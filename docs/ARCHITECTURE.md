@@ -17,13 +17,20 @@ Student
   |
   v
 Next.js / React PWA
-  |--------------------------|
-  |                          |
-  v                          v
-Next.js server routes      Supabase Auth
-  |                          |
-  |                          v
-  |                    authenticated user
+  |
+  |------------------------------|
+  |                              |
+  v                              v
+Next.js server routes          Supabase Auth
+  |                              |
+  |                              +--> Google OAuth
+  |                              +--> Apple OAuth
+  |                              +--> Microsoft / Azure OAuth
+  |                              +--> Email fallback
+  |                              +--> Facebook later
+  |                              |
+  |                              v
+  |                        authenticated user
   |
   +--> Supabase Postgres + RLS
   |       |-- study_rooms
@@ -31,6 +38,7 @@ Next.js server routes      Supabase Auth
   |       |-- document_chunks + pgvector
   |       |-- topics/mastery
   |       |-- conversations/messages
+  |       |-- product profile/onboarding data
   |
   +--> Supabase private Storage
   |       |-- original uploaded documents
@@ -42,7 +50,7 @@ Next.js server routes      Supabase Auth
           v
         OpenAI
 
-Async ingestion (next implementation phase)
+Async ingestion
   upload -> queue -> extract text/OCR -> normalize -> chunk -> embed -> ready
 ```
 
@@ -53,10 +61,62 @@ Async ingestion (next implementation phase)
 - Next.js App Router.
 - Responsive by default.
 - PWA manifest + service worker scaffold.
-- Do not put provider SDK credentials in browser code.
+- WebForge V1 visual system is the current design direction.
+- Do not put provider SDK secrets or privileged credentials in browser code.
 - UI should consume internal API routes or a future dedicated API service.
 
-The current home screen is only a product-shell reference. It is not the final visual design.
+Studigo should feel like a **living study field guide with a companion inside it**, not a generic education SaaS dashboard. Authentication, onboarding, Study Rooms, document management, tutoring, and mastery surfaces should all evolve from the same design system in `docs/DESIGN_SYSTEM.md`.
+
+## Authentication and identity
+
+Supabase Auth is the canonical Studigo identity layer. Do not introduce a parallel identity vendor unless a future requirement cannot reasonably be met by Supabase Auth.
+
+### Launch providers
+
+1. Google
+2. Apple
+3. Microsoft (Supabase `azure` provider)
+4. Email fallback
+5. Facebook later if justified by usage
+
+Google One Tap may be evaluated after standard Google OAuth is stable.
+
+### Web / PWA auth flow
+
+The Next.js app should use Supabase's supported SSR/cookie pattern with PKCE for OAuth.
+
+```text
+/login
+  -> signInWithOAuth(provider)
+  -> Supabase Auth
+  -> external provider
+  -> Supabase provider callback
+  -> /auth/callback
+  -> exchange code for session
+  -> onboarding check
+      -> /onboarding for new/incomplete profile
+      -> /app for returning user
+```
+
+The authenticated Supabase user ID is the principal used by RLS-protected Studigo data.
+
+Provider credentials belong in Supabase Auth provider configuration, not in browser source code. Social provider secrets, Apple signing material, service-role keys, and OpenAI keys must never be exposed to the client or committed to the repository.
+
+### Auth UI direction
+
+The surrounding login/onboarding experience should use the Studigo WebForge system: warm paper surfaces, strong editorial hierarchy, limited companion use, and clear study-oriented copy.
+
+The provider buttons themselves should remain immediately recognizable and trustworthy. Do not turn Google/Apple/Microsoft sign-in controls into stylized generic product CTAs that obscure the provider identity.
+
+### Authorization boundary
+
+Authentication answers **who the user is**. Postgres RLS answers **what the user can access**.
+
+Do not weaken ownership policies because requests pass through Next.js server routes. User-owned Study Rooms, documents, conversations, and mastery records must remain database-authorized.
+
+Do not use editable Supabase `user_metadata` values for authorization decisions.
+
+See `docs/AUTH.md` for the canonical auth/provider/session/security design.
 
 ## Backend
 
@@ -73,15 +133,19 @@ Use a separate backend service only when one of these becomes real:
 ## Supabase responsibilities
 
 ### Auth
-Student identity and sessions.
+
+Student identity, OAuth provider integration, JWT issuance/refresh, sessions, and the shared account model for web/PWA and future native shells.
 
 ### Postgres
+
 Product records and vector index. Row Level Security is mandatory on user-owned data.
 
 ### Storage
+
 Original source files in private bucket `study-materials`.
 
 ### pgvector
+
 Semantic retrieval of `document_chunks`. The first migration uses 1536-dimensional embeddings to match the default `text-embedding-3-small` scaffold setting.
 
 If the embedding model/dimensionality changes, migrate the vector column and index deliberately. Do not silently swap embedding dimensions.
@@ -172,17 +236,25 @@ Do not make the bucket public for convenience.
 ## Executable layer
 
 ### Phase 1: PWA
+
 The web app is the canonical client and should be installable on desktop/mobile browsers.
 
 ### Phase 2: Tauri
+
 `apps/desktop` reserves a Tauri v2 shell. Do not enable production bundling until the frontend/backend deployment boundary is finalized. A desktop shell should call the same hosted API rather than embedding secrets or duplicating AI logic.
 
+Tauri or any future native shell should resolve authentication to the same Supabase users and RLS model. Do not create a separate native-only account system.
+
 ### Possible later mobile route
+
 If native store distribution becomes important, evaluate Capacitor, React Native/Expo, or platform-native shells based on actual requirements. Do not build all three.
 
 ## Security rules
 
-- Never expose `OPENAI_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` to the client.
+- Never expose `OPENAI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, social-provider secrets, or Apple signing keys to the client.
+- Use PKCE/state protections for OAuth and validate application redirect destinations.
+- Avoid open redirects through callback query parameters.
+- Do not use editable user metadata for authorization.
 - Validate uploads server-side.
 - Private storage only.
 - RLS on all user-owned tables.
@@ -191,10 +263,13 @@ If native store distribution becomes important, evaluate Capacitor, React Native
 - Treat uploaded text as untrusted data, not executable instructions.
 - Prompt injection inside source material must not override system/product policy.
 - Add malware scanning and file-content validation before broad public launch.
+- Test duplicate-email/account-linking behavior before public beta.
+- Test session expiration, logout, and preview/production callback allowlists.
 
 ## Observability to add before beta
 
 - Structured request IDs.
+- Auth failure/callback diagnostics without logging provider secrets or tokens.
 - Ingestion job status + retries.
 - Model latency/token/cost metrics.
 - Retrieval trace (chunk IDs, scores, source mix).
