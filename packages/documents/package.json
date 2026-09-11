@@ -3,13 +3,23 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "echo 'lint handled at app level'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/*.test.ts"
   },
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "latest",
+    "tsx": "latest"
+  },
+  "dependencies": {
+    "jszip": "^3.10.2",
+    "mammoth": "^1.12.2",
+    "pdf-lib": "^1.17.1",
+    "unpdf": "^1.8.1"
   }
 }

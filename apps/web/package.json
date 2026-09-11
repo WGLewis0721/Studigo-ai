@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint || true",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test lib/*.test.ts"
   },
   "dependencies": {
     "@studigo/ai": "workspace:*",
@@ -25,6 +26,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "tsx": "latest"
   }
 }

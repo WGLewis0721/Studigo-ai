@@ -68,9 +68,9 @@ export default function HomePage() {
         <nav className="mainNav" aria-label="Primary navigation">
           <a href="#workspace">Study rooms</a>
           <a href="#how-it-works">How it works</a>
-          <Link href="/api/health">System</Link>
+          <Link href="/login">Sign in</Link>
         </nav>
-        <button className="navCta" type="button">Start studying <span>↗</span></button>
+        <Link className="navCta" href="/app">Start studying <span>↗</span></Link>
       </header>
 
       <section className="hero wrap">
@@ -81,7 +81,7 @@ export default function HomePage() {
             Drop in the study guide, textbook, notes, and worksheets. Studigo turns the material you already have into one grounded companion that teaches, quizzes, cites, and keeps track of what actually sticks.
           </p>
           <div className="heroActions">
-            <button className="buttonPrimary" type="button">Build a Study Room <span>→</span></button>
+            <Link className="buttonPrimary" href="/signup">Build a Study Room <span>→</span></Link>
             <a className="buttonQuiet" href="#workspace">See the study experience</a>
           </div>
           <div className="proofLine" aria-label="Product principles">
@@ -216,7 +216,7 @@ export default function HomePage() {
           <span className="sectionNumber">03 / START WITH WHAT YOU HAVE</span>
           <h2>One upload away from a better study session.</h2>
           <p>PDFs, class handouts, notes, and textbook chapters belong together. Keep the originals downloadable while Studigo builds the learning layer on top.</p>
-          <button className="buttonPrimary dark" type="button">Create your first room <span>→</span></button>
+          <Link className="buttonPrimary dark" href="/signup">Create your first room <span>→</span></Link>
         </div>
       </section>
 
