@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Your AI study companion, grounded in your own class materials.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f7f4ec",
-    theme_color: "#17231d",
+    background_color: "#f4efe4",
+    theme_color: "#1d2944",
     icons: []
   };
 }
