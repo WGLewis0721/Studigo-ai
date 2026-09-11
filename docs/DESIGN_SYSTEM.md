@@ -44,6 +44,65 @@ Studigo should feel like a **living study field guide with a companion inside it
 5. Source citations should look tangible and traceable.
 6. The Studigo companion may appear in onboarding, empty states, learning feedback, and active tutoring—but should not overwhelm serious study moments.
 
+## Authentication surfaces
+
+Authentication is part of the Studigo product experience, but it has a different trust requirement from marketing and study surfaces.
+
+### Login shell
+
+Use the Studigo WebForge visual language around the sign-in controls:
+
+- warm paper background or restrained field-guide texture
+- strong editorial hierarchy
+- compact Studigo wordmark
+- optional companion pose used lightly
+- short, useful copy such as `Welcome to Studigo` / `Your study companion is ready.`
+- generous breathing room and a single obvious path forward
+
+Do not turn login into another marketing page.
+
+### Social provider buttons
+
+Launch order in the UI:
+
+1. Continue with Google
+2. Continue with Apple
+3. Continue with Microsoft
+4. Email fallback below a visible divider
+5. Facebook only if/when it is enabled later
+
+Provider buttons are an exception to some of the more expressive WebForge styling rules. They should remain recognizable, accessible, and trustworthy.
+
+- Keep provider name and icon obvious.
+- Follow provider brand requirements where applicable.
+- Do not replace provider identity with Studigo colors.
+- Do not use offset novelty shadows that make a provider button look unofficial.
+- Do not hide all social providers behind a generic `Continue` menu.
+- Maintain clear keyboard focus and screen-reader labels.
+
+The surrounding layout may use Studigo paper, ink, lavender, coral, and companion elements; the provider controls should optimize for familiarity.
+
+### Auth states
+
+Design all auth states intentionally:
+
+- default sign-in
+- signing in / redirecting
+- callback processing
+- provider error
+- email fallback
+- first-login onboarding
+- expired session
+- signed-out confirmation when useful
+
+Never leave a user on a blank callback screen with no Studigo context.
+
+### Onboarding
+
+Onboarding should feel like the first page of the field guide, not a lengthy account questionnaire.
+
+Prioritize only information needed to improve the study experience. A new user should be able to reach `Create Study Room` quickly.
+
 ## Original Studigo companion
 
 The V1 companion is an original inline SVG: lavender body, paper-like belly, book/page ear shapes, and an open-book motif. It is intentionally simple enough to evolve later without locking the product into an external character asset or copyrighted visual language.
@@ -56,6 +115,8 @@ Future companion work may create poses for:
 - Needs review
 - Cram mode
 - Uploading / reading material
+- Welcome / authentication
+- First Study Room onboarding
 
 All future assets must be original to Studigo.
 
@@ -66,6 +127,7 @@ Motion must communicate state or character.
 - Companion idle float: slow and subtle.
 - Buttons: small physical offset, not glow-heavy animation.
 - Learning trail: future implementation should animate state changes, not continuously pulse everything.
+- Auth redirects/callbacks: use subtle progress feedback; never animate in a way that makes provider redirects feel suspicious or slow.
 - Respect `prefers-reduced-motion`.
 
 ## Responsive behavior
@@ -75,6 +137,7 @@ Desktop and mobile are different compositions, not simple scale-downs.
 - Desktop: full study-room rail + two-column mastery/tutor workspace.
 - Tablet: study-room rail remains, tutor stacks beneath mastery.
 - Mobile: rail disappears, trail and tutor become sequential, modes become a vertical action list, hero notes reposition around the companion.
+- Auth: keep provider controls full-width and thumb-friendly on small screens; avoid two-column provider layouts on mobile.
 
 ## Product UI hierarchy
 
@@ -87,7 +150,15 @@ The primary student loop is:
 5. Update mastery
 6. Continue
 
-Design should make this loop faster than opening multiple files, tabs, or apps.
+The first-run loop is:
+
+1. Sign in with a familiar provider
+2. Complete minimal onboarding
+3. Create first Study Room
+4. Upload class material
+5. Start studying
+
+Design should make both loops faster than opening multiple files, tabs, or apps.
 
 ## WebForge guardrails
 
@@ -97,5 +168,6 @@ Design should make this loop faster than opening multiple files, tabs, or apps.
 - No decorative motion that delays reading.
 - No gratuitous icons or pills.
 - No framework migration for visual work alone.
-- Preserve backend/API contracts while the frontend evolves.
+- Preserve backend/API/auth contracts while the frontend evolves.
+- Social sign-in controls prioritize trust and provider recognition over novelty.
 - Validate rendered responsiveness, accessibility, and build health on every major pass.
