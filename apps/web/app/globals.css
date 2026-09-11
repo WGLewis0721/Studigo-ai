@@ -1,0 +1,84 @@
+:root {
+  color-scheme: light;
+  --ink: #17231d;
+  --muted: #647068;
+  --paper: #f7f4ec;
+  --surface: #fffdf8;
+  --line: #dfe4dc;
+  --sage: #8fae96;
+  --sage-dark: #496650;
+  --peri: #8996d8;
+  --peri-soft: #e8eafb;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(137, 150, 216, 0.16), transparent 30rem),
+    radial-gradient(circle at 0% 25%, rgba(143, 174, 150, 0.16), transparent 28rem),
+    var(--paper);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+button, a { font: inherit; }
+a { color: inherit; }
+
+.shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; min-height: 100vh; }
+.nav { display: flex; align-items: center; gap: 12px; padding: 24px 0; }
+.brandMark {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 13px 13px 13px 5px; background: var(--ink); color: white; font-weight: 800;
+  box-shadow: 0 8px 20px rgba(23,35,29,.12);
+}
+.navSpacer { flex: 1; }
+.textLink { color: var(--muted); text-decoration: none; font-size: .92rem; }
+
+.hero { padding: 82px 0 52px; max-width: 850px; }
+.eyebrow { font-size: .76rem; letter-spacing: .16em; font-weight: 800; color: var(--sage-dark); margin-bottom: 16px; }
+h1 {
+  margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 600;
+  font-size: clamp(3.1rem, 8vw, 6.6rem); line-height: .92; letter-spacing: -.055em;
+}
+.lede { margin: 28px 0 0; max-width: 700px; font-size: clamp(1.05rem, 2vw, 1.32rem); line-height: 1.6; color: var(--muted); }
+.heroActions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+.primary, .secondary { border: 0; border-radius: 999px; padding: 14px 20px; cursor: pointer; font-weight: 750; }
+.primary { background: var(--ink); color: white; }
+.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+
+.roomPreview {
+  display: grid; grid-template-columns: 1fr auto; gap: 18px 24px; padding: 28px;
+  background: rgba(255,253,248,.86); border: 1px solid var(--line); border-radius: 28px;
+  box-shadow: 0 30px 90px rgba(58,70,60,.08); backdrop-filter: blur(16px);
+}
+.roomKicker { font-size: .72rem; letter-spacing: .14em; font-weight: 800; color: var(--peri); }
+.roomPreview h2 { font-family: Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 8px 0 4px; }
+.roomPreview p { margin: 0; color: var(--muted); }
+.score { align-self: end; font-size: 2.5rem; font-weight: 800; }
+.progressTrack { grid-column: 1 / -1; height: 12px; background: #eceee9; border-radius: 999px; overflow: hidden; }
+.progressTrack span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--sage), var(--peri)); }
+.topicGrid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.topicGrid span { padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--muted); }
+.topicGrid .done { color: var(--sage-dark); background: #f0f6f1; }
+.topicGrid .working { color: #5965a3; background: var(--peri-soft); }
+
+.capabilityGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 28px 0 80px; }
+.capability { padding: 22px; border-top: 1px solid var(--line); }
+.capabilityIcon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; background: var(--peri-soft); font-weight: 800; color: #5965a3; }
+.capability h3 { margin: 18px 0 8px; font-size: 1.05rem; }
+.capability p { margin: 0; color: var(--muted); line-height: 1.55; }
+.footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); color: var(--muted); padding: 22px 0 32px; font-size: .88rem; }
+
+@media (max-width: 800px) {
+  .hero { padding-top: 54px; }
+  .capabilityGrid, .topicGrid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 540px) {
+  .shell { width: min(100% - 22px, 1180px); }
+  .nav .textLink { display: none; }
+  .hero { padding-top: 38px; }
+  .roomPreview { padding: 20px; border-radius: 22px; }
+  .capabilityGrid, .topicGrid { grid-template-columns: 1fr; }
+  .footer { flex-direction: column; }
+}

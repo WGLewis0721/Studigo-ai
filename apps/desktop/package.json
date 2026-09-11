@@ -1,0 +1,14 @@
+{
+  "name": "@studigo/desktop",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "tauri": "tauri",
+    "build": "echo 'Desktop shell is scaffold-only until the hosted API boundary is finalized'",
+    "lint": "echo 'no desktop lint configured yet'",
+    "typecheck": "echo 'desktop shell uses Rust/Tauri'"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "latest"
+  }
+}
