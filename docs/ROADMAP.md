@@ -7,6 +7,7 @@ The order matters. Do not spend a week polishing the dashboard before ingestion 
 - Monorepo/workspace.
 - Next.js PWA shell.
 - Supabase schema + RLS + private storage.
+- Supabase Auth chosen as the canonical identity layer.
 - Document upload/download contracts.
 - OpenAI provider package.
 - Room-scoped pgvector retrieval RPC.
@@ -19,9 +20,18 @@ Exit: another engineer can start implementation without choosing architecture fr
 ## Phase 1 — Make the core loop real
 
 ### Auth + rooms
-- Add sign-up/sign-in/sign-out.
+- Implement branded `/login` and `/auth/callback` surfaces using the Studigo design system.
+- Configure Google OAuth first.
+- Configure Apple OAuth.
+- Configure Microsoft/Azure OAuth with required email scope.
+- Add email fallback.
+- Keep Facebook as a later optional provider rather than an MVP blocker.
+- Use Supabase SSR/cookie sessions with PKCE for social OAuth.
+- Add session refresh/protection for private app routes.
+- Route first-time users through minimal onboarding, then into `/app`.
 - Create/list/open/delete Study Rooms.
-- Verify RLS with integration tests.
+- Verify RLS with integration tests using at least two different users.
+- Test login/logout, expired sessions, callback failures, and duplicate/account-linking cases.
 
 ### Document UI
 - Upload dropzone.
@@ -50,7 +60,7 @@ Exit: another engineer can start implementation without choosing architecture fr
 - Streaming response.
 - Clear insufficient-evidence behavior.
 
-Exit: upload a real study guide + textbook chapter and get reliable cited answers.
+Exit: a student can sign in with a primary provider, create a Study Room, upload a real study guide + textbook chapter, and get reliable cited answers.
 
 ## Phase 2 — Turn RAG into a study product
 
@@ -104,6 +114,8 @@ Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 - Prompt-injection tests using hostile uploaded documents.
 - Parser fuzzing/file validation.
 - Malware scanning.
+- Auth abuse/rate-limit tests.
+- OAuth redirect/open-redirect tests.
 - Rate limits/quotas.
 - Cost budgets per user/room.
 - Caching/deduplication.
@@ -115,12 +127,13 @@ Exit: beta behavior is measurable and failures are diagnosable.
 ## Phase 5 — Product polish
 
 - Final Studigo visual system and mascot direction.
-- Onboarding.
+- Authentication/onboarding polish.
 - Empty/loading/error states.
 - Mobile-first study interactions.
 - Accessibility review.
 - PWA icons/offline shell/install education.
 - Notification/reminder strategy.
+- Evaluate Google One Tap only after standard Google OAuth is stable.
 
 Exit: feels like a cohesive study companion rather than a developer tool.
 
@@ -128,8 +141,10 @@ Exit: feels like a cohesive study companion rather than a developer tool.
 
 - Decide whether desktop packaging is actually valuable.
 - Finalize hosted API boundary.
+- Reuse the same Supabase identity/account model in native shells.
 - Enable Tauri bundling/signing/updating if justified.
 - Evaluate mobile-store wrapper only if PWA limitations block product goals.
+- If true native Apple clients are built, evaluate native Sign in with Apple while preserving the shared Supabase user model.
 
 ## Phase 7 — School/family expansion (post-validation)
 
@@ -140,13 +155,14 @@ Only after individual-student value is proven:
 - Shared class resources with licensing/permissions.
 - School/org accounts.
 - Administrative controls.
+- District-specific Microsoft/Entra tenant restrictions when needed.
 - Required privacy/compliance work.
 
 ## Immediate next 10 engineering tasks
 
 1. Connect Supabase project and apply initial migration.
-2. Add authentication UI + middleware/session refresh.
-3. Implement Study Room CRUD.
+2. Implement Supabase SSR auth foundation plus `/login` and `/auth/callback`; start with Google OAuth, then Apple/Microsoft and email fallback.
+3. Implement Study Room CRUD and verify two-user RLS isolation.
 4. Build upload/file-manager UI against existing endpoints.
 5. Choose and implement ingestion queue/worker.
 6. Implement PDF/TXT parsing first; add DOCX/PPTX next.
