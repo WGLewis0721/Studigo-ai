@@ -35,13 +35,15 @@ supabase/
 docs/
   PRODUCT.md           product behavior and UX principles
   ARCHITECTURE.md      system boundaries and data flow
+  DESIGN_SYSTEM.md     WebForge visual language and UI guardrails
+  VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
   ROADMAP.md           ordered engineering plan
   AI_HANDOFF.md        rules for Opus/SuperGrok/Astra/etc.
 ```
 
 ## Local development
 
-Prerequisites: Node 20+, pnpm, a Supabase project, and an OpenAI API key.
+Prerequisites: Node 22, pnpm, a Supabase project, and an OpenAI API key for backend/AI features. The current homepage can render without Supabase/OpenAI configuration.
 
 ```bash
 pnpm install
@@ -50,6 +52,20 @@ pnpm dev
 ```
 
 Apply `supabase/migrations/001_initial.sql` to the Supabase project before using authenticated study rooms or RAG.
+
+## Vercel
+
+Studigo is a monorepo. The deployable Next.js application is `apps/web`, not the repository root.
+
+For Vercel, configure the project with:
+
+- Root Directory: `apps/web`
+- Framework: Next.js
+- Node.js: 22.x
+- Output Directory: framework default (`.next`)
+- Include source files outside the Root Directory: enabled
+
+See [`docs/VERCEL_DEPLOYMENT.md`](docs/VERCEL_DEPLOYMENT.md) for the authoritative deployment and environment-variable checklist.
 
 ## Environment
 
@@ -65,7 +81,8 @@ Read these files in order before making major changes:
 
 1. `docs/PRODUCT.md`
 2. `docs/ARCHITECTURE.md`
-3. `docs/ROADMAP.md`
-4. `docs/AI_HANDOFF.md`
+3. `docs/DESIGN_SYSTEM.md`
+4. `docs/ROADMAP.md`
+5. `docs/AI_HANDOFF.md`
 
 The next engineer should implement the ingestion pipeline before expanding the UI surface area.
