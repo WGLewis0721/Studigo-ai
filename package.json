@@ -13,6 +13,11 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "desktop:dev": "pnpm --filter @studigo/desktop tauri dev",
-    "desktop:build": "pnpm --filter @studigo/desktop tauri build"
+    "desktop:build": "pnpm --filter @studigo/desktop tauri build",
+    "test": "pnpm -r test && node --test tests/database-security.test.mjs",
+    "test:security": "node --test tests/database-security.test.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14"
   }
 }

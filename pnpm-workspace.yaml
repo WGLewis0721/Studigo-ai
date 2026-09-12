@@ -1,3 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# The platform-specific esbuild binary is supplied as a dependency.
+# Do not run dependency lifecycle scripts during installation.
+allowBuilds:
+  esbuild: false

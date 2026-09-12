@@ -10,14 +10,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint || true",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test lib/*.test.ts"
   },
   "dependencies": {
     "@studigo/ai": "workspace:*",
     "@studigo/documents": "workspace:*",
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
-    "next": "latest",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.116.0",
+    "next": "16.3.4",
     "react": "latest",
     "react-dom": "latest"
   },
@@ -25,6 +26,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "tsx": "latest"
   }
 }

@@ -52,6 +52,10 @@ Next.js server routes          Supabase Auth
 
 Async ingestion
   upload -> queue -> extract text/OCR -> normalize -> chunk -> embed -> ready
+
+Ingestion (implemented)
+  upload -> queued -> processing -> extract text (page/slide numbers preserved)
+    -> OCR pages with no text layer -> normalize -> chunk -> embed -> ready
 ```
 
 ## Frontend
@@ -117,6 +121,13 @@ Do not weaken ownership policies because requests pass through Next.js server ro
 Do not use editable Supabase `user_metadata` values for authorization decisions.
 
 See `docs/AUTH.md` for the canonical auth/provider/session/security design.
+
+`/` is the marketing surface. The product lives behind auth:
+
+- `/login`, `/signup` — Supabase email/password, session refreshed in middleware.
+- `/app` — study rooms: create, open, rename, delete.
+- `/app/rooms/[roomId]` — one room with six modes: Materials, Ask, Learn, Quiz,
+  Flashcards, Mastery. Mode state is client-side; all data is server-loaded.
 
 ## Backend
 
@@ -276,3 +287,51 @@ If native store distribution becomes important, evaluate Capacitor, React Native
 - User-visible document processing failures.
 - Error reporting.
 - RAG eval set and regression suite.
+
+## Ingestion pipeline
+
+`apps/web/lib/ingest.ts` runs one document from stored original to retrievable
+chunks. It is invoked by `POST /api/documents/process` after upload and by the
+Retry action.
+
+1. **Claim.** The status update is conditional on the document still being in
+   `uploaded`, `queued`, or `failed`, so a double-click or a retry racing the
+   first run cannot ingest the same file twice.
+2. **Extract.** PDF via `unpdf` (one entry per page), DOCX via `mammoth`
+   (headings/lists/tables preserved, split into citable sections), PPTX by
+   reading `ppt/slides/slideN.xml` plus speaker notes, TXT/Markdown by heading.
+3. **OCR.** A PDF page whose text layer is under the threshold is isolated with
+   `pdf-lib` and transcribed on its own, so the transcription keeps the page
+   number a citation has to point at. Uploaded images go straight to OCR.
+4. **Chunk.** Page by page, so every chunk has exactly one citable location.
+   Long pages split on paragraph then sentence boundaries with a small overlap.
+5. **Embed and store.** Batched embeddings, then chunks written with the
+   service-role client. Re-ingestion deletes the previous pass first.
+6. **Topic map.** A study guide or teacher material additionally produces the
+   topic map, with each topic linked to the passages that support it.
+
+Ownership is always verified through RLS with the user's own client *before*
+the service-role worker touches anything.
+
+## Grounding contract
+
+- Retrieval is scoped to one room and one owner, in SQL, in `match_study_chunks`.
+- Excerpts reach the model numbered, wrapped in `<course_material>`, with an
+  explicit rule that their contents are data and never instructions.
+- The model cites inline as `[n]`. Only markers that appear in the answer become
+  citation chips, and an invented marker is discarded — so a chip is evidence,
+  not decoration.
+- An answer with no citations is reported as ungrounded in the UI.
+- Every chip links to the learner's own original file, at the cited page.
+
+## Mastery
+
+Readiness is derived, never stored as a decorative number.
+
+- A topic's mastery is the weighted average of the learner's recent attempts on
+  it, most recent weighted highest, damped until there are at least four
+  attempts.
+- Flashcard reviews are recorded as attempts too, at lower scores.
+- Room readiness averages mastery across *all* topics, so a topic never
+  practiced counts as zero — "ready" means ready for the whole test.
+- With no attempts at all, the UI shows "—", not a number.

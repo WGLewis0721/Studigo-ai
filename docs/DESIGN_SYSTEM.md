@@ -105,7 +105,11 @@ Prioritize only information needed to improve the study experience. A new user s
 
 ## Original Studigo companion
 
-The V1 companion is an original inline SVG: lavender body, paper-like belly, book/page ear shapes, and an open-book motif. It is intentionally simple enough to evolve later without locking the product into an external character asset or copyrighted visual language.
+The canonical companion is the orange scholar with a cream belly, green vest, crayon/writing tail and small flame. Preserve the asset library and references in `docs/brand/mascot/`.
+
+`StudigoMascot` is the shared component for marketing, auth, the app rail and contextual study states. Its state follows actual events: welcome, explain, thinking, sources, celebrate. Keep the product primary: 28–40 px in identity/answer labels, 64–96 px in empty or completion states, at most 150 px alongside the homepage product preview. No fullscreen mascot, mascot-led readiness or children's-game rewards.
+
+The supplied JPEGs have baked checkerboards; they are not transparent assets. `studigo-source-paper.png` is an edited derivative of the approved source pose, on a clean warm-paper background. Keep the full figure uncropped in contextual use. Only the circular brand/avatar variant crops to the face. The hero leads with a source-grounded example study session; all example progress is labeled as illustrative.
 
 Future companion work may create poses for:
 
