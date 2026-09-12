@@ -6,7 +6,7 @@ import { vector } from '@electric-sql/pglite/vector';
 
 // Execute the actual migrations in embedded PostgreSQL, including pgvector,
 // grants, RLS and transactional functions. Supabase auth/storage catalogs are
-// minimal fixtures; hosted Auth and Storage HTTP behavior has its own live suite.
+// minimal fixtures; hosted Auth and Storage HTTP behavior still needs live verification.
 let db;
 const A = '00000000-0000-4000-8000-000000000001';
 const B = '00000000-0000-4000-8000-000000000002';
@@ -31,7 +31,7 @@ before(async () => {
     grant all on storage.objects to anon, authenticated, service_role;
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   `);
-  for (const file of ['001_initial.sql', '002_core_loop.sql']) {
+  for (const file of ['001_initial.sql', '002_core_loop.sql', '20260912021422_study_planning.sql']) {
     const sql = await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8');
     // Core PG has gen_random_uuid; the pgcrypto extension is not packaged in PGlite.
     await db.exec(sql.replace('create extension if not exists pgcrypto;', ''));
@@ -152,6 +152,42 @@ test('Quiz retries return original grade, not another mastery-producing attempt'
     }
   });
   assert.equal((await one('select count(*)::int as n from quiz_attempts where question_id=$1',[id(61)])).n,1);
+});
+test('Whole practice tests hide keys, reject cross-user access and commit grading exactly once',async()=>{
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective) values($1,$2,$3,'Respiration','Explain respiration')`,[id(120),id(1),A]);
+  const questions=[id(31),id(120)].map((topic_id,i)=>({topic_id,kind:i?'short_answer':'multiple_choice',prompt:'Explain energy',choices:i?[]:['Sun','Moon','Wind','Rock'],correct_choice:i?null:0,expected_answer:i?'Sunlight':null,explanation:'Energy comes from sunlight.',citations:[],difficulty:'core'}));
+  const exam=await as('service_role',A,async()=>(await one('select create_practice_test($1,$2,$3,$4) as id',[id(1),A,'[]',JSON.stringify(questions)])).id);
+  await as('authenticated',B,async()=>{
+    assert.equal((await db.query('select * from practice_tests where id=$1',[exam])).rows.length,0);
+    assert.equal((await db.query('select id,prompt from quiz_questions where practice_test_id=$1',[exam])).rows.length,0);
+    await assert.rejects(db.query(`insert into study_plan_events(room_id,owner_id,plan_day,action_key,status) values($1,$2,'2026-09-12','learn:a','completed')`,[id(1),B]),e=>['42501','23503'].includes(e.code));
+  });
+  await as('authenticated',A,async()=>{
+    assert.equal((await one('select result from practice_tests where id=$1',[exam])).result,null);
+    assert.equal((await db.query('select id,prompt,choices from quiz_questions where practice_test_id=$1',[exam])).rows.length,2);
+    await assert.rejects(db.query('select expected_answer from quiz_questions where practice_test_id=$1',[exam]),e=>e.code==='42501');
+    await assert.rejects(db.query(`update practice_tests set status='submitted',result='{"score":100}' where id=$1`,[exam]),e=>e.code==='42501');
+    await assert.rejects(db.query('select submit_practice_test($1,$2,$3,$4)',[exam,A,'[]','{}']),e=>e.code==='42501');
+    await db.query(`insert into study_plan_events(room_id,owner_id,plan_day,action_key,status) values($1,$2,'2026-09-12','learn:a','completed')`,[id(1),A]);
+  });
+  await as('authenticated',B,async()=>assert.equal((await db.query('select * from study_plan_events where room_id=$1',[id(1)])).rows.length,0));
+  const rows=(await db.query('select id from quiz_questions where practice_test_id=$1 order by test_position',[exam])).rows;
+  const grades=rows.map((q,i)=>({id:q.id,response:i?'Sunlight':'',selected_choice:i?null:0,score:i?0:100,is_correct:!i,feedback:'Feedback'}));
+  await as('service_role',A,()=>assert.rejects(db.query('select submit_practice_test($1,$2,$3,$4)',[exam,A,JSON.stringify(grades.slice(0,1)),'{}']),/exactly once/));
+  await db.exec(`create function public.fail_test_grade() returns trigger language plpgsql as $$ begin if new.id='${id(120)}' then raise exception 'forced second topic failure'; end if; return new; end $$;
+    create trigger fail_test_grade before update on topics for each row execute function public.fail_test_grade();`);
+  try {
+    await as('service_role',A,()=>assert.rejects(db.query('select submit_practice_test($1,$2,$3,$4)',[exam,A,JSON.stringify(grades),'{}']),/forced second topic failure/));
+    assert.equal((await one('select count(*)::int as n from quiz_attempts where question_id=any($1::uuid[])',[rows.map(q=>q.id)])).n,0);
+    assert.equal((await one('select status from practice_tests where id=$1',[exam])).status,'draft');
+  } finally { await db.exec('drop trigger fail_test_grade on topics; drop function fail_test_grade();'); }
+  await as('service_role',A,async()=>{
+    const result=(await one('select submit_practice_test($1,$2,$3,$4) as result',[exam,A,JSON.stringify(grades),'{}'])).result;
+    assert.equal(result.score,50);assert.equal(result.topics.length,2);assert.equal(result.reviews.length,2);
+    const replay=(await one('select submit_practice_test($1,$2,$3,$4) as result',[exam,A,'[]','{}'])).result;
+    assert.deepEqual(replay,result);
+  });
+  assert.equal((await one('select count(*)::int as n from quiz_attempts where question_id=any($1::uuid[])',[rows.map(q=>q.id)])).n,2);
 });
 test('Revised study scope preserves matching mastery, refreshes sources, deactivates removed topics',async()=>{
   await db.query(`update documents set status='ready',source_type='study_guide' where id=$1`,[id(11)]);

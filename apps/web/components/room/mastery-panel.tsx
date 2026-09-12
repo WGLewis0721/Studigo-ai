@@ -1,5 +1,6 @@
 "use client";
 
+import type { WeakArea } from "@/lib/study-planning";
 import type { RoomReadiness, Topic } from "@/lib/rooms";
 
 function ReadinessRing({ value, practiced }: { value: number; practiced: boolean }) {
@@ -27,17 +28,15 @@ function ReadinessRing({ value, practiced }: { value: number; practiced: boolean
 export function MasteryPanel({
   topics,
   readiness,
-  onPractice
+  onPractice, areas
 }: {
   topics: Topic[];
+  areas: WeakArea[];
   readiness: RoomReadiness;
   onPractice: (topicId: string) => void;
 }) {
-  const practiced = readiness.questionsAnswered > 0;
-  const weakest = [...topics]
-    .filter((topic) => topic.status !== "mastered")
-    .sort((a, b) => Number(a.mastery_score) - Number(b.mastery_score))
-    .slice(0, 3);
+  const practiced = readiness.practicedTopicCount > 0;
+  const weakest = areas.slice(0, 3);
 
   return (
     <div className="masteryMode">
@@ -51,12 +50,12 @@ export function MasteryPanel({
                 ? "Nothing measured yet."
                 : readiness.readiness >= 80
                   ? "You're in good shape."
-                  : "Keep the streak moving."}
+                  : "Here is what holds readiness back."}
           </h2>
           <p>
             {!practiced
-              ? "Readiness is calculated from questions you actually answer — it stays blank until you practice."
-              : `Across ${readiness.topicCount} topics, weighted so unpracticed topics count as zero. ${readiness.correctAnswers} of ${readiness.questionsAnswered} answers correct.`}
+              ? "Readiness comes from saved quiz answers and flashcard recall — it stays blank until you practice a topic."
+              : `Across ${readiness.topicCount} topics, weighted so unpracticed topics count as zero. ${readiness.correctAnswers} of ${readiness.questionsAnswered} saved practice responses successful.`}
           </p>
         </div>
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
@@ -76,7 +75,7 @@ export function MasteryPanel({
           </dd>
         </div>
         <div>
-          <dt>Questions answered</dt>
+          <dt>Practice responses</dt>
           <dd>{readiness.questionsAnswered}</dd>
         </div>
         <div>
@@ -89,17 +88,13 @@ export function MasteryPanel({
         <section className="weakSpots">
           <span className="tinyLabel">PRACTICE THIS NEXT</span>
           <ul>
-            {weakest.map((topic) => (
-              <li key={topic.id}>
+            {weakest.map((area) => (
+              <li key={area.topic.id}>
                 <div>
-                  <strong>{topic.title}</strong>
-                  <small>
-                    {topic.last_practiced_at
-                      ? `${Math.round(topic.mastery_score)}% mastery`
-                      : "Not practiced yet"}
-                  </small>
+                  <strong>{area.topic.title}</strong>
+                  <small>{area.reasons.slice(0, 2).join(" ")}</small>
                 </div>
-                <button type="button" onClick={() => onPractice(topic.id)}>
+                <button type="button" onClick={() => onPractice(area.topic.id)}>
                   Practice →
                 </button>
               </li>
@@ -108,6 +103,9 @@ export function MasteryPanel({
         </section>
       )}
 
+      <div className="readinessBreakdown">
+        {[{name:"Strong",items:topics.filter(t=>t.status==="mastered")},{name:"Needs work",items:topics.filter(t=>t.last_practiced_at&&t.status!=="mastered")},{name:"Not practiced",items:topics.filter(t=>!t.last_practiced_at)}].map(group=><section key={group.name}><h3>{group.name} <span>{group.items.length}</span></h3><ul>{group.items.map(t=><li key={t.id}><button onClick={()=>onPractice(t.id)}>{t.title} →</button></li>)}</ul>{!group.items.length&&<p>None here.</p>}</section>)}
+      </div>
       <section className="masteryTable">
         <span className="tinyLabel">EVERY TOPIC</span>
         <ul>

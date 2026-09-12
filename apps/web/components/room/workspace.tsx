@@ -9,6 +9,11 @@ import { LearnPanel } from "./learn-panel";
 import { QuizPanel } from "./quiz-panel";
 import { CardsPanel } from "./cards-panel";
 import { MasteryPanel } from "./mastery-panel";
+import { WeakAreasPanel } from "./weak-areas-panel";
+import { PracticeTestPanel } from "./practice-test-panel";
+import { CramPanel } from "./cram-panel";
+import { StudyPlanPanel } from "./study-plan-panel";
+import { rankWeakAreas, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
 import { RoomSettings } from "./room-settings";
 
 const MODES = [
@@ -17,23 +22,39 @@ const MODES = [
   { id: "learn", icon: "✦", name: "Learn", copy: "Walk the guide in the right order." },
   { id: "quiz", icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
   { id: "cards", icon: "▤", name: "Flashcards", copy: "Drill the terms until they stick." },
+  { id: "weak", icon: "△", name: "Weak areas", copy: "Where to focus next." },
+  { id: "test", icon: "▤", name: "Practice test", copy: "Rehearse the whole test." },
+  { id: "plan", icon: "▦", name: "Study plan", copy: "A little each day." },
+  { id: "cram", icon: "◷", name: "Cram mode", copy: "Make limited time count." },
   { id: "mastery", icon: "↗", name: "Mastery", copy: "Find weak spots before test day." }
 ] as const;
 
 type Mode = (typeof MODES)[number]["id"];
+
+const GROUPS: Array<{name:string;modes:Mode[]}> = [
+  {name:"Study",modes:["learn","ask"]},
+  {name:"Practice",modes:["quiz","cards","test"]},
+  {name:"Progress",modes:["mastery","weak"]},
+  {name:"Plan",modes:["plan","cram"]},
+  {name:"Materials",modes:["materials"]}
+];
 
 export function RoomWorkspace({
   room,
   documents,
   topics,
   readiness,
-  initialMode
+  initialMode,
+  evidence, planEvents, asOf
 }: {
   room: StudyRoom;
   documents: StudyDocument[];
   topics: Topic[];
   readiness: RoomReadiness;
   initialMode?: string;
+  evidence: PracticeEvidence[];
+  planEvents: PlanEvent[];
+  asOf: number;
 }) {
   const router = useRouter();
   const readyDocuments = documents.filter((document) => document.status === "ready");
@@ -45,6 +66,18 @@ export function RoomWorkspace({
   const [focusTopicId, setFocusTopicId] = useState<string | null>(null);
 
   const refresh = () => router.refresh();
+  const areas = rankWeakAreas(topics, evidence, asOf);
+  const plan = buildStudyPlan({ topics, areas, testDate: room.test_date, cardsDue: readiness.cardsDue, events: planEvents, now: asOf });
+  const currentGroup = GROUPS.find(group => group.modes.includes(mode)) ?? GROUPS[0];
+  const [cramStarted, setCramStarted] = useState(initialMode === "cram");
+  function navigate(nextMode: Mode, topicId: string | null = null) {
+    setFocusTopicId(topicId);
+    setMode(nextMode);
+    if (nextMode === "cram") setCramStarted(true);
+    window.history.replaceState(null, "", `${window.location.pathname}?mode=${nextMode}`);
+  }
+  function startPlannedAction(action: StudyAction) { navigate(action.mode, action.topicId); }
+
 
   return (
     <div className="roomWorkspace">
@@ -75,25 +108,14 @@ export function RoomWorkspace({
 
       {settingsOpen && <RoomSettings room={room} onClose={() => setSettingsOpen(false)} />}
 
-      <nav className="modeDock roomModes" aria-label="Study modes">
-        {MODES.map((item) => (
-          <button
-            className={`modeItem ${mode === item.id ? "modeItemActive" : ""}`}
-            type="button"
-            key={item.id}
-            onClick={() => setMode(item.id)}
-            aria-current={mode === item.id}
-          >
-            <span className="modeIcon" aria-hidden="true">
-              {item.icon}
-            </span>
-            <span>
-              <strong>{item.name}</strong>
-              <small>{item.copy}</small>
-            </span>
-          </button>
-        ))}
-      </nav>
+      <div className="studyNavigation">
+        <nav className="studyGroups" aria-label="Study Room sections">
+          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}>{group.name}</button>)}
+        </nav>
+        <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
+          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span aria-hidden="true">{item.icon}</span>{item.name}</button>)}
+        </nav>
+      </div>
 
       <div className="modeSurface">
         {mode === "materials" && (
@@ -105,13 +127,13 @@ export function RoomWorkspace({
         {mode === "learn" && (
           <LearnPanel
             roomId={room.id}
-            topics={topics}
+            topics={focusTopicId ? topics.filter(t=>t.id===focusTopicId) : topics}
             hasMaterials={readyDocuments.length > 0}
             onChanged={refresh}
           />
         )}
         {mode === "quiz" && (
-          <QuizPanel
+          <QuizPanel key={focusTopicId ?? "all"}
             roomId={room.id}
             topics={topics}
             hasMaterials={readyDocuments.length > 0}
@@ -120,7 +142,8 @@ export function RoomWorkspace({
           />
         )}
         {mode === "cards" && (
-          <CardsPanel
+          <CardsPanel key={focusTopicId ?? "all"}
+            initialTopicId={focusTopicId}
             roomId={room.id}
             topics={topics}
             hasMaterials={readyDocuments.length > 0}
@@ -131,12 +154,17 @@ export function RoomWorkspace({
           <MasteryPanel
             topics={topics}
             readiness={readiness}
+            areas={areas}
             onPractice={(topicId) => {
-              setFocusTopicId(topicId);
-              setMode("quiz");
+              navigate("quiz", topicId);
             }}
           />
         )}
+        {mode === "weak" && <WeakAreasPanel areas={areas} onStudy={(next,id)=>navigate(next,id)}/>}
+        {mode === "test" && <PracticeTestPanel roomId={room.id} topicCount={topics.length} onGraded={refresh} onReviewTopic={id=>navigate("learn",id)}/>}
+        {mode === "plan" && <StudyPlanPanel roomId={room.id} days={plan} testDate={room.test_date} onStart={startPlannedAction} onChanged={refresh} onSetDate={()=>setSettingsOpen(true)}/>}
+        {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
+
       </div>
     </div>
   );

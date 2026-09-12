@@ -24,17 +24,19 @@ export function CardsPanel({
   roomId,
   topics,
   hasMaterials,
-  onReviewed
+  onReviewed,
+  initialTopicId = null
 }: {
   roomId: string;
   topics: Topic[];
   hasMaterials: boolean;
   onReviewed: () => void;
+  initialTopicId?: string | null;
 }) {
   const [cards, setCards] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [topicId, setTopicId] = useState("");
+  const [topicId, setTopicId] = useState(initialTopicId ?? "");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export function CardsPanel({
   const loadDue = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/flashcards?roomId=${roomId}`);
+      const response = await fetch(`/api/flashcards?roomId=${roomId}${topicId ? `&topicId=${encodeURIComponent(topicId)}` : ""}`);
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not load your cards.");
       setCards(payload.cards as Card[]);
@@ -57,7 +59,7 @@ export function CardsPanel({
     } finally {
       setLoading(false);
     }
-  }, [roomId]);
+  }, [roomId, topicId]);
 
   useEffect(() => {
     void loadDue();

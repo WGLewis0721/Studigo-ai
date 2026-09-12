@@ -16,13 +16,16 @@ export async function GET(request: Request) {
   const roomId = new URL(request.url).searchParams.get("roomId")?.trim();
   if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
 
-  const { data, error } = await supabase
+  const topicId = new URL(request.url).searchParams.get("topicId");
+  let query = supabase
     .from("flashcards")
     .select("id, front, back, citations, due_at, repetitions, topic_id")
     .eq("room_id", roomId)
     .lte("due_at", new Date().toISOString())
     .order("due_at", { ascending: true })
     .limit(MAX_CARDS);
+  if (topicId) query = query.eq("topic_id", topicId);
+  const { data, error } = await query;
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ cards: data ?? [] });

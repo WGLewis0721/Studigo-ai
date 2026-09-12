@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     .eq("id", owned.id).eq("owner_id", user.id).maybeSingle();
   if (!question) return Response.json({ error: "Question not found" }, { status: 404 });
 
+  if (question.practice_test_id) return Response.json({ error: "Submit the complete practice test to receive your answers." }, { status: 409 });
+
   let isCorrect = false;
   let score = 0;
   let feedback = question.explanation as string;

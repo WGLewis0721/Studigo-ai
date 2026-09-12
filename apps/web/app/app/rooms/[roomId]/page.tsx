@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadStudyEvidence } from "@/lib/study-evidence";
 import { requireUser } from "@/lib/auth";
 import { getRoom, getRoomReadiness, listDocuments, listTopics } from "@/lib/rooms";
 import { RoomWorkspace } from "@/components/room/workspace";
@@ -27,10 +28,11 @@ export default async function RoomPage({
   const { mode } = await searchParams;
 
   const room = await getRoom(roomId);
-  const [documents, topics, readiness] = await Promise.all([
+  const [documents, topics, readiness, studyEvidence] = await Promise.all([
     listDocuments(roomId),
     listTopics(roomId),
-    getRoomReadiness(roomId)
+    getRoomReadiness(roomId),
+    loadStudyEvidence(roomId)
   ]);
 
   return (
@@ -40,6 +42,7 @@ export default async function RoomPage({
       topics={topics}
       readiness={readiness}
       initialMode={mode}
+      {...studyEvidence}
     />
   );
 }

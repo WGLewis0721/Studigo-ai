@@ -13,3 +13,5 @@ coverage/
 target/
 apps/desktop/src-tauri/target/
 .vercel/
+
+supabase/.temp/

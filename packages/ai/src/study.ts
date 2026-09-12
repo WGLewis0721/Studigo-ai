@@ -168,6 +168,7 @@ export async function generateQuizQuestions(args: {
   topicTitle?: string;
   objective?: string;
   count: number;
+  kind?: "multiple_choice" | "short_answer";
 }): Promise<GeneratedQuestion[]> {
   if (!args.chunks.length) return [];
 
@@ -188,7 +189,7 @@ export async function generateQuizQuestions(args: {
     : "Cover the most testable material in these excerpts.";
 
   const user = [
-    `Write ${args.count} questions.`,
+    `Write ${args.count} questions.${args.kind ? ` All questions must use kind ${args.kind}.` : ""}`,
     asUntrustedMaterial({ focus }),
     `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
   ].join("\n\n");
