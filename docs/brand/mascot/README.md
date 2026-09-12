@@ -2,7 +2,7 @@
 
 ## Canonical mascot
 
-The orange Studigo scholar/companion creature is the official Studigo mascot.
+The orange Studigo scholar/companion character is the canonical Studigo mascot and the authoritative representation of the brand character.
 
 ## Character identity
 
@@ -31,6 +31,17 @@ are intended for use in the product and marketing UI.
 - `studigo-asking.jpg` - question/tutor interaction state
 - `studigo-pointing.jpg` - explanatory or CTA state
 - `studigo-hugging.jpg` - friendly/welcome/celebration state
+
+## Product Usage Map
+
+- WELCOME - `studigo-hugging.jpg`
+- ASKING - `studigo-asking.jpg`
+- EXPLAINING - `studigo-pointing.jpg`
+- FOUND SOURCE - `studigo-showing-source.jpg`
+- DIRECTIONAL - `studigo-looking-right.jpg`
+- REFERENCE-ONLY - all files under `docs/brand/mascot/reference/`
+
+The reference sheets are authoritative design guidance and must not be rendered directly in production UI.
 
 ## Design rule
 

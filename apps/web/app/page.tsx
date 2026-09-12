@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StudigoMascot } from "@/components/StudigoMascot";
 
 const trail = [
   { title: "Weather instruments", detail: "8 / 8 concepts", state: "mastered" },
@@ -14,36 +15,6 @@ const modes = [
   { icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
   { icon: "↗", name: "Mastery", copy: "Find weak spots before test day." }
 ];
-
-function StudigoBuddy() {
-  return (
-    <svg className="buddy" viewBox="0 0 420 420" role="img" aria-label="Studigo study companion">
-      <defs>
-        <filter id="buddy-shadow" x="-30%" y="-30%" width="160%" height="170%">
-          <feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#19243d" floodOpacity=".16" />
-        </filter>
-      </defs>
-      <g filter="url(#buddy-shadow)">
-        <path className="buddyEar buddyEarLeft" d="M122 128 88 45c-4-11 9-21 18-14l74 57Z" />
-        <path className="buddyEar buddyEarRight" d="m298 128 34-83c4-11-9-21-18-14l-74 57Z" />
-        <path className="buddyBody" d="M210 84c91 0 151 63 151 153 0 82-57 138-151 138S59 319 59 237C59 147 119 84 210 84Z" />
-        <path className="buddyBelly" d="M210 209c57 0 96 36 96 89 0 42-35 77-96 77s-96-35-96-77c0-53 39-89 96-89Z" />
-        <ellipse className="buddyEye" cx="154" cy="196" rx="15" ry="19" />
-        <ellipse className="buddyEye" cx="266" cy="196" rx="15" ry="19" />
-        <circle className="buddyEyeGlow" cx="159" cy="190" r="5" />
-        <circle className="buddyEyeGlow" cx="271" cy="190" r="5" />
-        <path className="buddyMouth" d="M182 235c17 15 39 15 56 0" />
-        <path className="buddyBook" d="M147 278c22-9 43-8 63 5v55c-20-13-41-14-63-5Zm126 0c-22-9-43-8-63 5v55c20-13 41-14 63-5Z" />
-        <path className="buddyBookLine" d="M210 283v55" />
-      </g>
-      <g className="buddySparkles" aria-hidden="true">
-        <path d="m58 126 5 13 13 5-13 5-5 13-5-13-13-5 13-5Z" />
-        <path d="m356 191 4 10 10 4-10 4-4 10-4-10-10-4 10-4Z" />
-        <circle cx="331" cy="116" r="5" />
-      </g>
-    </svg>
-  );
-}
 
 function ProgressRing() {
   return (
@@ -95,7 +66,13 @@ export default function HomePage() {
           <div className="fieldNote noteTop"><span>STUDY GUIDE</span><strong>18 things to know</strong><small>highest priority source</small></div>
           <div className="fieldNote noteRight"><span>TEXTBOOK</span><strong>Ch. 7 · Weather</strong><small>supporting context</small></div>
           <div className="companionHalo" />
-          <StudigoBuddy />
+          <StudigoMascot
+            state="welcome"
+            className="buddy heroMascot"
+            priority
+            sizes="(max-width: 500px) 330px, (max-width: 780px) 440px, 520px"
+            alt="Studigo ready to study with your class materials."
+          />
           <div className="buddyCaption"><span className="statusPing" /> Studigo is ready to study</div>
           <div className="scribbleArrow" aria-hidden="true">↘</div>
         </div>
@@ -162,7 +139,7 @@ export default function HomePage() {
 
               <aside className="askPanel">
                 <div className="askHeader">
-                  <div className="buddyMini">S✦</div>
+                  <StudigoMascot state="found-source" className="buddyMini" sizes="40px" decorative />
                   <div><strong>Ask Studigo</strong><span>grounded in 6 sources</span></div>
                 </div>
                 <div className="studentBubble">Why do tornadoes usually form from supercells?</div>
