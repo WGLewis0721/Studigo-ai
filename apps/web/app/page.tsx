@@ -1,3 +1,4 @@
+import { StudigoMascot } from "@/components/studigo-mascot";
 import Link from "next/link";
 
 const trail = [
@@ -14,36 +15,6 @@ const modes = [
   { icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
   { icon: "↗", name: "Mastery", copy: "Find weak spots before test day." }
 ];
-
-function StudigoBuddy() {
-  return (
-    <svg className="buddy" viewBox="0 0 420 420" role="img" aria-label="Studigo study companion">
-      <defs>
-        <filter id="buddy-shadow" x="-30%" y="-30%" width="160%" height="170%">
-          <feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#19243d" floodOpacity=".16" />
-        </filter>
-      </defs>
-      <g filter="url(#buddy-shadow)">
-        <path className="buddyEar buddyEarLeft" d="M122 128 88 45c-4-11 9-21 18-14l74 57Z" />
-        <path className="buddyEar buddyEarRight" d="m298 128 34-83c4-11-9-21-18-14l-74 57Z" />
-        <path className="buddyBody" d="M210 84c91 0 151 63 151 153 0 82-57 138-151 138S59 319 59 237C59 147 119 84 210 84Z" />
-        <path className="buddyBelly" d="M210 209c57 0 96 36 96 89 0 42-35 77-96 77s-96-35-96-77c0-53 39-89 96-89Z" />
-        <ellipse className="buddyEye" cx="154" cy="196" rx="15" ry="19" />
-        <ellipse className="buddyEye" cx="266" cy="196" rx="15" ry="19" />
-        <circle className="buddyEyeGlow" cx="159" cy="190" r="5" />
-        <circle className="buddyEyeGlow" cx="271" cy="190" r="5" />
-        <path className="buddyMouth" d="M182 235c17 15 39 15 56 0" />
-        <path className="buddyBook" d="M147 278c22-9 43-8 63 5v55c-20-13-41-14-63-5Zm126 0c-22-9-43-8-63 5v55c20-13 41-14 63-5Z" />
-        <path className="buddyBookLine" d="M210 283v55" />
-      </g>
-      <g className="buddySparkles" aria-hidden="true">
-        <path d="m58 126 5 13 13 5-13 5-5 13-5-13-13-5 13-5Z" />
-        <path d="m356 191 4 10 10 4-10 4-4 10-4-10-10-4 10-4Z" />
-        <circle cx="331" cy="116" r="5" />
-      </g>
-    </svg>
-  );
-}
 
 function ProgressRing() {
   return (
@@ -62,15 +33,15 @@ export default function HomePage() {
     <main>
       <header className="siteHeader wrap">
         <Link className="wordmark" href="/" aria-label="Studigo home">
-          <span className="wordmarkGlyph">S<span>✦</span></span>
+          <StudigoMascot size={40} mark />
           <span>Studigo</span>
         </Link>
         <nav className="mainNav" aria-label="Primary navigation">
           <a href="#workspace">Study rooms</a>
           <a href="#how-it-works">How it works</a>
-          <Link href="/api/health">System</Link>
+          <Link href="/login">Sign in</Link>
         </nav>
-        <button className="navCta" type="button">Start studying <span>↗</span></button>
+        <Link className="navCta" href="/app">Start studying <span>↗</span></Link>
       </header>
 
       <section className="hero wrap">
@@ -81,7 +52,7 @@ export default function HomePage() {
             Drop in the study guide, textbook, notes, and worksheets. Studigo turns the material you already have into one grounded companion that teaches, quizzes, cites, and keeps track of what actually sticks.
           </p>
           <div className="heroActions">
-            <button className="buttonPrimary" type="button">Build a Study Room <span>→</span></button>
+            <Link className="buttonPrimary" href="/signup">Build a Study Room <span>→</span></Link>
             <a className="buttonQuiet" href="#workspace">See the study experience</a>
           </div>
           <div className="proofLine" aria-label="Product principles">
@@ -91,13 +62,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="heroVisual" aria-label="Studigo companion illustration">
-          <div className="fieldNote noteTop"><span>STUDY GUIDE</span><strong>18 things to know</strong><small>highest priority source</small></div>
-          <div className="fieldNote noteRight"><span>TEXTBOOK</span><strong>Ch. 7 · Weather</strong><small>supporting context</small></div>
-          <div className="companionHalo" />
-          <StudigoBuddy />
-          <div className="buddyCaption"><span className="statusPing" /> Studigo is ready to study</div>
-          <div className="scribbleArrow" aria-hidden="true">↘</div>
+        <div className="heroVisual productPreview" aria-label="Example study session">
+          <div className="sessionSheet">
+            <div className="sheetTopline"><span>FIELD NOTES / 01</span><span>EXAMPLE SESSION</span></div>
+            <h2>The weather unit.<br /><em>Making sense, finally.</em></h2>
+            <p className="sheetQuestion">Why does a supercell start to rotate?</p>
+            <p className="sheetAnswer">Wind changes speed and direction with height. An updraft tilts that rotation upright. <sup>[1]</sup></p>
+            <div className="sheetSource"><span>01</span> Your textbook · page 214 <span>↗</span></div>
+            <div className="sheetRule" />
+            <span className="tinyLabel">YOUR NEXT STEP</span>
+            <p className="sheetNext">Explain it in your own words.</p>
+            <Link className="buttonPrimary" href="/signup">Try your own materials <span>→</span></Link>
+          </div>
+          <div className="heroCompanion">
+            <StudigoMascot state="sources" size={150} priority />
+            <p>Your material.<br /><strong>My full attention.</strong></p>
+          </div>
         </div>
       </section>
 
@@ -120,9 +100,10 @@ export default function HomePage() {
           <p>The study guide sets the destination. Your class materials provide the evidence. Studigo keeps the next useful action obvious.</p>
         </div>
 
+        <p className="tinyLabel">ILLUSTRATIVE WORKSPACE · SAMPLE MATERIALS AND PROGRESS</p>
         <div className="workspaceFrame">
           <aside className="workspaceRail">
-            <div className="miniWordmark"><span>S✦</span></div>
+            <div className="miniWordmark"><StudigoMascot size={40} mark /></div>
             <div className="railNav">
               <button className="railItem active" type="button"><span>⌂</span> Home</button>
               <button className="railItem" type="button"><span>□</span> Rooms</button>
@@ -162,7 +143,7 @@ export default function HomePage() {
 
               <aside className="askPanel">
                 <div className="askHeader">
-                  <div className="buddyMini">S✦</div>
+                  <StudigoMascot size={40} mark />
                   <div><strong>Ask Studigo</strong><span>grounded in 6 sources</span></div>
                 </div>
                 <div className="studentBubble">Why do tornadoes usually form from supercells?</div>
@@ -216,12 +197,12 @@ export default function HomePage() {
           <span className="sectionNumber">03 / START WITH WHAT YOU HAVE</span>
           <h2>One upload away from a better study session.</h2>
           <p>PDFs, class handouts, notes, and textbook chapters belong together. Keep the originals downloadable while Studigo builds the learning layer on top.</p>
-          <button className="buttonPrimary dark" type="button">Create your first room <span>→</span></button>
+          <Link className="buttonPrimary dark" href="/signup">Create your first room <span>→</span></Link>
         </div>
       </section>
 
       <footer className="siteFooter wrap">
-        <Link className="wordmark" href="/"><span className="wordmarkGlyph">S<span>✦</span></span><span>Studigo</span></Link>
+        <Link className="wordmark" href="/"><StudigoMascot size={40} mark /><span>Studigo</span></Link>
         <p>Study from your material. Know where every answer came from.</p>
         <span className="footerMeta">AI STUDY COMPANION · FOUNDATION V1</span>
       </footer>

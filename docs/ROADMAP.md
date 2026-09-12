@@ -17,7 +17,7 @@ The order matters. Do not spend a week polishing the dashboard before ingestion 
 
 Exit: another engineer can start implementation without choosing architecture from scratch.
 
-## Phase 1 — Make the core loop real
+## Phase 1 — Make the core loop real (implemented)
 
 ### Auth + rooms
 - Implement branded `/login` and `/auth/callback` surfaces using the Studigo design system.
@@ -61,6 +61,22 @@ Exit: another engineer can start implementation without choosing architecture fr
 - Clear insufficient-evidence behavior.
 
 Exit: a student can sign in with a primary provider, create a Study Room, upload a real study guide + textbook chapter, and get reliable cited answers.
+
+**Status: built.** Accounts, rooms, upload with processing state, the ingestion
+worker (PDF/DOCX/PPTX/TXT/MD/image, OCR fallback, page-accurate chunks), and a
+streaming grounded Ask mode with citations that open the original at the cited
+page. Learn, Quiz, Flashcards, and derived Mastery — the Phase 2 pieces the core
+loop needed to be a study product rather than a chat window — are built on the
+same retrieval path.
+
+Still open from the original Phase 1 list:
+
+- Ingestion runs inside the request rather than on a durable queue. It claims
+  work idempotently and retries by hand, which holds at current scale; a very
+  large scanned PDF can still exceed the function timeout.
+- Retry is learner-initiated, not automatic with backoff.
+- RLS is enforced and exercised by the app, but there is no automated
+  integration test asserting cross-account isolation yet.
 
 ## Phase 2 — Turn RAG into a study product
 

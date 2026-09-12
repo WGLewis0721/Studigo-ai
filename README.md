@@ -6,9 +6,11 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 > Give Studigo what you are supposed to learn and the resources you are supposed to learn it from. Studigo turns them into a study companion.
 
-## Scaffold status
+## Status
 
-This repository contains the general technology foundation for another engineering agent/team to continue:
+The core student loop — **sign up → create a Study Room → upload materials →
+ingest → ask → cited answer** — is implemented and working end to end, along
+with Learn, Quiz, Flashcards, and mastery derived from real practice.
 
 - **Frontend:** Next.js + React, responsive PWA shell.
 - **Backend:** Next.js route handlers + Supabase Auth/Postgres/Storage.
@@ -19,7 +21,32 @@ This repository contains the general technology foundation for another engineeri
 - **Executable layer:** installable PWA now; Tauri desktop shell is reserved as a separate wrapper.
 - **Handoff:** architecture, product constraints, implementation roadmap, and agent instructions in `docs/`.
 
-This is intentionally a **foundation, not a fake finished MVP**. Upload/download, schema, retrieval contracts, and the chat path are scaffolded. Production document extraction, chunking, study-guide analysis, quizzes, mastery scoring, OCR, and native packaging remain implementation phases.
+What works today:
+
+- **Accounts.** Email/password sign up, sign in, sign out; sessions refreshed in
+  middleware and persisted across visits.
+- **Study Rooms.** Create, open, rename, retitle, set a test date, delete
+  (originals removed from storage with the room). Scoped per user by RLS.
+- **Uploads.** Drag-and-drop PDF, DOCX, PPTX, TXT, Markdown, and photos of
+  handouts, tagged by source type, with live processing state, duplicate
+  detection, retry, and the original always openable and downloadable.
+- **Ingestion.** Text extraction preserving page and slide numbers, OCR for
+  scanned pages and images, normalization, page-accurate chunking, batched
+  embeddings into pgvector.
+- **Ask Studigo.** Streaming answers retrieved from that room only, with
+  citations that open the learner's own file at the cited page, and an explicit
+  "not in your materials" response when the evidence is not there.
+- **Study-guide intelligence.** A teacher study guide automatically produces the
+  topic map, each topic linked to the passages supporting it.
+- **Learn / Quiz / Flashcards.** Real modes over the same knowledge base:
+  grounded topic explanations, generated multiple-choice and short-answer
+  questions with model-graded free text, and spaced-repetition cards.
+- **Mastery.** Calculated from actual quiz and review performance — unpracticed
+  topics count as zero, and a room with no practice shows no number at all.
+
+Known limits: ingestion runs inside the request (idempotent and retryable, but a
+very large scanned PDF can exceed the function timeout) rather than on a durable
+queue, and native packaging is still the Tauri placeholder.
 
 ## Authentication direction
 
@@ -47,10 +74,10 @@ apps/
   desktop/             Tauri executable-shell placeholder
 packages/
   ai/                  model/provider + RAG prompt contracts
-  documents/           file policy/path helpers
+  documents/           file policy, extraction, OCR splitting, chunking
 supabase/
   migrations/          database, pgvector, RLS, retrieval RPC
-  functions/           async ingestion/embedding workers (next phase)
+  functions/           reserved for future out-of-request workers
 docs/
   PRODUCT.md           product behavior and UX principles
   ARCHITECTURE.md      system boundaries and data flow
@@ -71,7 +98,17 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Apply `supabase/migrations/001_initial.sql` to the Supabase project before using authenticated study rooms or RAG.
+Apply the migrations in order before using the app:
+
+```bash
+supabase db push   # or run 001_initial.sql then 002_core_loop.sql by hand
+```
+
+`002_core_loop.sql` adds ingestion bookkeeping, the topic map, quizzes,
+flashcards, the derived-readiness function, and the owner-scoped retrieval RPC.
+
+Run the test suite with `pnpm test` (extraction, chunking, citation grounding,
+and the spaced-repetition schedule), and `pnpm typecheck` across the workspace.
 
 ## Vercel
 
