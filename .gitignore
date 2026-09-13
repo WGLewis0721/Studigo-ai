@@ -13,3 +13,7 @@ coverage/
 target/
 apps/desktop/src-tauri/target/
 .vercel/
+
+.vercel
+.env*
+*.tsbuildinfo
