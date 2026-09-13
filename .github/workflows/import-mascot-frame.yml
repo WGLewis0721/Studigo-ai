@@ -23,14 +23,14 @@ jobs:
       - name: Download frame
         run: |
           mkdir -p apps/web/public/mascot/cursor-tracking
-          curl -fL 'https://d2ol7oe51mr4n9.cloudfront.net/user_3IkKBBXHZvEZQt2d8pBaRYd083T/baad3390-6960-4a6b-937d-83d09686c52d.png' -o 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-05-left-near.png'
-          file 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-05-left-near.png'
+          curl -fL 'https://d2ol7oe51mr4n9.cloudfront.net/user_3IkKBBXHZvEZQt2d8pBaRYd083T/9a11b866-256f-4998-b1ee-859c3197424a.png' -o 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-06-center.png'
+          file 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-06-center.png'
 
       - name: Commit imported frame
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-05-left-near.png'
+          git add 'apps/web/public/mascot/cursor-tracking/studigo-cursor-frame-06-center.png'
           git diff --cached --quiet && exit 0
-          git commit -m 'assets: add mascot cursor frame 05 left-near'
+          git commit -m 'assets: add mascot cursor frame 06 center'
           git push origin HEAD:assets/cursor-tracking-mascot-frames
