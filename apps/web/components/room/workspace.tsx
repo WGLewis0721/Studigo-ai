@@ -13,7 +13,7 @@ import { WeakAreasPanel } from "./weak-areas-panel";
 import { PracticeTestPanel } from "./practice-test-panel";
 import { CramPanel } from "./cram-panel";
 import { StudyPlanPanel } from "./study-plan-panel";
-import { rankWeakAreas, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
+import { rankWeakAreas, summarizeCalibration, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
 import { RoomSettings } from "./room-settings";
 
 const MODES = [
@@ -67,6 +67,7 @@ export function RoomWorkspace({
 
   const refresh = () => router.refresh();
   const areas = rankWeakAreas(topics, evidence, asOf);
+  const calibration = summarizeCalibration(evidence);
   const plan = buildStudyPlan({ topics, areas, testDate: room.test_date, cardsDue: readiness.cardsDue, events: planEvents, now: asOf });
   const currentGroup = GROUPS.find(group => group.modes.includes(mode)) ?? GROUPS[0];
   const [cramStarted, setCramStarted] = useState(initialMode === "cram");
@@ -152,6 +153,7 @@ export function RoomWorkspace({
         )}
         {mode === "mastery" && (
           <MasteryPanel
+            calibration={calibration}
             topics={topics}
             readiness={readiness}
             areas={areas}

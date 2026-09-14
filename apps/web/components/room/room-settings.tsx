@@ -34,6 +34,14 @@ export function RoomSettings({ room, onClose }: { room: StudyRoom; onClose: () =
           <input name="courseName" defaultValue={room.course_name ?? ""} maxLength={160} />
         </label>
         <label className="field">
+          <span>Explanation level</span>
+          <select name="explainLevel" defaultValue={room.explain_level}>
+            <option value="simpler">Simpler — plain words, more everyday examples</option>
+            <option value="standard">Standard — the level of the material</option>
+            <option value="deeper">Deeper — more precise, assumes the basics</option>
+          </select>
+        </label>
+        <label className="field">
           <span>Test date</span>
           <input
             name="testDate"

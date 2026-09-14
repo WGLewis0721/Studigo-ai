@@ -789,3 +789,113 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .fmButton, .fmNav .navCta { transition: none; }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Practice depth: new question formats, the confidence signal, and the
+   learner's own edits to generated topics and cards.
+   --------------------------------------------------------------------------- */
+
+.choiceListBinary { grid-template-columns: 1fr 1fr; display: grid; gap: 10px; }
+.choiceListBinary .choiceItem { justify-items: center; text-align: center; grid-template-columns: 26px auto; }
+
+.inlineBlank {
+  display: inline-block; min-width: 92px; padding: 0 10px; margin: 0 4px;
+  border-bottom: 3px solid var(--coral); text-align: center; color: var(--muted);
+  font-family: var(--sans); font-size: .9em; font-weight: 800;
+}
+.inlineBlankFilled { color: var(--ink); border-bottom-color: var(--moss); }
+.blankInput {
+  width: 100%; max-width: 420px; padding: 13px 14px; border: 1px solid var(--ink);
+  background: #fff; font: inherit; font-size: 1rem; font-weight: 700;
+}
+.blankInput:focus-visible { outline: 3px solid var(--lavender); outline-offset: 1px; }
+
+.confidenceRow { display: grid; gap: 8px; width: 100%; }
+.confidenceButtons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 520px; }
+.confidenceButton {
+  border: 1px solid var(--ink); background: #fff; padding: 11px 10px; cursor: pointer; text-align: center;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.confidenceButton strong { display: block; font-size: .85rem; }
+.confidenceButton small { display: block; margin-top: 2px; color: var(--muted); font-size: .66rem; }
+.confidenceButton:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.confidence-1:hover:not(:disabled) { background: #fdf1ed; }
+.confidence-2:hover:not(:disabled) { background: var(--sun); }
+.confidence-3:hover:not(:disabled) { background: var(--volt); }
+
+.blindSpotFlag {
+  margin: 6px 0 0; padding: 8px 10px; background: var(--ink); color: var(--paper-bright);
+  font-size: .78rem; font-weight: 800;
+}
+.calibrationNote { margin: 10px 0 0; font-size: .78rem; font-weight: 700; line-height: 1.5; }
+.blindSpotTag {
+  margin-left: 8px; padding: 2px 6px; background: var(--coral); border: 1px solid var(--ink);
+  font-size: .54rem; letter-spacing: .1em;
+}
+
+.calibrationCard {
+  display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap;
+  padding: 20px; border: 1px solid var(--ink); background: var(--paper-bright);
+}
+.calibrationCard h3 { margin: 6px 0 6px; font-family: var(--display); font-size: 1.5rem; letter-spacing: -.02em; }
+.calibrationCard p { margin: 0; color: var(--ink-soft); line-height: 1.6; max-width: 560px; font-size: .88rem; }
+.calibration-overconfident { box-shadow: 6px 6px 0 var(--coral); }
+.calibration-underconfident { box-shadow: 6px 6px 0 var(--sun); }
+.calibration-well-calibrated { box-shadow: 6px 6px 0 var(--moss); }
+.calibration-not-enough-data { box-shadow: 6px 6px 0 var(--line); }
+.calibrationScore { text-align: right; }
+.calibrationScore strong { display: block; font-family: var(--display); font-size: 2.4rem; line-height: 1; }
+.calibrationScore small { color: var(--muted); font-size: .66rem; font-weight: 800; line-height: 1.5; }
+
+.learnHeaderActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.topicEditor { display: grid; gap: 12px; margin-bottom: 12px; }
+.topicEditor textarea, .cardEditor textarea {
+  width: 100%; padding: 12px 13px; border: 1px solid var(--ink); background: #fff;
+  font: inherit; font-size: .9rem; line-height: 1.5; resize: vertical;
+}
+.topicEditor input[type="range"] { padding: 0; border: 0; accent-color: var(--coral); }
+.topicEditorActions, .cardEditorActions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.topicEditorActions button, .cardEditorActions button { padding: 9px 13px; }
+.topicAddCard {
+  padding: 20px; border: 1px solid var(--ink); background: var(--paper-bright);
+  box-shadow: 6px 6px 0 var(--lavender); display: grid; gap: 10px; justify-items: start;
+}
+.topicAddCard .field, .topicAddCard .topicEditor { width: 100%; }
+.topicEditLink, .cardEditLink {
+  border: 0; background: none; padding: 0; cursor: pointer; text-align: left;
+  color: var(--muted); font-size: .72rem; font-weight: 800;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.topicEditLink:hover, .cardEditLink:hover { color: var(--coral); }
+
+.cardEditor {
+  width: 100%; display: grid; gap: 12px; padding: 22px; border: 1px solid var(--ink);
+  background: var(--paper-bright); box-shadow: 8px 8px 0 var(--lavender); text-align: left;
+}
+.cardMetaRow { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
+
+@media (max-width: 780px) {
+  .confidenceButtons { grid-template-columns: 1fr; }
+  .calibrationScore { text-align: left; }
+  .blankInput { max-width: 100%; }
+}
+
+/* Socratic check: a formative conversation inside Learn, never a score. */
+.socraticCheck {
+  margin-top: 18px; padding: 16px; border: 1px dashed var(--ink); background: #f7f3ea;
+  display: grid; gap: 10px; justify-items: start;
+}
+.socraticCheck .shortAnswer { width: 100%; }
+.socraticQuestion { margin: 0; font-family: var(--display); font-size: 1.12rem; line-height: 1.35; }
+.socraticTurn { width: 100%; display: grid; gap: 6px; }
+.socraticAnswer {
+  margin: 0; justify-self: end; max-width: 85%; padding: 10px 13px; border-radius: 14px 14px 3px 14px;
+  background: var(--ink); color: var(--paper-bright); font-size: .84rem; line-height: 1.5;
+}
+.socraticFeedback {
+  margin: 0; max-width: 92%; padding: 11px 13px; border: 1px solid var(--line); background: #fff;
+  border-radius: 3px 14px 14px 14px; font-size: .84rem; line-height: 1.55;
+}
+.socraticGot { border-color: var(--moss-deep); background: rgba(118,151,122,.14); }
+.socraticDone { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.socraticDone strong { font-family: var(--display); font-size: 1.05rem; }

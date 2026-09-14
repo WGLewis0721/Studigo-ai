@@ -15,12 +15,33 @@ export async function POST(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
-  const body = (await request.json().catch(() => null)) as { roomId?: string } | null;
+  const body = (await request.json().catch(() => null)) as
+    | { roomId?: string; intent?: string; title?: string; objective?: string | null; priority?: number }
+    | null;
   const roomId = body?.roomId?.trim();
   if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
 
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
+
+  // A learner adding a topic the guide missed, rather than a full rebuild.
+  if (body?.intent === "create") {
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    if (!title) return Response.json({ error: "Give the topic a title." }, { status: 400 });
+
+    const { data, error } = await createServiceSupabaseClient().rpc("create_topic", {
+      p_room_id: roomId,
+      p_owner_id: user.id,
+      p_title: title,
+      p_objective: typeof body.objective === "string" ? body.objective : null,
+      p_priority: typeof body.priority === "number" ? Math.round(body.priority) : null
+    });
+
+    if (error) {
+      return Response.json({ error: error.message || "That topic could not be added." }, { status: 400 });
+    }
+    return Response.json({ topic: data }, { status: 201 });
+  }
 
   const { data: documents } = await supabase
     .from("documents")

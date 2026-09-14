@@ -8,6 +8,8 @@ export type StudyRoom = {
   subject: string | null;
   course_name: string | null;
   test_date: string | null;
+  /** How Studigo pitches explanations in this room. Never changes the facts. */
+  explain_level: "simpler" | "standard" | "deeper";
   created_at: string;
   updated_at: string;
 };
@@ -40,13 +42,14 @@ export type Topic = {
   mastery_score: number;
   status: "not_started" | "learning" | "mastered";
   last_practiced_at: string | null;
+  learner_edited: boolean;
 };
 
 export const DOCUMENT_COLUMNS =
   "id, room_id, name, mime_type, size_bytes, source_type, status, error_message, page_count, page_label, ocr_page_count, chunk_count, created_at";
 
 export const TOPIC_COLUMNS =
-  "id, room_id, title, objective, key_terms, priority, order_index, origin, mastery_score, status, last_practiced_at";
+  "id, room_id, title, objective, key_terms, priority, order_index, origin, mastery_score, status, last_practiced_at, learner_edited";
 
 export async function listRooms(): Promise<Array<StudyRoom & { document_count: number }>> {
   const supabase = await createServerSupabaseClient();
@@ -69,7 +72,7 @@ export async function getRoom(roomId: string): Promise<StudyRoom> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title, subject, course_name, test_date, created_at, updated_at")
+    .select("id, title, subject, course_name, test_date, explain_level, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
 

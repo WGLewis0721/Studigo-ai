@@ -1,4 +1,4 @@
-import { gradeShortAnswer } from "@studigo/ai";
+import { GradingError, gradeAnswer, readConfidence, readSelectedChoice } from "@/lib/grading";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
@@ -11,10 +11,18 @@ export async function POST(request: Request) {
   if (!user) return unauthorized;
 
   const body = (await request.json().catch(() => null)) as
-    | { questionId?: string; selectedChoice?: number | null; response?: string | null }
+    | {
+        questionId?: string;
+        selectedChoice?: number | null;
+        response?: string | null;
+        confidence?: number | null;
+      }
     | null;
   const questionId = body?.questionId?.trim();
   if (!questionId) return Response.json({ error: "questionId is required" }, { status: 400 });
+
+  // Confidence is optional: an older client, or a learner who skipped it.
+  const confidence = readConfidence(body?.confidence);
 
   const { data: owned } = await supabase.from("quiz_questions").select("id").eq("id", questionId).maybeSingle();
   if (!owned) return Response.json({ error: "Question not found" }, { status: 404 });
@@ -25,35 +33,23 @@ export async function POST(request: Request) {
 
   if (question.practice_test_id) return Response.json({ error: "Submit the complete practice test to receive your answers." }, { status: 409 });
 
-  let isCorrect = false;
-  let score = 0;
-  let feedback = question.explanation as string;
+  const selectedChoice = readSelectedChoice(body?.selectedChoice, question);
+  const response = typeof body?.response === "string" ? body.response : "";
 
-  if (question.kind === "multiple_choice") {
-    const selected = typeof body?.selectedChoice === "number" ? body.selectedChoice : -1;
-    if (!Number.isInteger(selected) || selected < 0 || selected >= question.choices.length) return Response.json({ error: "Choose a valid answer." }, { status: 400 });
-    isCorrect = selected === question.correct_choice;
-    score = isCorrect ? 100 : 0;
-  } else {
-    const answer = String(body?.response || "").trim();
-    if (!answer) {
-      return Response.json({ error: "Write an answer first." }, { status: 400 });
-    }
-    const grade = await gradeShortAnswer({
-      question: question.prompt as string,
-      expectedAnswer: (question.expected_answer as string) ?? "",
-      learnerAnswer: answer
-    });
-    isCorrect = grade.isCorrect;
-    score = grade.score;
-    feedback = grade.feedback;
+  let graded;
+  try {
+    graded = await gradeAnswer({ question, response, selectedChoice });
+  } catch (error) {
+    if (error instanceof GradingError) return Response.json({ error: error.message }, { status: 400 });
+    throw error;
   }
 
   const { data: result, error: attemptError } = await service.rpc("record_quiz_attempt", {
     p_question_id: question.id, p_owner_id: user.id,
-    p_response: typeof body?.response === "string" ? body.response.slice(0, 4000) : null,
-    p_selected_choice: typeof body?.selectedChoice === "number" ? body.selectedChoice : null,
-    p_score: score, p_is_correct: isCorrect, p_feedback: feedback
+    p_response: response ? response.slice(0, 4000) : null,
+    p_selected_choice: selectedChoice,
+    p_score: graded.score, p_is_correct: graded.isCorrect, p_feedback: graded.feedback,
+    p_confidence: confidence
   });
   if (attemptError || !result) return Response.json({ error: "Saving your answer failed. Please retry." }, { status: 500 });
 

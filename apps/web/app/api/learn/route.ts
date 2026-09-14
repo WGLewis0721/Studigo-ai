@@ -1,6 +1,7 @@
 import { explainTopic, toCitations, citationsUsedIn } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
+import { readExplainLevel } from "@/lib/explain-level";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -23,6 +24,8 @@ export async function POST(request: Request) {
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
 
+  const level = await readExplainLevel(supabase, roomId);
+
   const { data: topic } = await supabase
     .from("topics")
     .select("id, title, objective, key_terms").eq("active", true)
@@ -40,11 +43,13 @@ export async function POST(request: Request) {
   const explanation = await explainTopic({
     topicTitle: topic.title as string,
     objective: (topic.objective as string | null) ?? null,
-    chunks
+    chunks,
+    level
   });
 
   return Response.json({
     topicId,
+    level,
     explanation,
     citations: citationsUsedIn(explanation, toCitations(chunks))
   });
