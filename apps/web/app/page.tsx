@@ -2,210 +2,213 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { MascotVideoTracker } from "@/components/mascot/MascotVideoTracker";
 import Link from "next/link";
 
-const trail = [
-  { title: "Weather instruments", detail: "8 / 8 concepts", state: "mastered" },
-  { title: "Clouds & fronts", detail: "6 / 6 concepts", state: "mastered" },
-  { title: "Thunderstorms", detail: "4 / 6 concepts", state: "active" },
-  { title: "Tornado formation", detail: "Up next", state: "next" },
-  { title: "Weather safety", detail: "Not started", state: "locked" }
+const benefits = [
+  {
+    n: "01",
+    tone: "teal",
+    title: "It knows which source wins",
+    copy: "The teacher's guide sets the destination. Worksheets, textbook and notes rank underneath it, so the answer matches the class rather than the internet."
+  },
+  {
+    n: "02",
+    tone: "coral",
+    title: "Receipts, every time",
+    copy: "Page numbers you can open. If Studigo cannot ground a claim in your material, it says so instead of inventing one."
+  },
+  {
+    n: "03",
+    tone: "lavender",
+    title: "Revision that aims itself",
+    copy: "Readiness moves with what you get right. Tomorrow's session opens on the topic you keep dropping."
+  }
 ];
 
 const modes = [
-  { icon: "?", name: "Ask", copy: "Explain anything from your materials." },
-  { icon: "✦", name: "Learn", copy: "Walk the guide in the right order." },
-  { icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
-  { icon: "↗", name: "Mastery", copy: "Find weak spots before test day." }
+  { name: "Ask", tone: "coral", copy: "Explain anything from your materials." },
+  { name: "Learn", tone: "volt", copy: "Walk the guide in the right order." },
+  { name: "Quiz", tone: "sun", copy: "Flashcards, practice tests, cram sessions." },
+  { name: "Mastery", tone: "lavender", copy: "Find weak spots before test day." }
 ];
 
-function ProgressRing() {
-  return (
-    <div className="progressRing" aria-label="71 percent test ready">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <circle className="ringTrack" cx="60" cy="60" r="49" />
-        <circle className="ringValue" cx="60" cy="60" r="49" pathLength="100" />
-      </svg>
-      <div className="ringLabel"><strong>71%</strong><span>ready</span></div>
-    </div>
-  );
-}
+const steps = [
+  { n: "01", tone: "teal", title: "Upload what you were given", copy: "Study guide, chapter, worksheets, your notes." },
+  { n: "02", tone: "coral", title: "Studigo ranks and reads it", copy: "It maps topics and works out what the test is asking." },
+  { n: "03", tone: "lavender", title: "You study, it keeps score", copy: "Readiness moves and the plan follows it." }
+];
+
+const faqs = [
+  {
+    q: "Will it make up answers?",
+    a: "When the material does not support an answer, Studigo says so. When it can answer, the page or section is part of the response."
+  },
+  {
+    q: "Which file takes priority?",
+    a: "Your teacher's study guide is the map. Supporting class handouts, worksheets, slides, notes, and textbooks help explain it without silently changing what you need to study."
+  },
+  {
+    q: "Are my uploads private?",
+    a: "Study material belongs to you. Files stay private to your account and are used to make your own Study Room useful."
+  }
+];
 
 export default function HomePage() {
   return (
     <main>
-      <header className="siteHeader wrap">
-        <Link className="wordmark" href="/" aria-label="Studigo home">
-          <StudigoMascot size={40} mark />
-          <span>Studigo</span>
-        </Link>
-        <nav className="mainNav" aria-label="Primary navigation">
-          <a href="#workspace">Study rooms</a>
-          <a href="#how-it-works">How it works</a>
-          <Link href="/login">Sign in</Link>
-        </nav>
-        <Link className="navCta" href="/app">Start studying <span>↗</span></Link>
-      </header>
+      <div className="fmField fmHeroField">
+        <div className="fmGridTexture" aria-hidden="true" />
+        <div className="fmSpotlight" aria-hidden="true" />
 
-      <section className="hero wrap">
-        <div className="heroCopy">
-          <div className="eyebrow"><span className="eyebrowDot" /> BUILT FROM YOUR ACTUAL CLASS MATERIAL</div>
-          <h1>Your study pile just became a <em>study partner.</em></h1>
-          <p className="heroLede">
-            Drop in the study guide, textbook, notes, and worksheets. Studigo turns the material you already have into one grounded companion that teaches, quizzes, cites, and keeps track of what actually sticks.
-          </p>
-          <div className="heroActions">
-            <Link className="buttonPrimary" href="/signup">Build a Study Room <span>→</span></Link>
-            <a className="buttonQuiet" href="#workspace">See the study experience</a>
-          </div>
-          <div className="proofLine" aria-label="Product principles">
-            <span><i>01</i> Your sources first</span>
-            <span><i>02</i> Answers with receipts</span>
-            <span><i>03</i> Weak spots surfaced</span>
-          </div>
-        </div>
+        <header className="siteHeader wrap fmNav">
+          <Link className="wordmark" href="/" aria-label="Studigo home">
+            <StudigoMascot size={40} mark />
+            <span>Studigo</span>
+          </Link>
+          <nav className="mainNav" aria-label="Primary navigation">
+            <a href="#tools">Study rooms</a>
+            <a href="#how-it-works">How it works</a>
+            <Link href="/login">Sign in</Link>
+          </nav>
+          <Link className="navCta" href="/app">Start free <span>↗</span></Link>
+        </header>
 
-        <div className="heroVisual productPreview" aria-label="Example study session">
-          <div className="sessionSheet">
-            <div className="sheetTopline"><span>FIELD NOTES / 01</span><span>EXAMPLE SESSION</span></div>
-            <h2>The weather unit.<br /><em>Making sense, finally.</em></h2>
-            <p className="sheetQuestion">Why does a supercell start to rotate?</p>
-            <p className="sheetAnswer">Wind changes speed and direction with height. An updraft tilts that rotation upright. <sup>[1]</sup></p>
-            <div className="sheetSource"><span>01</span> Your textbook · page 214 <span>↗</span></div>
-            <div className="sheetRule" />
-            <span className="tinyLabel">YOUR NEXT STEP</span>
-            <p className="sheetNext">Explain it in your own words.</p>
-            <Link className="buttonPrimary" href="/signup">Try your own materials <span>→</span></Link>
-          </div>
-          <div className="heroCompanion">
-            <MascotVideoTracker size={150} priority />
-            <p>Your material.<br /><strong>My full attention.</strong></p>
-          </div>
-        </div>
-      </section>
-
-      <section className="statementBand" aria-label="Studigo promise">
-        <div className="wrap statementInner">
-          <p>Less hunting through tabs.</p>
-          <span>✦</span>
-          <p>More actually learning.</p>
-          <span>✦</span>
-          <p>No generic AI guesswork.</p>
-        </div>
-      </section>
-
-      <section className="workspaceSection wrap" id="workspace">
-        <div className="sectionIntro">
-          <div>
-            <span className="sectionNumber">01 / THE STUDY ROOM</span>
-            <h2>A home base that knows what matters.</h2>
-          </div>
-          <p>The study guide sets the destination. Your class materials provide the evidence. Studigo keeps the next useful action obvious.</p>
-        </div>
-
-        <p className="tinyLabel">ILLUSTRATIVE WORKSPACE · SAMPLE MATERIALS AND PROGRESS</p>
-        <div className="workspaceFrame">
-          <aside className="workspaceRail">
-            <div className="miniWordmark"><StudigoMascot size={40} mark /></div>
-            <div className="railNav">
-              <button className="railItem active" type="button"><span>⌂</span> Home</button>
-              <button className="railItem" type="button"><span>□</span> Rooms</button>
-              <button className="railItem" type="button"><span>◫</span> Library</button>
+        <section className="wrap fmHero">
+          <div className="fmHeroCopy">
+            <div className="fmEyebrow"><span className="fmEyebrowDot" /> BUILT FROM YOUR ACTUAL CLASS MATERIAL</div>
+            <h1 className="fmTitle">
+              Your study pile just became a <em>study partner.</em>
+            </h1>
+            <p className="fmLede">
+              Drop in the study guide, the textbook chapter, your notes. Studigo reads what your teacher actually assigned and turns it into one companion that explains, quizzes and cites.
+            </p>
+            <div className="fmActions">
+              <Link className="fmButton" href="/signup">Build your first Study Room <span>→</span></Link>
+              <a className="fmQuiet" href="#how-it-works">See how it works</a>
             </div>
-            <div className="roomList">
-              <span className="railLabel">STUDY ROOMS</span>
-              <button className="roomLink selected" type="button"><i className="roomColor science" /> Science</button>
-              <button className="roomLink" type="button"><i className="roomColor ela" /> ELA</button>
-              <button className="roomLink" type="button"><i className="roomColor math" /> Math</button>
+          </div>
+
+          <div className="fmStage">
+            <div className="fmDisc" aria-hidden="true" />
+            <MascotVideoTracker size={420} priority />
+            <div className="fmChip fmChipSource">
+              <span className="fmChipLabel fmCoral">SOURCE 01 · PRIMARY</span>
+              <strong>Teacher study guide</strong>
             </div>
-            <button className="profileChip" type="button"><span>WL</span><small>My study profile</small></button>
+            <div className="fmChip fmChipCited">
+              <span className="fmChipLabel fmLavender">CITED</span>
+              <span className="fmChipBody">Textbook · page 214, paragraph 3</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="fmPromise" aria-label="Studigo promise">
+        <div className="wrap fmPromiseInner">
+          <p>Your sources first.</p>
+          <span aria-hidden="true">/</span>
+          <p>Answers with receipts.</p>
+          <span aria-hidden="true">/</span>
+          <p>Weak spots surfaced.</p>
+        </div>
+      </div>
+
+      <section className="wrap fmBenefits" id="benefits">
+        <h2 className="fmSectionTitle">Not a chatbot with a textbook taped to it.</h2>
+        <div className="fmBenefitsGrid">
+          <div className="fmBenefitList">
+            {benefits.map((item) => (
+              <div className="fmBenefit" key={item.n}>
+                <span className={`fmNumeral fm-${item.tone}`}>{item.n}</span>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.copy}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <aside className="fmReadiness" aria-label="Example test readiness">
+            <span className="fmReadinessLabel">SAMPLE UNIT · ILLUSTRATIVE PROGRESS</span>
+            <div className="fmReadinessValue">71%</div>
+            <div className="fmReadinessTrack"><div className="fmReadinessFill" /></div>
+            <ul className="fmReadinessList">
+              <li><span>Weather instruments</span><span className="fmVolt">Mastered</span></li>
+              <li><span>Clouds &amp; fronts</span><span className="fmVolt">Mastered</span></li>
+              <li><span>Thunderstorms</span><span className="fmDim">4 of 6</span></li>
+              <li><span className="fmSun">Tornado formation</span><span className="fmSun">Up next</span></li>
+            </ul>
           </aside>
+        </div>
+      </section>
 
-          <div className="workspaceMain">
-            <div className="workspaceTopbar">
-              <div><span className="crumb">SCIENCE / WEATHER UNIT</span><strong>Storms & Severe Weather</strong></div>
-              <button className="iconButton" type="button" aria-label="More options">•••</button>
-            </div>
-
-            <div className="studyCanvas">
-              <section className="masteryPanel">
-                <div className="panelHeading">
-                  <div><span className="tinyLabel">TEST READINESS</span><h3>Keep the streak moving.</h3></div>
-                  <ProgressRing />
-                </div>
-                <div className="trail" aria-label="Learning trail">
-                  {trail.map((item, index) => (
-                    <div className={`trailStep ${item.state}`} key={item.title}>
-                      <div className="trailMarker"><span>{item.state === "mastered" ? "✓" : index + 1}</span></div>
-                      <div className="trailCopy"><strong>{item.title}</strong><small>{item.detail}</small></div>
-                      {item.state === "active" && <button type="button">Continue →</button>}
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <aside className="askPanel">
-                <div className="askHeader">
-                  <StudigoMascot size={40} mark />
-                  <div><strong>Ask Studigo</strong><span>grounded in 6 sources</span></div>
-                </div>
-                <div className="studentBubble">Why do tornadoes usually form from supercells?</div>
-                <div className="answerBubble">
-                  <span className="answerKicker">FROM YOUR MATERIALS</span>
-                  <p>Supercells can create strong rotating updrafts. When that rotation tightens and stretches vertically, it can help produce the rotating column that becomes a tornado.</p>
-                  <div className="sourceStack">
-                    <span><i>1</i> Study Guide · #8</span>
-                    <span><i>2</i> Textbook · p. 214</span>
-                  </div>
-                </div>
-                <div className="askComposer"><span>Ask about this unit…</span><button type="button" aria-label="Send question">↑</button></div>
-              </aside>
-            </div>
-
-            <div className="modeDock">
-              {modes.map((mode) => (
-                <button className="modeItem" type="button" key={mode.name}>
-                  <span className="modeIcon">{mode.icon}</span>
-                  <span><strong>{mode.name}</strong><small>{mode.copy}</small></span>
-                </button>
-              ))}
-            </div>
+      <section className="fmTools" id="tools">
+        <div className="wrap">
+          <div className="fmToolsHead">
+            <h2>One room. Four ways in.</h2>
+            <p>Every mode reads the same sources, so you never re-explain your class.</p>
+          </div>
+          <div className="fmToolsGrid">
+            {modes.map((mode) => (
+              <div className="fmTool" key={mode.name}>
+                <div className={`fmToolName fm-${mode.tone}`}>{mode.name}</div>
+                <p>{mode.copy}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="howSection" id="how-it-works">
-        <div className="wrap howGrid">
-          <div className="howLead">
-            <span className="sectionNumber">02 / HOW IT WORKS</span>
-            <h2>Feed the companion. Build the course brain.</h2>
-            <p>Studigo does not start with the entire internet. It starts with the things your teacher actually gave you.</p>
-          </div>
-          <div className="sourceMap" aria-label="Source priority model">
-            <div className="sourceRow priorityOne"><span>01</span><div><strong>Teacher study guide</strong><small>What the test is actually asking for</small></div><b>PRIMARY</b></div>
-            <div className="sourceRow"><span>02</span><div><strong>Teacher files & worksheets</strong><small>Class language, examples, assignments</small></div></div>
-            <div className="sourceRow"><span>03</span><div><strong>Assigned textbook</strong><small>Deep explanations and supporting context</small></div></div>
-            <div className="sourceRow"><span>04</span><div><strong>Your notes</strong><small>What you captured in class</small></div></div>
-          </div>
+      <section className="wrap fmSteps" id="how-it-works">
+        <span className="fmKicker">HOW IT WORKS</span>
+        <h2 className="fmSectionTitle fmStepsTitle">Three steps, then it is just studying.</h2>
+        <div className="fmStepsGrid">
+          {steps.map((step) => (
+            <div className={`fmStep fmStep-${step.tone}`} key={step.n}>
+              <span className={`fmNumeral fm-${step.tone}`}>{step.n}</span>
+              <h3>{step.title}</h3>
+              <p>{step.copy}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="dropSection wrap">
-        <div className="dropArt" aria-hidden="true">
-          <div className="paper paperBack">CHAPTER 07</div>
-          <div className="paper paperMid">MY NOTES</div>
-          <div className="paper paperFront"><span>STUDY GUIDE</span><strong>Weather Unit</strong><i>✓ Tornadoes<br/>✓ Fronts<br/>○ Safety</i></div>
+      <section className="wrap fmFaq" id="questions">
+        <div className="fmFaqIntro">
+          <span className="fmKicker">THE IMPORTANT BIT</span>
+          <h2 className="fmSectionTitle">Your class material stays the point.</h2>
+          <p>Studigo is designed to help you work from the files you upload, not replace your teacher or quietly expand the assignment.</p>
         </div>
-        <div className="dropCopy">
-          <span className="sectionNumber">03 / START WITH WHAT YOU HAVE</span>
-          <h2>One upload away from a better study session.</h2>
-          <p>PDFs, class handouts, notes, and textbook chapters belong together. Keep the originals downloadable while Studigo builds the learning layer on top.</p>
-          <Link className="buttonPrimary dark" href="/signup">Create your first room <span>→</span></Link>
+        <div className="fmFaqList">
+          {faqs.map((item, index) => (
+            <details className="fmFaqItem" key={item.q} open={index === 0}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="fmField fmCtaField" id="start">
+        <div className="fmGridTexture" aria-hidden="true" />
+        <div className="wrap fmCta">
+          <div>
+            <h2>Tonight&apos;s chapter, already read.</h2>
+            <p>Start a room with the guide you were handed. Ask it the thing you are stuck on and see where the answer comes from.</p>
+            <Link className="fmButton" href="/signup">Start studying — free <span>→</span></Link>
+          </div>
+          <div className="fmCtaArt" aria-hidden="true">
+            <div className="fmDisc fmDiscSmall" />
+            <StudigoMascot state="welcome" size={260} />
+          </div>
         </div>
       </section>
 
       <footer className="siteFooter wrap">
-        <Link className="wordmark" href="/"><StudigoMascot size={40} mark /><span>Studigo</span></Link>
+        <Link className="wordmark" href="/">
+          <StudigoMascot size={40} mark />
+          <span>Studigo</span>
+        </Link>
         <p>Study from your material. Know where every answer came from.</p>
-        <span className="footerMeta">AI STUDY COMPANION · FOUNDATION V1</span>
+        <span className="footerMeta">AI STUDY COMPANION</span>
       </footer>
     </main>
   );
