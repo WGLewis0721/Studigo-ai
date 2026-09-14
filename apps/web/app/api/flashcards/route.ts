@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const topicId = new URL(request.url).searchParams.get("topicId");
   let query = supabase
     .from("flashcards")
-    .select("id, front, back, citations, due_at, repetitions, topic_id")
+    .select("id, front, back, citations, due_at, repetitions, topic_id, learner_edited")
     .eq("room_id", roomId)
     .lte("due_at", new Date().toISOString())
     .order("due_at", { ascending: true })
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
         citations: markersToCitations(card.sourceMarkers, chunks)
       }))
     )
-    .select("id, front, back, citations, due_at, repetitions, topic_id");
+    .select("id, front, back, citations, due_at, repetitions, topic_id, learner_edited");
 
   if (error) {
     return Response.json({ error: "Saving the cards failed", detail: error.message }, { status: 500 });

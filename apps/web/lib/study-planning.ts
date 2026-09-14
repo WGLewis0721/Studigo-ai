@@ -1,7 +1,7 @@
 import type { Topic } from './rooms';
 
-export type PracticeEvidence = { topic_id: string | null; source: 'quiz' | 'flashcard'; score: number; is_correct: boolean; created_at: string };
-export type WeakArea = { topic: Topic; urgency: number; reasons: string[]; recommendation: 'learn' | 'quiz' | 'cards'; label: string; recentMisses: number; recentQuizCount: number; daysSincePractice: number | null };
+export type PracticeEvidence = { topic_id: string | null; source: 'quiz' | 'flashcard'; score: number; is_correct: boolean; created_at: string; confidence?: number | null };
+export type WeakArea = { topic: Topic; urgency: number; reasons: string[]; recommendation: 'learn' | 'quiz' | 'cards'; label: string; recentMisses: number; recentQuizCount: number; daysSincePractice: number | null; blindSpots: number };
 export type StudyAction = { key: string; mode: 'learn' | 'quiz' | 'cards' | 'test' | 'cram'; title: string; topicId: string | null; minutes: number; reason: string };
 export type PlanEvent = { plan_day: string; action_key: string; status: 'completed' | 'skipped' };
 export type PlanDay = { date: string; label: string; actions: StudyAction[] };
@@ -18,20 +18,25 @@ export function rankWeakAreas(topics: Topic[], evidence: PracticeEvidence[], now
     const last = recent[0]?.created_at ?? topic.last_practiced_at;
     const days = last ? Math.max(0,Math.floor((now-Date.parse(last))/DAY)) : null;
     const unpracticed = !topic.last_practiced_at && !recent.length;
+    // Answered wrongly while feeling sure: the learner does not know this and
+    // does not know that they do not know it. That is the costliest gap.
+    const blindSpots = recent.filter(a=>a.source==='quiz' && !a.is_correct && a.confidence===3).length;
     const reasons: string[] = [];
     if (unpracticed) reasons.push('Not practiced yet — understanding has not been measured.');
+    if (blindSpots) reasons.push(`${blindSpots} confident ${blindSpots===1?'answer was':'answers were'} wrong — a blind spot, not a gap you already know about.`);
     if (quiz.length && misses) reasons.push(`${misses} of the last ${quiz.length} quiz questions missed.`);
     if (recallMisses) reasons.push(`${recallMisses} of the last ${cards.length} flashcard recalls missed (self-reported).`);
     if (topic.priority >= 90) reasons.push('High priority in the current study scope.');
     if (days !== null && days >= 3) reasons.push(`Last practiced ${days} days ago.`);
     if (!unpracticed && Number(topic.mastery_score)<85) reasons.push(`${Math.round(Number(topic.mastery_score))}% earned mastery; more successful recall is needed.`);
     const urgency = (100-Number(topic.mastery_score))*0.42 + topic.priority*0.18 + (unpracticed?18:0)
-      + (quiz.length ? misses/quiz.length*22 : 0) + recallMisses*4 + Math.min(14,days??0);
+      + (quiz.length ? misses/quiz.length*22 : 0) + recallMisses*4 + Math.min(14,days??0)
+      + Math.min(20,blindSpots*10);
     const recommendation = unpracticed ? 'learn' : recallMisses>0 && misses===0 ? 'cards' : 'quiz';
     return { topic, urgency: Math.round(urgency), reasons, recommendation,
-      label: unpracticed ? 'Not practiced' : topic.status === 'mastered' && misses===0 && recallMisses===0 ? 'Recall check' : 'Needs work',
-      recentMisses: misses, recentQuizCount: quiz.length, daysSincePractice: days };
-  }).filter(area=>area.topic.status!=='mastered' || area.recentMisses>0 || area.reasons.some(r=>r.includes('self-reported')) || (area.daysSincePractice??0)>=7)
+      label: blindSpots ? 'Blind spot' : unpracticed ? 'Not practiced' : topic.status === 'mastered' && misses===0 && recallMisses===0 ? 'Recall check' : 'Needs work',
+      recentMisses: misses, recentQuizCount: quiz.length, daysSincePractice: days, blindSpots };
+  }).filter(area=>area.topic.status!=='mastered' || area.recentMisses>0 || area.blindSpots>0 || area.reasons.some(r=>r.includes('self-reported')) || (area.daysSincePractice??0)>=7)
     .sort((a,b)=>b.urgency-a.urgency || b.topic.priority-a.topic.priority || a.topic.id.localeCompare(b.topic.id));
 }
 
@@ -112,4 +117,49 @@ export function buildStudyPlan(args: { topics: Topic[]; areas: WeakArea[]; testD
     }
   }
   return result;
+}
+
+export type Calibration = {
+  /** Quiz answers that carried a reported confidence. */
+  reported: number;
+  /** Wrong while confident: the learner did not know they were guessing. */
+  blindSpots: number;
+  /** Right while guessing: knowledge they have but do not trust yet. */
+  underconfident: number;
+  /** 0-100. How well reported confidence matched the actual outcome. */
+  accuracy: number | null;
+  label: 'Well calibrated' | 'Overconfident' | 'Underconfident' | 'Not enough data';
+  summary: string;
+};
+
+/**
+ * Compares how sure the learner felt with how they actually did. Readiness says
+ * what they know; calibration says whether they can trust their own sense of it,
+ * which is what decides where revision time actually goes.
+ */
+export function summarizeCalibration(evidence: PracticeEvidence[]): Calibration {
+  const rated = evidence.filter(a => a.source === 'quiz' && (a.confidence === 1 || a.confidence === 2 || a.confidence === 3));
+  const blindSpots = rated.filter(a => a.confidence === 3 && !a.is_correct).length;
+  const underconfident = rated.filter(a => a.confidence === 1 && a.is_correct).length;
+
+  if (rated.length < 4) {
+    return { reported: rated.length, blindSpots, underconfident, accuracy: null, label: 'Not enough data',
+      summary: 'Answer a few more questions with a confidence rating and Studigo can tell you how well you read your own recall.' };
+  }
+
+  // Each answer's expected correctness from its rating, against the outcome.
+  const expected = { 1: 0.25, 2: 0.6, 3: 0.95 } as const;
+  const error = rated.reduce((total, a) => total + Math.abs(expected[a.confidence as 1|2|3] - (a.is_correct ? 1 : 0)), 0) / rated.length;
+  const accuracy = Math.round((1 - error) * 100);
+  const label = blindSpots / rated.length > 0.2 ? 'Overconfident'
+    : underconfident / rated.length > 0.2 ? 'Underconfident'
+    : 'Well calibrated';
+
+  const summary = label === 'Overconfident'
+    ? `You were sure on ${blindSpots} answer${blindSpots === 1 ? '' : 's'} you got wrong. Check those topics without your notes before the test.`
+    : label === 'Underconfident'
+      ? `You guessed correctly ${underconfident} time${underconfident === 1 ? '' : 's'}. You know more than you are giving yourself credit for — the recall is there.`
+      : 'Your sense of what you know matches how you actually perform, so you can trust where you feel shaky.';
+
+  return { reported: rated.length, blindSpots, underconfident, accuracy, label, summary };
 }

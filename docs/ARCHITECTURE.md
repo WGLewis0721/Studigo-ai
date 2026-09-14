@@ -335,3 +335,84 @@ Readiness is derived, never stored as a decorative number.
 - Room readiness averages mastery across *all* topics, so a topic never
   practiced counts as zero — "ready" means ready for the whole test.
 - With no attempts at all, the UI shows "—", not a number.
+
+## Practice types and grading
+
+Four question kinds share one grader, `apps/web/lib/grading.ts`, so a single quiz
+answer and the same question inside a practice test can never be scored two
+different ways.
+
+| Kind | Graded by | Cost |
+| --- | --- | --- |
+| `multiple_choice` | chosen index vs `correct_choice` | none |
+| `true_false` | chosen index vs `correct_choice` | none |
+| `fill_blank` | normalized match against `accepted_answers` | none |
+| `short_answer` | model, against `expected_answer` | one model call |
+
+Only short answers reach a model, which is what keeps a 20-question practice
+test fast. Fill-in comparison strips case, accents, punctuation and articles, and
+forgives one edit on terms of five characters or more — long enough that a single
+edit is a typo rather than a different word.
+
+`accepted_answers` is answer-key data. Like `correct_choice` and
+`expected_answer`, it is excluded from the column grant to `authenticated`, so
+the browser cannot read it before answering.
+
+Generated questions pass `normalizeGeneratedQuestion` before they are stored. It
+rejects what would otherwise reach a learner as broken: a true/false item with no
+key, a fill-in with zero or several blanks, a multiple choice with duplicate
+options, and a stem that contains its own answer.
+
+## Confidence and calibration
+
+Rating an answer *is* the submit action in Quiz, so confidence costs the learner
+no extra step and is present on effectively every attempt. It is stored on
+`quiz_attempts.confidence` (1 guessing, 2 unsure, 3 confident) and is nullable,
+so older attempts and flashcard rows stay valid.
+
+Two derived signals come from it, both in `apps/web/lib/study-planning.ts`:
+
+- **Blind spots** — wrong while confident. `rankWeakAreas` raises urgency for
+  them and labels them, because a learner who does not know that they do not
+  know something will not revise it on their own.
+- **Calibration** — `summarizeCalibration` compares reported confidence with
+  actual outcomes and reports whether the learner reads themselves accurately.
+  It stays silent below four rated answers rather than inventing a verdict.
+
+Neither replaces mastery. Mastery says what was demonstrated; calibration says
+whether the learner's own sense of it can be trusted.
+
+## Learner edits to generated material
+
+Studigo generates the topic map and the flashcards, but the learner is the one
+who knows when it read the teacher wrong. Edits go through
+`update_topic`, `set_topic_active`, `create_topic`, `update_flashcard` and
+`delete_flashcard` — `security invoker` functions callable only by the service
+role, after the route has confirmed ownership through RLS with the user's client.
+
+Two rules make editing safe to rely on:
+
+- `refresh_topic_map` treats `learner_edited` as authoritative. Re-ingesting a
+  guide re-links evidence, key terms and ordering, but never overwrites a title,
+  objective or priority the learner set.
+- A topic the learner removed carries `learner_removed` and stays out of scope
+  through any number of re-ingests. Re-adding it restores the original row, with
+  its practice history, rather than creating a duplicate.
+
+Editing a flashcard deliberately does not touch `ease`, `interval_days`,
+`repetitions` or `due_at`.
+
+## Explanation level
+
+`study_rooms.explain_level` (`simpler` / `standard` / `deeper`) changes how Learn
+mode and the Socratic check pitch an idea. It never changes which excerpts are
+retrieved, which facts are stated, or the citation rule — every level is bound to
+the same material, and the prompt says so explicitly.
+
+## Socratic checks
+
+`POST /api/learn/check` opens a check with one open question, then responds to
+the learner's explanation and follows up on the gap. It is formative: it writes
+no attempt and moves no mastery, because a teaching conversation should not
+punish thinking out loud. Measurement stays in Quiz, where the learner knows they
+are being assessed.

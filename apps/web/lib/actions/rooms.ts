@@ -13,6 +13,14 @@ function readTitle(formData: FormData) {
   return String(formData.get("title") || "").trim().slice(0, 160);
 }
 
+const EXPLAIN_LEVELS = new Set(["simpler", "standard", "deeper"]);
+
+/** Pitch of the explanations, not their content. Unknown values fall back. */
+function readExplainLevel(formData: FormData) {
+  const value = String(formData.get("explainLevel") || "standard");
+  return EXPLAIN_LEVELS.has(value) ? value : "standard";
+}
+
 function optional(formData: FormData, key: string) {
   const value = String(formData.get(key) || "").trim();
   return value ? value.slice(0, 160) : null;
@@ -70,7 +78,8 @@ export async function renameRoomAction(
       title,
       subject: optional(formData, "subject"),
       course_name: optional(formData, "courseName"),
-      test_date: testDate
+      test_date: testDate,
+      explain_level: readExplainLevel(formData)
     })
     .eq("id", roomId);
 

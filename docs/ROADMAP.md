@@ -81,43 +81,59 @@ Still open from the original Phase 1 list:
 ## Phase 2 — Turn RAG into a study product
 
 ### Study-guide analyzer
-- Extract explicit objectives/questions/terms.
-- Map them to supporting source passages.
-- Produce editable topic map.
-- Mark inferred vs explicitly stated test scope.
+- [x] Extract explicit objectives/questions/terms.
+- [x] Map them to supporting source passages.
+- [x] Produce editable topic map. Learners retitle, reword, re-prioritise, remove
+  and add topics. Their wording wins: a re-ingested guide re-links evidence and
+  ordering but never overwrites an edit, and never resurrects a removed topic.
+- [ ] Mark inferred vs explicitly stated test scope.
 
 ### Learn mode
-- Topic-by-topic explanation.
-- Socratic checks.
-- Age/grade-level adaptation without changing factual content.
-- Examples grounded in source when possible.
+- [x] Topic-by-topic explanation.
+- [x] Socratic checks. Studigo asks the learner to explain the idea back, responds
+  to what they actually said, and follows up on the gap. Formative by design: it
+  records no attempt and moves no mastery.
+- [x] Age/grade-level adaptation without changing factual content. `simpler` /
+  `standard` / `deeper` is set per room and changes only how an idea is pitched;
+  the excerpts, the citation rule and the facts are identical at every level.
+- [x] Examples grounded in source when possible.
 
 ### Flashcards
-- Generate per topic.
-- Student can edit/delete.
-- Track recall performance.
+- [x] Generate per topic.
+- [x] Student can edit/delete. Editing preserves the spaced-repetition schedule,
+  so fixing a typo never costs the recall history behind the card.
+- [x] Track recall performance.
 
 ### Quiz mode
-- MCQ, true/false, fill-in, short response.
-- Explain correct/incorrect answers from source.
-- Avoid leakage of answer in stem.
-- Store attempts.
+- [x] MCQ, true/false, fill-in, short response. True/false and fill-in are graded
+  deterministically server-side — no model call, so they are instant and free.
+  Fill-in accepts every listed spelling and forgives a single typo on a long term.
+- [x] Explain correct/incorrect answers from source.
+- [x] Avoid leakage of answer in stem. Generation is instructed against it and a
+  fill-in stem containing its own answer is discarded before a learner sees it.
+- [x] Store attempts.
 
 ### Practice test
-- Build coverage-balanced assessments from study-guide scope.
-- Separate answer/review flow.
+- [x] Build coverage-balanced assessments from study-guide scope. Formats now
+  rotate across the four question types within one test.
+- [x] Separate answer/review flow.
 
 Exit: Studigo can teach and test against the same source-grounded topic map.
+**Status: met.**
 
 ## Phase 3 — Real mastery and planning
 
-- Evidence-based topic mastery model.
-- Weak-area queue.
-- Spaced retrieval scheduling.
-- Cram mode based on available time.
-- Test-date study plan.
-- Confidence vs performance calibration.
-- Readiness score with transparent factors.
+- [x] Evidence-based topic mastery model.
+- [x] Weak-area queue.
+- [x] Spaced retrieval scheduling.
+- [x] Cram mode based on available time.
+- [x] Test-date study plan.
+- [x] Confidence vs performance calibration. Rating an answer is the submit
+  action, so every quiz answer carries a confidence with no extra step. Wrong
+  while confident is surfaced as a *blind spot* and ranked above an ordinary gap
+  in Weak Areas; Mastery reports whether the learner can trust their own sense
+  of what they know.
+- [x] Readiness score with transparent factors.
 
 Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 

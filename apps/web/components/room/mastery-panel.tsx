@@ -1,6 +1,6 @@
 "use client";
 
-import type { WeakArea } from "@/lib/study-planning";
+import type { Calibration, WeakArea } from "@/lib/study-planning";
 import type { RoomReadiness, Topic } from "@/lib/rooms";
 
 function ReadinessRing({ value, practiced }: { value: number; practiced: boolean }) {
@@ -28,11 +28,12 @@ function ReadinessRing({ value, practiced }: { value: number; practiced: boolean
 export function MasteryPanel({
   topics,
   readiness,
-  onPractice, areas
+  onPractice, areas, calibration
 }: {
   topics: Topic[];
   areas: WeakArea[];
   readiness: RoomReadiness;
+  calibration: Calibration;
   onPractice: (topicId: string) => void;
 }) {
   const practiced = readiness.practicedTopicCount > 0;
@@ -84,6 +85,24 @@ export function MasteryPanel({
         </div>
       </dl>
 
+      <section className={`calibrationCard calibration-${calibration.label.replace(/\s+/g, "-").toLowerCase()}`}>
+        <div>
+          <span className="tinyLabel">CONFIDENCE VS PERFORMANCE</span>
+          <h3>{calibration.label}</h3>
+          <p>{calibration.summary}</p>
+        </div>
+        {calibration.accuracy !== null && (
+          <div className="calibrationScore">
+            <strong>{calibration.accuracy}%</strong>
+            <small>
+              self-read accuracy
+              <br />
+              over {calibration.reported} rated answers
+            </small>
+          </div>
+        )}
+      </section>
+
       {weakest.length > 0 && (
         <section className="weakSpots">
           <span className="tinyLabel">PRACTICE THIS NEXT</span>
@@ -91,7 +110,10 @@ export function MasteryPanel({
             {weakest.map((area) => (
               <li key={area.topic.id}>
                 <div>
-                  <strong>{area.topic.title}</strong>
+                  <strong>
+                    {area.topic.title}
+                    {area.blindSpots > 0 && <b className="blindSpotTag">BLIND SPOT</b>}
+                  </strong>
                   <small>{area.reasons.slice(0, 2).join(" ")}</small>
                 </div>
                 <button type="button" onClick={() => onPractice(area.topic.id)}>

@@ -1,4 +1,4 @@
-import { generateQuizQuestions } from "@studigo/ai";
+import { QUESTION_KINDS, generateQuizQuestions, type QuestionKind } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   if (!user) return unauthorized;
 
   const body = (await request.json().catch(() => null)) as
-    | { roomId?: string; topicId?: string | null; count?: number }
+    | { roomId?: string; topicId?: string | null; count?: number; kinds?: unknown }
     | null;
   const roomId = body?.roomId?.trim();
   if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
@@ -27,6 +27,13 @@ export async function POST(request: Request) {
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
 
   const count = Math.min(MAX_QUESTIONS, Math.max(1, Math.round(body?.count ?? 5)));
+
+  // An unset or unrecognized list means a mixed set, which is the default.
+  const requestedKinds = Array.isArray(body?.kinds)
+    ? (body.kinds.filter((kind): kind is QuestionKind =>
+        (QUESTION_KINDS as readonly string[]).includes(kind as string)
+      ) as QuestionKind[])
+    : undefined;
 
   type QuizTopic = { id: string; title: string; objective: string | null; key_terms: string[] };
   let topic: QuizTopic | null = null;
@@ -73,7 +80,8 @@ export async function POST(request: Request) {
     chunks,
     topicTitle: topic?.title,
     objective: topic?.objective ?? undefined,
-    count
+    count,
+    kinds: requestedKinds
   });
 
   if (!generated.length) {
@@ -95,6 +103,7 @@ export async function POST(request: Request) {
         choices: question.choices,
         correct_choice: question.correctChoice,
         expected_answer: question.expectedAnswer,
+        accepted_answers: question.acceptedAnswers,
         explanation: question.explanation,
         difficulty: question.difficulty,
         citations: markersToCitations(question.sourceMarkers, chunks)

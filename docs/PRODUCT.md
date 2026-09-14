@@ -38,6 +38,8 @@ A concept/objective inferred primarily from the study guide and teacher material
 3. Upload study guide plus supporting materials.
 4. Studigo analyzes the material and produces a topic map.
 5. Student chooses: Ask, Learn, Quiz, Flashcards, Practice Test, Weak Areas.
+6. The student corrects anything Studigo read wrong: topics and flashcards are
+   theirs to retitle, reword, add or remove, and their edits survive a re-ingest.
 6. Studigo tracks evidence of mastery over time.
 7. Student can open/download the original source at any time.
 
@@ -76,9 +78,10 @@ MVP needs:
 - Parsing/chunking/indexing.
 - Grounded chat with citations.
 - Study-guide topic extraction.
-- Flashcards.
-- Quizzes/practice tests.
-- Topic mastery.
+- Flashcards, editable by the student.
+- Quizzes/practice tests in four formats: multiple choice, true/false, fill in
+  the blank, short answer.
+- Topic mastery, plus confidence-vs-performance calibration.
 - Basic study plan / cram mode.
 
 Not MVP:
@@ -94,3 +97,34 @@ Not MVP:
 ## Privacy/product constraints
 
 Studigo may eventually be used by minors, so collect as little personal data as possible. Keep user uploads private by default. Do not expose source documents through public storage URLs. Retention/deletion controls, parental/school requirements, COPPA/FERPA analysis, and publisher licensing need explicit work before school-scale distribution.
+
+## What the student is trusted to decide
+
+Studigo generates the topic map, the cards and the questions, but it is reading a
+teacher's document, and it can read it wrong. Three rules follow from that:
+
+- **The student's correction is authoritative.** An edited topic or card keeps
+  the student's wording through any number of re-ingests. A topic they removed
+  stays removed.
+- **Correcting something must never be punished.** Fixing a typo on a card keeps
+  the recall schedule it has already earned; removing a topic keeps its practice
+  history.
+- **Explanation level is a preference, not a fact filter.** `simpler` and
+  `deeper` change how an idea is pitched. The cited material, and what is true in
+  it, are identical at every level.
+
+## Why confidence is asked before the answer is revealed
+
+A student who is wrong *and knew they were unsure* has a gap they will revise on
+their own. A student who is wrong *while feeling certain* has a blind spot they
+will walk into the test with. Those need different responses, and nothing in a
+score tells them apart.
+
+So rating the answer is the submit action in Quiz — never an extra optional step
+that most students would skip. Confident-and-wrong is surfaced as a blind spot
+and ranked above an ordinary gap in Weak Areas.
+
+The Socratic check in Learn is the deliberate opposite: it is never scored and
+never moves mastery, because a student will not think out loud if doing it badly
+costs them something. Measurement belongs in Quiz, where they know they are being
+measured.

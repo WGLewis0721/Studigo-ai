@@ -31,7 +31,7 @@ before(async () => {
     grant all on storage.objects to anon, authenticated, service_role;
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   `);
-  for (const file of ['001_initial.sql', '002_core_loop.sql', '20260912021422_study_planning.sql']) {
+  for (const file of ['001_initial.sql', '002_core_loop.sql', '20260912021422_study_planning.sql', '20260914090000_practice_depth.sql']) {
     const sql = await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8');
     // Core PG has gen_random_uuid; the pgcrypto extension is not packaged in PGlite.
     await db.exec(sql.replace('create extension if not exists pgcrypto;', ''));
@@ -85,7 +85,7 @@ test('Browser cannot forge chunks, mastery, attempts or card schedules',async()=
       `update flashcards set repetitions=100 where owner_id='${A}'`,
       `update documents set attempts=0 where owner_id='${A}'`,
       `select review_flashcard('${id(81)}','${A}',3,gen_random_uuid())`,
-      `select record_quiz_attempt('${id(61)}','${A}',null,0,100,true,'forged')`,
+      `select record_quiz_attempt('${id(61)}','${A}',null,0,100,true,'forged',3)`,
       `select claim_document('${id(11)}','${A}')`,
       `select recalculate_mastery('${id(31)}')`
     ]) await assert.rejects(db.exec(sql),e=>e.code==='42501');
@@ -209,4 +209,126 @@ test('Deletion cascades atomically retain storage references in inaccessible cle
   const queued=await one('select storage_path from storage_cleanup_jobs where owner_id=$1',[B]);
   assert.equal(queued.storage_path,`${B}/${id(2)}/chapter.pdf`);
   await as('authenticated',B,()=>assert.rejects(db.exec('select * from storage_cleanup_jobs'),e=>e.code==='42501'));
+});
+
+// These cases own their fixtures: earlier tests deliberately retire topic 31.
+const T = id(95), CARD = id(96), TF = id(97), BLANK = id(98), REMOVED = id(99);
+const OTHER_ROOM = id(92), OTHER_T = id(93), OTHER_CARD = id(94);
+let fixtures;
+const withFixtures = () => (fixtures ??= (async()=>{
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective,source_document_ids) values($1,$2,$3,'Cell energy','Explain ATP',array[$4::uuid])`,[T,id(1),A,id(11)]);
+  await db.query(`insert into flashcards(id,room_id,owner_id,topic_id,front,back) values($1,$2,$3,$4,'ATP?','Cell energy currency')`,[CARD,id(1),A,T]);
+  // User B equivalents in a room of their own, so cross-owner attempts have a
+  // known target regardless of what earlier cases did to B's original room.
+  await db.query(`insert into study_rooms(id,owner_id,title) values($1,$2,'B room')`,[OTHER_ROOM,B]);
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective) values($1,$2,$3,'B cell energy','Explain ATP')`,[OTHER_T,OTHER_ROOM,B]);
+  await db.query(`insert into flashcards(id,room_id,owner_id,topic_id,front,back) values($1,$2,$3,$4,'B ATP?','B answer')`,[OTHER_CARD,OTHER_ROOM,B,OTHER_T]);
+})());
+
+test('The new question types are storable and their answer keys stay server-side',async()=>{
+  await withFixtures();
+  await as('service_role',A,async()=>{
+    await db.query(`insert into quiz_questions(id,room_id,owner_id,topic_id,kind,prompt,choices,correct_choice,explanation) values($1,$2,$3,$4,'true_false','ATP stores energy.','["True","False"]',0,'It does')`,[TF,id(1),A,T]);
+    await db.query(`insert into quiz_questions(id,room_id,owner_id,topic_id,kind,prompt,expected_answer,accepted_answers,explanation) values($1,$2,$3,$4,'fill_blank','Cells store energy as ____.','ATP',array['atp','adenosine triphosphate'],'Chapter 2')`,[BLANK,id(1),A,T]);
+    await assert.rejects(db.query(`insert into quiz_questions(room_id,owner_id,topic_id,kind,prompt,explanation) values($1,$2,$3,'essay','Discuss','x')`,[id(1),A,T]),e=>e.code==='23514');
+  });
+  await as('authenticated',A,async()=>{
+    // The learner may read the stem; the accepted spellings are answer key.
+    assert.ok(await one(`select prompt from quiz_questions where id=$1`,[BLANK]));
+    await assert.rejects(db.query(`select accepted_answers from quiz_questions where id=$1`,[BLANK]),e=>e.code==='42501');
+  });
+});
+
+test('Confidence is recorded with the attempt and only by a trusted writer',async()=>{
+  await withFixtures();
+  await as('service_role',A,async()=>{
+    const graded=await one(`select record_quiz_attempt($1,$2,null,0,100,true,'ok',3) as result`,[TF,A]);
+    assert.equal(graded.result.confidence,3);
+    // Out-of-range ratings are dropped rather than stored or thrown.
+    const loose=await one(`select record_quiz_attempt($1,$2,'ATP',null,100,true,'ok',9) as result`,[BLANK,A]);
+    assert.equal(loose.result.confidence,null);
+  });
+  await as('authenticated',A,async()=>{
+    await assert.rejects(db.exec(`update quiz_attempts set confidence=1 where owner_id='${A}'`),e=>e.code==='42501');
+  });
+});
+
+test('A learner edits their own topics and cards only through the trusted writer',async()=>{
+  await withFixtures();
+  await as('authenticated',A,async()=>{
+    for(const sql of [
+      `select update_topic('${T}','${A}','Hacked',null,50)`,
+      `select set_topic_active('${T}','${A}',false)`,
+      `select create_topic('${id(1)}','${A}','Hacked',null,50)`,
+      `select update_flashcard('${CARD}','${A}','Hacked','Hacked')`,
+      `select delete_flashcard('${CARD}','${A}')`
+    ]) await assert.rejects(db.exec(sql),e=>e.code==='42501');
+  });
+  await as('service_role',A,async()=>{
+    // Another learner's rows are invisible to these functions.
+    for(const sql of [
+      `select update_topic('${OTHER_T}','${A}','Stolen',null,50)`,
+      `select set_topic_active('${OTHER_T}','${A}',false)`,
+      `select update_flashcard('${OTHER_CARD}','${A}','Stolen','Stolen')`,
+      `select delete_flashcard('${OTHER_CARD}','${A}')`
+    ]) await assert.rejects(db.exec(sql),e=>/not found/i.test(e.message));
+    assert.equal((await one(`select title,active from topics where id=$1`,[OTHER_T])).title,'B cell energy');
+    assert.equal((await one(`select front from flashcards where id=$1`,[OTHER_CARD])).front,'B ATP?');
+    await assert.rejects(db.exec(`select update_topic('${T}','${A}','',null,50)`),e=>/needs a title/.test(e.message));
+  });
+});
+
+test('Editing a card keeps the recall schedule it has already earned',async()=>{
+  await withFixtures();
+  await as('service_role',A,async()=>{
+    await db.query(`update flashcards set repetitions=4,interval_days=9,ease=2.7 where id=$1`,[CARD]);
+    await db.query(`select update_flashcard($1,$2,'ATP?','The cell energy currency')`,[CARD,A]);
+    const card=await one(`select back,repetitions,interval_days,learner_edited from flashcards where id=$1`,[CARD]);
+    assert.equal(card.back,'The cell energy currency');
+    assert.equal(card.repetitions,4,'a typo fix must not reset recall history');
+    assert.equal(card.interval_days,9);
+    assert.equal(card.learner_edited,true);
+  });
+});
+
+test('Re-ingesting a guide keeps the learner wording and does not resurrect a removed topic',async()=>{
+  await withFixtures();
+  await as('service_role',A,async()=>{
+    await db.query(`select update_topic($1,$2,'Cell energy','My own wording',95)`,[T,A]);
+    await db.query(`insert into topics(id,room_id,owner_id,title,objective) values($1,$2,$3,'Fermentation','Explain respiration')`,[REMOVED,id(1),A]);
+    await db.query(`select set_topic_active($1,$2,false)`,[REMOVED,A]);
+
+    const refreshed=`[{"title":"Cell energy","objective":"Model answer from the guide","keyTerms":["atp"],"priority":40,"evidence":[]},
+      {"title":"Fermentation","objective":"Explain respiration","keyTerms":[],"priority":80,"evidence":[]}]`;
+    await db.query(`select refresh_topic_map($1,$2,$3,true,$4::jsonb)`,[id(1),A,id(11),refreshed]);
+
+    const edited=await one(`select objective,priority,key_terms,learner_edited from topics where id=$1`,[T]);
+    assert.equal(edited.objective,'My own wording','the learner wording survives a re-ingest');
+    assert.equal(Number(edited.priority),95,'and so does the priority they set');
+    assert.deepEqual(edited.key_terms,['atp'],'while fresh key terms are still re-linked');
+    assert.equal((await one(`select active from topics where id=$1`,[REMOVED])).active,false,'a removed topic stays removed');
+  });
+});
+
+test('Re-adding a removed topic restores the original row rather than duplicating it',async()=>{
+  await withFixtures();
+  await as('service_role',A,async()=>{
+    const created=await one(`select create_topic($1,$2,'Fermentation','Back in scope',70) as result`,[id(1),A]);
+    assert.equal(created.result.id,REMOVED);
+    const restored=await one(`select active,learner_removed,objective from topics where id=$1`,[REMOVED]);
+    assert.equal(restored.active,true);
+    assert.equal(restored.learner_removed,false);
+    assert.equal(restored.objective,'Back in scope');
+    assert.equal((await one(`select count(*)::int as n from topics where room_id=$1 and title='Fermentation'`,[id(1)])).n,1);
+  });
+});
+
+test('Explanation level is constrained and defaults to standard',async()=>{
+  await withFixtures();
+  assert.equal((await one(`select explain_level from study_rooms where id=$1`,[id(1)])).explain_level,'standard');
+  await as('authenticated',A,async()=>{
+    await db.query(`update study_rooms set explain_level='simpler' where id=$1`,[id(1)]);
+    await assert.rejects(db.query(`update study_rooms set explain_level='genius' where id=$1`,[id(1)]),e=>e.code==='23514');
+  });
+  assert.equal((await one(`select explain_level from study_rooms where id=$1`,[id(1)])).explain_level,'simpler');
 });

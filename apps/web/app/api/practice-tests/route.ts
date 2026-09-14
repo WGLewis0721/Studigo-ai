@@ -3,10 +3,13 @@ import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/retrieval';
 import { allocateTestQuestions } from '@/lib/study-planning';
+import { readConfidence, readSelectedChoice } from '@/lib/grading';
 import { TOPIC_COLUMNS, type Topic } from '@/lib/rooms';
 export const runtime='nodejs';
 export const maxDuration=300;
 const SAFE_QUESTION_COLUMNS='id,kind,prompt,choices,difficulty,topic_id,test_position';
+/** Starts with short answer so the opening question cannot be guessed. */
+const TEST_KIND_ROTATION=['short_answer','multiple_choice','fill_blank','true_false','multiple_choice'] as const;
 
 export async function GET(request: Request) {
   const {supabase,user,unauthorized}=await requireApiUser(); if(!user) return unauthorized;
@@ -41,11 +44,13 @@ export async function POST(request: Request) {
       const batches=await Promise.all(allocation.slice(offset,offset+2).map(async({topic,count},index)=>{
         const chunks=await retrieveForRoom({supabase,roomId:body.roomId,query:`${topic.title}. ${topic.objective??''}`,matchCount:8});
         if(!chunks.length) throw new Error(`Add supporting material for “${topic.title}” before testing it.`);
-        const kind=offset+index===0?'short_answer':'multiple_choice';
+        // Rotate the format per topic so one test exercises recognition,
+        // recall and explanation rather than twenty of the same shape.
+        const kind=TEST_KIND_ROTATION[(offset+index)%TEST_KIND_ROTATION.length];
         const generated=(await generateQuizQuestions({chunks,topicTitle:topic.title,objective:topic.objective??undefined,count,kind})).filter(q=>q.kind===kind&&q.sourceMarkers.length>0).slice(0,count);
         if(generated.length!==count) throw new Error(`Could not produce enough grounded questions for “${topic.title}”. Try again.`);
         return generated.map(q=>({topic_id:topic.id,kind:q.kind,prompt:q.prompt,choices:q.choices,correct_choice:q.correctChoice,
-          expected_answer:q.expectedAnswer,explanation:q.explanation,difficulty:q.difficulty,citations:markersToCitations(q.sourceMarkers,chunks)}));
+          expected_answer:q.expectedAnswer,accepted_answers:q.acceptedAnswers,explanation:q.explanation,difficulty:q.difficulty,citations:markersToCitations(q.sourceMarkers,chunks)}));
       }));
       questions.push(...batches.flat());
     }
@@ -65,12 +70,14 @@ export async function PATCH(request: Request) {
   if(typeof body?.testId!=='string'||!body.answers||typeof body.answers!=='object') return Response.json({error:'Invalid draft.'},{status:400});
   const {data:owned}=await supabase.from('practice_tests').select('id,status').eq('id',body.testId).maybeSingle();
   if(!owned) return Response.json({error:'Test not found.'},{status:404});
-  const {data:questions,error:questionError}=await supabase.from('quiz_questions').select('id').eq('practice_test_id',owned.id);
+  const {data:questions,error:questionError}=await supabase.from('quiz_questions').select('id,choices').eq('practice_test_id',owned.id);
   if(questionError||!questions?.length) return Response.json({error:'Could not load this draft.'},{status:500});
-  const answers: Record<string,{selectedChoice:number|null;response:string}>={};
+  const answers: Record<string,{selectedChoice:number|null;response:string;confidence:number|null}>={};
   for(const q of questions??[]) {
     const a=body.answers[q.id];
-    if(a) answers[q.id]={selectedChoice:Number.isInteger(a.selectedChoice)&&a.selectedChoice>=0&&a.selectedChoice<4?a.selectedChoice:null,response:typeof a.response==='string'?a.response.slice(0,4000):''};
+    if(a) answers[q.id]={selectedChoice:readSelectedChoice(a.selectedChoice,q),
+      response:typeof a.response==='string'?a.response.slice(0,4000):'',
+      confidence:readConfidence(a.confidence)};
   }
   const {data:saved,error}=await createServiceSupabaseClient().from('practice_tests').update({draft_answers:answers}).eq('id',owned.id).eq('owner_id',user.id).eq('status','draft').select('id').maybeSingle();
   if(error||!saved) return Response.json({error:'This draft could not be saved. Reload the test.'},{status:409});

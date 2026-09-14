@@ -12,6 +12,7 @@ type Card = {
   citations: Citation[];
   repetitions: number;
   topic_id: string | null;
+  learner_edited?: boolean;
 };
 
 const RATINGS = [
@@ -43,6 +44,8 @@ export function CardsPanel({
   const reviewRef = useRef<{ cardId: string; requestId: string; rating: 1 | 2 | 3 } | null>(null);
   const savingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ front: "", back: "" });
   const [, startTransition] = useTransition();
 
   const loadDue = useCallback(async () => {
@@ -85,6 +88,63 @@ export function CardsPanel({
     }
   }
 
+  /** Saves the learner's wording without touching the review schedule. */
+  async function saveEdit() {
+    const card = cards[index];
+    if (!card || saving) return;
+    const front = draft.front.trim();
+    const back = draft.back.trim();
+    if (!front || !back) {
+      setError("A card needs both a front and a back.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/flashcards/${card.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ front, back })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "That card could not be saved.");
+      setCards((current) =>
+        current.map((item) => (item.id === card.id ? { ...item, front, back, learner_edited: true } : item))
+      );
+      setEditing(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "That card could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeCard() {
+    const card = cards[index];
+    if (!card || saving) return;
+    if (!window.confirm("Delete this card? Its review history goes with it.")) return;
+
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/flashcards/${card.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "That card could not be deleted.");
+      }
+      // Drop it from the queue in place; the next card slides into this index.
+      setCards((current) => current.filter((item) => item.id !== card.id));
+      setEditing(false);
+      setFlipped(false);
+      startTransition(onReviewed);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "That card could not be deleted.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function rate(rating: 1 | 2 | 3) {
     const card = cards[index];
     if (!card || savingRef.current) return;
@@ -103,6 +163,7 @@ export function CardsPanel({
       if (!response.ok) throw new Error(payload.error || "Review did not save.");
       reviewRef.current = null;
       setFlipped(false);
+      setEditing(false);
       setIndex((value) => value + 1);
       startTransition(onReviewed);
     } catch {
@@ -177,17 +238,68 @@ export function CardsPanel({
         CARD {index + 1} OF {cards.length} DUE
       </span>
 
-      <button
-        className={`flashcard ${flipped ? "flashcardFlipped" : ""}`}
-        type="button"
-        onClick={() => setFlipped((value) => !value)}
-        aria-label={flipped ? "Show the question" : "Show the answer"}
-      >
-        <span className="flashcardSide">{flipped ? card.back : card.front}</span>
-        {!flipped && <small>Tap to flip</small>}
-      </button>
+      {editing ? (
+        <div className="cardEditor">
+          <label className="field">
+            <span>Front</span>
+            <input
+              value={draft.front}
+              onChange={(event) => setDraft((value) => ({ ...value, front: event.target.value }))}
+              maxLength={500}
+              autoFocus
+            />
+          </label>
+          <label className="field">
+            <span>Back</span>
+            <textarea
+              value={draft.back}
+              onChange={(event) => setDraft((value) => ({ ...value, back: event.target.value }))}
+              rows={4}
+              maxLength={2000}
+            />
+          </label>
+          <small className="hintText">
+            Your wording is kept when new cards are generated, and your review schedule is not reset.
+          </small>
+          <div className="cardEditorActions">
+            <button className="buttonPrimary" type="button" onClick={() => void saveEdit()} disabled={saving}>
+              {saving ? "Saving…" : "Save card"}
+            </button>
+            <button className="ghostButton" type="button" onClick={() => setEditing(false)} disabled={saving}>
+              Cancel
+            </button>
+            <button className="danger" type="button" onClick={() => void removeCard()} disabled={saving}>
+              Delete card
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          className={`flashcard ${flipped ? "flashcardFlipped" : ""}`}
+          type="button"
+          onClick={() => setFlipped((value) => !value)}
+          aria-label={flipped ? "Show the question" : "Show the answer"}
+        >
+          <span className="flashcardSide">{flipped ? card.back : card.front}</span>
+          {!flipped && <small>Tap to flip</small>}
+        </button>
+      )}
 
-      {flipped && <CitationChips citations={card.citations ?? []} />}
+      {flipped && !editing && (
+        <div className="cardMetaRow">
+          <CitationChips citations={card.citations ?? []} />
+          <button
+            className="cardEditLink"
+            type="button"
+            onClick={() => {
+              setDraft({ front: card.front, back: card.back });
+              setEditing(true);
+            }}
+          >
+            {card.learner_edited ? "Edited · change again" : "Fix this card"}
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className="formError" role="alert">
@@ -196,7 +308,7 @@ export function CardsPanel({
       )}
 
       <div className="ratingRow">
-        {flipped ? (
+        {editing ? null : flipped ? (
           RATINGS.map((rating) => (
             <button
               key={rating.value}

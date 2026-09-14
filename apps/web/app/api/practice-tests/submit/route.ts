@@ -1,4 +1,4 @@
-import { gradeShortAnswer } from '@studigo/ai';
+import { gradeAnswer, readConfidence, readSelectedChoice } from '@/lib/grading';
 import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 export const runtime='nodejs';
@@ -20,15 +20,13 @@ export async function POST(request: Request) {
       const batch=await Promise.all(questions.slice(offset,offset+3).map(async q=>{
         const a=body.answers[q.id];
         const response=typeof a?.response==='string'?a.response.trim().slice(0,4000):'';
-        const selected=Number.isInteger(a?.selectedChoice)&&a.selectedChoice>=0&&a.selectedChoice<(q.choices?.length??0)?a.selectedChoice:null;
-        answers[q.id]={response,selectedChoice:selected};
-        let score=0,isCorrect=false,feedback='Unanswered. Review the explanation and try this concept again.';
-        if(q.kind==='multiple_choice'&&selected!==null) { isCorrect=selected===q.correct_choice;score=isCorrect?100:0;feedback=q.explanation; }
-        else if(q.kind==='short_answer'&&response) {
-          const grade=await gradeShortAnswer({question:q.prompt,expectedAnswer:q.expected_answer??'',learnerAnswer:response});
-          score=grade.score;isCorrect=grade.isCorrect;feedback=grade.feedback;
-        }
-        return {id:q.id,response,selected_choice:selected,score,is_correct:isCorrect,feedback};
+        const selected=readSelectedChoice(a?.selectedChoice,q);
+        const confidence=readConfidence(a?.confidence);
+        answers[q.id]={response,selectedChoice:selected,confidence};
+        // A skipped question is a miss here, not a validation error.
+        const grade=await gradeAnswer({question:q,response,selectedChoice:selected,allowUnanswered:true});
+        return {id:q.id,response,selected_choice:selected,confidence,
+          score:grade.score,is_correct:grade.isCorrect,feedback:grade.feedback};
       }));
       grades.push(...batch);
     }
