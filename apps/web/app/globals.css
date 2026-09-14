@@ -595,8 +595,9 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .mascotMark { border-radius: 50%; }
 .mascotMark img { position: absolute; width: 280%; height: 280%; max-width: none; left: -96%; top: -24%; object-fit: contain; }
 .mascot-thinking { animation: companionPulse 1.8s ease-in-out infinite; }
-/* Cursor-tracking variant: pose frames stack in place and crossfade by opacity. */
-.mascotTracker img { position: absolute; inset: 0; will-change: opacity; }
+/* Cursor-tracking variant: a paused video scrubbed by pointer X, with a static
+   frame for touch, reduced motion and video failure. */
+.mascotTracker video, .mascotTracker img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .answerKicker .studigoMascot { margin-right: 8px; }
 @keyframes companionPulse { 50% { opacity: .55; } }
 .hero { grid-template-columns: 1.04fr .96fr; gap: 60px; min-height: 720px; }

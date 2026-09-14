@@ -1,5 +1,5 @@
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { MascotCursorTracker } from "@/components/mascot/MascotCursorTracker";
+import { MascotVideoTracker } from "@/components/mascot/MascotVideoTracker";
 import Link from "next/link";
 
 const trail = [
@@ -76,7 +76,7 @@ export default function HomePage() {
             <Link className="buttonPrimary" href="/signup">Try your own materials <span>→</span></Link>
           </div>
           <div className="heroCompanion">
-            <MascotCursorTracker size={150} priority />
+            <MascotVideoTracker size={150} priority />
             <p>Your material.<br /><strong>My full attention.</strong></p>
           </div>
         </div>
