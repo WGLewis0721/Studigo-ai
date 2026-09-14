@@ -1,0 +1,25 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Homepage - Focus Mode", "x": 0, "y": 0, "w": 1440, "h": 4800 },
+    { "file": "MainMobile.dc.html", "title": "Homepage - Focus Mode / mobile", "x": 0, "y": 4940, "w": 390, "h": 4700 },
+    { "file": "EditorialBroadsheet.dc.html", "title": "A - Editorial Broadsheet (reference)", "x": 1580, "y": 0, "w": 1440, "h": 3900 },
+    { "file": "DeskWorld.dc.html", "title": "B - Desk World (reference)", "x": 3160, "y": 0, "w": 1440, "h": 3560 }
+  ],
+  "annotations": [
+    {
+      "id": "spec",
+      "x": 0,
+      "y": -340,
+      "w": 520,
+      "text": "HOMEPAGE - Focus Mode (C) with the hero message from A.\n\nField #286061 is sampled from the mascot's vest. Everything else is the live system: paper #f4efe4, bright #fffdf7, ink #1d2944, coral #ef7e62, volt #d7ef78, sun #f0c75e, lavender #6961b1 - Fraunces + Nunito Sans.\n\nThe headline keeps A's coral study partner and volt underline, reversed out on the teal field. The journey closes with direct, product-grounded answers about citations, source priority, and private uploads rather than fabricated social proof.\n\nThe hero mascot sits in a 524px warm disc with clear space around the head - that disc is where the existing cursor-tracking video goes. MainMobile is the companion mobile composition."
+    },
+    {
+      "id": "note-refs",
+      "x": 1580,
+      "y": -340,
+      "w": 460,
+      "text": "The two directions not taken, kept for reference."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

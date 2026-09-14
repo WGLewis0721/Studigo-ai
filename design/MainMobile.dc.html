@@ -1,0 +1,206 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Nunito Sans", "Trebuchet MS", sans-serif; color: #1d2944; }
+    a { color: #d7ef78; text-decoration: none; } a:hover { color: #c3dc63; }
+    .fmm h1, .fmm h2, .fmm h3 { font-family: "Fraunces", Georgia, serif; margin: 0; letter-spacing: -.04em; }
+  </style>
+</helmet>
+
+<div class="fmm" style="width: 390px; background: #f4efe4;">
+
+  <!-- HERO -->
+  <div style="position: relative; background: #286061; overflow: hidden; padding-bottom: 34px;">
+    <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,253,247,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,253,247,.045) 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div style="position: absolute; left: 50%; top: 232px; margin-left: -230px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle at 50% 45%, rgba(240,199,94,.32) 0%, rgba(40,96,97,0) 66%);"></div>
+
+    <!-- compact bar; no fake status bar -->
+    <div style="position: relative; display: flex; align-items: center; padding: 18px 22px; z-index: 4;">
+      <div style="display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.04rem; color: #fffdf7;">
+        <span style="width: 34px; height: 34px; display: grid; place-items: center; background: #d7ef78; color: #1d2944; border-radius: 10px 14px 10px 4px; font-family: 'Fraunces', Georgia, serif; transform: rotate(-2deg);">S</span>
+        <span>Studigo</span>
+      </div>
+      <span style="margin-left: auto; width: 44px; height: 44px; display: grid; place-items: center; gap: 5px;">
+        <span style="display: block; width: 20px; height: 2px; background: #fffdf7;"></span>
+        <span style="display: block; width: 20px; height: 2px; background: #fffdf7;"></span>
+      </span>
+    </div>
+
+    <div style="position: relative; padding: 14px 22px 0; z-index: 4;">
+      <div style="display: inline-flex; align-items: center; gap: 7px; font-size: .61rem; letter-spacing: .13em; font-weight: 900; color: #d7ef78; border: 1px solid rgba(215,239,120,.4); padding: 6px 11px; border-radius: 999px;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #d7ef78;"></span>
+        GROUNDED IN YOUR MATERIAL
+      </div>
+      <h1 style="font-size: 3.15rem; line-height: .92; font-weight: 700; color: #fffdf7; margin: 18px 0 0;">
+        Study with the <span style="color: #f0c75e;">lights on.</span>
+      </h1>
+      <p style="margin: 16px 0 0; font-size: 1rem; line-height: 1.58; color: rgba(255,253,247,.8);">
+        Answers from the study guide, the chapter and the notes you actually have — with the page they came from.
+      </p>
+    </div>
+
+    <!-- character: one artefact only, so the phone hero stays calm -->
+    <div style="position: relative; height: 356px; margin-top: 10px; z-index: 4;">
+      <div style="position: absolute; left: 50%; top: 8px; margin-left: -164px; width: 328px; height: 328px; border-radius: 50%; background: #eed9ba; box-shadow: 0 26px 60px rgba(0,0,0,.3);"></div>
+      <img src="studigo-mascot.jpg" alt="" style="position: absolute; left: 50%; top: 8px; margin-left: -164px; width: 328px; height: 328px; object-fit: cover; border-radius: 50%;">
+      <div style="position: absolute; right: 10px; bottom: 22px; background: #fffdf7; border: 1px solid #1d2944; padding: 10px 13px; transform: rotate(3deg); box-shadow: 4px 5px 0 #f0c75e;">
+        <div style="font-size: .55rem; letter-spacing: .12em; font-weight: 900; color: #6961b1;">CITED</div>
+        <div style="font-size: .76rem; margin-top: 4px;">Textbook · p.214</div>
+      </div>
+    </div>
+
+    <div style="position: relative; padding: 0 22px; z-index: 4;">
+      <div style="background: #d7ef78; color: #1d2944; min-height: 54px; display: grid; place-items: center; font-weight: 900; font-size: 1.02rem; box-shadow: 4px 5px 0 #1d2944;">Build a Study Room</div>
+      <div style="min-height: 46px; display: grid; place-items: center; color: #fffdf7; font-weight: 900; font-size: .92rem; margin-top: 10px;">
+        <span style="border-bottom: 2px solid #d7ef78; padding-bottom: 3px;">See a cited answer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- promise list: a stack of three, not a squeezed strip -->
+  <div style="background: #d7ef78; padding: 18px 22px;">
+    <div style="display: grid; gap: 11px; font-family: 'Fraunces', Georgia, serif; font-size: 1.12rem; color: #1d2944;">
+      <div style="display: flex; align-items: center; gap: 11px;"><span style="color: #286061;">✦</span> Your sources first.</div>
+      <div style="display: flex; align-items: center; gap: 11px;"><span style="color: #286061;">✦</span> Answers with receipts.</div>
+      <div style="display: flex; align-items: center; gap: 11px;"><span style="color: #286061;">✦</span> Weak spots surfaced.</div>
+    </div>
+  </div>
+
+  <!-- benefits -->
+  <div style="padding: 46px 22px 0;">
+    <h2 style="font-size: 2.35rem; line-height: 1.02;">Not a chatbot with a textbook taped to it.</h2>
+
+    <div style="display: grid; gap: 26px; margin-top: 30px;">
+      <div style="border-top: 2px solid #1d2944; padding-top: 18px;">
+        <span style="font-family: 'Fraunces', Georgia, serif; font-size: 2rem; color: #286061;">01</span>
+        <h3 style="font-size: 1.32rem; margin-top: 6px;">It knows which source wins</h3>
+        <p style="margin: 8px 0 0; color: #36435d; line-height: 1.62; font-size: .96rem;">The teacher's guide sets the destination. Worksheets, textbook and notes rank underneath it.</p>
+      </div>
+      <div style="border-top: 1px solid rgba(29,41,68,.2); padding-top: 18px;">
+        <span style="font-family: 'Fraunces', Georgia, serif; font-size: 2rem; color: #ef7e62;">02</span>
+        <h3 style="font-size: 1.32rem; margin-top: 6px;">Receipts, every time</h3>
+        <p style="margin: 8px 0 0; color: #36435d; line-height: 1.62; font-size: .96rem;">Page numbers you can open. If it cannot ground a claim in your material, it says so.</p>
+      </div>
+      <div style="border-top: 1px solid rgba(29,41,68,.2); padding-top: 18px;">
+        <span style="font-family: 'Fraunces', Georgia, serif; font-size: 2rem; color: #6961b1;">03</span>
+        <h3 style="font-size: 1.32rem; margin-top: 6px;">Revision that aims itself</h3>
+        <p style="margin: 8px 0 0; color: #36435d; line-height: 1.62; font-size: .96rem;">Readiness moves with what you get right. Tomorrow opens on the topic you keep dropping.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- readiness: full-bleed teal card -->
+  <div style="margin: 44px 0 0; background: #286061; color: #fffdf7; padding: 30px 22px;">
+    <div style="font-size: .6rem; letter-spacing: .13em; font-weight: 900; color: #d7ef78;">WEATHER UNIT · FRIDAY</div>
+    <div style="font-family: 'Fraunces', Georgia, serif; font-size: 3.4rem; line-height: 1; margin-top: 8px;">71%</div>
+    <div style="height: 8px; background: rgba(255,253,247,.2); margin-top: 14px;">
+      <div style="width: 71%; height: 8px; background: #d7ef78;"></div>
+    </div>
+    <div style="display: grid; gap: 11px; margin-top: 22px; font-size: .92rem;">
+      <div style="display: flex; justify-content: space-between; gap: 12px;"><span>Clouds &amp; fronts</span><span style="color: #d7ef78;">Mastered</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px;"><span>Thunderstorms</span><span style="color: rgba(255,253,247,.62);">4 of 6</span></div>
+      <div style="display: flex; justify-content: space-between; gap: 12px;"><span style="color: #f0c75e;">Tornado formation</span><span style="color: #f0c75e;">Up next</span></div>
+    </div>
+  </div>
+
+  <!-- tools: 2x2, not four squeezed columns -->
+  <div style="padding: 44px 22px 0;">
+    <h2 style="font-size: 2.2rem; line-height: 1.04;">One room. Four ways in.</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 24px;">
+      <div style="background: #fffdf7; border: 1px solid #1d2944; padding: 18px; box-shadow: 4px 5px 0 #ef7e62; min-height: 132px;">
+        <div style="font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem;">Ask</div>
+        <p style="margin: 7px 0 0; font-size: .86rem; color: #36435d; line-height: 1.55;">Explain anything from your materials.</p>
+      </div>
+      <div style="background: #fffdf7; border: 1px solid #1d2944; padding: 18px; box-shadow: 4px 5px 0 #286061; min-height: 132px;">
+        <div style="font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem;">Learn</div>
+        <p style="margin: 7px 0 0; font-size: .86rem; color: #36435d; line-height: 1.55;">Walk the guide in the right order.</p>
+      </div>
+      <div style="background: #fffdf7; border: 1px solid #1d2944; padding: 18px; box-shadow: 4px 5px 0 #6961b1; min-height: 132px;">
+        <div style="font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem;">Quiz</div>
+        <p style="margin: 7px 0 0; font-size: .86rem; color: #36435d; line-height: 1.55;">Flashcards, practice tests, cram sessions.</p>
+      </div>
+      <div style="background: #fffdf7; border: 1px solid #1d2944; padding: 18px; box-shadow: 4px 5px 0 #f0c75e; min-height: 132px;">
+        <div style="font-family: 'Fraunces', Georgia, serif; font-size: 1.4rem;">Mastery</div>
+        <p style="margin: 7px 0 0; font-size: .86rem; color: #36435d; line-height: 1.55;">Find weak spots before test day.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- how it works: vertical with a connecting rule -->
+  <div style="padding: 46px 22px 0;">
+    <div style="font-size: .64rem; letter-spacing: .14em; font-weight: 900; color: #42654c;">HOW IT WORKS</div>
+    <h2 style="font-size: 2.2rem; margin-top: 10px; line-height: 1.04;">Three steps, then it is just studying.</h2>
+    <div style="display: grid; gap: 0; margin-top: 26px;">
+      <div style="display: grid; grid-template-columns: 46px 1fr; gap: 16px;">
+        <div style="display: grid; justify-items: center;">
+          <span style="width: 34px; height: 34px; border-radius: 50%; background: #286061; color: #fffdf7; display: grid; place-items: center; font-weight: 900; font-size: .84rem;">1</span>
+          <span style="width: 2px; flex-grow: 1; background: rgba(29,41,68,.18); min-height: 46px;"></span>
+        </div>
+        <div style="padding-bottom: 22px;">
+          <h3 style="font-size: 1.22rem;">Upload what you were given</h3>
+          <p style="margin: 6px 0 0; color: #36435d; line-height: 1.6; font-size: .94rem;">Study guide, chapter, worksheets, notes.</p>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 46px 1fr; gap: 16px;">
+        <div style="display: grid; justify-items: center;">
+          <span style="width: 34px; height: 34px; border-radius: 50%; background: #ef7e62; color: #fffdf7; display: grid; place-items: center; font-weight: 900; font-size: .84rem;">2</span>
+          <span style="width: 2px; flex-grow: 1; background: rgba(29,41,68,.18); min-height: 46px;"></span>
+        </div>
+        <div style="padding-bottom: 22px;">
+          <h3 style="font-size: 1.22rem;">Studigo ranks and reads it</h3>
+          <p style="margin: 6px 0 0; color: #36435d; line-height: 1.6; font-size: .94rem;">It maps topics and works out what the test is asking.</p>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 46px 1fr; gap: 16px;">
+        <div style="display: grid; justify-items: center;">
+          <span style="width: 34px; height: 34px; border-radius: 50%; background: #6961b1; color: #fffdf7; display: grid; place-items: center; font-weight: 900; font-size: .84rem;">3</span>
+        </div>
+        <div>
+          <h3 style="font-size: 1.22rem;">You study, it keeps score</h3>
+          <p style="margin: 6px 0 0; color: #36435d; line-height: 1.6; font-size: .94rem;">Readiness moves and the plan follows it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- proof: one quote on phone, not three -->
+  <div style="padding: 44px 22px 0;">
+    <div style="border-left: 3px solid #286061; padding: 4px 0 4px 18px;">
+      <div style="font-family: 'Fraunces', Georgia, serif; font-size: 1.3rem; line-height: 1.38;">“[STUDENT QUOTE — to supply]”</div>
+      <div style="margin-top: 14px; font-size: .74rem; font-weight: 900; color: #6e756f;">[NAME], [GRADE]</div>
+    </div>
+  </div>
+
+  <!-- final CTA -->
+  <div style="margin-top: 46px; position: relative; background: #286061; overflow: hidden; padding: 40px 22px 44px;">
+    <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,253,247,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,253,247,.045) 1px, transparent 1px); background-size: 28px 28px;"></div>
+    <div style="position: relative; z-index: 3;">
+      <div style="display: grid; place-items: center;">
+        <div style="position: relative; width: 168px; height: 168px;">
+          <div style="position: absolute; inset: 0; border-radius: 50%; background: #eed9ba;"></div>
+          <img src="studigo-mascot.jpg" alt="" style="position: absolute; inset: 0; width: 168px; height: 168px; object-fit: cover; border-radius: 50%;">
+        </div>
+      </div>
+      <h2 style="font-size: 2.5rem; line-height: 1; color: #fffdf7; margin-top: 24px; text-align: center;">Tonight's chapter, already read.</h2>
+      <p style="color: rgba(255,253,247,.78); line-height: 1.62; margin: 14px 0 24px; text-align: center; font-size: .98rem;">Start a room with the guide you were handed.</p>
+      <div style="background: #d7ef78; color: #1d2944; min-height: 54px; display: grid; place-items: center; font-weight: 900; font-size: 1.02rem; box-shadow: 4px 5px 0 #1d2944;">Start studying — free</div>
+    </div>
+  </div>
+
+  <div style="padding: 26px 22px 30px; text-align: center; font-size: .78rem; color: #6e756f;">
+    <div style="font-weight: 900; color: #1d2944;">Studigo</div>
+    <div style="margin-top: 6px;">Study from your material.</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
