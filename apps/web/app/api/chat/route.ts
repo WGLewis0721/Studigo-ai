@@ -13,6 +13,9 @@ type ChatRequest = {
    *  practice protocol). Kept separate from `question` so they only ever
    *  shape the system prompt and never the retrieval query. */
   directives?: EngineDirective[];
+  /** "coach" routes the turn through the Coach state machine instead of
+   *  free-form grounded Q&A. Defaults to "ask". */
+  mode?: "ask" | "coach";
 };
 
 function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
@@ -85,6 +88,7 @@ export async function POST(request: Request) {
     .insert({ conversation_id: conversationId, role: "user", content: question });
 
   const directives = sanitizeDirectives(body?.directives);
+  const mode = body?.mode === "coach" ? "coach" : "ask";
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives })) {
+        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, conversationId })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
