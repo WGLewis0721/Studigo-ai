@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
 import { MaterialsPanel } from "./materials-panel";
 import { AskPanel } from "./ask-panel";
+import { CoachPanel } from "./coach-panel";
 import { LearnPanel } from "./learn-panel";
 import { QuizPanel } from "./quiz-panel";
 import { CardsPanel } from "./cards-panel";
@@ -19,6 +20,7 @@ import { RoomSettings } from "./room-settings";
 const MODES = [
   { id: "materials", icon: "◫", name: "Materials", copy: "Everything this room knows." },
   { id: "ask", icon: "?", name: "Ask", copy: "Explain anything from your materials." },
+  { id: "coach", icon: "◉", name: "Coach", copy: "Practice with the right method." },
   { id: "learn", icon: "✦", name: "Learn", copy: "Walk the guide in the right order." },
   { id: "quiz", icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
   { id: "cards", icon: "▤", name: "Flashcards", copy: "Drill the terms until they stick." },
@@ -32,7 +34,7 @@ const MODES = [
 type Mode = (typeof MODES)[number]["id"];
 
 const GROUPS: Array<{name:string;modes:Mode[]}> = [
-  {name:"Study",modes:["learn","ask"]},
+  {name:"Study",modes:["learn","ask","coach"]},
   {name:"Practice",modes:["quiz","cards","test"]},
   {name:"Progress",modes:["mastery","weak"]},
   {name:"Plan",modes:["plan","cram"]},
@@ -124,6 +126,9 @@ export function RoomWorkspace({
         )}
         {mode === "ask" && (
           <AskPanel roomId={room.id} readyCount={readyDocuments.length} onOpenMaterials={() => setMode("materials")} />
+        )}
+        {mode === "coach" && (
+          <CoachPanel roomId={room.id} readyCount={readyDocuments.length} topics={topics} onOpenMaterials={() => setMode("materials")} />
         )}
         {mode === "learn" && (
           <LearnPanel
