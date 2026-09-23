@@ -31,6 +31,16 @@ Files uploaded by the learner. Initial types:
 ### Topic
 A concept/objective inferred primarily from the study guide and teacher material. Topics become the unit of mastery tracking.
 
+### Downloaded Study Guide
+A learner-owned snapshot generated from the current Study Room: teacher-defined
+scope, the student's current topic map, concise source-grounded explanations/key
+facts, useful retrieval prompts, and references back to the uploaded material.
+
+The downloaded guide is not a new source of truth. It is an export of Studigo's
+current grounded understanding of the room. Student edits must win, removed
+topics must stay removed, and missing evidence must remain missing rather than
+being filled with general model knowledge.
+
 ## Initial experience
 
 1. Create account.
@@ -40,8 +50,10 @@ A concept/objective inferred primarily from the study guide and teacher material
 5. Student chooses: Ask, Learn, Quiz, Flashcards, Practice Test, Weak Areas.
 6. The student corrects anything Studigo read wrong: topics and flashcards are
    theirs to retitle, reword, add or remove, and their edits survive a re-ingest.
-6. Studigo tracks evidence of mastery over time.
-7. Student can open/download the original source at any time.
+7. Studigo tracks evidence of mastery over time.
+8. Student can open/download the original source at any time.
+9. Student can click **Download study guide** and receive a clean, printable
+   study guide built from the current grounded room state.
 
 ## Grounding rules
 
@@ -83,6 +95,7 @@ MVP needs:
   the blank, short answer.
 - Topic mastery, plus confidence-vs-performance calibration.
 - Basic study plan / cram mode.
+- One-click downloadable study guide (PDF first).
 
 Not MVP:
 
@@ -128,3 +141,46 @@ The Socratic check in Learn is the deliberate opposite: it is never scored and
 never moves mastery, because a student will not think out loud if doing it badly
 costs them something. Measurement belongs in Quiz, where they know they are being
 measured.
+
+
+## Downloadable study guide contract
+
+This is the highest-priority missing learner-facing capability after the working
+core loop.
+
+### First release
+
+- A visible **Download study guide** action from the Study Room.
+- One click produces a PDF; do not make the learner choose a format first.
+- Use a human filename such as `Biology-Midterm-Study-Guide.pdf`.
+- Include room title/test context, current topic ordering, concise grounded
+  explanations/key facts, and source references.
+- Include retrieval prompts/check-yourself questions so the exported artifact
+  supports active study rather than becoming only another rereading surface.
+- Respect learner edits and removals.
+- If evidence is insufficient, explain that in-product instead of fabricating a
+  complete-looking guide.
+- Export is read-only with respect to mastery/practice state.
+- The file must open cleanly on desktop and mobile and print legibly.
+
+### Not required for the first release
+
+- DOCX/Google Docs export.
+- Template/theme selection.
+- Teacher/school branding.
+- Public share links.
+- Collaborative editing.
+
+Those can follow only after the default PDF is demonstrably useful in user
+testing.
+
+## Study-method policy
+
+Studigo's learning modes should follow the evidence and product mappings in
+[`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md).
+
+Retrieval practice and distributed practice are the strongest default behaviors.
+Interleaving, corrective feedback, self-explanation, worked examples, and
+elaboration are used where their evidence and context fit. Passive rereading or
+highlighting may support a workflow, but they should not become the primary
+study loop simply because they feel familiar.
