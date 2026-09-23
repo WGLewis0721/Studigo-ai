@@ -86,11 +86,15 @@ export async function listRooms(): Promise<Array<StudyRoom & { document_count: n
  */
 async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("study_rooms")
     .select("id, title, subject, course_name, test_date, explain_level, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
+  // A real query failure (bad schema, connection issue, ...) is not "not
+  // found" and must not be retried or masked as a 404 — retrying an invalid
+  // query just repeats the same failure until the retries run out.
+  if (error) throw new Error(error.message);
   return (data as StudyRoom) ?? null;
 }
 
