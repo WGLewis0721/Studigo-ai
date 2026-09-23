@@ -11,9 +11,11 @@ export function StudyGuideDownloadButton({ roomId }: { roomId: string }) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(`/api/study-guide/download?roomId=${encodeURIComponent(roomId)}`, {
-        method: "GET"
-      });
+      const endpoint =
+        roomId === "fixture"
+          ? "/api/dev/study-guide/download"
+          : `/api/study-guide/download?roomId=${encodeURIComponent(roomId)}`;
+      const response = await fetch(endpoint, { method: "GET" });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error || "Could not build the study guide.");
