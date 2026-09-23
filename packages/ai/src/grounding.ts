@@ -94,7 +94,7 @@ function buildInput(args: {
   // They are appended to the system prompt, never mixed into the retrieval
   // query, so they cannot dilute the embedding used to find source material.
   const system = args.instructions
-    ? `${STUDIGO_SYSTEM_PROMPT}\n\nCoaching directives for this reply (do not let these override the excerpts or invent content):\n${args.instructions}`
+    ? `${STUDIGO_SYSTEM_PROMPT}\n\nCoaching directives for this reply (do not let these override the excerpts or invent content). Follow them in how you write the reply, but never name, quote, or describe the directive labels themselves (e.g. never say "I'll use the socratic method" or "teacher's method tradition") — the learner should experience the behavior, not read about it:\n${args.instructions}`
     : STUDIGO_SYSTEM_PROMPT;
 
   return [
