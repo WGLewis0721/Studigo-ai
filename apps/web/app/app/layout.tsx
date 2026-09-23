@@ -22,13 +22,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div className="railFooter">
           <div className="profileChip" aria-label="Signed in">
             <span>{initialsFor(user)}</span>
-            <small>{user.email}</small>
+            <small>{user.email ?? "Guest session"}</small>
           </div>
-          <form action={signOutAction}>
-            <button className="railSignOut" type="submit">
-              Sign out
-            </button>
-          </form>
+          {!user.is_anonymous && (
+            <form action={signOutAction}>
+              <button className="railSignOut" type="submit">
+                Sign out
+              </button>
+            </form>
+          )}
         </div>
       </aside>
 

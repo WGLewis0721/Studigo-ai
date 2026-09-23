@@ -30,9 +30,19 @@ export async function middleware(request: NextRequest) {
 
   // Refreshes the session cookie on every navigation so a student stays signed
   // in across visits without a client-side round trip.
-  const {
+  let {
     data: { user }
   } = await supabase.auth.getUser();
+
+  // TEMP: open live testing. A visitor with no session is signed in as a real
+  // (but anonymous) Supabase Auth user instead of being sent to /login. This
+  // is a genuine `auth.uid()`, so every existing RLS policy applies unchanged
+  // and the guest gets their own isolated rooms/writes. Restore
+  // `PROTECTED_PREFIXES = ["/app"]` and drop this block to re-require sign-in.
+  if (!user) {
+    const { data } = await supabase.auth.signInAnonymously();
+    user = data.user;
+  }
 
   const path = request.nextUrl.pathname;
 
