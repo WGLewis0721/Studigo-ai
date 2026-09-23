@@ -55,6 +55,12 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     const assistantId = crypto.randomUUID();
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }, { id: assistantId, role: "assistant", content: "", streaming: true }]);
     try {
+      if (roomId === "fixture") {
+        const topic = topics.find((item) => text.toLowerCase().includes(item.title.toLowerCase())) ?? topics[0];
+        const demoAnswer = `Let’s practice ${topic.title}. ${topic.objective ?? "Explain the idea in your own words."} First, I’ll model one step. Then you try a similar example, and I’ll give one specific correction before choosing the next repetition. Current method: ${style.name}; tradition: ${tradition.name}; practice: ${practice.name}.`;
+        setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: demoAnswer, grounded: true, streaming: false, citations: [{ documentId: "source", documentName: "Fifth Grade Science study guide.pdf", pageNumber: 1, pageLabel: "Page" }] } : message));
+        return;
+      }
       const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId, question: `[COACHING STYLE: ${style.name}] ${style.instruction}\n\n[LEARNING TRADITION: ${tradition.name}] ${tradition.instruction}\n\n[PRACTICE PROTOCOL: ${practice.name}] ${practice.instruction}\n\nLearner request: ${text}`, conversationId: conversationId.current }) });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
