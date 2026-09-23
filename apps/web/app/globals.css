@@ -278,7 +278,26 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .documentActions button { border: 0; background: none; cursor: pointer; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
 .documentActions a { text-underline-offset: 3px; }
 
-/* Ask -------------------------------------------------------------------- */
+  /* Coach ------------------------------------------------------------------ */
+  .coachMode { display: flex; flex-direction: column; gap: 24px; max-width: 980px; }
+  .coachHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  .coachHeader h2 { margin: 8px 0 6px; font-family: var(--display); font-size: clamp(2rem, 4vw, 3.3rem); letter-spacing: -.04em; max-width: 680px; }
+  .coachHeader p { margin: 0; color: var(--ink-soft); max-width: 580px; line-height: 1.6; }
+  .coachStyleGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .coachStyle { display: grid; gap: 7px; text-align: left; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 14px; cursor: pointer; min-height: 92px; }
+  .coachStyle strong { font-size: .78rem; }
+  .coachStyle span { color: var(--muted); font-size: .7rem; line-height: 1.35; }
+  .coachStyle:hover, .coachStyle.active { border-color: var(--ink); background: var(--volt); box-shadow: 4px 4px 0 var(--ink); transform: translate(-1px,-1px); }
+  .coachTopics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .coachTopics .tinyLabel { width: 100%; }
+  .coachTopics button { display: inline-flex; align-items: center; gap: 16px; border: 1px solid var(--ink); background: var(--paper-bright); padding: 10px 12px; font-weight: 800; cursor: pointer; }
+  .coachTopics button:hover { background: var(--coral); }
+  .coachThread { display: flex; flex-direction: column; gap: 12px; max-height: 43vh; min-height: 180px; overflow-y: auto; }
+  .coachEmpty { border: 1px dashed var(--line); padding: 24px; max-width: 650px; }
+  .coachEmpty strong { font-family: var(--display); font-size: 1.5rem; }
+  .coachEmpty p { color: var(--ink-soft); line-height: 1.6; }
+
+  /* Ask -------------------------------------------------------------------- */
 .askMode { display: flex; flex-direction: column; gap: 14px; height: calc(100vh - 260px); min-height: 460px; }
 .askThread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 6px; }
 .askIntro { display: grid; justify-items: start; gap: 10px; padding: 10px 0 20px; }
