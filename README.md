@@ -58,11 +58,12 @@ and no fabricated filler when a room lacks evidence. See
 case.
 
 The next product-validation cycle is defined in
-[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). Learning-method behavior
-and claims are governed by
-[`docs/STUDY_METHOD_LIBRARY.md`](docs/STUDY_METHOD_LIBRARY.md), which anchors
-retrieval practice, spacing, interleaving, feedback, self-explanation, worked
-examples, and related techniques in published research.
+[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). The Coach's existing
+coaching styles, learning traditions, and practice recipes are mapped to real
+teaching/coaching paradigms in
+[`knowledge/teaching-coaching/README.md`](knowledge/teaching-coaching/README.md).
+Each UI option has its own retrieval-friendly Markdown record with stable YAML
+metadata, examples, use cases, cautions, and research sources.
 
 Known limits: ingestion runs inside the request (idempotent and retryable, but a
 very large scanned PDF can exceed the function timeout) rather than on a durable
@@ -115,6 +116,8 @@ packages/
 supabase/
   migrations/          database, pgvector, RLS, retrieval RPC
   functions/           reserved for future out-of-request workers
+knowledge/
+  teaching-coaching/   Coach-method KB derived from the live UI taxonomy
 docs/
   PRODUCT.md           product behavior and UX principles
   ARCHITECTURE.md      system boundaries and data flow
@@ -123,7 +126,6 @@ docs/
   VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
   ROADMAP.md           ordered engineering plan
   USER_TEST_CASES.md   next production user-test and release cases
-  STUDY_METHOD_LIBRARY.md evidence-backed study-method catalog + product mapping
   AI_HANDOFF.md        rules for Opus/SuperGrok/Astra/etc.
 ```
 
@@ -183,7 +185,7 @@ Read these files in order before making major changes:
 2. `docs/ARCHITECTURE.md`
 3. `docs/AUTH.md`
 4. `docs/DESIGN_SYSTEM.md`
-5. `docs/STUDY_METHOD_LIBRARY.md`
+5. `knowledge/teaching-coaching/README.md`
 6. `docs/USER_TEST_CASES.md`
 7. `docs/ROADMAP.md`
 8. `docs/AI_HANDOFF.md`
