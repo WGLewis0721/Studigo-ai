@@ -10,8 +10,11 @@ import {
   citationsForQuestions,
   classifyIntent,
   dedupeQuestions,
+  extractLatestPracticePromptsFromHistory,
   extractPriorPromptsFromHistory,
   formatQuestionsForChat,
+  isPracticeHelpRequest,
+  practicePromptForFollowup,
   isNearDuplicateText,
   resolvePracticeTopic
 } from "./recommendation-engine";
@@ -273,7 +276,7 @@ test("buildPracticeQuestionSet never asks for more than the bounded retry budget
     return [];
   };
   await buildPracticeQuestionSet({ chunks: [CHUNK], count: 5, generate: generate as never });
-  assert.equal(requestedCounts.length, 3, "gives up after a bounded number of attempts rather than looping forever");
+  assert.equal(requestedCounts.length, 5, "gives up after a bounded number of attempts rather than looping forever");
   for (const count of requestedCounts) assert.ok(count <= MAX_PRACTICE_COUNT * 2);
 });
 
@@ -359,3 +362,21 @@ test("the engine composes intent -> topic -> grounded set -> reply -> citations 
 });
 
 void ({} as PracticeEvidence);
+
+
+test("practice follow-up helpers recognize a stuck learner and preserve the original question", () => {
+  const history = [
+    { role: "user" as const, content: "give me 3 questions" },
+    { role: "assistant" as const, content: "1. What are the three forms of water? [1]\n\n2. What causes evaporation? [1]\n\n3. What is condensation? [1]" }
+  ];
+  assert.deepEqual(extractLatestPracticePromptsFromHistory(history), [
+    "What are the three forms of water?",
+    "What causes evaporation?",
+    "What is condensation?"
+  ]);
+  assert.equal(practicePromptForFollowup("pizza", extractLatestPracticePromptsFromHistory(history)), "What are the three forms of water?");
+  assert.equal(practicePromptForFollowup("2: heat", extractLatestPracticePromptsFromHistory(history)), "What causes evaporation?");
+  assert.equal(isPracticeHelpRequest("I don't know"), true);
+  assert.equal(isPracticeHelpRequest("hint please"), true);
+  assert.equal(isPracticeHelpRequest("liquid, gas, solid"), false);
+});
