@@ -47,10 +47,15 @@ export async function fetchChunksByIds(
 ): Promise<RetrievedChunk[]> {
   if (!chunkIds.length) return [];
 
+  // document_chunks has no `priority` column, and its own `page_label` is
+  // nullable — both live (or fall back) on `documents`, exactly as
+  // `match_study_chunks` computes them. Selecting the non-existent columns
+  // used to make this query error on every call, which `fetchChunksByIds`
+  // then swallowed into an empty array.
   const { data, error } = await supabase
     .from("document_chunks")
     .select(
-      "id, document_id, content, page_number, page_label, priority, documents!inner(name, source_type, room_id)"
+      "id, document_id, content, page_number, page_label, documents!inner(name, source_type, room_id, page_label, source_priority)"
     )
     .in("id", chunkIds)
     .eq("documents.room_id", roomId);
@@ -63,21 +68,36 @@ export async function fetchChunksByIds(
     content: string;
     page_number: number | null;
     page_label: string | null;
-    priority: number | null;
-    documents: { name: string; source_type: string | null } | null;
+    documents: { name: string; source_type: string | null; page_label: string | null; source_priority: number | null } | null;
   };
 
-  return (data as unknown as ChunkRow[]).map((row) => ({
-    id: row.id,
-    documentId: row.document_id,
-    documentName: row.documents?.name ?? "Unknown document",
-    content: row.content,
-    similarity: 1,
-    sourceType: row.documents?.source_type ?? null,
-    pageNumber: row.page_number ?? null,
-    pageLabel: row.page_label || "page",
-    priority: row.priority ?? null
-  }));
+  const byId = new Map<string, RetrievedChunk>(
+    (data as unknown as ChunkRow[]).map((row) => [
+      row.id,
+      {
+        id: row.id,
+        documentId: row.document_id,
+        documentName: row.documents?.name ?? "Unknown document",
+        content: row.content,
+        similarity: 1,
+        sourceType: row.documents?.source_type ?? null,
+        pageNumber: row.page_number ?? null,
+        pageLabel: row.page_label || row.documents?.page_label || "page",
+        priority: row.documents?.source_priority ?? null
+      }
+    ])
+  );
+
+  // `.in()` does not preserve the order of the id list, but callers (e.g.
+  // grading a pending Coach question) rely on chunk order matching the
+  // citation markers assigned when the question was generated. Re-order to
+  // the caller's original id order, and drop ids with no row (deleted, or
+  // no longer accessible under this caller's RLS boundary) so the caller
+  // can compare `chunks.length` against `chunkIds.length` to detect partial
+  // source loss.
+  return chunkIds
+    .map((id) => byId.get(id))
+    .filter((chunk): chunk is RetrievedChunk => chunk !== undefined);
 }
 
 /** Confirms the room belongs to the caller before any generation work starts. */

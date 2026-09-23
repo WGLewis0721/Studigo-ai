@@ -23,6 +23,32 @@ const CONTROL_ACTION_PROMPTS: Record<CoachControlAction, string> = {
   explain_again: "Explain that again."
 };
 
+/**
+ * The model/retrieval calls `runCoachTurn` makes, gathered into one
+ * injectable surface. Defaults are the real `@studigo/ai` and
+ * `@/lib/retrieval` implementations; tests override individual entries
+ * (e.g. a fake `evaluateCoachAnswer`, or a `retrieveForRoom` spy) so the
+ * deterministic state-machine behavior can be verified without calling
+ * out to a model, and so tests can assert *which* calls happened — e.g.
+ * that answering a pending question never re-retrieves using the raw
+ * learner reply.
+ */
+type CoachRouterDeps = {
+  retrieveForRoom: typeof retrieveForRoom;
+  fetchChunksByIds: typeof fetchChunksByIds;
+  evaluateCoachAnswer: typeof evaluateCoachAnswer;
+  generateCoachQuestion: typeof generateCoachQuestion;
+  generateCoachFeedback: typeof generateCoachFeedback;
+};
+
+const defaultDeps: CoachRouterDeps = {
+  retrieveForRoom,
+  fetchChunksByIds,
+  evaluateCoachAnswer,
+  generateCoachQuestion,
+  generateCoachFeedback
+};
+
 /** Debug/telemetry shape for one Coach turn. Not persisted — logged only. */
 export type CoachTurnLog = {
   stateBefore: CoachState["kind"];
@@ -32,13 +58,31 @@ export type CoachTurnLog = {
   stateAfter: CoachState["kind"];
 };
 
+/**
+ * A Supabase read/write failure here means the Coach protocol can no longer
+ * trust what "state" the conversation is in — silently falling back to
+ * `IDLE_COACH_STATE` would let the model grade an answer against the wrong
+ * question, or lose a pending question without the learner ever knowing
+ * why. Throwing surfaces the failure as a controlled "error" SSE event
+ * (via the try/catch in the chat route) instead of a silent state reset.
+ */
 async function loadCoachState(supabase: SupabaseClient, conversationId: string): Promise<CoachState> {
-  const { data } = await supabase.from("conversations").select("coach_state").eq("id", conversationId).maybeSingle();
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("coach_state")
+    .eq("id", conversationId)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Could not load Coach state for conversation ${conversationId}: ${error.message}`);
+  }
   return parseCoachState((data as { coach_state?: unknown } | null)?.coach_state);
 }
 
 async function saveCoachState(supabase: SupabaseClient, conversationId: string, state: CoachState): Promise<void> {
-  await supabase.from("conversations").update({ coach_state: state }).eq("id", conversationId);
+  const { error } = await supabase.from("conversations").update({ coach_state: state }).eq("id", conversationId);
+  if (error) {
+    throw new Error(`Could not save Coach state for conversation ${conversationId}: ${error.message}`);
+  }
 }
 
 function pickTopic(topics: Topic[], question: string): Topic | undefined {
@@ -63,8 +107,10 @@ export async function* runCoachTurn(args: {
   conversationId: string;
   question: string;
   topics: Topic[];
+  deps?: Partial<CoachRouterDeps>;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   const { supabase, roomId, conversationId, question, topics } = args;
+  const deps: CoachRouterDeps = { ...defaultDeps, ...args.deps };
   const state = await loadCoachState(supabase, conversationId);
   const intent = detectTurnIntent(question, state);
 
@@ -84,7 +130,7 @@ export async function* runCoachTurn(args: {
       // affirm/next: replay the pending action as the effective question.
       const effectiveQuestion = CONTROL_ACTION_PROMPTS[state.action];
       const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, effectiveQuestion);
-      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic });
+      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps });
       return { ...log, stateBefore: state.kind, turnIntent: intent };
     }
     // A genuinely new message while a control action is pending — most
@@ -107,8 +153,12 @@ export async function* runCoachTurn(args: {
 
     // Re-fetch the question's source chunks under this request's RLS
     // boundary rather than trusting the cached copy from when it was asked.
-    const chunks = await fetchChunksByIds(supabase, roomId, state.sourceChunkIds);
-    if (!chunks.length) {
+    // A partial result (some chunk ids no longer resolve) is treated the
+    // same as a total loss: grading against a subset of the original
+    // material isn't fair to the learner, since the question may reference
+    // a concept that lived in exactly the chunk that's now missing.
+    const chunks = await deps.fetchChunksByIds(supabase, roomId, state.sourceChunkIds);
+    if (chunks.length < state.sourceChunkIds.length) {
       await saveCoachState(supabase, conversationId, IDLE_COACH_STATE);
       const text =
         "The material behind that question isn't available anymore, so I can't grade it fairly. Let's pick a fresh topic.";
@@ -117,16 +167,22 @@ export async function* runCoachTurn(args: {
       return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "control", stateAfter: "idle" };
     }
 
-    const evaluation = await evaluateCoachAnswer({
+    const evaluation = await deps.evaluateCoachAnswer({
       question: state.question,
       expectedConcepts: state.expectedConcepts,
       learnerResponse: question,
       chunks
     });
 
-    // The model's own intent read can override the deterministic pass for
-    // things regex can't catch (off-topic content like "pizza").
-    const effectiveIntent = intent === "answer" ? evaluation.intent : intent;
+    // The model's own intent read can refine a deterministic "answer" into
+    // irrelevant/help_request/show_answer for things regex can't catch (e.g.
+    // off-topic content like "pizza"). It must never promote a reply into
+    // "conversation_control" itself — only the deterministic state router
+    // (detectTurnIntent, above) is authorized to trigger a control
+    // transition. Without this guard, the model could invent a "yes"/"next"
+    // reading of ordinary answer prose and silently skip grading.
+    const effectiveIntent =
+      intent === "answer" && evaluation.intent !== "conversation_control" ? evaluation.intent : intent;
     const score = scoreConcepts(state.expectedConcepts, evaluation.concepts);
     const outcome = decideOutcome({
       intent: effectiveIntent,
@@ -135,7 +191,7 @@ export async function* runCoachTurn(args: {
       score
     });
 
-    const feedback = await generateCoachFeedback({
+    const feedback = await deps.generateCoachFeedback({
       question: state.question,
       expectedConcepts: state.expectedConcepts,
       evaluated: evaluation.concepts,
@@ -179,7 +235,7 @@ export async function* runCoachTurn(args: {
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
   const topic = pickTopic(topics, question);
-  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic });
+  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps });
   return { ...log, stateBefore: state.kind, turnIntent: intent };
 }
 
@@ -195,6 +251,7 @@ async function* openCoachQuestion(args: {
   conversationId: string;
   topics: Topic[];
   topic: Topic | undefined;
+  deps: CoachRouterDeps;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   if (!args.topic) {
     const text = "Add a study guide topic first — I need at least one active topic in this room before I can coach it.";
@@ -204,7 +261,7 @@ async function* openCoachQuestion(args: {
   }
 
   const query = [args.topic.title, args.topic.objective, args.topic.key_terms.join(", ")].filter(Boolean).join(". ");
-  const chunks: RetrievedChunk[] = await retrieveForRoom({
+  const chunks: RetrievedChunk[] = await args.deps.retrieveForRoom({
     supabase: args.supabase,
     roomId: args.roomId,
     query,
@@ -218,7 +275,7 @@ async function* openCoachQuestion(args: {
     return { stateBefore: "idle", turnIntent: "answer", semanticScore: null, outcome: "irrelevant", stateAfter: "idle" };
   }
 
-  const coachQuestion = await generateCoachQuestion({
+  const coachQuestion = await args.deps.generateCoachQuestion({
     topicTitle: args.topic.title,
     objective: args.topic.objective,
     chunks
