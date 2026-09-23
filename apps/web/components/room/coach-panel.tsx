@@ -3,6 +3,7 @@
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
+import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 
 type CoachingStyle = {
   id: string;
@@ -38,17 +39,6 @@ const PRACTICE_PROTOCOLS: PracticeProtocol[] = [
 
 type Message = { id: string; role: "user" | "assistant"; content: string; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
 
-const MATERIAL_NOTES: Record<string, { summary: string; example: string; source: string }> = {
-  "Instinctive and learned behaviors": { summary: "Instincts are behaviors an organism is born knowing how to do. Learned behaviors develop through experience or practice.", example: "A spider building a web is instinctive; a dog responding to a trained command is learned.", source: "Study guide · Life Science" },
-  "Inherited traits and environment": { summary: "Inherited traits come from parents through genes. The environment can influence how traits develop and how organisms behave.", example: "Eye color is inherited; nutrition and exercise can affect growth and strength.", source: "Study guide · Heredity and Environment" },
-  "Variation and survival advantages": { summary: "Individuals of the same species can vary. Some variations help an organism survive and reproduce in a particular environment.", example: "A moth whose color blends with tree bark may be harder for predators to see.", source: "Study guide · Adaptation" },
-  "Fossils and rock layers": { summary: "Fossils are evidence of past life. In undisturbed rock layers, deeper layers are generally older than layers above them.", example: "A fossil found in a lower layer usually provides evidence of an earlier time than a fossil in a layer above it.", source: "Study guide · Earth History" },
-  "Phase changes and conservation of matter": { summary: "Matter can change state from solid, liquid, or gas, but the matter itself is conserved during a phase change.", example: "When ice melts, it becomes liquid water; its form changes, but the amount of water remains the same.", source: "Study guide · Matter" },
-  "Dissolving": { summary: "Temperature, stirring, and particle size can affect how quickly a substance dissolves.", example: "Sugar usually dissolves faster in warm water when the water is stirred.", source: "Study guide · Properties of Matter" },
-  "Solar system objects and motion": { summary: "The solar system includes the Sun, planets, moons, and smaller objects. Objects move in predictable patterns because of gravity.", example: "Earth revolves around the Sun while rotating on its axis.", source: "Study guide · Space Science" },
-  "Balanced and unbalanced forces": { summary: "Balanced forces do not change an object's motion. Unbalanced forces can make an object speed up, slow down, or change direction.", example: "A book resting on a table has balanced forces; a pushed book accelerates because the forces become unbalanced.", source: "Study guide · Physical Science" }
-};
-
 export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { roomId: string; readyCount: number; topics: Array<{ title: string; objective: string | null }>; onOpenMaterials: () => void }) {
   const [style, setStyle] = useState(STYLES[0]);
   const [tradition, setTradition] = useState(TRADITIONS[0]);
@@ -65,38 +55,12 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     if (!text || busy) return;
     setPrompt(""); setError(null); setBusy(true);
     const assistantId = crypto.randomUUID();
+    // Snapshot the conversation so far — before the new user turn and the
+    // streaming placeholder are added — so the engine can dedupe a new
+    // batch of practice questions against everything already asked.
+    const priorHistory = messages.filter((message) => !message.streaming).map((message) => ({ role: message.role, content: message.content }));
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }, { id: assistantId, role: "assistant", content: "", streaming: true }]);
     try {
-      if (roomId === "fixture") {
-        const topic = topics.find((item) => text.toLowerCase().includes(item.title.toLowerCase())) ?? selectedTopic ?? topics[0];
-        const material = MATERIAL_NOTES[topic.title];
-        const lowerText = text.toLowerCase();
-        const wantsQuestions = /\b(\d+|ten|five|some|several)\s+(practice\s+)?questions?\b/.test(lowerText) || lowerText.includes("practice questions");
-        const questionCountMatch = lowerText.match(/\b(\d+)\s+(?:practice\s+)?questions?\b/);
-        const questionCount = Math.min(Math.max(Number(questionCountMatch?.[1] ?? (lowerText.includes("ten") ? 10 : 5)), 1), 10);
-        const questions = material ? [
-          `What is the main idea of ${topic.title.toLowerCase()}?`,
-          `Explain ${material.summary.split(".")[0].toLowerCase()} in your own words.`,
-          `Use this example: ${material.example} What does it show?`,
-          `How would you tell the difference between the two ideas in this topic?`,
-          `What evidence from the study guide supports your explanation?`,
-          `Describe a new example that fits this topic.`,
-          `What might change if one part of this example changed?`,
-          `Compare the example with a different situation.`,
-          `What common mistake should a learner avoid here?`,
-          `Teach this idea to a younger student in two sentences.`
-        ].slice(0, questionCount) : [];
-        const definition = lowerText.includes("what does") || lowerText.includes("define") || lowerText.includes("mean");
-        const demoAnswer = material
-          ? wantsQuestions
-            ? `Here are ${questionCount} practice questions grounded in ${material.source.toLowerCase()}:\\n\\n${questions.map((question, index) => `${index + 1}. ${question}`).join("\\n")}`
-            : definition
-              ? `In your study guide, ${topic.title.toLowerCase()} means: ${material.summary}\\n\\nExample: ${material.example}\\n\\nTry it: explain the difference in your own words, then I’ll give one precise correction.`
-              : `From your study guide: ${material.summary}\\n\\nExample: ${material.example}\\n\\nI’ll use ${style.name.toLowerCase()} with the ${tradition.name.toLowerCase()} tradition and ${practice.name.toLowerCase()}. Now explain the example in your own words, and I’ll give one precise correction before choosing the next practice item.`
-          : `Let’s practice ${topic.title}. ${topic.objective ?? "Explain the idea in your own words."} First, I’ll model one step. Then you try a similar example, and I’ll give one specific correction before choosing the next repetition.`;
-        setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: demoAnswer, grounded: true, streaming: false, citations: [{ documentId: "source", documentName: "Fifth Grade Science study guide.pdf", pageNumber: 1, pageLabel: "Page" }] } : message));
-        return;
-      }
       // The learner's question stays clean for retrieval; pedagogy choices
       // travel as separate directives so they only ever shape how the coach
       // answers, never what gets searched for.
@@ -105,7 +69,15 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         { name: "Learning tradition", instruction: tradition.instruction },
         { name: "Practice protocol", instruction: practice.instruction }
       ];
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId, question: text, directives, conversationId: conversationId.current }) });
+      // Fixture and production hit the same request/response contract; only
+      // the endpoint (and how it sources chunks) differs. One brain, one
+      // client code path.
+      const isFixture = roomId === "fixture";
+      const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
+      const body = isFixture
+        ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
+        : JSON.stringify({ roomId, question: text, directives, conversationId: conversationId.current });
+      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {
