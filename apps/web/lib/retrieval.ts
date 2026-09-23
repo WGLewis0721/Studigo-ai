@@ -47,20 +47,20 @@ export async function fetchChunksByIds(
 ): Promise<RetrievedChunk[]> {
   if (!chunkIds.length) return [];
 
-  // document_chunks has no `priority` column, and its own `page_label` is
-  // nullable — both live (or fall back) on `documents`, exactly as
-  // `match_study_chunks` computes them. Selecting the non-existent columns
-  // used to make this query error on every call, which `fetchChunksByIds`
-  // then swallowed into an empty array.
-  const { data, error } = await supabase
+  // Re-fetch the chunk rows first, without embedding `documents`. This table
+  // has more than one foreign-key path to `documents`, so an implicit
+  // PostgREST embed can be ambiguous. A two-step read avoids that ambiguity
+  // and, just as importantly, lets database/API failures surface as failures
+  // instead of pretending the source material disappeared.
+  const { data: chunkData, error: chunkError } = await supabase
     .from("document_chunks")
-    .select(
-      "id, document_id, content, page_number, page_label, documents!inner(name, source_type, room_id, page_label, source_priority)"
-    )
+    .select("id, document_id, content, page_number, page_label")
     .in("id", chunkIds)
-    .eq("documents.room_id", roomId);
+    .eq("room_id", roomId);
 
-  if (error || !data) return [];
+  if (chunkError) {
+    throw new Error(`Could not re-fetch Coach source chunks: ${chunkError.message}`);
+  }
 
   type ChunkRow = {
     id: string;
@@ -68,33 +68,60 @@ export async function fetchChunksByIds(
     content: string;
     page_number: number | null;
     page_label: string | null;
-    documents: { name: string; source_type: string | null; page_label: string | null; source_priority: number | null } | null;
   };
 
+  type DocumentRow = {
+    id: string;
+    name: string;
+    source_type: string | null;
+    page_label: string | null;
+    source_priority: number | null;
+  };
+
+  const chunkRows = (chunkData ?? []) as unknown as ChunkRow[];
+  const documentIds = [...new Set(chunkRows.map((row) => row.document_id))];
+  const documentsById = new Map<string, DocumentRow>();
+
+  if (documentIds.length) {
+    const { data: documentData, error: documentError } = await supabase
+      .from("documents")
+      .select("id, name, source_type, page_label, source_priority")
+      .in("id", documentIds)
+      .eq("room_id", roomId);
+
+    if (documentError) {
+      throw new Error(`Could not re-fetch Coach source document metadata: ${documentError.message}`);
+    }
+
+    for (const row of (documentData ?? []) as unknown as DocumentRow[]) {
+      documentsById.set(row.id, row);
+    }
+  }
+
   const byId = new Map<string, RetrievedChunk>(
-    (data as unknown as ChunkRow[]).map((row) => [
-      row.id,
-      {
-        id: row.id,
-        documentId: row.document_id,
-        documentName: row.documents?.name ?? "Unknown document",
-        content: row.content,
-        similarity: 1,
-        sourceType: row.documents?.source_type ?? null,
-        pageNumber: row.page_number ?? null,
-        pageLabel: row.page_label || row.documents?.page_label || "page",
-        priority: row.documents?.source_priority ?? null
-      }
-    ])
+    chunkRows.map((row) => {
+      const document = documentsById.get(row.document_id);
+      return [
+        row.id,
+        {
+          id: row.id,
+          documentId: row.document_id,
+          documentName: document?.name ?? "Unknown document",
+          content: row.content,
+          similarity: 1,
+          sourceType: document?.source_type ?? null,
+          pageNumber: row.page_number ?? null,
+          pageLabel: row.page_label || document?.page_label || "page",
+          priority: document?.source_priority ?? null
+        }
+      ];
+    })
   );
 
-  // `.in()` does not preserve the order of the id list, but callers (e.g.
-  // grading a pending Coach question) rely on chunk order matching the
-  // citation markers assigned when the question was generated. Re-order to
-  // the caller's original id order, and drop ids with no row (deleted, or
-  // no longer accessible under this caller's RLS boundary) so the caller
-  // can compare `chunks.length` against `chunkIds.length` to detect partial
-  // source loss.
+  // `.in()` does not preserve the caller's id order. Coach citation markers
+  // do, so rebuild the result in the exact persisted sourceChunkIds order.
+  // Missing chunk rows are intentionally dropped so the router can distinguish
+  // genuine source loss from a healthy re-fetch.
   return chunkIds
     .map((id) => byId.get(id))
     .filter((chunk): chunk is RetrievedChunk => chunk !== undefined);
