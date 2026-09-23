@@ -44,18 +44,15 @@ What works today:
 - **Mastery.** Calculated from actual quiz and review performance — unpracticed
   topics count as zero, and a room with no practice shows no number at all.
 
-### Next product priority — downloadable study guide
+### Downloadable study guide
 
-The highest-priority missing learner feature is a one-click **Download study
-guide** action. Studigo already turns teacher scope + supporting sources into a
-topic map, explanations, practice, and mastery; the learner should also be able
-to leave with a clean artifact they can print, save, or study offline.
+A Study Room now exposes a one-click **Download study guide** action. The first
+release generates a PDF from the current learner-edited topic map, grounded
+source passages, source/page references, and check-yourself prompts. Empty or
+insufficient rooms return an explicit error rather than a fabricated guide.
 
-The first release target is deliberately simple: one visible action, PDF by
-default, source-grounded content, student-edited topic wording/order preserved,
-and no fabricated filler when a room lacks evidence. See
-[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md) for the P0 acceptance
-case.
+Mobile open/download and print-layout validation still belong in the real-user
+beta pass. See [`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md).
 
 The next product-validation cycle is defined in
 [`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). The Coach's existing
@@ -71,17 +68,19 @@ queue, and native packaging is still the Tauri placeholder.
 
 ### Active investigation — Coach "give me N questions"
 
-The Coach is being hardened so that a request like *"give me 10 questions"*
-reliably returns *N* distinct, source-grounded questions instead of narrating
-the learner's selected customization options. Intent routing into practice
-generation is implemented and covered by tests; the open item is live-site
-verification of real model generation (the preview sandbox has environment and
-AI-Gateway-billing limits that the deployed app does not).
+The Coach routes *"give me 10 questions"* into a dedicated practice-generation
+path, spreads generic sets across enough high-priority room material to sustain
+the requested count, avoids prior prompts during top-up generation, and treats
+follow-up answers as tutoring interactions rather than literal text matching.
 
-For testing this without an account, a temporary login bypass exposes a
-read-only guest shell at `/app`, and a fixture-backed coach is reachable at
-`/dev/study?mode=coach`. Both are **temporary testing surfaces** and are tracked
-for reversion before launch.
+Short answers are graded for semantic understanding. Partial understanding gets
+partial credit plus a targeted nudge; an unrelated answer is redirected with a
+simpler rephrasing and source-grounded hint; *"I don't know"* enters scaffold
+mode. Live-site verification against the production model is still required.
+
+The temporary anonymous-app and production fixture bypasses used during earlier
+Coach debugging have been removed. `/app` requires authentication again, and
+`/dev/study` plus `/api/dev/coach` are development-only.
 
 - Problem, scope, and root causes: [`PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md)
 - Chronological change log and reversion checklist: [`ATTEMPTED_FIXES.md`](ATTEMPTED_FIXES.md)
