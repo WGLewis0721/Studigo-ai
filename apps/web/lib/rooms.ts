@@ -52,6 +52,12 @@ export const TOPIC_COLUMNS =
   "id, room_id, title, objective, key_terms, priority, order_index, origin, mastery_score, status, last_practiced_at, learner_edited";
 
 export async function listRooms(): Promise<Array<StudyRoom & { document_count: number }>> {
+  // Guest/testing shell: with no Supabase session (or when browser-safe env is
+  // absent, as in the sandbox preview) there are no rooms to show. Degrade to
+  // an empty list instead of crashing the /app shell.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return [];
+  }
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
