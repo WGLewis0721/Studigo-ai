@@ -75,7 +75,16 @@ export async function POST(request: Request) {
     filename: file.name
   });
 
-  const service = createServiceSupabaseClient();
+  let service: ReturnType<typeof createServiceSupabaseClient>;
+  try {
+    service = createServiceSupabaseClient();
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Server is misconfigured." },
+      { status: 503 }
+    );
+  }
+
   const { data: document, error: insertError } = await service
     .from("documents")
     .insert({
