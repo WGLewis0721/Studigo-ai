@@ -61,7 +61,9 @@ export async function listRooms(): Promise<Array<StudyRoom & { document_count: n
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title, subject, course_name, test_date, created_at, updated_at, documents(count)")
+    .select(
+      "id, title, subject, course_name, test_date, created_at, updated_at, documents!documents_room_id_fkey(count)"
+    )
     .order("updated_at", { ascending: false });
 
   if (error) throw new Error(error.message);
