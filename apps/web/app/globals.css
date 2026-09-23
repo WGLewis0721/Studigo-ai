@@ -283,6 +283,12 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .coachHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
   .coachHeader h2 { margin: 8px 0 6px; font-family: var(--display); font-size: clamp(2rem, 4vw, 3.3rem); letter-spacing: -.04em; max-width: 680px; }
   .coachHeader p { margin: 0; color: var(--ink-soft); max-width: 580px; line-height: 1.6; }
+  .coachSettings { display: grid; gap: 16px; }
+  .coachChoiceRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 680px) { .coachChoiceRow { grid-template-columns: 1fr; } }
+  .coachChoiceRow label { display: grid; gap: 6px; color: var(--ink-soft); font-size: .72rem; font-weight: 800; }
+  .coachChoiceRow select { width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 11px 12px; font: inherit; font-size: .8rem; }
+  .coachChoiceRow small { color: var(--muted); font-size: .68rem; line-height: 1.35; font-weight: 500; }
   .coachStyleGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
   .coachStyle { display: grid; gap: 7px; text-align: left; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 14px; cursor: pointer; min-height: 92px; }
   .coachStyle strong { font-size: .78rem; }
