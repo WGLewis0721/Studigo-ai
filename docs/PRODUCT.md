@@ -174,13 +174,31 @@ core loop.
 Those can follow only after the default PDF is demonstrably useful in user
 testing.
 
-## Study-method policy
+## Teaching and coaching knowledge-base policy
 
-Studigo's learning modes should follow the evidence and product mappings in
-[`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md).
+The Coach's coaching styles, learning traditions, and practice recipes are
+defined in the live UI today. Their research grounding lives in
+[`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md).
 
-Retrieval practice and distributed practice are the strongest default behaviors.
-Interleaving, corrective feedback, self-explanation, worked examples, and
-elaboration are used where their evidence and context fit. Passive rereading or
-highlighting may support a workflow, but they should not become the primary
-study loop simply because they feel familiar.
+The knowledge base is derived from the actual code taxonomy rather than from a
+separate list of fashionable study techniques. Each current UI option has one
+retrieval-friendly Markdown record containing its exact Studigo instruction,
+closest real-world paradigm, use cases, cautions, examples, and sources.
+
+Not every current label is a canonical method. The knowledge base must preserve
+that distinction:
+
+- named matches such as Explicit Instruction, Deliberate Practice, Socratic
+  Questioning, CPA/CRA, and Montessori principles can be mapped directly;
+- Studigo composites such as "Studigo default" and "Skill progression" are
+  explicitly labeled composite;
+- "Teacher's method" is a product/source-fidelity rule, not a teaching
+  tradition;
+- country-labelled options are not allowed to become cultural stereotypes.
+  "Japanese-inspired" is compared against documented Japanese structured
+  problem solving, and "Swedish-inspired" is grounded in learner agency and
+  critical-inquiry values from Sweden's national curriculum.
+
+Future Coach prompt generation should retrieve from this knowledge base by
+`ui_dimension + ui_id` instead of duplicating educational claims in unrelated
+prompt strings.
