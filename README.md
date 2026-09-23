@@ -2,7 +2,7 @@
 
 Studigo is an AI study companion that turns a student's own class materials into a grounded, course-specific tutor.
 
-Students create a **Study Room**, upload teacher study guides, textbook chapters, notes, worksheets, and presentations, then use one workspace to learn, ask questions, quiz themselves, generate flashcards, track mastery, and download their source files.
+Students create a **Study Room**, upload teacher study guides, textbook chapters, notes, worksheets, and presentations, then use one workspace to learn, ask questions, quiz themselves, generate flashcards, track mastery, and keep the work as a downloadable study guide.
 
 > Give Studigo what you are supposed to learn and the resources you are supposed to learn it from. Studigo turns them into a study companion.
 
@@ -43,6 +43,26 @@ What works today:
   questions with model-graded free text, and spaced-repetition cards.
 - **Mastery.** Calculated from actual quiz and review performance — unpracticed
   topics count as zero, and a room with no practice shows no number at all.
+
+### Next product priority — downloadable study guide
+
+The highest-priority missing learner feature is a one-click **Download study
+guide** action. Studigo already turns teacher scope + supporting sources into a
+topic map, explanations, practice, and mastery; the learner should also be able
+to leave with a clean artifact they can print, save, or study offline.
+
+The first release target is deliberately simple: one visible action, PDF by
+default, source-grounded content, student-edited topic wording/order preserved,
+and no fabricated filler when a room lacks evidence. See
+[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md) for the P0 acceptance
+case.
+
+The next product-validation cycle is defined in
+[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). Learning-method behavior
+and claims are governed by
+[`docs/STUDY_METHOD_LIBRARY.md`](docs/STUDY_METHOD_LIBRARY.md), which anchors
+retrieval practice, spacing, interleaving, feedback, self-explanation, worked
+examples, and related techniques in published research.
 
 Known limits: ingestion runs inside the request (idempotent and retryable, but a
 very large scanned PDF can exceed the function timeout) rather than on a durable
@@ -102,6 +122,8 @@ docs/
   DESIGN_SYSTEM.md     WebForge visual language and UI guardrails
   VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
   ROADMAP.md           ordered engineering plan
+  USER_TEST_CASES.md   next production user-test and release cases
+  STUDY_METHOD_LIBRARY.md evidence-backed study-method catalog + product mapping
   AI_HANDOFF.md        rules for Opus/SuperGrok/Astra/etc.
 ```
 
@@ -161,7 +183,9 @@ Read these files in order before making major changes:
 2. `docs/ARCHITECTURE.md`
 3. `docs/AUTH.md`
 4. `docs/DESIGN_SYSTEM.md`
-5. `docs/ROADMAP.md`
-6. `docs/AI_HANDOFF.md`
+5. `docs/STUDY_METHOD_LIBRARY.md`
+6. `docs/USER_TEST_CASES.md`
+7. `docs/ROADMAP.md`
+8. `docs/AI_HANDOFF.md`
 
-The next engineer should preserve the shared Supabase identity/RLS model while making the upload → ingest → ask → cite loop real.
+The next engineer should treat the core loop as real and protect it while shipping the next learner-value loop: upload → understand/practice → **download a trustworthy study guide**.
