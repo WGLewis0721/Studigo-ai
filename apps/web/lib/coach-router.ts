@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   IDLE_COACH_STATE,
+  answerFromRetrievedContext,
   citationsUsedIn,
   decideOutcome,
   detectTurnIntent,
@@ -69,6 +70,11 @@ type CoachRouterDeps = {
   evaluateCoachAnswer: typeof evaluateCoachAnswer;
   generateCoachQuestion: typeof generateCoachQuestion;
   generateCoachFeedback: typeof generateCoachFeedback;
+  /** Grounded RAG used to answer a learner's mid-answer clarification
+   *  ("What does inherited mean?") from the room's own material, reusing the
+   *  same cited-answer path Ask mode uses rather than a second grounding
+   *  implementation. */
+  answerFromRetrievedContext: typeof answerFromRetrievedContext;
 };
 
 const defaultDeps: CoachRouterDeps = {
@@ -76,7 +82,8 @@ const defaultDeps: CoachRouterDeps = {
   fetchChunksByIds,
   evaluateCoachAnswer,
   generateCoachQuestion,
-  generateCoachFeedback
+  generateCoachFeedback,
+  answerFromRetrievedContext
 };
 
 /** Debug/telemetry shape for one Coach turn. Not persisted — logged only. */
@@ -84,7 +91,7 @@ export type CoachTurnLog = {
   stateBefore: CoachState["kind"];
   turnIntent: string;
   semanticScore: number | null;
-  outcome: CoachOutcome | "new_question";
+  outcome: CoachOutcome | "new_question" | "clarification";
   stateAfter: CoachState["kind"];
 };
 
@@ -222,6 +229,48 @@ export async function* runCoachTurn(args: {
     // reading of ordinary answer prose and silently skip grading.
     const effectiveIntent =
       intent === "answer" && evaluation.intent !== "conversation_control" ? evaluation.intent : intent;
+
+    // The learner asked their own genuine question instead of answering
+    // ("What does inherited mean?"). Only the semantic evaluator can spot
+    // this — the deterministic regex layer reads it as an answer attempt,
+    // and we deliberately do not decide it from lexical overlap with the
+    // question. It must not be graded as a wrong answer. Answer it from the
+    // room's own material with a fresh retrieval, then explicitly hand the
+    // pending question back so the learner is never quietly bumped off it.
+    if (effectiveIntent === "clarification") {
+      const clarificationChunks = await deps.retrieveForRoom({
+        supabase,
+        roomId,
+        query: question,
+        matchCount: 8
+      });
+      const grounded = await deps.answerFromRetrievedContext({
+        question,
+        chunks: clarificationChunks,
+        instructions: pedagogyDirectives.length ? pedagogyDirectives.join("\n") : undefined
+      });
+
+      // The pending question is preserved unchanged and re-persisted, so the
+      // next turn is still routed as an answer to it rather than reset.
+      await saveCoachState(supabase, conversationId, state);
+
+      const returnPrompt = `\n\nNow, back to the question: ${state.question}`;
+      yield { type: "delta", text: grounded.text };
+      yield { type: "delta", text: returnPrompt };
+      const text = grounded.text + returnPrompt;
+      yield {
+        type: "done",
+        answer: { text, citations: grounded.citations, grounded: grounded.grounded }
+      };
+      return {
+        stateBefore: state.kind,
+        turnIntent: effectiveIntent,
+        semanticScore: null,
+        outcome: "clarification",
+        stateAfter: "awaiting_answer"
+      };
+    }
+
     const score = scoreConcepts(state.expectedConcepts, evaluation.concepts);
     const outcome = decideOutcome({
       intent: effectiveIntent,

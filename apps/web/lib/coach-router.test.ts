@@ -46,6 +46,25 @@ async function drain<T>(generator: AsyncGenerator<unknown, T>): Promise<T> {
   return result.value;
 }
 
+type DoneEvent = { type: "done"; answer: { text: string; citations: Array<{ marker: number; chunkId: string }>; grounded: boolean } };
+
+/**
+ * Drains a Coach turn while capturing the final `done` stream event, so a
+ * test can assert on the surfaced answer (text, citations, grounded flag)
+ * without re-running the generator.
+ */
+async function drainCollectingDone<T>(generator: AsyncGenerator<unknown, T>): Promise<DoneEvent> {
+  let doneEvent: DoneEvent | undefined;
+  let result = await generator.next();
+  while (!result.done) {
+    const event = result.value as { type?: string };
+    if (event?.type === "done") doneEvent = event as DoneEvent;
+    result = await generator.next();
+  }
+  if (!doneEvent) throw new Error("Coach turn ended without emitting a done event");
+  return doneEvent;
+}
+
 const topics: Topic[] = [];
 
 test("a Coach-state load failure surfaces as a thrown error instead of silently resetting to idle", async () => {
@@ -305,4 +324,374 @@ test("pedagogy directives are threaded into generateCoachQuestion when opening a
   );
 
   assert.deepEqual(receivedDirectives, ["[FEYNMAN] Explain like teaching a curious beginner."]);
+});
+
+// ---------------------------------------------------------------------------
+// Citation-marker regression: a [n] in Coach prose must resolve to real
+// source chunk n (in the order chunks were presented), and `grounded` must
+// track whether a source was actually cited — never true with zero citations,
+// never false when the prose cited a valid marker.
+// ---------------------------------------------------------------------------
+
+const twoChunks: RetrievedChunk[] = [
+  { id: "chunk-A", documentId: "doc-A", documentName: "Genetics Guide", content: "Traits pass from parents to offspring.", similarity: 0.9 },
+  { id: "chunk-B", documentId: "doc-B", documentName: "Biology Textbook", content: "Alleles vary across a population.", similarity: 0.8 }
+];
+
+const genderNeutralTopic: Topic = {
+  id: "topic-1",
+  title: "Heredity",
+  objective: null,
+  key_terms: [],
+  priority: 1,
+  order_index: 0,
+  active: true
+} as unknown as Topic;
+
+test("a [n] marker in a freshly opened Coach question resolves to source chunk n and reports grounded", async () => {
+  const done = await drainCollectingDone(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: { version: 1, kind: "idle" } }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "coach me on heredity",
+      topics: [genderNeutralTopic],
+      deps: {
+        retrieveForRoom: async () => twoChunks,
+        generateCoachQuestion: async () => ({
+          question: "How do traits pass to offspring [1], and why do they vary [2]?",
+          expectedConcepts: [],
+          sourceChunkIds: ["chunk-A", "chunk-B"],
+          sourceMarkers: [1, 2]
+        })
+      }
+    })
+  );
+
+  assert.equal(done.answer.grounded, true);
+  assert.deepEqual(done.answer.citations.map((c) => c.marker), [1, 2]);
+  // marker 1 -> chunk-A, marker 2 -> chunk-B, in presented order.
+  assert.equal(done.answer.citations[0].chunkId, "chunk-A");
+  assert.equal(done.answer.citations[1].chunkId, "chunk-B");
+});
+
+test("a Coach question with no [n] markers is reported grounded:false with no citations", async () => {
+  const done = await drainCollectingDone(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: { version: 1, kind: "idle" } }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "coach me on heredity",
+      topics: [genderNeutralTopic],
+      deps: {
+        retrieveForRoom: async () => twoChunks,
+        generateCoachQuestion: async () => ({
+          question: "In your own words, how does heredity work?",
+          expectedConcepts: [],
+          sourceChunkIds: ["chunk-A"],
+          sourceMarkers: []
+        })
+      }
+    })
+  );
+
+  assert.equal(done.answer.grounded, false);
+  assert.deepEqual(done.answer.citations, []);
+});
+
+test("a [n] marker in grading feedback resolves to the pending question's own source chunk n and reports grounded", async () => {
+  const done = await drainCollectingDone(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: awaitingAnswerState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "The moon's gravity pulls the oceans.",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({ intent: "answer", concepts: [{ id: "gravity", status: "demonstrated" }] }),
+        generateCoachFeedback: async () => "Exactly — the moon's gravity drives the tides [1]."
+      }
+    })
+  );
+
+  assert.equal(done.answer.grounded, true);
+  assert.deepEqual(done.answer.citations.map((c) => c.marker), [1]);
+  assert.equal(done.answer.citations[0].chunkId, "chunk-1");
+});
+
+test("uncited grading feedback is grounded:false even when the answer is correct", async () => {
+  const done = await drainCollectingDone(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: awaitingAnswerState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "The moon's gravity pulls the oceans.",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({ intent: "answer", concepts: [{ id: "gravity", status: "demonstrated" }] }),
+        generateCoachFeedback: async () => "Nice — that's exactly it."
+      }
+    })
+  );
+
+  assert.equal(done.answer.grounded, false);
+  assert.deepEqual(done.answer.citations, []);
+});
+
+// ---------------------------------------------------------------------------
+// Clarification intent (C): a genuine learner question mid-answer is answered
+// from the material and the pending question is restored — never graded.
+// ---------------------------------------------------------------------------
+
+test("a clarification question mid-answer is answered from the material, is never graded, and preserves+returns to the pending question", async () => {
+  const supabase = fakeSupabase({
+    loadResult: { data: { coach_state: awaitingAnswerState }, error: null }
+  });
+
+  let retrieveForRoomCalls = 0;
+  let clarificationQuery: string | undefined;
+  let evaluateCalled = false;
+  let feedbackCalled = false;
+
+  const done = await drainCollectingDone(
+    runCoachTurn({
+      supabase,
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "Wait, what does gravitational pull actually mean?",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => {
+          evaluateCalled = true;
+          return { intent: "clarification", concepts: [] };
+        },
+        retrieveForRoom: async (args) => {
+          retrieveForRoomCalls += 1;
+          clarificationQuery = (args as { query: string }).query;
+          return [fakeChunk];
+        },
+        answerFromRetrievedContext: async () => ({
+          text: "Gravitational pull is the force the moon exerts on Earth's water [1].",
+          citations: [{ marker: 1, chunkId: "chunk-1", documentId: "source-1", documentName: "Tides Reading", pageNumber: null, pageLabel: "page" } as never],
+          grounded: true
+        }),
+        generateCoachFeedback: async () => {
+          feedbackCalled = true;
+          return "should not be called";
+        }
+      }
+    })
+  );
+
+  // Answered with a fresh grounded retrieval keyed on the clarification text.
+  assert.equal(retrieveForRoomCalls, 1);
+  assert.equal(clarificationQuery, "Wait, what does gravitational pull actually mean?");
+  // Never graded: the clarification branch runs before scoring/feedback.
+  assert.equal(feedbackCalled, false);
+  // The grounded answer is surfaced and the pending question is handed back.
+  assert.match(done.answer.text, /Gravitational pull is the force/);
+  assert.match(done.answer.text, /Now, back to the question: What causes tides\?/);
+  assert.equal(done.answer.grounded, true);
+  // evaluateCoachAnswer must run first (it is what classifies clarification).
+  assert.equal(evaluateCalled, true);
+});
+
+test("a clarification turn stays in awaiting_answer (the pending question is never dropped)", async () => {
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: awaitingAnswerState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "What does gravitational pull mean?",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({ intent: "clarification", concepts: [] }),
+        retrieveForRoom: async () => [fakeChunk],
+        answerFromRetrievedContext: async () => ({ text: "It is the moon's force [1].", citations: [{ marker: 1 } as never], grounded: true }),
+        generateCoachFeedback: async () => "should not be called"
+      }
+    })
+  );
+
+  assert.equal(log.turnIntent, "clarification");
+  assert.equal(log.outcome, "clarification");
+  assert.equal(log.stateBefore, "awaiting_answer");
+  assert.equal(log.stateAfter, "awaiting_answer");
+  assert.equal(log.semanticScore, null);
+});
+
+// ---------------------------------------------------------------------------
+// Production regression sequence (D): the exact learner turns from the review
+// that used to misbehave, each pinned to its correct outcome and next state.
+// ---------------------------------------------------------------------------
+
+const variationQuestionState = {
+  version: 1,
+  kind: "awaiting_answer",
+  question: "What are some ways offspring can vary from their parents, and why does that variation happen?",
+  topicId: "topic-1",
+  expectedConcepts: [
+    { id: "examples", description: "concrete examples of variation such as height, color, or patterns", weight: 0.5 },
+    { id: "mechanism", description: "why variation happens (genetic recombination / mutation)", weight: 0.5 }
+  ],
+  sourceChunkIds: ["chunk-1"],
+  askedAt: new Date().toISOString()
+};
+
+test("regression: a partially-correct answer ('height, color, or patterns') is graded partial, keeps the pending question, and never re-retrieves the raw reply", async () => {
+  let retrieveForRoomCalls = 0;
+
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: variationQuestionState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "Things like their height, color, or patterns",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        retrieveForRoom: async () => {
+          retrieveForRoomCalls += 1;
+          return [fakeChunk];
+        },
+        evaluateCoachAnswer: async () => ({
+          intent: "answer",
+          concepts: [
+            { id: "examples", status: "demonstrated" },
+            { id: "mechanism", status: "absent" }
+          ]
+        }),
+        generateCoachFeedback: async () => "Good — those are real examples. Now, why does that variation actually happen?"
+      }
+    })
+  );
+
+  assert.equal(log.outcome, "partial");
+  assert.equal(log.stateAfter, "awaiting_answer");
+  assert.equal(retrieveForRoomCalls, 0);
+});
+
+test("regression: an off-topic answer ('pizza') is graded irrelevant and keeps the pending question", async () => {
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: variationQuestionState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "pizza",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({ intent: "irrelevant", concepts: [] }),
+        generateCoachFeedback: async () => "That doesn't address the question — want a hint?"
+      }
+    })
+  );
+
+  assert.equal(log.outcome, "irrelevant");
+  assert.equal(log.stateAfter, "awaiting_answer");
+});
+
+test("regression: a complete natural paraphrase is graded correct and advances to awaiting_control", async () => {
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: variationQuestionState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "Kids can look different in height or color, and it happens because they get a mix of genes from both parents plus the odd mutation.",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({
+          intent: "answer",
+          concepts: [
+            { id: "examples", status: "demonstrated" },
+            { id: "mechanism", status: "demonstrated" }
+          ]
+        }),
+        generateCoachFeedback: async () => "That's exactly right."
+      }
+    })
+  );
+
+  assert.equal(log.outcome, "correct");
+  assert.equal(log.stateAfter, "awaiting_control");
+});
+
+test("regression: 'I don't know' is a help request, not a wrong answer, and keeps the pending question", async () => {
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: variationQuestionState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "I don't know, can you give me a hint?",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        // detectTurnIntent classifies this as help_request deterministically;
+        // the evaluator result is ignored for intent in that case.
+        evaluateCoachAnswer: async () => ({ intent: "answer", concepts: [] }),
+        generateCoachFeedback: async () => "Here's a nudge: think about what parents pass down."
+      }
+    })
+  );
+
+  assert.equal(log.turnIntent, "help_request");
+  assert.equal(log.outcome, "help");
+  assert.equal(log.stateAfter, "awaiting_answer");
+});
+
+test("regression: 'next' while a question is pending exits to idle without grading", async () => {
+  let evaluateCalled = false;
+
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: variationQuestionState }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "next",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => {
+          evaluateCalled = true;
+          return { intent: "answer", concepts: [] };
+        }
+      }
+    })
+  );
+
+  assert.equal(log.turnIntent, "conversation_control");
+  assert.equal(log.outcome, "control");
+  assert.equal(log.stateAfter, "idle");
+  assert.equal(evaluateCalled, false);
+});
+
+test("regression: partial source loss halts grading entirely (never grade against incomplete evidence)", async () => {
+  let evaluateCalled = false;
+
+  const log = await drain(
+    runCoachTurn({
+      supabase: fakeSupabase({ loadResult: { data: { coach_state: { ...variationQuestionState, sourceChunkIds: ["chunk-1", "chunk-2"] } }, error: null } }),
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "Things like height and color",
+      topics,
+      deps: {
+        // Only one of the two original chunks still resolves.
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => {
+          evaluateCalled = true;
+          return { intent: "answer", concepts: [] };
+        }
+      }
+    })
+  );
+
+  assert.equal(evaluateCalled, false);
+  assert.equal(log.outcome, "control");
+  assert.equal(log.stateAfter, "idle");
 });

@@ -100,7 +100,20 @@ function isExpectedConcept(value: unknown): value is ExpectedConcept {
 // actually needs to route (invariant from the spec, section 7).
 // ---------------------------------------------------------------------------
 
-export type TurnIntent = "answer" | "irrelevant" | "help_request" | "show_answer" | "conversation_control";
+export type TurnIntent =
+  | "answer"
+  | "irrelevant"
+  | "help_request"
+  | "show_answer"
+  | "conversation_control"
+  // The learner asked their own genuine question while a Coach question was
+  // pending ("What does inherited mean?"). This is neither an answer attempt
+  // nor a discourse move — it must be answered from the material and then the
+  // pending question restored, never graded as a wrong answer. Only the
+  // semantic evaluator can recognize it; the deterministic regex layer
+  // (detectTurnIntent) cannot, and lexical similarity to the question is
+  // deliberately not used as the signal.
+  | "clarification";
 
 const AFFIRM_PATTERN = /^(yes|yeah|yep|yup|sure|ok|okay|please|go\s*ahead|sounds\s+good|let'?s\s+go)[.!]?$/i;
 const DECLINE_PATTERN = /^(no|nope|nah|not\s+now|no\s+thanks)[.!]?$/i;
@@ -292,7 +305,10 @@ const EVAL_SCHEMA = {
   additionalProperties: false,
   required: ["intent", "concepts"],
   properties: {
-    intent: { type: "string", enum: ["answer", "irrelevant", "help_request", "show_answer", "conversation_control"] },
+    intent: {
+      type: "string",
+      enum: ["answer", "irrelevant", "help_request", "show_answer", "conversation_control", "clarification"]
+    },
     concepts: {
       type: "array",
       items: {
@@ -330,7 +346,8 @@ export async function evaluateCoachAnswer(args: {
   }>({
     system: [
       "You extract semantic evidence from a learner's reply to a Coach question. You do not decide what happens next — you only report what the reply shows.",
-      "Classify the reply's intent: answer (any attempt to respond to the question, including partial, example-based, or informal replies), irrelevant (off-topic or nonsensical), help_request (asking for a hint or admitting they do not know), show_answer (explicitly asking to be told the answer), or conversation_control (a short discourse move like yes/no/next that carries no content).",
+      "Classify the reply's intent: answer (any attempt to respond to the question, including partial, example-based, or informal replies), irrelevant (off-topic or nonsensical), help_request (asking for a hint or admitting they do not know), show_answer (explicitly asking to be told the answer), conversation_control (a short discourse move like yes/no/next that carries no content), or clarification (the learner is asking their own genuine question instead of answering — e.g. asking what a word or concept in the question means, or asking a related question they want answered first).",
+      "Distinguish clarification from answer carefully: a reply that tries to explain, apply, or exemplify the idea is an answer even if it is wrong or incomplete; a reply that instead poses a question back to you (asking for a definition or explanation) is a clarification. When it is genuinely a question the learner wants answered before they can respond, choose clarification. Do not base this on how many words the reply shares with the question.",
       "For every expected concept, decide: demonstrated (clearly shown, in any wording, including examples or everyday vocabulary), partial (gestured at or incomplete), absent (not addressed at all), or contradicted (the reply states something incompatible with it).",
       "Judge meaning, not wording. A correct idea in different vocabulary, a valid example instead of a definition, and a typo-heavy but recognizable answer must never be marked absent just because it does not repeat the source's phrasing.",
       "Never require verbatim overlap with the source excerpts.",
