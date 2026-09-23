@@ -208,11 +208,31 @@ const CHUNK = {
   priority: 90
 };
 
+// A pool of genuinely distinct subjects so a mock `generate` can stand in for
+// a model that has enough unique material to draw on. Two prompts built from
+// different subjects share only "explain"/"effect" (Jaccard ~0.5), so they
+// stay under the near-duplicate threshold — unlike prompts that differ by a
+// single index number, which the dedup layer rightly collapses.
+const DISTINCT_SUBJECTS = [
+  "gravity", "friction", "momentum", "inertia", "acceleration",
+  "velocity", "buoyancy", "tension", "torque", "magnetism",
+  "elasticity", "density", "thrust", "drag", "compression",
+  "vibration", "rotation", "collision", "expansion", "conduction",
+  "radiation", "convection", "reflection", "refraction", "resonance",
+  "oscillation", "turbulence", "viscosity", "cohesion", "adhesion",
+  "capillarity", "sublimation", "condensation", "evaporation", "crystallization",
+  "diffraction", "polarization", "ionization", "combustion", "fermentation"
+];
+let subjectCursor = 0;
+function distinctQuestion(): GeneratedQuestion {
+  const subject = DISTINCT_SUBJECTS[subjectCursor % DISTINCT_SUBJECTS.length];
+  subjectCursor += 1;
+  return question({ prompt: `Explain the effect of ${subject} here?` });
+}
+
 test("buildPracticeQuestionSet returns exactly the requested count when the model has enough unique material", async () => {
-  let call = 0;
   const generate = async ({ count }: { count: number }) => {
-    call += 1;
-    return Array.from({ length: count }, (_, index) => question({ prompt: `Unique question ${call}-${index} about forces?` }));
+    return Array.from({ length: count }, () => distinctQuestion());
   };
   const result = await buildPracticeQuestionSet({ chunks: [CHUNK], count: 10, generate: generate as never });
   assert.equal(result.length, 10);
@@ -228,7 +248,7 @@ test("buildPracticeQuestionSet tops up with additional attempts when the first b
       // The model returns mostly the same question restated — realistic failure mode.
       return Array.from({ length: count }, () => question({ prompt: "What happens when forces on an object are balanced?" }));
     }
-    return Array.from({ length: count }, (_, index) => question({ prompt: `Fresh question ${call}-${index} about unbalanced forces?` }));
+    return Array.from({ length: count }, () => distinctQuestion());
   };
   const result = await buildPracticeQuestionSet({ chunks: [CHUNK], count: 5, generate: generate as never });
   assert.equal(result.length, 5);
