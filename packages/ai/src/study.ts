@@ -407,7 +407,9 @@ export async function gradeShortAnswer(args: {
     "Score the understanding, not the wording: a correct idea in the learner's own words scores high; a right-sounding phrase with the wrong idea does not.",
     "Never require the learner to reproduce the model answer verbatim, use identical vocabulary, or match its sentence structure. Equivalent meaning counts.",
     "score 85-100: correct and complete. 60-84: the core idea with a gap. 30-59: partly right. 0-29: incorrect or empty.",
-    "For a partial answer, feedback should preserve what is correct and give one concrete nudge toward the missing idea. For an incorrect answer, briefly teach the missing idea rather than only saying it is wrong.",
+    "For a partial answer, feedback should preserve what is correct and give one concrete nudge toward the missing idea. A partially correct answer is not fully correct just because it contains some expected terms.",
+    "If the learner gives a non-responsive or unrelated answer, do not merely say wrong and do not pretend it is a content misconception. Briefly redirect to what the question is asking, rephrase it more simply, and give one useful hint from the model answer/context.",
+    "Example policy: if a source expects the concrete forms ice, liquid water, and water vapor, a response like 'solid, liquid, gas' demonstrates the concept but may receive partial credit if the question asks for the concrete forms; semantically equivalent examples should receive full credit even when phrased differently.",
     "Feedback is two sentences at most, addressed to the learner. Never invent material beyond the model answer and context.",
     UNTRUSTED_MATERIAL_RULE
   ].join(" ");
@@ -428,7 +430,7 @@ export async function gradeShortAnswer(args: {
   });
 
   const score = Math.min(100, Math.max(0, Math.round(result.score)));
-  return { score, isCorrect: score >= 60, feedback: result.feedback.trim() };
+  return { score, isCorrect: score >= 85, feedback: result.feedback.trim() };
 }
 
 // ---------------------------------------------------------------------------
