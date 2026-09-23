@@ -97,7 +97,15 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: demoAnswer, grounded: true, streaming: false, citations: [{ documentId: "source", documentName: "Fifth Grade Science study guide.pdf", pageNumber: 1, pageLabel: "Page" }] } : message));
         return;
       }
-      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId, question: `[COACHING STYLE: ${style.name}] ${style.instruction}\n\n[LEARNING TRADITION: ${tradition.name}] ${tradition.instruction}\n\n[PRACTICE PROTOCOL: ${practice.name}] ${practice.instruction}\n\nLearner request: ${text}`, conversationId: conversationId.current }) });
+      // The learner's question stays clean for retrieval; pedagogy choices
+      // travel as separate directives so they only ever shape how the coach
+      // answers, never what gets searched for.
+      const directives = [
+        { name: "Coaching style", instruction: style.instruction },
+        { name: "Learning tradition", instruction: tradition.instruction },
+        { name: "Practice protocol", instruction: practice.instruction }
+      ];
+      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId, question: text, directives, conversationId: conversationId.current }) });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {
