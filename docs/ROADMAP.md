@@ -1,6 +1,31 @@
 # Studigo Engineering Roadmap
 
-The order matters. Do not spend a week polishing the dashboard before ingestion and grounded retrieval work.
+The order matters. The core product loop now works in production, so the
+priority has changed from proving the architecture to proving repeatable learner
+value.
+
+## Current P0 — Downloadable study guide
+
+The #1 missing user-facing feature is a simple way to **download the study guide
+Studigo has built from the room**.
+
+First-release acceptance:
+
+- one visible **Download study guide** action from the Study Room;
+- PDF is the default and requires no format picker;
+- file opens on desktop/mobile and prints cleanly;
+- current topic order and learner edits are preserved;
+- concise explanations/key facts remain grounded in room sources;
+- references let the learner trace important claims back to source material;
+- include check-yourself/retrieval prompts so the PDF supports active recall;
+- insufficient source evidence produces an honest in-product state instead of a
+  polished-looking fabricated guide;
+- export does not change mastery, attempts, scheduling, topics, or source files.
+
+Canonical acceptance test: [`USER_TEST_CASES.md`](USER_TEST_CASES.md).
+
+The order still matters: protect the working create → upload → study flow while
+shipping outputs and validating them with real learners.
 
 ## Phase 0 — Foundation (this scaffold)
 
@@ -137,7 +162,44 @@ Exit: Studigo can teach and test against the same source-grounded topic map.
 
 Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 
-## Active blocker — Coach practice-set generation
+## Phase 3.5 — Export + real-user validation (current)
+
+### Downloadable study guide
+- [ ] One-click PDF export from a Study Room.
+- [ ] Source-grounded topic summaries/key facts.
+- [ ] Current learner-edited topic wording/order.
+- [ ] Source references/citations in the exported artifact.
+- [ ] Embedded retrieval/check-yourself prompts.
+- [ ] Honest empty/insufficient-evidence state.
+- [ ] Mobile download/open validation.
+- [ ] Printable layout validation.
+- [ ] Export regression tests: does not mutate mastery/practice/source state.
+
+### Next user-validation cycle
+- [ ] Run the canonical cases in [`USER_TEST_CASES.md`](USER_TEST_CASES.md).
+- [ ] Re-test the create-room mobile 404 regression on iPhone/Safari.
+- [ ] Measure time-to-first-value and study-guide download success.
+- [ ] Observe whether users understand teacher-study-guide scope vs supporting
+      textbook/material scope.
+- [ ] Run the downloaded-guide trust questions with real learners.
+- [ ] Convert repeated user failures into focused regression tests before adding
+      more surfaces.
+
+### Evidence-backed study methods
+- [x] Canonical method/evidence library documented in
+      [`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md).
+- [ ] Audit Learn/Quiz/Flashcards/Practice Test/Weak Areas against that mapping.
+- [ ] Prefer retrieval + feedback over passive review where both are plausible.
+- [ ] Verify spacing logic is adaptive and never marketed as one universally
+      optimal fixed interval.
+- [ ] Add interleaving where learners must discriminate among problem types.
+- [ ] Use self-explanation/worked examples as contextual teaching tools rather
+      than replacements for retrieval.
+
+Exit: a learner can complete create → upload → study → **download**, and the
+artifact is trusted enough to print/use without manual reconstruction.
+
+## Active investigation — Coach practice-set generation
 
 Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
 [`../ATTEMPTED_FIXES.md`](../ATTEMPTED_FIXES.md).
@@ -216,13 +278,28 @@ Only after individual-student value is proven:
 
 ## Immediate next 10 engineering tasks
 
-1. Connect Supabase project and apply initial migration.
-2. Implement Supabase SSR auth foundation plus `/login` and `/auth/callback`; start with Google OAuth, then Apple/Microsoft and email fallback.
-3. Implement Study Room CRUD and verify two-user RLS isolation.
-4. Build upload/file-manager UI against existing endpoints.
-5. Choose and implement ingestion queue/worker.
-6. Implement PDF/TXT parsing first; add DOCX/PPTX next.
-7. Chunk and embed into `document_chunks`.
-8. Test `/api/chat` against real uploaded material.
-9. Add citations/source preview and persisted conversations.
-10. Create a 25–50 question RAG eval set before tuning retrieval.
+1. **Ship one-click Study Guide PDF download.** This is the current P0.
+2. Add focused export tests for grounding, learner edits/removals, empty rooms,
+   filenames, PDF response headers, and non-mutation of mastery/practice state.
+3. Run the production user-test suite in
+   [`USER_TEST_CASES.md`](USER_TEST_CASES.md), starting with mobile room creation
+   and Study Guide download.
+4. Validate downloaded-guide trust: source traceability, usefulness, printability,
+   and whether a learner would use it instead of rebuilding a guide manually.
+5. Audit the study surfaces against
+   [`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md): retrieval, spacing,
+   feedback, interleaving, self-explanation, and worked examples.
+6. Add automated two-user RLS integration tests for rooms, documents, citations,
+   downloads, and mutations.
+7. Move ingestion off request-bound execution onto a durable retryable worker
+   before large-document volume makes timeouts a common user failure.
+8. Build the 25–50 item grounded RAG/citation eval set and run it before retrieval
+   or model changes.
+9. Finish deployed Coach "give me N questions" verification and remove temporary
+   test bypasses before beta.
+10. Instrument production failure modes and user-critical funnel steps:
+    create room → upload ready → first useful study action → Study Guide download.
+
+Do not replace these with another foundation rewrite. The architecture has
+crossed the threshold where user-value, regression prevention, and reliability
+matter more than adding parallel infrastructure.
