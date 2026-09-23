@@ -1,11 +1,12 @@
-import { notFound } from 'next/navigation';
 import { RoomWorkspace } from '@/components/room/workspace';
 import type { Topic } from '@/lib/rooms';
 
-// Preview-only fixture. Production always returns 404.
+// TEMP testing surface: synthetic-fixture coach with no account, no Supabase,
+// and no persistence. Exposed in production so the coach can be tested without
+// signing in (mirrors the temporary guest bypass). Revert to a dev-only 404 to
+// re-lock it. Try it at /dev/study?mode=coach.
 export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string}>}) {
-  if(process.env.NODE_ENV!=='development') notFound();
-  const {mode='weak',phone}=await searchParams;
+  const {mode='coach',phone}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
   const topics:Topic[]=[
