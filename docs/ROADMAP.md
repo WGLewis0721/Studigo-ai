@@ -185,16 +185,21 @@ Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 - [ ] Convert repeated user failures into focused regression tests before adding
       more surfaces.
 
-### Evidence-backed study methods
-- [x] Canonical method/evidence library documented in
-      [`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md).
-- [ ] Audit Learn/Quiz/Flashcards/Practice Test/Weak Areas against that mapping.
-- [ ] Prefer retrieval + feedback over passive review where both are plausible.
-- [ ] Verify spacing logic is adaptive and never marketed as one universally
-      optimal fixed interval.
-- [ ] Add interleaving where learners must discriminate among problem types.
-- [ ] Use self-explanation/worked examples as contextual teaching tools rather
-      than replacements for retrieval.
+### Teaching + coaching knowledge base
+- [x] Inventory the live Coach taxonomy directly from
+      `apps/web/components/room/coach-panel.tsx`.
+- [x] Map every coaching style, learning tradition, and practice recipe to the
+      closest documented real-world paradigm in
+      [`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md).
+- [x] Store each option as retrieval-friendly Markdown with stable YAML metadata,
+      examples, use cases, cautions, and sources.
+- [x] Mark Studigo composites and product policies explicitly instead of
+      presenting them as named research traditions.
+- [ ] Wire Coach directive construction to retrieve these records rather than
+      keeping the research rationale only in documentation.
+- [ ] Review the two country-labelled composites ("Japanese-inspired" and
+      "Swedish-inspired") against the KB before changing their production prompt
+      wording.
 
 Exit: a learner can complete create → upload → study → **download**, and the
 artifact is trusted enough to print/use without manual reconstruction.
@@ -286,9 +291,9 @@ Only after individual-student value is proven:
    and Study Guide download.
 4. Validate downloaded-guide trust: source traceability, usefulness, printability,
    and whether a learner would use it instead of rebuilding a guide manually.
-5. Audit the study surfaces against
-   [`STUDY_METHOD_LIBRARY.md`](STUDY_METHOD_LIBRARY.md): retrieval, spacing,
-   feedback, interleaving, self-explanation, and worked examples.
+5. Wire the Coach's style/tradition/practice directives to the canonical
+   [`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md)
+   records so the current UI taxonomy and its research grounding cannot drift.
 6. Add automated two-user RLS integration tests for rooms, documents, citations,
    downloads, and mutations.
 7. Move ingestion off request-bound execution onto a durable retryable worker
