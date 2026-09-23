@@ -19,6 +19,9 @@ export default async function LoginPage({
       {error && <p className="formError" role="alert">Sign-in did not finish. Please try again.</p>}
       <GoogleSignIn next={next ?? "/app"} />
       <AuthForm mode="signin" action={signInAction} next={next ?? "/app"} />
+      <p className="authDemoLink">
+        Just exploring? <a href="/dev/study">Preview the coach</a>
+      </p>
     </>
   );
 }

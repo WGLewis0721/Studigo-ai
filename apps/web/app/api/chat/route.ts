@@ -1,6 +1,6 @@
-import { streamGroundedAnswer } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
-import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
+import { assertRoomAccess } from "@/lib/retrieval";
+import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -9,7 +9,20 @@ type ChatRequest = {
   roomId?: string;
   question?: string;
   conversationId?: string | null;
+  /** Pedagogy choices from the UI (coaching style, learning tradition,
+   *  practice protocol). Kept separate from `question` so they only ever
+   *  shape the system prompt and never the retrieval query. */
+  directives?: EngineDirective[];
 };
+
+function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
+  if (!Array.isArray(input)) return undefined;
+  const cleaned = input
+    .filter((item): item is EngineDirective => Boolean(item) && typeof item === "object" && typeof (item as EngineDirective).name === "string" && typeof (item as EngineDirective).instruction === "string")
+    .map((item) => ({ name: item.name.slice(0, 60), instruction: item.instruction.slice(0, 600) }))
+    .slice(0, 8);
+  return cleaned.length ? cleaned : undefined;
+}
 
 /**
  * Ask Studigo: retrieve inside this room only, answer from what came back, and
@@ -71,15 +84,7 @@ export async function POST(request: Request) {
     .from("messages")
     .insert({ conversation_id: conversationId, role: "user", content: question });
 
-  let chunks;
-  try {
-    chunks = await retrieveForRoom({ supabase, roomId, query: question });
-  } catch (error) {
-    return Response.json(
-      { error: error instanceof Error ? error.message : "Retrieval failed" },
-      { status: 500 }
-    );
-  }
+  const directives = sanitizeDirectives(body?.directives);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -91,7 +96,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of streamGroundedAnswer({ question, chunks, history })) {
+        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

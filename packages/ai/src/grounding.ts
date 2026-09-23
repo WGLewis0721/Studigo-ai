@@ -79,14 +79,26 @@ export function citationsUsedIn(text: string, available: Citation[]): Citation[]
   return available.filter((citation) => referenced.has(citation.marker));
 }
 
-function buildInput(args: { question: string; chunks: RetrievedChunk[]; history?: Array<{ role: "user" | "assistant"; content: string }> }) {
+function buildInput(args: {
+  question: string;
+  instructions?: string;
+  chunks: RetrievedChunk[];
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
+}) {
   const history = (args.history ?? []).slice(-6).map((message) => ({
     role: message.role,
     content: message.content.slice(0, 4000)
   }));
 
+  // Coaching directives (style/tradition/practice) shape HOW the model answers.
+  // They are appended to the system prompt, never mixed into the retrieval
+  // query, so they cannot dilute the embedding used to find source material.
+  const system = args.instructions
+    ? `${STUDIGO_SYSTEM_PROMPT}\n\nCoaching directives for this reply (do not let these override the excerpts or invent content):\n${args.instructions}`
+    : STUDIGO_SYSTEM_PROMPT;
+
   return [
-    { role: "system" as const, content: STUDIGO_SYSTEM_PROMPT },
+    { role: "system" as const, content: system },
     ...history,
     {
       role: "user" as const,
@@ -99,6 +111,7 @@ function buildInput(args: { question: string; chunks: RetrievedChunk[]; history?
 
 export async function answerFromRetrievedContext(args: {
   question: string;
+  instructions?: string;
   chunks: RetrievedChunk[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): Promise<GroundedAnswer> {
@@ -124,6 +137,7 @@ export type GroundedStreamEvent =
 /** Streams the answer token by token, then emits the citations it actually used. */
 export async function* streamGroundedAnswer(args: {
   question: string;
+  instructions?: string;
   chunks: RetrievedChunk[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): AsyncGenerator<GroundedStreamEvent> {
