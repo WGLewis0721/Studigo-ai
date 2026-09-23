@@ -3,7 +3,8 @@
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
-import { MATERIAL_NOTES } from "@/lib/fixture-materials";\nimport { coachMaterialLabel } from "@/lib/coach-material-state";
+import { MATERIAL_NOTES } from "@/lib/fixture-materials";
+import { coachMaterialLabel } from "@/lib/coach-material-state";
 
 type CoachingStyle = {
   id: string;
