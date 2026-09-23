@@ -246,3 +246,63 @@ test("answering a pending question never re-retrieves using the raw learner repl
   assert.equal(retrieveForRoomCalls, 0);
   assert.equal(fetchChunksByIdsCalls, 1);
 });
+
+test("pedagogy directives are formatted and threaded into generateCoachFeedback, but never influence the deterministic outcome", async () => {
+  const supabase = fakeSupabase({
+    loadResult: { data: { coach_state: awaitingAnswerState }, error: null }
+  });
+
+  let receivedDirectives: string[] | undefined;
+
+  const log = await drain(
+    runCoachTurn({
+      supabase,
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "The moon's gravity pulls the oceans.",
+      topics,
+      directives: [{ name: "socratic", instruction: "Favor guiding questions over direct statements." }],
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        evaluateCoachAnswer: async () => ({ intent: "answer", concepts: [{ id: "gravity", status: "demonstrated" }] }),
+        generateCoachFeedback: async (args) => {
+          receivedDirectives = args.pedagogyDirectives;
+          return "Nice — that's exactly it.";
+        }
+      }
+    })
+  );
+
+  assert.deepEqual(receivedDirectives, ["[SOCRATIC] Favor guiding questions over direct statements."]);
+  // Grading is unaffected by the directive — same outcome as the equivalent
+  // test above with no directives.
+  assert.equal(log.outcome, "correct");
+});
+
+test("pedagogy directives are threaded into generateCoachQuestion when opening a fresh question", async () => {
+  const supabase = fakeSupabase({
+    loadResult: { data: { coach_state: { version: 1, kind: "idle" } }, error: null }
+  });
+
+  let receivedDirectives: string[] | undefined;
+
+  await drain(
+    runCoachTurn({
+      supabase,
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "Let's talk about tides",
+      topics: [{ id: "topic-1", title: "Tides", objective: null, key_terms: [], priority: 1, order_index: 0, active: true } as unknown as Topic],
+      directives: [{ name: "feynman", instruction: "Explain like teaching a curious beginner." }],
+      deps: {
+        retrieveForRoom: async () => [fakeChunk],
+        generateCoachQuestion: async (args) => {
+          receivedDirectives = args.pedagogyDirectives;
+          return { question: "Why do tides happen?", expectedConcepts: [], sourceChunkIds: ["chunk-1"], sourceMarkers: [1] };
+        }
+      }
+    })
+  );
+
+  assert.deepEqual(receivedDirectives, ["[FEYNMAN] Explain like teaching a curious beginner."]);
+});

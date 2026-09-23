@@ -70,7 +70,8 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
       roomId: args.roomId,
       conversationId: args.conversationId,
       question: args.question,
-      topics
+      topics,
+      directives: args.directives
     });
     return;
   }

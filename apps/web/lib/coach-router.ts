@@ -23,6 +23,18 @@ const CONTROL_ACTION_PROMPTS: Record<CoachControlAction, string> = {
   explain_again: "Explain that again."
 };
 
+/** Local mirror of engine.ts's EngineDirective — deliberately not imported
+ *  from @/lib/engine to avoid a circular import (engine.ts imports this
+ *  module). Same shape: a named teaching-style/tradition choice from the UI,
+ *  sanitized before it ever reaches a system prompt. */
+type PedagogyDirective = { name: string; instruction: string };
+
+/** Formats directives exactly like engine.ts does for Ask mode, so Coach and
+ *  Ask read identically to the model. Phrasing-only — see coach.ts. */
+function formatPedagogyDirectives(directives: PedagogyDirective[] | undefined): string[] {
+  return (directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`);
+}
+
 /**
  * The model/retrieval calls `runCoachTurn` makes, gathered into one
  * injectable surface. Defaults are the real `@studigo/ai` and
@@ -107,10 +119,16 @@ export async function* runCoachTurn(args: {
   conversationId: string;
   question: string;
   topics: Topic[];
+  /** Sanitized teaching-style/tradition directives from the UI, same as
+   *  Ask mode's EngineDirective[]. Only affects how Coach phrases questions
+   *  and feedback — never the deterministic score, outcome, or source
+   *  truth (see coach.ts generateCoachQuestion/generateCoachFeedback). */
+  directives?: PedagogyDirective[];
   deps?: Partial<CoachRouterDeps>;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   const { supabase, roomId, conversationId, question, topics } = args;
   const deps: CoachRouterDeps = { ...defaultDeps, ...args.deps };
+  const pedagogyDirectives = formatPedagogyDirectives(args.directives);
   const state = await loadCoachState(supabase, conversationId);
   const intent = detectTurnIntent(question, state);
 
@@ -130,7 +148,7 @@ export async function* runCoachTurn(args: {
       // affirm/next: replay the pending action as the effective question.
       const effectiveQuestion = CONTROL_ACTION_PROMPTS[state.action];
       const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, effectiveQuestion);
-      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps });
+      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives });
       return { ...log, stateBefore: state.kind, turnIntent: intent };
     }
     // A genuinely new message while a control action is pending — most
@@ -197,7 +215,8 @@ export async function* runCoachTurn(args: {
       evaluated: evaluation.concepts,
       learnerResponse: question,
       outcome,
-      chunks
+      chunks,
+      pedagogyDirectives
     });
 
     yield { type: "delta", text: feedback };
@@ -235,7 +254,7 @@ export async function* runCoachTurn(args: {
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
   const topic = pickTopic(topics, question);
-  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps });
+  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives });
   return { ...log, stateBefore: state.kind, turnIntent: intent };
 }
 
@@ -252,6 +271,7 @@ async function* openCoachQuestion(args: {
   topics: Topic[];
   topic: Topic | undefined;
   deps: CoachRouterDeps;
+  pedagogyDirectives?: string[];
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   if (!args.topic) {
     const text = "Add a study guide topic first — I need at least one active topic in this room before I can coach it.";
@@ -278,7 +298,8 @@ async function* openCoachQuestion(args: {
   const coachQuestion = await args.deps.generateCoachQuestion({
     topicTitle: args.topic.title,
     objective: args.topic.objective,
-    chunks
+    chunks,
+    pedagogyDirectives: args.pedagogyDirectives
   });
 
   const nextState: CoachState = {

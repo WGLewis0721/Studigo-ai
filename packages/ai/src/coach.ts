@@ -213,6 +213,12 @@ export async function generateCoachQuestion(args: {
   topicTitle: string;
   objective: string | null;
   chunks: RetrievedChunk[];
+  /** Sanitized [NAME] instruction lines from the learner's chosen teaching
+   *  style/tradition (see engine.ts EngineDirective). These may only steer
+   *  *phrasing* — tone, framing, question style — never the concepts,
+   *  weights, criticality, or source markers, which stay fully determined
+   *  by the material itself. */
+  pedagogyDirectives?: string[];
 }): Promise<CoachQuestion> {
   if (!args.chunks.length) {
     return {
@@ -234,6 +240,12 @@ export async function generateCoachQuestion(args: {
       "List 2-4 underlying concepts that together constitute a correct answer. Each concept needs a short id, a plain description of what demonstrating it looks like, a positive weight, and whether it is critical (a critical concept that the learner directly contradicts means the answer cannot be marked correct, no matter the other concepts).",
       "Weights must be positive numbers whose sum is 1 across all concepts for this question.",
       "The question and every concept must be answerable and verifiable from the supplied excerpts alone.",
+      ...(args.pedagogyDirectives?.length
+        ? [
+            "The learner has chosen a teaching style/tradition below. Apply it only to how you phrase the question — never to which concepts you list, their weights, or criticality:",
+            ...args.pedagogyDirectives
+          ]
+        : []),
       UNTRUSTED_MATERIAL_RULE
     ].join(" "),
     user: [
@@ -416,6 +428,11 @@ export async function generateCoachFeedback(args: {
   learnerResponse: string;
   outcome: CoachOutcome;
   chunks: RetrievedChunk[];
+  /** Same sanitized [NAME] instruction lines as generateCoachQuestion —
+   *  phrasing/tone only. The outcome (and therefore what pedagogically
+   *  must happen next) is passed in already decided and is never
+   *  influenced by these directives. */
+  pedagogyDirectives?: string[];
 }): Promise<string> {
   const statusById = new Map(args.evaluated.map((concept) => [concept.id, concept.status]));
   const conceptSummary = args.expectedConcepts.map((concept) => ({
@@ -439,6 +456,12 @@ export async function generateCoachFeedback(args: {
       "At most three sentences, addressed directly to the learner. Cite with [n] only when stating a fact the numbered excerpts actually support.",
       "If you give an example, use one drawn from the excerpts whenever possible. If you must give an example that is not in the excerpts, say plainly that it is a general example and not from the uploaded material — never attach a source citation to an example the excerpts do not contain.",
       "Never say the material is insufficient because of how the learner replied; that framing is reserved for cases where the room genuinely has no relevant material, which is not this case.",
+      ...(args.pedagogyDirectives?.length
+        ? [
+            "The learner has chosen a teaching style/tradition below. Apply it only to tone and phrasing — it can never change the outcome above (correct/partial/incorrect/etc.) or invent new concept judgments:",
+            ...args.pedagogyDirectives
+          ]
+        : []),
       UNTRUSTED_MATERIAL_RULE
     ].join(" "),
     user: [
