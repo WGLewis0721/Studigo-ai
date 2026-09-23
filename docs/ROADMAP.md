@@ -137,6 +137,30 @@ Exit: Studigo can teach and test against the same source-grounded topic map.
 
 Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 
+## Active blocker — Coach practice-set generation
+
+Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
+[`../ATTEMPTED_FIXES.md`](../ATTEMPTED_FIXES.md).
+
+A Coach request for *N* practice questions must return *N* distinct,
+source-grounded questions rather than narrating the learner's selected
+customization options.
+
+- [x] Route "give me N questions" into a practice-generation intent instead of
+      the grounded-answer/refusal path (`lib/recommendation-engine.ts`,
+      `lib/engine.ts`).
+- [x] Single orchestration layer: intent → topic selection → grounded
+      generation → formatting → citations.
+- [x] Near-duplicate collapse verified against genuinely distinct material;
+      unit + end-to-end pipeline tests green 10× consecutively.
+- [x] Model client falls back to Vercel AI Gateway when `OPENAI_API_KEY` is
+      absent, keeping the direct OpenAI path unchanged when present.
+- [ ] **Verify real generation on the deployed Vercel app** (the preview
+      sandbox has env-injection + AI-Gateway-billing limits the deploy does not).
+- [ ] Revert the temporary testing surfaces before beta (see reversion
+      checklist in `ATTEMPTED_FIXES.md`): restore the `/app` login gate and
+      `requireUser()` redirect, and re-guard `/dev/study` + `/api/dev/coach`.
+
 ## Phase 4 — Reliability, safety, cost
 
 - RAG evaluation dataset with known source answers.
