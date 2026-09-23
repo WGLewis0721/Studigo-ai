@@ -6,7 +6,8 @@ import {
 } from "./client";
 import { buildContextBlock, type RetrievedChunk } from "./grounding";
 
-async function structured<T>(args: {
+/** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
+export async function structured<T>(args: {
   system: string;
   user: string;
   schemaName: string;

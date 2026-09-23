@@ -76,7 +76,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
       const body = isFixture
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
-        : JSON.stringify({ roomId, question: text, directives, conversationId: conversationId.current });
+        : JSON.stringify({ roomId, question: text, directives, mode: "coach", conversationId: conversationId.current });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";

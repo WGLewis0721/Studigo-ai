@@ -1,6 +1,7 @@
 import { INSUFFICIENT_EVIDENCE_TEXT, streamGroundedAnswer, toCitations, type GroundedStreamEvent } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
+import { runCoachTurn } from "@/lib/coach-router";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 import {
@@ -28,6 +29,12 @@ export type EngineRequest = {
   /** How to teach: coaching style, learning tradition, practice protocol.
    *  Chosen in the UI, applied only to the system prompt. */
   directives?: EngineDirective[];
+  /** "coach" routes the turn through the Coach state machine
+   *  (packages/ai/src/coach.ts + lib/coach-router.ts) instead of free-form
+   *  grounded Q&A. Requires `conversationId` — Coach state is persisted per
+   *  conversation, not inferred from the message list each turn. */
+  mode?: "ask" | "coach";
+  conversationId?: string;
 };
 
 const EVIDENCE_WINDOW = 300;
@@ -52,6 +59,22 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
     fetchActiveTopics(args.supabase, args.roomId),
     fetchRecentEvidence(args.supabase, args.roomId)
   ]);
+
+  // Coach mode is a stateful protocol (idle / awaiting_answer /
+  // awaiting_control), not free-form Q&A, so it is routed to its own state
+  // machine instead of the intent classifier below. It requires a
+  // conversation to persist that state against.
+  if (args.mode === "coach" && args.conversationId) {
+    yield* runCoachTurn({
+      supabase: args.supabase,
+      roomId: args.roomId,
+      conversationId: args.conversationId,
+      question: args.question,
+      topics,
+      directives: args.directives
+    });
+    return;
+  }
 
   // A batch practice-question request ("give me 10 questions") is a
   // structurally different job than free-form Q&A: it needs a topic

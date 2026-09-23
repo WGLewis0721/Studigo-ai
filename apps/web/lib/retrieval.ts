@@ -30,6 +30,76 @@ export async function retrieveForRoom(args: {
   return toRetrievedChunks((data ?? []) as Array<Record<string, unknown>>);
 }
 
+/**
+ * Re-fetches specific chunks by id, scoped to the room, under the same RLS
+ * boundary as any other read. Used to re-ground a pending Coach question
+ * against its original source material at grading time, instead of trusting
+ * a cached copy of chunk content that may have been edited or deleted since
+ * the question was asked. Missing ids (deleted, or never accessible to this
+ * caller) are silently dropped rather than erroring, so the caller can detect
+ * "some/all source material is gone" from a shorter result and invalidate
+ * the pending state accordingly.
+ */
+export async function fetchChunksByIds(
+  supabase: SupabaseClient,
+  roomId: string,
+  chunkIds: string[]
+): Promise<RetrievedChunk[]> {
+  if (!chunkIds.length) return [];
+
+  // document_chunks has no `priority` column, and its own `page_label` is
+  // nullable — both live (or fall back) on `documents`, exactly as
+  // `match_study_chunks` computes them. Selecting the non-existent columns
+  // used to make this query error on every call, which `fetchChunksByIds`
+  // then swallowed into an empty array.
+  const { data, error } = await supabase
+    .from("document_chunks")
+    .select(
+      "id, document_id, content, page_number, page_label, documents!inner(name, source_type, room_id, page_label, source_priority)"
+    )
+    .in("id", chunkIds)
+    .eq("documents.room_id", roomId);
+
+  if (error || !data) return [];
+
+  type ChunkRow = {
+    id: string;
+    document_id: string;
+    content: string;
+    page_number: number | null;
+    page_label: string | null;
+    documents: { name: string; source_type: string | null; page_label: string | null; source_priority: number | null } | null;
+  };
+
+  const byId = new Map<string, RetrievedChunk>(
+    (data as unknown as ChunkRow[]).map((row) => [
+      row.id,
+      {
+        id: row.id,
+        documentId: row.document_id,
+        documentName: row.documents?.name ?? "Unknown document",
+        content: row.content,
+        similarity: 1,
+        sourceType: row.documents?.source_type ?? null,
+        pageNumber: row.page_number ?? null,
+        pageLabel: row.page_label || row.documents?.page_label || "page",
+        priority: row.documents?.source_priority ?? null
+      }
+    ])
+  );
+
+  // `.in()` does not preserve the order of the id list, but callers (e.g.
+  // grading a pending Coach question) rely on chunk order matching the
+  // citation markers assigned when the question was generated. Re-order to
+  // the caller's original id order, and drop ids with no row (deleted, or
+  // no longer accessible under this caller's RLS boundary) so the caller
+  // can compare `chunks.length` against `chunkIds.length` to detect partial
+  // source loss.
+  return chunkIds
+    .map((id) => byId.get(id))
+    .filter((chunk): chunk is RetrievedChunk => chunk !== undefined);
+}
+
 /** Confirms the room belongs to the caller before any generation work starts. */
 export async function assertRoomAccess(supabase: SupabaseClient, roomId: string) {
   const { data, error } = await supabase
