@@ -16,6 +16,7 @@ import { CramPanel } from "./cram-panel";
 import { StudyPlanPanel } from "./study-plan-panel";
 import { rankWeakAreas, summarizeCalibration, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
 import { RoomSettings } from "./room-settings";
+import { StudyGuideDownloadButton } from "./study-guide-download-button";
 
 const MODES = [
   { id: "materials", icon: "◫", name: "Materials", copy: "Everything this room knows." },
@@ -97,6 +98,7 @@ export function RoomWorkspace({
             {readyDocuments.length} of {documents.length}{" "}
             {documents.length === 1 ? "source" : "sources"} ready
           </span>
+          <StudyGuideDownloadButton roomId={room.id} />
           <button
             className="iconButton"
             type="button"
