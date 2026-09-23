@@ -10,26 +10,14 @@ export async function getUser(): Promise<User | null> {
 }
 
 /**
- * TEMP: login gate disabled for open live testing. When there is no real
- * Supabase session we hand back a read-only guest identity instead of
- * redirecting to /login, so the app shell is reachable without an account.
- * Because every query is RLS-scoped to the session user, a guest sees an empty
- * shell (no rooms, no writes) — full functionality still needs a real account.
- * To restore the gate, delete GUEST_USER and re-enable `redirect("/login")`.
+ * For pages and server actions. Middleware signs every visitor in — as a real
+ * anonymous Supabase Auth user when they have no account — before a request
+ * reaches here, so this should always resolve. The redirect is a fallback for
+ * the rare request middleware didn't run in front of (e.g. local tooling).
  */
-const GUEST_USER = {
-  id: "00000000-0000-0000-0000-000000000000",
-  email: "guest@studigo.local",
-  app_metadata: {},
-  user_metadata: { full_name: "Guest" },
-  aud: "authenticated",
-  created_at: new Date(0).toISOString()
-} as unknown as User;
-
-/** For pages and server actions: no session falls back to a read-only guest. */
 export async function requireUser(): Promise<User> {
   const user = await getUser();
-  if (!user) return GUEST_USER;
+  if (!user) redirect("/login");
   return user;
 }
 
