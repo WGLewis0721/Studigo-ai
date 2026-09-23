@@ -70,8 +70,29 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       if (roomId === "fixture") {
         const topic = topics.find((item) => text.toLowerCase().includes(item.title.toLowerCase())) ?? selectedTopic ?? topics[0];
         const material = MATERIAL_NOTES[topic.title];
+        const lowerText = text.toLowerCase();
+        const wantsQuestions = /\b(\d+|ten|five|some|several)\s+(practice\s+)?questions?\b/.test(lowerText) || lowerText.includes("practice questions");
+        const questionCountMatch = lowerText.match(/\b(\d+)\s+(?:practice\s+)?questions?\b/);
+        const questionCount = Math.min(Math.max(Number(questionCountMatch?.[1] ?? (lowerText.includes("ten") ? 10 : 5)), 1), 10);
+        const questions = material ? [
+          `What is the main idea of ${topic.title.toLowerCase()}?`,
+          `Explain ${material.summary.split(".")[0].toLowerCase()} in your own words.`,
+          `Use this example: ${material.example} What does it show?`,
+          `How would you tell the difference between the two ideas in this topic?`,
+          `What evidence from the study guide supports your explanation?`,
+          `Describe a new example that fits this topic.`,
+          `What might change if one part of this example changed?`,
+          `Compare the example with a different situation.`,
+          `What common mistake should a learner avoid here?`,
+          `Teach this idea to a younger student in two sentences.`
+        ].slice(0, questionCount) : [];
+        const definition = lowerText.includes("what does") || lowerText.includes("define") || lowerText.includes("mean");
         const demoAnswer = material
-          ? `From your study guide: ${material.summary} Example: ${material.example} I’ll use ${style.name.toLowerCase()} with the ${tradition.name.toLowerCase()} tradition and ${practice.name.toLowerCase()}. Now explain the example in your own words, and I’ll give one precise correction before choosing the next practice item.`
+          ? wantsQuestions
+            ? `Here are ${questionCount} practice questions grounded in ${material.source.toLowerCase()}:\\n\\n${questions.map((question, index) => `${index + 1}. ${question}`).join("\\n")}`
+            : definition
+              ? `In your study guide, ${topic.title.toLowerCase()} means: ${material.summary}\\n\\nExample: ${material.example}\\n\\nTry it: explain the difference in your own words, then I’ll give one precise correction.`
+              : `From your study guide: ${material.summary}\\n\\nExample: ${material.example}\\n\\nI’ll use ${style.name.toLowerCase()} with the ${tradition.name.toLowerCase()} tradition and ${practice.name.toLowerCase()}. Now explain the example in your own words, and I’ll give one precise correction before choosing the next practice item.`
           : `Let’s practice ${topic.title}. ${topic.objective ?? "Explain the idea in your own words."} First, I’ll model one step. Then you try a similar example, and I’ll give one specific correction before choosing the next repetition.`;
         setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: demoAnswer, grounded: true, streaming: false, citations: [{ documentId: "source", documentName: "Fifth Grade Science study guide.pdf", pageNumber: 1, pageLabel: "Page" }] } : message));
         return;
