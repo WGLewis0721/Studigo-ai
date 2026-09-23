@@ -21,10 +21,10 @@ type FixtureChatRequest = {
  * engine running over synthetic chunks.
  */
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV !== "development") {
-    return Response.json({ error: "Not found" }, { status: 404 });
-  }
-
+  // TEMP testing surface: previously dev-only (404 in production). Now open so
+  // the fixture coach at /dev/study can be exercised on the live deploy without
+  // an account. No auth, no room, no persistence — only the shared engine over
+  // synthetic chunks. Restore the dev-only 404 guard to re-lock it.
   const body = (await request.json().catch(() => null)) as FixtureChatRequest | null;
   const question = body?.question?.trim();
   const topics = Array.isArray(body?.topics) ? body!.topics : [];

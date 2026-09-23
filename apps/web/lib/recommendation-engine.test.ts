@@ -29,6 +29,7 @@ function topic(overrides: Partial<Topic> = {}): Topic {
     mastery_score: 40,
     status: "learning",
     last_practiced_at: "2026-09-10T12:00:00Z",
+    learner_edited: false,
     ...overrides
   };
 }
