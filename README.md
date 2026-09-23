@@ -48,6 +48,23 @@ Known limits: ingestion runs inside the request (idempotent and retryable, but a
 very large scanned PDF can exceed the function timeout) rather than on a durable
 queue, and native packaging is still the Tauri placeholder.
 
+### Active investigation — Coach "give me N questions"
+
+The Coach is being hardened so that a request like *"give me 10 questions"*
+reliably returns *N* distinct, source-grounded questions instead of narrating
+the learner's selected customization options. Intent routing into practice
+generation is implemented and covered by tests; the open item is live-site
+verification of real model generation (the preview sandbox has environment and
+AI-Gateway-billing limits that the deployed app does not).
+
+For testing this without an account, a temporary login bypass exposes a
+read-only guest shell at `/app`, and a fixture-backed coach is reachable at
+`/dev/study?mode=coach`. Both are **temporary testing surfaces** and are tracked
+for reversion before launch.
+
+- Problem, scope, and root causes: [`PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md)
+- Chronological change log and reversion checklist: [`ATTEMPTED_FIXES.md`](ATTEMPTED_FIXES.md)
+
 ## Authentication direction
 
 Studigo uses **Supabase Auth as the single identity layer** for the web/PWA product and future native shells.
