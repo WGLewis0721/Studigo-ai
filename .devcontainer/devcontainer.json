@@ -1,0 +1,17 @@
+{
+  "name": "Studigo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Studigo",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "corepack enable && corepack prepare pnpm@10.0.0 --activate && pnpm install --no-frozen-lockfile",
+  "postStartCommand": "nohup pnpm dev > /tmp/studigo-dev.log 2>&1 &",
+  "remoteUser": "node"
+}
