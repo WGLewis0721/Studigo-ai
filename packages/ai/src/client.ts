@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 /**
- * The app talks to OpenAI-compatible models through one of two transports,
+ * The app talks to OpenAI-compatible models through one of three transports,
  * resolved once at first use:
  *
  *  - "direct":  a raw OpenAI API key (OPENAI_API_KEY). Production/deploy path.
@@ -9,12 +9,21 @@ import OpenAI from "openai";
  *               compatible and zero-config on Vercel. Used only as a fallback
  *               when no direct key is present (e.g. sandbox/preview processes
  *               that receive the gateway credential but not the raw key).
+ *  - "ollama":  a self-hosted Ollama daemon (OLLAMA_BASE_URL), which exposes
+ *               an OpenAI-compatible /v1 endpoint. Zero-cost, zero API key —
+ *               the same mechanism afoqt-coach-ai uses locally — but only for
+ *               chat. Ollama's local embedding models (768/1024-dim) don't
+ *               match this schema's pgvector column (EMBEDDING_DIMENSIONS,
+ *               1536, matching OpenAI's text-embedding-3-small), so RAG
+ *               embeddings still require "direct" or "gateway" regardless of
+ *               which transport chat is using. embeddingModel() below always
+ *               resolves against direct/gateway for that reason.
  *
  * Direct mode is byte-identical to the previous behavior, so production — where
- * OPENAI_API_KEY is configured — is unaffected. The gateway fallback keeps the
- * app functional wherever only the gateway credential is injected.
+ * OPENAI_API_KEY is configured — is unaffected. The gateway and ollama paths are
+ * fallbacks, tried in order, when no direct key is present.
  */
-type Transport = "direct" | "gateway";
+type Transport = "direct" | "gateway" | "ollama";
 
 const GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1";
 
@@ -27,54 +36,93 @@ function resolveTransport(): Transport {
     resolvedTransport = "direct";
   } else if (process.env.AI_GATEWAY_API_KEY) {
     resolvedTransport = "gateway";
+  } else if (process.env.OLLAMA_BASE_URL) {
+    resolvedTransport = "ollama";
   } else {
     throw new Error(
-      "No model credential configured: set OPENAI_API_KEY (direct) or AI_GATEWAY_API_KEY (Vercel AI Gateway)."
+      "No model credential configured: set OPENAI_API_KEY (direct), AI_GATEWAY_API_KEY (Vercel AI Gateway), or OLLAMA_BASE_URL (self-hosted Ollama, chat only)."
     );
   }
   return resolvedTransport;
 }
 
-export function client() {
-  if (cached) return cached;
+/** Chat resolves through whichever transport is configured; embeddings never use "ollama" (see module docs). */
+function resolveEmbeddingTransport(): Exclude<Transport, "ollama"> {
   const transport = resolveTransport();
+  if (transport !== "ollama") return transport;
+  if (process.env.OPENAI_API_KEY) return "direct";
+  if (process.env.AI_GATEWAY_API_KEY) return "gateway";
+  throw new Error(
+    "Ollama provides chat only. Set OPENAI_API_KEY or AI_GATEWAY_API_KEY for embeddings/RAG."
+  );
+}
+
+function clientFor(transport: Transport): OpenAI {
   if (transport === "direct") {
-    cached = new OpenAI({
+    return new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
       maxRetries: 2,
       timeout: 120_000,
     });
-  } else {
-    cached = new OpenAI({
+  }
+  if (transport === "gateway") {
+    return new OpenAI({
       apiKey: process.env.AI_GATEWAY_API_KEY,
       baseURL: GATEWAY_BASE_URL,
       maxRetries: 2,
       timeout: 120_000,
     });
   }
+  return new OpenAI({
+    // Ollama ignores the key but the SDK requires a non-empty string.
+    apiKey: "ollama",
+    baseURL: `${process.env.OLLAMA_BASE_URL!.replace(/\/+$/, "")}/v1`,
+    maxRetries: 2,
+    timeout: 120_000,
+  });
+}
+
+export function client() {
+  if (cached) return cached;
+  cached = clientFor(resolveTransport());
   return cached;
+}
+
+let cachedEmbeddingClient: OpenAI | null = null;
+
+/** A dedicated client for embeddings, since chat may be on "ollama" while embeddings must stay on direct/gateway. */
+export function embeddingClient() {
+  const transport = resolveEmbeddingTransport();
+  if (transport === resolvedTransport && cached) return cached;
+  if (cachedEmbeddingClient) return cachedEmbeddingClient;
+  cachedEmbeddingClient = clientFor(transport);
+  return cachedEmbeddingClient;
 }
 
 /**
  * AI Gateway addresses models as `creator/model` (e.g. `openai/gpt-4.1-mini`),
- * while the direct OpenAI API expects the bare id (`gpt-4.1-mini`). A model id
- * that already carries a `creator/` prefix is passed through unchanged in both
- * modes so explicit configuration always wins.
+ * while the direct OpenAI API and Ollama expect a bare id (`gpt-4.1-mini`,
+ * `llama3.1`). A model id that already carries a `creator/` prefix is passed
+ * through unchanged in every mode so explicit configuration always wins.
  */
-function qualifyModel(model: string): string {
-  if (resolveTransport() === "gateway" && !model.includes("/")) {
+function qualifyModel(model: string, transport: Transport): string {
+  if (transport === "gateway" && !model.includes("/")) {
     return `openai/${model}`;
   }
   return model;
 }
 
 export function chatModel() {
-  return qualifyModel(process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini");
+  const transport = resolveTransport();
+  const fallback = transport === "ollama" ? "llama3.1" : "gpt-4.1-mini";
+  return qualifyModel(process.env.OPENAI_CHAT_MODEL || fallback, transport);
 }
 
 export function embeddingModel() {
+  const transport = resolveEmbeddingTransport();
   return qualifyModel(
-    process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small"
+    process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small",
+    transport
   );
 }
 
