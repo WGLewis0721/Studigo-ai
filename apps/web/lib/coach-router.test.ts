@@ -670,6 +670,169 @@ test("regression: 'next' while a question is pending exits to idle without gradi
   assert.equal(evaluateCalled, false);
 });
 
+// ---------------------------------------------------------------------------
+// Acceptance gate (E): the two turns from the original gate that must not
+// regress.
+//
+//   1. awaiting_control + "yes" -> execute the stored control action, open a
+//      new grounded question, transition to awaiting_answer, and NEVER call
+//      retrieval with "yes" as the query.
+//   2. awaiting_answer + "show me the answer" -> classify show_answer, keep
+//      the pending question, and return a complete source-grounded model
+//      answer (NOT the hint-only help_request path).
+// ---------------------------------------------------------------------------
+
+const awaitingControlState = {
+  version: 1,
+  kind: "awaiting_control",
+  action: "more_practice",
+  topicId: "topic-1",
+  sourceChunkIds: ["chunk-A"]
+};
+
+/** Drains a Coach turn while capturing BOTH the final `done` event and the
+ *  generator's return value, for turns where a test must assert on the
+ *  surfaced answer and on the telemetry log together. */
+async function drainCollectingBoth<T>(
+  generator: AsyncGenerator<unknown, T>
+): Promise<{ done: DoneEvent; log: T }> {
+  let doneEvent: DoneEvent | undefined;
+  let result = await generator.next();
+  while (!result.done) {
+    const event = result.value as { type?: string };
+    if (event?.type === "done") doneEvent = event as DoneEvent;
+    result = await generator.next();
+  }
+  if (!doneEvent) throw new Error("Coach turn ended without emitting a done event");
+  return { done: doneEvent, log: result.value };
+}
+
+test("acceptance: awaiting_control + 'yes' executes the stored more_practice action, opens a new grounded question in awaiting_answer, and never retrieves with 'yes'", async () => {
+  const supabase = fakeSupabase({
+    loadResult: { data: { coach_state: awaitingControlState }, error: null }
+  });
+
+  const retrievedQueries: string[] = [];
+  let generateCoachQuestionCalls = 0;
+
+  const { done, log } = await drainCollectingBoth(
+    runCoachTurn({
+      supabase,
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "yes",
+      // The stored action is pinned to topic-1; supply it so the replayed
+      // action resolves to a real topic to build the retrieval query from.
+      topics: [genderNeutralTopic],
+      deps: {
+        retrieveForRoom: async (args) => {
+          retrievedQueries.push((args as { query: string }).query);
+          return twoChunks;
+        },
+        generateCoachQuestion: async () => {
+          generateCoachQuestionCalls += 1;
+          return {
+            question: "How do traits pass to offspring [1]?",
+            expectedConcepts: [],
+            sourceChunkIds: ["chunk-A"],
+            sourceMarkers: [1]
+          };
+        }
+      }
+    })
+  );
+
+  // Routed as a control move that replayed the pending action into a new
+  // question, landing back in awaiting_answer.
+  assert.equal(log.turnIntent, "conversation_control");
+  assert.equal(log.stateBefore, "awaiting_control");
+  assert.equal(log.outcome, "new_question");
+  assert.equal(log.stateAfter, "awaiting_answer");
+
+  // A fresh grounded question was actually generated.
+  assert.equal(generateCoachQuestionCalls, 1);
+  assert.equal(done.answer.grounded, true);
+  assert.deepEqual(done.answer.citations.map((c) => c.marker), [1]);
+  assert.equal(done.answer.citations[0].chunkId, "chunk-A");
+
+  // Retrieval ran exactly once and was keyed on the topic, never on the raw
+  // "yes" discourse move.
+  assert.equal(retrievedQueries.length, 1);
+  assert.equal(retrievedQueries[0], "Heredity");
+  assert.ok(!retrievedQueries.some((query) => /\byes\b/i.test(query)));
+});
+
+test("acceptance: awaiting_answer + 'show me the answer' returns a complete source-grounded model answer for the pending question — distinct from the hint-only help_request path", async () => {
+  const supabase = fakeSupabase({
+    loadResult: { data: { coach_state: awaitingAnswerState }, error: null }
+  });
+
+  let evaluateCalled = false;
+  let feedbackCalled = false;
+  let retrieveForRoomCalls = 0;
+  let answeredQuestion: string | undefined;
+
+  const { done, log } = await drainCollectingBoth(
+    runCoachTurn({
+      supabase,
+      roomId: "room-1",
+      conversationId: "conv-1",
+      question: "show me the answer",
+      topics,
+      deps: {
+        fetchChunksByIds: async () => [fakeChunk],
+        // The hint path's model calls must NOT run for an explicit
+        // show-the-answer request.
+        evaluateCoachAnswer: async () => {
+          evaluateCalled = true;
+          return { intent: "answer", concepts: [] };
+        },
+        generateCoachFeedback: async () => {
+          feedbackCalled = true;
+          return "should not be called";
+        },
+        // The full answer must come from the pending question's own source
+        // chunks, never a fresh retrieval keyed on "show me the answer".
+        retrieveForRoom: async () => {
+          retrieveForRoomCalls += 1;
+          return [fakeChunk];
+        },
+        answerFromRetrievedContext: async (args) => {
+          answeredQuestion = (args as { question: string }).question;
+          return {
+            text: "Tides are caused by the moon's gravitational pull on Earth's oceans [1].",
+            citations: [
+              { marker: 1, chunkId: "chunk-1", documentId: "source-1", documentName: "Tides Reading", pageNumber: null, pageLabel: "page" } as never
+            ],
+            grounded: true
+          };
+        }
+      }
+    })
+  );
+
+  // Deterministically classified as show_answer; the pending question is
+  // preserved (still awaiting_answer).
+  assert.equal(log.turnIntent, "show_answer");
+  assert.equal(log.outcome, "show_answer");
+  assert.equal(log.stateBefore, "awaiting_answer");
+  assert.equal(log.stateAfter, "awaiting_answer");
+
+  // A complete, source-grounded answer to the *pending* question with valid
+  // citations resolving to the question's own source chunk.
+  assert.equal(answeredQuestion, "What causes tides?");
+  assert.match(done.answer.text, /moon's gravitational pull/);
+  assert.equal(done.answer.grounded, true);
+  assert.deepEqual(done.answer.citations.map((c) => c.marker), [1]);
+  assert.equal(done.answer.citations[0].chunkId, "chunk-1");
+
+  // Distinct from the hint-only help_request path: no semantic evaluation, no
+  // scaffolded generateCoachFeedback nudge, and no retrieval on the raw reply.
+  assert.equal(evaluateCalled, false);
+  assert.equal(feedbackCalled, false);
+  assert.equal(retrieveForRoomCalls, 0);
+});
+
 test("regression: partial source loss halts grading entirely (never grade against incomplete evidence)", async () => {
   let evaluateCalled = false;
 

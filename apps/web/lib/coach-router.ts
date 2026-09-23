@@ -91,7 +91,7 @@ export type CoachTurnLog = {
   stateBefore: CoachState["kind"];
   turnIntent: string;
   semanticScore: number | null;
-  outcome: CoachOutcome | "new_question" | "clarification";
+  outcome: CoachOutcome | "new_question" | "clarification" | "show_answer";
   stateAfter: CoachState["kind"];
 };
 
@@ -211,6 +211,36 @@ export async function* runCoachTurn(args: {
       yield { type: "delta", text };
       yield { type: "done", answer: { text, citations: [], grounded: false } };
       return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "control", stateAfter: "idle" };
+    }
+
+    // The learner explicitly asked to be shown the answer ("show me the
+    // answer"). This is deterministically classified by detectTurnIntent, so
+    // it needs no semantic evaluation. Unlike a hint-only help_request — which
+    // scaffolds a single nudge through generateCoachFeedback and deliberately
+    // withholds the full answer — this returns a complete, source-grounded
+    // model answer to the *pending* question, built from that question's own
+    // source chunks (the ones just re-fetched by id above) rather than a fresh
+    // retrieval keyed on the raw reply. The pending question is preserved and
+    // re-persisted so the learner can still attempt it afterward.
+    if (intent === "show_answer") {
+      const grounded = await deps.answerFromRetrievedContext({
+        question: state.question,
+        chunks,
+        instructions: pedagogyDirectives.length ? pedagogyDirectives.join("\n") : undefined
+      });
+      await saveCoachState(supabase, conversationId, state);
+      yield { type: "delta", text: grounded.text };
+      yield {
+        type: "done",
+        answer: { text: grounded.text, citations: grounded.citations, grounded: grounded.grounded }
+      };
+      return {
+        stateBefore: state.kind,
+        turnIntent: intent,
+        semanticScore: null,
+        outcome: "show_answer",
+        stateAfter: "awaiting_answer"
+      };
     }
 
     const evaluation = await deps.evaluateCoachAnswer({
