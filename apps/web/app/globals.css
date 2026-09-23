@@ -300,7 +300,15 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .coachTopics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .coachTopics .tinyLabel { width: 100%; }
   .coachTopics button { display: inline-flex; align-items: center; gap: 16px; border: 1px solid var(--ink); background: var(--paper-bright); padding: 10px 12px; font-weight: 800; cursor: pointer; }
-  .coachTopics button:hover { background: var(--coral); }
+  .coachTopics button:hover, .coachTopics button.active { background: var(--coral); }
+  .coachMaterial { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(220px, .8fr); gap: 16px; border: 1px solid var(--line); background: var(--paper-bright); padding: 18px; }
+  .coachMaterial h3 { margin: 7px 0 6px; font-family: var(--display); font-size: 1.35rem; }
+  .coachMaterial p { margin: 0; color: var(--ink-soft); line-height: 1.55; }
+  .coachMaterialExample { border-left: 3px solid var(--coral); padding-left: 14px; }
+  .coachMaterialExample span { color: var(--muted); font-size: .65rem; font-weight: 900; letter-spacing: .12em; }
+  .coachMaterialExample p { margin: 6px 0 8px; color: var(--ink); font-weight: 700; }
+  .coachMaterialExample small { color: var(--muted); font-size: .68rem; }
+  @media (max-width: 680px) { .coachMaterial { grid-template-columns: 1fr; } .coachMaterialExample { border-left: 0; border-top: 3px solid var(--coral); padding: 12px 0 0; } }
   .coachThread { display: flex; flex-direction: column; gap: 12px; max-height: 43vh; min-height: 180px; overflow-y: auto; }
   .coachEmpty { border: 1px dashed var(--line); padding: 24px; max-width: 650px; }
   .coachEmpty strong { font-family: var(--display); font-size: 1.5rem; }
