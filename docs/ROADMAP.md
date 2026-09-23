@@ -165,15 +165,15 @@ Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 ## Phase 3.5 — Export + real-user validation (current)
 
 ### Downloadable study guide
-- [ ] One-click PDF export from a Study Room.
-- [ ] Source-grounded topic summaries/key facts.
-- [ ] Current learner-edited topic wording/order.
-- [ ] Source references/citations in the exported artifact.
-- [ ] Embedded retrieval/check-yourself prompts.
-- [ ] Honest empty/insufficient-evidence state.
+- [x] One-click PDF export from a Study Room.
+- [x] Source-grounded topic notes/key facts from linked room material.
+- [x] Current learner-edited topic wording/order.
+- [x] Source/page references in the exported artifact.
+- [x] Embedded retrieval/check-yourself prompts.
+- [x] Honest empty/insufficient-evidence state.
 - [ ] Mobile download/open validation.
 - [ ] Printable layout validation.
-- [ ] Export regression tests: does not mutate mastery/practice/source state.
+- [x] Export PDF regression coverage; export path is read-only and does not mutate mastery/practice/source state.
 
 ### Next user-validation cycle
 - [ ] Run the canonical cases in [`USER_TEST_CASES.md`](USER_TEST_CASES.md).
@@ -224,9 +224,9 @@ customization options.
       absent, keeping the direct OpenAI path unchanged when present.
 - [ ] **Verify real generation on the deployed Vercel app** (the preview
       sandbox has env-injection + AI-Gateway-billing limits the deploy does not).
-- [ ] Revert the temporary testing surfaces before beta (see reversion
-      checklist in `ATTEMPTED_FIXES.md`): restore the `/app` login gate and
-      `requireUser()` redirect, and re-guard `/dev/study` + `/api/dev/coach`.
+- [x] Revert the temporary testing surfaces before beta: `/app` requires
+      authentication again and `/dev/study` + `/api/dev/coach` are
+      development-only.
 
 ## Phase 4 — Reliability, safety, cost
 
@@ -283,9 +283,9 @@ Only after individual-student value is proven:
 
 ## Immediate next 10 engineering tasks
 
-1. **Ship one-click Study Guide PDF download.** This is the current P0.
-2. Add focused export tests for grounding, learner edits/removals, empty rooms,
-   filenames, PDF response headers, and non-mutation of mastery/practice state.
+1. **Production-validate Study Guide PDF download** on desktop/mobile and print.
+2. Add remaining endpoint-level export tests for empty rooms, response headers,
+   filenames, and learner-edited/removal cases.
 3. Run the production user-test suite in
    [`USER_TEST_CASES.md`](USER_TEST_CASES.md), starting with mobile room creation
    and Study Guide download.
@@ -300,8 +300,8 @@ Only after individual-student value is proven:
    before large-document volume makes timeouts a common user failure.
 8. Build the 25–50 item grounded RAG/citation eval set and run it before retrieval
    or model changes.
-9. Finish deployed Coach "give me N questions" verification and remove temporary
-   test bypasses before beta.
+9. Finish deployed Coach "give me N questions" + tutor-scaffolding verification
+   against the real production model.
 10. Instrument production failure modes and user-critical funnel steps:
     create room → upload ready → first useful study action → Study Guide download.
 
