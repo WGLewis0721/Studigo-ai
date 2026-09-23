@@ -1,8 +1,16 @@
-import { streamGroundedAnswer, type GroundedStreamEvent } from "@studigo/ai";
+import { INSUFFICIENT_EVIDENCE_TEXT, streamGroundedAnswer, toCitations, type GroundedStreamEvent } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
+import {
+  buildPracticeQuestionSet,
+  citationsForQuestions,
+  classifyIntent,
+  extractPriorPromptsFromHistory,
+  formatQuestionsForChat,
+  resolvePracticeTopic
+} from "@/lib/recommendation-engine";
 
 export type EngineDirective = { name: string; instruction: string };
 
@@ -42,6 +50,19 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
     fetchRecentEvidence(args.supabase, args.roomId)
   ]);
 
+  // A batch practice-question request ("give me 10 questions") is a
+  // structurally different job than free-form Q&A: it needs a topic
+  // decision, a fixed-count grounded generation call, and dedup against
+  // whatever this learner has already been asked in this conversation.
+  // Routing it through the recommendation engine instead of the generic
+  // chat completion is what stops the model from self-narrating the
+  // coaching directives or re-asking the same question.
+  const intent = classifyIntent(args.question);
+  if (intent.type === "practice_questions" && topics.length) {
+    yield* runPracticeQuestionFlow({ ...args, topics, evidence, count: intent.count });
+    return;
+  }
+
   const learnerStateDirective = buildLearnerStateDirective(topics, evidence);
 
   const instructions = [...(args.directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`), learnerStateDirective]
@@ -60,6 +81,50 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
     chunks,
     history: args.history
   });
+}
+
+async function* runPracticeQuestionFlow(
+  args: EngineRequest & { topics: Topic[]; evidence: PracticeEvidence[]; count: number }
+): AsyncGenerator<GroundedStreamEvent> {
+  const resolved = resolvePracticeTopic({ message: args.question, topics: args.topics, evidence: args.evidence });
+  if (!resolved) {
+    const text = "Add a study guide topic first — I need at least one active topic in this room before I can write practice questions.";
+    yield { type: "delta", text };
+    yield { type: "done", answer: { text, citations: [], grounded: false } };
+    return;
+  }
+
+  const chunks = await retrieveForRoom({
+    supabase: args.supabase,
+    roomId: args.roomId,
+    query: `${resolved.topic.title}. ${resolved.topic.objective ?? ""}`.trim()
+  });
+
+  if (!chunks.length) {
+    yield { type: "delta", text: INSUFFICIENT_EVIDENCE_TEXT };
+    yield { type: "done", answer: { text: INSUFFICIENT_EVIDENCE_TEXT, citations: [], grounded: false } };
+    return;
+  }
+
+  const priorPrompts = extractPriorPromptsFromHistory(args.history);
+  const questions = await buildPracticeQuestionSet({
+    chunks,
+    topicTitle: resolved.topic.title,
+    objective: resolved.topic.objective ?? undefined,
+    count: args.count,
+    priorPrompts
+  });
+
+  const available = toCitations(chunks);
+  const citations = citationsForQuestions(questions, available);
+  const text = formatQuestionsForChat({
+    questions,
+    topicTitle: resolved.topic.title,
+    sourceLabel: chunks[0]?.documentName ?? "your materials"
+  });
+
+  yield { type: "delta", text };
+  yield { type: "done", answer: { text, citations, grounded: citations.length > 0 } };
 }
 
 async function fetchActiveTopics(supabase: SupabaseClient, roomId: string): Promise<Topic[]> {
