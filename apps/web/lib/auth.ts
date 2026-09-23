@@ -9,10 +9,27 @@ export async function getUser(): Promise<User | null> {
   return data.user ?? null;
 }
 
-/** For pages and server actions: no session means back to sign-in. */
+/**
+ * TEMP: login gate disabled for open live testing. When there is no real
+ * Supabase session we hand back a read-only guest identity instead of
+ * redirecting to /login, so the app shell is reachable without an account.
+ * Because every query is RLS-scoped to the session user, a guest sees an empty
+ * shell (no rooms, no writes) — full functionality still needs a real account.
+ * To restore the gate, delete GUEST_USER and re-enable `redirect("/login")`.
+ */
+const GUEST_USER = {
+  id: "00000000-0000-0000-0000-000000000000",
+  email: "guest@studigo.local",
+  app_metadata: {},
+  user_metadata: { full_name: "Guest" },
+  aud: "authenticated",
+  created_at: new Date(0).toISOString()
+} as unknown as User;
+
+/** For pages and server actions: no session falls back to a read-only guest. */
 export async function requireUser(): Promise<User> {
   const user = await getUser();
-  if (!user) redirect("/login");
+  if (!user) return GUEST_USER;
   return user;
 }
 

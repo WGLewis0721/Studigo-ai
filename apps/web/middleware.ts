@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/app"];
+// TEMP: login gate disabled for open live testing so the app is reachable
+// without an account. Restore `["/app"]` to re-require sign-in.
+const PROTECTED_PREFIXES: string[] = [];
 const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
