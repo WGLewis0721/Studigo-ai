@@ -177,8 +177,11 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .authForm { display: grid; gap: 14px; max-width: 420px; }
 .authSubmit { justify-self: start; }
 .authSwitch { margin: 4px 0 0; font-size: .85rem; color: var(--muted); font-weight: 700; }
-.authSwitch a { font-weight: 900; text-underline-offset: 4px; }
-.authAside { background: var(--ink); color: var(--paper-bright); display: grid; place-items: center; padding: 48px; }
+  .authSwitch a { font-weight: 900; text-underline-offset: 4px; }
+  .authDemoLink { margin: 12px 0 0; font-size: .85rem; color: var(--muted); font-weight: 700; }
+  .authDemoLink a { color: var(--ink); font-weight: 900; text-underline-offset: 4px; }
+  .authAside { background: var(--ink); color: var(--paper-bright); display: grid; place-items: center; padding: 48px; }
+
 .authAsideInner { max-width: 380px; }
 .authQuote { font-family: var(--display); font-size: 1.7rem; line-height: 1.25; }
 .authProof { display: grid; gap: 10px; margin-top: 34px; font-size: .76rem; font-weight: 800; color: #c2c6d0; }

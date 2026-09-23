@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import { RoomWorkspace } from '@/components/room/workspace';
 import type { Topic } from '@/lib/rooms';
 
-// Explicit local-only visual fixture. Production always returns 404.
+// Preview-only fixture. Production always returns 404.
 export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string}>}) {
-  if(process.env.NODE_ENV!=='development'||process.env.STUDIGO_VISUAL_QA!=='1') notFound();
+  if(process.env.NODE_ENV!=='development') notFound();
   const {mode='weak',phone}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
