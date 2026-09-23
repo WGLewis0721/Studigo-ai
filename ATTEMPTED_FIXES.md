@@ -70,17 +70,49 @@ investigation continues — it is the audit trail, not marketing copy.
 - **Sandbox model transport.** Real generation cannot be fully verified inside
   the v0 preview sandbox (env injection + AI Gateway billing). It must be
   verified on the deployed Vercel app, where `OPENAI_API_KEY` is present.
-- **Guest bypass is temporary.** Items 5 above weaken auth for testing only.
-  Restore the login gate (`PROTECTED_PREFIXES`, `requireUser()` redirect) and
-  re-guard the fixture surfaces before beta.
+- **Guest bypass has been reverted.** The temporary behavior in item 5 remains
+  documented for audit history but is no longer active on the beta branch.
 - **Fixture coach is a test surface**, not a product feature. It should not ship
   as a learner-facing entry point.
 
 ## Reversion checklist (before launch)
 
-- [ ] Restore `PROTECTED_PREFIXES = ["/app"]` in `middleware.ts`.
-- [ ] Restore the redirect-to-`/login` behavior in `requireUser()`.
-- [ ] Re-add the `development`-only guard on `/dev/study` and `/api/dev/coach`
+- [x] Restore `PROTECTED_PREFIXES = ["/app"]` in `middleware.ts`.
+- [x] Restore the redirect-to-`/login` behavior in `requireUser()`.
+- [x] Re-add the `development`-only guard on `/dev/study` and `/api/dev/coach`
       (or remove those surfaces entirely).
 - [ ] Confirm the AI Gateway fallback in `packages/ai/src/client.ts` is desired
       long-term, or gate it to non-production.
+
+
+## 6. Exact-count breadth + tutor-like answer handling
+
+- **Change:** Generic practice-set requests now retrieve across several
+  high-priority/weak topics instead of silently collapsing the entire set onto
+  one topic. Top-up generation carries explicit prior-prompt avoidance and a
+  larger bounded retry budget.
+- **Why:** A valid `"give me 10 questions"` request could still return fewer
+  than 10 after validation/dedup when one resolved topic did not contain enough
+  distinct material.
+- **Change:** A learner response after a numbered practice set is now grounded
+  against the original practice question rather than embedded/retrieved from
+  the learner's raw answer.
+- **Resulting tutoring policy:** semantic equivalence counts; partial
+  understanding receives partial credit and a nudge; `"I don't know"` or
+  `"hint"` enters scaffold mode; a non-responsive answer such as `"pizza"`
+  is redirected with a simpler rephrasing and source-grounded hint instead of
+  being treated as an ordinary content answer.
+- **Quiz grading:** short-answer `isCorrect` now requires a substantially
+  complete answer (85+). Scores 60–84 remain meaningful partial credit rather
+  than showing a green fully-correct state.
+- **Verification:** CI typecheck, unit tests, and production build all pass on
+  the beta-hardening branch. Real deployed-model behavior remains a production
+  smoke-test item.
+
+## 7. Temporary testing bypass reverted
+
+- `/app` is protected again by `PROTECTED_PREFIXES = ["/app"]`.
+- Unauthenticated visitors are no longer auto-signed-in anonymously by middleware.
+- `requireUser()` redirects to `/login` when no session exists.
+- `/dev/study` returns 404 outside development.
+- `/api/dev/coach` returns 404 outside development.
