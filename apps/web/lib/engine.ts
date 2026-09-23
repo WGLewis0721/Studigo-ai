@@ -7,8 +7,11 @@ import {
   buildPracticeQuestionSet,
   citationsForQuestions,
   classifyIntent,
+  extractLatestPracticePromptsFromHistory,
   extractPriorPromptsFromHistory,
   formatQuestionsForChat,
+  isPracticeHelpRequest,
+  practicePromptForFollowup,
   resolvePracticeTopic
 } from "@/lib/recommendation-engine";
 
@@ -63,6 +66,27 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
     return;
   }
 
+  // If the Coach's last substantive reply was a numbered practice set, a
+  // short learner reply is most likely an answer to that practice, not a new
+  // retrieval query. Ground the follow-up on the original question so an
+  // irrelevant answer like "pizza" cannot send retrieval off-topic.
+  const latestPracticePrompts = extractLatestPracticePromptsFromHistory(args.history);
+  const conversationalOnly = /^(thanks|thank you|ok|okay|cool|got it|nevermind|never mind)[.!]?$/i.test(args.question.trim());
+  const looksLikePracticeReply =
+    latestPracticePrompts.length > 0 &&
+    !conversationalOnly &&
+    args.question.trim().length > 0 &&
+    args.question.length <= 1000 &&
+    !/[?]$/.test(args.question.trim());
+
+  if (looksLikePracticeReply) {
+    const practicePrompt = practicePromptForFollowup(args.question, latestPracticePrompts);
+    if (practicePrompt) {
+      yield* runPracticeFollowup({ ...args, practicePrompt });
+      return;
+    }
+  }
+
   const learnerStateDirective = buildLearnerStateDirective(topics, evidence);
 
   const instructions = [...(args.directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`), learnerStateDirective]
@@ -94,10 +118,35 @@ async function* runPracticeQuestionFlow(
     return;
   }
 
+  const lowerMessage = args.question.toLowerCase();
+  const namedTopic = args.topics.find(
+    (topic) => topic.title && lowerMessage.includes(topic.title.toLowerCase())
+  );
+
+  // A generic "give me 10 questions" request should use enough of the room to
+  // actually produce 10 useful questions. Previously it silently narrowed the
+  // entire set to one weak topic, then dedup/validation often collapsed the
+  // batch below the requested count.
+  const ranked = rankWeakAreas(args.topics, args.evidence).map((area) => area.topic);
+  const fallback = [...args.topics].sort(
+    (a, b) => b.priority - a.priority || a.order_index - b.order_index || a.id.localeCompare(b.id)
+  );
+  const selectedTopics = namedTopic
+    ? [namedTopic]
+    : [...new Map([...ranked, ...fallback].map((topic) => [topic.id, topic])).values()].slice(
+        0,
+        Math.min(Math.max(3, Math.ceil(args.count / 2)), 6)
+      );
+
+  const query = selectedTopics
+    .map((topic) => [topic.title, topic.objective, topic.key_terms.join(", ")].filter(Boolean).join(". "))
+    .join("\n");
+
   const chunks = await retrieveForRoom({
     supabase: args.supabase,
     roomId: args.roomId,
-    query: `${resolved.topic.title}. ${resolved.topic.objective ?? ""}`.trim()
+    query,
+    matchCount: Math.min(24, Math.max(12, args.count * 2))
   });
 
   if (!chunks.length) {
@@ -107,10 +156,22 @@ async function* runPracticeQuestionFlow(
   }
 
   const priorPrompts = extractPriorPromptsFromHistory(args.history);
+  const focusLabel = namedTopic
+    ? namedTopic.title
+    : selectedTopics.length > 1
+      ? "your highest-priority study topics"
+      : resolved.topic.title;
+  const objective = namedTopic
+    ? namedTopic.objective ?? undefined
+    : selectedTopics
+        .map((topic) => topic.objective)
+        .filter((value): value is string => Boolean(value))
+        .join(" ");
+
   const questions = await buildPracticeQuestionSet({
     chunks,
-    topicTitle: resolved.topic.title,
-    objective: resolved.topic.objective ?? undefined,
+    topicTitle: namedTopic?.title,
+    objective,
     count: args.count,
     priorPrompts
   });
@@ -119,12 +180,56 @@ async function* runPracticeQuestionFlow(
   const citations = citationsForQuestions(questions, available);
   const text = formatQuestionsForChat({
     questions,
-    topicTitle: resolved.topic.title,
-    sourceLabel: chunks[0]?.documentName ?? "your materials"
+    topicTitle: focusLabel,
+    sourceLabel: namedTopic ? chunks[0]?.documentName ?? "your materials" : "your Study Room materials"
   });
 
   yield { type: "delta", text };
   yield { type: "done", answer: { text, citations, grounded: citations.length > 0 } };
+}
+
+async function* runPracticeFollowup(
+  args: EngineRequest & { practicePrompt: string }
+): AsyncGenerator<GroundedStreamEvent> {
+  const chunks = await retrieveForRoom({
+    supabase: args.supabase,
+    roomId: args.roomId,
+    query: args.practicePrompt,
+    matchCount: 10
+  });
+
+  if (!chunks.length) {
+    yield { type: "delta", text: INSUFFICIENT_EVIDENCE_TEXT };
+    yield { type: "done", answer: { text: INSUFFICIENT_EVIDENCE_TEXT, citations: [], grounded: false } };
+    return;
+  }
+
+  const wantsHelp = isPracticeHelpRequest(args.question);
+  const wantsAnswer = /\b(show|tell|give)\s+(?:me\s+)?(?:the\s+)?answer\b/i.test(args.question);
+
+  const tutorDirective = [
+    `The learner is responding to this practice question: "${args.practicePrompt}"`,
+    "Evaluate semantic understanding, not verbatim overlap with the study guide or a model answer. Equivalent wording and valid examples count.",
+    "Distinguish four states: correct, partially correct, non-responsive/off-topic, and explicitly asking for help.",
+    wantsAnswer
+      ? "The learner explicitly asked for the answer. Give a concise source-grounded model answer, then one sentence explaining it."
+      : wantsHelp
+        ? "The learner is stuck. Do not mark them wrong. Rephrase the question more simply and give one concrete source-grounded hint. Do not reveal the full answer unless they ask for it."
+        : "If correct, affirm it briefly and explain any terminology difference. If partially correct, name what is right and give one targeted nudge for what is missing. If non-responsive or off-topic, do not score it as ordinary content failure: redirect to the question, rephrase it more simply, and give one concrete hint. Do not reveal the full answer on the first off-topic response.",
+    "Examples of the policy: for a question asking for three forms/states of water, an unrelated response such as 'pizza' gets a redirect plus a hint; a response that shows the right concept but incomplete or less precise terminology gets partial-credit coaching; semantically correct examples such as ice/liquid water/water vapor count even if the source phrases them differently.",
+    "Keep the response short and teacher-like. Cite the source when stating course content."
+  ].join(" ");
+
+  const instructions = [
+    ...(args.directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`),
+    tutorDirective
+  ].join("\n\n");
+
+  yield* streamGroundedAnswer({
+    question: `Practice question: ${args.practicePrompt}\nLearner response: ${args.question}`,
+    instructions,
+    chunks
+  });
 }
 
 async function fetchActiveTopics(supabase: SupabaseClient, roomId: string): Promise<Topic[]> {

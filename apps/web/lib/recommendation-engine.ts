@@ -203,19 +203,55 @@ export function dedupeQuestions<T extends { prompt: string }>(
  * output so a later "give me 10 more" in the same conversation cannot repeat
  * them. Only assistant turns are scanned.
  */
+const NUMBERED_QUESTION_LINE = /^\s*\d{1,2}\.\s+(.+?)\s*(?:\[\d{1,2}\])?\s*$/;
+
 export function extractPriorPromptsFromHistory(
   history: Array<{ role: "user" | "assistant"; content: string }> = []
 ): string[] {
-  const NUMBERED_LINE = /^\s*\d{1,2}\.\s+(.+?)\s*(?:\[\d{1,2}\])?\s*$/;
   const prompts: string[] = [];
   for (const message of history) {
     if (message.role !== "assistant") continue;
     for (const line of message.content.split("\n")) {
-      const match = line.match(NUMBERED_LINE);
+      const match = line.match(NUMBERED_QUESTION_LINE);
       if (match) prompts.push(match[1].trim());
     }
   }
   return prompts;
+}
+
+/** Returns only the most recent numbered practice set in the conversation. */
+export function extractLatestPracticePromptsFromHistory(
+  history: Array<{ role: "user" | "assistant"; content: string }> = []
+): string[] {
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const message = history[index];
+    if (message.role !== "assistant") continue;
+    const prompts = message.content
+      .split("\n")
+      .map((line) => line.match(NUMBERED_QUESTION_LINE)?.[1]?.trim())
+      .filter((prompt): prompt is string => Boolean(prompt));
+    if (prompts.length) return prompts;
+  }
+  return [];
+}
+
+const PRACTICE_HELP_PATTERN =
+  /\b(i\s+(?:do\s*n't|dont)\s+know|idk|not\s+sure|i\s+am\s+stuck|i'm\s+stuck|stuck|hint|help|nudge|show\s+(?:me\s+)?(?:the\s+)?answer|tell\s+(?:me\s+)?(?:the\s+)?answer)\b/i;
+
+/** Learner explicitly signals that they need scaffolding rather than grading. */
+export function isPracticeHelpRequest(message: string): boolean {
+  return PRACTICE_HELP_PATTERN.test(message.trim());
+}
+
+/** Selects a numbered question when the learner names one; otherwise starts at #1. */
+export function practicePromptForFollowup(message: string, prompts: string[]): string | null {
+  if (!prompts.length) return null;
+  const numbered = message.match(/(?:question\s*|#)?(\d{1,2})\s*(?:[.):\-]|\b)/i);
+  if (numbered) {
+    const requested = Number(numbered[1]);
+    if (requested >= 1 && requested <= prompts.length) return prompts[requested - 1];
+  }
+  return prompts[0];
 }
 
 // ---------------------------------------------------------------------------
@@ -224,7 +260,7 @@ export function extractPriorPromptsFromHistory(
 
 export type GenerateQuizQuestionsFn = typeof generateQuizQuestions;
 
-const MAX_GENERATION_ATTEMPTS = 3;
+const MAX_GENERATION_ATTEMPTS = 5;
 
 export async function buildPracticeQuestionSet(args: {
   chunks: RetrievedChunk[];
@@ -252,7 +288,8 @@ export async function buildPracticeQuestionSet(args: {
       chunks: args.chunks,
       topicTitle: args.topicTitle,
       objective: args.objective,
-      count: requestCount
+      count: requestCount,
+      avoidPrompts: [...prior, ...result.map((question) => question.prompt)].slice(-40)
     });
 
     const unique = dedupeQuestions(batch, [...prior, ...result.map((question) => question.prompt)]);
@@ -299,7 +336,8 @@ export function formatQuestionsForChat(args: {
     "",
     lines.join("\n\n"),
     "",
-    "Answer any of these and I'll check your reasoning against the material."
+    "Answer any of these and I'll check the idea, not whether your wording matches the study guide.",
+    "If you're stuck, say “hint” or “I don't know.” I'll nudge you first, then show a model answer if you need it."
   ].join("\n");
 }
 
