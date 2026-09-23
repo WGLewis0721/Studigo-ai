@@ -1,0 +1,20 @@
+{
+  "name": "@studigo/mastery",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "echo 'lint handled at app level'",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "typescript": "latest",
+    "tsx": "latest"
+  }
+}
