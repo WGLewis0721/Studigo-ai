@@ -128,6 +128,18 @@ docs/
   AI_HANDOFF.md        rules for Opus/SuperGrok/Astra/etc.
 ```
 
+## GitHub Codespaces preview
+
+Studigo includes a dev-container configuration for a browser-based preview directly from GitHub.
+
+1. Open the repository in GitHub.
+2. Choose **Code → Codespaces → Create codespace**.
+3. Wait for dependency installation; the container starts `pnpm dev` automatically.
+4. Open forwarded port **3000**.
+5. Visit `/dev/study?mode=coach` for a no-secrets fixture that exercises the current Coach UI/engine and the downloadable Study Guide PDF.
+
+The fixture is development-only and uses synthetic study material. To run the full authenticated Study Room flow inside Codespaces, add the normal Studigo environment variables as Codespaces secrets and configure the forwarded Codespaces URL as an allowed Supabase redirect URL.
+
 ## Local development
 
 Prerequisites: Node 22, pnpm, a Supabase project, and an OpenAI API key for backend/AI features. The current homepage can render without Supabase/OpenAI configuration.
