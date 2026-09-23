@@ -310,4 +310,51 @@ test("citationsForQuestions only keeps citations the returned questions actually
   assert.deepEqual(kept.map((c) => c.marker), [2]);
 });
 
+// ---------------------------------------------------------------------------
+// End-to-end: the whole engine as one brain. A learner asks for a count on no
+// named topic; the engine must classify the intent, pick the weakest topic
+// from mastery, generate that many grounded non-repeating questions, format a
+// reply that states only content, and keep just the citations actually used.
+// ---------------------------------------------------------------------------
+
+test("the engine composes intent -> topic -> grounded set -> reply -> citations as one pipeline", async () => {
+  subjectCursor = 0;
+  const topics = [
+    topic({ id: "strong", title: "Dissolving", mastery_score: 96, status: "mastered", priority: 40, last_practiced_at: "2026-09-12T00:00:00Z" }),
+    topic({ id: "weak", title: "Balanced and unbalanced forces", mastery_score: 18, status: "learning", priority: 90, last_practiced_at: null })
+  ];
+
+  const intent = classifyIntent("give me 10 questions");
+  assert.deepEqual(intent, { type: "practice_questions", count: 10 });
+
+  const resolved = resolvePracticeTopic({ message: "give me 10 questions", topics, evidence: [] });
+  assert.equal(resolved?.topic.id, "weak", "no named topic -> falls back to the weakest by mastery");
+
+  const generate = async ({ count }: { count: number }) => Array.from({ length: count }, () => distinctQuestion());
+  const questions = await buildPracticeQuestionSet({
+    chunks: [CHUNK],
+    topicTitle: resolved!.topic.title,
+    count: (intent as { count: number }).count,
+    generate: generate as never
+  });
+  assert.equal(questions.length, 10);
+  assert.equal(new Set(questions.map((q) => q.prompt)).size, 10);
+
+  const reply = formatQuestionsForChat({
+    questions,
+    topicTitle: resolved!.topic.title,
+    sourceLabel: "Study guide.pdf"
+  });
+  assert.ok(reply.includes("10 practice questions"));
+  assert.ok(reply.toLowerCase().includes("balanced and unbalanced forces"));
+  assert.ok(!/coaching style|learning tradition|practice protocol/i.test(reply), "reply must never self-narrate directives");
+
+  const available = [
+    { marker: 1, documentId: "doc-1", documentName: "Study guide.pdf", pageNumber: 1, pageLabel: "Page" },
+    { marker: 2, documentId: "doc-1", documentName: "Study guide.pdf", pageNumber: 2, pageLabel: "Page" }
+  ];
+  const citations = citationsForQuestions(questions, available as never);
+  assert.deepEqual(citations.map((c) => c.marker), [1], "only marker 1 is cited by the generated questions");
+});
+
 void ({} as PracticeEvidence);
