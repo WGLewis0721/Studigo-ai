@@ -76,17 +76,34 @@ export async function listRooms(): Promise<Array<StudyRoom & { document_count: n
   });
 }
 
-export async function getRoom(roomId: string): Promise<StudyRoom> {
+/**
+ * Immediately after createRoomAction's insert-and-redirect, the very next
+ * request's read can come back empty even though the row and the caller's
+ * RLS-owning session are both confirmed correct — a read-after-write race
+ * against the data API rather than a missing room. A few short retries
+ * absorb that race without masking a genuinely missing/foreign room, which
+ * still 404s once retries are exhausted.
+ */
+async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("study_rooms")
     .select("id, title, subject, course_name, test_date, explain_level, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
+  return (data as StudyRoom) ?? null;
+}
+
+export async function getRoom(roomId: string): Promise<StudyRoom> {
+  const delaysMs = [0, 150, 350, 750];
+  for (const delay of delaysMs) {
+    if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+    const room = await fetchRoom(roomId);
+    if (room) return room;
+  }
 
   // RLS makes another learner's room indistinguishable from a missing one.
-  if (error || !data) notFound();
-  return data as StudyRoom;
+  notFound();
 }
 
 export async function listDocuments(roomId: string): Promise<StudyDocument[]> {
