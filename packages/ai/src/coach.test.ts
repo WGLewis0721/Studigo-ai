@@ -187,3 +187,31 @@ test("normalizeExpectedConcepts returns an empty array for empty input", () => {
   assert.deepEqual(normalizeExpectedConcepts(undefined), []);
   assert.deepEqual(normalizeExpectedConcepts([]), []);
 });
+
+test("normalizeExpectedConcepts assigns stable positional ids (concept_1, concept_2, ...) when the model omits an id, never a random one", () => {
+  const raw = [
+    { id: "", description: "first idea", weight: 1, critical: false },
+    { id: "   ", description: "second idea", weight: 1, critical: false },
+    { id: "custom_id", description: "third idea", weight: 1, critical: false }
+  ];
+
+  const first = normalizeExpectedConcepts(raw);
+  const second = normalizeExpectedConcepts(raw);
+
+  assert.deepEqual(first.map((c) => c.id), ["concept_1", "concept_2", "custom_id"]);
+  // Repeatability: the exact same input yields the exact same ids every
+  // time, unlike a Math.random()-based fallback which would differ per call.
+  assert.deepEqual(second.map((c) => c.id), first.map((c) => c.id));
+});
+
+test("normalizeExpectedConcepts keeps positional numbering based on the concept's position in the raw list, not its post-filter position", () => {
+  const raw = [
+    { id: "", description: "", weight: 1, critical: false }, // dropped: empty description
+    { id: "", description: "kept", weight: 1, critical: false }
+  ];
+  const result = normalizeExpectedConcepts(raw);
+  assert.equal(result.length, 1);
+  // This concept was at raw index 1, so its positional id is concept_2 even
+  // though it is the only surviving concept after filtering.
+  assert.equal(result[0].id, "concept_2");
+});

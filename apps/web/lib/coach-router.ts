@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   IDLE_COACH_STATE,
+  citationsUsedIn,
   decideOutcome,
   detectTurnIntent,
   evaluateCoachAnswer,
@@ -8,6 +9,8 @@ import {
   generateCoachQuestion,
   parseCoachState,
   scoreConcepts,
+  toCitations,
+  type Citation,
   type CoachControlAction,
   type CoachOutcome,
   type CoachState,
@@ -33,6 +36,21 @@ type PedagogyDirective = { name: string; instruction: string };
  *  Ask read identically to the model. Phrasing-only — see coach.ts. */
 function formatPedagogyDirectives(directives: PedagogyDirective[] | undefined): string[] {
   return (directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`);
+}
+
+/**
+ * Resolves the [n] markers actually present in Coach prose (a question or a
+ * feedback message) to real Citation[] for the chunks it was generated
+ * from. This reuses the same conversion Ask mode uses (`toCitations` +
+ * `citationsUsedIn` from @studigo/ai/grounding) instead of inventing a
+ * second citation representation for Coach: `toCitations(chunks)` assigns
+ * marker `index + 1` to each chunk in the order it was presented to the
+ * model — the exact order `buildContextBlock` used to build that prompt —
+ * so a `[1]` in the text always resolves to chunk 0, in that same source
+ * order, regardless of which subset the model actually cited.
+ */
+function citationsIn(text: string, chunks: RetrievedChunk[]): Citation[] {
+  return citationsUsedIn(text, toCitations(chunks));
 }
 
 /**
@@ -142,7 +160,9 @@ export async function* runCoachTurn(args: {
         await saveCoachState(supabase, conversationId, IDLE_COACH_STATE);
         const text = "No problem — say the word whenever you want to pick this back up.";
         yield { type: "delta", text };
-        yield { type: "done", answer: { text, citations: [], grounded: true } };
+        // Pure conversational acknowledgement — no course fact is stated, so
+        // this is never "grounded" no matter how it reads.
+        yield { type: "done", answer: { text, citations: [], grounded: false } };
         return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "control", stateAfter: "idle" };
       }
       // affirm/next: replay the pending action as the effective question.
@@ -165,7 +185,8 @@ export async function* runCoachTurn(args: {
       await saveCoachState(supabase, conversationId, IDLE_COACH_STATE);
       const text = "Sure — let's move on. What would you like to work on?";
       yield { type: "delta", text };
-      yield { type: "done", answer: { text, citations: [], grounded: true } };
+      // Pure conversational acknowledgement — no course fact is stated.
+      yield { type: "done", answer: { text, citations: [], grounded: false } };
       return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "control", stateAfter: "idle" };
     }
 
@@ -221,6 +242,14 @@ export async function* runCoachTurn(args: {
 
     yield { type: "delta", text: feedback };
 
+    // Real citations: a [n] marker in the feedback prose resolves to the
+    // citation for source chunk n (chunks are in the same order they were
+    // presented to the model, so marker order == chunk order). Grounded is
+    // never true unless the feedback actually cited a source chunk — this
+    // is what stops "grounded: true" with zero citations for feedback that
+    // is really just conversational (e.g. a bare "Nice, that's it!").
+    const feedbackCitations = citationsIn(feedback, chunks);
+
     if (outcome === "correct") {
       const nextAction: CoachControlAction = "more_practice";
       const nextState: CoachState = {
@@ -234,20 +263,29 @@ export async function* runCoachTurn(args: {
       const prompt = " Want another one on this?";
       yield { type: "delta", text: prompt };
       const text = feedback + prompt;
-      yield { type: "done", answer: { text, citations: [], grounded: true } };
+      yield {
+        type: "done",
+        answer: { text, citations: feedbackCitations, grounded: feedbackCitations.length > 0 }
+      };
       return { stateBefore: state.kind, turnIntent: effectiveIntent, semanticScore: score, outcome, stateAfter: "awaiting_control" };
     }
 
     if (outcome === "incorrect" || outcome === "irrelevant" || outcome === "help") {
       // Stay on the same pending question — the learner gets another try
       // once they have the hint/correction, instead of silently moving on.
-      yield { type: "done", answer: { text: feedback, citations: [], grounded: true } };
+      yield {
+        type: "done",
+        answer: { text: feedback, citations: feedbackCitations, grounded: feedbackCitations.length > 0 }
+      };
       return { stateBefore: state.kind, turnIntent: effectiveIntent, semanticScore: score, outcome, stateAfter: "awaiting_answer" };
     }
 
     // partial: keep the same pending question — the follow-up question
     // is already embedded in the feedback, pointed at the missing concept.
-    yield { type: "done", answer: { text: feedback, citations: [], grounded: true } };
+    yield {
+      type: "done",
+      answer: { text: feedback, citations: feedbackCitations, grounded: feedbackCitations.length > 0 }
+    };
     return { stateBefore: state.kind, turnIntent: effectiveIntent, semanticScore: score, outcome, stateAfter: "awaiting_answer" };
   }
 
@@ -313,7 +351,17 @@ async function* openCoachQuestion(args: {
   };
   await saveCoachState(args.supabase, args.conversationId, nextState);
 
+  // Real citations: a [n] marker in the generated question resolves to the
+  // chunk it actually references, in source order. A Socratic question that
+  // is purely a prompt to explain ("Explain how X varies") legitimately
+  // carries no citation — it is grounded in the topic's material without
+  // stating a citable fact — so grounded correctly reads false in that case.
+  const questionCitations = citationsIn(coachQuestion.question, chunks);
+
   yield { type: "delta", text: coachQuestion.question };
-  yield { type: "done", answer: { text: coachQuestion.question, citations: [], grounded: true } };
+  yield {
+    type: "done",
+    answer: { text: coachQuestion.question, citations: questionCitations, grounded: questionCitations.length > 0 }
+  };
   return { stateBefore: "idle", turnIntent: "answer", semanticScore: null, outcome: "new_question", stateAfter: "awaiting_answer" };
 }

@@ -185,8 +185,13 @@ export function normalizeExpectedConcepts(
   raw: Array<{ id: string; description: string; weight: number; critical: boolean }> | undefined
 ): ExpectedConcept[] {
   const cleaned = (raw ?? [])
-    .map((concept) => ({
-      id: String(concept.id ?? "").trim() || `concept_${Math.random().toString(36).slice(2, 8)}`,
+    .map((concept, index) => ({
+      // A missing/blank model-provided id becomes a stable positional id
+      // (concept_1, concept_2, ...) based on the concept's position in the
+      // raw list. Deterministic and repeatable across calls with the same
+      // input — never a random suffix, which would make grading state
+      // (persisted per-question) non-reproducible for tests and debugging.
+      id: String(concept.id ?? "").trim() || `concept_${index + 1}`,
       description: String(concept.description ?? "").trim(),
       weight: Number(concept.weight) > 0 ? Number(concept.weight) : 0,
       critical: Boolean(concept.critical)
@@ -237,6 +242,7 @@ export async function generateCoachQuestion(args: {
     system: [
       "You are Studigo's Coach, asking one Socratic question drawn from the learner's own course materials.",
       "Ask exactly one open question that requires explaining, applying, or exemplifying the idea — never a question answerable with yes, no, or a single memorized term.",
+      "If the question states or references a specific fact, figure, or example from the excerpts (e.g. 'Excerpt 2 mentions...'), cite it inline with the bracketed excerpt number, like [2]. Only cite numbers that appear in the supplied excerpts, and never cite a number for something the excerpts do not actually say. A question that is purely a prompt to explain a concept in the learner's own words needs no citation.",
       "List 2-4 underlying concepts that together constitute a correct answer. Each concept needs a short id, a plain description of what demonstrating it looks like, a positive weight, and whether it is critical (a critical concept that the learner directly contradicts means the answer cannot be marked correct, no matter the other concepts).",
       "Weights must be positive numbers whose sum is 1 across all concepts for this question.",
       "The question and every concept must be answerable and verifiable from the supplied excerpts alone.",
