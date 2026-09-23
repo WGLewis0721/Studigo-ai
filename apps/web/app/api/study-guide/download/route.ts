@@ -164,7 +164,9 @@ export async function GET(request: Request) {
     topics: pdfTopics
   });
 
-  return new Response(pdf, {
+  const body = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
+
+  return new Response(body, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${filename(roomResult.data.title)}"`,
