@@ -15,6 +15,7 @@ import {
   type ExtractionResult
 } from "@studigo/documents";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
 const MAX_ATTEMPTS = 3;
@@ -125,6 +126,23 @@ export async function processDocument(args: {
         isTeacherStudyGuide: document.source_type === "study_guide",
         pages: withOcr.pages
       });
+    }
+
+    // Optional, best-effort: mirror the same pages into the local
+    // zero-cost retrieval service (services/retrieval) if one is
+    // configured. Never allowed to fail ingestion — it's supplementary
+    // infrastructure, not the primary RAG path.
+    if (retrievalServiceConfigured()) {
+      try {
+        await indexDocumentLocally({
+          roomId: document.room_id,
+          documentId: document.id,
+          documentName: document.name,
+          pages: withOcr.pages.map((page) => ({ page_number: page.pageNumber, text: page.text }))
+        });
+      } catch {
+        // Swallowed deliberately: the local retrieval service is optional.
+      }
     }
 
     const { error: readyError } = await supabase
