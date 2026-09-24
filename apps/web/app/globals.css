@@ -2007,3 +2007,20 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     font-weight: 900;
   }
 }
+
+
+/* Modal-sheet isolation: the backdrop owns the viewport while a Coach sheet is open. */
+@media (max-width: 700px) {
+  .coachSetupBackdrop,
+  .roomSettingsBackdrop {
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  .coachSkillSheet,
+  .coachSettings.mobileOpen,
+  .roomSettings {
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
