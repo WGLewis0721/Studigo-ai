@@ -2,6 +2,7 @@ import { LEARNING_ROUTES, type LearningRoute } from "@/lib/learning";
 import { InteractionConflictError, isInteractionId, persistUserInteraction } from "@/lib/coach-interaction";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
 
@@ -56,6 +57,10 @@ export async function POST(request: Request) {
 
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
+  // All conversation-state and message mutations are server-owned. The
+  // user-scoped client above proves ownership; the service writer performs
+  // the mutation so browsers do not need privileges on trusted state.
+  const service = createServiceSupabaseClient();
 
   let conversationId = body?.conversationId ?? null;
   if (conversationId) {
@@ -103,7 +108,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "A valid interactionId is required for Coach turns." }, { status: 400 });
     }
     try {
-      interaction = await persistUserInteraction({ supabase, interactionId: body.interactionId, conversationId, content: question });
+      interaction = await persistUserInteraction({ supabase, writer: service, interactionId: body.interactionId, conversationId, content: question });
     } catch (error) {
       if (error instanceof InteractionConflictError) {
         return Response.json({ error: "That message ID was already used for a different message." }, { status: 409 });
@@ -111,7 +116,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Could not save your message. Please retry." }, { status: 503 });
     }
   } else {
-    await supabase
+    await service
       .from("messages")
       .insert({ conversation_id: conversationId, role: "user", content: question });
   }
@@ -127,13 +132,13 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
           }
 
-          await supabase.from("messages").insert({
+          await service.from("messages").insert({
             conversation_id: conversationId,
             role: "assistant",
             content: event.answer.text,

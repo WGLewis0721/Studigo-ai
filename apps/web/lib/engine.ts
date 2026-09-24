@@ -22,6 +22,8 @@ export type EngineDirective = { name: string; instruction: string };
 
 export type EngineRequest = {
   supabase: SupabaseClient;
+  /** Server-only writer for trusted Coach state/message mutations. */
+  serviceSupabase?: SupabaseClient;
   roomId: string;
   /** The learner's raw question. Never mixed with directives — this is the
    *  only text that gets embedded for retrieval, so pedagogy choices can never
@@ -76,6 +78,7 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
   if (args.mode === "coach" && args.conversationId) {
     yield* runCoachTurn({
       supabase: args.supabase,
+      stateSupabase: args.serviceSupabase,
       roomId: args.roomId,
       conversationId: args.conversationId,
       question: args.question,
