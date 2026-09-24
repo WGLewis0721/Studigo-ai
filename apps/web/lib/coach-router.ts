@@ -171,6 +171,17 @@ function requiresReasoning(spec: ChallengeSpec | undefined): boolean {
   return !spec || (spec.challengeKind !== "recognize" && spec.challengeKind !== "recall");
 }
 
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function extractAnswerChoices(question: string): string | null {
+  const a = question.match(/\bA\)\s*([\s\S]*?)(?=\s+B\)|$)/i)?.[1]?.trim();
+  const b = question.match(/\bB\)\s*([\s\S]*?)(?=\s+C\)|\s+Why\?|\s+Explain\b|$)/i)?.[1]?.trim();
+  if (!a || !b) return null;
+  return `A) ${a}\nB) ${b}\n\nPick A or B.`;
+}
+
 function withSupport<T extends CoachState>(state: T, level: number): T {
   if (state.kind === "idle" || !state.issuedChallenge) return state;
   const used = state.issuedChallenge.scaffoldUsed;
@@ -423,43 +434,34 @@ export async function* runCoachTurn(args: {
     const pendingSpec = parseIssuedSpec(state.issuedChallenge?.spec);
     const routeGuidance = pendingSpec ? renderRouteGuidance(pendingSpec) : undefined;
 
-    // "Make it simpler": same concepts, same sources, same reasoning task —
-    // only the wording changes. Never graded; recorded as help.
+    // "Make it simpler": wording only. Repeated requests get progressively
+    // shorter, but never silently add answer choices or lower the reasoning task.
     if (intent === "simplify") {
-      const rendered = await deps.generateCoachQuestion({
-        topicTitle: topics.find((t) => t.id === state.topicId)?.title ?? "",
-        objective: pendingSpec?.concept.objective ?? null,
+      const currentWords = wordCount(state.question);
+      const maxWords = scaffoldBefore !== null && scaffoldBefore >= SUPPORT_GIVEN.simplify
+        ? Math.min(10, Math.max(6, currentWords - 3))
+        : Math.min(14, Math.max(8, currentWords - 2));
+      const simpler = await deps.rewriteCoachQuestion({
+        question: state.question,
+        violations: [`is too wordy for this learner's explicit simplify request; use at most ${maxWords} words`],
+        expectedConcepts: state.expectedConcepts,
         chunks,
-        pedagogyDirectives,
         challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined,
-        simplifyFrom: { question: state.question, expectedConcepts: state.expectedConcepts }
+        maxWords
       });
-      const floor = await enforceLanguageFloor({
-        question: rendered.question || state.question,
-        requiresReasoning: requiresReasoning(pendingSpec),
-        rewrite: (violations) =>
-          deps.rewriteCoachQuestion({
-            question: rendered.question || state.question,
-            violations,
-            expectedConcepts: state.expectedConcepts,
-            chunks,
-            challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined
-          })
-      });
-      const simpler = floor.question;
+      const nextQuestion = simpler || state.question;
       await record(supportEvents("help", SUPPORT_GIVEN.simplify, 0));
-      await commit(withSupport({ ...state, question: simpler }, SUPPORT_GIVEN.simplify));
-      const citations = citationsIn(simpler, chunks);
-      yield { type: "delta", text: simpler };
-      yield { type: "done", answer: { text: simpler, citations, grounded: citations.length > 0 } };
+      await commit(withSupport({ ...state, question: nextQuestion }, SUPPORT_GIVEN.simplify));
+      const citations = citationsIn(nextQuestion, chunks);
+      yield { type: "delta", text: nextQuestion };
+      yield { type: "done", answer: { text: nextQuestion, citations, grounded: citations.length > 0 } };
       return {
         stateBefore: state.kind,
         turnIntent: intent,
         semanticScore: null,
         outcome: "simplified",
         stateAfter: "awaiting_answer",
-        languageFloor: assessLanguageFloor(simpler),
-        languageFloorEnforcement: floor.enforcement
+        languageFloor: assessLanguageFloor(nextQuestion)
       };
     }
 
@@ -484,11 +486,60 @@ export async function* runCoachTurn(args: {
       return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "example", stateAfter: "awaiting_answer" };
     }
 
-    // A deterministic help request ("I don't know", "hint") is not an answer
-    // attempt, so it is not evaluated at all — it goes straight to one hint.
-    const evaluation = intent === "help_request"
-      ? { intent: "help_request" as const, concepts: [] }
-      : await deps.evaluateCoachAnswer({
+    // "What are the answer choices?" refers to the current Coach state, not
+    // the Study Room corpus. Never RAG-search the learner's meta-question.
+    if (intent === "repeat_choices") {
+      const existing = extractAnswerChoices(state.question);
+      if (existing) {
+        await commit(state);
+        yield { type: "delta", text: existing };
+        yield { type: "done", answer: { text: existing, citations: [], grounded: false } };
+        return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "help", stateAfter: "awaiting_answer" };
+      }
+
+      const choiceQuestion = await deps.renderCoachSupport({
+        support: "choice",
+        question: state.question,
+        expectedConcepts: state.expectedConcepts,
+        chunks,
+        routeGuidance,
+        pedagogyDirectives
+      });
+      const nextState = withSupport({ ...state, question: choiceQuestion }, 4);
+      await record(supportEvents("help", 4, 0));
+      await commit(nextState);
+      const citations = citationsIn(choiceQuestion, chunks);
+      yield { type: "delta", text: choiceQuestion };
+      yield { type: "done", answer: { text: choiceQuestion, citations, grounded: citations.length > 0 } };
+      return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "help", stateAfter: "awaiting_answer" };
+    }
+
+    // Help climbs the existing scaffold ladder instead of repeating the same
+    // hint forever: hint -> concrete example -> two choices -> worked answer.
+    if (intent === "help_request") {
+      const prior = scaffoldBefore ?? 0;
+      const supportKind = prior < 2 ? "hint" : prior < 3 ? "example" : prior < 4 ? "choice" : "worked_example";
+      const nextLevel = supportKind === "hint" ? 2 : supportKind === "example" ? 3 : supportKind === "choice" ? 4 : 5;
+      const support = await deps.renderCoachSupport({
+        support: supportKind,
+        question: state.question,
+        expectedConcepts: state.expectedConcepts,
+        chunks,
+        routeGuidance,
+        pedagogyDirectives
+      });
+      const nextState = supportKind === "choice"
+        ? withSupport({ ...state, question: support }, nextLevel)
+        : withSupport(state, nextLevel);
+      await record(supportEvents(nextLevel === 5 ? "revealed" : "help", nextLevel, 0));
+      await commit(nextState);
+      const citations = citationsIn(support, chunks);
+      yield { type: "delta", text: support };
+      yield { type: "done", answer: { text: support, citations, grounded: citations.length > 0 } };
+      return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "help", stateAfter: "awaiting_answer" };
+    }
+
+    const evaluation = await deps.evaluateCoachAnswer({
       question: state.question,
       expectedConcepts: state.expectedConcepts,
       learnerResponse: question,
@@ -497,7 +548,7 @@ export async function* runCoachTurn(args: {
 
     // A transport retry of an assessed answer keeps the result committed the
     // first time; re-grading could otherwise produce a conflicting event.
-    const recorded = scope && intent !== "help_request"
+    const recorded = scope
       ? await deps.evidence.recordedResult(supabase, coachEventId(interaction!.id, "attempt"))
       : null;
     const recordedOutcome: CoachOutcome | null =
