@@ -182,7 +182,7 @@ legacy adaptation and failed persistence. `tests/database-security.test.mjs`
 executes all repository migrations in PGlite, including two-user isolation,
 grants, source-attempt reuse, idempotency, conflict rollback and scope constraints.
 
-Apply `20260924054643_adaptive_learning_core.sql` to the target test environment
+Apply `20260924131330_adaptive_learning_core.sql` to the target test environment
 before exercising the endpoint. This branch does not apply production migrations
 or merge either PR. Hosted Auth/Data API verification and Coach/UI integration
 remain rollout work; embedded PostgreSQL tests do not claim to cover those.
