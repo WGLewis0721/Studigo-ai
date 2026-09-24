@@ -2156,3 +2156,16 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     box-sizing: border-box;
   }
 }
+
+
+/* Mobile sheets scroll as one surface. Their headers are intentionally not
+   sticky, preventing content from sliding visibly behind translucent chrome. */
+@media (max-width: 700px) {
+  .coachSettingsSheetHead,
+  .roomSettingsHead {
+    position: static;
+    top: auto;
+    z-index: auto;
+    background: transparent;
+  }
+}
