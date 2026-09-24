@@ -2213,3 +2213,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     box-shadow: inset 0 0 0 1px rgba(29,41,68,.04);
   }
 }
+
+
+/* Keep the study-plan route phrase intact; the date may wrap independently. */
+.planRouteLead { white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .studyPlanPanel .studySectionHeading h2 {
+    max-width: 100%;
+  }
+  .planRouteLead {
+    display: inline-block;
+    white-space: nowrap;
+  }
+}
