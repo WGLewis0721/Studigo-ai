@@ -2142,3 +2142,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     height: 28px !important;
   }
 }
+
+
+/* Keep the fixed mobile composer optically centered. The shared desktop
+   composer uses width:100%, but on iPhone the fixed left/right insets own
+   the width; forcing 100% there pushes the right edge off-screen. */
+@media (max-width: 700px) {
+  .studigoComposer.askComposerLive {
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+  }
+}
