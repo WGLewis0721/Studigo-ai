@@ -18,7 +18,11 @@ export function RoomSettings({ room, onClose }: { room: StudyRoom; onClose: () =
   const [state, formAction] = useActionState<RoomFormState, FormData>(renameRoomAction, {});
 
   return (
-    <section className="roomSettings" aria-label="Room settings">
+    <section className="roomSettings" role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
+      <div className="roomSettingsHead">
+        <div><span className="tinyLabel">ROOM SETTINGS</span><strong id="room-settings-title">Study Room</strong></div>
+        <button type="button" onClick={onClose}>Done</button>
+      </div>
       <form className="settingsForm" action={formAction}>
         <input type="hidden" name="roomId" value={room.id} />
         <label className="field">
