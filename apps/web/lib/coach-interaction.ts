@@ -19,13 +19,17 @@ export class InteractionConflictError extends Error {}
  */
 export async function persistUserInteraction(args: {
   supabase: SupabaseClient;
+  /** Server-only writer. Production passes the service-role client so the
+   * browser never needs INSERT permission on messages. Tests may omit it. */
+  writer?: SupabaseClient;
   interactionId: string;
   conversationId: string;
   content: string;
 }): Promise<CoachInteraction> {
   if (!isInteractionId(args.interactionId)) throw new InteractionConflictError("Invalid interaction ID");
 
-  const inserted = await args.supabase
+  const writer = args.writer ?? args.supabase;
+  const inserted = await writer
     .from("messages")
     .insert({ id: args.interactionId, conversation_id: args.conversationId, role: "user", content: args.content })
     .select("id, created_at")
