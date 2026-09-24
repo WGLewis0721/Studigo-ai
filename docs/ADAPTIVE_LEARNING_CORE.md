@@ -91,7 +91,7 @@ it. No database failure is converted into an empty initial state.
 Authenticated read-only endpoint:
 
 ```text
-GET /api/learning/challenge?roomId=<uuid>&topicId=<uuid>&activity=coach&route=studigo_default
+GET /api/learning/challenge?roomId=<uuid>&topicId=<uuid>&activity=coach&route=studigo_default&challengeRequest=normal
 ```
 
 Returns a `ChallengeSpec` plus compact evidence, with private/no-store caching.
@@ -105,9 +105,43 @@ Server-side orchestration can instead use:
 const { state, events } = await loadConceptLearningState(userClient, conceptKey);
 const spec = nextChallenge({
   concept: { ...conceptKey, objective }, learnerState: state,
-  recentEvents: events, activity: 'coach', route: 'studigo_default', now
+  recentEvents: events, activity: 'coach', route: 'studigo_default',
+  challengeRequest: 'normal', now
 });
 ```
+
+`challengeRequest` is optional. Omit it, or pass `"normal"`, for today's demand.
+`"stretch"` asks for one harder rung on this issued spec only.
+
+### One-shot stretch
+
+Pressing "Challenge me" means "give me a harder attempt." It does not mean the
+learner has demonstrated that level. Only a later assessed `LearningEvent` may
+move progression.
+
+`nextChallenge` stays pure. A stretch does not change `ConceptLearningState`,
+recent events, mastery, streaks, scaffold, rematch, or encounter history, and
+it does not store a preference. The next call reads persisted demand again, so
+repeated presses without new evidence do not stair-step.
+
+For one Coach encounter the issued reasoning level is persisted demand + 1,
+capped at 9 (`teach_back`). The route, concept, topic, and source scope stay
+the same. Scaffold and task size stay on their normal rules. The spec records
+`learner_requested_stretch` in `reasons`.
+
+Precedence, in order:
+
+1. A due rematch that this activity can serve wins. The spec is the rematch,
+   including a transfer rematch at transfer, and it does not include the stretch
+   reason. Flashcards still cannot serve or clear a rematch.
+2. Practice tests, Learn, Quiz, Weak Areas, and Cram keep their existing demand.
+   A practice test stays an independent whole task at scaffold 0.
+3. Flashcards may take the one rung only up to recall. A stretch cannot turn a
+   card into transfer, a novel problem, or teach-back.
+4. Coach takes the one rung, capped at 9.
+
+The read-only endpoint accepts the same choice as
+`?challengeRequest=normal|stretch`. Omitting it is normal.
 
 Before wiring Coach:
 
@@ -115,6 +149,13 @@ Before wiring Coach:
    pending state. Keep grading against that issued challenge and its sources.
 2. Track actual help/reveals with the SAME encounter ID. Do not trust a browser
    or an LLM to claim independent support, progression or new context.
+   Support given after an answer must not retroactively change that answer.
+   Record the incorrect attempt with the scaffold actually used then (often 0).
+   Later help on that same encounter raises support for the retry only. A later
+   correct attempt records the accumulated support and is recovery, not
+   independent mastery. The reducer already does this by keeping each event
+   immutable and taking the max scaffold seen on the encounter; do not fold
+   later help back into the earlier result.
 3. Translate a server-verified assessment into `LearningEvent`; use a stable
    interaction ID and timestamp across transport retries. Call
    `recordLearningEvent(serviceClient, event)` after user-client ownership checks.
