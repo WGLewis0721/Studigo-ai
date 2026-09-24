@@ -217,6 +217,9 @@ function pickTopic(topics: Topic[], question: string): Topic | undefined {
  */
 export async function* runCoachTurn(args: {
   supabase: SupabaseClient;
+  /** Trusted server-only writer. Production supplies the service-role client;
+   * tests may omit it and keep using their fake user-scoped client. */
+  stateSupabase?: SupabaseClient;
   roomId: string;
   conversationId: string;
   question: string;
@@ -257,9 +260,9 @@ export async function* runCoachTurn(args: {
   const commit = async (next: CoachState): Promise<void> => {
     const stamped: CoachState = interaction ? { ...next, lastInteractionId: interaction.id } : next;
     try {
-      await saveCoachState(supabase, conversationId, stamped);
+      await saveCoachState(args.stateSupabase ?? supabase, conversationId, stamped);
     } catch {
-      await saveCoachState(supabase, conversationId, stamped);
+      await saveCoachState(args.stateSupabase ?? supabase, conversationId, stamped);
     }
   };
 
