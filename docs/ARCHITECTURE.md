@@ -446,4 +446,11 @@ The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`
   It is carried into `awaiting_control` after a correct answer, so an assisted success can never look independent. An unknown (`null`) value stays unknown. This records what the learner actually received so a future `LearningEvent` can report it honestly.
 - Learner controls ("Make it simpler", "Give me a hint", "Show me an example", "Challenge me") are detected deterministically and are never graded. Simplify keeps the pending concepts, sources and spec.
 - If the control-plane read fails, the question is rendered without a target, nothing is stored as issued, and no progression is claimed.
-- Not yet wired: recording Coach results as `LearningEvent`s (`recordLearningEvent`). Until then the director has no Coach evidence to act on, so the Coach will not change level from Coach practice alone.
+- **Coach ↔ control-plane loop:** ChallengeSpec → question → reply → semantic evidence → deterministic outcome → `LearningEvent` → replayed state → next ChallengeSpec.
+  - "Challenge me" is the only call that sends `challengeRequest: "stretch"`. Everything else sends "normal".
+  - Each Coach submission carries a client UUID that becomes the persisted user message's ID (`lib/coach-interaction.ts`). An exact retry reuses the row; conflicting reuse fails closed with a 409.
+  - The message's server `created_at` is the event time. Support given in reply to an attempt is stamped at +1 ms.
+  - Events are built only from the persisted issued spec, encounter, user and message (`lib/coach-learning-events.ts`), with deterministic IDs `coach:<interactionId>:attempt|support|skip`.
+  - The issued spec must match the authenticated user, the room and the pending topic before the service-role write.
+  - Commit order: record evidence, then save Coach state (one retry), then stream. A failed event write advances nothing. A retry after a failed state write re-records idempotently and keeps the committed result.
+  - The director reloads persisted history for every new question.

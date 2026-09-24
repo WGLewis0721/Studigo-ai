@@ -130,7 +130,7 @@ function pending(spec?: ChallengeSpec, scaffoldUsed: number | null = spec?.scaff
     expectedConcepts: concepts,
     sourceChunkIds: [magnetChunk.id],
     askedAt: "2026-01-01T00:00:00.000Z",
-    ...(spec ? { issuedChallenge: { spec: spec as unknown as Record<string, unknown>, encounterId: "enc-1", scaffoldUsed } } : {})
+    ...(spec ? { issuedChallenge: { spec: spec as unknown as Record<string, unknown>, encounterId: "enc-1", scaffoldUsed, contextId: null } } : {})
   };
 }
 

@@ -57,11 +57,15 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     if (!text || busy) return;
     setPrompt(""); setError(null); setBusy(true);
     const assistantId = crypto.randomUUID();
+    // One UUID per submitted turn. It becomes the persisted user message's ID
+    // and the identity of any learning evidence, so a resend of this same
+    // turn is recognized server-side instead of being recorded twice.
+    const interactionId = crypto.randomUUID();
     // Snapshot the conversation so far — before the new user turn and the
     // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
     const priorHistory = messages.filter((message) => !message.streaming).map((message) => ({ role: message.role, content: message.content }));
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }, { id: assistantId, role: "assistant", content: "", streaming: true }]);
+    setMessages((current) => [...current, { id: interactionId, role: "user", content: text }, { id: assistantId, role: "assistant", content: "", streaming: true }]);
     try {
       // The learner's question stays clean for retrieval; pedagogy choices
       // travel as separate directives so they only ever shape how the coach
@@ -78,7 +82,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
       const body = isFixture
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
-        : JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), conversationId: conversationId.current });
+        : JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), interactionId, conversationId: conversationId.current });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";

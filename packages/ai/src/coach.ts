@@ -25,8 +25,11 @@ export type ExpectedConcept = {
 export const COACH_CONTROL_ACTIONS = ["more_practice", "next_question", "explain_again"] as const;
 export type CoachControlAction = (typeof COACH_CONTROL_ACTIONS)[number];
 
+/** `lastInteractionId`: the learner submission whose processing produced this
+ *  state. A transport retry of that same submission is then recognized as
+ *  already complete instead of being graded twice. */
 export type CoachState =
-  | { version: 1; kind: "idle" }
+  | { version: 1; kind: "idle"; lastInteractionId?: string }
   | {
       version: 1;
       kind: "awaiting_answer";
@@ -37,6 +40,7 @@ export type CoachState =
       askedAt: string;
       /** Optional: rows written before this field existed stay valid. */
       issuedChallenge?: IssuedChallenge;
+      lastInteractionId?: string;
     }
   | {
       version: 1;
@@ -45,6 +49,7 @@ export type CoachState =
       topicId: string | null;
       sourceChunkIds: string[];
       issuedChallenge?: IssuedChallenge;
+      lastInteractionId?: string;
     };
 
 /**
@@ -58,6 +63,8 @@ export type IssuedChallenge = {
   spec: Record<string, unknown>;
   encounterId: string;
   scaffoldUsed: number | null;
+  /** Stable context identity, set when the spec required a new context. */
+  contextId: string | null;
 };
 
 export const IDLE_COACH_STATE: CoachState = { version: 1, kind: "idle" };
@@ -67,6 +74,8 @@ export function parseCoachState(raw: unknown): CoachState {
   if (!raw || typeof raw !== "object") return IDLE_COACH_STATE;
   const value = raw as Record<string, unknown>;
   if (value.version !== 1) return IDLE_COACH_STATE;
+  const lastInteractionId = typeof value.lastInteractionId === "string" && value.lastInteractionId ? value.lastInteractionId : undefined;
+  const stamp = lastInteractionId ? { lastInteractionId } : {};
 
   if (
     value.kind === "awaiting_answer" &&
@@ -84,7 +93,8 @@ export function parseCoachState(raw: unknown): CoachState {
       expectedConcepts: (value.expectedConcepts as unknown[]).filter(isExpectedConcept),
       sourceChunkIds: (value.sourceChunkIds as unknown[]).filter((id): id is string => typeof id === "string"),
       askedAt: value.askedAt,
-      ...(issuedChallenge ? { issuedChallenge } : {})
+      ...(issuedChallenge ? { issuedChallenge } : {}),
+      ...stamp
     };
   }
 
@@ -101,10 +111,12 @@ export function parseCoachState(raw: unknown): CoachState {
       action: value.action as CoachControlAction,
       topicId: typeof value.topicId === "string" ? value.topicId : null,
       sourceChunkIds: (value.sourceChunkIds as unknown[]).filter((id): id is string => typeof id === "string"),
-      ...(issuedChallenge ? { issuedChallenge } : {})
+      ...(issuedChallenge ? { issuedChallenge } : {}),
+      ...stamp
     };
   }
 
+  if (value.kind === "idle" && lastInteractionId) return { version: 1, kind: "idle", lastInteractionId };
   return IDLE_COACH_STATE;
 }
 
@@ -118,11 +130,17 @@ function parseIssuedChallenge(raw: unknown): IssuedChallenge | undefined {
     Array.isArray(value.spec) ||
     typeof value.encounterId !== "string" ||
     !value.encounterId ||
-    !(scaffold === null || (Number.isInteger(scaffold) && (scaffold as number) >= 0 && (scaffold as number) <= 5))
+    !(scaffold === null || (Number.isInteger(scaffold) && (scaffold as number) >= 0 && (scaffold as number) <= 5)) ||
+    !(value.contextId === undefined || value.contextId === null || (typeof value.contextId === "string" && value.contextId))
   ) {
     return undefined;
   }
-  return { spec: value.spec as Record<string, unknown>, encounterId: value.encounterId, scaffoldUsed: scaffold as number | null };
+  return {
+    spec: value.spec as Record<string, unknown>,
+    encounterId: value.encounterId,
+    scaffoldUsed: scaffold as number | null,
+    contextId: typeof value.contextId === "string" ? value.contextId : null
+  };
 }
 
 function isExpectedConcept(value: unknown): value is ExpectedConcept {

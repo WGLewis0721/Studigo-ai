@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { nextChallenge, type ChallengeSpec, type LearningRoute } from "@/lib/learning";
+import { nextChallenge, type ChallengeRequest, type ChallengeSpec, type LearningRoute } from "@/lib/learning";
 import { loadConceptLearningState } from "@/lib/learning/persistence";
 import type { Topic } from "@/lib/rooms";
 
@@ -15,11 +15,13 @@ export type CoachDirector = {
     roomId: string;
     topic: Topic;
     route: LearningRoute;
+    /** Forwarded verbatim. Only "Challenge me" asks for "stretch". */
+    challengeRequest: ChallengeRequest;
   }): Promise<ChallengeSpec>;
 };
 
 export const learningControlPlaneDirector: CoachDirector = {
-  async challengeFor({ supabase, userId, roomId, topic, route }) {
+  async challengeFor({ supabase, userId, roomId, topic, route, challengeRequest }) {
     const key = { userId, roomId, topicId: topic.id };
     const { state, events } = await loadConceptLearningState(supabase, key);
     const recentEvents = [...events]
@@ -31,6 +33,7 @@ export const learningControlPlaneDirector: CoachDirector = {
       recentEvents,
       activity: "coach",
       route,
+      challengeRequest,
       now: new Date().toISOString()
     });
   }

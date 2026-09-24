@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { runCoachTurn } from "@/lib/coach-router";
 import type { LearningRoute } from "@/lib/learning";
+import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 import {
@@ -41,6 +42,8 @@ export type EngineRequest = {
   /** Authenticated learner. Coach needs it to ask the learning-control plane
    *  for the next ChallengeSpec (the read itself stays RLS-scoped). */
   userId?: string;
+  /** The persisted user message for a Coach turn (ID + server time). */
+  interaction?: CoachInteraction;
 };
 
 const EVIDENCE_WINDOW = 300;
@@ -79,7 +82,8 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
       topics,
       directives: args.directives,
       route: args.route,
-      userId: args.userId
+      userId: args.userId,
+      interaction: args.interaction
     });
     return;
   }
