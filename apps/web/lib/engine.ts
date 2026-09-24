@@ -2,6 +2,8 @@ import { INSUFFICIENT_EVIDENCE_TEXT, streamGroundedAnswer, toCitations, type Gro
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { runCoachTurn } from "@/lib/coach-router";
+import type { LearningRoute } from "@/lib/learning";
+import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 import {
@@ -29,12 +31,19 @@ export type EngineRequest = {
   /** How to teach: coaching style, learning tradition, practice protocol.
    *  Chosen in the UI, applied only to the system prompt. */
   directives?: EngineDirective[];
+  /** Selected learning route (Coach only). Shapes delivery, never grading. */
+  route?: LearningRoute;
   /** "coach" routes the turn through the Coach state machine
    *  (packages/ai/src/coach.ts + lib/coach-router.ts) instead of free-form
    *  grounded Q&A. Requires `conversationId` — Coach state is persisted per
    *  conversation, not inferred from the message list each turn. */
   mode?: "ask" | "coach";
   conversationId?: string;
+  /** Authenticated learner. Coach needs it to ask the learning-control plane
+   *  for the next ChallengeSpec (the read itself stays RLS-scoped). */
+  userId?: string;
+  /** The persisted user message for a Coach turn (ID + server time). */
+  interaction?: CoachInteraction;
 };
 
 const EVIDENCE_WINDOW = 300;
@@ -71,7 +80,10 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
       conversationId: args.conversationId,
       question: args.question,
       topics,
-      directives: args.directives
+      directives: args.directives,
+      route: args.route,
+      userId: args.userId,
+      interaction: args.interaction
     });
     return;
   }

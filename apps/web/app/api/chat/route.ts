@@ -1,3 +1,6 @@
+import { LEARNING_ROUTES, type LearningRoute } from "@/lib/learning";
+import { InteractionConflictError, isInteractionId, persistUserInteraction } from "@/lib/coach-interaction";
+import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
@@ -16,6 +19,11 @@ type ChatRequest = {
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
   mode?: "ask" | "coach";
+  /** Learning route id; anything unrecognized falls back to the default. */
+  route?: string;
+  /** Client-generated UUID, once per submitted turn. Becomes the user
+   *  message's ID and the stable identity of any learning evidence. */
+  interactionId?: string;
 };
 
 function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
@@ -83,12 +91,31 @@ export async function POST(request: Request) {
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
-  await supabase
-    .from("messages")
-    .insert({ conversation_id: conversationId, role: "user", content: question });
-
   const directives = sanitizeDirectives(body?.directives);
   const mode = body?.mode === "coach" ? "coach" : "ask";
+
+  // Coach turns can produce learning evidence, so they require a stable
+  // interaction ID: the persisted user message's own ID. Exact retries reuse
+  // the row; conflicting reuse fails closed.
+  let interaction: CoachInteraction | undefined;
+  if (mode === "coach") {
+    if (!isInteractionId(body?.interactionId)) {
+      return Response.json({ error: "A valid interactionId is required for Coach turns." }, { status: 400 });
+    }
+    try {
+      interaction = await persistUserInteraction({ supabase, interactionId: body.interactionId, conversationId, content: question });
+    } catch (error) {
+      if (error instanceof InteractionConflictError) {
+        return Response.json({ error: "That message ID was already used for a different message." }, { status: 409 });
+      }
+      return Response.json({ error: "Could not save your message. Please retry." }, { status: 503 });
+    }
+  } else {
+    await supabase
+      .from("messages")
+      .insert({ conversation_id: conversationId, role: "user", content: question });
+  }
+  const route = LEARNING_ROUTES.includes(body?.route as LearningRoute) ? (body?.route as LearningRoute) : undefined;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -100,7 +127,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, conversationId })) {
+        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
