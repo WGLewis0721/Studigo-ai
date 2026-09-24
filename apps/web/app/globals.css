@@ -1698,3 +1698,144 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+
+/* Screenshot-driven iPhone refinement: compact segmented control, stable skills
+   hierarchy, and a quiet Studigo composer affordance. */
+@media (max-width: 700px) {
+  /* Apple-style segmented control proportions: compact visual control with
+     enough surrounding bar space to remain easy to hit. */
+  .studySubnav {
+    height: 44px;
+    min-height: 44px;
+    padding: 4px 16px;
+    gap: 2px;
+    align-items: center;
+  }
+  .studySubnav::before {
+    inset: 4px 16px;
+    border-radius: 10px;
+    background: rgba(29,41,68,.052);
+  }
+  .studySubnav button {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 8px;
+    gap: 5px;
+    border-radius: 8px;
+    font-size: .89rem;
+    font-weight: 700;
+    letter-spacing: -.012em;
+    line-height: 1;
+  }
+  .studySubnav button > span {
+    font-size: .8rem;
+    line-height: 1;
+  }
+  .studySubnav button[aria-current] {
+    background: rgba(255,255,255,.96);
+    box-shadow:
+      0 1px 2px rgba(29,41,68,.08),
+      0 2px 6px rgba(29,41,68,.08);
+  }
+
+  /* "Today's skills" is metadata above the skill row, never an overlay. */
+  .coachSkills {
+    display: grid;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .coachSkillsLabel {
+    position: static;
+    display: block;
+    width: auto;
+    padding: 0 2px;
+    background: transparent;
+    color: rgba(54,67,93,.64);
+    font-size: .66rem;
+    line-height: 1;
+    letter-spacing: .14em;
+  }
+  .coachTopics {
+    margin: 0 -16px;
+    padding: 0 16px 3px;
+    gap: 8px;
+  }
+  .coachTopics .tinyLabel { display: none; }
+  .coachTopics button {
+    min-height: 42px;
+    padding: 8px 14px;
+    font-size: .84rem;
+    line-height: 1.2;
+  }
+
+  /* Coach composer: quiet until used. The mascot replaces the arrow so the
+     control feels like "send to Studigo", not a generic web form. */
+  .coachComposer {
+    min-height: 54px;
+    padding: 4px 5px 4px 16px;
+  }
+  .coachComposer input {
+    min-height: 44px;
+    padding: 9px 6px;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .coachComposer input::placeholder {
+    color: rgba(54,67,93,.42);
+    opacity: 1;
+    font-weight: 600;
+  }
+  .coachComposerButton,
+  .askComposerLive .coachComposerButton {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+  }
+  .coachComposerButton:disabled {
+    opacity: 1;
+    background: transparent;
+  }
+  .coachComposerButton .studigoMascot {
+    width: 28px !important;
+    height: 28px !important;
+    opacity: .46;
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  .coachComposerButton .studigoMascot img {
+    filter: grayscale(1) saturate(0);
+  }
+  .coachComposerButton:not(:disabled) .studigoMascot {
+    opacity: .72;
+  }
+  .coachComposerButton:not(:disabled):active .studigoMascot {
+    transform: scale(.94);
+  }
+}
+
+@media (max-width: 390px) {
+  .studySubnav {
+    height: 42px;
+    min-height: 42px;
+    padding: 4px 12px;
+  }
+  .studySubnav::before { inset: 4px 12px; }
+  .studySubnav button {
+    height: 34px;
+    min-height: 34px;
+    padding-inline: 6px;
+    font-size: .85rem;
+  }
+  .coachTopics {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+}
