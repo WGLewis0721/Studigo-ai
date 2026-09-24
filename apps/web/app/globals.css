@@ -1160,3 +1160,463 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .studyGroups { left: 7px; right: 7px; padding: 6px; border-radius: 18px; }
   .studyGroups button { min-height: 52px; font-size: .58rem; }
 }
+
+
+/* ---------------------------------------------------------------------------
+   Mobile precision pass — tuned around iPhone 14-class 390×844 CSS px.
+   Bars separate navigation from content; sheets hold secondary controls;
+   conversation space wins over persistent chrome.
+   --------------------------------------------------------------------------- */
+.roomBackButton,
+.roomSettingsBackdrop,
+.coachSetupBackdrop,
+.coachSettingsSheetHead { display: none; }
+
+@media (max-width: 700px) {
+  :root {
+    --m-page: 16px;
+    --m-gap-1: 6px;
+    --m-gap-2: 10px;
+    --m-gap-3: 16px;
+    --m-gap-4: 24px;
+    --m-radius-sm: 12px;
+    --m-radius: 18px;
+    --m-radius-lg: 26px;
+    --m-topbar: 56px;
+    --m-tabbar: 70px;
+    --m-composer: 56px;
+    --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { overscroll-behavior-y: none; }
+  .roomWorkspace button,
+  .roomWorkspace a,
+  .roomWorkspace input,
+  .roomWorkspace select,
+  .roomWorkspace textarea { touch-action: manipulation; }
+
+  /* Collapse the desktop app rail entirely inside a Study Room. */
+  .appShell:has(.roomWorkspace) { display: block; min-height: 100dvh; }
+  .appShell:has(.roomWorkspace) > .appRail { display: none; }
+
+  /* One compact navigation bar instead of two stacked headers. */
+  .roomWorkspace .workspaceTopbar {
+    position: sticky; top: 0; z-index: 70;
+    height: var(--m-topbar); min-height: var(--m-topbar);
+    display: grid; grid-template-columns: 40px minmax(0,1fr) auto;
+    align-items: center; gap: 8px; padding: 6px 10px;
+    background: rgba(255,253,247,.82);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    border-bottom: 1px solid rgba(29,41,68,.09);
+  }
+  .roomBackButton {
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border-radius: 50%; text-decoration: none; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, var(--sans);
+    font-size: 2rem; font-weight: 400; line-height: 1;
+    background: rgba(29,41,68,.055);
+  }
+  .roomBackButton span { transform: translateY(-1px); }
+  .roomTitleBlock { min-width: 0; text-align: left; }
+  .roomTitleBlock .crumb { display: none; }
+  .workspaceTopbar strong {
+    margin: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: var(--sans); font-size: 1rem; line-height: 1.2; letter-spacing: -.01em; font-weight: 900;
+  }
+  .topbarRight { gap: 4px; }
+  .studyGuideDownload .buttonQuiet,
+  .workspaceTopbar .iconButton {
+    width: 40px; height: 40px; min-width: 40px;
+    background: rgba(29,41,68,.055);
+    border-radius: 50%;
+  }
+  .workspaceTopbar .iconButton { font-size: 1rem; letter-spacing: .04em; }
+  .studyGuideDownloadIcon { font-size: .95rem; }
+
+  /* Room settings behaves like a sheet, not an inline form that shoves content down. */
+  .roomSettingsBackdrop,
+  .coachSetupBackdrop {
+    position: fixed; inset: 0; z-index: 108; display: block;
+    border: 0; background: rgba(20,25,36,.24);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  }
+  .roomSettings {
+    position: fixed; left: 8px; right: 8px; bottom: max(8px,var(--m-safe-bottom)); z-index: 110;
+    max-height: calc(100dvh - 24px - var(--m-safe-bottom)); overflow-y: auto;
+    padding: 22px 18px 20px; border: 1px solid rgba(29,41,68,.12);
+    border-radius: 30px; background: rgba(255,253,247,.97);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    box-shadow: 0 24px 70px rgba(20,25,36,.22);
+  }
+  .roomSettings .settingsForm { grid-template-columns: 1fr; gap: 13px; }
+  .roomSettings .settingsActions { position: sticky; bottom: 0; padding-top: 8px; background: inherit; }
+  .roomSettings .dangerZone { align-items: flex-start; }
+
+  /* Mode selection is a compact segmented control directly below the toolbar. */
+  .studySubnav {
+    position: sticky; top: var(--m-topbar); z-index: 60;
+    min-height: 48px; margin: 0; padding: 6px var(--m-page);
+    display: flex; gap: 3px; overflow: hidden;
+    background: rgba(255,253,247,.84);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+    backdrop-filter: saturate(180%) blur(22px);
+    border-bottom: 1px solid rgba(29,41,68,.08);
+  }
+  .studySubnav::before {
+    content: ""; position: absolute; inset: 6px var(--m-page);
+    border-radius: 12px; background: rgba(29,41,68,.055); pointer-events: none;
+  }
+  .studySubnav button {
+    position: relative; z-index: 1; flex: 1 1 0; min-width: 0; min-height: 36px;
+    padding: 0 7px; justify-content: center; gap: 5px;
+    border: 0; border-radius: 10px; background: transparent;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--ink-soft); font-size: .72rem; font-weight: 800;
+  }
+  .studySubnav button > span { flex: 0 0 auto; font-size: .7rem; }
+  .studySubnav button[aria-current] {
+    color: var(--ink); background: rgba(255,253,247,.95);
+    box-shadow: 0 1px 5px rgba(29,41,68,.12);
+  }
+
+  /* Five primary areas stay reachable with one thumb. */
+  .studyGroups {
+    left: 8px; right: 8px; bottom: max(7px,var(--m-safe-bottom)); z-index: 90;
+    min-height: var(--m-tabbar); padding: 6px; gap: 2px;
+    border-radius: 25px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.74), rgba(248,246,240,.68));
+    border: 1px solid rgba(255,255,255,.82);
+    outline: 1px solid rgba(29,41,68,.08);
+    -webkit-backdrop-filter: saturate(190%) blur(30px);
+    backdrop-filter: saturate(190%) blur(30px);
+    box-shadow: 0 12px 36px rgba(29,41,68,.16), inset 0 1px rgba(255,255,255,.8);
+  }
+  .studyGroups button {
+    min-height: 56px; padding: 5px 1px; gap: 4px;
+    border-radius: 19px; color: rgba(54,67,93,.72);
+    font-size: .625rem; font-weight: 800; letter-spacing: -.01em;
+  }
+  .studyGroups button[aria-current] {
+    color: var(--ink); background: rgba(215,239,120,.48);
+    box-shadow: inset 0 0 0 1px rgba(29,41,68,.055);
+  }
+  .studyGroupIcon { font-size: 1.12rem; }
+
+  .modeSurface {
+    padding: 18px var(--m-page) calc(var(--m-tabbar) + 30px + var(--m-safe-bottom));
+  }
+
+  /* Shared mobile typography and spacing. */
+  .modeEmpty,
+  .materialsPanel,
+  .quizSetup,
+  .quizMode,
+  .cardsMode,
+  .learnMode,
+  .masteryMode,
+  .studyPlanPanel,
+  .practiceTestSetup,
+  .testSession,
+  .testResults,
+  .cramMode { max-width: 100%; }
+  .modeEmpty,
+  .materialsPanel,
+  .quizSetup,
+  .quizMode,
+  .learnMode,
+  .masteryMode { gap: var(--m-gap-3); }
+  .modeEmpty h2,
+  .materialsIntro h2,
+  .quizSetup h2,
+  .learnHeader h2,
+  .masteryHero h2,
+  .studySectionHeading h2 {
+    font-size: 1.72rem; line-height: 1.08; letter-spacing: -.035em;
+  }
+  .modeEmpty p,
+  .materialsIntro p,
+  .quizSetup p,
+  .masteryHero p,
+  .studySectionHeading p { font-size: .92rem; line-height: 1.55; }
+
+  .buttonPrimary {
+    min-height: 48px; padding: 0 18px; border-radius: 14px; box-shadow: none;
+  }
+  .buttonPrimary:hover { transform: none; box-shadow: none; }
+  .ghostButton,
+  .sourceChip { min-height: 44px; border-radius: 12px; }
+  .formError, .formNotice { border-radius: 12px; }
+
+  /* Coach: secondary setup in a sheet; the conversation remains the main view. */
+  .coachMode { gap: 14px; padding-bottom: 154px; }
+  .coachHeader { gap: 10px; }
+  .coachHeader h2 { font-size: 1.88rem; line-height: 1.02; letter-spacing: -.045em; }
+  .coachHeader p { font-size: .88rem; line-height: 1.48; }
+  .coachHeader .studigoMascot { width: 50px !important; height: 50px !important; }
+  .coachMode.activeSession .coachHeader { display: none; }
+  .coachMode.activeSession .coachMaterial { display: none; }
+
+  .coachSetupButton {
+    min-height: 52px; padding: 8px 12px; border-radius: 16px;
+    border-color: rgba(29,41,68,.1);
+    background: rgba(29,41,68,.045);
+  }
+  .coachSetupButton strong { font-size: .82rem; }
+  .coachSetupButton small { font-size: .66rem; }
+  .coachMode.activeSession .coachSetupButton { min-height: 48px; }
+
+  .coachSettingsSheetHead {
+    position: sticky; top: -1px; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 5px 0 14px; background: rgba(255,253,247,.97);
+  }
+  .coachSettingsSheetHead > div { min-width: 0; }
+  .coachSettingsSheetHead strong {
+    display: block; margin-top: 3px; font-size: 1.12rem; letter-spacing: -.02em;
+  }
+  .coachSettingsSheetHead button {
+    min-width: 58px; min-height: 38px; border: 0; border-radius: 999px;
+    background: rgba(29,41,68,.07); color: var(--ink); font-weight: 900;
+  }
+  .coachSettings.mobileOpen {
+    position: fixed; left: 8px; right: 8px; bottom: max(8px,var(--m-safe-bottom)); z-index: 110;
+    display: grid; max-height: calc(100dvh - 24px - var(--m-safe-bottom)); overflow-y: auto;
+    gap: 16px; padding: 16px 16px 20px;
+    border: 1px solid rgba(29,41,68,.11); border-radius: 30px;
+    background: rgba(255,253,247,.98);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    box-shadow: 0 24px 70px rgba(20,25,36,.22);
+  }
+  .coachSettings.mobileOpen .coachStyleGrid {
+    display: grid; grid-template-columns: 1fr; gap: 7px; overflow: visible; padding: 0;
+  }
+  .coachSettings.mobileOpen .coachStyle {
+    min-height: 62px; padding: 10px 12px; border-radius: 14px;
+    display: grid; gap: 3px;
+  }
+  .coachSettings.mobileOpen .coachStyle strong { font-size: .8rem; }
+  .coachSettings.mobileOpen .coachStyle span { font-size: .68rem; line-height: 1.32; }
+  .coachChoiceRow select { border: 0; background: rgba(29,41,68,.055); }
+
+  .coachTopics {
+    margin-inline: -16px; padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+  .coachTopics .tinyLabel {
+    position: sticky; left: 16px; z-index: 2;
+    padding-right: 6px; background: var(--paper-bright);
+  }
+  .coachTopics button {
+    min-height: 40px; padding: 7px 12px; border: 0;
+    border-radius: 999px; background: rgba(29,41,68,.055);
+    font-size: .76rem;
+  }
+  .coachTopics button.active { background: rgba(239,126,98,.26); box-shadow: inset 0 0 0 1px rgba(239,126,98,.38); }
+
+  .coachMaterial {
+    padding: 14px; border: 0; border-radius: 18px;
+    background: rgba(29,41,68,.035);
+  }
+
+  /* Conversation density: assistant text breathes, learner text stays compact. */
+  .askMode { padding-bottom: 92px; }
+  .askThread, .coachThread { gap: 4px; }
+  .threadEnd { width: 100%; height: 1px; }
+  .studentBubble {
+    max-width: 84%; margin-top: 12px; padding: 10px 14px;
+    border-radius: 19px 19px 6px 19px; font-size: 1rem; line-height: 1.4;
+    box-shadow: none;
+  }
+  .answerBubble,
+  .askMode .answerBubble {
+    width: 100%; max-width: 100%; margin-top: 6px; padding: 8px 1px 16px;
+    border: 0; border-radius: 0; background: transparent;
+  }
+  .answerKicker {
+    display: flex; align-items: center; gap: 7px;
+    font-size: .6rem; letter-spacing: .105em;
+  }
+  .answerText,
+  .answerBubble p {
+    margin: 8px 0 10px; font-size: 1rem; line-height: 1.62;
+    letter-spacing: -.008em;
+  }
+  .sourceStack {
+    flex-wrap: nowrap; overflow-x: auto; gap: 7px; padding-bottom: 3px;
+    scrollbar-width: none; scroll-snap-type: x proximity;
+  }
+  .sourceStack::-webkit-scrollbar { display: none; }
+  .sourceChipLink {
+    flex: 0 0 auto; min-height: 34px; padding: 6px 9px;
+    border-radius: 999px; scroll-snap-align: start;
+    background: rgba(29,41,68,.045);
+  }
+
+  .askIntro { gap: 9px; padding: 6px 0 12px; }
+  .askIntro .studigoMascot { width: 62px !important; height: 62px !important; }
+  .askIntro h2 { font-size: 1.78rem; line-height: 1.05; }
+  .askIntro p { font-size: .9rem; line-height: 1.5; }
+  .askIntro .starterList,
+  .coachEmpty .starterList { width: 100%; gap: 7px; }
+  .askIntro .starterList button,
+  .coachEmpty .starterList button {
+    min-height: 48px; padding: 10px 13px;
+    border-color: rgba(29,41,68,.12); border-radius: 14px;
+    background: rgba(29,41,68,.035); font-size: .84rem;
+  }
+
+  /* Composer and Coach shortcuts float above the tab bar and get out of the keyboard's way. */
+  .askComposerLive {
+    position: fixed; left: 14px; right: 14px;
+    bottom: calc(var(--m-tabbar) + 24px + var(--m-safe-bottom)); z-index: 82;
+    width: auto; min-height: var(--m-composer); margin: 0; padding: 4px 4px 4px 14px;
+    border: 1px solid rgba(29,41,68,.1); border-radius: 28px;
+    background: rgba(255,255,255,.9);
+    -webkit-backdrop-filter: saturate(190%) blur(28px);
+    backdrop-filter: saturate(190%) blur(28px);
+    box-shadow: 0 12px 34px rgba(29,41,68,.17), inset 0 1px rgba(255,255,255,.75);
+    transition: bottom .22s ease, box-shadow .22s ease;
+  }
+  .askComposerLive input {
+    min-height: 46px; padding: 10px 7px; font-size: 16px; color: var(--ink);
+  }
+  .askComposerLive button {
+    width: 46px; height: 46px; min-width: 46px; margin: 0; border-radius: 50%;
+    font-size: 1rem;
+  }
+  .coachControls {
+    position: fixed; left: 0; right: 0;
+    bottom: calc(var(--m-tabbar) + var(--m-composer) + 30px + var(--m-safe-bottom)); z-index: 81;
+    margin: 0; padding: 6px 14px 8px;
+    background: linear-gradient(to bottom, rgba(255,253,247,0), rgba(255,253,247,.96) 44%);
+  }
+  .coachControls button {
+    min-height: 38px; padding: 0 12px; border: 0; border-radius: 999px;
+    background: rgba(255,255,255,.93); font-size: .75rem;
+    box-shadow: 0 4px 14px rgba(29,41,68,.09), inset 0 0 0 1px rgba(29,41,68,.08);
+  }
+
+  .roomWorkspace:has(.askComposerLive input:focus) .studyGroups {
+    transform: translateY(calc(100% + 28px)); opacity: 0; pointer-events: none;
+  }
+  .roomWorkspace:has(.askComposerLive input:focus) .coachControls {
+    transform: translateY(24px); opacity: 0; pointer-events: none;
+  }
+  .roomWorkspace:has(.askComposerLive input:focus) .askComposerLive {
+    bottom: max(8px,var(--m-safe-bottom));
+    box-shadow: 0 8px 28px rgba(29,41,68,.2);
+  }
+  .studyGroups, .coachControls {
+    transition: transform .24s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
+  }
+
+  /* Quiz / cards / learn / materials / progress: one spacing and control language. */
+  .quizPrompt { font-size: 1.5rem; line-height: 1.28; }
+  .quizBar { height: 5px; border: 0; border-radius: 999px; overflow: hidden; }
+  .choiceItem,
+  .testChoice {
+    min-height: 54px; padding: 13px 14px; border-color: rgba(29,41,68,.12);
+    border-radius: 16px; font-size: .92rem; background: rgba(255,255,255,.86);
+  }
+  .choiceSelected,
+  .testChoice:has(input:checked) {
+    box-shadow: none; border-color: rgba(29,41,68,.4); background: rgba(215,239,120,.22);
+  }
+  .quizFeedback,
+  .quizScoreCard,
+  .testSubmitReview,
+  .testReview,
+  .calibrationCard,
+  .cardEditor,
+  .topicAddCard,
+  .cramActivity {
+    border-radius: 18px; box-shadow: none;
+  }
+  .quizActions { gap: 8px; }
+  .quizActions > * { flex: 1; }
+
+  .flashcard {
+    min-height: 286px; padding: 26px 20px;
+    border-color: rgba(29,41,68,.13); border-radius: 24px;
+    box-shadow: 0 12px 32px rgba(29,41,68,.09);
+  }
+  .flashcardFlipped { box-shadow: 0 12px 32px rgba(29,41,68,.09); }
+  .flashcardSide { font-size: 1.6rem; line-height: 1.32; }
+  .ratingRow { width: 100%; display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .ratingButton {
+    min-width: 0; min-height: 54px; padding: 8px 5px;
+    border-color: rgba(29,41,68,.12); border-radius: 14px;
+  }
+
+  .learnHeader { align-items: center; gap: 10px; }
+  .learnHeaderActions { width: 100%; gap: 7px; }
+  .learnHeaderActions button { flex: 1; min-height: 44px; }
+  .topicList { gap: 9px; }
+  .topicItem { border-color: rgba(29,41,68,.1); border-radius: 17px; overflow: hidden; }
+  .topicItemOpen { box-shadow: none; border-color: rgba(29,41,68,.26); }
+  .topicHead {
+    grid-template-columns: 32px minmax(0,1fr) auto; gap: 10px; padding: 13px;
+    min-height: 62px;
+  }
+  .topicMarker { width: 32px; height: 32px; }
+  .topicCopy strong { font-size: .9rem; }
+  .topicCopy small { font-size: .72rem; }
+  .topicBody { padding: 0 13px 16px; }
+  .termChip { border: 0; border-radius: 999px; background: rgba(29,41,68,.06); }
+
+  .sourceTypePicker {
+    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; scrollbar-width: none;
+  }
+  .sourceTypePicker::-webkit-scrollbar { display: none; }
+  .sourceChip { flex: 0 0 auto; padding-inline: 12px; border-color: rgba(29,41,68,.13); }
+  .dropzone { padding: 30px 16px; border-radius: 20px; border-color: rgba(29,41,68,.4); }
+  .documentRow {
+    grid-template-columns: auto minmax(0,1fr); gap: 10px 12px;
+    padding: 13px; border-color: rgba(29,41,68,.1); border-radius: 16px;
+  }
+  .documentActions { grid-column: 1 / -1; gap: 16px; }
+
+  .masteryHero { gap: 16px; align-items: flex-start; }
+  .progressRing { width: 82px; }
+  .statRow { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .statRow > div { padding: 13px; border-color: rgba(29,41,68,.09); border-radius: 15px; }
+  .statRow dd { font-size: 1.55rem; }
+  .masteryTable li {
+    grid-template-columns: minmax(0,1fr) 42px; gap: 10px; padding: 12px;
+    border-color: rgba(29,41,68,.09); border-radius: 14px;
+  }
+
+  .studySectionHeading { margin-bottom: 20px; }
+  .studySectionHeading > .studigoMascot { width: 48px !important; height: 48px !important; }
+  .testQuestionNav {
+    flex-wrap: nowrap; overflow-x: auto; gap: 7px; margin: 16px -16px 20px;
+    padding: 3px 16px 5px; scrollbar-width: none;
+  }
+  .testQuestionNav::-webkit-scrollbar { display: none; }
+  .testQuestionNav button {
+    flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%;
+  }
+  .testQuestion { padding-top: 20px; }
+  .testQuestion h3 { font-size: 1.45rem; line-height: 1.38; }
+  .testSessionActions { margin: 22px 0; align-items: center; }
+  .planDay { padding: 20px 0 28px; }
+  .planDayActions article { padding-left: 14px; margin-bottom: 22px; }
+}
+
+@media (max-width: 390px) {
+  .modeSurface { padding-inline: 14px; }
+  .workspaceTopbar { padding-inline: 8px; }
+  .workspaceTopbar strong { font-size: .96rem; }
+  .studyGroups { left: 6px; right: 6px; }
+  .studyGroups button { font-size: .59rem; }
+  .studySubnav { padding-inline: 12px; }
+  .studySubnav::before { inset-inline: 12px; }
+  .studySubnav button { font-size: .69rem; padding-inline: 5px; }
+  .coachHeader h2 { font-size: 1.78rem; }
+  .studentBubble { max-width: 88%; }
+}
