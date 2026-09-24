@@ -6,9 +6,11 @@ It exists to keep implementation disciplined.
 
 The core premise is simple:
 
-> **Studigo does not need machine learning, RAG, an LLM, or agent orchestration to decide how learning should progress.**
+> **Generative AI is a core feature of the Studigo Coach, but it is not the learning control plane.**
 >
-> Those tools can enhance the experience, but the learning loop itself should be implemented with proven software primitives: state, events, counters, thresholds, deterministic rules, feedback loops, and persistent history.
+> Roughly 80% of the adaptive learning system should come from established software and system-design principles: state, events, counters, thresholds, deterministic rules, feedback loops, mastery projections, and persistent history. The remaining generative layer is the high-value ~20% that makes Coach conversational, flexible, semantically aware, and able to explain the same grounded concept in many useful ways.
+>
+> RAG, embeddings, and LLMs are therefore first-class tools in the Coach experience, but they should enhance an established learning system rather than replace its progression logic.
 
 The game-design inspiration is deliberate:
 
@@ -124,8 +126,9 @@ Cram / Weak Areas     Direct / Socratic / etc.
         +-------+-------+
         |               |
         v               v
- deterministic       optional AI
- templates           phrasing / grading
+ deterministic      generative AI
+ rules/templates    Coach phrasing /
+                    feedback / grading
         |               |
         +-------+-------+
                 |
@@ -156,7 +159,7 @@ Use the infrastructure Studigo already has:
 - **Postgres RLS** for per-user ownership;
 - **Supabase Storage** for source documents;
 - **pgvector** only where semantic source retrieval is useful;
-- **`packages/ai`** as the provider boundary for optional model calls;
+- **`packages/ai`** as the provider boundary for the Coach's generative AI, semantic grading, and grounded generation;
 - **Vercel** for the current web deployment.
 
 No new infrastructure is required to prove the adaptive engine.
@@ -709,9 +712,9 @@ The renderer should prefer:
 - concrete examples;
 - no compound academic prompt when the same task can be split across turns.
 
-### Deterministic first
+### Deterministic control, generative delivery
 
-Use templates where templates are sufficient.
+Use templates where templates are sufficient, but do not force the Coach into rigid canned language merely to avoid an LLM call.
 
 Example:
 
@@ -721,13 +724,17 @@ renderBinaryContrast(a, b)
 renderTransferPrompt(sourceExample, newExample)
 ```
 
-Use an LLM when natural variation or open-ended context is genuinely useful.
+Use the LLM as the normal Coach delivery layer when natural explanation, dialogue, semantic feedback, or varied context adds learning value. The deterministic system still supplies the target, reasoning demand, scaffold level, and progression constraints.
 
 ---
 
-## 14. Role of LLMs
+## 14. Role of generative AI
 
-LLMs are an enhancer, not the engine.
+Generative AI is a **core Coach capability**, not an optional afterthought.
+
+The architectural boundary is that it should own roughly the conversational 20% of the system, while established software owns the learning-control 80%.
+
+The generative layer is responsible for making the Coach feel adaptive and human: language, explanation, dialogue, semantic interpretation, grounded examples, and feedback. It should not become the authoritative store or progression engine.
 
 Good uses:
 
@@ -749,13 +756,15 @@ Bad uses:
 - silently expand test scope;
 - replace persisted learning history with chat context.
 
-If the model is unavailable, the adaptive engine should still be able to:
+If the model is unavailable, the **learning control plane** should still be able to:
 
 - update learner state;
 - select the next reasoning level;
 - select the next scaffold level;
 - schedule a rematch;
-- render at least basic deterministic prompts for supported mini-games.
+- preserve progression and mastery evidence.
+
+Coach's rich conversational experience may be degraded or unavailable without generative AI. That is acceptable. The requirement is not "Coach without AI"; the requirement is that loss of the AI layer does not erase or redefine the underlying learning state. Deterministic mini-games may continue where their own interaction model permits it.
 
 ---
 
@@ -1163,10 +1172,10 @@ A learned system should have to beat it.
 
 ---
 
-## 27. Core distinction: engine vs enhancement
+## 27. Core distinction: 80% control plane, 20% generative layer
 
 ```text
-ESTABLISHED SYSTEM DESIGN
+~80% — ESTABLISHED SOFTWARE / SYSTEM DESIGN
 
 state
 events
@@ -1176,30 +1185,33 @@ state machines
 lookup tables
 feedback loops
 persistent history
+mastery projection
 deterministic progression
 
-        = learning engine
+        = learning control plane
 
-OPTIONAL ENHANCEMENTS
+~20% — GENERATIVE COACH LAYER
 
-LLM
+LLM conversation
 semantic grading
 natural-language feedback
-RAG
-embeddings
+RAG-grounded explanation
+embeddings/retrieval support
 grounded examples
 generated variations
 
-        = experience enhancers
+        = Coach intelligence and expression
 ```
 
-This distinction protects the product from becoming dependent on whichever AI framework is fashionable next.
+The percentages are an architectural heuristic, not a runtime accounting formula. They exist to prevent the generative model from swallowing responsibilities that ordinary software can perform more predictably, cheaply, and transparently.
+
+This distinction also protects the product from becoming dependent on whichever AI framework is fashionable next while preserving generative AI as one of Studigo Coach's defining features.
 
 ---
 
 ## 28. Final architecture principle
 
-> **Build the learning system so that it still knows what should happen next when the model is turned off.**
+> **Build the learning control plane so it still knows what should happen next even though generative AI is central to how Coach delivers that next step.**
 
 If Studigo can determine:
 
@@ -1211,8 +1223,8 @@ If Studigo can determine:
 
 without an LLM call, then the learning engine is correctly separated.
 
-The LLM can then do what it is unusually good at:
+The LLM then does what it is unusually good at and what Studigo explicitly depends on it for:
 
-> make that established system feel like a patient, natural, responsive tutor.
+> turn that established learning system into a patient, natural, responsive, semantically aware tutor.
 
 That is the intended technical direction for Studigo's adaptive-learning roadmap.
