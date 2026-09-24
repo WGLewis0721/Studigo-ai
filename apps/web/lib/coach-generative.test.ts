@@ -604,6 +604,7 @@ function answerTurn(state: CoachState, question: string, evaluation: { intent: "
       fetchChunksByIds: async () => [magnetChunk],
       evaluateCoachAnswer: async () => evaluation,
       generateCoachFeedback: async () => { feedbackCalled = true; return "Think about the ends."; },
+      renderCoachSupport: async () => "Think about the ends.",
       answerFromRetrievedContext: async () => { revealed = true; return { text: "Like poles push apart [1].", citations: [], grounded: true }; }
     }
   }));
