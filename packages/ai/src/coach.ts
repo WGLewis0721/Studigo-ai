@@ -173,7 +173,8 @@ export type TurnIntent =
   // Learner-facing Coach controls. Deterministic, never graded as answers.
   | "simplify"
   | "example"
-  | "challenge";
+  | "challenge"
+  | "repeat_choices";
 
 const AFFIRM_PATTERN = /^(yes|yeah|yep|yup|sure|ok|okay|please|go\s*ahead|sounds\s+good|let'?s\s+go)[.!]?$/i;
 const DECLINE_PATTERN = /^(no|nope|nah|not\s+now|no\s+thanks)[.!]?$/i;
@@ -185,7 +186,9 @@ const HELP_PATTERN = /\b(i\s+(?:do\s*n't|dont)\s+know|idk|not\s+sure|i'?m\s+stuc
 const SHOW_ANSWER_PATTERN =
   /\b(show\s+(?:me\s+)?(?:the\s+)?answer|tell\s+me\s+the\s+answer|what'?s\s+the\s+answer|give\s+me\s+the\s+answer)\b/i;
 const SIMPLIFY_PATTERN =
-  /\b(make\s+it\s+simpler|simpler(?:\s+please)?|simplify(?:\s+it)?|(?:in\s+)?simpler\s+words|say\s+(?:it|that)\s+(?:more\s+)?simply|easier\s+words|i\s+(?:do\s*n't|dont)\s+understand\s+the\s+question)\b/i;
+  /\b(make\s+it\s+simpler|simpler(?:\s+please)?|simplify(?:\s+it)?|(?:in\s+)?simpler\s+words|say\s+(?:it|that)\s+(?:more\s+)?simply|easier\s+words|too\s+many\s+words|too\s+wordy|too\s+long|shorter(?:\s+please)?|use\s+fewer\s+words|less\s+words|i\s+(?:do\s*n't|dont)\s+understand\s+the\s+question)\b/i;
+const CHOICES_PATTERN =
+  /\b(what\s+are\s+(?:the\s+)?answer\s+choices|what\s+are\s+(?:my\s+)?choices|repeat\s+(?:the\s+)?choices|show\s+(?:me\s+)?(?:the\s+)?choices|what\s+were\s+(?:the\s+)?choices)\b/i;
 const EXAMPLE_PATTERN =
   /\b(show\s+me\s+an?\s+example|give\s+me\s+an?\s+example|(?:an?\s+)?example\s+please|can\s+i\s+(?:see|have|get)\s+an?\s+example)\b/i;
 const CHALLENGE_PATTERN =
@@ -220,6 +223,7 @@ export function detectTurnIntent(text: string, state: CoachState): TurnIntent {
   const trimmed = text.trim();
   if (!trimmed) return "irrelevant";
   if (SHOW_ANSWER_PATTERN.test(trimmed)) return "show_answer";
+  if (CHOICES_PATTERN.test(trimmed)) return "repeat_choices";
   if (isShortCommand(trimmed)) {
     if (SIMPLIFY_PATTERN.test(trimmed)) return "simplify";
     if (EXAMPLE_PATTERN.test(trimmed)) return "example";
@@ -231,6 +235,13 @@ export function detectTurnIntent(text: string, state: CoachState): TurnIntent {
 
   if (state.kind === "awaiting_control" && control) return "conversation_control";
   if (state.kind === "awaiting_answer" && (control === "next" || control === "exit")) return "conversation_control";
+  if (
+    state.kind === "awaiting_answer" &&
+    control === "decline" &&
+    !/^(?:is|are|do|does|did|can|could|will|would|should|has|have|had|was|were)\b/i.test(state.question.trim())
+  ) {
+    return "help_request";
+  }
 
   return "answer";
 }
@@ -398,12 +409,17 @@ export async function rewriteCoachQuestion(args: {
   expectedConcepts: ExpectedConcept[];
   chunks: RetrievedChunk[];
   challengeGuidance?: string[];
+  /** Optional explicit cap for learner-requested simplification. */
+  maxWords?: number;
 }): Promise<string> {
   const result = await structured<{ question: string }>({
     system: [
       "You rewrite one Coach question so its English is easier. You change wording only.",
       "Keep exactly the same reasoning task and difficulty: if it asks why, how, to predict, compare, apply, or defend, the rewrite must ask the same. Never turn it into a recall or yes/no question to make it easier.",
       "Keep the same idea being checked and the same facts. Keep any [n] citation that the original has, and add none.",
+      "Do not add answer choices unless the original question already had labeled choices.",
+      "Do not add a second question or an extra 'Why?' that the original did not ask.",
+      ...(args.maxWords ? [`Use at most ${args.maxWords} words total.`] : []),
       "Fix these problems:",
       ...args.violations.map((violation) => `- The question ${violation}.`),
       ...LANGUAGE_FLOOR_RULES,
@@ -430,7 +446,7 @@ export async function rewriteCoachQuestion(args: {
 // never change what counts as correct and are never graded.
 // ---------------------------------------------------------------------------
 
-export type CoachSupportKind = "simplify" | "example";
+export type CoachSupportKind = "simplify" | "hint" | "example" | "choice" | "worked_example";
 
 export function buildCoachSupportSystem(args: {
   support: CoachSupportKind;
@@ -440,8 +456,14 @@ export function buildCoachSupportSystem(args: {
 }): string {
   const task =
     args.support === "simplify"
-      ? "Rewrite the pending question in plainer words. Keep the same idea and the same reasoning task; only make the English easier. Return only the rewritten question, as one main question."
-      : "Give one short, concrete example that makes the pending question easier to think about, without answering it. Prefer an example from the excerpts and cite it with [n]. If the example is not in the excerpts, say it is a general example and do not cite it. At most three short sentences, and do not ask a question.";
+      ? "Rewrite the pending question in plainer words. Keep the same idea and reasoning task. Use fewer words. Do not add answer choices. Return only one short question."
+      : args.support === "hint"
+        ? "Give ONE small clue, at most 10 words. Do not state the complete answer. For a comparison, do not explain both sides. End with one tiny prompt to try again."
+        : args.support === "example"
+          ? "Give one short, concrete example that makes the pending question easier to think about, without answering it. Prefer an example from the excerpts and cite it with [n]. At most two short sentences."
+          : args.support === "choice"
+            ? "Turn the same pending task into exactly two short labeled choices, A) and B). One choice is correct and one is plausibly wrong. Do not reveal which is correct. End only with 'Pick A or B.' Keep the same concept."
+            : "Give a one-sentence worked answer from the excerpts, then one very short check-for-understanding question. This is maximum support, so it may reveal the answer. Cite supported facts with [n].";
   return [
     "You are Studigo's Coach, supporting a learner on a question they have not answered yet.",
     task,
@@ -547,6 +569,7 @@ export async function evaluateCoachAnswer(args: {
       "Distinguish clarification from answer carefully: a reply that tries to explain, apply, or exemplify the idea is an answer even if it is wrong or incomplete; a reply that instead poses a question back to you (asking for a definition or explanation) is a clarification. When it is genuinely a question the learner wants answered before they can respond, choose clarification. Do not base this on how many words the reply shares with the question.",
       "For every expected concept, decide: demonstrated (clearly shown, in any wording, including examples or everyday vocabulary), partial (gestured at or incomplete), absent (not addressed at all), or contradicted (the reply states something incompatible with it).",
       "Judge meaning, not wording. A correct idea in different vocabulary, a valid example instead of a definition, and a typo-heavy but recognizable answer must never be marked absent just because it does not repeat the source's phrasing.",
+      "If the pending question contains labeled answer choices and the learner replies only with a label like A or B, interpret the text of that selected choice as the learner's answer.",
       "Never require verbatim overlap with the source excerpts.",
       UNTRUSTED_MATERIAL_RULE
     ].join(" "),
@@ -653,7 +676,7 @@ const OUTCOME_INSTRUCTIONS: Record<CoachOutcome, string> = {
   correct: "The learner's reply is correct. Affirm it briefly, in one or two short sentences, and note a terminology difference from the source only if relevant.",
   partial: "The learner's reply is partly correct. Say plainly what they got right, then ask only for the one missing piece.",
   incorrect: "The learner's reply is incorrect or contradicts a critical concept. Name the specific mistake plainly and correct it using the excerpts, without being harsh.",
-  irrelevant: "The learner's reply does not respond to the question. Do not treat this as a content mistake. Briefly say what the question is asking, in simpler words, and give one concrete clue from the excerpts. Never say the material is insufficient.",
+  irrelevant: "The learner's reply does not respond to the question. Do not treat this as a content mistake. Say that briefly, then give ONE small clue only. Never state the full answer. For a comparison question, never explain both sides. Keep the whole response under 25 words and never say the material is insufficient.",
   help: "The learner is stuck. Give exactly one short clue grounded in the excerpts, in at most two short sentences. Do not give the answer. Then invite them to try again.",
   control: "Acknowledge briefly and move on."
 };
