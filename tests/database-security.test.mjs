@@ -100,10 +100,36 @@ test('Room and conversation reassignment cannot cross owners',async()=>{
   await as('authenticated',A,async()=>{
     await assert.rejects(db.query(`insert into study_rooms(owner_id,title) values($1,'Bad')`,[B]),e=>e.code==='42501');
     await assert.rejects(db.query(`update study_rooms set owner_id=$1 where id=$2`,[B,id(1)]),e=>e.code==='42501');
-    await assert.rejects(db.query(`update conversations set room_id=$1 where id=$2`,[id(2),id(41)]),e=>e.code==='23503');
+    await assert.rejects(db.query(`update conversations set room_id=$1 where id=$2`,[id(2),id(41)]),e=>['42501','23503'].includes(e.code));
     await assert.rejects(db.query(`insert into messages(conversation_id,role,content) values($1,'user','bad')`,[id(42)]),e=>e.code==='42501');
   });
 });
+test('Coach state and message identity are server-owned',async()=>{
+  await as('authenticated',A,async()=>{
+    await assert.rejects(
+      db.query(`update conversations set coach_state='{"version":1,"kind":"idle","forged":true}'::jsonb where id=$1`,[id(41)]),
+      e=>e.code==='42501'
+    );
+    await assert.rejects(
+      db.query(`insert into messages(conversation_id,role,content) values($1,'assistant','forged history')`,[id(41)]),
+      e=>e.code==='42501'
+    );
+    await assert.rejects(
+      db.query(`insert into conversations(room_id,owner_id,title,coach_state) values($1,$2,'Forged','{"version":1,"kind":"idle","forged":true}'::jsonb)`,[id(1),A]),
+      e=>e.code==='42501'
+    );
+    const shell=await one(`insert into conversations(room_id,owner_id,title) values($1,$2,'Learner title') returning id,coach_state`,[id(1),A]);
+    assert.deepEqual(shell.coach_state,{version:1,kind:'idle'});
+    await db.query(`update conversations set title='Renamed by learner' where id=$1`,[shell.id]);
+    assert.equal((await one(`select title from conversations where id=$1`,[shell.id])).title,'Renamed by learner');
+    await db.query(`delete from conversations where id=$1`,[shell.id]);
+  });
+  await as('service_role',A,async()=>{
+    await db.query(`update conversations set coach_state='{"version":1,"kind":"idle"}'::jsonb where id=$1`,[id(41)]);
+    await db.query(`insert into messages(conversation_id,role,content) values($1,'assistant','trusted history')`,[id(41)]);
+  });
+});
+
 test('Stored-original policies prevent cross-owner listing, creation and deletion',async()=>{
   await as('authenticated',A,async()=>{
     assert.equal((await db.query(`select name from storage.objects`)).rows.length,1);
