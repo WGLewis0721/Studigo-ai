@@ -516,7 +516,9 @@ export async function* runCoachTurn(args: {
 
     // Help climbs the existing scaffold ladder instead of repeating the same
     // hint forever: hint -> concrete example -> two choices -> worked answer.
-    if (intent === "help_request") {
+    // The same path is used whether the command was recognized deterministically
+    // ("hint", "I don't know") or semantically by the evaluator.
+    const supportLearner = async function* (resolvedIntent: string): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
       const prior = scaffoldBefore ?? 0;
       const supportKind = prior < 2 ? "hint" : prior < 3 ? "example" : prior < 4 ? "choice" : "worked_example";
       const nextLevel = supportKind === "hint" ? 2 : supportKind === "example" ? 3 : supportKind === "choice" ? 4 : 5;
@@ -536,8 +538,10 @@ export async function* runCoachTurn(args: {
       const citations = citationsIn(support, chunks);
       yield { type: "delta", text: support };
       yield { type: "done", answer: { text: support, citations, grounded: citations.length > 0 } };
-      return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "help", stateAfter: "awaiting_answer" };
-    }
+      return { stateBefore: state.kind, turnIntent: resolvedIntent, semanticScore: null, outcome: "help", stateAfter: "awaiting_answer" };
+    };
+
+    if (intent === "help_request") return yield* supportLearner(intent);
 
     const evaluation = await deps.evaluateCoachAnswer({
       question: state.question,
@@ -568,6 +572,7 @@ export async function* runCoachTurn(args: {
     // The evaluator resolved an apparent answer into "show me the answer":
     // take the same reveal path so what is recorded matches what was given.
     if (effectiveIntent === "show_answer") return yield* reveal(effectiveIntent);
+    if (effectiveIntent === "help_request") return yield* supportLearner(effectiveIntent);
 
     // The learner asked their own genuine question instead of answering
     // ("What does inherited mean?"). Only the semantic evaluator can spot
