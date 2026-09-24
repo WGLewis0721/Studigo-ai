@@ -163,7 +163,10 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
           </label>
         </div>
       </section>
-      <div className="coachTopics"><span className="tinyLabel">TODAY&apos;S SKILLS</span>{topics.slice(0, 5).map((topic) => <button key={topic.title} type="button" className={selectedTopic.title === topic.title ? "active" : ""} onClick={() => { setSelectedTopic(topic); void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`); }}>{topic.title}<span aria-hidden="true">→</span></button>)}</div>
+      <section className="coachSkills" aria-label="Today's skills">
+        <span className="tinyLabel coachSkillsLabel">TODAY&apos;S SKILLS</span>
+        <div className="coachTopics">{topics.slice(0, 5).map((topic) => <button key={topic.title} type="button" className={selectedTopic.title === topic.title ? "active" : ""} onClick={() => { setSelectedTopic(topic); void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`); }}>{topic.title}<span aria-hidden="true">→</span></button>)}</div>
+      </section>
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <div className="coachThread">
         {messages.length === 0 ? (
@@ -173,7 +176,12 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       </div>
       {messages.length > 0 && <div className="starterList coachControls" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
       {error && <p className="formError" role="alert">{error}</p>}
-      <form className="askComposer askComposerLive" onSubmit={(event) => { event.preventDefault(); void coach(prompt); }}><input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={`Ask the ${style.name.toLowerCase()}…`} aria-label="Ask Studigo to coach you" disabled={busy} /><button type="submit" aria-label="Start coaching" disabled={busy || !prompt.trim()}>↑</button></form>
+      <form className="askComposer askComposerLive coachComposer" onSubmit={(event) => { event.preventDefault(); void coach(prompt); }}>
+        <input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ask Studigo" aria-label="Ask Studigo" disabled={busy} />
+        <button className="coachComposerButton" type="submit" aria-label="Send to Studigo" disabled={busy || !prompt.trim()}>
+          <StudigoMascot state={busy ? "thinking" : "welcome"} size={30} mark />
+        </button>
+      </form>
     </div>
   );
 }
