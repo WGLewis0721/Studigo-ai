@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint || true",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test lib/*.test.ts"
+    "test": "node --import tsx --test lib/*.test.ts",
+    "generate:routes": "tsx scripts/generate-route-policies.ts"
   },
   "dependencies": {
     "@studigo/ai": "workspace:*",

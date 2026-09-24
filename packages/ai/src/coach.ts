@@ -369,6 +369,43 @@ export async function generateCoachQuestion(args: {
   return { question: result.question.trim(), expectedConcepts, sourceChunkIds, sourceMarkers };
 }
 
+/**
+ * The single constrained rewrite used by `enforceLanguageFloor`. It returns
+ * only new wording: the expected concepts, sources and control-plane spec
+ * of the question are not outputs of this call, so they cannot change.
+ */
+export async function rewriteCoachQuestion(args: {
+  question: string;
+  violations: string[];
+  expectedConcepts: ExpectedConcept[];
+  chunks: RetrievedChunk[];
+  challengeGuidance?: string[];
+}): Promise<string> {
+  const result = await structured<{ question: string }>({
+    system: [
+      "You rewrite one Coach question so its English is easier. You change wording only.",
+      "Keep exactly the same reasoning task and difficulty: if it asks why, how, to predict, compare, apply, or defend, the rewrite must ask the same. Never turn it into a recall or yes/no question to make it easier.",
+      "Keep the same idea being checked and the same facts. Keep any [n] citation that the original has, and add none.",
+      "Fix these problems:",
+      ...args.violations.map((violation) => `- The question ${violation}.`),
+      ...LANGUAGE_FLOOR_RULES,
+      ...(args.challengeGuidance?.length ? ["The question was written for this task:", ...args.challengeGuidance] : []),
+      "Return only the rewritten question.",
+      UNTRUSTED_MATERIAL_RULE
+    ].join(" "),
+    user: [
+      asUntrustedMaterial({
+        question: args.question,
+        conceptsBeingChecked: args.expectedConcepts.map((concept) => concept.description)
+      }),
+      `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
+    ].join("\n\n"),
+    schemaName: "studigo_coach_question_rewrite",
+    schema: { type: "object", additionalProperties: false, required: ["question"], properties: { question: { type: "string" } } }
+  });
+  return result.question.trim();
+}
+
 // ---------------------------------------------------------------------------
 // Learner support controls ("make it simpler", "show me an example").
 // These render support around the SAME pending question and concepts; they

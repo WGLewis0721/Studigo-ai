@@ -4,6 +4,8 @@ import {
   SHOW_ANSWER_INSTRUCTIONS,
   answerFromRetrievedContext,
   assessLanguageFloor,
+  enforceLanguageFloor,
+  rewriteCoachQuestion,
   citationsUsedIn,
   decideOutcome,
   detectTurnIntent,
@@ -16,6 +18,7 @@ import {
   toCitations,
   type Citation,
   type IssuedChallenge,
+  type LanguageFloorEnforcement,
   type LanguageFloorReport,
   type CoachControlAction,
   type CoachOutcome,
@@ -28,7 +31,7 @@ import type { Topic } from "@/lib/rooms";
 import { randomUUID } from "node:crypto";
 import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-director";
 import { parseIssuedSpec, renderChallengeGuidance, renderRouteGuidance } from "@/lib/coach-render";
-import type { LearningRoute } from "@/lib/learning";
+import type { ChallengeSpec, LearningRoute } from "@/lib/learning";
 
 const CONTROL_ACTION_PROMPTS: Record<CoachControlAction, string> = {
   more_practice: "Give me another practice question on this.",
@@ -86,6 +89,8 @@ type CoachRouterDeps = {
   answerFromRetrievedContext: typeof answerFromRetrievedContext;
   /** Renders "make it simpler" / "show me an example" support text. */
   renderCoachSupport: typeof renderCoachSupport;
+  /** The single constrained rewrite `enforceLanguageFloor` may request. */
+  rewriteCoachQuestion: typeof rewriteCoachQuestion;
   /** The learning-control plane. The Coach asks it for the next
    *  ChallengeSpec and renders it; it never decides progression. */
   director: CoachDirector;
@@ -99,6 +104,7 @@ const defaultDeps: CoachRouterDeps = {
   generateCoachFeedback,
   answerFromRetrievedContext,
   renderCoachSupport,
+  rewriteCoachQuestion,
   director: learningControlPlaneDirector
 };
 
@@ -111,11 +117,42 @@ export type CoachTurnLog = {
   stateAfter: CoachState["kind"];
   /** Deterministic language-floor metrics for the question Coach asked this turn. */
   languageFloor?: LanguageFloorReport;
+  /** What enforcement did: passed as generated, rewritten once, or kept. */
+  languageFloorEnforcement?: LanguageFloorEnforcement;
 };
 
-/** Help actually given on an encounter, on the SCAFFOLD_LADDER scale. Only
- *  ever raised, never lowered, so a later unaided answer cannot erase it. */
-const SUPPORT_GIVEN = { simplify: 1, help_request: 2, example: 3, show_answer: 5 } as const;
+/**
+ * Help actually given on an encounter, on the SCAFFOLD_LADDER scale, keyed by
+ * what the Coach DID this turn (from the effective, resolved intent/outcome,
+ * never only the regex's first read). Only ever raised, never lowered, so a
+ * later correct answer on the same encounter can never look independent.
+ *  - simplify: reworded question (gentle prompt)
+ *  - hint / clarification / irrelevant redirect: feedback that carries a clue
+ *  - example: a concrete example
+ *  - reveal / incorrect correction: the right idea was stated to the learner
+ */
+const SUPPORT_GIVEN = {
+  simplify: 1,
+  hint: 2,
+  clarification: 2,
+  irrelevant_redirect: 2,
+  example: 3,
+  correction: 5,
+  reveal: 5
+} as const;
+
+/** Support implied by graded feedback; 0 when the feedback gives no help. */
+function feedbackSupport(outcome: CoachOutcome): number {
+  if (outcome === "help") return SUPPORT_GIVEN.hint;
+  if (outcome === "irrelevant") return SUPPORT_GIVEN.irrelevant_redirect;
+  if (outcome === "incorrect") return SUPPORT_GIVEN.correction;
+  return 0;
+}
+
+/** Does this spec's task demand reasoning (vs. a short recognized/recalled fact)? */
+function requiresReasoning(spec: ChallengeSpec | undefined): boolean {
+  return !spec || (spec.challengeKind !== "recognize" && spec.challengeKind !== "recall");
+}
 
 function withSupport<T extends CoachState>(state: T, level: number): T {
   if (state.kind === "idle" || !state.issuedChallenge) return state;
@@ -272,35 +309,27 @@ export async function* runCoachTurn(args: {
       return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "control", stateAfter: "idle" };
     }
 
-    // The learner explicitly asked to be shown the answer ("show me the
-    // answer"). This is deterministically classified by detectTurnIntent, so
-    // it needs no semantic evaluation. Unlike a hint-only help_request — which
-    // scaffolds a single nudge through generateCoachFeedback and deliberately
-    // withholds the full answer — this returns a complete, source-grounded
-    // model answer to the *pending* question, built from that question's own
-    // source chunks (the ones just re-fetched by id above) rather than a fresh
-    // retrieval keyed on the raw reply. The pending question is preserved and
-    // re-persisted so the learner can still attempt it afterward.
-    if (intent === "show_answer") {
+    // "Show me the answer": a complete, source-grounded answer to the
+    // *pending* question from its own re-fetched chunks, never a fresh
+    // retrieval keyed on the raw reply. Reached from the deterministic intent
+    // OR from the evaluator's resolved intent, and either way recorded as a
+    // reveal on the same encounter. The pending question is kept so the
+    // learner can still attempt it, but no later answer can count as unaided.
+    const reveal = async function* (resolvedIntent: string): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
       const grounded = await deps.answerFromRetrievedContext({
         question: state.question,
         chunks,
         instructions: [SHOW_ANSWER_INSTRUCTIONS, ...pedagogyDirectives].join("\n")
       });
-      await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.show_answer));
+      await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.reveal));
       yield { type: "delta", text: grounded.text };
       yield {
         type: "done",
         answer: { text: grounded.text, citations: grounded.citations, grounded: grounded.grounded }
       };
-      return {
-        stateBefore: state.kind,
-        turnIntent: intent,
-        semanticScore: null,
-        outcome: "show_answer",
-        stateAfter: "awaiting_answer"
-      };
-    }
+      return { stateBefore: state.kind, turnIntent: resolvedIntent, semanticScore: null, outcome: "show_answer", stateAfter: "awaiting_answer" };
+    };
+    if (intent === "show_answer") return yield* reveal(intent);
 
     // The pending question is always rendered against the spec it was issued for.
     const pendingSpec = parseIssuedSpec(state.issuedChallenge?.spec);
@@ -317,7 +346,19 @@ export async function* runCoachTurn(args: {
         challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined,
         simplifyFrom: { question: state.question, expectedConcepts: state.expectedConcepts }
       });
-      const simpler = rendered.question || state.question;
+      const floor = await enforceLanguageFloor({
+        question: rendered.question || state.question,
+        requiresReasoning: requiresReasoning(pendingSpec),
+        rewrite: (violations) =>
+          deps.rewriteCoachQuestion({
+            question: rendered.question || state.question,
+            violations,
+            expectedConcepts: state.expectedConcepts,
+            chunks,
+            challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined
+          })
+      });
+      const simpler = floor.question;
       const nextState: CoachState = withSupport({ ...state, question: simpler }, SUPPORT_GIVEN.simplify);
       await saveCoachState(supabase, conversationId, nextState);
       const citations = citationsIn(simpler, chunks);
@@ -329,7 +370,8 @@ export async function* runCoachTurn(args: {
         semanticScore: null,
         outcome: "simplified",
         stateAfter: "awaiting_answer",
-        languageFloor: assessLanguageFloor(simpler)
+        languageFloor: assessLanguageFloor(simpler),
+        languageFloorEnforcement: floor.enforcement
       };
     }
 
@@ -374,6 +416,10 @@ export async function* runCoachTurn(args: {
     const effectiveIntent =
       intent === "answer" && evaluation.intent !== "conversation_control" ? evaluation.intent : intent;
 
+    // The evaluator resolved an apparent answer into "show me the answer":
+    // take the same reveal path so what is recorded matches what was given.
+    if (effectiveIntent === "show_answer") return yield* reveal(effectiveIntent);
+
     // The learner asked their own genuine question instead of answering
     // ("What does inherited mean?"). Only the semantic evaluator can spot
     // this — the deterministic regex layer reads it as an answer attempt,
@@ -395,8 +441,9 @@ export async function* runCoachTurn(args: {
       });
 
       // The pending question is preserved unchanged and re-persisted, so the
-      // next turn is still routed as an answer to it rather than reset.
-      await saveCoachState(supabase, conversationId, state);
+      // next turn is still routed as an answer to it rather than reset. The
+      // answer to the learner's own question is assistance on this encounter.
+      await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.clarification));
 
       const returnPrompt = `\n\nNow, back to the question: ${state.question}`;
       yield { type: "delta", text: grounded.text };
@@ -466,9 +513,11 @@ export async function* runCoachTurn(args: {
     }
 
     if (outcome === "incorrect" || outcome === "irrelevant" || outcome === "help") {
-      // A hint is recorded on the encounter so later credit reflects it.
-      if (intent === "help_request" && state.issuedChallenge) {
-        await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.help_request));
+      // Help carried by the feedback (a clue, a redirect clue, or a stated
+      // correction) is recorded on the SAME encounter, from the resolved outcome.
+      const support = feedbackSupport(outcome);
+      if (support > 0 && state.issuedChallenge) {
+        await saveCoachState(supabase, conversationId, withSupport(state, support));
       }
       // Stay on the same pending question — the learner gets another try
       // once they have the hint/correction, instead of silently moving on.
@@ -543,10 +592,27 @@ async function* openCoachQuestion(args: {
     challengeGuidance: spec ? renderChallengeGuidance(spec) : undefined
   });
 
+  // Enforce the language floor: at most one constrained rewrite. Concepts,
+  // sources and the issued spec come from the original generation and are
+  // never outputs of the rewrite.
+  const floor = await enforceLanguageFloor({
+    question: coachQuestion.question,
+    requiresReasoning: requiresReasoning(spec),
+    rewrite: (violations) =>
+      args.deps.rewriteCoachQuestion({
+        question: coachQuestion.question,
+        violations,
+        expectedConcepts: coachQuestion.expectedConcepts,
+        chunks,
+        challengeGuidance: spec ? renderChallengeGuidance(spec) : undefined
+      })
+  });
+  const questionText = floor.question;
+
   const nextState: CoachState = {
     version: 1,
     kind: "awaiting_answer",
-    question: coachQuestion.question,
+    question: questionText,
     topicId: args.topic.id,
     expectedConcepts: coachQuestion.expectedConcepts,
     sourceChunkIds: coachQuestion.sourceChunkIds,
@@ -560,12 +626,12 @@ async function* openCoachQuestion(args: {
   // is purely a prompt to explain ("Explain how X varies") legitimately
   // carries no citation — it is grounded in the topic's material without
   // stating a citable fact — so grounded correctly reads false in that case.
-  const questionCitations = citationsIn(coachQuestion.question, chunks);
+  const questionCitations = citationsIn(questionText, chunks);
 
-  yield { type: "delta", text: coachQuestion.question };
+  yield { type: "delta", text: questionText };
   yield {
     type: "done",
-    answer: { text: coachQuestion.question, citations: questionCitations, grounded: questionCitations.length > 0 }
+    answer: { text: questionText, citations: questionCitations, grounded: questionCitations.length > 0 }
   };
   return {
     stateBefore: "idle",
@@ -573,6 +639,7 @@ async function* openCoachQuestion(args: {
     semanticScore: null,
     outcome: "new_question",
     stateAfter: "awaiting_answer",
-    languageFloor: assessLanguageFloor(coachQuestion.question)
+    languageFloor: assessLanguageFloor(questionText),
+    languageFloorEnforcement: floor.enforcement
   };
 }

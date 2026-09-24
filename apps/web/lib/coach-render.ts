@@ -8,6 +8,8 @@ import {
   type LearningRoute,
   type ScaffoldLevel
 } from "@/lib/learning";
+import routePolicies from "@/lib/generated/route-policies.json";
+import type { RoutePolicyProjection } from "@/lib/route-policy-projection";
 
 // ---------------------------------------------------------------------------
 // ChallengeSpec -> learner-facing Coach instructions.
@@ -45,103 +47,27 @@ const SCAFFOLD_GUIDANCE: Record<ScaffoldLevel, string> = {
   5: "show one short worked example from the excerpts, then ask a similar question."
 };
 
-type RoutePolicy = {
-  label: string;
-  /** The route's turn-by-turn shape, spread across conversational turns. */
-  sequence: readonly string[];
-  rules: readonly string[];
-};
+const ROUTE_POLICIES = routePolicies as Record<string, RoutePolicyProjection>;
 
-/** Condensed from each record's "Recommended coaching rules"; the spec's
- *  `routeRecord` names the canonical file in knowledge/teaching-coaching/. */
-export const ROUTE_POLICIES: Record<LearningRoute, RoutePolicy> = {
-  studigo_default: {
-    label: "Studigo default",
-    sequence: ["brief explanation", "one example", "learner attempt", "diagnose", "next practice"],
-    rules: [
-      "Keep your explanation shorter than the learner's practice.",
-      "Use one representative example before asking for an attempt.",
-      "If the learner is missing a prerequisite, teach the prerequisite."
-    ]
-  },
-  direct_instruction: {
-    label: "Direct instruction",
-    sequence: ["model", "worked example", "guided attempt", "correction", "independent attempt"],
-    rules: [
-      "Model one clear example, then ask the learner to do the next step rather than watch another example.",
-      "Give one precise correction tied to the learner's exact error."
-    ]
-  },
-  socratic: {
-    label: "Socratic",
-    sequence: ["question", "learner reasoning", "targeted probe", "identify the gap", "revised reasoning"],
-    rules: [
-      "Ask one meaningful question at a time and make the learner's reasoning visible.",
-      "Probe the gap instead of stating the answer; after two failed probes on the same gap, give a hint.",
-      "Participation alone is not understanding."
-    ]
-  },
-  deliberate_practice: {
-    label: "Deliberate practice",
-    sequence: ["target one weakness", "focused attempt", "specific feedback", "repeat with variation"],
-    rules: [
-      "Target one observable weakness at a time.",
-      "Keep feedback specific enough to change the next attempt; reteach if the same error repeats."
-    ]
-  },
-  concrete_to_abstract: {
-    label: "Concrete to abstract",
-    sequence: ["concrete situation", "model or picture", "abstract idea", "application"],
-    rules: [
-      "Start from something the learner can picture, and say what it represents.",
-      "Ask the learner to connect the concrete case to the idea before moving to abstract wording.",
-      "Keep the teacher's vocabulary once it is introduced."
-    ]
-  },
-  japanese_inspired: {
-    label: "Japanese-inspired",
-    sequence: ["one carefully chosen problem", "learner attempt", "compare approaches", "the important idea", "small variation", "refinement"],
-    rules: [
-      "Pose a worthwhile problem before giving the method, and let the learner attempt it.",
-      "Where the material allows, compare two plausible approaches and ask what they share.",
-      "Use a worked model only if the learner is blocked; treat errors as information."
-    ]
-  },
-  montessori_inspired: {
-    label: "Montessori-inspired",
-    sequence: ["concrete representation", "independent attempt", "self-correction", "minimal intervention", "abstraction"],
-    rules: [
-      "Use minimal prompts once the task is understood.",
-      "Let the learner check and repair their own error before you correct it; step in if self-correction stalls."
-    ]
-  },
-  swedish_inspired: {
-    label: "Swedish-inspired",
-    sequence: ["learner agency", "prediction", "discussion", "evidence", "alternatives", "reflection"],
-    rules: [
-      "Invite a prediction or a bounded choice, and ask for reasons before affirming.",
-      "Ask the learner to weigh the evidence for their answer.",
-      "Teach directly when agency would only force guessing."
-    ]
-  },
-  singapore_math_inspired: {
-    label: "Singapore Math-inspired",
-    sequence: ["concrete situation", "visual or model representation", "symbolic abstraction", "application"],
-    rules: [
-      "Make the step from picture or model to words or symbols explicit.",
-      "Ask the learner to explain the representation; return to it if the abstract step loses meaning."
-    ]
-  }
-};
-
-/** The spec's route as phrasing guidance. Carries the invariant that routes
- *  shape delivery only — the same boundary the code enforces. */
-export function renderRouteGuidance(spec: Pick<ChallengeSpec, "route">): string[] {
-  const policy = ROUTE_POLICIES[spec.route];
+/**
+ * The spec's route as phrasing guidance, read from the canonical KB record the
+ * control plane named (`spec.routeRecord`) via its generated projection.
+ * KB rules about when to change support or advance are superseded by the
+ * spec, which has already made that decision.
+ */
+export function renderRouteGuidance(spec: Pick<ChallengeSpec, "routeRecord">): string[] {
+  const policy = ROUTE_POLICIES[spec.routeRecord];
+  const invariant =
+    "The route changes how you teach, never what is correct: keep the same facts, the same concepts, and the same standard for a correct answer.";
+  if (!policy) return [invariant];
   return [
-    `Teaching route: ${policy.label}. Its shape across turns: ${policy.sequence.join(" -> ")}. Play only the current step of that shape in this turn.`,
+    `Teaching route: ${policy.label}.`,
+    ...(policy.sequence.length
+      ? [`Its shape across turns: ${policy.sequence.join(" -> ")} Play only the current step of that shape in this turn.`]
+      : []),
     ...policy.rules,
-    "The route changes how you teach, never what is correct: keep the same facts, the same concepts, and the same standard for a correct answer."
+    "Support level and progression are already decided by the application; follow the support level given above rather than any route rule about changing it.",
+    invariant
   ];
 }
 
@@ -186,6 +112,7 @@ export function parseIssuedSpec(raw: unknown): ChallengeSpec | undefined {
     LEARNING_ROUTES.includes(spec.route as LearningRoute) &&
     ACTIVITIES.includes(spec.activity as ChallengeSpec["activity"]) &&
     (spec.taskSize === "whole" || spec.taskSize === "single_step") &&
+    typeof spec.routeRecord === "string" &&
     typeof spec.constraints === "object" &&
     spec.constraints !== null;
   return ok ? (spec as ChallengeSpec) : undefined;

@@ -428,9 +428,20 @@ The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`
 `ChallengeSpec → grounded excerpts → route policy → language floor → LLM`.
 
 - `apps/web/lib/coach-director.ts`: the Coach's only doorway to the control plane. It calls `loadConceptLearningState` + `nextChallenge` with `activity: "coach"` for every new question, including "another one" and "Challenge me". The Coach never builds, edits or steps a spec; it has no difficulty ladder of its own.
-- `apps/web/lib/coach-render.ts`: renders a spec into phrasing instructions using Astra's types directly. It covers the reasoning task for `challengeKind`, the support for `scaffoldLevel`, `taskSize`, `requireNewContext` and the route policy for `route` (condensed from the spec's `routeRecord`). `parseIssuedSpec` re-validates a stored spec against the control plane's constants.
-- `packages/ai/src/coach-language.ts`: the language-floor rules plus a deterministic lint (`assessLanguageFloor`) used by tests and the turn log. `packages/ai` never interprets a spec; it receives only rendered instruction lines, and keeps the spec opaque in `coach_state.issuedChallenge`.
-- `coach_state.issuedChallenge` = `{ spec, encounterId, scaffoldUsed }`. The encounter ID is stable across hints and reveals of the same question. `scaffoldUsed` only rises: simplify 1, hint 2, example 3, show answer 5. This records what the learner actually received so a future `LearningEvent` can report it honestly.
+- `apps/web/lib/coach-render.ts`: renders a spec into phrasing instructions using Astra's types directly. It covers the reasoning task for `challengeKind`, the support for `scaffoldLevel`, `taskSize`, `requireNewContext`, and the route policy named by `spec.routeRecord`. `parseIssuedSpec` re-validates a stored spec against the control plane's constants.
+- Route policy has one source: the `knowledge/teaching-coaching/*.md` record that `spec.routeRecord` names. `lib/route-policy-projection.ts` extracts `ui_label`, "Core sequence" and "Recommended coaching rules" deterministically. `pnpm --filter @studigo/web generate:routes` writes that projection to `lib/generated/route-policies.json`, which is bundled, so there is no runtime KB read or RAG. A drift test fails if the JSON no longer matches the records.
+- `packages/ai/src/coach-language.ts`: the language-floor rules, a deterministic lint, and its enforcement. The lint checks for one main question, sentences of 20 words or fewer, no packed lists, no stacked task verbs, no formal connectors, and at most two 13+-letter words. Every generated or simplified question goes through `enforceLanguageFloor`:
+  1. Validate.
+  2. If it fails, make at most one constrained rewrite (`rewriteCoachQuestion`), which changes wording only; the concepts, sources and spec are not outputs of that call.
+  3. Re-validate, and reject a rewrite that drops the reasoning demand, becomes a bare yes/no question for a reasoning task, or adds a citation.
+  4. If the rewrite fails validation or is rejected, keep the original. Harder English is preferred to silently easier thinking. There are no loops. `packages/ai` never interprets a spec; it receives only rendered instruction lines, and keeps the spec opaque in `coach_state.issuedChallenge`.
+- `coach_state.issuedChallenge` = `{ spec, encounterId, scaffoldUsed }`. The encounter ID is stable across hints and reveals of the same question. `scaffoldUsed` only rises, and is set from the resolved intent or outcome, not just the regex's first read:
+  - simplify: 1
+  - hint, clarification answer, or irrelevant-redirect clue: 2
+  - example: 3
+  - reveal (including an evaluator-resolved "show me the answer") or an incorrect-answer correction: 5
+
+  It is carried into `awaiting_control` after a correct answer, so an assisted success can never look independent. An unknown (`null`) value stays unknown. This records what the learner actually received so a future `LearningEvent` can report it honestly.
 - Learner controls ("Make it simpler", "Give me a hint", "Show me an example", "Challenge me") are detected deterministically and are never graded. Simplify keeps the pending concepts, sources and spec.
 - If the control-plane read fails, the question is rendered without a target, nothing is stored as issued, and no progression is claimed.
 - Not yet wired: recording Coach results as `LearningEvent`s (`recordLearningEvent`). Until then the director has no Coach evidence to act on, so the Coach will not change level from Coach practice alone.

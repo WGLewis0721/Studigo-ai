@@ -1,0 +1,180 @@
+{
+  "knowledge/teaching-coaching/coaching-style-default.md": {
+    "record": "knowledge/teaching-coaching/coaching-style-default.md",
+    "label": "Studigo default",
+    "sequence": [
+      "State or clarify the target.",
+      "Explain only what is needed.",
+      "Model one representative example.",
+      "Ask the learner to perform a similar task.",
+      "Diagnose the exact error or missing idea.",
+      "Give targeted feedback.",
+      "Choose the next task from that evidence.",
+      "Reduce support when performance improves."
+    ],
+    "rules": [
+      "Keep explanation shorter than the learner's practice whenever possible.",
+      "Use one representative example before asking for an attempt.",
+      "Base the next action on the learner's response.",
+      "If the learner fails because a prerequisite is missing, teach the prerequisite.",
+      "If the learner succeeds twice with support, reduce support or use transfer."
+    ]
+  },
+  "knowledge/teaching-coaching/coaching-style-direct.md": {
+    "record": "knowledge/teaching-coaching/coaching-style-direct.md",
+    "label": "Direct instruction",
+    "sequence": [
+      "State the objective and success criterion.",
+      "Confirm prerequisite knowledge.",
+      "Present material in manageable steps.",
+      "Model a worked example or think-aloud.",
+      "Ask the learner to respond frequently.",
+      "Correct the exact error.",
+      "Provide guided practice.",
+      "Fade prompts.",
+      "Require independent practice and later review."
+    ],
+    "rules": [
+      "Model one clear example.",
+      "Ask the learner to do the next step, not merely watch another example.",
+      "Use precise feedback tied to the learner's error.",
+      "Fade support after evidence of success.",
+      "Mix in a transfer item before declaring independence."
+    ]
+  },
+  "knowledge/teaching-coaching/coaching-style-socratic.md": {
+    "record": "knowledge/teaching-coaching/coaching-style-socratic.md",
+    "label": "Socratic coach",
+    "sequence": [
+      "Elicit the learner's current answer or approach.",
+      "Clarify what they mean.",
+      "Ask for the reason or evidence.",
+      "Probe an assumption.",
+      "Test an implication or counterexample.",
+      "Ask the learner to revise.",
+      "Explain directly if the prerequisite is missing."
+    ],
+    "rules": [
+      "Ask one meaningful question at a time.",
+      "Make the learner's reasoning visible.",
+      "Ground evidence questions in the uploaded course material.",
+      "After two failed probes on the same missing prerequisite, teach or hint.",
+      "Do not award mastery merely for participating in dialogue."
+    ]
+  },
+  "knowledge/teaching-coaching/coaching-style-deliberate-practice.md": {
+    "record": "knowledge/teaching-coaching/coaching-style-deliberate-practice.md",
+    "label": "Deliberate practice",
+    "sequence": [
+      "Define a measurable target.",
+      "Diagnose the weakest component.",
+      "Select a task just beyond reliable performance.",
+      "Require an attempt.",
+      "Give specific feedback.",
+      "Retry or vary the task.",
+      "Increase challenge after demonstrated control.",
+      "Revisit prior errors later."
+    ],
+    "rules": [
+      "Target one observable weakness at a time.",
+      "Keep feedback specific enough to change the next attempt.",
+      "Stop and reteach if the same conceptual error repeats.",
+      "Vary surface details after initial stability.",
+      "Require a transfer check before increasing difficulty."
+    ]
+  },
+  "knowledge/teaching-coaching/coaching-style-concrete-to-abstract.md": {
+    "record": "knowledge/teaching-coaching/coaching-style-concrete-to-abstract.md",
+    "label": "Concrete to abstract",
+    "sequence": [
+      "Identify the mathematical relationship.",
+      "Concrete: manipulate or describe tangible quantities.",
+      "Pictorial/representational: show the same relation with bars, arrays, number lines, drawings, or diagrams.",
+      "Explicitly connect each visual element to the quantity or action.",
+      "Abstract: express the same relationship with symbols.",
+      "Move backward if symbols lose meaning.",
+      "Test with a new example."
+    ],
+    "rules": [
+      "Label what each object or diagram represents.",
+      "Ask the learner to explain the connection between representations.",
+      "Preserve the teacher's vocabulary and notation.",
+      "Use representation to repair meaning, not as decoration.",
+      "Move to abstract work when the learner can explain the mapping."
+    ]
+  },
+  "knowledge/teaching-coaching/tradition-japanese-inspired.md": {
+    "record": "knowledge/teaching-coaching/tradition-japanese-inspired.md",
+    "label": "Japanese-inspired",
+    "sequence": [],
+    "rules": [
+      "Start with a worthwhile problem before giving the method.",
+      "Ask the learner to attempt or anticipate a solution.",
+      "Compare at least two plausible strategies when source material permits.",
+      "Ask what the strategies have in common.",
+      "End with a concise synthesis.",
+      "Use worked modeling only when the learner lacks prerequisites or remains blocked."
+    ]
+  },
+  "knowledge/teaching-coaching/tradition-montessori-inspired.md": {
+    "record": "knowledge/teaching-coaching/tradition-montessori-inspired.md",
+    "label": "Montessori-inspired",
+    "sequence": [
+      "Define the objective and prepare a small set of appropriate tasks.",
+      "Offer bounded learner choice.",
+      "Give a concise presentation if needed.",
+      "Let the learner attempt independently.",
+      "Provide a built-in or explicit way to check the work.",
+      "Ask the learner to identify/correct the error.",
+      "Intervene only when self-correction fails or a misconception persists."
+    ],
+    "rules": [
+      "Offer 2–3 meaningful choices, not unlimited options.",
+      "Use minimal prompts after the task is understood.",
+      "Build self-checking into the task when possible.",
+      "Let the learner repair an error before giving the final correction.",
+      "Intervene when self-correction stalls or becomes random."
+    ]
+  },
+  "knowledge/teaching-coaching/tradition-swedish-inspired.md": {
+    "record": "knowledge/teaching-coaching/tradition-swedish-inspired.md",
+    "label": "Swedish-inspired",
+    "sequence": [
+      "State the learning objective and constraints.",
+      "Ask what the learner thinks or which approach they would choose.",
+      "Require evidence or reasoning.",
+      "Compare alternatives.",
+      "Let the learner choose among valid next steps.",
+      "Hold the learner accountable for completing and evaluating that choice.",
+      "Intervene directly when prerequisite knowledge is missing."
+    ],
+    "rules": [
+      "Offer meaningful, bounded choices.",
+      "Ask for reasons before affirming a strategy.",
+      "Make the learner evaluate the result of their chosen approach.",
+      "Preserve explicit goals and deadlines.",
+      "Use direct teaching when agency would merely force guessing."
+    ]
+  },
+  "knowledge/teaching-coaching/tradition-singapore-math.md": {
+    "record": "knowledge/teaching-coaching/tradition-singapore-math.md",
+    "label": "Singapore Math-inspired",
+    "sequence": [
+      "Identify the mathematical relationship.",
+      "Represent it concretely when useful.",
+      "Draw or model the same relationship.",
+      "Ask the learner to explain what each part represents.",
+      "Express the relationship symbolically.",
+      "Solve.",
+      "Check the symbolic solution against the representation.",
+      "Increase complexity after conceptual connection is demonstrated."
+    ],
+    "rules": [
+      "Make representation-to-symbol mapping explicit.",
+      "Use bar models for relationships, not decoration.",
+      "Ask the learner to explain the representation.",
+      "Return to a representation if symbolic manipulation becomes meaningless.",
+      "Move forward once the learner demonstrates the connection."
+    ]
+  }
+}

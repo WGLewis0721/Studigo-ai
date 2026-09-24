@@ -312,7 +312,9 @@ test("10. a clarification preserves the pending question", async () => {
       }
     })
   );
-  assert.deepEqual(saved.at(-1), pending(initialSpec));
+  // Same pending question and encounter; the answer to the learner's own
+  // question is recorded as assistance (hint level) on that encounter.
+  assert.deepEqual(saved.at(-1), pending(initialSpec, 2));
   assert.ok(done.answer.text.includes("What happens when two north poles meet?"));
 });
 
@@ -460,4 +462,216 @@ test("rendering is a pure function of the spec: route only changes route lines",
     direct.filter((line) => !directRoute.has(line))
   );
   assert.ok(socratic.some((line) => line.includes("Support level 2 (hint)")));
+});
+
+// ===========================================================================
+// Review fix 1: language-floor ENFORCEMENT (not just guidance + telemetry)
+// ===========================================================================
+
+const burdened = "Explain the process by which magnets attract and describe why like poles repel?";
+
+function openWith(question: string, rewrite: (args: { question: string; violations: string[] }) => Promise<string>, calls: string[][]) {
+  const { supabase, saved } = recordingSupabase(null);
+  const spec = specFor("predict");
+  const run = drainBoth(runCoachTurn({
+    supabase, roomId: "room-1", conversationId: "c", question: "Coach me on magnetism", topics: [magnetTopic], userId: "user-1",
+    deps: {
+      director: fixedDirector(spec),
+      retrieveForRoom: async () => [magnetChunk],
+      generateCoachQuestion: async () => ({ question, expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] }),
+      rewriteCoachQuestion: async (args) => {
+        calls.push(args.violations);
+        return rewrite(args);
+      }
+    }
+  }));
+  return { run, saved, spec };
+}
+
+test("floor: a failing question is rewritten once; concepts, sources and spec are untouched", async () => {
+  const calls: string[][] = [];
+  const { run, saved, spec } = openWith(burdened, async () => "You push two north ends together. What will happen? Why?", calls);
+  const { log, done } = await run;
+  assert.equal(calls.length, 1);
+  const after = saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>;
+  assert.equal(after.question, "You push two north ends together. What will happen? Why?");
+  assert.equal(done.answer.text, after.question);
+  assert.deepEqual(after.expectedConcepts, concepts);
+  assert.deepEqual(after.sourceChunkIds, [magnetChunk.id]);
+  assert.deepEqual(after.issuedChallenge?.spec, spec);
+  assert.equal((log.languageFloorEnforcement as { rewriteAccepted: boolean }).rewriteAccepted, true);
+});
+
+test("floor: a rewrite that lowers the reasoning demand is rejected and the original stands", async () => {
+  const calls: string[][] = [];
+  const { run, saved } = openWith(burdened, async () => "What is a magnet?", calls);
+  const { log } = await run;
+  assert.equal(calls.length, 1);
+  assert.equal((saved.at(-1) as { question: string }).question, burdened);
+  assert.equal((log.languageFloorEnforcement as { rejectedReason: string }).rejectedReason, "dropped the reasoning demand");
+});
+
+test("floor: at most one rewrite, even when the rewrite also fails", async () => {
+  const calls: string[][] = [];
+  const { run, saved } = openWith(burdened, async () => "Explain and describe, whereby magnets act?", calls);
+  await run;
+  assert.equal(calls.length, 1);
+  assert.equal((saved.at(-1) as { question: string }).question, burdened);
+});
+
+test("floor: a passing question never calls the rewrite", async () => {
+  const calls: string[][] = [];
+  const { run } = openWith("You push two north ends together. What will happen? Why?", async () => "x", calls);
+  await run;
+  assert.equal(calls.length, 0);
+});
+
+test("floor: 'make it simpler' output is enforced too, keeping the encounter", async () => {
+  const calls: string[][] = [];
+  const spec = specFor("explain");
+  const { supabase, saved } = recordingSupabase(pending(spec));
+  await drainBoth(runCoachTurn({
+    supabase, roomId: "room-1", conversationId: "c", question: "Make it simpler", topics: [magnetTopic],
+    deps: {
+      fetchChunksByIds: async () => [magnetChunk],
+      generateCoachQuestion: async () => ({ question: burdened, expectedConcepts: [], sourceChunkIds: [], sourceMarkers: [] }),
+      rewriteCoachQuestion: async (args) => { calls.push(args.violations); return "Two north ends meet. Why do they push apart?"; }
+    }
+  }));
+  const after = saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>;
+  assert.equal(calls.length, 1);
+  assert.equal(after.question, "Two north ends meet. Why do they push apart?");
+  assert.equal(after.issuedChallenge?.encounterId, "enc-1");
+  assert.deepEqual(after.expectedConcepts, concepts);
+});
+
+// ===========================================================================
+// Review fix 2: ONE canonical source per teaching route
+// ===========================================================================
+
+test("routes: the committed projection is exactly what the KB records generate (drift check)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { ROUTE_RECORDS } = await import("./learning/director");
+  const { projectRoutePolicy } = await import("./route-policy-projection");
+  const committed = JSON.parse(readFileSync(join(__dirname, "generated", "route-policies.json"), "utf8"));
+  const regenerated = Object.fromEntries(Object.values(ROUTE_RECORDS).map((name) => {
+    const record = `knowledge/teaching-coaching/${name}.md`;
+    return [record, projectRoutePolicy(record, readFileSync(join(__dirname, "..", "..", "..", record), "utf8"))];
+  }));
+  assert.deepEqual(committed, regenerated, "Run `pnpm --filter @studigo/web generate:routes` after editing a KB record.");
+});
+
+test("routes: every route's spec.routeRecord resolves, and its rules come verbatim from that record", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { LEARNING_ROUTES } = await import("./learning");
+  for (const route of LEARNING_ROUTES) {
+    const spec = specFor("explain", route);
+    const markdown = readFileSync(join(__dirname, "..", "..", "..", spec.routeRecord), "utf8");
+    const guidance = renderRouteGuidance(spec);
+    const ruleLines = guidance.filter((line) => markdown.includes(`- ${line}`));
+    assert.ok(ruleLines.length >= 2, `${route}: rules must come from ${spec.routeRecord}`);
+  }
+});
+
+test("routes: coach-render.ts holds no hand-maintained route policy", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const source = readFileSync(join(__dirname, "coach-render.ts"), "utf8");
+  assert.doesNotMatch(source, /sequence:\s*\[/);
+  assert.doesNotMatch(source, /rules:\s*\[/);
+});
+
+// ===========================================================================
+// Review fix 3: support/reveal tracked from the RESOLVED intent, monotonic,
+// on the SAME encounter
+// ===========================================================================
+
+type Pending = Extract<CoachState, { kind: "awaiting_answer" }>;
+
+function answerTurn(state: CoachState, question: string, evaluation: { intent: "answer" | "help_request" | "show_answer" | "irrelevant"; concepts: Array<{ id: string; status: "demonstrated" | "partial" | "absent" | "contradicted" }> }) {
+  const { supabase, saved } = recordingSupabase(state);
+  let revealed = false;
+  let feedbackCalled = false;
+  const run = drainBoth(runCoachTurn({
+    supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic],
+    deps: {
+      fetchChunksByIds: async () => [magnetChunk],
+      evaluateCoachAnswer: async () => evaluation,
+      generateCoachFeedback: async () => { feedbackCalled = true; return "Think about the ends."; },
+      answerFromRetrievedContext: async () => { revealed = true; return { text: "Like poles push apart [1].", citations: [], grounded: true }; }
+    }
+  }));
+  return { run, saved, flags: () => ({ revealed, feedbackCalled }) };
+}
+
+test("support: an apparent answer the evaluator resolves to help_request records a hint", async () => {
+  const { run, saved } = answerTurn(pending(initialSpec), "hmm can you nudge me a little on the ends thing", { intent: "help_request", concepts: [] });
+  await run;
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 2);
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.encounterId, "enc-1");
+});
+
+test("support: an apparent answer the evaluator resolves to show_answer takes the reveal path and records a reveal", async () => {
+  const { run, saved, flags } = answerTurn(pending(initialSpec), "just tell me what it is please, I give up on this one", { intent: "show_answer", concepts: [] });
+  const { log } = await run;
+  assert.deepEqual(flags(), { revealed: true, feedbackCalled: false });
+  assert.equal(log.outcome, "show_answer");
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 5);
+});
+
+test("support: incorrect feedback (a stated correction) and irrelevant redirects (a clue) are recorded", async () => {
+  const wrong = answerTurn(pending(initialSpec), "All magnets always pull together", {
+    intent: "answer", concepts: [{ id: "opposites_attract", status: "demonstrated" }, { id: "likes_repel", status: "contradicted" }]
+  });
+  await wrong.run;
+  const afterWrong = wrong.saved.at(-1) as Pending;
+  assert.equal(afterWrong.issuedChallenge?.scaffoldUsed, 5);
+
+  const offTopic = answerTurn(pending(initialSpec), "pizza", { intent: "irrelevant", concepts: [] });
+  await offTopic.run;
+  assert.equal((offTopic.saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 2);
+});
+
+test("support is monotonic on one encounter: example then simplify never lowers it", async () => {
+  const spec = specFor("explain");
+  const { supabase, saved } = recordingSupabase(pending(spec));
+  const deps = {
+    fetchChunksByIds: async () => [magnetChunk],
+    renderCoachSupport: async () => "A fridge magnet sticks to the door.",
+    generateCoachQuestion: async () => ({ question: "Two north ends meet. Why do they push apart?", expectedConcepts: [], sourceChunkIds: [], sourceMarkers: [] })
+  };
+  const run = (question: string) => drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
+  await run("Show me an example");
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 3);
+  await run("Make it simpler");
+  const after = saved.at(-1) as Pending;
+  assert.equal(after.issuedChallenge?.scaffoldUsed, 3);
+  assert.equal(after.issuedChallenge?.encounterId, "enc-1");
+});
+
+test("support: a correct answer after a hint still carries the hint, so it can never look independent", async () => {
+  const { supabase, saved } = recordingSupabase(pending(initialSpec));
+  const deps = {
+    fetchChunksByIds: async () => [magnetChunk],
+    generateCoachFeedback: async () => "That's it.",
+    evaluateCoachAnswer: async () => ({
+      intent: "answer" as const,
+      concepts: [{ id: "opposites_attract", status: "demonstrated" as const }, { id: "likes_repel", status: "demonstrated" as const }]
+    })
+  };
+  const run = (question: string) => drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
+  await run("I don't know");
+  await run("Opposite ends pull together and the same ends push apart");
+  const after = saved.at(-1) as Extract<CoachState, { kind: "awaiting_control" }>;
+  assert.equal(after.kind, "awaiting_control");
+  assert.equal(after.issuedChallenge?.encounterId, "enc-1");
+  assert.equal(after.issuedChallenge?.scaffoldUsed, 2);
+});
+
+test("support: unknown support stays unknown (null) and is never upgraded to a number", async () => {
+  const { run, saved } = answerTurn(pending(initialSpec, null), "I'm stuck", { intent: "help_request", concepts: [] });
+  await run;
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, null);
 });
