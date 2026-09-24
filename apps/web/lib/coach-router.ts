@@ -145,6 +145,7 @@ export type CoachTurnLog = {
  */
 const SUPPORT_GIVEN = {
   simplify: 1,
+  partial_nudge: 1,
   hint: 2,
   clarification: 2,
   irrelevant_redirect: 2,
@@ -155,6 +156,10 @@ const SUPPORT_GIVEN = {
 
 /** Support implied by graded feedback; 0 when the feedback gives no help. */
 function feedbackSupport(outcome: CoachOutcome): number {
+  // Partial feedback explicitly asks for the one missing piece, so it is a
+  // gentle prompt on this encounter. Persist it as support before a retry can
+  // be credited; otherwise a prompted correction could look independent.
+  if (outcome === "partial") return SUPPORT_GIVEN.partial_nudge;
   if (outcome === "help") return SUPPORT_GIVEN.hint;
   if (outcome === "irrelevant") return SUPPORT_GIVEN.irrelevant_redirect;
   if (outcome === "incorrect") return SUPPORT_GIVEN.correction;
