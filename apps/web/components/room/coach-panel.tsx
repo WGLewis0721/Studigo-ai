@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel } from "@/lib/coach-material-state";
+import { StudigoComposer } from "./studigo-composer";
 
 type CoachingStyle = {
   id: string;
@@ -251,12 +252,13 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       </div>
       {messages.length > 0 && <div className="starterList coachControls" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
       {error && <p className="formError" role="alert">{error}</p>}
-      <form className="askComposer askComposerLive coachComposer" onSubmit={(event) => { event.preventDefault(); void coach(prompt); }}>
-        <input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ask Studigo" aria-label="Ask Studigo" disabled={busy} />
-        <button className="coachComposerButton" type="submit" aria-label="Send to Studigo" disabled={busy || !prompt.trim()}>
-          <StudigoMascot state={busy ? "thinking" : "welcome"} size={30} mark />
-        </button>
-      </form>
+      <StudigoComposer
+        value={prompt}
+        onChange={setPrompt}
+        onSubmit={() => void coach(prompt)}
+        disabled={busy}
+        ariaLabel="Ask Studigo"
+      />
     </div>
   );
 }
