@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
 import { MaterialsPanel } from "./materials-panel";
 import { AskPanel } from "./ask-panel";
@@ -86,7 +87,10 @@ export function RoomWorkspace({
   return (
     <div className="roomWorkspace">
       <header className="workspaceTopbar">
-        <div>
+        <Link className="roomBackButton" href="/app" aria-label="All rooms">
+          <span aria-hidden="true">‹</span>
+        </Link>
+        <div className="roomTitleBlock">
           <span className="crumb">
             {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||
               "STUDY ROOM"}
@@ -111,6 +115,7 @@ export function RoomWorkspace({
         </div>
       </header>
 
+      {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={() => setSettingsOpen(false)} />}
       {settingsOpen && <RoomSettings room={room} onClose={() => setSettingsOpen(false)} />}
 
       <div className="studyNavigation">
