@@ -330,6 +330,8 @@ The Phase 3.6 deterministic control-plane foundation is documented in
 [`ADAPTIVE_LEARNING_CORE.md`](ADAPTIVE_LEARNING_CORE.md). It derives challenge
 demand, support and rematches from shared observations while preserving the
 existing numerical mastery/readiness and transactional attempt writes below.
+A learner stretch request raises only that one issued challenge. It is not
+evidence and does not write concept state.
 
 Readiness is derived, never stored as a decorative number.
 

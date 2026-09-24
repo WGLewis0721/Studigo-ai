@@ -11,6 +11,9 @@ export const SCAFFOLD_LADDER = [
 export type ScaffoldLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export const ACTIVITIES = ['learn', 'coach', 'flashcard', 'quiz', 'practice_test', 'weak_area', 'cram'] as const;
 export type LearningActivity = typeof ACTIVITIES[number];
+/** One issued encounter. Omitted or "normal" keeps today's demand. "stretch" is a request, not evidence. */
+export const CHALLENGE_REQUESTS = ['normal', 'stretch'] as const;
+export type ChallengeRequest = typeof CHALLENGE_REQUESTS[number];
 export const LEARNING_ROUTES = [
   'studigo_default', 'direct_instruction', 'socratic', 'deliberate_practice',
   'concrete_to_abstract', 'japanese_inspired', 'montessori_inspired',

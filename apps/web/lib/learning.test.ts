@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { initialLearningState, reduceLearningEvent, replayLearningEvents, nextChallenge,
-  REASONING_LADDER, LEARNING_ROUTES, type LearningEvent, type ConceptLearningState } from './learning';
+  REASONING_LADDER, LEARNING_ROUTES, ACTIVITIES, type LearningEvent, type ConceptLearningState, type LearningActivity } from './learning';
 import { fromExistingAttempt, fromObservationRow, toObservationRow, loadConceptLearningState, recordLearningEvent } from './learning/persistence';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -179,4 +179,155 @@ test('persistence adapter reads both authoritative sources and fails closed on r
   await assert.rejects(loadConceptLearningState(broken, key), /Could not load/);
   await assert.rejects(recordLearningEvent(broken, e), /did not save/);
   assert.throws(() => toObservationRow(event(1, { activity: 'quiz' })), /authoritative/);
+});
+
+function atDemand(level: ConceptLearningState['reasoningLevel'], overrides: Partial<ConceptLearningState> = {}): ConceptLearningState {
+  return { ...initialLearningState(key), reasoningLevel: level, ...overrides };
+}
+
+test('omitted challenge request matches an explicit normal request', () => {
+  const state = replay([event(1), event(2, { result: 'incorrect' })]);
+  const events = [event(1), event(2)];
+  for (const activity of ACTIVITIES) {
+    for (const route of ['studigo_default', 'socratic'] as const) {
+      assert.deepEqual(
+        direct(state, { activity, route, recentEvents: events }),
+        direct(state, { activity, route, recentEvents: events, challengeRequest: 'normal' })
+      );
+    }
+  }
+  assert.throws(() => direct(state, { challengeRequest: 'harder' as 'normal' }), /Invalid challenge request/);
+});
+
+test('stretch raises coach demand by exactly one, keeps route and scope, and does not compound', () => {
+  const state = atDemand(3, { lastResult: 'correct', scaffoldLevel: 2, taskSize: 'whole', masteryEvidence: 'independent' });
+  const recent = [event(1), event(2)];
+  const beforeState = structuredClone(state);
+  const beforeEvents = structuredClone(recent);
+  const normal = direct(state, { recentEvents: recent, route: 'socratic' });
+  const stretch = direct(state, { recentEvents: recent, route: 'socratic', challengeRequest: 'stretch' });
+  const again = direct(state, { recentEvents: recent, route: 'socratic', challengeRequest: 'stretch' });
+  assert.equal(normal.reasoningLevel, 3);
+  assert.equal(normal.challengeKind, 'compare');
+  assert.equal(stretch.reasoningLevel, 4);
+  assert.equal(stretch.challengeKind, 'predict');
+  assert.deepEqual(again, stretch);
+  assert.deepEqual(state, beforeState);
+  assert.deepEqual(recent, beforeEvents);
+  assert.equal(stretch.route, 'socratic');
+  assert.equal(stretch.routeRecord, normal.routeRecord);
+  assert.equal(stretch.activity, 'coach');
+  assert.deepEqual(stretch.concept, normal.concept);
+  assert.equal(stretch.scaffoldLevel, 2);
+  assert.equal(stretch.taskSize, 'whole');
+  assert.equal(stretch.action, normal.action);
+  assert.deepEqual(stretch.constraints, normal.constraints);
+  assert.ok(stretch.reasons.includes('learner_requested_stretch'));
+  assert.ok(stretch.reasons.includes('last_correct'));
+  assert.equal(stretch.constraints.requireNewContext, false);
+});
+
+test('stretch at the top of the ladder stays at teach-back', () => {
+  const state = atDemand(9, { lastResult: 'correct' });
+  const stretch = direct(state, { challengeRequest: 'stretch' });
+  assert.equal(stretch.reasoningLevel, 9);
+  assert.equal(stretch.challengeKind, 'teach_back');
+  assert.equal(state.reasoningLevel, 9);
+  assert.ok(stretch.reasons.includes('learner_requested_stretch'));
+});
+
+test('stretch cannot carry flashcards past recall or change a practice test', () => {
+  const high = atDemand(7, { scaffoldLevel: 4, taskSize: 'single_step', lastResult: 'incorrect' });
+  const before = structuredClone(high);
+  const cards = direct(high, { activity: 'flashcard', challengeRequest: 'stretch' });
+  assert.equal(cards.reasoningLevel, 1);
+  assert.equal(cards.challengeKind, 'recall');
+  assert.ok(cards.reasons.includes('learner_requested_stretch'));
+  assert.ok(cards.reasons.includes('flashcard_recall_only'));
+  const beginner = direct(atDemand(0), { activity: 'flashcard', challengeRequest: 'stretch' });
+  assert.equal(beginner.challengeKind, 'recall');
+  assert.notEqual(beginner.challengeKind, 'transfer');
+  const practiced = direct(high, { activity: 'practice_test', challengeRequest: 'stretch' });
+  assert.deepEqual(practiced, direct(high, { activity: 'practice_test' }));
+  assert.equal(practiced.scaffoldLevel, 0);
+  assert.equal(practiced.taskSize, 'whole');
+  assert.equal(practiced.reasoningLevel, 7);
+  assert.equal(practiced.challengeKind, 'novel_problem');
+  assert.equal(practiced.reasons.includes('learner_requested_stretch'), false);
+  for (const activity of ['learn', 'quiz', 'weak_area', 'cram'] as const satisfies readonly LearningActivity[]) {
+    assert.deepEqual(
+      direct(high, { activity, challengeRequest: 'stretch' }),
+      direct(high, { activity }),
+      activity
+    );
+  }
+  assert.deepEqual(high, before);
+});
+
+test('a due rematch outranks a stretch request', () => {
+  const failed = event(2, { challengeKind: 'transfer', newContext: true, result: 'incorrect' });
+  const state = replay([event(1, { challengeKind: 'transfer', newContext: true }), failed]);
+  const before = structuredClone(state);
+  assert.equal(state.rematch?.reason, 'transfer_fail');
+  const normal = direct(state);
+  const stretch = direct(state, { challengeRequest: 'stretch' });
+  assert.equal(normal.action, 'rematch');
+  assert.deepEqual(stretch, normal);
+  assert.equal(stretch.challengeKind, 'transfer');
+  assert.equal(stretch.reasoningLevel, 6);
+  assert.equal(stretch.constraints.requireNewContext, true);
+  assert.equal(stretch.constraints.avoidContextId, failed.contextId);
+  assert.equal(stretch.reasons.includes('learner_requested_stretch'), false);
+  const advanced = atDemand(8, { rematch: state.rematch, lastResult: 'incorrect' });
+  const stillRematch = direct(advanced, { challengeRequest: 'stretch' });
+  assert.equal(stillRematch.action, 'rematch');
+  assert.equal(stillRematch.challengeKind, 'transfer');
+  assert.notEqual(stillRematch.challengeKind, 'defend');
+  const cards = direct(state, { activity: 'flashcard', challengeRequest: 'stretch' });
+  assert.equal(cards.action, 'retry');
+  assert.equal(cards.challengeKind, 'recall');
+  assert.equal(state.rematch?.reason, 'transfer_fail');
+  assert.deepEqual(state, before);
+});
+
+test('stretch success and failure still use the normal reducer, with no mastery shortcut', () => {
+  let state = initialLearningState(key);
+  for (let n = 0; n < 6; n++) state = reduceLearningEvent(state, event(n, { challengeKind: REASONING_LADDER[state.reasoningLevel] }));
+  assert.equal(state.reasoningLevel, 3);
+  assert.equal(state.correctStreak, 0);
+  const issued = direct(state, { challengeRequest: 'stretch' });
+  assert.equal(issued.challengeKind, 'predict');
+  const frozen = structuredClone(state);
+  const passed = reduceLearningEvent(state, event(6, { challengeKind: issued.challengeKind }));
+  assert.deepEqual(state, frozen);
+  assert.equal(passed.reasoningLevel, 3);
+  assert.equal(passed.correctStreak, 1);
+  assert.equal(passed.masteryEvidence, 'independent');
+  assert.equal(passed.successfulTransferCount, 0);
+  const advanced = reduceLearningEvent(passed, event(7, { challengeKind: issued.challengeKind }));
+  assert.equal(advanced.reasoningLevel, 4);
+  assert.equal(advanced.correctStreak, 0);
+  assert.equal(advanced.masteryEvidence, 'independent');
+  const failed = reduceLearningEvent(state, event(8, { challengeKind: issued.challengeKind, result: 'incorrect', scaffoldUsed: 0 }));
+  assert.equal(failed.reasoningLevel, 3);
+  assert.equal(failed.scaffoldLevel, 1);
+  assert.equal(failed.incorrectStreak, 1);
+  assert.equal(failed.masteryEvidence, 'independent');
+  assert.equal(failed.rematch, null);
+  const again = direct(failed, { challengeRequest: 'stretch' });
+  assert.equal(again.reasoningLevel, 4);
+  assert.notEqual(again.reasoningLevel, 5);
+});
+
+test('support after an answer does not rewrite that answer or grant independent mastery', () => {
+  const incorrect = event(1, { encounterId: 'same', result: 'incorrect', scaffoldUsed: 0, challengeKind: 'explain' });
+  const help = event(2, { encounterId: 'same', result: 'help', scaffoldUsed: 2, challengeKind: 'explain' });
+  const retry = event(3, { encounterId: 'same', result: 'correct', scaffoldUsed: 2, challengeKind: 'explain' });
+  const state = replay([incorrect, help, retry]);
+  assert.equal(incorrect.scaffoldUsed, 0);
+  assert.equal(state.independentSuccessCount, 0);
+  assert.equal(state.hintDependentSuccessCount, 1);
+  assert.equal(state.recoveryCount, 1);
+  assert.equal(state.reasoningLevel, 0);
+  assert.equal(state.masteryEvidence, 'not_demonstrated');
 });
