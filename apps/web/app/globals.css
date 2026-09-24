@@ -1839,3 +1839,25 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     padding-inline: 14px;
   }
 }
+
+
+/* Optical centering for the mobile mode segmented control. */
+@media (max-width: 700px) {
+  .studySubnav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
+  .studySubnavIcon,
+  .studySubnavLabel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1;
+  }
+  .studySubnavLabel {
+    transform: translateY(.5px);
+  }
+}
