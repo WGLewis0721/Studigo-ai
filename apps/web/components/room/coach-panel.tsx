@@ -127,7 +127,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         aria-controls="coach-personalization"
         onClick={() => setPersonalizeOpen((open) => !open)}
       >
-        <span><strong>{style.name}</strong><small>{tradition.name} · {practice.name}</small></span>
+        <span><strong>{style.name}</strong><small>{selectedTopic.title} · {tradition.name} · {practice.name}</small></span>
         <span aria-hidden="true">{personalizeOpen ? "−" : "+"}</span>
       </button>
       {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={() => setPersonalizeOpen(false)} />}
