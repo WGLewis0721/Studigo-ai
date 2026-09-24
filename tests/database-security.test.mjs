@@ -1,6 +1,6 @@
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
 
@@ -31,7 +31,7 @@ before(async () => {
     grant all on storage.objects to anon, authenticated, service_role;
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   `);
-  for (const file of ['001_initial.sql', '002_core_loop.sql', '20260912021422_study_planning.sql', '20260914090000_practice_depth.sql']) {
+  for (const file of (await readdir(new URL('../supabase/migrations/',import.meta.url))).filter(f=>f.endsWith('.sql')).sort()) {
     const sql = await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8');
     // Core PG has gen_random_uuid; the pgcrypto extension is not packaged in PGlite.
     await db.exec(sql.replace('create extension if not exists pgcrypto;', ''));
@@ -331,4 +331,70 @@ test('Explanation level is constrained and defaults to standard',async()=>{
     await assert.rejects(db.query(`update study_rooms set explain_level='genius' where id=$1`,[id(1)]),e=>e.code==='23514');
   });
   assert.equal((await one(`select explain_level from study_rooms where id=$1`,[id(1)])).explain_level,'simpler');
+});
+
+const observation = (overrides={}) => ({ id:'learning-1',owner_id:A,room_id:id(1),topic_id:id(901),
+  encounter_id:'encounter-1',activity:'coach',challenge_kind:'transfer',result:'correct',
+  scaffold_used:0,evidence:'assessed',context_id:'new-context',new_context:true,
+  misconception_id:null,created_at:'2026-09-24T10:00:00Z',...overrides });
+
+test('Learning history reuses authoritative quiz/card/test attempts and isolates two users',async()=>{
+  await db.query(`insert into study_rooms(id,owner_id,title) values($1,$2,'Other room') on conflict do nothing`,[id(2),B]);
+  await db.query(`insert into topics(id,room_id,owner_id,title) values($1,$2,$3,'Adaptive test'),($4,$5,$6,'Other learner')`,[id(901),id(1),A,id(902),id(2),B]);
+  await as('service_role',A,async()=>{
+    await db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation())]);
+    await db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({owner_id:B,room_id:id(2),topic_id:id(902)}))]);
+    await db.query(`insert into quiz_questions(id,room_id,owner_id,topic_id,prompt,correct_choice,choices)
+      values($1,$2,$3,$4,'Question','0','["A","B"]')`,[id(903),id(1),A,id(901)]);
+    await db.query(`select record_quiz_attempt($1,$2,null,0,100,true,'Correct',3)`,[id(903),A]);
+    await db.query(`select record_quiz_attempt($1,$2,null,0,100,true,'Correct',3)`,[id(903),A]);
+    await db.query(`insert into flashcards(id,room_id,owner_id,topic_id,front,back) values($1,$2,$3,$4,'Front','Back')`,[id(904),id(1),A,id(901)]);
+    await db.query(`select review_flashcard($1,$2,3,$3)`,[id(904),A,id(905)]);
+    await db.query(`select review_flashcard($1,$2,3,$3)`,[id(904),A,id(905)]);
+    await db.query(`insert into practice_tests(id,room_id,owner_id,title) values($1,$2,$3,'Exam')`,[id(906),id(1),A]);
+    await db.query(`insert into quiz_questions(id,room_id,owner_id,topic_id,prompt,correct_choice,choices,practice_test_id,test_position)
+      values($1,$2,$3,$4,'Test question',0,'["A","B"]',$5,0)`,[id(907),id(1),A,id(901),id(906)]);
+    const grades=JSON.stringify([{id:id(907),score:100,is_correct:true,feedback:'Correct',selected_choice:0}]);
+    await db.query(`select submit_practice_test($1,$2,$3::jsonb,'{}'::jsonb)`,[id(906),A,grades]);
+    await db.query(`select submit_practice_test($1,$2,$3::jsonb,'{}'::jsonb)`,[id(906),A,grades]);
+  });
+  await as('authenticated',A,async()=>{
+    const result=(await one(`select read_concept_learning_history($1,$2) as history`,[id(1),id(901)])).history;
+    assert.equal(result.observations.length,1);
+    assert.equal(result.attempts.length,3,'retries do not duplicate source evidence');
+    assert.equal(result.attempts.filter(a=>a.practice_test_id).length,1);
+    assert.equal(result.attempts.filter(a=>a.source==='flashcard').length,1);
+    assert.ok(result.attempts.every(a=>!('response' in a)&&!('expected_answer' in a)&&!('feedback' in a)));
+    assert.deepEqual((await one(`select read_concept_learning_history($1,$2) as history`,[id(2),id(902)])).history,{attempts:[],observations:[]});
+    assert.equal((await one(`select count(*)::int n from learning_events`)).n,1);
+  });
+});
+
+test('Learning writes are idempotent, conflicts rollback, and ownership is enforced for trusted writers',async()=>{
+  await as('service_role',A,async()=>{
+    const first=await one(`select record_learning_event($1::jsonb) as saved`,[JSON.stringify(observation())]);
+    const retry=await one(`select record_learning_event($1::jsonb) as saved`,[JSON.stringify(observation())]);
+    assert.deepEqual(first,retry);
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({result:'incorrect'}))]),/Conflicting/);
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({id:'foreign',topic_id:id(902)}))]),/active study scope/);
+    await assert.rejects(db.query(`insert into learning_events select * from jsonb_populate_record(null::learning_events,$1::jsonb)`,[JSON.stringify(observation({id:'foreign-fk',topic_id:id(902)}))]),e=>e.code==='23503');
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({id:'duplicate-source',activity:'quiz'}))]),e=>e.code==='23514');
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({id:'bad-level',scaffold_used:6}))]),e=>e.code==='23514');
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({id:'bad-context',context_id:null}))]),e=>e.code==='23514');
+    await assert.rejects(db.query(`update learning_events set result='incorrect' where owner_id=$1`,[A]),e=>e.code==='42501');
+    assert.equal((await one(`select count(*)::int n from learning_events where owner_id=$1`,[A])).n,1);
+    assert.equal((await one(`select result from learning_events where owner_id=$1`,[A])).result,'correct');
+  });
+});
+
+test('Clients cannot forge observations, call privileged writes, or access history anonymously',async()=>{
+  for(const role of ['anon','authenticated']) await as(role,A,async()=>{
+    await assert.rejects(db.query(`select record_learning_event($1::jsonb)`,[JSON.stringify(observation({id:'forged'}))]),e=>e.code==='42501');
+    for(const sql of [
+      `insert into learning_events select * from jsonb_populate_record(null::learning_events,$1::jsonb)`,
+      `update learning_events set result='correct' where id=($1::jsonb->>'id')`,
+      `delete from learning_events where id=($1::jsonb->>'id')`
+    ]) await assert.rejects(db.query(sql,[JSON.stringify(observation())]),e=>e.code==='42501');
+    if(role==='anon') await assert.rejects(db.query(`select read_concept_learning_history($1,$2)`,[id(1),id(901)]),e=>e.code==='42501');
+  });
 });
