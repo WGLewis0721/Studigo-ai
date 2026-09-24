@@ -193,11 +193,27 @@ test("4. a correct answer writes an assessed attempt from the issued spec", asyn
   assert.equal(w.events.size, 1);
 });
 
-test("5. a partial answer writes partial", async () => {
-  const w = world(pending());
-  const { ix } = await turn(w, "They pull together", { evaluation: graded("demonstrated", "absent") });
-  assert.equal(byId(w, ix, "attempt")?.result, "partial");
-  assert.equal(byId(w, ix, "support"), undefined);
+test("5. a partial answer records its attempt, then the targeted nudge as support", async () => {
+  const w = world(pending(undefined, 0));
+  const first = interaction("2026-09-24T10:00:00.000Z");
+  await turn(w, "They pull together", { interaction: first, evaluation: graded("demonstrated", "absent") });
+  const attempt = byId(w, first, "attempt");
+  const support = byId(w, first, "support");
+  assert.equal(attempt?.result, "partial");
+  assert.equal(attempt?.scaffoldUsed, 0, "the nudge must not rewrite the attempt that came before it");
+  assert.equal(support?.result, "help");
+  assert.equal(support?.scaffoldUsed, 1);
+  assert.equal(support?.encounterId, attempt?.encounterId);
+  assert.equal(support?.createdAt, "2026-09-24T10:00:00.001Z");
+  assert.equal(pendingIssued(w)?.scaffoldUsed, 1);
+
+  const retry = interaction("2026-09-24T10:01:00.000Z");
+  await turn(w, "Same ends push apart, opposite ends pull", { interaction: retry });
+  assert.equal(byId(w, retry, "attempt")?.scaffoldUsed, 1);
+  const replayed = w.replay();
+  assert.equal(replayed.independentSuccessCount, 0);
+  assert.equal(replayed.hintDependentSuccessCount, 1);
+  assert.equal(replayed.recoveryCount, 1);
 });
 
 test("6. an incorrect attempt records the PRE-feedback scaffold", async () => {
