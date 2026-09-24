@@ -131,7 +131,13 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         <span aria-hidden="true">{personalizeOpen ? "−" : "+"}</span>
       </button>
       {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={() => setPersonalizeOpen(false)} />}
-      <section id="coach-personalization" className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"} aria-label="Personalize coaching">
+      <section
+        id="coach-personalization"
+        className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"}
+        aria-label="Personalize coaching"
+        role={personalizeOpen ? "dialog" : undefined}
+        aria-modal={personalizeOpen ? true : undefined}
+      >
         <div className="coachSettingsSheetHead">
           <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this session</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
