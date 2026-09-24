@@ -34,10 +34,15 @@ export function AskPanel({
   const [error, setError] = useState<string | null>(null);
   const conversationId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (!messages.length) return;
+    const frame = window.requestAnimationFrame(() => {
+      threadEndRef.current?.scrollIntoView({ behavior: busy ? "auto" : "smooth", block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages, busy]);
 
   async function ask(text: string) {
     const trimmed = text.trim();
@@ -191,6 +196,7 @@ export function AskPanel({
             </div>
           )
         )}
+        <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
       </div>
 
       {error && (
