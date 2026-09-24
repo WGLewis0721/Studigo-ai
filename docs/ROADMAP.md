@@ -223,8 +223,9 @@ Core direction:
 - Let prior struggles create future rematches, while successful transfer becomes
   strong mastery evidence.
 - Keep learning traditions as coaching routes through the same mastery target.
-- Keep LLMs, semantic grading, embeddings, and RAG as optional enhancers around
-  the deterministic learning engine rather than the owner of progression logic.
+- Keep generative AI as a core Coach capability for dialogue, semantic grading,
+  grounded explanation, and feedback, while the learning control plane remains
+  deterministic and owns progression, mastery, scaffolding, and encounter state.
 
 Technical design, data contracts, infrastructure boundaries, delivery order, and
 explicit anti-overengineering constraints live in
@@ -232,8 +233,9 @@ explicit anti-overengineering constraints live in
 
 Exit: two learners using the same material can receive appropriately different
 next challenges from observable performance, all mini-games contribute to one
-concept-level learning state, and Studigo can still determine the next learning
-action when the LLM is unavailable.
+concept-level learning state, and the learning control plane can determine the
+next action independently of generation while Coach uses generative AI to deliver
+that action naturally.
 ## Active investigation — Coach practice-set generation
 
 Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
