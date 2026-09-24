@@ -3,6 +3,7 @@
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
+import { StudigoComposer } from "./studigo-composer";
 
 type ChatMessage = {
   id: string;
@@ -205,25 +206,14 @@ export function AskPanel({
         </p>
       )}
 
-      <form
-        className="askComposer askComposerLive"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void ask(question);
-        }}
-      >
-        <input
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask about this unit…"
-          aria-label="Ask Studigo a question"
-          maxLength={4000}
-          disabled={busy}
-        />
-        <button type="submit" aria-label="Send question" disabled={busy || !question.trim()}>
-          ↑
-        </button>
-      </form>
+      <StudigoComposer
+        value={question}
+        onChange={setQuestion}
+        onSubmit={() => void ask(question)}
+        disabled={busy}
+        maxLength={4000}
+        ariaLabel="Ask Studigo a question"
+      />
     </div>
   );
 }
