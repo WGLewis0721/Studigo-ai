@@ -417,3 +417,34 @@ test("25. the next question's spec comes from freshly reloaded persisted evidenc
   // Two independent successes: the control plane (not Coach) raises demand.
   assert.equal(w.issuedSpecs.at(-1)!.reasoningLevel, w.issuedSpecs[0].reasoningLevel + 1);
 });
+
+test("invariant: incorrect at scaffold 0 -> correction -> correct retry is recovery, never independent", async () => {
+  const w = world(pending(undefined, 0));
+  const wrong = await turn(w, "All magnets pull together", {
+    evaluation: graded("demonstrated", "contradicted"),
+    interaction: interaction("2026-09-24T10:00:00.000Z")
+  });
+  const attempt = byId(w, wrong.ix, "attempt")!;
+  const correction = byId(w, wrong.ix, "support")!;
+  // The earlier answer keeps the support that existed when it was given.
+  assert.equal(attempt.result, "incorrect");
+  assert.equal(attempt.scaffoldUsed, 0);
+  // The correction is a later, separate observation on the SAME encounter.
+  assert.equal(correction.encounterId, attempt.encounterId);
+  assert.equal(correction.scaffoldUsed, 5);
+  assert.ok(Date.parse(correction.createdAt) > Date.parse(attempt.createdAt));
+
+  const retry = await turn(w, "Same ends push apart, opposite ends pull", { interaction: interaction("2026-09-24T10:01:00.000Z") });
+  const success = byId(w, retry.ix, "attempt")!;
+  assert.equal(success.result, "correct");
+  assert.equal(success.encounterId, attempt.encounterId);
+  assert.equal(success.scaffoldUsed, 5);
+  // The earlier attempt was never rewritten.
+  assert.equal(byId(w, wrong.ix, "attempt")!.scaffoldUsed, 0);
+
+  const state = w.replay();
+  assert.equal(state.independentSuccessCount, 0);
+  assert.equal(state.recoveryCount, 1);
+  assert.equal(state.hintDependentSuccessCount, 1);
+  assert.equal(state.masteryEvidence, "not_demonstrated");
+});
