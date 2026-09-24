@@ -7,6 +7,7 @@ import {
   assessLanguageFloor,
   buildCoachFeedbackSystem,
   buildCoachQuestionSystem,
+  buildCoachSupportSystem,
   decideOutcome,
   detectTurnIntent,
   questionMeetsLanguageFloor,
@@ -211,9 +212,9 @@ test("4. magnetism can progress to a reasoning problem without vocabulary inflat
 
 // --- 5-6: help paths -------------------------------------------------------
 
-test("5. 'I don't know' gets a concise hint without being evaluated", async () => {
+test("5. 'I don't know' gets one real hint without being evaluated", async () => {
   let evaluated = false;
-  let outcome: string | undefined;
+  let supportKind: string | undefined;
   const { supabase, saved } = recordingSupabase(pending(initialSpec));
   const { log } = await drainBoth(
     runCoachTurn({
@@ -228,24 +229,23 @@ test("5. 'I don't know' gets a concise hint without being evaluated", async () =
           evaluated = true;
           return { intent: "answer", concepts: [] };
         },
-        generateCoachFeedback: async (args) => {
-          outcome = args.outcome;
-          return "Think about which sides are the same. Try again?";
+        renderCoachSupport: async (args) => {
+          supportKind = args.support;
+          return "Think about the same ends. What do they do?";
         }
       }
     })
   );
   assert.equal(evaluated, false);
-  assert.equal(outcome, "help");
+  assert.equal(supportKind, "hint");
   assert.equal(log.stateAfter, "awaiting_answer");
-  // Same question, same encounter; the hint is recorded as support used.
   const after = saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>;
   assert.equal(after.question, "What happens when two north poles meet?");
   assert.equal(after.issuedChallenge?.encounterId, "enc-1");
   assert.equal(after.issuedChallenge?.scaffoldUsed, 2);
-  const system = buildCoachFeedbackSystem({ outcome: "help" });
-  assert.ok(system.includes("exactly one short clue"));
-  assert.ok(system.includes("Do not give the answer"));
+  const system = buildCoachSupportSystem({ support: "hint" });
+  assert.ok(system.includes("ONE small clue"));
+  assert.ok(system.includes("Do not state the complete answer"));
 });
 
 test("6. 'show me the answer' gives a concise grounded answer with citations", async () => {
@@ -355,18 +355,19 @@ test("11. a route change alters teaching but not correctness", async () => {
   assert.equal(selectLearningRoute("socratic", "tradition-japanese"), "japanese_inspired");
 });
 
-test("12. 'make it simpler' keeps the expected concept, sources, and reasoning task", async () => {
+test("12. 'make it simpler' changes wording only and never invents choices", async () => {
   let evaluated = false;
   let seenGuidance: string[] | undefined;
+  let maxWords: number | undefined;
   const spec = specFor("predict");
   const { supabase, saved } = recordingSupabase(pending(spec));
-  assert.equal(detectTurnIntent("Make it simpler", pending(spec)), "simplify");
+  assert.equal(detectTurnIntent("Too many words", pending(spec)), "simplify");
   const { log } = await drainBoth(
     runCoachTurn({
       supabase,
       roomId: "room-1",
       conversationId: "c",
-      question: "Make it simpler",
+      question: "Too many words",
       topics: [magnetTopic],
       deps: {
         fetchChunksByIds: async () => [magnetChunk],
@@ -374,9 +375,10 @@ test("12. 'make it simpler' keeps the expected concept, sources, and reasoning t
           evaluated = true;
           return { intent: "answer", concepts: [] };
         },
-        generateCoachQuestion: async (args) => {
+        rewriteCoachQuestion: async (args) => {
           seenGuidance = args.challengeGuidance;
-          return { question: "Two north ends meet. What do they do?", expectedConcepts: [], sourceChunkIds: ["other"], sourceMarkers: [] };
+          maxWords = args.maxWords;
+          return "What will the two north ends do?";
         }
       }
     })
@@ -387,8 +389,10 @@ test("12. 'make it simpler' keeps the expected concept, sources, and reasoning t
   assert.deepEqual(after.expectedConcepts, concepts);
   assert.deepEqual(after.sourceChunkIds, [magnetChunk.id]);
   assert.deepEqual(seenGuidance, renderChallengeGuidance(spec));
+  assert.ok(maxWords && maxWords <= 14);
   assert.deepEqual(after.issuedChallenge?.spec, spec);
-  assert.equal(after.question, "Two north ends meet. What do they do?");
+  assert.equal(after.question, "What will the two north ends do?");
+  assert.doesNotMatch(after.question, /\bA\)|\bB\)/);
 });
 
 test("13. 'Challenge me' asks the control plane; the Coach has no difficulty ladder of its own", async () => {
@@ -640,7 +644,7 @@ test("support is monotonic on one encounter: example then simplify never lowers 
   const deps = {
     fetchChunksByIds: async () => [magnetChunk],
     renderCoachSupport: async () => "A fridge magnet sticks to the door.",
-    generateCoachQuestion: async () => ({ question: "Two north ends meet. Why do they push apart?", expectedConcepts: [], sourceChunkIds: [], sourceMarkers: [] })
+    rewriteCoachQuestion: async () => "Why do the north ends push apart?"
   };
   const run = (question: string) => drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
   await run("Show me an example");
@@ -655,6 +659,7 @@ test("support: a correct answer after a hint still carries the hint, so it can n
   const { supabase, saved } = recordingSupabase(pending(initialSpec));
   const deps = {
     fetchChunksByIds: async () => [magnetChunk],
+    renderCoachSupport: async () => "Think about the same ends.",
     generateCoachFeedback: async () => "That's it.",
     evaluateCoachAnswer: async () => ({
       intent: "answer" as const,
@@ -668,6 +673,36 @@ test("support: a correct answer after a hint still carries the hint, so it can n
   assert.equal(after.kind, "awaiting_control");
   assert.equal(after.issuedChallenge?.encounterId, "enc-1");
   assert.equal(after.issuedChallenge?.scaffoldUsed, 2);
+});
+
+test("support: repeated help climbs hint -> example -> choices instead of looping", async () => {
+  const { supabase, saved } = recordingSupabase(pending(initialSpec));
+  const kinds: string[] = [];
+  const deps = {
+    fetchChunksByIds: async () => [magnetChunk],
+    renderCoachSupport: async (args: { support: string }) => {
+      kinds.push(args.support);
+      if (args.support === "hint") return "Think about the same ends.";
+      if (args.support === "example") return "Imagine two fridge magnets.";
+      if (args.support === "choice") return "A) Same ends push apart. B) Same ends pull together. Pick A or B.";
+      return "Same ends push apart. Which choice says that?";
+    }
+  };
+  const run = (question: string) => drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
+
+  await run("Give me a hint");
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 2);
+  await run("Give me a hint");
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 3);
+  await run("Give me a hint");
+  const choiceState = saved.at(-1) as Pending;
+  assert.equal(choiceState.issuedChallenge?.scaffoldUsed, 4);
+  assert.match(choiceState.question, /A\).*B\)/s);
+  assert.deepEqual(kinds, ["hint", "example", "choice"]);
+
+  const repeated = await run("What are the answer choices");
+  assert.match(repeated.done.answer.text, /^A\).*\nB\)/s);
+  assert.deepEqual(kinds, ["hint", "example", "choice"], "repeating choices must not call the model or RAG again");
 });
 
 test("support: unknown support stays unknown (null) and is never upgraded to a number", async () => {
