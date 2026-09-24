@@ -21,9 +21,37 @@ import type { Topic } from "@/lib/rooms";
 
 export type ChallengeRequest = "harder";
 
+/** Sync or async, so the real director (which loads persisted learner
+ *  state) can be dropped in without changing the router. */
 export interface CoachDirector {
-  initial(topic: Topic, route: LearningRoute): CoachChallenge;
-  request(current: CoachChallenge, request: ChallengeRequest): CoachChallenge;
+  initial(topic: Topic, route: LearningRoute): CoachChallenge | Promise<CoachChallenge>;
+  request(current: CoachChallenge, request: ChallengeRequest): CoachChallenge | Promise<CoachChallenge>;
+}
+
+/**
+ * The subset of the control plane's `ChallengeSpec`
+ * (feature/adaptive-learning-core, apps/web/lib/learning/types.ts) that the
+ * Coach renders. Declared structurally so this branch does not depend on
+ * that unmerged one; once it lands, import `ChallengeSpec` instead.
+ */
+export type ControlPlaneChallengeSpec = {
+  concept: { topicId: string; objective: string };
+  route: LearningRoute;
+  challengeKind: CoachChallenge["challengeKind"];
+  scaffoldLevel: CoachChallenge["scaffoldLevel"];
+  constraints: { oneConceptAtATime: true };
+};
+
+/** Maps the control plane's decision onto what the Coach renders. Pure; decides nothing. */
+export function fromChallengeSpec(spec: ControlPlaneChallengeSpec): CoachChallenge {
+  return {
+    topicId: spec.concept.topicId,
+    challengeKind: spec.challengeKind,
+    scaffoldLevel: spec.scaffoldLevel,
+    route: spec.route,
+    objective: spec.concept.objective,
+    constraints: { oneConceptAtATime: spec.constraints.oneConceptAtATime }
+  };
 }
 
 export const temporaryCoachDirector: CoachDirector = {

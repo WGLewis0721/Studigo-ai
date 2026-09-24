@@ -18,7 +18,7 @@ import {
   type RetrievedChunk
 } from "@studigo/ai";
 import { runCoachTurn } from "./coach-router";
-import { temporaryCoachDirector, type CoachDirector } from "./coach-challenge-adapter";
+import { fromChallengeSpec, temporaryCoachDirector, type CoachDirector } from "./coach-challenge-adapter";
 import { selectLearningRoute } from "./coach-route-selection";
 import type { Topic } from "./rooms";
 
@@ -96,7 +96,7 @@ function pending(challenge?: CoachChallenge): CoachState {
   };
 }
 
-const initialSpec = temporaryCoachDirector.initial(magnetTopic, "studigo_default");
+const initialSpec = temporaryCoachDirector.initial(magnetTopic, "studigo_default") as CoachChallenge;
 
 // --- 1-4: language floor, reasoning ceiling --------------------------------
 
@@ -385,7 +385,41 @@ test("13. 'Challenge me' goes through the control plane, and practice never auto
   assert.equal(requests.length, 1);
 
   // The temporary adapter steps exactly one rung and resets support.
-  const harder = temporaryCoachDirector.request({ ...initialSpec, scaffoldLevel: 3 }, "harder");
+  const harder = (await temporaryCoachDirector.request({ ...initialSpec, scaffoldLevel: 3 }, "harder")) as CoachChallenge;
   assert.equal(harder.challengeKind, "compare");
   assert.equal(harder.scaffoldLevel, 0);
+});
+
+test("the control plane's ChallengeSpec maps onto the Coach challenge without changing its decision", async () => {
+  const spec = {
+    concept: { topicId: "topic-magnets", objective: "Explain magnets" },
+    route: "socratic" as const,
+    challengeKind: "transfer" as const,
+    scaffoldLevel: 2 as const,
+    constraints: { oneConceptAtATime: true as const }
+  };
+  const mapped = fromChallengeSpec(spec);
+  assert.deepEqual(mapped, {
+    topicId: "topic-magnets",
+    challengeKind: "transfer",
+    scaffoldLevel: 2,
+    route: "socratic",
+    objective: "Explain magnets",
+    constraints: { oneConceptAtATime: true }
+  });
+  // An async director (the real one loads persisted state) renders the same spec.
+  let rendered: CoachChallenge | undefined;
+  const { supabase } = recordingSupabase(null);
+  await drainBoth(runCoachTurn({
+    supabase, roomId: "room-1", conversationId: "c", question: "Coach me on magnetism", topics: [magnetTopic], route: "socratic",
+    deps: {
+      director: { initial: async () => mapped, request: async (current) => current },
+      retrieveForRoom: async () => [magnetChunk],
+      generateCoachQuestion: async (args) => {
+        rendered = args.challenge;
+        return { question: "Is a fridge magnet like a compass? Why?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
+      }
+    }
+  }));
+  assert.deepEqual(rendered, mapped);
 });

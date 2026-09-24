@@ -182,8 +182,8 @@ export async function* runCoachTurn(args: {
   const state = await loadCoachState(supabase, conversationId);
   const intent = detectTurnIntent(question, state);
   const route: LearningRoute = args.route ?? "studigo_default";
-  const specFor = (topic: Topic, stored: CoachChallenge | undefined) =>
-    withRoute(stored && stored.topicId === topic.id ? stored : deps.director.initial(topic, route), route);
+  const specFor = async (topic: Topic, stored: CoachChallenge | undefined) =>
+    withRoute(stored && stored.topicId === topic.id ? stored : await deps.director.initial(topic, route), route);
 
   // 1. A pending control action ("Want another one?" -> "yes") is executed
   //    directly. It never goes through retrieval or grading — the learner's
@@ -205,7 +205,7 @@ export async function* runCoachTurn(args: {
       const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, effectiveQuestion);
       // "Another one" reuses the stored spec as-is: the Coach never
       // auto-advances. Only the control plane may change the target.
-      const challenge = topic ? specFor(topic, state.challenge) : undefined;
+      const challenge = topic ? await specFor(topic, state.challenge) : undefined;
       const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
       return { ...log, stateBefore: state.kind, turnIntent: intent };
     }
@@ -220,7 +220,7 @@ export async function* runCoachTurn(args: {
   if (intent === "challenge" && state.kind !== "idle") {
     const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, question);
     if (topic) {
-      const challenge = withRoute(deps.director.request(specFor(topic, state.challenge), "harder"), route);
+      const challenge = withRoute(await deps.director.request(await specFor(topic, state.challenge), "harder"), route);
       const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
       return { ...log, stateBefore: state.kind, turnIntent: intent };
     }
@@ -468,7 +468,7 @@ export async function* runCoachTurn(args: {
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
   const topic = pickTopic(topics, question);
-  const challenge = topic ? specFor(topic, undefined) : undefined;
+  const challenge = topic ? await specFor(topic, undefined) : undefined;
   const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
   return { ...log, stateBefore: state.kind, turnIntent: intent };
 }
