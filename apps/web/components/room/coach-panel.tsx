@@ -52,6 +52,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   const [error, setError] = useState<string | null>(null);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +63,45 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     });
     return () => window.cancelAnimationFrame(frame);
   }, [messages, busy]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const root = document.documentElement;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      rootOverflow: root.style.overflow
+    };
+
+    // iOS Safari will still rubber-band/scroll the page behind a fixed sheet
+    // unless the document itself is frozen. Pinning the body preserves the
+    // current viewport while the sheet remains the only scrollable surface.
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    root.style.overflow = "hidden";
+
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      root.style.overflow = previous.rootOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [modalOpen]);
 
   async function coach(input: string) {
     const text = input.trim();
