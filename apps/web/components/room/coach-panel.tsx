@@ -50,6 +50,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const conversationId = useRef<string | null>(null);
 
   async function coach(input: string) {
@@ -110,7 +111,17 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         <div><span className="tinyLabel">THE COACHING FLOOR</span><h2>Practice the skill, not just the facts.</h2><p>Studigo keeps the teacher&apos;s content fixed and changes how it helps you practice.</p></div>
         <StudigoMascot state={busy ? "thinking" : "welcome"} size={76} />
       </div>
-      <section className="coachSettings" aria-label="Personalize coaching">
+      <button
+        className="coachSetupButton"
+        type="button"
+        aria-expanded={personalizeOpen}
+        aria-controls="coach-personalization"
+        onClick={() => setPersonalizeOpen((open) => !open)}
+      >
+        <span><strong>{style.name}</strong><small>{tradition.name} · {practice.name}</small></span>
+        <span aria-hidden="true">{personalizeOpen ? "−" : "+"}</span>
+      </button>
+      <section id="coach-personalization" className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"} aria-label="Personalize coaching">
         <div>
           <span className="tinyLabel">HOW TO COACH</span>
           <div className="coachStyleGrid" aria-label="Choose a coaching style">
