@@ -34,12 +34,12 @@ const MODES = [
 
 type Mode = (typeof MODES)[number]["id"];
 
-const GROUPS: Array<{name:string;modes:Mode[]}> = [
-  {name:"Study",modes:["learn","ask","coach"]},
-  {name:"Practice",modes:["quiz","cards","test"]},
-  {name:"Progress",modes:["mastery","weak"]},
-  {name:"Plan",modes:["plan","cram"]},
-  {name:"Materials",modes:["materials"]}
+const GROUPS: Array<{name:string;icon:string;modes:Mode[]}> = [
+  {name:"Study",icon:"✦",modes:["learn","ask","coach"]},
+  {name:"Practice",icon:"✓",modes:["quiz","cards","test"]},
+  {name:"Progress",icon:"↗",modes:["mastery","weak"]},
+  {name:"Plan",icon:"◷",modes:["plan","cram"]},
+  {name:"Materials",icon:"◫",modes:["materials"]}
 ];
 
 export function RoomWorkspace({
@@ -115,7 +115,7 @@ export function RoomWorkspace({
 
       <div className="studyNavigation">
         <nav className="studyGroups" aria-label="Study Room sections">
-          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}>{group.name}</button>)}
+          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}><span className="studyGroupIcon" aria-hidden="true">{group.icon}</span><span>{group.name}</span></button>)}
         </nav>
         <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
           {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span aria-hidden="true">{item.icon}</span>{item.name}</button>)}
