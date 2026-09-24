@@ -204,6 +204,36 @@ Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 Exit: a learner can complete create → upload → study → **download**, and the
 artifact is trusted enough to print/use without manual reconstruction.
 
+## Phase 3.6 — Adaptive learning game engine (planned)
+
+Connect the existing learning surfaces through one deterministic learner-state
+and challenge system rather than adding another AI orchestration layer.
+
+Core direction:
+
+- **Low language floor, high skill ceiling.**
+- Treat Learn, Coach, Quiz, Flashcards, Practice Test, Weak Areas, and Cram as
+  mini-games that contribute evidence to one learner state.
+- Let demonstrated performance determine challenge; let learner preference choose
+  a teaching route/build.
+- Add independent reasoning and scaffolding ladders so challenge can rise without
+  making language harder.
+- Use simple state, counters, thresholds, reducers, and persistent encounter
+  history before considering learned recommendation models.
+- Let prior struggles create future rematches, while successful transfer becomes
+  strong mastery evidence.
+- Keep learning traditions as coaching routes through the same mastery target.
+- Keep LLMs, semantic grading, embeddings, and RAG as optional enhancers around
+  the deterministic learning engine rather than the owner of progression logic.
+
+Technical design, data contracts, infrastructure boundaries, delivery order, and
+explicit anti-overengineering constraints live in
+[`ADAPTIVE_LEARNING_ENGINE.md`](ADAPTIVE_LEARNING_ENGINE.md).
+
+Exit: two learners using the same material can receive appropriately different
+next challenges from observable performance, all mini-games contribute to one
+concept-level learning state, and Studigo can still determine the next learning
+action when the LLM is unavailable.
 ## Active investigation — Coach practice-set generation
 
 Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
