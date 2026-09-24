@@ -2,7 +2,7 @@
 
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, selectLearningRoute } from "@/lib/coach-route-selection";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel } from "@/lib/coach-material-state";
@@ -52,6 +52,15 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   const [error, setError] = useState<string | null>(null);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const conversationId = useRef<string | null>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!messages.length) return;
+    const frame = window.requestAnimationFrame(() => {
+      threadEndRef.current?.scrollIntoView({ behavior: busy ? "auto" : "smooth", block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages, busy]);
 
   async function coach(input: string) {
     const text = input.trim();
@@ -106,7 +115,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   if (readyCount === 0) return <div className="modeEmpty"><StudigoMascot state="welcome" size={72} /><h2>Give Studigo something to coach.</h2><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
-    <div className="coachMode">
+    <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       <div className="coachHeader">
         <div><span className="tinyLabel">THE COACHING FLOOR</span><h2>Practice the skill, not just the facts.</h2><p>Studigo keeps the teacher&apos;s content fixed and changes how it helps you practice.</p></div>
         <StudigoMascot state={busy ? "thinking" : "welcome"} size={76} />
@@ -121,7 +130,12 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         <span><strong>{style.name}</strong><small>{tradition.name} · {practice.name}</small></span>
         <span aria-hidden="true">{personalizeOpen ? "−" : "+"}</span>
       </button>
+      {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={() => setPersonalizeOpen(false)} />}
       <section id="coach-personalization" className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"} aria-label="Personalize coaching">
+        <div className="coachSettingsSheetHead">
+          <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this session</strong></div>
+          <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
+        </div>
         <div>
           <span className="tinyLabel">HOW TO COACH</span>
           <div className="coachStyleGrid" aria-label="Choose a coaching style">
@@ -149,6 +163,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         {messages.length === 0 ? (
           <div className="coachEmpty"><strong>Ready when you are.</strong><p>Pick a skill above or ask for a diagnostic. Studigo will explain, demonstrate, watch your attempt, and choose what comes next.</p><div className="starterList"><button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button><button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button></div></div>
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{coachMaterialLabel({ content: message.content, grounded: message.grounded, streaming: message.streaming })}</span><p className="answerText">{message.content}{message.streaming && <span className="caret" aria-hidden="true" />}</p>{message.citations && <CitationChips citations={message.citations} />}</div>)}
+        <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
       </div>
       {messages.length > 0 && <div className="starterList coachControls" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
       {error && <p className="formError" role="alert">{error}</p>}
