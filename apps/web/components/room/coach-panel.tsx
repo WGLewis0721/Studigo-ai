@@ -51,6 +51,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
+  const [skillPickerOpen, setSkillPickerOpen] = useState(false);
   const conversationId = useRef<string | null>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
@@ -125,7 +126,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         type="button"
         aria-expanded={personalizeOpen}
         aria-controls="coach-personalization"
-        onClick={() => setPersonalizeOpen((open) => !open)}
+        onClick={() => { setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}
       >
         <span><strong>{style.name}</strong><small>{selectedTopic.title} · {tradition.name} · {practice.name}</small></span>
         <span aria-hidden="true">{personalizeOpen ? "−" : "+"}</span>
@@ -163,10 +164,44 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
           </label>
         </div>
       </section>
-      <section className="coachSkills" aria-label="Today's skills">
-        <span className="tinyLabel coachSkillsLabel">TODAY&apos;S SKILLS</span>
-        <div className="coachTopics">{topics.slice(0, 5).map((topic) => <button key={topic.title} type="button" className={selectedTopic.title === topic.title ? "active" : ""} onClick={() => { setSelectedTopic(topic); void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`); }}>{topic.title}<span aria-hidden="true">→</span></button>)}</div>
+      <section className="coachSkills" aria-label="Today's skill">
+        <div className="coachSkillsHead">
+          <span className="tinyLabel coachSkillsLabel">TODAY&apos;S SKILL</span>
+          {topics.length > 1 && <button type="button" className="coachSkillChange" onClick={() => { setPersonalizeOpen(false); setSkillPickerOpen(true); }}>Change</button>}
+        </div>
+        <button
+          type="button"
+          className="coachSkillFocus"
+          onClick={() => void coach(`Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}
+        >
+          <span className="coachSkillTitle">{selectedTopic.title}</span>
+          {selectedTopic.objective && selectedTopic.objective !== selectedTopic.title && <small>{selectedTopic.objective}</small>}
+          <span className="coachSkillAction" aria-hidden="true">→</span>
+        </button>
       </section>
+      {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
+      {skillPickerOpen && (
+        <section className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
+          <div className="coachSettingsSheetHead">
+            <div><span className="tinyLabel">TODAY&apos;S SKILLS</span><strong id="coach-skill-sheet-title">Choose what to practice</strong></div>
+            <button type="button" onClick={() => setSkillPickerOpen(false)}>Done</button>
+          </div>
+          <div className="coachSkillList">
+            {topics.slice(0, 5).map((topic, index) => (
+              <button
+                key={topic.title}
+                type="button"
+                className={selectedTopic.title === topic.title ? "active" : ""}
+                onClick={() => { setSelectedTopic(topic); setSkillPickerOpen(false); }}
+              >
+                <span className="coachSkillIndex">{index + 1}</span>
+                <span><strong>{topic.title}</strong>{topic.objective && topic.objective !== topic.title && <small>{topic.objective}</small>}</span>
+                {selectedTopic.title === topic.title && <span className="coachSkillCheck" aria-hidden="true">✓</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <div className="coachThread">
         {messages.length === 0 ? (
