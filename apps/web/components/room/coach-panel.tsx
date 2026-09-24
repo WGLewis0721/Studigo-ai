@@ -228,7 +228,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
             <button type="button" onClick={() => setSkillPickerOpen(false)}>Done</button>
           </div>
           <div className="coachSkillList">
-            {topics.slice(0, 5).map((topic, index) => (
+            {topics.map((topic, index) => (
               <button
                 key={topic.title}
                 type="button"
