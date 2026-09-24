@@ -2227,3 +2227,27 @@ button:disabled { opacity: .55; cursor: not-allowed; }
     white-space: nowrap;
   }
 }
+
+
+/* Keep the full study-plan route title on one line on iPhone.
+   Give the title the full content width instead of sharing it with Change date. */
+@media (max-width: 700px) {
+  .studyPlanPanel .studySectionHeading {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    gap: 14px;
+  }
+  .studyPlanPanel .studySectionHeading > div {
+    width: 100%;
+  }
+  .studyPlanPanel .studySectionHeading h2 {
+    width: 100%;
+    max-width: none;
+    white-space: nowrap;
+    font-size: clamp(1.46rem, 6.6vw, 1.7rem);
+    letter-spacing: -.04em;
+  }
+  .studyPlanPanel .planDateButton {
+    justify-self: start;
+  }
+}
