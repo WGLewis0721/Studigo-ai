@@ -1620,3 +1620,81 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .coachHeader h2 { font-size: 1.78rem; }
   .studentBubble { max-width: 88%; }
 }
+
+
+/* Final mobile finish: 44pt-class targets, sheet choreography, and consistent chrome. */
+.roomSettingsHead { display: none; }
+
+@media (max-width: 700px) {
+  :root { --m-topbar: 58px; }
+
+  .roomWorkspace .workspaceTopbar {
+    height: var(--m-topbar); min-height: var(--m-topbar);
+    grid-template-columns: 44px minmax(0,1fr) auto;
+    padding: 7px 10px;
+  }
+  .roomBackButton,
+  .studyGuideDownload .buttonQuiet,
+  .workspaceTopbar .iconButton {
+    width: 44px; height: 44px; min-width: 44px;
+  }
+
+  .studySubnav {
+    min-height: 54px; padding-block: 5px;
+  }
+  .studySubnav::before { inset-block: 5px; }
+  .studySubnav button { min-height: 44px; }
+
+  .coachControls button { min-height: 44px; }
+  .sourceChipLink { min-height: 40px; }
+  .testQuestionNav button { flex-basis: 44px; width: 44px; height: 44px; }
+
+  .roomSettingsHead {
+    position: sticky; top: -1px; z-index: 3;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin: -4px 0 14px; padding: 4px 0 10px;
+    background: rgba(255,253,247,.97);
+  }
+  .roomSettingsHead > div { min-width: 0; }
+  .roomSettingsHead strong {
+    display: block; margin-top: 3px; font-size: 1.16rem; letter-spacing: -.02em;
+  }
+  .roomSettingsHead > button {
+    min-width: 58px; min-height: 38px; border: 0; border-radius: 999px;
+    background: rgba(29,41,68,.07); font-weight: 900;
+  }
+  .roomSettings .settingsActions .ghostButton { display: none; }
+
+  .roomSettings,
+  .coachSettings.mobileOpen {
+    overscroll-behavior: contain;
+    animation: mobileSheetIn .26s cubic-bezier(.2,.8,.2,1);
+  }
+  .roomSettingsBackdrop,
+  .coachSetupBackdrop { animation: mobileBackdropIn .18s ease-out; }
+
+  .studyGroups button:active,
+  .studySubnav button:active,
+  .roomBackButton:active,
+  .workspaceTopbar .iconButton:active,
+  .studyGuideDownload .buttonQuiet:active,
+  .askComposerLive button:active {
+    transform: scale(.96);
+  }
+
+  .studyGroups button[aria-current] .studyGroupIcon { transform: translateY(-1px) scale(1.04); }
+  .studyGroupIcon { transition: transform .18s cubic-bezier(.2,.8,.2,1); }
+
+  .roomWorkspace:has(.askComposerLive input:focus) .studySubnav {
+    box-shadow: 0 1px 0 rgba(29,41,68,.06);
+  }
+}
+
+@keyframes mobileSheetIn {
+  from { opacity: .72; transform: translateY(18px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes mobileBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
