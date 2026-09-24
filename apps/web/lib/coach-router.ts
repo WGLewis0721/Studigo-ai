@@ -15,9 +15,8 @@ import {
   scoreConcepts,
   toCitations,
   type Citation,
-  type CoachChallenge,
+  type IssuedChallenge,
   type LanguageFloorReport,
-  type LearningRoute,
   type CoachControlAction,
   type CoachOutcome,
   type CoachState,
@@ -26,7 +25,10 @@ import {
 } from "@studigo/ai";
 import { fetchChunksByIds, retrieveForRoom } from "@/lib/retrieval";
 import type { Topic } from "@/lib/rooms";
-import { temporaryCoachDirector, type CoachDirector } from "@/lib/coach-challenge-adapter";
+import { randomUUID } from "node:crypto";
+import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-director";
+import { parseIssuedSpec, renderChallengeGuidance, renderRouteGuidance } from "@/lib/coach-render";
+import type { LearningRoute } from "@/lib/learning";
 
 const CONTROL_ACTION_PROMPTS: Record<CoachControlAction, string> = {
   more_practice: "Give me another practice question on this.",
@@ -84,9 +86,8 @@ type CoachRouterDeps = {
   answerFromRetrievedContext: typeof answerFromRetrievedContext;
   /** Renders "make it simpler" / "show me an example" support text. */
   renderCoachSupport: typeof renderCoachSupport;
-  /** The learning-control plane. The Coach asks it for challenge specs and
-   *  never decides progression itself. Temporary adapter until the real
-   *  control plane lands (see coach-challenge-adapter.ts). */
+  /** The learning-control plane. The Coach asks it for the next
+   *  ChallengeSpec and renders it; it never decides progression. */
   director: CoachDirector;
 };
 
@@ -98,7 +99,7 @@ const defaultDeps: CoachRouterDeps = {
   generateCoachFeedback,
   answerFromRetrievedContext,
   renderCoachSupport,
-  director: temporaryCoachDirector
+  director: learningControlPlaneDirector
 };
 
 /** Debug/telemetry shape for one Coach turn. Not persisted — logged only. */
@@ -112,10 +113,14 @@ export type CoachTurnLog = {
   languageFloor?: LanguageFloorReport;
 };
 
-/** The route is the learner's delivery preference, not progression, so the
- *  currently selected route always wins over the one stored with a spec. */
-function withRoute(challenge: CoachChallenge, route: LearningRoute): CoachChallenge {
-  return challenge.route === route ? challenge : { ...challenge, route };
+/** Help actually given on an encounter, on the SCAFFOLD_LADDER scale. Only
+ *  ever raised, never lowered, so a later unaided answer cannot erase it. */
+const SUPPORT_GIVEN = { simplify: 1, help_request: 2, example: 3, show_answer: 5 } as const;
+
+function withSupport<T extends CoachState>(state: T, level: number): T {
+  if (state.kind === "idle" || !state.issuedChallenge) return state;
+  const used = state.issuedChallenge.scaffoldUsed;
+  return { ...state, issuedChallenge: { ...state.issuedChallenge, scaffoldUsed: used === null ? null : Math.max(used, level) } };
 }
 
 /**
@@ -174,6 +179,8 @@ export async function* runCoachTurn(args: {
   directives?: PedagogyDirective[];
   /** Selected learning route. Changes teaching, never correctness. */
   route?: LearningRoute;
+  /** Authenticated learner; without it no ChallengeSpec can be requested. */
+  userId?: string;
   deps?: Partial<CoachRouterDeps>;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   const { supabase, roomId, conversationId, question, topics } = args;
@@ -182,8 +189,20 @@ export async function* runCoachTurn(args: {
   const state = await loadCoachState(supabase, conversationId);
   const intent = detectTurnIntent(question, state);
   const route: LearningRoute = args.route ?? "studigo_default";
-  const specFor = async (topic: Topic, stored: CoachChallenge | undefined) =>
-    withRoute(stored && stored.topicId === topic.id ? stored : await deps.director.initial(topic, route), route);
+
+  // Every new question asks the control plane for its ChallengeSpec. If that
+  // read fails, the question is rendered without a target and nothing about
+  // progression is claimed; the failure is never turned into an empty state.
+  const issueFor = async (topic: Topic): Promise<IssuedChallenge | undefined> => {
+    if (!args.userId) return undefined;
+    try {
+      const spec = await deps.director.challengeFor({ supabase, userId: args.userId, roomId, topic, route });
+      return { spec: spec as unknown as Record<string, unknown>, encounterId: randomUUID(), scaffoldUsed: spec.scaffoldLevel };
+    } catch (error) {
+      console.warn("[coach] ChallengeSpec unavailable; rendering without a control-plane target", error);
+      return undefined;
+    }
+  };
 
   // 1. A pending control action ("Want another one?" -> "yes") is executed
   //    directly. It never goes through retrieval or grading — the learner's
@@ -203,10 +222,9 @@ export async function* runCoachTurn(args: {
       // affirm/next: replay the pending action as the effective question.
       const effectiveQuestion = CONTROL_ACTION_PROMPTS[state.action];
       const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, effectiveQuestion);
-      // "Another one" reuses the stored spec as-is: the Coach never
-      // auto-advances. Only the control plane may change the target.
-      const challenge = topic ? await specFor(topic, state.challenge) : undefined;
-      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
+      // "Another one" asks the control plane again; the Coach never picks the next level.
+      const issued = topic ? await issueFor(topic) : undefined;
+      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, issued });
       return { ...log, stateBefore: state.kind, turnIntent: intent };
     }
     // A genuinely new message while a control action is pending — most
@@ -215,15 +233,14 @@ export async function* runCoachTurn(args: {
     // action on unrelated input.
   }
 
-  // "Challenge me": an explicit learner request routed through the control
-  // plane. The director decides the harder spec; the Coach only renders it.
-  if (intent === "challenge" && state.kind !== "idle") {
-    const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, question);
-    if (topic) {
-      const challenge = withRoute(await deps.director.request(await specFor(topic, state.challenge), "harder"), route);
-      const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
-      return { ...log, stateBefore: state.kind, turnIntent: intent };
-    }
+  // "Challenge me": a request for a fresh challenge, served by the control
+  // plane. Whatever level it returns is the level asked; the Coach has no
+  // difficulty ladder of its own and does not make questions harder by prompt.
+  if (intent === "challenge") {
+    const topic = (state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined) ?? pickTopic(topics, question);
+    const issued = topic ? await issueFor(topic) : undefined;
+    const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, issued });
+    return { ...log, stateBefore: state.kind, turnIntent: intent };
   }
 
   // 2. A pending question is being answered (or the learner is asking for
@@ -270,7 +287,7 @@ export async function* runCoachTurn(args: {
         chunks,
         instructions: [SHOW_ANSWER_INSTRUCTIONS, ...pedagogyDirectives].join("\n")
       });
-      await saveCoachState(supabase, conversationId, state);
+      await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.show_answer));
       yield { type: "delta", text: grounded.text };
       yield {
         type: "done",
@@ -285,21 +302,23 @@ export async function* runCoachTurn(args: {
       };
     }
 
-    const pendingChallenge = state.challenge ? withRoute(state.challenge, route) : undefined;
+    // The pending question is always rendered against the spec it was issued for.
+    const pendingSpec = parseIssuedSpec(state.issuedChallenge?.spec);
+    const routeGuidance = pendingSpec ? renderRouteGuidance(pendingSpec) : undefined;
 
     // "Make it simpler": same concepts, same sources, same reasoning task —
     // only the wording changes. Never graded.
     if (intent === "simplify") {
       const rendered = await deps.generateCoachQuestion({
         topicTitle: topics.find((t) => t.id === state.topicId)?.title ?? "",
-        objective: pendingChallenge?.objective ?? null,
+        objective: pendingSpec?.concept.objective ?? null,
         chunks,
         pedagogyDirectives,
-        challenge: pendingChallenge,
+        challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined,
         simplifyFrom: { question: state.question, expectedConcepts: state.expectedConcepts }
       });
       const simpler = rendered.question || state.question;
-      const nextState: CoachState = { ...state, question: simpler };
+      const nextState: CoachState = withSupport({ ...state, question: simpler }, SUPPORT_GIVEN.simplify);
       await saveCoachState(supabase, conversationId, nextState);
       const citations = citationsIn(simpler, chunks);
       yield { type: "delta", text: simpler };
@@ -321,10 +340,10 @@ export async function* runCoachTurn(args: {
         question: state.question,
         expectedConcepts: state.expectedConcepts,
         chunks,
-        challenge: pendingChallenge,
+        routeGuidance,
         pedagogyDirectives
       });
-      await saveCoachState(supabase, conversationId, state);
+      await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.example));
       const returnPrompt = `\n\nYour turn: ${state.question}`;
       const text = support + returnPrompt;
       const citations = citationsIn(text, chunks);
@@ -412,7 +431,7 @@ export async function* runCoachTurn(args: {
       outcome,
       chunks,
       pedagogyDirectives,
-      challenge: pendingChallenge
+      routeGuidance
     });
 
     yield { type: "delta", text: feedback };
@@ -433,7 +452,7 @@ export async function* runCoachTurn(args: {
         action: nextAction,
         topicId: state.topicId,
         sourceChunkIds: state.sourceChunkIds,
-        ...(state.challenge ? { challenge: state.challenge } : {})
+        ...(state.issuedChallenge ? { issuedChallenge: state.issuedChallenge } : {})
       };
       await saveCoachState(supabase, conversationId, nextState);
       const prompt = " Want another one on this?";
@@ -447,6 +466,10 @@ export async function* runCoachTurn(args: {
     }
 
     if (outcome === "incorrect" || outcome === "irrelevant" || outcome === "help") {
+      // A hint is recorded on the encounter so later credit reflects it.
+      if (intent === "help_request" && state.issuedChallenge) {
+        await saveCoachState(supabase, conversationId, withSupport(state, SUPPORT_GIVEN.help_request));
+      }
       // Stay on the same pending question — the learner gets another try
       // once they have the hint/correction, instead of silently moving on.
       yield {
@@ -468,8 +491,8 @@ export async function* runCoachTurn(args: {
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
   const topic = pickTopic(topics, question);
-  const challenge = topic ? await specFor(topic, undefined) : undefined;
-  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, challenge });
+  const issued = topic ? await issueFor(topic) : undefined;
+  const log = yield* openCoachQuestion({ supabase, roomId, conversationId, topics, topic, deps, pedagogyDirectives, issued });
   return { ...log, stateBefore: state.kind, turnIntent: intent };
 }
 
@@ -487,7 +510,7 @@ async function* openCoachQuestion(args: {
   topic: Topic | undefined;
   deps: CoachRouterDeps;
   pedagogyDirectives?: string[];
-  challenge?: CoachChallenge;
+  issued?: IssuedChallenge;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   if (!args.topic) {
     const text = "Add a study guide topic first — I need at least one active topic in this room before I can coach it.";
@@ -511,12 +534,13 @@ async function* openCoachQuestion(args: {
     return { stateBefore: "idle", turnIntent: "answer", semanticScore: null, outcome: "irrelevant", stateAfter: "idle" };
   }
 
+  const spec = parseIssuedSpec(args.issued?.spec);
   const coachQuestion = await args.deps.generateCoachQuestion({
     topicTitle: args.topic.title,
     objective: args.topic.objective,
     chunks,
     pedagogyDirectives: args.pedagogyDirectives,
-    challenge: args.challenge
+    challengeGuidance: spec ? renderChallengeGuidance(spec) : undefined
   });
 
   const nextState: CoachState = {
@@ -527,7 +551,7 @@ async function* openCoachQuestion(args: {
     expectedConcepts: coachQuestion.expectedConcepts,
     sourceChunkIds: coachQuestion.sourceChunkIds,
     askedAt: new Date().toISOString(),
-    ...(args.challenge ? { challenge: args.challenge } : {})
+    ...(args.issued ? { issuedChallenge: args.issued } : {})
   };
   await saveCoachState(args.supabase, args.conversationId, nextState);
 

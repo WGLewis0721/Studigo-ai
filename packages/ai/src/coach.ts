@@ -1,9 +1,7 @@
 import { UNTRUSTED_MATERIAL_RULE, asUntrustedMaterial } from "./client";
 import { structured } from "./study";
 import { buildContextBlock, type RetrievedChunk } from "./grounding";
-import { parseCoachChallenge, type CoachChallenge } from "./coach-challenge";
-import { LANGUAGE_FLOOR_RULES, challengeKindGuidance, scaffoldGuidance } from "./coach-language";
-import { routeGuidance } from "./coach-routes";
+import { LANGUAGE_FLOOR_RULES } from "./coach-language";
 
 // ---------------------------------------------------------------------------
 // Coach finite-state machine
@@ -37,10 +35,8 @@ export type CoachState =
       expectedConcepts: ExpectedConcept[];
       sourceChunkIds: string[];
       askedAt: string;
-      /** The control-plane target this question was rendered for. Kept so
-       *  "make it simpler" / hints preserve the same reasoning objective.
-       *  Optional: rows written before this field existed stay valid. */
-      challenge?: CoachChallenge;
+      /** Optional: rows written before this field existed stay valid. */
+      issuedChallenge?: IssuedChallenge;
     }
   | {
       version: 1;
@@ -48,8 +44,21 @@ export type CoachState =
       action: CoachControlAction;
       topicId: string | null;
       sourceChunkIds: string[];
-      challenge?: CoachChallenge;
+      issuedChallenge?: IssuedChallenge;
     };
+
+/**
+ * The control-plane challenge a pending question was issued for. The spec is
+ * opaque to this package: it is the learning-control plane's ChallengeSpec
+ * (apps/web/lib/learning), validated and interpreted only in apps/web.
+ * `encounterId` is stable across hints and reveals of the SAME question;
+ * `scaffoldUsed` is the most support the learner actually received on it.
+ */
+export type IssuedChallenge = {
+  spec: Record<string, unknown>;
+  encounterId: string;
+  scaffoldUsed: number | null;
+};
 
 export const IDLE_COACH_STATE: CoachState = { version: 1, kind: "idle" };
 
@@ -66,7 +75,7 @@ export function parseCoachState(raw: unknown): CoachState {
     Array.isArray(value.sourceChunkIds) &&
     typeof value.askedAt === "string"
   ) {
-    const challenge = parseCoachChallenge(value.challenge);
+    const issuedChallenge = parseIssuedChallenge(value.issuedChallenge);
     return {
       version: 1,
       kind: "awaiting_answer",
@@ -75,7 +84,7 @@ export function parseCoachState(raw: unknown): CoachState {
       expectedConcepts: (value.expectedConcepts as unknown[]).filter(isExpectedConcept),
       sourceChunkIds: (value.sourceChunkIds as unknown[]).filter((id): id is string => typeof id === "string"),
       askedAt: value.askedAt,
-      ...(challenge ? { challenge } : {})
+      ...(issuedChallenge ? { issuedChallenge } : {})
     };
   }
 
@@ -85,18 +94,35 @@ export function parseCoachState(raw: unknown): CoachState {
     (COACH_CONTROL_ACTIONS as readonly string[]).includes(value.action) &&
     Array.isArray(value.sourceChunkIds)
   ) {
-    const challenge = parseCoachChallenge(value.challenge);
+    const issuedChallenge = parseIssuedChallenge(value.issuedChallenge);
     return {
       version: 1,
       kind: "awaiting_control",
       action: value.action as CoachControlAction,
       topicId: typeof value.topicId === "string" ? value.topicId : null,
       sourceChunkIds: (value.sourceChunkIds as unknown[]).filter((id): id is string => typeof id === "string"),
-      ...(challenge ? { challenge } : {})
+      ...(issuedChallenge ? { issuedChallenge } : {})
     };
   }
 
   return IDLE_COACH_STATE;
+}
+
+function parseIssuedChallenge(raw: unknown): IssuedChallenge | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Record<string, unknown>;
+  const scaffold = value.scaffoldUsed;
+  if (
+    !value.spec ||
+    typeof value.spec !== "object" ||
+    Array.isArray(value.spec) ||
+    typeof value.encounterId !== "string" ||
+    !value.encounterId ||
+    !(scaffold === null || (Number.isInteger(scaffold) && (scaffold as number) >= 0 && (scaffold as number) <= 5))
+  ) {
+    return undefined;
+  }
+  return { spec: value.spec as Record<string, unknown>, encounterId: value.encounterId, scaffoldUsed: scaffold as number | null };
 }
 
 function isExpectedConcept(value: unknown): value is ExpectedConcept {
@@ -255,16 +281,6 @@ export function normalizeExpectedConcepts(
   return cleaned.map((concept) => ({ ...concept, weight: concept.weight / total }));
 }
 
-function challengeLines(challenge: CoachChallenge | undefined): string[] {
-  if (!challenge) return [];
-  return [
-    challengeKindGuidance(challenge.challengeKind),
-    scaffoldGuidance(challenge.scaffoldLevel),
-    ...(challenge.constraints.oneConceptAtATime ? ["Focus this question on a single concept."] : []),
-    ...routeGuidance(challenge.route)
-  ];
-}
-
 function directiveLines(directives: string[] | undefined, scope: string): string[] {
   return directives?.length
     ? [`The learner has chosen a teaching style/tradition below. Apply it only to ${scope}:`, ...directives]
@@ -272,25 +288,24 @@ function directiveLines(directives: string[] | undefined, scope: string): string
 }
 
 /**
- * Pure prompt builder for Coach questions: ChallengeSpec -> route policy ->
- * language floor. The challenge decides the *reasoning task*; the language
+ * Pure prompt builder for Coach questions. `challengeGuidance` is the
+ * control plane's ChallengeSpec already rendered into instructions (reasoning
+ * task, support level, route) by apps/web/lib/coach-render.ts; the language
  * rules hold the English plain regardless of how hard that task is.
  */
 export function buildCoachQuestionSystem(args: {
-  challenge?: CoachChallenge;
+  challengeGuidance?: string[];
   pedagogyDirectives?: string[];
 }): string {
-  const kind = args.challenge?.challengeKind;
-  const allowsShortAnswer = kind === "recognize" || kind === "recall";
   return [
     "You are Studigo's Coach, asking one question drawn from the learner's own course materials.",
     ...LANGUAGE_FLOOR_RULES,
-    ...(args.challenge
-      ? challengeLines(args.challenge)
-      : ["Reasoning task: explain. Ask what happens or why it happens, in one familiar case."]),
-    allowsShortAnswer
-      ? "A short factual answer is acceptable for this task."
-      : "Do not ask a question that can be answered with only yes or no, unless you also ask why.",
+    ...(args.challengeGuidance?.length
+      ? args.challengeGuidance
+      : [
+          "Reasoning task: explain. Ask what happens or why it happens, in one familiar case.",
+          "Do not ask a question that can be answered with only yes or no, unless you also ask why."
+        ]),
     "If the question states a specific fact, figure, or example from the excerpts, cite it inline with the bracketed excerpt number, like [2]. Only cite numbers that appear in the supplied excerpts. A question that only asks the learner to explain an idea needs no citation.",
     "List 1-3 underlying concepts that together make a correct answer to THIS question only - not everything in the excerpts. Each concept needs a short id, a plain description of what showing it looks like, a positive weight, and whether it is critical (a critical concept the learner directly contradicts means the answer cannot be marked correct).",
     "Weights must be positive numbers whose sum is 1 across all concepts for this question.",
@@ -311,8 +326,8 @@ export async function generateCoachQuestion(args: {
   chunks: RetrievedChunk[];
   /** Sanitized [NAME] instruction lines (engine.ts EngineDirective). Phrasing only. */
   pedagogyDirectives?: string[];
-  /** Control-plane target. Rendered, never altered, by the Coach. */
-  challenge?: CoachChallenge;
+  /** The ChallengeSpec rendered as instructions (apps/web/lib/coach-render.ts). */
+  challengeGuidance?: string[];
   /** Re-render an existing question in plainer words, same concept. */
   simplifyFrom?: { question: string; expectedConcepts: ExpectedConcept[] };
 }): Promise<CoachQuestion> {
@@ -330,7 +345,7 @@ export async function generateCoachQuestion(args: {
     expected_concepts: Array<{ id: string; description: string; weight: number; critical: boolean }>;
     source_markers: number[];
   }>({
-    system: buildCoachQuestionSystem({ challenge: args.challenge, pedagogyDirectives: args.pedagogyDirectives }),
+    system: buildCoachQuestionSystem({ challengeGuidance: args.challengeGuidance, pedagogyDirectives: args.pedagogyDirectives }),
     user: [
       asUntrustedMaterial({
         topicTitle: args.topicTitle,
@@ -364,7 +379,8 @@ export type CoachSupportKind = "simplify" | "example";
 
 export function buildCoachSupportSystem(args: {
   support: CoachSupportKind;
-  challenge?: CoachChallenge;
+  /** The spec's teaching route rendered as instructions. Phrasing only. */
+  routeGuidance?: string[];
   pedagogyDirectives?: string[];
 }): string {
   const task =
@@ -375,7 +391,7 @@ export function buildCoachSupportSystem(args: {
     "You are Studigo's Coach, supporting a learner on a question they have not answered yet.",
     task,
     ...LANGUAGE_FLOOR_RULES,
-    ...(args.challenge ? routeGuidance(args.challenge.route) : []),
+    ...(args.routeGuidance ?? []),
     ...directiveLines(args.pedagogyDirectives, "tone and phrasing"),
     UNTRUSTED_MATERIAL_RULE
   ].join(" ");
@@ -386,7 +402,7 @@ export async function renderCoachSupport(args: {
   question: string;
   expectedConcepts: ExpectedConcept[];
   chunks: RetrievedChunk[];
-  challenge?: CoachChallenge;
+  routeGuidance?: string[];
   pedagogyDirectives?: string[];
 }): Promise<string> {
   const result = await structured<{ text: string }>({
@@ -590,7 +606,7 @@ const OUTCOME_INSTRUCTIONS: Record<CoachOutcome, string> = {
 /** Pure prompt builder for feedback: the outcome is already decided. */
 export function buildCoachFeedbackSystem(args: {
   outcome: CoachOutcome;
-  challenge?: CoachChallenge;
+  routeGuidance?: string[];
   pedagogyDirectives?: string[];
 }): string {
   return [
@@ -599,7 +615,7 @@ export function buildCoachFeedbackSystem(args: {
     "At most three short sentences, addressed directly to the learner, with one main question at most. Use familiar words and define any technical word right away. Cite with [n] only when stating a fact the numbered excerpts actually support.",
     "If you give an example, use one from the excerpts whenever possible. If it is not in the excerpts, say it is a general example and never attach a citation to it.",
     "Never say the material is insufficient because of how the learner replied.",
-    ...(args.challenge ? routeGuidance(args.challenge.route) : []),
+    ...(args.routeGuidance ?? []),
     ...directiveLines(args.pedagogyDirectives, "tone and phrasing - it can never change the outcome above or invent new concept judgments"),
     UNTRUSTED_MATERIAL_RULE
   ].join(" ");
@@ -617,7 +633,7 @@ export async function generateCoachFeedback(args: {
    *  must happen next) is passed in already decided and is never
    *  influenced by these directives. */
   pedagogyDirectives?: string[];
-  challenge?: CoachChallenge;
+  routeGuidance?: string[];
 }): Promise<string> {
   const statusById = new Map(args.evaluated.map((concept) => [concept.id, concept.status]));
   const conceptSummary = args.expectedConcepts.map((concept) => ({
@@ -628,7 +644,7 @@ export async function generateCoachFeedback(args: {
   const result = await structured<{ feedback: string }>({
     system: buildCoachFeedbackSystem({
       outcome: args.outcome,
-      challenge: args.challenge,
+      routeGuidance: args.routeGuidance,
       pedagogyDirectives: args.pedagogyDirectives
     }),
     user: [

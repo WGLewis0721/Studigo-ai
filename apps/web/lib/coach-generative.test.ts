@@ -11,14 +11,23 @@ import {
   detectTurnIntent,
   questionMeetsLanguageFloor,
   scoreConcepts,
-  type CoachChallenge,
   type CoachState,
   type ExpectedConcept,
-  type LearningRoute,
   type RetrievedChunk
 } from "@studigo/ai";
 import { runCoachTurn } from "./coach-router";
-import { fromChallengeSpec, temporaryCoachDirector, type CoachDirector } from "./coach-challenge-adapter";
+import type { CoachDirector } from "./coach-director";
+import { renderChallengeGuidance, renderRouteGuidance } from "./coach-render";
+import {
+  REASONING_LADDER,
+  initialLearningState,
+  nextChallenge,
+  type ChallengeKind,
+  type ChallengeSpec,
+  type LearningRoute,
+  type ReasoningLevel,
+  type ScaffoldLevel
+} from "./learning";
 import { selectLearningRoute } from "./coach-route-selection";
 import type { Topic } from "./rooms";
 
@@ -83,7 +92,36 @@ const concepts: ExpectedConcept[] = [
   { id: "likes_repel", description: "Like poles push apart", weight: 0.5, critical: false }
 ];
 
-function pending(challenge?: CoachChallenge): CoachState {
+const conceptKey = { userId: "user-1", roomId: "room-1", topicId: magnetTopic.id };
+
+/** Specs come from Astra's own director, never hand-built: the Coach tests
+ *  render whatever the control plane decides. */
+function specFor(kind: ChallengeKind = "explain", route: LearningRoute = "studigo_default", scaffoldLevel: ScaffoldLevel = 0): ChallengeSpec {
+  const learnerState = {
+    ...initialLearningState(conceptKey),
+    reasoningLevel: REASONING_LADDER.indexOf(kind) as ReasoningLevel,
+    scaffoldLevel
+  };
+  return nextChallenge({
+    concept: { ...conceptKey, objective: magnetTopic.objective! },
+    learnerState,
+    recentEvents: [],
+    activity: "coach",
+    route,
+    now: "2026-09-24T00:00:00.000Z"
+  });
+}
+
+function fixedDirector(spec: ChallengeSpec, calls: string[] = []): CoachDirector {
+  return {
+    async challengeFor(args) {
+      calls.push(`${args.userId}:${args.topic.id}:${args.route}`);
+      return { ...spec, route: args.route };
+    }
+  };
+}
+
+function pending(spec?: ChallengeSpec, scaffoldUsed: number | null = spec?.scaffoldLevel ?? null): CoachState {
   return {
     version: 1,
     kind: "awaiting_answer",
@@ -92,17 +130,17 @@ function pending(challenge?: CoachChallenge): CoachState {
     expectedConcepts: concepts,
     sourceChunkIds: [magnetChunk.id],
     askedAt: "2026-01-01T00:00:00.000Z",
-    ...(challenge ? { challenge } : {})
+    ...(spec ? { issuedChallenge: { spec: spec as unknown as Record<string, unknown>, encounterId: "enc-1", scaffoldUsed } } : {})
   };
 }
 
-const initialSpec = temporaryCoachDirector.initial(magnetTopic, "studigo_default") as CoachChallenge;
+const initialSpec = specFor();
 
 // --- 1-4: language floor, reasoning ceiling --------------------------------
 
 test("1. the intro question is rendered for one concept in simple language", async () => {
-  let seen: CoachChallenge | undefined;
-  const { supabase } = recordingSupabase(null);
+  let seen: string[] | undefined;
+  const { supabase, saved } = recordingSupabase(null);
   const { log } = await drainBoth(
     runCoachTurn({
       supabase,
@@ -110,18 +148,23 @@ test("1. the intro question is rendered for one concept in simple language", asy
       conversationId: "c",
       question: "Coach me on magnetism",
       topics: [magnetTopic],
+      userId: "user-1",
       deps: {
+        director: fixedDirector(initialSpec),
         retrieveForRoom: async () => [magnetChunk],
         generateCoachQuestion: async (args) => {
-          seen = args.challenge;
+          seen = args.challengeGuidance;
           return { question: "What happens when two magnets touch?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
         }
       }
     })
   );
-  assert.equal(seen?.constraints.oneConceptAtATime, true);
-  assert.equal(seen?.scaffoldLevel, 0);
-  const system = buildCoachQuestionSystem({ challenge: seen });
+  assert.deepEqual(seen, renderChallengeGuidance(initialSpec));
+  const issued = (saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>).issuedChallenge;
+  assert.deepEqual(issued?.spec, initialSpec);
+  assert.equal(issued?.scaffoldUsed, initialSpec.scaffoldLevel);
+  assert.ok(issued?.encounterId);
+  const system = buildCoachQuestionSystem({ challengeGuidance: seen });
   for (const rule of LANGUAGE_FLOOR_RULES) assert.ok(system.includes(rule));
   assert.ok(system.includes("single concept"));
   assert.ok(system.includes("1-3 underlying concepts"));
@@ -144,7 +187,7 @@ test("2. melting can be asked in short form and passes the language floor", () =
 test("3. the candle-wax transfer question uses simple language", () => {
   const transfer = "Candle wax turns liquid when it gets hot. Is that like melting ice? Why?";
   assert.ok(questionMeetsLanguageFloor(transfer));
-  const system = buildCoachQuestionSystem({ challenge: { ...initialSpec, challengeKind: "transfer" } });
+  const system = buildCoachQuestionSystem({ challengeGuidance: renderChallengeGuidance(specFor("transfer")) });
   assert.ok(system.includes("Reasoning task: transfer"));
   assert.ok(system.includes("never by making the English harder"));
 });
@@ -160,8 +203,8 @@ test("4. magnetism can progress to a reasoning problem without vocabulary inflat
   assert.ok(avgWordLength(novel) <= avgWordLength(recall) + 0.5);
   assert.ok(assessLanguageFloor(novel).longestSentenceWords <= 20);
   // The harder rung changes the task instruction, while the language rules are identical.
-  const easy = buildCoachQuestionSystem({ challenge: { ...initialSpec, challengeKind: "recall" } });
-  const hard = buildCoachQuestionSystem({ challenge: { ...initialSpec, challengeKind: "novel_problem" } });
+  const easy = buildCoachQuestionSystem({ challengeGuidance: renderChallengeGuidance(specFor("recall")) });
+  const hard = buildCoachQuestionSystem({ challengeGuidance: renderChallengeGuidance(specFor("novel_problem")) });
   assert.notEqual(easy, hard);
   for (const rule of LANGUAGE_FLOOR_RULES) assert.ok(easy.includes(rule) && hard.includes(rule));
 });
@@ -195,8 +238,11 @@ test("5. 'I don't know' gets a concise hint without being evaluated", async () =
   assert.equal(evaluated, false);
   assert.equal(outcome, "help");
   assert.equal(log.stateAfter, "awaiting_answer");
-  // The pending question row is left untouched.
-  assert.equal(saved.length, 0);
+  // Same question, same encounter; the hint is recorded as support used.
+  const after = saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>;
+  assert.equal(after.question, "What happens when two north poles meet?");
+  assert.equal(after.issuedChallenge?.encounterId, "enc-1");
+  assert.equal(after.issuedChallenge?.scaffoldUsed, 2);
   const system = buildCoachFeedbackSystem({ outcome: "help" });
   assert.ok(system.includes("exactly one short clue"));
   assert.ok(system.includes("Do not give the answer"));
@@ -274,7 +320,7 @@ test("11. a route change alters teaching but not correctness", async () => {
   const outcomes: string[] = [];
   const systems = new Set<string>();
   for (const route of ["studigo_default", "socratic", "japanese_inspired"] as LearningRoute[]) {
-    const { supabase } = recordingSupabase(pending({ ...initialSpec, route }));
+    const { supabase } = recordingSupabase(pending(specFor("explain", route)));
     const { log } = await drainBoth(
       runCoachTurn({
         supabase,
@@ -293,7 +339,7 @@ test("11. a route change alters teaching but not correctness", async () => {
             ]
           }),
           generateCoachFeedback: async (args) => {
-            systems.add(buildCoachFeedbackSystem({ outcome: args.outcome, challenge: args.challenge }));
+            systems.add(buildCoachFeedbackSystem({ outcome: args.outcome, routeGuidance: args.routeGuidance }));
             return "Good start.";
           }
         }
@@ -309,8 +355,8 @@ test("11. a route change alters teaching but not correctness", async () => {
 
 test("12. 'make it simpler' keeps the expected concept, sources, and reasoning task", async () => {
   let evaluated = false;
-  let seenChallenge: CoachChallenge | undefined;
-  const spec: CoachChallenge = { ...initialSpec, challengeKind: "predict" };
+  let seenGuidance: string[] | undefined;
+  const spec = specFor("predict");
   const { supabase, saved } = recordingSupabase(pending(spec));
   assert.equal(detectTurnIntent("Make it simpler", pending(spec)), "simplify");
   const { log } = await drainBoth(
@@ -327,7 +373,7 @@ test("12. 'make it simpler' keeps the expected concept, sources, and reasoning t
           return { intent: "answer", concepts: [] };
         },
         generateCoachQuestion: async (args) => {
-          seenChallenge = args.challenge;
+          seenGuidance = args.challengeGuidance;
           return { question: "Two north ends meet. What do they do?", expectedConcepts: [], sourceChunkIds: ["other"], sourceMarkers: [] };
         }
       }
@@ -338,26 +384,21 @@ test("12. 'make it simpler' keeps the expected concept, sources, and reasoning t
   assert.equal(log.outcome, "simplified");
   assert.deepEqual(after.expectedConcepts, concepts);
   assert.deepEqual(after.sourceChunkIds, [magnetChunk.id]);
-  assert.equal(seenChallenge?.challengeKind, "predict");
+  assert.deepEqual(seenGuidance, renderChallengeGuidance(spec));
+  assert.deepEqual(after.issuedChallenge?.spec, spec);
   assert.equal(after.question, "Two north ends meet. What do they do?");
 });
 
-test("13. 'Challenge me' goes through the control plane, and practice never auto-advances", async () => {
-  const requests: string[] = [];
-  const director: CoachDirector = {
-    initial: temporaryCoachDirector.initial,
-    request: (current, request) => {
-      requests.push(`${current.challengeKind}->${request}`);
-      return { ...current, challengeKind: "defend" };
-    }
-  };
-  const rendered: Array<CoachChallenge | undefined> = [];
+test("13. 'Challenge me' asks the control plane; the Coach has no difficulty ladder of its own", async () => {
+  const calls: string[] = [];
+  const directorSpec = specFor("defend");
+  const rendered: Array<string[] | undefined> = [];
   const deps = {
-    director,
+    director: fixedDirector(directorSpec, calls),
     retrieveForRoom: async () => [magnetChunk],
     fetchChunksByIds: async () => [magnetChunk],
-    generateCoachQuestion: async (args: { challenge?: CoachChallenge }) => {
-      rendered.push(args.challenge);
+    generateCoachQuestion: async (args: { challengeGuidance?: string[] }) => {
+      rendered.push(args.challengeGuidance);
       return { question: "Is it true that any two magnets pull together? Why?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
     },
     evaluateCoachAnswer: async () => ({
@@ -371,55 +412,52 @@ test("13. 'Challenge me' goes through the control plane, and practice never auto
   };
   const { supabase, saved } = recordingSupabase(pending(initialSpec));
   const run = (question: string) =>
-    drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
+    drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], userId: "user-1", deps }));
 
   await run("Challenge me");
-  assert.deepEqual(requests, ["explain->harder"]);
-  assert.equal(rendered.at(-1)?.challengeKind, "defend");
+  assert.deepEqual(calls, ["user-1:topic-magnets:studigo_default"]);
+  // Exactly the director's spec is rendered and stored — nothing stepped or edited.
+  assert.deepEqual(rendered.at(-1), renderChallengeGuidance(directorSpec));
+  const issued = (saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>).issuedChallenge;
+  assert.deepEqual(issued?.spec, directorSpec);
+  assert.notEqual(issued?.encounterId, "enc-1");
 
-  // Answer correctly, then "yes" to another one: same spec, no hidden ladder.
+  // Correct answer, then "yes": the next question is again the director's call.
   await run("No, only opposite ends pull; same ends push apart");
   assert.equal(saved.at(-1)?.kind, "awaiting_control");
   await run("yes");
-  assert.equal(rendered.at(-1)?.challengeKind, "defend");
-  assert.equal(requests.length, 1);
-
-  // The temporary adapter steps exactly one rung and resets support.
-  const harder = (await temporaryCoachDirector.request({ ...initialSpec, scaffoldLevel: 3 }, "harder")) as CoachChallenge;
-  assert.equal(harder.challengeKind, "compare");
-  assert.equal(harder.scaffoldLevel, 0);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(rendered.at(-1), renderChallengeGuidance(directorSpec));
 });
 
-test("the control plane's ChallengeSpec maps onto the Coach challenge without changing its decision", async () => {
-  const spec = {
-    concept: { topicId: "topic-magnets", objective: "Explain magnets" },
-    route: "socratic" as const,
-    challengeKind: "transfer" as const,
-    scaffoldLevel: 2 as const,
-    constraints: { oneConceptAtATime: true as const }
-  };
-  const mapped = fromChallengeSpec(spec);
-  assert.deepEqual(mapped, {
-    topicId: "topic-magnets",
-    challengeKind: "transfer",
-    scaffoldLevel: 2,
-    route: "socratic",
-    objective: "Explain magnets",
-    constraints: { oneConceptAtATime: true }
-  });
-  // An async director (the real one loads persisted state) renders the same spec.
-  let rendered: CoachChallenge | undefined;
-  const { supabase } = recordingSupabase(null);
-  await drainBoth(runCoachTurn({
-    supabase, roomId: "room-1", conversationId: "c", question: "Coach me on magnetism", topics: [magnetTopic], route: "socratic",
+test("a control-plane read failure renders without a target and claims no progression", async () => {
+  const { supabase, saved } = recordingSupabase(null);
+  let guidance: string[] | undefined = ["sentinel"];
+  const { log } = await drainBoth(runCoachTurn({
+    supabase, roomId: "room-1", conversationId: "c", question: "Coach me on magnetism", topics: [magnetTopic], userId: "user-1",
     deps: {
-      director: { initial: async () => mapped, request: async (current) => current },
+      director: { challengeFor: async () => { throw new Error("Could not load learning history"); } },
       retrieveForRoom: async () => [magnetChunk],
       generateCoachQuestion: async (args) => {
-        rendered = args.challenge;
-        return { question: "Is a fridge magnet like a compass? Why?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
+        guidance = args.challengeGuidance;
+        return { question: "What happens when two magnets touch?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
       }
     }
   }));
-  assert.deepEqual(rendered, mapped);
+  assert.equal(guidance, undefined);
+  assert.equal(log.stateAfter, "awaiting_answer");
+  assert.equal((saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>).issuedChallenge, undefined);
+});
+
+test("rendering is a pure function of the spec: route only changes route lines", () => {
+  const socratic = renderChallengeGuidance(specFor("compare", "socratic", 2));
+  const direct = renderChallengeGuidance(specFor("compare", "direct_instruction", 2));
+  const route = (spec: ChallengeSpec) => new Set(renderRouteGuidance(spec));
+  const socraticRoute = route(specFor("compare", "socratic"));
+  const directRoute = route(specFor("compare", "direct_instruction"));
+  assert.deepEqual(
+    socratic.filter((line) => !socraticRoute.has(line)),
+    direct.filter((line) => !directRoute.has(line))
+  );
+  assert.ok(socratic.some((line) => line.includes("Support level 2 (hint)")));
 });

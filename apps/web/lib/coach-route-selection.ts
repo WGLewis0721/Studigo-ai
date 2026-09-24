@@ -1,4 +1,4 @@
-import type { LearningRoute } from "@studigo/ai";
+import type { LearningRoute } from "@/lib/learning";
 
 // Maps the coach panel's style/tradition pickers to one learning-route id.
 // Client-safe: type-only import, so no provider code reaches the browser.

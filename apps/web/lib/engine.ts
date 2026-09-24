@@ -2,7 +2,7 @@ import { INSUFFICIENT_EVIDENCE_TEXT, streamGroundedAnswer, toCitations, type Gro
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { runCoachTurn } from "@/lib/coach-router";
-import type { LearningRoute } from "@studigo/ai";
+import type { LearningRoute } from "@/lib/learning";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 import {
@@ -38,6 +38,9 @@ export type EngineRequest = {
    *  conversation, not inferred from the message list each turn. */
   mode?: "ask" | "coach";
   conversationId?: string;
+  /** Authenticated learner. Coach needs it to ask the learning-control plane
+   *  for the next ChallengeSpec (the read itself stays RLS-scoped). */
+  userId?: string;
 };
 
 const EVIDENCE_WINDOW = 300;
@@ -75,7 +78,8 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
       question: args.question,
       topics,
       directives: args.directives,
-      route: args.route
+      route: args.route,
+      userId: args.userId
     });
     return;
   }

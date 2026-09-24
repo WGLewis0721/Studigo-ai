@@ -1,4 +1,4 @@
-import { isLearningRoute } from "@studigo/ai";
+import { LEARNING_ROUTES, type LearningRoute } from "@/lib/learning";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
   const directives = sanitizeDirectives(body?.directives);
   const mode = body?.mode === "coach" ? "coach" : "ask";
-  const route = isLearningRoute(body?.route) ? body.route : undefined;
+  const route = LEARNING_ROUTES.includes(body?.route as LearningRoute) ? (body?.route as LearningRoute) : undefined;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, route, conversationId })) {
+        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, route, userId: user.id, conversationId })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

@@ -424,11 +424,13 @@ are being assessed.
 
 ## Coach generative layer
 
-Coach questions are rendered through a fixed pipeline:
+The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`, see `docs/ADAPTIVE_LEARNING_CORE.md`) and ends at a learner-facing turn:
 `ChallengeSpec → grounded excerpts → route policy → language floor → LLM`.
 
-- `packages/ai/src/coach-challenge.ts`: the `CoachChallenge` shape the Coach consumes from the learning-control plane (challenge kind, scaffold level, route). This declares shapes only and decides nothing.
-- `packages/ai/src/coach-language.ts`: the language-floor rules ("one main question, short sentences, familiar words, define terms right away"), reasoning-task guidance for each challenge kind, and a deterministic lint (`assessLanguageFloor`) that the tests and the turn log use. A harder question changes the reasoning task, never the English.
-- `packages/ai/src/coach-routes.ts`: learning routes as phrasing policies, condensed from `knowledge/teaching-coaching/`. Routes reach the question, feedback and support prompts only, never the evaluator or `decideOutcome`.
-- Learner controls: "Make it simpler", "Give me a hint", "Show me an example" and "Challenge me" are detected deterministically and are never graded. Simplify keeps the pending concepts and sources. "Challenge me" asks the director for a harder spec, and "another one" reuses the stored spec, so the Coach never auto-advances.
-- `apps/web/lib/coach-challenge-adapter.ts` is a **temporary** director until `feature/adaptive-learning-core` lands. It gives a fixed starting spec, and on an explicit request it moves one rung up the ladder. It stores nothing and never reads grades.
+- `apps/web/lib/coach-director.ts`: the Coach's only doorway to the control plane. It calls `loadConceptLearningState` + `nextChallenge` with `activity: "coach"` for every new question, including "another one" and "Challenge me". The Coach never builds, edits or steps a spec; it has no difficulty ladder of its own.
+- `apps/web/lib/coach-render.ts`: renders a spec into phrasing instructions using Astra's types directly. It covers the reasoning task for `challengeKind`, the support for `scaffoldLevel`, `taskSize`, `requireNewContext` and the route policy for `route` (condensed from the spec's `routeRecord`). `parseIssuedSpec` re-validates a stored spec against the control plane's constants.
+- `packages/ai/src/coach-language.ts`: the language-floor rules plus a deterministic lint (`assessLanguageFloor`) used by tests and the turn log. `packages/ai` never interprets a spec; it receives only rendered instruction lines, and keeps the spec opaque in `coach_state.issuedChallenge`.
+- `coach_state.issuedChallenge` = `{ spec, encounterId, scaffoldUsed }`. The encounter ID is stable across hints and reveals of the same question. `scaffoldUsed` only rises: simplify 1, hint 2, example 3, show answer 5. This records what the learner actually received so a future `LearningEvent` can report it honestly.
+- Learner controls ("Make it simpler", "Give me a hint", "Show me an example", "Challenge me") are detected deterministically and are never graded. Simplify keeps the pending concepts, sources and spec.
+- If the control-plane read fails, the question is rendered without a target, nothing is stored as issued, and no progression is claimed.
+- Not yet wired: recording Coach results as `LearningEvent`s (`recordLearningEvent`). Until then the director has no Coach evidence to act on, so the Coach will not change level from Coach practice alone.
