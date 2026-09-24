@@ -1,6 +1,7 @@
 "use client";
 
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { COACH_CONTROL_COMMANDS, selectLearningRoute } from "@/lib/coach-route-selection";
 import { useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
@@ -77,7 +78,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
       const body = isFixture
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
-        : JSON.stringify({ roomId, question: text, directives, mode: "coach", conversationId: conversationId.current });
+        : JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), conversationId: conversationId.current });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -134,6 +135,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
           <div className="coachEmpty"><strong>Ready when you are.</strong><p>Pick a skill above or ask for a diagnostic. Studigo will explain, demonstrate, watch your attempt, and choose what comes next.</p><div className="starterList"><button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button><button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button></div></div>
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{coachMaterialLabel({ content: message.content, grounded: message.grounded, streaming: message.streaming })}</span><p className="answerText">{message.content}{message.streaming && <span className="caret" aria-hidden="true" />}</p>{message.citations && <CitationChips citations={message.citations} />}</div>)}
       </div>
+      {messages.length > 0 && <div className="starterList coachControls" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
       {error && <p className="formError" role="alert">{error}</p>}
       <form className="askComposer askComposerLive" onSubmit={(event) => { event.preventDefault(); void coach(prompt); }}><input value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={`Ask the ${style.name.toLowerCase()}…`} aria-label="Ask Studigo to coach you" disabled={busy} /><button type="submit" aria-label="Start coaching" disabled={busy || !prompt.trim()}>↑</button></form>
     </div>

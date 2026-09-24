@@ -416,3 +416,14 @@ the learner's explanation and follows up on the gap. It is formative: it writes
 no attempt and moves no mastery, because a teaching conversation should not
 punish thinking out loud. Measurement stays in Quiz, where the learner knows they
 are being assessed.
+
+## Coach generative layer
+
+Coach questions are rendered through a fixed pipeline:
+`ChallengeSpec → grounded excerpts → route policy → language floor → LLM`.
+
+- `packages/ai/src/coach-challenge.ts`: the `CoachChallenge` shape the Coach consumes from the learning-control plane (challenge kind, scaffold level, route). This declares shapes only and decides nothing.
+- `packages/ai/src/coach-language.ts`: the language-floor rules ("one main question, short sentences, familiar words, define terms right away"), reasoning-task guidance for each challenge kind, and a deterministic lint (`assessLanguageFloor`) that the tests and the turn log use. A harder question changes the reasoning task, never the English.
+- `packages/ai/src/coach-routes.ts`: learning routes as phrasing policies, condensed from `knowledge/teaching-coaching/`. Routes reach the question, feedback and support prompts only, never the evaluator or `decideOutcome`.
+- Learner controls: "Make it simpler", "Give me a hint", "Show me an example" and "Challenge me" are detected deterministically and are never graded. Simplify keeps the pending concepts and sources. "Challenge me" asks the director for a harder spec, and "another one" reuses the stored spec, so the Coach never auto-advances.
+- `apps/web/lib/coach-challenge-adapter.ts` is a **temporary** director until `feature/adaptive-learning-core` lands. It gives a fixed starting spec, and on an explicit request it moves one rung up the ladder. It stores nothing and never reads grades.

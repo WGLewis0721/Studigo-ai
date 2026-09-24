@@ -1,3 +1,4 @@
+import { isLearningRoute } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
@@ -16,6 +17,8 @@ type ChatRequest = {
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
   mode?: "ask" | "coach";
+  /** Learning route id; anything unrecognized falls back to the default. */
+  route?: string;
 };
 
 function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
 
   const directives = sanitizeDirectives(body?.directives);
   const mode = body?.mode === "coach" ? "coach" : "ask";
+  const route = isLearningRoute(body?.route) ? body.route : undefined;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -100,7 +104,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, conversationId })) {
+        for await (const event of runStudigoEngine({ supabase, roomId, question, history, directives, mode, route, conversationId })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

@@ -2,6 +2,7 @@ import { INSUFFICIENT_EVIDENCE_TEXT, streamGroundedAnswer, toCitations, type Gro
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { runCoachTurn } from "@/lib/coach-router";
+import type { LearningRoute } from "@studigo/ai";
 import { rankWeakAreas, summarizeCalibration, type PracticeEvidence } from "@/lib/study-planning";
 import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 import {
@@ -29,6 +30,8 @@ export type EngineRequest = {
   /** How to teach: coaching style, learning tradition, practice protocol.
    *  Chosen in the UI, applied only to the system prompt. */
   directives?: EngineDirective[];
+  /** Selected learning route (Coach only). Shapes delivery, never grading. */
+  route?: LearningRoute;
   /** "coach" routes the turn through the Coach state machine
    *  (packages/ai/src/coach.ts + lib/coach-router.ts) instead of free-form
    *  grounded Q&A. Requires `conversationId` — Coach state is persisted per
@@ -71,7 +74,8 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
       conversationId: args.conversationId,
       question: args.question,
       topics,
-      directives: args.directives
+      directives: args.directives,
+      route: args.route
     });
     return;
   }
