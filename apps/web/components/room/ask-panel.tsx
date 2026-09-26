@@ -3,6 +3,7 @@
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
+import { StudigoComposer } from "./studigo-composer";
 
 type ChatMessage = {
   id: string;
@@ -34,10 +35,15 @@ export function AskPanel({
   const [error, setError] = useState<string | null>(null);
   const conversationId = useRef<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    if (!messages.length) return;
+    const frame = window.requestAnimationFrame(() => {
+      threadEndRef.current?.scrollIntoView({ behavior: busy ? "auto" : "smooth", block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [messages, busy]);
 
   async function ask(text: string) {
     const trimmed = text.trim();
@@ -196,6 +202,7 @@ export function AskPanel({
             </div>
           )
         )}
+        <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
       </div>
 
       {error && (
@@ -204,25 +211,14 @@ export function AskPanel({
         </p>
       )}
 
-      <form
-        className="askComposer askComposerLive"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void ask(question);
-        }}
-      >
-        <input
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask about this unit…"
-          aria-label="Ask Studigo a question"
-          maxLength={4000}
-          disabled={busy}
-        />
-        <button type="submit" aria-label="Send question" disabled={busy || !question.trim()}>
-          ↑
-        </button>
-      </form>
+      <StudigoComposer
+        value={question}
+        onChange={setQuestion}
+        onSubmit={() => void ask(question)}
+        disabled={busy}
+        maxLength={4000}
+        ariaLabel="Ask Studigo a question"
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
 import { MaterialsPanel } from "./materials-panel";
 import { AskPanel } from "./ask-panel";
@@ -17,7 +18,7 @@ import { StudyPlanPanel } from "./study-plan-panel";
 import { rankWeakAreas, summarizeCalibration, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
 import { RoomSettings } from "./room-settings";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
-import { ModeGlyph } from "@/components/mode-glyph";
+import { ModeGlyph, type GlyphName } from "@/components/mode-glyph";
 import { roomShellFor } from "@/lib/room-shell";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
@@ -40,12 +41,12 @@ const MODES = [
 
 type Mode = (typeof MODES)[number]["id"];
 
-const GROUPS: Array<{name:string;modes:Mode[]}> = [
-  {name:"Study",modes:["learn","ask","coach"]},
-  {name:"Practice",modes:["quiz","cards","test"]},
-  {name:"Progress",modes:["mastery","weak"]},
-  {name:"Plan",modes:["plan","cram"]},
-  {name:"Materials",modes:["materials"]}
+const GROUPS: Array<{name:string;icon:GlyphName;modes:Mode[]}> = [
+  {name:"Study",icon:"learn",modes:["learn","ask","coach"]},
+  {name:"Practice",icon:"quiz",modes:["quiz","cards","test"]},
+  {name:"Progress",icon:"mastery",modes:["mastery","weak"]},
+  {name:"Plan",icon:"plan",modes:["plan","cram"]},
+  {name:"Materials",icon:"materials",modes:["materials"]}
 ];
 
 export function RoomWorkspace({
@@ -93,7 +94,10 @@ export function RoomWorkspace({
     <div className="roomDevice" data-shell={roomShellFor(room.id)}>
     <div className="roomWorkspace" data-tone={mode}>
       <header className="workspaceTopbar">
-        <div className="workspaceTitle">
+        <Link className="roomBackButton" href="/app" aria-label="All rooms">
+          <span aria-hidden="true">‹</span>
+        </Link>
+        <div className="workspaceTitle roomTitleBlock">
           <i className="roomGem roomGemLarge" data-tone={roomShellFor(room.id)} aria-hidden="true" />
           <div>
             <span className="crumb">
@@ -121,14 +125,15 @@ export function RoomWorkspace({
         </div>
       </header>
 
+      {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={() => setSettingsOpen(false)} />}
       {settingsOpen && <RoomSettings room={room} onClose={() => setSettingsOpen(false)} />}
 
       <div className="studyNavigation">
         <nav className="studyGroups" aria-label="Study Room sections">
-          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}>{group.name}</button>)}
+          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}><span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={20} /></span><span>{group.name}</span></button>)}
         </nav>
         <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
-          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap"><ModeGlyph name={item.id} /></span>{item.name}</button>)}
+          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap studySubnavIcon"><ModeGlyph name={item.id} /></span><span className="studySubnavLabel">{item.name}</span></button>)}
         </nav>
       </div>
 

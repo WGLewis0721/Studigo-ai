@@ -17,6 +17,8 @@ test("Coach control phrases route deterministically", () => {
   assert.equal(detectTurnIntent("Show me an example", pending), "example");
   assert.equal(detectTurnIntent("Challenge me", pending), "challenge");
   assert.equal(detectTurnIntent("Give me a hint", pending), "help_request");
+  assert.equal(detectTurnIntent("Too many words", pending), "simplify");
+  assert.equal(detectTurnIntent("What are the answer choices", pending), "repeat_choices");
   assert.equal(detectTurnIntent("show me the answer", pending), "show_answer");
 });
 
@@ -27,9 +29,13 @@ test("long answers that mention a control word are still answers", () => {
   );
 });
 
-test("yes/no/next stay control commands", () => {
+test("yes/no/next stay state-aware control commands", () => {
   const control: CoachState = { version: 1, kind: "awaiting_control", action: "more_practice", topicId: null, sourceChunkIds: [] };
   for (const word of ["yes", "no", "next"]) assert.equal(detectTurnIntent(word, control), "conversation_control");
   assert.equal(detectTurnIntent("yes", pending), "answer");
+  assert.equal(detectTurnIntent("no", pending), "help_request");
+
+  const yesNo: CoachState = { ...pending, question: "Do solid particles move past each other?" };
+  assert.equal(detectTurnIntent("no", yesNo), "answer");
   assert.equal(detectTurnIntent("next", IDLE_COACH_STATE), "answer");
 });
