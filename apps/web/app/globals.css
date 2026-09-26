@@ -85,6 +85,9 @@
 [data-tone="tangerine"], [data-tone="coach"], [data-tone="cram"] {
   --tone: var(--tangerine); --tone-ink: var(--tangerine-ink); --tone-on: var(--ink); --tone-key: var(--tangerine);
 }
+/* Coach is the one mode with a partner color: the companion's tangerine
+   against berry. Only whole-mode surfaces read --tone-2. */
+[data-tone="coach"] { --tone-2: var(--berry); }
 [data-tone="dandelion"], [data-tone="quiz"] {
   --tone: var(--dandelion); --tone-ink: var(--dandelion-ink); --tone-on: var(--ink); --tone-key: var(--dandelion);
 }
@@ -479,6 +482,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    Study Room workspace — the device. The whole shell takes the mode's tone.
    --------------------------------------------------------------------------- */
 
+/* The room's shell color is the bezel you open the room inside — the same
+   color as its card and gem. The mode color lives inside, on the screen. */
+[data-shell="blueberry"] { --shell: var(--blueberry); }
+[data-shell="tangerine"] { --shell: var(--tangerine); }
+[data-shell="grape"] { --shell: var(--grape); }
+[data-shell="kiwi"] { --shell: var(--kiwi); }
+[data-shell="berry"] { --shell: var(--berry); }
+[data-shell="teal"] { --shell: var(--teal); }
+[data-shell="graphite"] { --shell: var(--graphite-2); }
+.roomDevice {
+  --shell: var(--blueberry);
+  min-height: 100vh; padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .55) 0%, rgba(255, 255, 255, .12) 30%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(160deg, color-mix(in oklab, var(--shell) 40%, white), color-mix(in oklab, var(--shell) 78%, white));
+}
+.roomDevice > .roomWorkspace {
+  min-height: calc(100vh - 20px); border-radius: 26px; overflow: clip;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .7), 0 2px 14px color-mix(in oklab, var(--shell) 45%, transparent);
+}
 .roomWorkspace {
   display: flex; flex-direction: column; min-height: 100vh;
   background: var(--snow);
@@ -521,7 +544,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .studyNavigation {
   display: grid; gap: 12px; padding: 16px clamp(16px, 3vw, 32px) 14px;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--tone) 16%, var(--snow)) 0%, var(--snow) 100%);
+    linear-gradient(180deg, transparent 0%, var(--snow) 100%),
+    linear-gradient(90deg, color-mix(in oklab, var(--tone) 18%, var(--snow)), color-mix(in oklab, var(--tone-2, var(--tone)) 14%, var(--snow)));
   border-bottom: 1px solid var(--hairline);
 }
 .studyGroups {
@@ -1348,6 +1372,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .appRail .profileChip small { display: none; }
   .railSignOut { width: auto; padding: 0 10px; white-space: nowrap; }
 
+  .roomDevice { padding: 6px; }
+  .roomDevice > .roomWorkspace { border-radius: 20px; min-height: calc(100vh - 12px); }
   /* Workspace: the dial stays one-thumb reachable. */
   .roomWorkspace .workspaceTopbar { position: static; flex-wrap: wrap; padding: 14px 16px; }
   .workspaceTopbar strong { font-size: 1.2rem; white-space: normal; }

@@ -4,7 +4,7 @@
  * so it is stable across sessions, list order and devices without a schema
  * change. It never encodes state; status always has its own text.
  */
-export const ROOM_SHELLS = ["blueberry", "tangerine", "grape", "kiwi", "berry", "teal"] as const;
+export const ROOM_SHELLS = ["blueberry", "tangerine", "grape", "kiwi", "berry", "teal", "graphite"] as const;
 
 export type RoomShell = (typeof ROOM_SHELLS)[number];
 
@@ -14,7 +14,8 @@ export const ROOM_SHELL_NAMES: Record<RoomShell, string> = {
   grape: "Grape",
   kiwi: "Kiwi",
   berry: "Berry",
-  teal: "Teal"
+  teal: "Teal",
+  graphite: "Graphite"
 };
 
 /** FNV-1a over the id: cheap, deterministic, and evenly spread for UUIDs. */

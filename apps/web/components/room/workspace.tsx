@@ -90,6 +90,7 @@ export function RoomWorkspace({
 
 
   return (
+    <div className="roomDevice" data-shell={roomShellFor(room.id)}>
     <div className="roomWorkspace" data-tone={mode}>
       <header className="workspaceTopbar">
         <div className="workspaceTitle">
@@ -184,6 +185,7 @@ export function RoomWorkspace({
         {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
 
       </div>
+    </div>
     </div>
   );
 }

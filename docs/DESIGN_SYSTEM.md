@@ -24,6 +24,36 @@ Design from roughly age 14 outward: an 8-year-old should think *"this looks fun
 and I know what to press"*; an 18-year-old should think *"this looks cool"* and
 never *"this is for little kids."*
 
+### The distinction to protect
+
+**Colorful Apple, not Apple with a few colorful buttons.** Color is part of the
+product architecture — Study Rooms, modes, materials, states, navigation,
+motion and marketing — the way shell color was the physical identity of the
+object, not a trim applied to it. If a change turns color back into accents on
+a gray app, it is moving in the wrong direction.
+
+## Research basis
+
+These are the inputs the system was derived from. They are reasons, not
+assets to copy: no trademarks, product imagery, characters, layouts or branded
+shapes are used.
+
+| Reference | What it contributes to Studigo |
+| --- | --- |
+| 1999 iMac lineup (Strawberry, Lime, Blueberry, Tangerine, Grape) | Color chosen like any personal consumer good; color as identity; neutral surroundings let the object's color lead |
+| 2000 iMac colors (Indigo, Ruby, Sage, Snow, Graphite) and the 2001 patterned editions | The era was not restrained; it also had quieter "serious" colors — Snow and Graphite. Hence the Snow canvas and a Graphite room shell |
+| iBook clamshell (Blueberry, Tangerine; later Key Lime, Indigo, Graphite) | Translucent shell, integrated handle, friendly but not a toy, sold to students without looking "educational" — the hero device's shell and handle |
+| Early Aqua-era interfaces | Depth, gloss, translucent layers, controls that look touchable — reinterpreted as restrained gloss on keys, never literal |
+| Game Boy Color (Berry, Grape, Kiwi, Dandelion, Teal, translucent purple) | One product, many personalities through shell color; memorable color names; neutral/dark structure around saturated color — the room shells and palette names |
+| Tamagotchi (positioned for ages 8+) | A tiny persistent character, clear state, compact information, approachable controls — the companion in its screen |
+| Neopets | A product can feel like a place with destinations; activities are visually differentiated — each mode has its own color |
+| Nickelodeon, historic and its modern redesign | A flexible identity that can change shape and stay itself; the modern version kept the legacy DNA and added cleaner geometry, dimensionality, contemporary type and complementary color pairs — the transformation strategy for this whole system, and Coach's tangerine + berry pair |
+| Cartoon Network | A rigid underlying system with saturated modules and high contrast that works for young children and older viewers alike |
+| dELiA*s (roughly ages 10–24) | Personality and confidence against lots of white space; youthful without talking down — the Snow-heavy marketing page |
+| Limited Too (ages 7–14 stores) | Color as environment, clean architecture, vivid lighting, interactive stations, products shown like treasures — experience design, not just a logo; the color-field sections |
+| Current Apple interface guidance | Hierarchy, consistency, color used for meaning, adequate contrast, never color alone for state |
+| Usability research on children vs. teenagers | Teens are goal-oriented and expect things to be easy; younger children need extra clarity, navigation and legibility — one legible system designed from ~14 outward |
+
 ## Principles
 
 1. **Neutral room, concentrated color.** Snow and ink carry structure. Color is
@@ -74,6 +104,24 @@ filled control carrying text.
 | Teal | `#1FC3B6` | `#09756D` | `#DDF6F3` | ink |
 | Indigo | `#4A55C8` | `#3440A8` | `#E8EAFB` | white |
 
+#### Why these values differ from the starting palette
+
+The brief's starting values were deliberately tuned; restore them only with a
+reason, and re-check contrast if you do.
+
+| Name | Starting value | Shipped | Reason |
+| --- | --- | --- | --- |
+| Snow | `#F8F9FC` | `#F7F8FB` | Effectively identical; one step more separation from white surfaces |
+| Ink | `#172033` | `#141B2D` | Slightly deeper for body text contrast on tinted wells |
+| Blueberry | `#4887FF` | `#3C7CFF` | More saturated at shell scale; key shade `#2B69F0` for white text (AA) |
+| Grape | `#7657E8` | `#7A5AF0` | Brighter in translucent shells; white text still AA |
+| Berry | `#F04F7C` | `#F0457A` | Slightly richer; key shade `#D42D63` for white text (AA) |
+| Tangerine | `#FF853D` | `#FF8A3D` | Matched to the companion's orange |
+| Kiwi | `#A9E84A` | `#93D93F` | Deeper so progress fills and meters read on white and on graphite |
+| Dandelion | `#FFD84A` | `#FFD23F` | Slightly warmer so it doesn't wash out as a fill on Snow |
+| Teal | `#32CFC3` | `#1FC3B6` | Deeper for the citation color and the full-bleed Sources field |
+| Indigo | `#4450BE` | `#4A55C8` | Lifted slightly to sit beside Blueberry without going muddy |
+
 Tangerine is also the companion's own color (the orange scholar), which is why
 it belongs to Coach.
 
@@ -87,7 +135,7 @@ so the whole room re-tints (the `--tone` custom property is registered with
 | --- | --- | --- |
 | Learn | Blueberry | Calm, explanatory, trustworthy |
 | Ask, Materials | Teal | "Your material speaking" — the source color; citations are teal everywhere |
-| Coach, Cram | Tangerine | The companion's color; warmth and energy |
+| Coach, Cram | Tangerine (Coach pairs it with Berry) | The companion's color; warmth and energy. Coach's whole-mode surfaces run tangerine → berry (`--tone-2`) |
 | Quiz | Dandelion | Attention, a focused challenge |
 | Flashcards | Grape | The collectible, physical deck |
 | Practice test | Graphite | The serious full rehearsal |
@@ -101,10 +149,16 @@ State colors are separate from mode colors: **kiwi = strong/correct**,
 
 ### Room shells
 
-Every Study Room is shown in one of Blueberry, Tangerine, Grape, Kiwi, Berry or
-Teal, derived deterministically from the room id (`lib/room-shell.ts`). It is
-cosmetic — it never encodes state and needs no schema. It appears as a glossy
-"gem" in the rail and topbar and as the molded shell of the room card.
+Every Study Room is shown in one of Blueberry, Tangerine, Grape, Kiwi, Berry,
+Teal or Graphite, derived deterministically from the room id
+(`lib/room-shell.ts`). It is cosmetic — it never encodes state and needs no
+schema. It appears as a glossy "gem" in the rail and topbar, as the molded
+shell of the room card, and as the **bezel the Study Room opens inside**
+(`.roomDevice[data-shell]`).
+
+Two colors, two jobs: the **shell** (outer frame) says *which room you are in*;
+the **tone** (inside, on the screen) says *which mode you are using*. The shell
+never changes inside a room; the tone changes with every mode.
 
 ## Materials
 
@@ -195,6 +249,8 @@ All example progress is labeled illustrative.
 
 ### Study Room
 
+- **Device bezel**: the whole workspace sits in a 10px (6px on phones) frame of
+  the room's shell color, with a rounded "screen" inside it.
 - **Topbar** (frosted): room gem, crumb, title; sources-ready chip, Download
   study guide, settings.
 - **Mode dial**: groups as a segmented control; modes as keys with a colored

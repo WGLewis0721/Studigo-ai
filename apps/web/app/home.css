@@ -289,7 +289,7 @@
   min-height: 500px; padding: clamp(28px, 4.5vw, 60px); border-radius: clamp(28px, 4vw, 48px);
   background:
     radial-gradient(70% 90% at 90% 10%, rgba(255, 255, 255, .6), transparent 60%),
-    linear-gradient(160deg, color-mix(in oklab, var(--tone) 22%, white), color-mix(in oklab, var(--tone) 58%, white));
+    linear-gradient(160deg, color-mix(in oklab, var(--tone) 22%, white), color-mix(in oklab, var(--tone-2, var(--tone)) 50%, white));
   box-shadow: var(--edge), inset 0 0 0 1px color-mix(in oklab, var(--tone) 30%, white), inset 0 -40px 80px -40px color-mix(in oklab, var(--tone) 70%, transparent);
 }
 .modeStageCopy { animation: modeEnter .45s var(--ease-out) both; }
