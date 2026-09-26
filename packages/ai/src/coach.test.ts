@@ -74,9 +74,14 @@ const AWAITING_CONTROL: CoachState = {
   sourceChunkIds: []
 };
 
-test("a plain yes/no while a question is pending is left as an answer attempt", () => {
-  assert.equal(detectTurnIntent("yes", AWAITING_ANSWER), "answer");
-  assert.equal(detectTurnIntent("no", AWAITING_ANSWER), "answer");
+test("plain yes/no is state-aware while a question is pending", () => {
+  const openEnded: CoachState = { ...AWAITING_ANSWER, question: "How do solid and liquid particles move differently?" };
+  assert.equal(detectTurnIntent("yes", openEnded), "answer");
+  assert.equal(detectTurnIntent("no", openEnded), "help_request");
+
+  const yesNoQuestion: CoachState = { ...AWAITING_ANSWER, question: "Do solid particles move past each other?" };
+  assert.equal(detectTurnIntent("yes", yesNoQuestion), "answer");
+  assert.equal(detectTurnIntent("no", yesNoQuestion), "answer");
 });
 
 test("next/stop while a question is pending is conversation control", () => {

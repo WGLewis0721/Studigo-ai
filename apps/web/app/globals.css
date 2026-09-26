@@ -935,3 +935,1319 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .socraticGot { border-color: var(--moss-deep); background: rgba(118,151,122,.14); }
 .socraticDone { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .socraticDone strong { font-family: var(--display); font-size: 1.05rem; }
+
+
+/* ---------------------------------------------------------------------------
+   Mobile study workspace — iPhone-first, Apple-inspired interaction model.
+   The desktop visual system stays intact; narrow screens get progressive
+   disclosure, one-handed navigation, safe-area spacing and 44px touch targets.
+   --------------------------------------------------------------------------- */
+.studyGroupIcon { display: none; }
+.coachSetupButton { display: none; }
+.studyGuideDownloadIcon { margin-left: 6px; }
+
+@media (max-width: 700px) {
+  html { scroll-padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  body { background: var(--paper-bright); }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+  .appShell { min-height: 100dvh; }
+  .appRail {
+    position: sticky; top: 0; z-index: 60; height: 52px; padding: 6px 12px;
+    flex-direction: row; align-items: center; gap: 8px; overflow: visible;
+    background: rgba(244,239,228,.88);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    backdrop-filter: saturate(180%) blur(18px);
+    border-right: 0; border-bottom: 1px solid rgba(29,41,68,.12);
+  }
+  .appRail .miniWordmark { display: grid; place-items: center; min-width: 40px; min-height: 40px; }
+  .appRail .miniWordmark .studigoMascot { width: 36px !important; height: 36px !important; }
+  .railScroll { flex: 0 0 auto; display: flex; overflow: visible; }
+  .railScroll .roomList, .railScroll .railLabel, .railEmpty { display: none; }
+  .railItem {
+    min-height: 40px; padding: 0 12px; border-radius: 999px; align-items: center;
+    background: rgba(255,253,247,.58);
+  }
+  .railFooter { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .appRail .profileChip { grid-template-columns: 32px; min-width: 32px; margin: 0; }
+  .appRail .profileChip > span { width: 32px; height: 32px; }
+  .appRail .profileChip small, .railSignOut { display: none; }
+
+  .roomWorkspace { min-height: calc(100dvh - 52px); }
+  .roomWorkspace .workspaceTopbar {
+    position: relative; top: auto; z-index: 1; min-height: 58px;
+    padding: 10px 14px 8px; gap: 10px;
+  }
+  .workspaceTopbar strong {
+    max-width: 20ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 1.08rem;
+  }
+  .workspaceTopbar .crumb { font-size: .55rem; letter-spacing: .1em; }
+  .topbarRight { gap: 6px; }
+  .sourceCount { display: none; }
+  .studyGuideDownload .buttonQuiet, .workspaceTopbar .iconButton {
+    display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px;
+    padding: 0; border: 0; border-radius: 50%; text-decoration: none;
+    background: rgba(29,41,68,.06);
+  }
+  .studyGuideDownloadLabel {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .studyGuideDownloadIcon { margin: 0; font-size: 1rem; }
+
+  .studyNavigation { border: 0; background: transparent; }
+  .studyGroups {
+    position: fixed; left: 10px; right: 10px;
+    bottom: max(8px, env(safe-area-inset-bottom)); z-index: 80;
+    display: flex; gap: 2px; padding: 7px; overflow: visible;
+    background: rgba(255,253,247,.88);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid rgba(29,41,68,.14); border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(29,41,68,.16);
+  }
+  .studyGroups button {
+    flex: 1; min-width: 0; min-height: 54px; padding: 5px 2px;
+    border: 0; border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; font-size: .61rem; line-height: 1; color: var(--muted);
+  }
+  .studyGroups button[aria-current] {
+    color: var(--ink); background: rgba(215,239,120,.7); border: 0;
+  }
+  .studyGroupIcon { display: block; font-size: 1.04rem; line-height: 1; }
+
+  .studySubnav {
+    position: sticky; top: 52px; z-index: 45; min-height: 52px;
+    gap: 8px; padding: 7px 14px 8px; overflow-x: auto;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+    background: rgba(255,253,247,.9);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid rgba(29,41,68,.1);
+  }
+  .studySubnav::-webkit-scrollbar,
+  .coachStyleGrid::-webkit-scrollbar,
+  .coachTopics::-webkit-scrollbar,
+  .coachControls::-webkit-scrollbar { display: none; }
+  .studySubnav button {
+    flex: 0 0 auto; min-height: 38px; padding: 0 13px;
+    border: 1px solid rgba(29,41,68,.12); border-radius: 999px;
+    background: rgba(244,239,228,.68); scroll-snap-align: start;
+    font-size: .76rem;
+  }
+  .studySubnav button[aria-current] {
+    color: var(--paper-bright); background: var(--ink); border-color: var(--ink);
+    text-decoration: none;
+  }
+
+  .modeSurface {
+    padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
+    overflow: clip;
+  }
+
+  .coachMode { max-width: none; gap: 18px; }
+  .coachHeader { align-items: center; gap: 12px; }
+  .coachHeader .studigoMascot { width: 52px !important; height: 52px !important; }
+  .coachHeader h2 { margin: 5px 0 5px; font-size: 1.78rem; line-height: 1.03; }
+  .coachHeader p { font-size: .86rem; line-height: 1.45; }
+
+  .coachSetupButton {
+    width: 100%; min-height: 58px; padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    border: 1px solid rgba(29,41,68,.14); border-radius: 17px;
+    background: rgba(244,239,228,.7); text-align: left; cursor: pointer;
+  }
+  .coachSetupButton > span:first-child { min-width: 0; display: grid; gap: 2px; }
+  .coachSetupButton strong { font-size: .86rem; }
+  .coachSetupButton small {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--muted); font-size: .68rem;
+  }
+  .coachSetupButton > span:last-child { font-size: 1.3rem; color: var(--muted); }
+  .coachSettings:not(.mobileOpen) { display: none; }
+  .coachSettings.mobileOpen {
+    display: grid; gap: 14px; padding: 14px;
+    border: 1px solid rgba(29,41,68,.12); border-radius: 18px;
+    background: rgba(244,239,228,.48);
+  }
+  .coachStyleGrid {
+    display: flex; gap: 10px; overflow-x: auto; padding: 2px 1px 5px;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+  }
+  .coachStyle {
+    flex: 0 0 min(76vw, 280px); min-height: 82px; padding: 13px;
+    border-radius: 16px; scroll-snap-align: start;
+  }
+  .coachStyle:hover, .coachStyle.active { transform: none; box-shadow: none; }
+  .coachStyle.active { border-color: var(--ink); background: rgba(215,239,120,.74); }
+  .coachChoiceRow { gap: 10px; }
+  .coachChoiceRow select {
+    min-height: 44px; border-radius: 12px; background: var(--paper-bright);
+  }
+  .roomWorkspace input, .roomWorkspace select, .roomWorkspace textarea { font-size: 16px; }
+
+  .coachTopics {
+    flex-wrap: nowrap; gap: 8px; overflow-x: auto; margin-inline: -16px;
+    padding: 0 16px 4px; scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  .coachTopics .tinyLabel { width: auto; flex: 0 0 auto; align-self: center; }
+  .coachTopics button {
+    flex: 0 0 auto; min-height: 44px; padding: 8px 13px;
+    border-radius: 999px; gap: 8px; scroll-snap-align: start;
+  }
+  .coachTopics button:hover, .coachTopics button.active { background: rgba(239,126,98,.72); }
+
+  .coachMaterial {
+    grid-template-columns: 1fr; gap: 12px; padding: 14px;
+    border-radius: 18px; background: rgba(244,239,228,.4);
+  }
+  .coachMaterialExample { border-left: 0; border-top: 2px solid var(--coral); padding: 11px 0 0; }
+
+  .coachThread, .askThread {
+    max-height: none; overflow: visible; min-height: 160px; gap: 10px; padding-right: 0;
+  }
+  .coachEmpty { padding: 18px; border-radius: 16px; }
+  .studentBubble {
+    width: auto; max-width: 86%; margin-top: 8px; padding: 12px 14px;
+    border-radius: 18px 18px 6px 18px; font-size: .96rem; line-height: 1.45;
+  }
+  .answerBubble {
+    max-width: 100%; margin-top: 2px; padding: 15px;
+    border-radius: 8px 18px 18px 18px;
+  }
+  .answerBubble p, .answerText { font-size: .96rem; line-height: 1.58; }
+
+  .coachControls {
+    position: sticky; bottom: calc(139px + env(safe-area-inset-bottom)); z-index: 30;
+    display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px;
+    padding: 5px 16px 8px; scroll-snap-type: x proximity; scrollbar-width: none;
+    background: linear-gradient(to bottom, rgba(255,253,247,0), rgba(255,253,247,.94) 28%);
+  }
+  .coachControls button {
+    flex: 0 0 auto; min-height: 44px; padding: 0 14px;
+    border-radius: 999px; scroll-snap-align: start;
+    background: var(--paper-bright); box-shadow: 0 3px 12px rgba(29,41,68,.08);
+  }
+
+  .askComposerLive {
+    position: sticky; bottom: calc(78px + env(safe-area-inset-bottom)); z-index: 35;
+    min-height: 54px; padding-left: 12px; border-radius: 22px;
+    background: rgba(255,255,255,.94);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    backdrop-filter: saturate(180%) blur(18px);
+    box-shadow: 0 10px 30px rgba(29,41,68,.15);
+  }
+  .askComposerLive input { min-width: 0; padding: 14px 6px; font-size: 16px; }
+  .askComposerLive button {
+    width: 44px; height: 44px; min-width: 44px; margin-right: 4px;
+    border-radius: 50%;
+  }
+
+  .roomWorkspace button, .appRail a, .appRail button {
+    transition: transform .12s ease, opacity .12s ease, background-color .12s ease;
+  }
+  .roomWorkspace button:active:not(:disabled), .appRail a:active, .appRail button:active:not(:disabled) {
+    transform: scale(.97); opacity: .84;
+  }
+}
+
+@media (max-width: 390px) {
+  .workspaceTopbar strong { max-width: 16ch; }
+  .coachHeader .studigoMascot { width: 46px !important; height: 46px !important; }
+  .coachHeader h2 { font-size: 1.62rem; }
+  .studyGroups { left: 7px; right: 7px; padding: 6px; border-radius: 18px; }
+  .studyGroups button { min-height: 52px; font-size: .58rem; }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Mobile precision pass — tuned around iPhone 14-class 390×844 CSS px.
+   Bars separate navigation from content; sheets hold secondary controls;
+   conversation space wins over persistent chrome.
+   --------------------------------------------------------------------------- */
+.roomBackButton,
+.roomSettingsBackdrop,
+.coachSetupBackdrop,
+.coachSettingsSheetHead { display: none; }
+
+@media (max-width: 700px) {
+  :root {
+    --m-page: 16px;
+    --m-gap-1: 6px;
+    --m-gap-2: 10px;
+    --m-gap-3: 16px;
+    --m-gap-4: 24px;
+    --m-radius-sm: 12px;
+    --m-radius: 18px;
+    --m-radius-lg: 26px;
+    --m-topbar: 56px;
+    --m-tabbar: 70px;
+    --m-composer: 56px;
+    --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html { scroll-behavior: smooth; }
+  body { overscroll-behavior-y: none; }
+  .roomWorkspace button,
+  .roomWorkspace a,
+  .roomWorkspace input,
+  .roomWorkspace select,
+  .roomWorkspace textarea { touch-action: manipulation; }
+
+  /* Collapse the desktop app rail entirely inside a Study Room. */
+  .appShell:has(.roomWorkspace) { display: block; min-height: 100dvh; }
+  .appShell:has(.roomWorkspace) > .appRail { display: none; }
+
+  /* One compact navigation bar instead of two stacked headers. */
+  .roomWorkspace .workspaceTopbar {
+    position: sticky; top: 0; z-index: 70;
+    height: var(--m-topbar); min-height: var(--m-topbar);
+    display: grid; grid-template-columns: 40px minmax(0,1fr) auto;
+    align-items: center; gap: 8px; padding: 6px 10px;
+    background: rgba(255,253,247,.82);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    border-bottom: 1px solid rgba(29,41,68,.09);
+  }
+  .roomBackButton {
+    width: 40px; height: 40px; display: grid; place-items: center;
+    border-radius: 50%; text-decoration: none; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, var(--sans);
+    font-size: 2rem; font-weight: 400; line-height: 1;
+    background: rgba(29,41,68,.055);
+  }
+  .roomBackButton span { transform: translateY(-1px); }
+  .roomTitleBlock { min-width: 0; text-align: left; }
+  .roomTitleBlock .crumb { display: none; }
+  .workspaceTopbar strong {
+    margin: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: var(--sans); font-size: 1rem; line-height: 1.2; letter-spacing: -.01em; font-weight: 900;
+  }
+  .topbarRight { gap: 4px; }
+  .studyGuideDownload .buttonQuiet,
+  .workspaceTopbar .iconButton {
+    width: 40px; height: 40px; min-width: 40px;
+    background: rgba(29,41,68,.055);
+    border-radius: 50%;
+  }
+  .workspaceTopbar .iconButton { font-size: 1rem; letter-spacing: .04em; }
+  .studyGuideDownloadIcon { font-size: .95rem; }
+
+  /* Room settings behaves like a sheet, not an inline form that shoves content down. */
+  .roomSettingsBackdrop,
+  .coachSetupBackdrop {
+    position: fixed; inset: 0; z-index: 108; display: block;
+    border: 0; background: rgba(20,25,36,.24);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  }
+  .roomSettings {
+    position: fixed; left: 8px; right: 8px; bottom: max(8px,var(--m-safe-bottom)); z-index: 110;
+    max-height: calc(100dvh - 24px - var(--m-safe-bottom)); overflow-y: auto;
+    padding: 22px 18px 20px; border: 1px solid rgba(29,41,68,.12);
+    border-radius: 30px; background: rgba(255,253,247,.97);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    box-shadow: 0 24px 70px rgba(20,25,36,.22);
+  }
+  .roomSettings .settingsForm { grid-template-columns: 1fr; gap: 13px; }
+  .roomSettings .settingsActions { position: sticky; bottom: 0; padding-top: 8px; background: inherit; }
+  .roomSettings .dangerZone { align-items: flex-start; }
+
+  /* Mode selection is a compact segmented control directly below the toolbar. */
+  .studySubnav {
+    position: sticky; top: var(--m-topbar); z-index: 60;
+    min-height: 48px; margin: 0; padding: 6px var(--m-page);
+    display: flex; gap: 3px; overflow: hidden;
+    background: rgba(255,253,247,.84);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+    backdrop-filter: saturate(180%) blur(22px);
+    border-bottom: 1px solid rgba(29,41,68,.08);
+  }
+  .studySubnav::before {
+    content: ""; position: absolute; inset: 6px var(--m-page);
+    border-radius: 12px; background: rgba(29,41,68,.055); pointer-events: none;
+  }
+  .studySubnav button {
+    position: relative; z-index: 1; flex: 1 1 0; min-width: 0; min-height: 36px;
+    padding: 0 7px; justify-content: center; gap: 5px;
+    border: 0; border-radius: 10px; background: transparent;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--ink-soft); font-size: .72rem; font-weight: 800;
+  }
+  .studySubnav button > span { flex: 0 0 auto; font-size: .7rem; }
+  .studySubnav button[aria-current] {
+    color: var(--ink); background: rgba(255,253,247,.95);
+    box-shadow: 0 1px 5px rgba(29,41,68,.12);
+  }
+
+  /* Five primary areas stay reachable with one thumb. */
+  .studyGroups {
+    left: 8px; right: 8px; bottom: max(7px,var(--m-safe-bottom)); z-index: 90;
+    min-height: var(--m-tabbar); padding: 6px; gap: 2px;
+    border-radius: 25px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.74), rgba(248,246,240,.68));
+    border: 1px solid rgba(255,255,255,.82);
+    outline: 1px solid rgba(29,41,68,.08);
+    -webkit-backdrop-filter: saturate(190%) blur(30px);
+    backdrop-filter: saturate(190%) blur(30px);
+    box-shadow: 0 12px 36px rgba(29,41,68,.16), inset 0 1px rgba(255,255,255,.8);
+  }
+  .studyGroups button {
+    min-height: 56px; padding: 5px 1px; gap: 4px;
+    border-radius: 19px; color: rgba(54,67,93,.72);
+    font-size: .625rem; font-weight: 800; letter-spacing: -.01em;
+  }
+  .studyGroups button[aria-current] {
+    color: var(--ink); background: rgba(215,239,120,.48);
+    box-shadow: inset 0 0 0 1px rgba(29,41,68,.055);
+  }
+  .studyGroupIcon { font-size: 1.12rem; }
+
+  .modeSurface {
+    padding: 18px var(--m-page) calc(var(--m-tabbar) + 30px + var(--m-safe-bottom));
+  }
+
+  /* Shared mobile typography and spacing. */
+  .modeEmpty,
+  .materialsPanel,
+  .quizSetup,
+  .quizMode,
+  .cardsMode,
+  .learnMode,
+  .masteryMode,
+  .studyPlanPanel,
+  .practiceTestSetup,
+  .testSession,
+  .testResults,
+  .cramMode { max-width: 100%; }
+  .modeEmpty,
+  .materialsPanel,
+  .quizSetup,
+  .quizMode,
+  .learnMode,
+  .masteryMode { gap: var(--m-gap-3); }
+  .modeEmpty h2,
+  .materialsIntro h2,
+  .quizSetup h2,
+  .learnHeader h2,
+  .masteryHero h2,
+  .studySectionHeading h2 {
+    font-size: 1.72rem; line-height: 1.08; letter-spacing: -.035em;
+  }
+  .modeEmpty p,
+  .materialsIntro p,
+  .quizSetup p,
+  .masteryHero p,
+  .studySectionHeading p { font-size: .92rem; line-height: 1.55; }
+
+  .buttonPrimary {
+    min-height: 48px; padding: 0 18px; border-radius: 14px; box-shadow: none;
+  }
+  .buttonPrimary:hover { transform: none; box-shadow: none; }
+  .ghostButton,
+  .sourceChip { min-height: 44px; border-radius: 12px; }
+  .formError, .formNotice { border-radius: 12px; }
+
+  /* Coach: secondary setup in a sheet; the conversation remains the main view. */
+  .coachMode { gap: 14px; padding-bottom: 154px; }
+  .coachHeader { gap: 10px; }
+  .coachHeader h2 { font-size: 1.88rem; line-height: 1.02; letter-spacing: -.045em; }
+  .coachHeader p { font-size: .88rem; line-height: 1.48; }
+  .coachHeader .studigoMascot { width: 50px !important; height: 50px !important; }
+  .coachMode.activeSession .coachHeader { display: none; }
+  .coachMode.activeSession .coachMaterial { display: none; }
+
+  .coachSetupButton {
+    min-height: 52px; padding: 8px 12px; border-radius: 16px;
+    border-color: rgba(29,41,68,.1);
+    background: rgba(29,41,68,.045);
+  }
+  .coachSetupButton strong { font-size: .82rem; }
+  .coachSetupButton small { font-size: .66rem; }
+  .coachMode.activeSession .coachSetupButton { min-height: 48px; }
+
+  .coachSettingsSheetHead {
+    position: sticky; top: -1px; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 5px 0 14px; background: rgba(255,253,247,.97);
+  }
+  .coachSettingsSheetHead > div { min-width: 0; }
+  .coachSettingsSheetHead strong {
+    display: block; margin-top: 3px; font-size: 1.12rem; letter-spacing: -.02em;
+  }
+  .coachSettingsSheetHead button {
+    min-width: 58px; min-height: 38px; border: 0; border-radius: 999px;
+    background: rgba(29,41,68,.07); color: var(--ink); font-weight: 900;
+  }
+  .coachSettings.mobileOpen {
+    position: fixed; left: 8px; right: 8px; bottom: max(8px,var(--m-safe-bottom)); z-index: 110;
+    display: grid; max-height: calc(100dvh - 24px - var(--m-safe-bottom)); overflow-y: auto;
+    gap: 16px; padding: 16px 16px 20px;
+    border: 1px solid rgba(29,41,68,.11); border-radius: 30px;
+    background: rgba(255,253,247,.98);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    box-shadow: 0 24px 70px rgba(20,25,36,.22);
+  }
+  .coachSettings.mobileOpen .coachStyleGrid {
+    display: grid; grid-template-columns: 1fr; gap: 7px; overflow: visible; padding: 0;
+  }
+  .coachSettings.mobileOpen .coachStyle {
+    min-height: 62px; padding: 10px 12px; border-radius: 14px;
+    display: grid; gap: 3px;
+  }
+  .coachSettings.mobileOpen .coachStyle strong { font-size: .8rem; }
+  .coachSettings.mobileOpen .coachStyle span { font-size: .68rem; line-height: 1.32; }
+  .coachChoiceRow select { border: 0; background: rgba(29,41,68,.055); }
+
+  .coachTopics {
+    margin-inline: -16px; padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+  .coachTopics .tinyLabel {
+    position: sticky; left: 16px; z-index: 2;
+    padding-right: 6px; background: var(--paper-bright);
+  }
+  .coachTopics button {
+    min-height: 40px; padding: 7px 12px; border: 0;
+    border-radius: 999px; background: rgba(29,41,68,.055);
+    font-size: .76rem;
+  }
+  .coachTopics button.active { background: rgba(239,126,98,.26); box-shadow: inset 0 0 0 1px rgba(239,126,98,.38); }
+
+  .coachMaterial {
+    padding: 14px; border: 0; border-radius: 18px;
+    background: rgba(29,41,68,.035);
+  }
+
+  /* Conversation density: assistant text breathes, learner text stays compact. */
+  .askMode { padding-bottom: 92px; }
+  .askThread, .coachThread { gap: 4px; }
+  .threadEnd { width: 100%; height: 1px; }
+  .studentBubble {
+    max-width: 84%; margin-top: 12px; padding: 10px 14px;
+    border-radius: 19px 19px 6px 19px; font-size: 1rem; line-height: 1.4;
+    box-shadow: none;
+  }
+  .answerBubble,
+  .askMode .answerBubble {
+    width: 100%; max-width: 100%; margin-top: 6px; padding: 8px 1px 16px;
+    border: 0; border-radius: 0; background: transparent;
+  }
+  .answerKicker {
+    display: flex; align-items: center; gap: 7px;
+    font-size: .6rem; letter-spacing: .105em;
+  }
+  .answerText,
+  .answerBubble p {
+    margin: 8px 0 10px; font-size: 1rem; line-height: 1.62;
+    letter-spacing: -.008em;
+  }
+  .sourceStack {
+    flex-wrap: nowrap; overflow-x: auto; gap: 7px; padding-bottom: 3px;
+    scrollbar-width: none; scroll-snap-type: x proximity;
+  }
+  .sourceStack::-webkit-scrollbar { display: none; }
+  .sourceChipLink {
+    flex: 0 0 auto; min-height: 34px; padding: 6px 9px;
+    border-radius: 999px; scroll-snap-align: start;
+    background: rgba(29,41,68,.045);
+  }
+
+  .askIntro { gap: 9px; padding: 6px 0 12px; }
+  .askIntro .studigoMascot { width: 62px !important; height: 62px !important; }
+  .askIntro h2 { font-size: 1.78rem; line-height: 1.05; }
+  .askIntro p { font-size: .9rem; line-height: 1.5; }
+  .askIntro .starterList,
+  .coachEmpty .starterList { width: 100%; gap: 7px; }
+  .askIntro .starterList button,
+  .coachEmpty .starterList button {
+    min-height: 48px; padding: 10px 13px;
+    border-color: rgba(29,41,68,.12); border-radius: 14px;
+    background: rgba(29,41,68,.035); font-size: .84rem;
+  }
+
+  /* Composer and Coach shortcuts float above the tab bar and get out of the keyboard's way. */
+  .askComposerLive {
+    position: fixed; left: 14px; right: 14px;
+    bottom: calc(var(--m-tabbar) + 24px + var(--m-safe-bottom)); z-index: 82;
+    width: auto; min-height: var(--m-composer); margin: 0; padding: 4px 4px 4px 14px;
+    border: 1px solid rgba(29,41,68,.1); border-radius: 28px;
+    background: rgba(255,255,255,.9);
+    -webkit-backdrop-filter: saturate(190%) blur(28px);
+    backdrop-filter: saturate(190%) blur(28px);
+    box-shadow: 0 12px 34px rgba(29,41,68,.17), inset 0 1px rgba(255,255,255,.75);
+    transition: bottom .22s ease, box-shadow .22s ease;
+  }
+  .askComposerLive input {
+    min-height: 46px; padding: 10px 7px; font-size: 16px; color: var(--ink);
+  }
+  .askComposerLive button {
+    width: 46px; height: 46px; min-width: 46px; margin: 0; border-radius: 50%;
+    font-size: 1rem;
+  }
+  .coachControls {
+    position: fixed; left: 0; right: 0;
+    bottom: calc(var(--m-tabbar) + var(--m-composer) + 30px + var(--m-safe-bottom)); z-index: 81;
+    margin: 0; padding: 6px 14px 8px;
+    background: linear-gradient(to bottom, rgba(255,253,247,0), rgba(255,253,247,.96) 44%);
+  }
+  .coachControls button {
+    min-height: 38px; padding: 0 12px; border: 0; border-radius: 999px;
+    background: rgba(255,255,255,.93); font-size: .75rem;
+    box-shadow: 0 4px 14px rgba(29,41,68,.09), inset 0 0 0 1px rgba(29,41,68,.08);
+  }
+
+  .roomWorkspace:has(.askComposerLive input:focus) .studyGroups {
+    transform: translateY(calc(100% + 28px)); opacity: 0; pointer-events: none;
+  }
+  .roomWorkspace:has(.askComposerLive input:focus) .coachControls {
+    transform: translateY(24px); opacity: 0; pointer-events: none;
+  }
+  .roomWorkspace:has(.askComposerLive input:focus) .askComposerLive {
+    bottom: max(8px,var(--m-safe-bottom));
+    box-shadow: 0 8px 28px rgba(29,41,68,.2);
+  }
+  .studyGroups, .coachControls {
+    transition: transform .24s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
+  }
+
+  /* Quiz / cards / learn / materials / progress: one spacing and control language. */
+  .quizPrompt { font-size: 1.5rem; line-height: 1.28; }
+  .quizBar { height: 5px; border: 0; border-radius: 999px; overflow: hidden; }
+  .choiceItem,
+  .testChoice {
+    min-height: 54px; padding: 13px 14px; border-color: rgba(29,41,68,.12);
+    border-radius: 16px; font-size: .92rem; background: rgba(255,255,255,.86);
+  }
+  .choiceSelected,
+  .testChoice:has(input:checked) {
+    box-shadow: none; border-color: rgba(29,41,68,.4); background: rgba(215,239,120,.22);
+  }
+  .quizFeedback,
+  .quizScoreCard,
+  .testSubmitReview,
+  .testReview,
+  .calibrationCard,
+  .cardEditor,
+  .topicAddCard,
+  .cramActivity {
+    border-radius: 18px; box-shadow: none;
+  }
+  .quizActions { gap: 8px; }
+  .quizActions > * { flex: 1; }
+
+  .flashcard {
+    min-height: 286px; padding: 26px 20px;
+    border-color: rgba(29,41,68,.13); border-radius: 24px;
+    box-shadow: 0 12px 32px rgba(29,41,68,.09);
+  }
+  .flashcardFlipped { box-shadow: 0 12px 32px rgba(29,41,68,.09); }
+  .flashcardSide { font-size: 1.6rem; line-height: 1.32; }
+  .ratingRow { width: 100%; display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+  .ratingButton {
+    min-width: 0; min-height: 54px; padding: 8px 5px;
+    border-color: rgba(29,41,68,.12); border-radius: 14px;
+  }
+
+  .learnHeader { align-items: center; gap: 10px; }
+  .learnHeaderActions { width: 100%; gap: 7px; }
+  .learnHeaderActions button { flex: 1; min-height: 44px; }
+  .topicList { gap: 9px; }
+  .topicItem { border-color: rgba(29,41,68,.1); border-radius: 17px; overflow: hidden; }
+  .topicItemOpen { box-shadow: none; border-color: rgba(29,41,68,.26); }
+  .topicHead {
+    grid-template-columns: 32px minmax(0,1fr) auto; gap: 10px; padding: 13px;
+    min-height: 62px;
+  }
+  .topicMarker { width: 32px; height: 32px; }
+  .topicCopy strong { font-size: .9rem; }
+  .topicCopy small { font-size: .72rem; }
+  .topicBody { padding: 0 13px 16px; }
+  .termChip { border: 0; border-radius: 999px; background: rgba(29,41,68,.06); }
+
+  .sourceTypePicker {
+    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; scrollbar-width: none;
+  }
+  .sourceTypePicker::-webkit-scrollbar { display: none; }
+  .sourceChip { flex: 0 0 auto; padding-inline: 12px; border-color: rgba(29,41,68,.13); }
+  .dropzone { padding: 30px 16px; border-radius: 20px; border-color: rgba(29,41,68,.4); }
+  .documentRow {
+    grid-template-columns: auto minmax(0,1fr); gap: 10px 12px;
+    padding: 13px; border-color: rgba(29,41,68,.1); border-radius: 16px;
+  }
+  .documentActions { grid-column: 1 / -1; gap: 16px; }
+
+  .masteryHero { gap: 16px; align-items: flex-start; }
+  .progressRing { width: 82px; }
+  .statRow { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .statRow > div { padding: 13px; border-color: rgba(29,41,68,.09); border-radius: 15px; }
+  .statRow dd { font-size: 1.55rem; }
+  .masteryTable li {
+    grid-template-columns: minmax(0,1fr) 42px; gap: 10px; padding: 12px;
+    border-color: rgba(29,41,68,.09); border-radius: 14px;
+  }
+
+  .studySectionHeading { margin-bottom: 20px; }
+  .studySectionHeading > .studigoMascot { width: 48px !important; height: 48px !important; }
+  .testQuestionNav {
+    flex-wrap: nowrap; overflow-x: auto; gap: 7px; margin: 16px -16px 20px;
+    padding: 3px 16px 5px; scrollbar-width: none;
+  }
+  .testQuestionNav::-webkit-scrollbar { display: none; }
+  .testQuestionNav button {
+    flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%;
+  }
+  .testQuestion { padding-top: 20px; }
+  .testQuestion h3 { font-size: 1.45rem; line-height: 1.38; }
+  .testSessionActions { margin: 22px 0; align-items: center; }
+  .planDay { padding: 20px 0 28px; }
+  .planDayActions article { padding-left: 14px; margin-bottom: 22px; }
+}
+
+@media (max-width: 390px) {
+  .modeSurface { padding-inline: 14px; }
+  .workspaceTopbar { padding-inline: 8px; }
+  .workspaceTopbar strong { font-size: .96rem; }
+  .studyGroups { left: 6px; right: 6px; }
+  .studyGroups button { font-size: .59rem; }
+  .studySubnav { padding-inline: 12px; }
+  .studySubnav::before { inset-inline: 12px; }
+  .studySubnav button { font-size: .69rem; padding-inline: 5px; }
+  .coachHeader h2 { font-size: 1.78rem; }
+  .studentBubble { max-width: 88%; }
+}
+
+
+/* Final mobile finish: 44pt-class targets, sheet choreography, and consistent chrome. */
+.roomSettingsHead { display: none; }
+
+@media (max-width: 700px) {
+  :root { --m-topbar: 58px; }
+
+  .roomWorkspace .workspaceTopbar {
+    height: var(--m-topbar); min-height: var(--m-topbar);
+    grid-template-columns: 44px minmax(0,1fr) auto;
+    padding: 7px 10px;
+  }
+  .roomBackButton,
+  .studyGuideDownload .buttonQuiet,
+  .workspaceTopbar .iconButton {
+    width: 44px; height: 44px; min-width: 44px;
+  }
+
+  .studySubnav {
+    min-height: 54px; padding-block: 5px;
+  }
+  .studySubnav::before { inset-block: 5px; }
+  .studySubnav button { min-height: 44px; }
+
+  .coachControls button { min-height: 44px; }
+  .sourceChipLink { min-height: 40px; }
+  .testQuestionNav button { flex-basis: 44px; width: 44px; height: 44px; }
+
+  .roomSettingsHead {
+    position: sticky; top: -1px; z-index: 3;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin: -4px 0 14px; padding: 4px 0 10px;
+    background: rgba(255,253,247,.97);
+  }
+  .roomSettingsHead > div { min-width: 0; }
+  .roomSettingsHead strong {
+    display: block; margin-top: 3px; font-size: 1.16rem; letter-spacing: -.02em;
+  }
+  .roomSettingsHead > button {
+    min-width: 58px; min-height: 38px; border: 0; border-radius: 999px;
+    background: rgba(29,41,68,.07); font-weight: 900;
+  }
+  .roomSettings .settingsActions .ghostButton { display: none; }
+
+  .roomSettings,
+  .coachSettings.mobileOpen {
+    overscroll-behavior: contain;
+    animation: mobileSheetIn .26s cubic-bezier(.2,.8,.2,1);
+  }
+  .roomSettingsBackdrop,
+  .coachSetupBackdrop { animation: mobileBackdropIn .18s ease-out; }
+
+  .studyGroups button:active,
+  .studySubnav button:active,
+  .roomBackButton:active,
+  .workspaceTopbar .iconButton:active,
+  .studyGuideDownload .buttonQuiet:active,
+  .askComposerLive button:active {
+    transform: scale(.96);
+  }
+
+  .studyGroups button[aria-current] .studyGroupIcon { transform: translateY(-1px) scale(1.04); }
+  .studyGroupIcon { transition: transform .18s cubic-bezier(.2,.8,.2,1); }
+
+  .roomWorkspace:has(.askComposerLive input:focus) .studySubnav {
+    box-shadow: 0 1px 0 rgba(29,41,68,.06);
+  }
+}
+
+@keyframes mobileSheetIn {
+  from { opacity: .72; transform: translateY(18px) scale(.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes mobileBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+/* Screenshot-driven iPhone refinement: compact segmented control, stable skills
+   hierarchy, and a quiet Studigo composer affordance. */
+@media (max-width: 700px) {
+  /* Apple-style segmented control proportions: compact visual control with
+     enough surrounding bar space to remain easy to hit. */
+  .studySubnav {
+    height: 44px;
+    min-height: 44px;
+    padding: 4px 16px;
+    gap: 2px;
+    align-items: center;
+  }
+  .studySubnav::before {
+    inset: 4px 16px;
+    border-radius: 10px;
+    background: rgba(29,41,68,.052);
+  }
+  .studySubnav button {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 8px;
+    gap: 5px;
+    border-radius: 8px;
+    font-size: .89rem;
+    font-weight: 700;
+    letter-spacing: -.012em;
+    line-height: 1;
+  }
+  .studySubnav button > span {
+    font-size: .8rem;
+    line-height: 1;
+  }
+  .studySubnav button[aria-current] {
+    background: rgba(255,255,255,.96);
+    box-shadow:
+      0 1px 2px rgba(29,41,68,.08),
+      0 2px 6px rgba(29,41,68,.08);
+  }
+
+  /* "Today's skills" is metadata above the skill row, never an overlay. */
+  .coachSkills {
+    display: grid;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .coachSkillsLabel {
+    position: static;
+    display: block;
+    width: auto;
+    padding: 0 2px;
+    background: transparent;
+    color: rgba(54,67,93,.64);
+    font-size: .66rem;
+    line-height: 1;
+    letter-spacing: .14em;
+  }
+  .coachTopics {
+    margin: 0 -16px;
+    padding: 0 16px 3px;
+    gap: 8px;
+  }
+  .coachTopics .tinyLabel { display: none; }
+  .coachTopics button {
+    min-height: 42px;
+    padding: 8px 14px;
+    font-size: .84rem;
+    line-height: 1.2;
+  }
+
+  /* Coach composer: quiet until used. The mascot replaces the arrow so the
+     control feels like "send to Studigo", not a generic web form. */
+  .coachComposer {
+    min-height: 54px;
+    padding: 4px 5px 4px 16px;
+  }
+  .coachComposer input {
+    min-height: 44px;
+    padding: 9px 6px;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .coachComposer input::placeholder {
+    color: rgba(54,67,93,.42);
+    opacity: 1;
+    font-weight: 600;
+  }
+  .coachComposerButton,
+  .askComposerLive .coachComposerButton {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+  }
+  .coachComposerButton:disabled {
+    opacity: 1;
+    background: transparent;
+  }
+  .coachComposerButton .studigoMascot {
+    width: 28px !important;
+    height: 28px !important;
+    opacity: .46;
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  .coachComposerButton .studigoMascot img {
+    filter: grayscale(1) saturate(0);
+  }
+  .coachComposerButton:not(:disabled) .studigoMascot {
+    opacity: .72;
+  }
+  .coachComposerButton:not(:disabled):active .studigoMascot {
+    transform: scale(.94);
+  }
+}
+
+@media (max-width: 390px) {
+  .studySubnav {
+    height: 42px;
+    min-height: 42px;
+    padding: 4px 12px;
+  }
+  .studySubnav::before { inset: 4px 12px; }
+  .studySubnav button {
+    height: 34px;
+    min-height: 34px;
+    padding-inline: 6px;
+    font-size: .85rem;
+  }
+  .coachTopics {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+}
+
+
+/* Optical centering for the mobile mode segmented control. */
+@media (max-width: 700px) {
+  .studySubnav button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
+  .studySubnavIcon,
+  .studySubnavLabel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    line-height: 1;
+  }
+  .studySubnavLabel {
+    transform: translateY(.5px);
+  }
+}
+
+
+/* Coach skill focus: always show the entire selected skill in-frame. */
+.coachSkills { display: grid; gap: 10px; }
+.coachSkillsHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.coachSkillChange {
+  border: 0; background: none; color: var(--ink-soft);
+  font-size: .76rem; font-weight: 900; cursor: pointer;
+}
+.coachSkillFocus {
+  position: relative; width: 100%; min-height: 64px;
+  display: grid; grid-template-columns: minmax(0,1fr) auto;
+  gap: 4px 12px; align-items: center;
+  padding: 14px 46px 14px 16px;
+  border: 1px solid rgba(239,126,98,.34); border-radius: 20px;
+  background: rgba(239,126,98,.10); color: var(--ink); text-align: left;
+  cursor: pointer;
+}
+.coachSkillTitle {
+  display: block; min-width: 0;
+  font-weight: 900; line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.coachSkillFocus small {
+  grid-column: 1;
+  color: var(--muted); line-height: 1.35;
+}
+.coachSkillAction {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 1.08rem;
+}
+.coachSkillSheet { display: none; }
+
+@media (max-width: 700px) {
+  .coachSkills {
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .coachSkillsHead {
+    min-height: 24px;
+    padding: 0 2px;
+  }
+  .coachSkillsLabel {
+    padding: 0;
+  }
+  .coachSkillChange {
+    min-height: 32px; padding: 0 6px;
+    border-radius: 9px;
+    color: rgba(54,67,93,.68);
+    font-size: .72rem;
+  }
+  .coachSkillFocus {
+    min-height: 70px;
+    padding: 14px 46px 14px 16px;
+    gap: 5px 10px;
+    border: 0;
+    border-radius: 18px;
+    background: rgba(29,41,68,.045);
+    box-shadow: inset 0 0 0 1px rgba(29,41,68,.055);
+  }
+  .coachSkillTitle {
+    font-size: .98rem;
+    line-height: 1.35;
+    letter-spacing: -.012em;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .coachSkillFocus small {
+    display: block;
+    font-size: .74rem;
+    line-height: 1.38;
+  }
+  .coachSkillAction {
+    right: 16px;
+    font-size: 1rem;
+    color: rgba(29,41,68,.58);
+  }
+
+  .coachSkillSheet {
+    position: fixed;
+    left: 8px; right: 8px;
+    bottom: max(8px,var(--m-safe-bottom));
+    z-index: 110;
+    display: grid;
+    max-height: calc(100dvh - 24px - var(--m-safe-bottom));
+    overflow-y: auto;
+    gap: 12px;
+    padding: 16px 16px 18px;
+    border: 1px solid rgba(29,41,68,.11);
+    border-radius: 30px;
+    background: rgba(255,253,247,.98);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    backdrop-filter: saturate(180%) blur(28px);
+    box-shadow: 0 24px 70px rgba(20,25,36,.22);
+    overscroll-behavior: contain;
+    animation: mobileSheetIn .26s cubic-bezier(.2,.8,.2,1);
+  }
+  .coachSkillList {
+    display: grid;
+    gap: 8px;
+  }
+  .coachSkillList > button {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 30px minmax(0,1fr) auto;
+    align-items: start;
+    gap: 10px;
+    min-height: 58px;
+    padding: 11px 12px;
+    border: 1px solid rgba(29,41,68,.09);
+    border-radius: 15px;
+    background: rgba(29,41,68,.025);
+    text-align: left;
+  }
+  .coachSkillList > button.active {
+    background: rgba(215,239,120,.24);
+    border-color: rgba(29,41,68,.16);
+  }
+  .coachSkillIndex {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: rgba(29,41,68,.06);
+    color: var(--ink-soft);
+    font-size: .72rem; font-weight: 900;
+  }
+  .coachSkillList strong {
+    display: block;
+    font-size: .87rem;
+    line-height: 1.34;
+    overflow-wrap: anywhere;
+  }
+  .coachSkillList small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: .7rem;
+    line-height: 1.36;
+  }
+  .coachSkillCheck {
+    padding-top: 4px;
+    color: var(--moss-deep);
+    font-weight: 900;
+  }
+}
+
+
+/* Modal-sheet isolation: the backdrop owns the viewport while a Coach sheet is open. */
+@media (max-width: 700px) {
+  .coachSetupBackdrop,
+  .roomSettingsBackdrop {
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  .coachSkillSheet,
+  .coachSettings.mobileOpen,
+  .roomSettings {
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+
+/* Canonical Studigo composer ------------------------------------------------
+   One text-send affordance everywhere: Ask, Coach, mobile, and desktop. */
+.studigoComposer {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+  padding: 5px 6px 5px 18px;
+  border: 1px solid rgba(29,41,68,.11);
+  border-radius: 30px;
+  background: rgba(255,255,255,.94);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow:
+    0 8px 24px rgba(29,41,68,.10),
+    inset 0 1px rgba(255,255,255,.78);
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.studigoComposer:focus-within {
+  border-color: rgba(29,41,68,.18);
+  background: rgba(255,255,255,.98);
+  box-shadow:
+    0 10px 28px rgba(29,41,68,.13),
+    inset 0 1px rgba(255,255,255,.86);
+}
+.studigoComposer input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 6px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.studigoComposer input::placeholder {
+  color: rgba(54,67,93,.42);
+  opacity: 1;
+  font-weight: 700;
+}
+.studigoComposer input:disabled { cursor: wait; }
+.studigoComposerAction,
+.askComposerLive .studigoComposerAction {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  cursor: pointer;
+}
+.studigoComposerAction:disabled {
+  opacity: 1;
+  cursor: default;
+  background: transparent;
+}
+.studigoComposerAction .studigoMascot {
+  width: 30px !important;
+  height: 30px !important;
+  opacity: .46;
+  background: transparent;
+  filter: grayscale(1) saturate(0);
+  transition: opacity .16s ease, transform .16s ease, filter .16s ease;
+}
+.studigoComposerAction:not(:disabled) .studigoMascot {
+  opacity: .72;
+}
+.studigoComposerAction:not(:disabled):hover .studigoMascot {
+  opacity: .86;
+}
+.studigoComposerAction:not(:disabled):active .studigoMascot {
+  transform: scale(.94);
+}
+.studigoComposerAction:focus-visible {
+  outline: 2px solid rgba(29,41,68,.5);
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .studigoComposer {
+    min-height: 56px;
+    padding: 4px 5px 4px 16px;
+    border-radius: 28px;
+    background: rgba(255,255,255,.92);
+    box-shadow:
+      0 12px 34px rgba(29,41,68,.17),
+      inset 0 1px rgba(255,255,255,.78);
+  }
+  .studigoComposer input {
+    min-height: 46px;
+    padding: 9px 6px;
+    font-size: 16px;
+  }
+  .studigoComposerAction,
+  .askComposerLive .studigoComposerAction {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+  }
+  .studigoComposerAction .studigoMascot {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+
+/* Keep the fixed mobile composer optically centered. The shared desktop
+   composer uses width:100%, but on iPhone the fixed left/right insets own
+   the width; forcing 100% there pushes the right edge off-screen. */
+@media (max-width: 700px) {
+  .studigoComposer.askComposerLive {
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-width: none;
+    box-sizing: border-box;
+  }
+}
+
+
+/* Mobile sheets scroll as one surface. Their headers are intentionally not
+   sticky, preventing content from sliding visibly behind translucent chrome. */
+@media (max-width: 700px) {
+  .coachSettingsSheetHead,
+  .roomSettingsHead {
+    position: static;
+    top: auto;
+    z-index: auto;
+    background: transparent;
+  }
+}
+
+
+/* Study-plan date action: compact, single-line, Apple-style secondary pill. */
+.planDateButton {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(29,41,68,.06);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: .8rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+.planDateButton > span:first-child {
+  font-size: .92rem;
+  color: rgba(29,41,68,.72);
+}
+
+@media (max-width: 700px) {
+  .studyPlanPanel .studySectionHeading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .studyPlanPanel .studySectionHeading > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .studyPlanPanel .planDateButton {
+    min-height: 44px;
+    padding: 0 13px;
+    margin-top: 0;
+    font-size: .76rem;
+    box-shadow: inset 0 0 0 1px rgba(29,41,68,.04);
+  }
+}
+
+
+/* Keep the study-plan route phrase intact; the date may wrap independently. */
+.planRouteLead { white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .studyPlanPanel .studySectionHeading h2 {
+    max-width: 100%;
+  }
+  .planRouteLead {
+    display: inline-block;
+    white-space: nowrap;
+  }
+}
+
+
+/* Keep the full study-plan route title on one line on iPhone.
+   Give the title the full content width instead of sharing it with Change date. */
+@media (max-width: 700px) {
+  .studyPlanPanel .studySectionHeading {
+    display: grid;
+    grid-template-columns: minmax(0,1fr);
+    gap: 14px;
+  }
+  .studyPlanPanel .studySectionHeading > div {
+    width: 100%;
+  }
+  .studyPlanPanel .studySectionHeading h2 {
+    width: 100%;
+    max-width: none;
+    white-space: nowrap;
+    font-size: clamp(1.46rem, 6.6vw, 1.7rem);
+    letter-spacing: -.04em;
+  }
+  .studyPlanPanel .planDateButton {
+    justify-self: start;
+  }
+}

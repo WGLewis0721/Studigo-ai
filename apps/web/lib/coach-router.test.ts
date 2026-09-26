@@ -634,7 +634,7 @@ test("regression: 'I don't know' is a help request, not a wrong answer, and keep
         // detectTurnIntent classifies this as help_request deterministically;
         // the evaluator result is ignored for intent in that case.
         evaluateCoachAnswer: async () => ({ intent: "answer", concepts: [] }),
-        generateCoachFeedback: async () => "Here's a nudge: think about what parents pass down."
+        renderCoachSupport: async () => "Think about what parents pass down."
       }
     })
   );

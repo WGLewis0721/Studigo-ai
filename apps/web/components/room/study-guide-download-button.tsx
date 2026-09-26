@@ -43,7 +43,8 @@ export function StudyGuideDownloadButton({ roomId }: { roomId: string }) {
   return (
     <span className="studyGuideDownload">
       <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy}>
-        {busy ? "Building PDF..." : "Download study guide"} <span aria-hidden="true">↓</span>
+        <span className="studyGuideDownloadLabel">{busy ? "Building PDF..." : "Download study guide"}</span>
+        <span className="studyGuideDownloadIcon" aria-hidden="true">↓</span>
       </button>
       {error && <small className="formError" role="alert">{error}</small>}
     </span>
