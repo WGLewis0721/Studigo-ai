@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
+import { StudigoMascot } from "@/components/studigo-mascot";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -264,6 +265,7 @@ export function LearnPanel({
   if (!topics.length) {
     return (
       <div className="modeEmpty">
+        <StudigoMascot state="explain" size={80} />
         <h2>No topic map yet.</h2>
         <p>
           Upload a teacher study guide and Studigo reads what it says you need to know. If all you

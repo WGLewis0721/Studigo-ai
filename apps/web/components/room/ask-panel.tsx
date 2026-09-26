@@ -139,6 +139,7 @@ export function AskPanel({
   if (readyCount === 0) {
     return (
       <div className="modeEmpty">
+        <StudigoMascot state="sources" size={80} />
         <h2>Studigo has nothing to answer from yet.</h2>
         <p>
           Ask mode only answers from this room's own materials — that's the point. Add the study
@@ -178,7 +179,11 @@ export function AskPanel({
               {message.content}
             </div>
           ) : (
-            <div className="answerBubble" key={message.id}>
+            <div
+              className="answerBubble"
+              key={message.id}
+              data-state={message.streaming ? "streaming" : message.grounded ? "grounded" : "insufficient"}
+            >
               <span className="answerKicker">
                 <StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />
                 {message.streaming

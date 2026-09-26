@@ -281,7 +281,7 @@ Exit: beta behavior is measurable and failures are diagnosable.
 
 ## Phase 5 — Product polish
 
-- Final Studigo visual system and mascot direction.
+- Final Studigo visual system and mascot direction. *(Visual system V2, "Personal Learning Device", is implemented across marketing, auth and the Study Room — see `docs/DESIGN_SYSTEM.md`. New mascot poses remain future work.)*
 - Authentication/onboarding polish.
 - Empty/loading/error states.
 - Mobile-first study interactions.

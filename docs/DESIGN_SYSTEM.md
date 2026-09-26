@@ -1,177 +1,336 @@
-# Studigo Design System — WebForge V1
+# Studigo Design System — Personal Learning Device (V2)
 
-## Product character
+> Supersedes **WebForge V1** ("living study field guide"). V1's product rules —
+> product before marketing, tangible citations, spatial mastery, a subordinate
+> companion, recognizable provider sign-in — carry forward unchanged. Its
+> paper-and-ink *look* is retired. See [What changed from V1](#what-changed-from-v1).
 
-Studigo should feel like a **living study field guide with a companion inside it**, not an education SaaS dashboard and not a children's game. The interface is playful enough to be memorable, structured enough to trust for schoolwork, and grounded enough to keep the student's material—not generic AI—at the center.
+## Thesis
 
-## Core visual idea
+Studigo is a **personal learning device**.
 
-**Study quest / living field guide**
+Picture the translucent, colorful consumer technology of 1998–2004 — molded
+shells you chose by color, pocket companions with a tiny persistent character,
+glossy tactile controls, TV brands that could change shape and stay themselves —
+continuing to evolve for twenty-five years, and then being disciplined by modern
+product design: ruthless hierarchy, large product presentation, generous space,
+excellent type, purposeful motion.
 
-- Warm paper and notebook surfaces instead of default white SaaS canvas.
-- Deep ink blue provides structure and trust.
-- Lavender belongs to the Studigo companion.
-- Acid-lime is used for progress, active learning, and earned momentum.
-- Coral is used for emphasis and key moments, never as a generic gradient accent.
-- Visible borders, offset shadows, paper overlaps, and small hand-made irregularities make the product feel tactile.
-- No generic glassmorphism, floating gradient blobs, repetitive rounded card grids, or excessive pills.
+It should read **colorful before nostalgic, modern before retro, useful before
+decorative**. No single reference should be recognizable; none of their
+trademarks, characters, layouts or branded shapes are used.
 
-## Typography
+Design from roughly age 14 outward: an 8-year-old should think *"this looks fun
+and I know what to press"*; an 18-year-old should think *"this looks cool"* and
+never *"this is for little kids."*
 
-- Display: **Fraunces** — expressive, academic, warm, used for headlines and key narrative moments.
-- UI/body: **Nunito Sans** — friendly without becoming childish.
-- Labels use compact uppercase tracking to create field-guide/navigation rhythm.
+### The distinction to protect
 
-## Color tokens
+**Colorful Apple, not Apple with a few colorful buttons.** Color is part of the
+product architecture — Study Rooms, modes, materials, states, navigation,
+motion and marketing — the way shell color was the physical identity of the
+object, not a trim applied to it. If a change turns color back into accents on
+a gray app, it is moving in the wrong direction.
+
+## Research basis
+
+These are the inputs the system was derived from. They are reasons, not
+assets to copy: no trademarks, product imagery, characters, layouts or branded
+shapes are used.
+
+| Reference | What it contributes to Studigo |
+| --- | --- |
+| 1999 iMac lineup (Strawberry, Lime, Blueberry, Tangerine, Grape) | Color chosen like any personal consumer good; color as identity; neutral surroundings let the object's color lead |
+| 2000 iMac colors (Indigo, Ruby, Sage, Snow, Graphite) and the 2001 patterned editions | The era was not restrained; it also had quieter "serious" colors — Snow and Graphite. Hence the Snow canvas and a Graphite room shell |
+| iBook clamshell (Blueberry, Tangerine; later Key Lime, Indigo, Graphite) | Translucent shell, integrated handle, friendly but not a toy, sold to students without looking "educational" — the hero device's shell and handle |
+| Early Aqua-era interfaces | Depth, gloss, translucent layers, controls that look touchable — reinterpreted as restrained gloss on keys, never literal |
+| Game Boy Color (Berry, Grape, Kiwi, Dandelion, Teal, translucent purple) | One product, many personalities through shell color; memorable color names; neutral/dark structure around saturated color — the room shells and palette names |
+| Tamagotchi (positioned for ages 8+) | A tiny persistent character, clear state, compact information, approachable controls — the companion in its screen |
+| Neopets | A product can feel like a place with destinations; activities are visually differentiated — each mode has its own color |
+| Nickelodeon, historic and its modern redesign | A flexible identity that can change shape and stay itself; the modern version kept the legacy DNA and added cleaner geometry, dimensionality, contemporary type and complementary color pairs — the transformation strategy for this whole system, and Coach's tangerine + berry pair |
+| Cartoon Network | A rigid underlying system with saturated modules and high contrast that works for young children and older viewers alike |
+| dELiA*s (roughly ages 10–24) | Personality and confidence against lots of white space; youthful without talking down — the Snow-heavy marketing page |
+| Limited Too (ages 7–14 stores) | Color as environment, clean architecture, vivid lighting, interactive stations, products shown like treasures — experience design, not just a logo; the color-field sections |
+| Current Apple interface guidance | Hierarchy, consistency, color used for meaning, adequate contrast, never color alone for state |
+| Usability research on children vs. teenagers | Teens are goal-oriented and expect things to be easy; younger children need extra clarity, navigation and legibility — one legible system designed from ~14 outward |
+
+## Principles
+
+1. **Neutral room, concentrated color.** Snow and ink carry structure. Color is
+   concentrated in the product: shells, keys, mode identity, state. Never spread
+   every color evenly across a page.
+2. **Color is identity and navigation.** Every study mode has a named color;
+   every Study Room has a shell color. Color helps you know where you are and
+   remember what you did there.
+3. **Every material has a reason.** A surface looks deliberately manufactured
+   from one material (below). No random blurred rectangles.
+4. **Reading surfaces stay calm.** Explanations, answers and documents sit on
+   plain white with ink text. Translucency and gloss are for navigation,
+   controls and special surfaces — never under long-form text.
+5. **Never color alone.** Correct/incorrect, confidence, status and priority
+   always have text or shape as well as color.
+6. **The product is the hero.** On the marketing site the interface itself is
+   presented as the desirable object.
+
+## Color
+
+### Neutrals
 
 | Token | Value | Role |
 | --- | --- | --- |
-| Paper | `#F4EFE4` | Primary canvas |
-| Bright paper | `#FFFDF7` | Reading surfaces |
-| Ink | `#1D2944` | Navigation, structure, primary text |
-| Moss | `#76977A` | Grounded/complete state |
-| Volt | `#D7EF78` | Active progress, momentum |
-| Lavender | `#B9B5EF` | Studigo companion identity |
-| Coral | `#EF7E62` | Editorial emphasis/action |
-| Sun | `#F0C75E` | Secondary highlight |
+| `--snow` | `#F7F8FB` | App and marketing canvas |
+| `--snow-2` | `#EEF1F6` | Recessed wells, secondary fills |
+| `--snow-3` | `#E3E7EF` | Deeper wells, inactive fills |
+| `--white` | `#FFFFFF` | Reading surfaces, keys |
+| `--ink` | `#141B2D` | Primary text, neutral primary key |
+| `--ink-2` | `#39435A` | Body text |
+| `--muted` | `#5D6780` | Labels, hints (AA on white, snow and snow-2) |
+| `--graphite` / `--graphite-2` | `#1D2433` / `#2B3346` | Dark "screen" surfaces, student bubbles, Practice test |
 
-## Composition rules
+### Shell colors
 
-1. The product experience should be visible before generic feature marketing.
-2. Sections should change rhythm: editorial hero, dark statement strip, application frame, source-priority table, physical paper composition.
-3. Cards are allowed only when the content is genuinely card-like. Do not turn every concept into a rounded rectangle.
-4. Mastery/progress should be spatial and actionable, not reduced to a decorative percent bar.
-5. Source citations should look tangible and traceable.
-6. The Studigo companion may appear in onboarding, empty states, learning feedback, and active tutoring—but should not overwhelm serious study moments.
+Each color has a **base** (fills, shells, glows), an **-ink** (text on white,
+WCAG AA), a **-soft** tint (selected wells), and a **key** shade when it is a
+filled control carrying text.
 
-## Authentication surfaces
+| Name | Base | -ink | -soft | Text on a filled key |
+| --- | --- | --- | --- | --- |
+| Blueberry | `#3C7CFF` | `#1D5BDB` | `#E7EFFF` | white on `#2B69F0` |
+| Grape | `#7A5AF0` | `#5A3BD0` | `#EFEBFE` | white |
+| Berry | `#F0457A` | `#C01D52` | `#FFE8EF` | white on `#D42D63` |
+| Tangerine | `#FF8A3D` | `#B24A0A` | `#FFEFE2` | ink |
+| Kiwi | `#93D93F` | `#3A7010` | `#EEF9DF` | ink |
+| Dandelion | `#FFD23F` | `#7A5800` | `#FFF6D4` | ink |
+| Teal | `#1FC3B6` | `#09756D` | `#DDF6F3` | ink |
+| Indigo | `#4A55C8` | `#3440A8` | `#E8EAFB` | white |
 
-Authentication is part of the Studigo product experience, but it has a different trust requirement from marketing and study surfaces.
+#### Why these values differ from the starting palette
 
-### Login shell
+The brief's starting values were deliberately tuned; restore them only with a
+reason, and re-check contrast if you do.
 
-Use the Studigo WebForge visual language around the sign-in controls:
+| Name | Starting value | Shipped | Reason |
+| --- | --- | --- | --- |
+| Snow | `#F8F9FC` | `#F7F8FB` | Effectively identical; one step more separation from white surfaces |
+| Ink | `#172033` | `#141B2D` | Slightly deeper for body text contrast on tinted wells |
+| Blueberry | `#4887FF` | `#3C7CFF` | More saturated at shell scale; key shade `#2B69F0` for white text (AA) |
+| Grape | `#7657E8` | `#7A5AF0` | Brighter in translucent shells; white text still AA |
+| Berry | `#F04F7C` | `#F0457A` | Slightly richer; key shade `#D42D63` for white text (AA) |
+| Tangerine | `#FF853D` | `#FF8A3D` | Matched to the companion's orange |
+| Kiwi | `#A9E84A` | `#93D93F` | Deeper so progress fills and meters read on white and on graphite |
+| Dandelion | `#FFD84A` | `#FFD23F` | Slightly warmer so it doesn't wash out as a fill on Snow |
+| Teal | `#32CFC3` | `#1FC3B6` | Deeper for the citation color and the full-bleed Sources field |
+| Indigo | `#4450BE` | `#4A55C8` | Lifted slightly to sit beside Blueberry without going muddy |
 
-- warm paper background or restrained field-guide texture
-- strong editorial hierarchy
-- compact Studigo wordmark
-- optional companion pose used lightly
-- short, useful copy such as `Welcome to Studigo` / `Your study companion is ready.`
-- generous breathing room and a single obvious path forward
+Tangerine is also the companion's own color (the orange scholar), which is why
+it belongs to Coach.
 
-Do not turn login into another marketing page.
+### Mode colors
 
-### Social provider buttons
+Set with `data-tone="<mode id>"`; the workspace root carries the current mode,
+so the whole room re-tints (the `--tone` custom property is registered with
+`@property` so the change animates).
 
-Launch order in the UI:
+| Mode | Color | Why |
+| --- | --- | --- |
+| Learn | Blueberry | Calm, explanatory, trustworthy |
+| Ask, Materials | Teal | "Your material speaking" — the source color; citations are teal everywhere |
+| Coach, Cram | Tangerine (Coach pairs it with Berry) | The companion's color; warmth and energy. Coach's whole-mode surfaces run tangerine → berry (`--tone-2`) |
+| Quiz | Dandelion | Attention, a focused challenge |
+| Flashcards | Grape | The collectible, physical deck |
+| Practice test | Graphite | The serious full rehearsal |
+| Mastery | Kiwi | Growth, earned progress |
+| Weak areas | Berry | What needs you next |
+| Study plan | Indigo | Steady, time-based structure |
 
-1. Continue with Google
-2. Continue with Apple
-3. Continue with Microsoft
-4. Email fallback below a visible divider
-5. Facebook only if/when it is enabled later
+State colors are separate from mode colors: **kiwi = strong/correct**,
+**dandelion = learning/needs work**, **berry = wrong/blind spot/destructive**,
+**teal = grounded in your sources**, **tangerine-ink = not in your sources**.
 
-Provider buttons are an exception to some of the more expressive WebForge styling rules. They should remain recognizable, accessible, and trustworthy.
+### Room shells
 
-- Keep provider name and icon obvious.
-- Follow provider brand requirements where applicable.
-- Do not replace provider identity with Studigo colors.
-- Do not use offset novelty shadows that make a provider button look unofficial.
-- Do not hide all social providers behind a generic `Continue` menu.
-- Maintain clear keyboard focus and screen-reader labels.
+Every Study Room is shown in one of Blueberry, Tangerine, Grape, Kiwi, Berry,
+Teal or Graphite, derived deterministically from the room id
+(`lib/room-shell.ts`). It is cosmetic — it never encodes state and needs no
+schema. It appears as a glossy "gem" in the rail and topbar, as the molded
+shell of the room card, and as the **bezel the Study Room opens inside**
+(`.roomDevice[data-shell]`).
 
-The surrounding layout may use Studigo paper, ink, lavender, coral, and companion elements; the provider controls should optimize for familiarity.
+Two colors, two jobs: the **shell** (outer frame) says *which room you are in*;
+the **tone** (inside, on the screen) says *which mode you are using*. The shell
+never changes inside a room; the tone changes with every mode.
 
-### Auth states
+## Materials
 
-Design all auth states intentionally:
+| Material | Look | Used for |
+| --- | --- | --- |
+| **Matte white** | White, hairline edge, top edge highlight, soft lift | All reading surfaces, cards, answers, documents |
+| **Recessed well** | Snow-2, inner shadow | Inputs' context, progress tracks, examples, meters, the Socratic check |
+| **Molded key** | Solid color, subtle top gloss, darker bottom lip, presses down 1px | Primary actions, send, confidence and rating keys |
+| **Translucent polycarbonate** | Tinted gradient, bright top highlight, colored inner depth, colored cast shadow | Room cards, the hero device shell, score cards |
+| **Frosted plastic** | Blurred translucent white | Navigation only: topbar, marketing nav, mobile rail |
+| **Dark screen** | Graphite with a faint colored glow | Readouts: mastery ring, cram timer, practice-test score, student bubbles |
+| **Clear tray** | Translucent white over a color field | The source bay on the marketing page |
 
-- default sign-in
-- signing in / redirecting
-- callback processing
-- provider error
-- email fallback
-- first-login onboarding
-- expired session
-- signed-out confirmation when useful
+Tokens: `--edge`, `--recess`, `--gloss`, `--gloss-key`, `--lift-1/2/3`.
 
-Never leave a user on a blank callback screen with no Studigo context.
+## Geometry
 
-### Onboarding
+- Radii: `8 · 12 · 16 · 22 · 30 · 40`. Nest concentrically (inner = outer − padding).
+- Keys are **chunky rounded rectangles** (14–17px radius, 44–58px tall).
+- Pills only where the object is semantically a chip: source-type chips, topic
+  chips, tags, the shell picker.
+- The mode dial is a **segmented control** (groups) above **mode keys** with a
+  colored keycap glyph. Glyphs come from `components/mode-glyph.tsx` — one
+  stroke weight, one grid, always paired with a text label.
+- Circular physical references: the readiness ring, the companion's screen
+  bezel, the concentric dial on the marketing CTA.
 
-Onboarding should feel like the first page of the field guide, not a lengthy account questionnaire.
+## Typography
 
-Prioritize only information needed to improve the study experience. A new user should be able to reach `Create Study Room` quickly.
+| Role | Face | Notes |
+| --- | --- | --- |
+| Display | **Bricolage Grotesque** (700–800, optical size axis) | Headlines, room titles, card faces, big numbers. Personality lives here. Tracking −0.03 to −0.035em. |
+| UI / body | **Figtree** (400–800) | Everything you read and press. Geometric, friendly, very legible; not childish, not enterprise. |
+| Readout | **JetBrains Mono** (500–600) | Page numbers, citation markers, counts, timers, percentages in tiles — the "device readout" voice. Use sparingly. |
 
-## Original Studigo companion
-
-The canonical companion is the orange scholar with a cream belly, green vest, crayon/writing tail and small flame. Preserve the asset library and references in `docs/brand/mascot/`.
-
-`StudigoMascot` is the shared component for marketing, auth, the app rail and contextual study states. Its state follows actual events: welcome, explain, thinking, sources, celebrate. Keep the product primary: 28–40 px in identity/answer labels, 64–96 px in empty or completion states, at most 150 px alongside the homepage product preview. No fullscreen mascot, mascot-led readiness or children's-game rewards.
-
-The supplied JPEGs have baked checkerboards; they are not transparent assets. `studigo-source-paper.png` is an edited derivative of the approved source pose, on a clean warm-paper background. Keep the full figure uncropped in contextual use. Only the circular brand/avatar variant crops to the face. The hero leads with a source-grounded example study session; all example progress is labeled as illustrative.
-
-Future companion work may create poses for:
-
-- Ready to study
-- Thinking / retrieving sources
-- Correct answer / mastery gain
-- Needs review
-- Cram mode
-- Uploading / reading material
-- Welcome / authentication
-- First Study Room onboarding
-
-All future assets must be original to Studigo.
+Fonts are self-hosted through `next/font/google` in `app/layout.tsx` (a remote
+CSS `@import` is dropped by the build pipeline and was never loading).
+Small labels are uppercase, 0.7rem, 700, +0.08em — the printing on a device.
 
 ## Motion
 
-Motion must communicate state or character.
+Motion communicates state or character. One choreographed load sequence beats
+many unrelated animations.
 
-- Companion idle float: slow and subtle.
-- Buttons: small physical offset, not glow-heavy animation.
-- Learning trail: future implementation should animate state changes, not continuously pulse everything.
-- Auth redirects/callbacks: use subtle progress feedback; never animate in a way that makes provider redirects feel suspicious or slow.
-- Respect `prefers-reduced-motion`.
+- **Marketing load:** headline lines rise in sequence → the device lifts → source
+  objects drift in → the citation ticket lands. Shell-color changes crossfade.
+- **Scroll:** where `animation-timeline: view()` is supported, cartridges, tiles
+  and cards rise as they enter. Progressive enhancement only.
+- **Workspace:** the room re-tints over 0.5s when the mode changes; each mode's
+  content enters with a 6px rise. Keys press down.
+- **Flashcards:** a real 3D flip.
+- **Companion:** "thinking" breathes the bezel; "celebrate" lands once.
+- **`prefers-reduced-motion`:** animations, delays and transitions are removed;
+  the flashcard swaps faces without rotation; nothing waits on motion to appear.
 
-## Responsive behavior
+## The companion
 
-Desktop and mobile are different compositions, not simple scale-downs.
+The canonical companion is the orange scholar with a cream belly, green vest,
+crayon/writing tail and small flame. Preserve the asset library in
+`docs/brand/mascot/` and `apps/web/public/mascot/`. Do not replace it.
 
-- Desktop: full study-room rail + two-column mastery/tutor workspace.
-- Tablet: study-room rail remains, tutor stacks beneath mastery.
-- Mobile: rail disappears, trail and tutor become sequential, modes become a vertical action list, hero notes reposition around the companion.
-- Auth: keep provider controls full-width and thumb-friendly on small screens; avoid two-column provider layouts on mobile.
+The world around it is what changed: the companion now **lives in a small screen
+set into a bezel of the current tone** — the device it inhabits. The cream of
+the source art becomes the screen material, so it reads as intended rather than
+as a pasted square.
 
-## Product UI hierarchy
+`StudigoMascot` is the one component. Its state follows real events: `welcome`,
+`explain`, `thinking` (while retrieving/streaming), `sources`, `celebrate`
+(a finished deck, a strong test). Sizes: 28–40px in identity and answer labels,
+56–96px in empty/completion states, at most ~150px beside the marketing product
+view. The full figure is never cropped except in the circular `mark`. No
+fullscreen mascot, no mascot-led readiness, no reward economy.
 
-The primary student loop is:
+Use it for: greeting, thinking, explanation, source retrieval, encouragement,
+meaningful success, and empty states.
 
-1. Enter Study Room
-2. See what matters next
-3. Learn / ask / quiz
-4. See evidence/source
-5. Update mastery
-6. Continue
+## Surfaces
 
-The first-run loop is:
+### Marketing (`app/page.tsx`, `app/home.css`)
 
-1. Sign in with a familiar provider
-2. Complete minimal onboarding
-3. Create first Study Room
-4. Upload class material
-5. Start studying
+A product launch, in this order: floating frosted nav → **hero device** (the
+Study Room as a translucent colored device, with a working shell-color picker)
+→ the five-step loop as keys → **Sources** teal color field (priority as
+cartridges in a tray) → **Modes** showcase (tabs, each an oversized mode view in
+its color) → **Mastery** graphite field with a kiwi readout → **Receipts**
+(answer, ticket, the cited page) → questions → Tangerine closing field.
+All example progress is labeled illustrative.
 
-Design should make both loops faster than opening multiple files, tabs, or apps.
+### Study Room
 
-## WebForge guardrails
+- **Device bezel**: the whole workspace sits in a 10px (6px on phones) frame of
+  the room's shell color, with a rounded "screen" inside it.
+- **Topbar** (frosted): room gem, crumb, title; sources-ready chip, Download
+  study guide, settings.
+- **Mode dial**: groups as a segmented control; modes as keys with a colored
+  keycap. The dial area is tinted by the current mode.
+- **Reading surfaces** are matte white. Teal citation **tickets** (numbered
+  stub + document + mono page + open arrow) open the learner's original file.
+- **Materials**: the upload dropzone is a **media bay** with a slot that lights
+  when a file is dragged over; documents are **cartridges** whose colored spine
+  says the source type (study guide = tangerine, handouts = blueberry,
+  worksheets = dandelion, slides = grape, notes = kiwi, textbook = teal).
+  Each has a text status (Ready / Reading / Queued / Needs attention).
+- **Ask/Coach**: graphite student bubbles, white answers with a teal
+  "from your materials" or tangerine "not in your materials" label, a capsule
+  composer with a round send key.
+- **Quiz**: one question on a white stage; answers are keys with letter caps;
+  confidence keys carry a 1–3 bar meter; after grading, choices say
+  "✓ Correct answer" / "✕ Your answer" in text.
+- **Flashcards**: a card with a deck beneath it and a real flip.
+- **Mastery**: a dark readout (ring), stat wells, calibration, next practice,
+  and every topic as a **tile map** with a fill level.
 
-- Reference-driven, never reference-cloned.
-- No stock imagery as visual identity.
-- No unrelated dashboard metrics.
-- No decorative motion that delays reading.
-- No gratuitous icons or pills.
-- No framework migration for visual work alone.
-- Preserve backend/API/auth contracts while the frontend evolves.
-- Social sign-in controls prioritize trust and provider recognition over novelty.
-- Validate rendered responsiveness, accessibility, and build health on every major pass.
+### Authentication
+
+Calm and minimal: form on snow, a blueberry polycarbonate panel with the
+companion and three promises. **Provider buttons keep the provider's look** —
+no Studigo color, gloss or novelty shadow; name and logo obvious; full width on
+phones. Launch order: Google, Apple, Microsoft, then email under a divider.
+
+### Loading, empty and error states
+
+- `app/app/loading.tsx`: the companion thinking and a sweeping key-color bar.
+- `app/app/error.tsx`: says nothing saved was lost; Try again / All rooms.
+- Every mode's empty state pairs the companion with one clear next action.
+- First run (no rooms) is a three-step onboarding card, not a blank grid.
+
+## Responsive
+
+- **Desktop:** frosted rail + workspace.
+- **Tablet:** rail remains; multi-column sections collapse to one.
+- **Phone:** the rail becomes a frosted top bar with a scrolling room strip; the
+  mode dial fits without sideways scrolling (segmented groups on one row, mode
+  keys as equal columns with the icon above the label); marketing floats
+  reposition inside the device; shell-picker names collapse to swatches
+  (accessible names kept).
+
+## Accessibility
+
+- Text pairs meet WCAG AA (see the table above; filled blueberry/berry keys use
+  a darker key shade for white text).
+- Visible `:focus-visible` ring in the current tone's ink everywhere.
+- Radio groups (shell picker) and tabs (mode showcase) support arrow keys with
+  roving tabindex.
+- Decorative product mock-ups are exposed as a single labeled image.
+
+## Guardrails
+
+Avoid: generic AI purple gradients, generic glassmorphism, Web3 gloss, beige
+minimalism, corporate education dashboards, classroom clip art, notebook-paper
+UI, maximalist Y2K chrome, cyberpunk, vaporwave, retro OS parody, CRT
+scanlines, pixel fonts as primary type, copied brands, a mascot on every
+screen, meaningless gradients, badge clutter, endless identical card grids.
+
+Colorful is not chaotic. Minimal is not colorless. Premium is not beige.
+Youthful is not childish.
+
+Implementation rules carried from V1: no framework migration for visual work;
+preserve backend/API/auth contracts; validate rendered responsiveness,
+accessibility and build health on every major pass.
+
+## What changed from V1
+
+| V1 (WebForge, field guide) | V2 (Personal Learning Device) | Why |
+| --- | --- | --- |
+| Warm paper `#F4EFE4` with a 32px grid | Snow `#F7F8FB`, no texture | Paper read as "school"; snow lets color lead |
+| Fraunces serif + Nunito Sans | Bricolage Grotesque + Figtree + JetBrains Mono | Consumer technology, not an editorial field guide |
+| Hard offset "print" shadows, square corners | Soft lift, edge highlights, molded rounded keys | Tactile, not paper cut-outs |
+| Moss / volt / lavender / coral / sun | Eight named shell colors with ink/soft/key variants | Color as identity and navigation |
+| One lime active state for everything | A color per mode, a shell per room | Places you can recognize |
+| Mascot on a paper square | Mascot in a screen with a tone bezel | The companion lives in the device |
+
+Kept from V1: product before marketing, tangible citations, spatial mastery,
+the companion used sparingly and truthfully, recognizable provider sign-in,
+motion only for state or character.

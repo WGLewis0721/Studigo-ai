@@ -14,7 +14,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="appShell">
       <aside className="appRail">
         <Link className="miniWordmark" href="/app" aria-label="Studigo home">
-          <StudigoMascot size={40} mark />
+          <StudigoMascot size={36} mark />
+          <span className="wordmarkText">Studigo</span>
         </Link>
 
         <RoomRail rooms={rooms.map(({ id, title }) => ({ id, title }))} />

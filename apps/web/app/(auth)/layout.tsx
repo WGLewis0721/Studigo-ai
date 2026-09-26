@@ -14,6 +14,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </div>
       <aside className="authAside" aria-hidden="true">
         <div className="authAsideInner">
+          <StudigoMascot state="welcome" size={96} />
           <p className="authQuote">
             Your study guide, your textbook, your notes — one companion that answers from them and
             shows the receipts.

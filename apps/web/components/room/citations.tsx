@@ -21,7 +21,7 @@ export function CitationChips({ citations }: { citations: Citation[] }) {
     <div className="sourceStack">
       {citations.map((citation, index) => {
         const label = citation.pageLabel || "page";
-        const location = citation.pageNumber ? ` · ${label} ${citation.pageNumber}` : "";
+        const location = citation.pageNumber ? `${label} ${citation.pageNumber}` : "";
         const href = `/api/documents/download?documentId=${citation.documentId}&inline=1${
           citation.pageNumber ? `&page=${citation.pageNumber}` : ""
         }`;
@@ -36,8 +36,9 @@ export function CitationChips({ citations }: { citations: Citation[] }) {
             title={`Open ${citation.documentName}`}
           >
             <i>{citation.marker ?? index + 1}</i>
-            {citation.documentName}
-            {location}
+            <span className="sourceChipName">{citation.documentName}</span>
+            {location && <span className="sourceChipPage">{location}</span>}
+            <span className="sourceChipOpen" aria-hidden="true">↗</span>
           </a>
         );
       })}

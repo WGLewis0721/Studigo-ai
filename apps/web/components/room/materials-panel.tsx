@@ -14,6 +14,14 @@ type QueueItem = {
   message?: string;
 };
 
+const STATUS_LABELS: Record<StudyDocument["status"], string> = {
+  ready: "Ready",
+  processing: "Reading",
+  queued: "Queued",
+  uploaded: "Queued",
+  failed: "Needs attention"
+};
+
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -225,11 +233,18 @@ export function MaterialsPanel({
         )}
 
         {documents.map((document) => (
-          <li key={document.id} className={`documentRow status-${document.status}`}>
+          <li
+            key={document.id}
+            className={`documentRow status-${document.status}`}
+            data-source={document.source_type}
+          >
             <span className="documentBadge">{SOURCE_TYPE_LABELS[document.source_type]}</span>
             <div className="documentMeta">
               <strong>{document.name}</strong>
               <small>
+                <b className={`docStatus docStatus-${document.status}`}>
+                  {STATUS_LABELS[document.status]}
+                </b>
                 {formatSize(document.size_bytes)} · {statusCopy(document)}
               </small>
             </div>

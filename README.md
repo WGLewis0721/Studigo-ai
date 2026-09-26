@@ -99,7 +99,7 @@ Launch priority:
 
 The Next.js implementation should use Supabase's SSR/cookie pattern with an `/auth/callback` route. Provider credentials belong in Supabase Auth provider configuration, never in browser source code.
 
-The login experience should use the Studigo WebForge visual system around provider-recognizable sign-in controls. Keep Google/Apple/Microsoft buttons familiar and trustworthy rather than restyling them into generic product CTAs.
+The login experience should use the Studigo "Personal Learning Device" design system (`docs/DESIGN_SYSTEM.md`) around provider-recognizable sign-in controls. Keep Google/Apple/Microsoft buttons familiar and trustworthy rather than restyling them into generic product CTAs.
 
 See [`docs/AUTH.md`](docs/AUTH.md) for the canonical provider, callback, session, security, and first-login architecture.
 
@@ -121,7 +121,7 @@ docs/
   PRODUCT.md           product behavior and UX principles
   ARCHITECTURE.md      system boundaries and data flow
   AUTH.md              social OAuth, sessions, callback, auth UX/security
-  DESIGN_SYSTEM.md     WebForge visual language and UI guardrails
+  DESIGN_SYSTEM.md     "Personal Learning Device" visual system and UI guardrails
   VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
   ROADMAP.md           ordered engineering plan
   USER_TEST_CASES.md   next production user-test and release cases
