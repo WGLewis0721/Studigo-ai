@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
+import { StudigoMascot } from "@/components/studigo-mascot";
 
 const BLANK_MARKER = "____";
 
@@ -156,6 +157,7 @@ export function QuizPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
+        <StudigoMascot state="sources" size={80} />
         <h2>Quiz mode needs material to quiz you on.</h2>
         <p>Add and process a document, then Studigo writes questions only from what's in it.</p>
       </div>
@@ -280,7 +282,15 @@ export function QuizPanel({
                       : "F"
                     : String.fromCharCode(65 + choiceIndex)}
                 </i>
-                {choice}
+                <span>{choice}</span>
+                {result && choiceIndex === result.correctChoice && (
+                  <b className="choiceVerdict">
+                    {choiceIndex === selected ? "✓ Your answer" : "✓ Correct answer"}
+                  </b>
+                )}
+                {result && choiceIndex === selected && choiceIndex !== result.correctChoice && (
+                  <b className="choiceVerdict">✕ Your answer</b>
+                )}
               </button>
             );
           })}

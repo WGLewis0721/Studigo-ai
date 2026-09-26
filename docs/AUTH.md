@@ -30,7 +30,7 @@ Use a branded Studigo authentication shell with:
 - email fallback below a visible `or` divider
 - minimal legal/privacy copy below the form
 
-Provider buttons should follow the visual conventions expected by each provider. Do not over-style them into generic WebForge buttons or obscure provider identity.
+Provider buttons should follow the visual conventions expected by each provider. Do not over-style them into generic Studigo keys or obscure provider identity.
 
 Recommended default surface:
 
@@ -51,7 +51,7 @@ Recommended default surface:
    [ Continue with email     ]
 ```
 
-The surrounding page can use Studigo's WebForge design system; the provider buttons should prioritize familiarity, accessibility, and trust.
+The surrounding page can use Studigo's design system; the provider buttons should prioritize familiarity, accessibility, and trust.
 
 ## Web / PWA flow
 

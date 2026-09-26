@@ -1,6 +1,6 @@
 # Studigo next product layer
 
-This branch extends the integrated core app. It reuses topic extraction, pgvector retrieval, the AI provider in `packages/ai`, the existing question bank and grading, flashcards, earned mastery, source links, and the WebForge visual system.
+This branch extends the integrated core app. It reuses topic extraction, pgvector retrieval, the AI provider in `packages/ai`, the existing question bank and grading, flashcards, earned mastery, source links, and the Studigo visual system (`docs/DESIGN_SYSTEM.md`).
 
 ## New learner flows
 

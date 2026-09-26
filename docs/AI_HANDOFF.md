@@ -25,7 +25,7 @@ Already established:
 
 - Next.js/React primary client.
 - PWA installability scaffold.
-- Studigo WebForge V1 visual direction.
+- Studigo "Personal Learning Device" visual system (V2; replaced WebForge V1).
 - Supabase Auth/Postgres/Storage architecture.
 - Social auth decision: Google, Apple, Microsoft first; email fallback; Facebook later.
 - Private `study-materials` storage design.
@@ -66,7 +66,7 @@ Supabase Auth owns Studigo identity across web/PWA and future native shells. Do 
 Launch auth priority is Google -> Apple -> Microsoft -> email fallback. Facebook is later/optional. See `docs/AUTH.md`.
 
 ### 3. Auth UX is Studigo-branded, provider controls remain recognizable
-Use the WebForge visual language around login/onboarding, but keep Google/Apple/Microsoft buttons familiar, accessible, and compliant with provider branding expectations.
+Use the Studigo design system around login/onboarding, but keep Google/Apple/Microsoft buttons familiar, accessible, and compliant with provider branding expectations.
 
 ### 4. Uploaded material is the default knowledge boundary
 Do not quietly add web search or unrestricted model knowledge to grounded course answers.

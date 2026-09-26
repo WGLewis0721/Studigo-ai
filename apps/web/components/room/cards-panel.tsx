@@ -180,6 +180,7 @@ export function CardsPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
+        <StudigoMascot state="sources" size={80} />
         <h2>Flashcards come from your materials.</h2>
         <p>Add and process a document first, then Studigo pulls the terms worth drilling.</p>
       </div>
@@ -278,10 +279,19 @@ export function CardsPanel({
           className={`flashcard ${flipped ? "flashcardFlipped" : ""}`}
           type="button"
           onClick={() => setFlipped((value) => !value)}
-          aria-label={flipped ? "Show the question" : "Show the answer"}
         >
-          <span className="flashcardSide">{flipped ? card.back : card.front}</span>
-          {!flipped && <small>Tap to flip</small>}
+          <span className="srOnly">{flipped ? "Answer side. Press to show the question." : "Question side. Press to show the answer."}</span>
+          <span className="flashcardInner">
+            <span className="flashcardFace flashcardFront" aria-hidden={flipped}>
+              <small>FRONT</small>
+              <span className="flashcardSide">{card.front}</span>
+              <small>Tap to flip</small>
+            </span>
+            <span className="flashcardFace flashcardBack" aria-hidden={!flipped}>
+              <small>BACK</small>
+              <span className="flashcardSide">{card.back}</span>
+            </span>
+          </span>
         </button>
       )}
 

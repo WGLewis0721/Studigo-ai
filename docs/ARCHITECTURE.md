@@ -65,11 +65,11 @@ Ingestion (implemented)
 - Next.js App Router.
 - Responsive by default.
 - PWA manifest + service worker scaffold.
-- WebForge V1 visual system is the current design direction.
+- The "Personal Learning Device" design system (V2, `docs/DESIGN_SYSTEM.md`) is the current design direction; it replaced WebForge V1.
 - Do not put provider SDK secrets or privileged credentials in browser code.
 - UI should consume internal API routes or a future dedicated API service.
 
-Studigo should feel like a **living study field guide with a companion inside it**, not a generic education SaaS dashboard. Authentication, onboarding, Study Rooms, document management, tutoring, and mastery surfaces should all evolve from the same design system in `docs/DESIGN_SYSTEM.md`.
+Studigo should feel like a **personal learning device with a companion living inside it** — colorful, tactile and modern — not a generic education SaaS dashboard. Authentication, onboarding, Study Rooms, document management, tutoring, and mastery surfaces should all evolve from the same design system in `docs/DESIGN_SYSTEM.md`.
 
 ## Authentication and identity
 
@@ -108,7 +108,7 @@ Provider credentials belong in Supabase Auth provider configuration, not in brow
 
 ### Auth UI direction
 
-The surrounding login/onboarding experience should use the Studigo WebForge system: warm paper surfaces, strong editorial hierarchy, limited companion use, and clear study-oriented copy.
+The surrounding login/onboarding experience should use the Studigo design system: calm snow surfaces, a single colored polycarbonate panel, strong hierarchy, limited companion use, and clear study-oriented copy.
 
 The provider buttons themselves should remain immediately recognizable and trustworthy. Do not turn Google/Apple/Microsoft sign-in controls into stylized generic product CTAs that obscure the provider identity.
 

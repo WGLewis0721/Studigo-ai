@@ -21,7 +21,7 @@ Do not point Vercel at the repository root as a generic Next.js project. The roo
 
 ## First deployment goal
 
-The current homepage is intentionally renderable without Supabase or OpenAI credentials, so the WebForge frontend can be deployed and reviewed before backend configuration.
+The current homepage is intentionally renderable without Supabase or OpenAI credentials, so the frontend can be deployed and reviewed before backend configuration.
 
 A successful frontend deployment should make `/` publicly viewable and should also expose:
 
@@ -69,7 +69,7 @@ Security rules:
 
 After Vercel reports `Ready`:
 
-1. Open the production/preview URL and confirm the Studigo WebForge homepage renders.
+1. Open the production/preview URL and confirm the Studigo homepage renders.
 2. Open `/api/health` and confirm an HTTP 200 response.
 3. Confirm the Studigo companion, Study Room preview, mastery trail, Ask Studigo panel, citations, source-priority section, and responsive styles render correctly.
 4. Test at desktop and mobile widths.

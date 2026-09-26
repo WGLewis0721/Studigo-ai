@@ -17,19 +17,25 @@ import { StudyPlanPanel } from "./study-plan-panel";
 import { rankWeakAreas, summarizeCalibration, buildStudyPlan, type PracticeEvidence, type PlanEvent, type StudyAction } from "@/lib/study-planning";
 import { RoomSettings } from "./room-settings";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
+import { ModeGlyph } from "@/components/mode-glyph";
+import { roomShellFor } from "@/lib/room-shell";
 
+// Each mode's id doubles as its color tone (see [data-tone] in globals.css):
+// Learn blueberry, Ask/Materials teal, Coach/Cram tangerine, Quiz dandelion,
+// Flashcards grape, Practice test graphite, Mastery kiwi, Weak areas berry,
+// Study plan indigo.
 const MODES = [
-  { id: "materials", icon: "◫", name: "Materials", copy: "Everything this room knows." },
-  { id: "ask", icon: "?", name: "Ask", copy: "Explain anything from your materials." },
-  { id: "coach", icon: "◉", name: "Coach", copy: "Practice with the right method." },
-  { id: "learn", icon: "✦", name: "Learn", copy: "Walk the guide in the right order." },
-  { id: "quiz", icon: "✓", name: "Quiz", copy: "Practice exactly what is testable." },
-  { id: "cards", icon: "▤", name: "Flashcards", copy: "Drill the terms until they stick." },
-  { id: "weak", icon: "△", name: "Weak areas", copy: "Where to focus next." },
-  { id: "test", icon: "▤", name: "Practice test", copy: "Rehearse the whole test." },
-  { id: "plan", icon: "▦", name: "Study plan", copy: "A little each day." },
-  { id: "cram", icon: "◷", name: "Cram mode", copy: "Make limited time count." },
-  { id: "mastery", icon: "↗", name: "Mastery", copy: "Find weak spots before test day." }
+  { id: "materials", name: "Materials", copy: "Everything this room knows." },
+  { id: "ask", name: "Ask", copy: "Explain anything from your materials." },
+  { id: "coach", name: "Coach", copy: "Practice with the right method." },
+  { id: "learn", name: "Learn", copy: "Walk the guide in the right order." },
+  { id: "quiz", name: "Quiz", copy: "Practice exactly what is testable." },
+  { id: "cards", name: "Flashcards", copy: "Drill the terms until they stick." },
+  { id: "weak", name: "Weak areas", copy: "Where to focus next." },
+  { id: "test", name: "Practice test", copy: "Rehearse the whole test." },
+  { id: "plan", name: "Study plan", copy: "A little each day." },
+  { id: "cram", name: "Cram mode", copy: "Make limited time count." },
+  { id: "mastery", name: "Mastery", copy: "Find weak spots before test day." }
 ] as const;
 
 type Mode = (typeof MODES)[number]["id"];
@@ -84,14 +90,17 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomWorkspace">
+    <div className="roomWorkspace" data-tone={mode}>
       <header className="workspaceTopbar">
-        <div>
-          <span className="crumb">
-            {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||
-              "STUDY ROOM"}
-          </span>
-          <strong>{room.title}</strong>
+        <div className="workspaceTitle">
+          <i className="roomGem roomGemLarge" data-tone={roomShellFor(room.id)} aria-hidden="true" />
+          <div>
+            <span className="crumb">
+              {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||
+                "STUDY ROOM"}
+            </span>
+            <strong>{room.title}</strong>
+          </div>
         </div>
         <div className="topbarRight">
           <span className="sourceCount">
@@ -118,7 +127,7 @@ export function RoomWorkspace({
           {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}>{group.name}</button>)}
         </nav>
         <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
-          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span aria-hidden="true">{item.icon}</span>{item.name}</button>)}
+          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap"><ModeGlyph name={item.id} /></span>{item.name}</button>)}
         </nav>
       </div>
 
