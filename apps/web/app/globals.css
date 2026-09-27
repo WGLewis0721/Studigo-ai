@@ -2779,8 +2779,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 700px) {
   .studySubnav button { background: transparent; box-shadow: none; color: var(--ink-2); }
   .studySubnav button[aria-current] { color: var(--ink); }
-  .studySubnav .keycap { width: 22px; height: 22px; border-radius: 7px; background: none; box-shadow: none; }
-  .studySubnav .keycap .modeGlyph { width: 16px; height: 16px; }
+  .studySubnav .keycap { width: 24px; height: 24px; border-radius: 8px; background: none; box-shadow: none; }
+  .studySubnav .keycap .modeGlyph { width: 18px; height: 18px; }
   .studySubnav button[aria-current] .keycap { background-color: var(--tone-key); color: var(--tone-on); }
   .studyGroups { justify-self: stretch; max-width: none; }
   .studyGroups button[aria-current]::before { content: none; }
