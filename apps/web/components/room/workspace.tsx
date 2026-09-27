@@ -133,7 +133,7 @@ export function RoomWorkspace({
           {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}><span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span><span>{group.name}</span></button>)}
         </nav>
         <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
-          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap studySubnavIcon"><ModeGlyph name={item.id} /></span><span className="studySubnavLabel">{item.name}</span></button>)}
+          {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap studySubnavIcon"><ModeGlyph name={item.id} size={20} /></span><span className="studySubnavLabel">{item.name}</span></button>)}
         </nav>
       </div>
 
