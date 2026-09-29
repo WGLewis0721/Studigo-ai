@@ -1,2 +1,3 @@
 # dist/assets and dist/vendor are committed so the static builds play from GitHub Pages.
 # `node prepare.mjs` still regenerates them byte-for-byte from runtime/part-*.txt.
+art-source/generated/
