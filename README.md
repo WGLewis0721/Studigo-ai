@@ -6,6 +6,15 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 > Give Studigo what you are supposed to learn and the resources you are supposed to learn it from. Studigo turns them into a study companion.
 
+## Play the math game (beta)
+
+**▶ [Play Moon Keep II](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/)**. It's a multiplication Metroidvania prototype and the current golden build.
+
+- The previous golden build is [Moon Keep](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/).
+- It plays in the browser with a keyboard or touch, and ↺ in the header restarts a run.
+- It's a standalone prototype served from GitHub Pages, not part of the Studigo app.
+- The source, rules and tests are in [`prototypes/moon-road/`](prototypes/moon-road/). Start with [POC-X.md](prototypes/moon-road/POC-X.md).
+
 ## Status
 
 The core student loop — **sign up → create a Study Room → upload materials →

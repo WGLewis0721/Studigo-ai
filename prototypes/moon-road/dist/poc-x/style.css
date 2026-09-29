@@ -14,7 +14,7 @@ header{position:absolute;left:22px;right:22px;top:14px;display:flex;gap:14px;ali
 .brand b{display:block;color:#dce8d2;font-size:16px;margin-top:4px;letter-spacing:3px}
 #hearts{font-size:22px;color:var(--heart);letter-spacing:3px;margin-left:10px}
 #shield{font-size:18px;color:#8ff5e0;letter-spacing:2px;text-shadow:0 0 8px #3fd6b866,0 2px 2px #000}
-#streak{font-size:12px;letter-spacing:2px;color:#2a1a06;background:#ffe08a;border-radius:4px;padding:3px 7px;box-shadow:0 0 12px #ffe08a88;animation:pop .3s ease-out}
+#streak{position:absolute;left:210px;top:44px;font-size:12px;letter-spacing:2px;color:#2a1a06;background:#ffe08a;border-radius:4px;padding:3px 7px;box-shadow:0 0 12px #ffe08a88;animation:pop .3s ease-out}
 #minimap{margin-left:auto;width:150px;height:56px;background:#07101cc8;border:1px solid #3f5870;border-radius:4px}
 header button{pointer-events:auto;width:45px;height:43px;font-size:19px}
 

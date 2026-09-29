@@ -9,7 +9,8 @@ test('room count and dimensions', () => {
   assert.equal(rooms.length, ROOM_COUNT);
   for (const r of rooms) {
     assert.equal(r.rows.length, r.h * SCREEN_H, r.id);
-    for (const row of r.rows) assert.equal(row.length, r.w * SCREEN_W, r.id);
+    assert.ok(r.tw >= r.w * SCREEN_W && r.tw <= r.w * SCREEN_W * 1.25, `${r.id} width`);
+    for (const row of r.rows) assert.equal(row.length, r.tw, r.id);
   }
 });
 
@@ -37,7 +38,7 @@ test('doors are carved and reciprocal', () => {
 
 test('barriers referenced by doors and items exist', () => {
   for (const r of rooms) for (const x of [...r.doors, ...r.entities]) {
-    if (x.via) assert.ok(r.entities.some(e => e.id === x.via), `${r.id} via ${x.via}`);
+    for (const v of [].concat(x.via || [])) assert.ok(r.entities.some(e => e.id === v), `${r.id} via ${v}`);
   }
 });
 
@@ -65,17 +66,36 @@ test('whole slice completes in order', () => {
   assert.deepEqual([...s.owned].sort(), [1, 2, 3, 4, 5]);
 });
 
-test('x4 opens the Clock Tower; x5 opens the trial', () => {
+test('x4 opens the Clock Tower; x5 opens the Training Hall', () => {
   const noX4 = solve({without: ['orb-4']});
   assert.ok(!noX4.rooms.has('M') && !noX4.have.has('w5'));
   const noX5 = solve({without: ['w5']});
   assert.ok(noX5.rooms.has('P') && !noX5.rooms.has('Q') && !noX5.have.has('shieldplus'));
 });
 
-test('the Clockwork Warden is beatable before x5; the trial has 25% of its health', () => {
+test('the Clockwork Warden is beatable before x5', () => {
   const plates = ROOMS.P.entities.find(e => e.id === 'clock').plates;
   assert.ok(plates.every(p => [1, 2, 3, 4].some(w => (w === 1 ? p.a === 1 || p.b === 1 : w === p.a || w === p.b))));
-  const total = plates.reduce((n, p) => n + p.a * p.b, 0);
-  const trial = ROOMS.Q.entities.find(e => e.id === 'trial');
-  assert.equal(trial.hp, Math.round(total / 4));
+});
+
+test('the Training Hall is 20% wider with a save shrine, the dummy and the shield upgrade', () => {
+  const q = ROOMS.Q;
+  assert.equal(q.tw, 36);
+  for (const t of ['shrine', 'dummy']) assert.ok(q.entities.some(e => e.type === t), t);
+  assert.ok(q.entities.some(e => e.id === 'shieldplus'));
+  assert.ok(!q.entities.some(e => e.type === 'boss'), 'no boss fight in the Training Hall');
+});
+
+test('Rune Gate needs one shot of each power beam; all four runes light the portal', () => {
+  const gates = ROOMS.R.entities.filter(e => e.type === 'seal');
+  assert.deepEqual(gates.map(g => g.a * g.b), [2, 3, 4, 5]);
+  const runes = ROOMS.S.entities.filter(e => e.type === 'rune');
+  assert.deepEqual(runes.map(r => r.n), [2, 3, 4, 5]);
+  const portal = ROOMS.S.entities.find(e => e.type === 'finale');
+  assert.deepEqual(portal.needs, runes.map(r => r.id));
+  assert.ok(!Object.values(ROOMS).some(r => r.id !== 'S' && r.entities.some(e => e.type === 'finale')), 'only one portal');
+  const s = solve();
+  assert.ok(runes.every(r => s.have.has(r.id)), 'runes charge');
+  const noX5 = solve({without: ['w5']});
+  assert.ok(!noX5.rooms.has('S'), 'x5 gate blocks the sanctum without x5');
 });

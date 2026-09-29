@@ -1,5 +1,5 @@
 import {TILE} from './physics.js';
-import {canDamage, damageFor} from './rules.js';
+import {canDamage} from './rules.js';
 import {COLOR, CSS, overlaps, item, pickup} from './actors.js';
 import {ART} from './art/art.js';
 
@@ -281,94 +281,8 @@ export function clockWarden(def, S) {
   return boss;
 }
 
-// Pendulum Trial mini-boss: skeleton rules on a single health pool. The problem hovers above it and
-// reshuffles through 1–5; while a 5 shows it glows and a ×5 hit counts double.
-export function pendulumTrial(def, S) {
-  const F = ART.sentinel, pivot = {x: 480, y: 70}, len = 250;
-  const sprite = S.add.sprite(480, 320, 'sentinel', 1).setDepth(4);
-  const badge = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 22, fontStyle: 'bold', color: '#fff3d6', stroke: '#081422', strokeThickness: 5}).setOrigin(0.5).setDepth(6);
-  const hint = S.add.text(0, 0, '×5 = DOUBLE', {fontFamily: 'monospace', fontSize: 13, fontStyle: 'bold', color: '#ffb3c1', stroke: '#081422', strokeThickness: 4}).setOrigin(0.5).setDepth(6);
-  const max = def.hp;
-  const t0 = {x: 480, y: 320, hp: max, hit: 0, frame: 1, clock: 0, since: 0, shownFor: 0, bag: [], dying: 0};
-  let prob = {a: 1, b: 2};
-  const glowing = () => prob.a === 5 || prob.b === 5;
-  const reshuffle = () => {
-    if (!t0.bag.length) t0.bag = [1, 2, 3, 4, 5].sort(() => Math.random() - 0.5);
-    let a = t0.bag.pop();
-    if (a === prob.a && t0.bag.length) { t0.bag.unshift(a); a = t0.bag.pop(); }
-    const bs = [2, 3, 4, 6].filter(n => n !== a);
-    prob = {a, b: bs[Math.floor(Math.random() * bs.length)]};
-    t0.since = 0;
-    t0.shownFor = 0;
-    S.sfx(glowing() ? 1320 : 880, 0.18);
-    S.burst(t0.x, t0.y, glowing() ? COLOR[5] : 0xffe2a0, 20);
-    S.log('trial-shuffle', {a: prob.a, b: prob.b});
-  };
-  const target = {
-    target: true, alive: true,
-    rect: () => ({x: t0.x - 48, y: t0.y - 70, w: 96, h: 130}),
-    math: () => (t0.dying ? NONE : {kind: 'trial', a: prob.a, b: prob.b}),
-    applyDamage: w => {
-      const m = {kind: 'trial', a: prob.a, b: prob.b}, dmg = damageFor(m, w);
-      t0.hp = Math.max(0, t0.hp - dmg);
-      t0.hit = 0.18;
-      t0.since += dmg;
-      S.float(t0.x + (Math.random() < 0.5 ? -1 : 1) * 60, t0.y - 40, dmg > w ? `−${dmg} ×2!` : '−' + dmg, CSS[w], dmg > w ? 28 : 24);
-      S.burst(t0.x, t0.y, COLOR[w], dmg > w ? 40 : 14);
-      S.sfx(dmg > w ? 1500 : 160, 0.12);
-      S.log('trial-hit', {a: m.a, b: m.b, weapon: w, damage: dmg, hp: t0.hp});
-      if (!t0.hp) { t0.dying = 0.001; S.sfx(80, 0.8); S.cameras.main.shake(200, 0.005); }
-    },
-  };
-  const boss = {
-    name: def.name, id: def.id, kind: def.kind, alive: true, index: 0,
-    get plates() { return [{a: prob.a, b: prob.b, hp: t0.hp, max}]; },
-    get problem() { return {...prob, glowing: glowing()}; },
-    targets: () => (t0.dying ? [] : [target]),
-    update(dt) {
-      t0.hit = Math.max(0, t0.hit - dt);
-      if (t0.dying) {
-        t0.dying += dt;
-        t0.y += 120 * dt;
-        if (t0.dying > 1.2 && boss.alive) { boss.alive = false; reward(def, S); }
-        return;
-      }
-      t0.clock += dt;
-      t0.shownFor += dt;
-      const ang = Math.sin(t0.clock * 0.85) * 0.95;
-      t0.x = pivot.x + Math.sin(ang) * len * 1.25;
-      t0.y = pivot.y + Math.cos(ang) * len;
-      t0.frame = t0.hit ? 2 : Math.abs(ang) > 0.6 ? 0 : 1;
-      // A 5 only shows briefly; other problems hold about 2.6 s or until 4 damage lands.
-      if (t0.shownFor > (glowing() ? 1.8 : 2.6) || t0.since >= 4) reshuffle();
-      if (overlaps(target.rect(), S.playerRect())) S.hurtPlayer(t0.x);
-    },
-    draw(g, t) {
-      if (!boss.alive) { sprite.setVisible(false); badge.setVisible(false); hint.setVisible(false); return; }
-      if (!t0.dying) { g.lineStyle(3, 0x8a6a3a, 0.8); g.lineBetween(pivot.x, pivot.y, t0.x, t0.y - 40); }
-      g.fillStyle(0xc89a52); g.fillCircle(pivot.x, pivot.y, 8);
-      if (glowing() && !t0.dying) {
-        g.fillStyle(COLOR[5], 0.16 + 0.1 * Math.sin(t * 12)); g.fillCircle(t0.x, t0.y, 86);
-        g.lineStyle(3, COLOR[5], 0.8); g.strokeCircle(t0.x, t0.y, 78 + Math.sin(t * 12) * 4);
-      }
-      sprite.setFrame(t0.frame).setPosition(t0.x, t0.y).setFlipX(S.p.x < t0.x)
-        .setRotation(t0.dying ? t0.dying * 2 : 0).setAlpha(t0.dying ? Math.max(0, 1 - t0.dying) : 1)
-        .setTint(t0.hit ? 0xfff0d8 : glowing() ? 0xffd0dc : 0xffffff);
-      badge.setVisible(!t0.dying).setPosition(t0.x, t0.y - 100 + Math.sin(t * 2.4) * 2).setText(`${prob.a} · ${prob.b}`)
-        .setColor(glowing() ? '#ffb3c1' : '#fff3d6').setScale(glowing() ? 1.15 : 1);
-      hint.setVisible(glowing() && !t0.dying).setPosition(t0.x, t0.y - 126);
-      if (t0.dying) return;
-      g.fillStyle(0x0b1322); g.fillRect(t0.x - 50, t0.y - 84, 100, 8);
-      g.fillStyle(0xe5b68a); g.fillRect(t0.x - 49, t0.y - 83, 98 * t0.hp / max, 6);
-    },
-    destroy() { sprite.destroy(); badge.destroy(); hint.destroy(); },
-  };
-  return boss;
-}
-
 export function makeBoss(def, S) {
   if (def.kind === 'twin') return twinWarden(def, S);
   if (def.kind === 'clock') return clockWarden(def, S);
-  if (def.kind === 'trial') return pendulumTrial(def, S);
   return trineGuardian(def, S);
 }

@@ -4,7 +4,7 @@ import {canDamage, reflectText, fact, choices} from './rules.js';
 import * as P from './progress.js';
 import * as UI from './ui.js';
 import {input, clearInput} from './ui.js';
-import {build, COLOR, overlaps} from './actors.js';
+import {build, COLOR, overlaps, orb, pickup} from './actors.js';
 import {makeBoss} from './boss.js';
 import {ART} from './art/art.js';
 
@@ -135,7 +135,7 @@ export class MoonKeep extends Phaser.Scene {
     this.nearOrb = null;
     const room = this.room = ROOMS[id];
     this.grid = makeGrid(room.rows);
-    this.W = room.w * 960;
+    this.W = room.rows[0].length * TILE;
     this.H = room.rows.length * TILE;
     this.zone = ZONES[room.zone];
     this.bg.setTexture(this.zone.bg).setDisplaySize(1152, 648).setTint(this.zone.bgTint);
@@ -146,7 +146,9 @@ export class MoonKeep extends Phaser.Scene {
     if (def && !this.run.items.has('boss:' + def.id)) {
       this.boss = makeBoss(def, this);
       this.bossIntro = 1.5;
-      this.banner(def.name, def.kind === 'trial' ? 'Match the numbers as they change · ×5 on a 5 hits double' : 'Hit the plate numbers on its core');
+      // Above the left platform in every arena: reachable from the platform or floor, away from where bosses roam.
+      this.actors.push(orb({id: 'bossorb-' + def.id, family: 2, bossOrb: true}, this, 224, 270));
+      this.banner(def.name, 'Hit the plate numbers on its core · ✚ orb refills your beams');
       this.log('boss-start', {id: def.id});
     }
     const p = this.p;
@@ -279,11 +281,11 @@ export class MoonKeep extends Phaser.Scene {
   openOrb(o) {
     if (this.mode !== 'play' || !o.ready() || Math.abs(this.p.x - o.x) > 150) return;
     const offset = [...o.id].reduce((n, c) => n + c.charCodeAt(0), 0);
-    const f = o.family, k = fact(f, P.orbAttempt(this.run, o.id) + offset);
+    const f = o.refillAll ? this.bossOrbFamily() : o.family, k = fact(f, P.orbAttempt(this.run, o.id) + offset);
     this.mode = 'question';
     clearInput();
-    this.question = {orb: o, k};
-    const reward = o.unlock ? `UNLOCK ×${f} BEAM` : `REFILL ×${f} · ${this.run.cap[f]} ROUNDS`;
+    this.question = {orb: o, k, family: f};
+    const reward = o.refillAll ? 'REFILL EVERY BEAM · ♥ IF HURT' : o.unlock ? `UNLOCK ×${f} BEAM` : `REFILL ×${f} · ${this.run.cap[f]} ROUNDS`;
     UI.question({family: f, k, values: choices(f, k), reward}, v => this.answer(v));
     this.sfx(780, 0.16);
     this.log('question', {id: o.id, family: f, k});
@@ -292,7 +294,7 @@ export class MoonKeep extends Phaser.Scene {
   answer(v) {
     const q = this.question;
     if (this.mode !== 'question' || !q) return;
-    const o = q.orb, f = o.family, correct = v === f * q.k;
+    const o = q.orb, f = q.family, correct = v === f * q.k;
     P.submitOrb(this.run, o.id);
     this.question = null;
     UI.show('question', false);
@@ -300,14 +302,20 @@ export class MoonKeep extends Phaser.Scene {
     this.fireCD = 0.3;
     clearInput();
     if (correct) {
-      if (o.unlock) {
+      if (o.refillAll) {
+        for (const n of [2, 3, 4, 5]) P.refill(this.run, n);
+        const hurt = this.run.hearts < this.run.maxHearts;
+        if (hurt) this.spawn(pickup({kind: 'heart'}, this.p.x + (this.p.x < 480 ? 50 : -50), this.p.y - 120, this));
+        this.say(hurt ? 'BEAMS REFILLED · ♥' : 'BEAMS REFILLED', 2);
+      } else if (o.unlock) {
         P.collect(this.run, {id: o.id, kind: 'weapon', family: f});
         this.banner(`×${f} BEAM`, `PRESS ${f} OR TAP THE BEAM BUTTON`);
+        this.weapon = f;
       } else {
         P.refill(this.run, f);
         this.say(`×${f} · ${this.run.ammo[f]} ROUNDS!`, 2);
+        this.weapon = f;
       }
-      this.weapon = f;
       this.burst(o.x, o.y, COLOR[f], 60);
       this.sfx(1046, 0.4);
       this.cameras.main.flash(130, 145, 180, 135);
@@ -318,6 +326,15 @@ export class MoonKeep extends Phaser.Scene {
       this.say('Keep going!', 1.2);
       this.log('wrong', {id: o.id, family: f, k: q.k});
     }
+  }
+
+  // The boss orb asks about the beam the current plate needs (or any owned beam), defaulting to ×2.
+  bossOrbFamily() {
+    const p = this.boss?.plates?.[this.boss.index];
+    const fits = p ? [p.a, p.b].filter(n => n > 1 && this.run.owned[n]) : [];
+    if (fits.length) return Math.max(...fits);
+    const owned = [2, 3, 4, 5].filter(n => this.run.owned[n]);
+    return owned.length ? owned.sort((m, n) => this.run.ammo[m] / this.run.cap[m] - this.run.ammo[n] / this.run.cap[n])[0] : 2;
   }
 
   leaveQuestion() {
@@ -481,7 +498,7 @@ export class MoonKeep extends Phaser.Scene {
       if (dx * p.face <= 0 || Math.abs(dx) > 620 || Math.abs(c.y - oy) > 230) continue;
       // Prefer targets this beam can hurt; a mismatched one is only aimed at up close, never mid-boss.
       const fits = canDamage(t.math(), this.weapon);
-      if (!fits && (Math.abs(dx) > 300 || (this.boss?.alive && this.boss.kind !== 'trial'))) continue;
+      if (!fits && (Math.abs(dx) > 300 || this.boss?.alive)) continue;
       const d = Math.hypot(dx, c.y - oy) + (fits ? 0 : 2000);
       if (d < bestD) { bestD = d; best = t; }
     }
@@ -556,7 +573,11 @@ export class MoonKeep extends Phaser.Scene {
       s.y += s.vy * dt;
       s.life -= dt;
       if (this.grid.at(Math.floor(s.x / TILE), Math.floor(s.y / TILE)) === '#') { s.life = 0; this.burst(s.x, s.y, s.color, 6); continue; }
-      if (overlaps({x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2}, pr)) { s.life = 0; this.hurtPlayer(s.x); }
+      if (overlaps({x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2}, pr)) {
+        s.life = 0;
+        if (s.harmless) { this.float(this.p.x, this.p.y - 100, '0', '#d8e2ec', 20); this.burst(s.x, s.y, s.color, 8); this.sfx(900, 0.05); this.log('harmless-hit'); }
+        else this.hurtPlayer(s.x);
+      }
     }
     this.enemyShots = this.enemyShots.filter(s => s.life > 0);
   }
@@ -645,7 +666,7 @@ export class MoonKeep extends Phaser.Scene {
       hearts: S.run.hearts, maxHearts: S.run.maxHearts, weapon: S.weapon, owned: {...S.run.owned}, ammo: {...S.run.ammo}, cap: {...S.run.cap},
       boots: S.run.boots, shield: {...S.run.shield}, match: {...S.run.match}, items: [...S.run.items], visited: [...S.run.visited], mapPercent: P.mapPercent(S.run, ROOM_COUNT), active: +S.run.active.toFixed(3),
       nearOrb: S.nearOrb ? S.nearOrb.id : null,
-      question: S.question ? {family: S.question.orb.family, k: S.question.k} : null,
+      question: S.question ? {family: S.question.family, k: S.question.k} : null,
       boss: S.boss ? {id: S.boss.id, kind: S.boss.kind, alive: S.boss.alive, index: S.boss.index, plates: S.boss.plates.map(p => ({a: p.a, b: p.b, hp: p.hp})), problem: S.boss.problem || null} : null,
       hazards: S.enemyShots.map(h => ({x: Math.round(h.x), y: Math.round(h.y), vx: Math.round(h.vx), wave: !!h.wave})),
       targets: S.targets().map(t => ({...center(t.rect()), ...t.math()})),

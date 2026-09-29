@@ -1,11 +1,11 @@
 // Moon Keep + Clock Tower room data (POC X). Coordinates are tiles (32 px). `ty` on actors is the surface row they stand on.
-export const SCREEN_W = 30, SCREEN_H = 17, ROOM_COUNT = 17;
+export const SCREEN_W = 30, SCREEN_H = 17, ROOM_COUNT = 18;
 
-function room(id, name, zone, gx, gy, w, h) {
-  const W = w * SCREEN_W, H = h * SCREEN_H;
+function room(id, name, zone, gx, gy, w, h, tw = w * SCREEN_W) {
+  const W = tw, H = h * SCREEN_H;
   const grid = Array.from({length: H}, (_, y) =>
     Array.from({length: W}, (_, x) => (x === 0 || x === W - 1 || y === 0 || y >= H - 2 ? '#' : '.')));
-  return {id, name, zone, gx, gy, w, h, grid, doors: [], entities: []};
+  return {id, name, zone, gx, gy, w, h, tw, grid, doors: [], entities: []};
 }
 
 function fill(r, x, y, w, h, ch = '#') {
@@ -15,7 +15,7 @@ function fill(r, x, y, w, h, ch = '#') {
 const plat = (r, x, y, len) => fill(r, x, y, len, 1, '=');
 
 export function doorSpan(r, d) {
-  const W = r.w * SCREEN_W, base = d.row * SCREEN_H;
+  const W = r.tw, base = d.row * SCREEN_H;
   return {tx: d.side === 'W' ? 0 : W - 1, ty0: base + 11, ty1: base + 14, ledge: base + 15};
 }
 
@@ -54,8 +54,10 @@ door(C, 'E', 3, 'D');
 door(C, 'E', 0, 'H', {via: 'seal-h', needs: ['boots']});
 door(C, 'W', 0, 'M', {via: 'seal-5', needs: ['boots']});
 door(C, 'W', 1, 'K', {via: 'block-9', needs: ['boots']});
+door(C, 'E', 1, 'R', {needs: ['boots']});
 for (const [x, y] of [[10, 63], [17, 60], [10, 57], [17, 54], [7, 51]]) plat(C, x, y, 6);
 for (const [x, y] of [[9, 44], [16, 39], [7, 34], [14, 29], [8, 24], [18, 24], [7, 19], [16, 19]]) plat(C, x, y, 6);
+plat(C, 21, 36, 5);
 add(C,
   {type: 'skeleton', tx: 21, ty: 66, a: 1, b: 4, range: 3},
   {type: 'orb', id: 'orb-C2', family: 2, tx: 3, ty: 49},
@@ -121,7 +123,6 @@ add(I, {type: 'shrine', id: 'shrine-I', tx: 14, ty: 15, orbs: [2, 3]});
 
 const J = room('J', 'Trine Guardian', 'stars', 7, 1, 1, 1);
 door(J, 'W', 0, 'I');
-door(J, 'E', 0, 'L');
 plat(J, 4, 11, 5);
 plat(J, 21, 11, 5);
 add(J, {type: 'boss', id: 'trine', kind: 'trine', name: 'TRINE GUARDIAN',
@@ -135,9 +136,26 @@ add(K,
   {type: 'orb', id: 'orb-4', family: 4, unlock: true, tx: 10, ty: 14},
   {type: 'item', id: 'tank2', kind: 'tank', tx: 20, ty: 15});
 
-const L = room('L', 'Moon Vault', 'vault', 8, 1, 1, 1);
-door(L, 'W', 0, 'J');
-add(L, {type: 'finale', tx: 18, ty: 15});
+// ---------- Rune Gate and Rune Sanctum (bonus area off the Central Shaft), row 2 ----------
+// A low corridor with one gate per power beam: one shot of the matching beam opens each.
+const R = room('R', 'Rune Gate', 'vault', 4, 2, 1, 1);
+door(R, 'W', 0, 'C');
+door(R, 'E', 0, 'S', {via: ['gate-2', 'gate-3', 'gate-4', 'gate-5']});
+fill(R, 1, 1, 28, 10);
+add(R,
+  // A refill-all orb at the entrance, so arriving with empty beams is never a dead end.
+  {type: 'orb', id: 'orb-R', family: 2, refillAll: true, tx: 3, ty: 15},
+  ...[2, 3, 4, 5].map((n, i) => ({type: 'seal', id: `gate-${n}`, tx: 7 + i * 5, ty: 11, a: n, b: 1, label: `×${n}`})));
+
+// Four runes, one per power beam, charge by skip counting with their own beam; all four open the portal.
+const S = room('S', 'Rune Sanctum', 'vault', 5, 2, 2, 1);
+door(S, 'W', 0, 'R');
+plat(S, 20, 11, 5);
+plat(S, 35, 11, 5);
+add(S,
+  {type: 'shrine', id: 'shrine-S', tx: 8, ty: 15, orbs: [2, 3, 4, 5]},
+  ...[2, 3, 4, 5].map((n, i) => ({type: 'rune', id: `rune-${n}`, n, product: n * 5, tx: 16 + i * 9, ty: 7})),
+  {type: 'finale', tx: 55, ty: 15, needs: ['rune-2', 'rune-3', 'rune-4', 'rune-5']});
 
 // ---------- Clock Tower (x5 zone), row 0 ----------
 const M = room('M', 'Clock Gate', 'clock', 2, 0, 1, 2);
@@ -180,13 +198,18 @@ add(P,
     rewards: [{id: 'w5', kind: 'weapon', family: 5}, {id: 'shield', kind: 'shield'}]},
   {type: 'seal', id: 'seal-q', tx: 28, ty: 11, a: 5, b: 5});
 
-// Trial mini-boss: skeleton rules, one health pool (25% of the Clockwork Warden), problem reshuffles.
-const Q = room('Q', 'Pendulum Trial', 'clock', 8, 0, 1, 1);
+// Training Hall: a harmless practice dummy with monster rules, a save shrine and the +1 shield charge.
+const Q = room('Q', 'Training Hall', 'clock', 8, 0, 1, 1, 36);
 door(Q, 'W', 0, 'P');
-add(Q, {type: 'boss', id: 'trial', kind: 'trial', name: 'PENDULUM TRIAL', hp: 20,
-  rewards: [{id: 'shieldplus', kind: 'shieldplus'}]});
+plat(Q, 8, 11, 5);
+plat(Q, 23, 11, 5);
+fill(Q, 30, 14, 4, 1);
+add(Q,
+  {type: 'shrine', id: 'shrine-Q', tx: 4, ty: 15, orbs: []},
+  {type: 'dummy', id: 'dummy', tx: 18},
+  {type: 'item', id: 'shieldplus', kind: 'shieldplus', tx: 31, ty: 14});
 
-export const ROOMS = Object.fromEntries([A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q].map(r => {
+export const ROOMS = Object.fromEntries([A, B, C, D, E, F, G, H, I, J, K, M, N, O, P, Q, R, S].map(r => {
   const {grid, ...rest} = r;
   return [r.id, {...rest, rows: grid.map(row => row.join(''))}];
 }));
