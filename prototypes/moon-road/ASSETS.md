@@ -20,3 +20,7 @@ Web Audio effects are synthesized locally. Fonts are device monospace fonts; no 
 ## POC VIII skeleton reference
 
 The Graveyard skeleton body is reused from William's supplied Higgsfield prototype, `https://studigo-graveyard-123.higgsfield.app`, via its authorized source checkout (`app/public/client.js`, `drawSkeleton`, inspected 2026-09-29). The existing procedural skull, ribs, limbs and belt are rendered into a local Phaser canvas texture; number overlays and combat effects remain separate. No third-party pack license is claimed. See POC-VIII.md for provenance and preservation boundaries. All shared generated images remain unchanged.
+
+## Reuse and transfer
+
+See `ART_HANDOFF.md` for frame dimensions, animation ordering, generation prompt templates and Claude instructions. Original source PNGs and `scripts/normalize-art.py` are now directly tracked in the GitHub game branch. `downloads/Studigo-Art-Pack.zip` provides the originals, ready assets, frame metadata, script and provenance in one download. Runtime `dist/assets/` remains reconstructible with `node prepare.mjs`.

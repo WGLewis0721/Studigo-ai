@@ -1,5 +1,9 @@
 # Studigo — Current Game Handoff
 
+## Art transfer
+
+Read **ART_HANDOFF.md** for the actual generation/preparation workflow, frame map, Claude continuation prompt and reconstructed generation prompts. Original sheets are in `art-source/`, the exact pipeline is `scripts/normalize-art.py`, and `downloads/Studigo-Art-Pack.zip` includes originals plus every game-ready PNG and `frames.json`. `node prepare.mjs` still restores the exact runtime assets. Reuse the accepted artwork before generating anything new.
+
 ## New additive stage: POC VIII (2026-09-29)
 
 Connected experiment: https://studigo-core-clash.william-glewis17.chatgpt.site/journey/
