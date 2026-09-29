@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-29T15:58:03.223Z",
+  "date": "2026-09-29T16:53:01.351Z",
   "viewport": "960x540",
   "checks": {
     "x4-opens-clock-tower-4x5-seal": {
@@ -21,10 +21,17 @@
         "skeleton 3·5 ×1"
       ]
     },
+    "boots-jump-clears-clockwork-warden": {
+      "ok": true,
+      "detail": {
+        "landedAt": 806,
+        "hurt": 0
+      }
+    },
     "warden-drops-x5-and-clock-shield": {
       "ok": true,
       "detail": {
-        "attempts": 1,
+        "attempts": 2,
         "shield": {
           "owned": true,
           "charges": 3,
@@ -39,9 +46,8 @@
     "trial-reshuffles-problems": {
       "ok": true,
       "detail": [
-        "2·6",
-        "5·2",
-        "4·6"
+        "2·4",
+        "5·6"
       ]
     },
     "trial-deflects-mismatched-beams": {
@@ -52,15 +58,14 @@
       "ok": true,
       "detail": [
         "1·2 ×2=2",
-        "1·2 ×1=1",
-        "1·2 ×1=1",
-        "2·6 ×1=1",
-        "2·6 ×1=1",
-        "2·6 ×1=1",
-        "2·6 ×1=1",
-        "5·2 ×1=1",
-        "5·2 ×5=10",
-        "4·6 ×1=1"
+        "1·2 ×2=2",
+        "2·4 ×1=1",
+        "2·4 ×1=1",
+        "2·4 ×1=1",
+        "2·4 ×1=1",
+        "5·6 ×1=1",
+        "5·6 ×1=1",
+        "5·6 ×5=10"
       ]
     },
     "trial-grants-shield-plus-one": {
@@ -77,7 +82,7 @@
     }
   },
   "notes": [
-    "Trial: 10 hits, double x5 hits: 1. Warden attempts: 1. Trial attempts: 1. Shield blocks this run: 0."
+    "Trial: 9 hits, double x5 hits: 1. Warden attempts: 2. Trial attempts: 1. Shield blocks this run: 0."
   ],
   "passed": true
 }
