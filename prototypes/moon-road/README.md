@@ -34,3 +34,7 @@ A longer sibling of POC VII (`dist/poc-vii/` untouched) with the same optional �
 ## POC IX — Moon Keep (golden image)
 
 **Current golden image** (tag `golden/poc-ix-moon-keep`). Beta test: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/ — or `/poc-ix/` locally. Don't edit it; new work goes in `dist/poc-x/`. A 12-room connected keep where multiplication gates the world: seals open only with a matching ×N beam (×1 never opens them), stone blocks skip-count to their product, and two plate bosses (Twin Warden, Trine Guardian) drop ×2 and ×3 Mega Man-style. Moon Boots, energy tanks, ammo expansions, a hidden ×4 vault, a minimap and a % map. The POC VII orb loop is unchanged. Ends at the original Core Clash. Read [POC-IX.md](POC-IX.md). Tests: `node --test test/*.test.mjs` and `node qa/moon-keep-playtest.cjs`.
+
+## POC X — Moon Keep II: Clock Tower (beta)
+
+Beta test: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/ — or `/poc-x/` locally. It's the golden POC IX with new generated art (sprites, backdrops, wall textures), the ×5 Clock Tower, the Clock Shield, and the Pendulum Trial mini-boss. Read [POC-X.md](POC-X.md). Tests: `node --test "test/**/*.test.mjs"` and `node qa/clock-tower-playtest.cjs`.
