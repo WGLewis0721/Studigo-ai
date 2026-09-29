@@ -1,0 +1,5473 @@
+[
+ {
+  "type": "room",
+  "t": 0,
+  "room": "A",
+  "id": "A"
+ },
+ {
+  "type": "ready",
+  "t": 0,
+  "room": "A"
+ },
+ {
+  "type": "start",
+  "t": 0,
+  "room": "A"
+ },
+ {
+  "type": "shrine",
+  "t": 0.013,
+  "room": "A"
+ },
+ {
+  "type": "shot",
+  "t": 0.175,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 0.458,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 0.742,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 1.025,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 1.308,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 1.592,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 1.877,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 2.182,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 2.479,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 2.776,
+  "room": "A",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 2.908,
+  "room": "B",
+  "id": "B"
+ },
+ {
+  "type": "shot",
+  "t": 3.37,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 3.667,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 3.964,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 3.997,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "kill",
+  "t": 4.228,
+  "room": "B",
+  "a": 1,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 4.228,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 4.327,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 4.624,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 4.822,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 4.954,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 5.053,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 5.284,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 5.317,
+  "room": "B",
+  "a": 1,
+  "b": 3,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 5.317,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 5.614,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 5.911,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 6.208,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 6.505,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 6.802,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 7.099,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 7.198,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 7.429,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 7.429,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "hit",
+  "t": 7.66,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 7.792,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 7.891,
+  "room": "B",
+  "a": 2,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 7.891,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 8.122,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 8.419,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 8.716,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 9.013,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 9.31,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 9.607,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 9.904,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 10.201,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 10.498,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 10.795,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 11.026,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "shot",
+  "t": 11.455,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 11.752,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 12.049,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 12.346,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 12.643,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 12.94,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 13.237,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 13.534,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 13.831,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 14.128,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 14.425,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 14.722,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 15.019,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 15.151,
+  "room": "D",
+  "id": "D"
+ },
+ {
+  "type": "shot",
+  "t": 15.58,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 15.877,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 15.943,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "kill",
+  "t": 16.141,
+  "room": "D",
+  "a": 1,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 16.141,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 16.24,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 16.537,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 16.834,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 17.098,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 17.164,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 17.329,
+  "room": "D",
+  "a": 2,
+  "b": 1,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 17.329,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 17.494,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 17.758,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 17.791,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 18.022,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 18.088,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 18.253,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 18.385,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 18.55,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 18.682,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 18.979,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 19.276,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 19.342,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "hit",
+  "t": 19.54,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 19.639,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 19.771,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 19.969,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 20.002,
+  "room": "D",
+  "a": 1,
+  "b": 4,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 20.002,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 20.299,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 20.596,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 20.629,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "hit",
+  "t": 20.86,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 20.959,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 21.091,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 21.289,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 21.289,
+  "room": "D",
+  "a": 2,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 21.289,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 21.619,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 21.916,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 22.213,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 22.51,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 22.807,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 23.104,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 23.401,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 23.599,
+  "room": "E",
+  "id": "E"
+ },
+ {
+  "type": "shrine",
+  "t": 25.414,
+  "room": "E"
+ },
+ {
+  "type": "boss-start",
+  "t": 27.592,
+  "room": "F",
+  "id": "twin"
+ },
+ {
+  "type": "room",
+  "t": 27.592,
+  "room": "F",
+  "id": "F"
+ },
+ {
+  "type": "shot",
+  "t": 29.826,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "jump",
+  "t": 29.89,
+  "room": "F",
+  "boots": false
+ },
+ {
+  "type": "shot",
+  "t": 30.119,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 30.218,
+  "room": "F",
+  "boss": "twin",
+  "plate": 0,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 30.218,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 30.449,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 30.515,
+  "room": "F",
+  "boss": "twin",
+  "plate": 0,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 30.515,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 30.779,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 30.812,
+  "room": "F",
+  "boss": "twin",
+  "plate": 0,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 30.812,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 31.109,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "jump",
+  "t": 31.307,
+  "room": "F",
+  "boots": false
+ },
+ {
+  "type": "shot",
+  "t": 31.406,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 31.571,
+  "room": "F",
+  "boss": "twin",
+  "plate": 1,
+  "a": 1,
+  "b": 2,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 31.571,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 31.736,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 31.835,
+  "room": "F",
+  "boss": "twin",
+  "plate": 1,
+  "a": 1,
+  "b": 2,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 31.835,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 32.066,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 32.066,
+  "room": "F",
+  "boss": "twin",
+  "plate": 2,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 3
+ },
+ {
+  "type": "hit",
+  "t": 32.066,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 32.396,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 32.396,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "plate-hit",
+  "t": 32.396,
+  "room": "F",
+  "boss": "twin",
+  "plate": 2,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 32.396,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "hurt",
+  "t": 32.561,
+  "room": "F",
+  "hearts": 4
+ },
+ {
+  "type": "jump",
+  "t": 32.66,
+  "room": "F",
+  "boots": false
+ },
+ {
+  "type": "shot",
+  "t": 32.726,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 32.726,
+  "room": "F",
+  "boss": "twin",
+  "plate": 2,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 32.726,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 33.056,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 33.056,
+  "room": "F",
+  "boss": "twin",
+  "plate": 2,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 33.056,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 33.386,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 33.683,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 33.716,
+  "room": "F",
+  "boss": "twin",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 33.716,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 34.013,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 34.046,
+  "room": "F",
+  "boss": "twin",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 34.046,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "jump",
+  "t": 34.112,
+  "room": "F",
+  "boots": false
+ },
+ {
+  "type": "hurt",
+  "t": 34.211,
+  "room": "F",
+  "hearts": 3
+ },
+ {
+  "type": "shot",
+  "t": 34.343,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 34.343,
+  "room": "F",
+  "boss": "twin",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 34.343,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 34.673,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 34.97,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 35.201,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 35.267,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 35.465,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "jump",
+  "t": 35.498,
+  "room": "F",
+  "boots": false
+ },
+ {
+  "type": "shot",
+  "t": 35.564,
+  "room": "F",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "boss-defeated",
+  "t": 35.597,
+  "room": "F",
+  "id": "twin"
+ },
+ {
+  "type": "reflect",
+  "t": 35.762,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 36.026,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 36.29,
+  "room": "F",
+  "weapon": 1,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "item",
+  "t": 38.237,
+  "room": "F",
+  "id": "w2",
+  "kind": "weapon",
+  "family": 2
+ },
+ {
+  "type": "shot",
+  "t": 38.864,
+  "room": "F",
+  "weapon": 2,
+  "ammo": 11
+ },
+ {
+  "type": "shot",
+  "t": 39.161,
+  "room": "F",
+  "weapon": 2,
+  "ammo": 10
+ },
+ {
+  "type": "seal",
+  "t": 39.359,
+  "room": "F",
+  "id": "seal-g",
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 39.359,
+  "room": "F",
+  "weapon": 2,
+  "target": {
+   "kind": "seal",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "room",
+  "t": 41.405,
+  "room": "G",
+  "id": "G"
+ },
+ {
+  "type": "jump",
+  "t": 43.121,
+  "room": "G",
+  "boots": false
+ },
+ {
+  "type": "item",
+  "t": 43.781,
+  "room": "G",
+  "id": "boots",
+  "kind": "boots"
+ },
+ {
+  "type": "shot",
+  "t": 44.078,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 44.375,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "shot",
+  "t": 44.672,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "shot",
+  "t": 44.969,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 6
+ },
+ {
+  "type": "shot",
+  "t": 45.266,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 5
+ },
+ {
+  "type": "shot",
+  "t": 45.563,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 4
+ },
+ {
+  "type": "shot",
+  "t": 45.86,
+  "room": "G",
+  "weapon": 2,
+  "ammo": 3
+ },
+ {
+  "type": "room",
+  "t": 45.992,
+  "room": "F",
+  "id": "F"
+ },
+ {
+  "type": "shot",
+  "t": 46.454,
+  "room": "F",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "shot",
+  "t": 46.751,
+  "room": "F",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "shot",
+  "t": 47.048,
+  "room": "F",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "empty",
+  "t": 47.345,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 47.807,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 48.269,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 48.731,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 49.193,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 49.655,
+  "room": "F",
+  "weapon": 2
+ },
+ {
+  "type": "room",
+  "t": 49.985,
+  "room": "E",
+  "id": "E"
+ },
+ {
+  "type": "empty",
+  "t": 50.414,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 50.876,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 51.338,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 51.8,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "shrine",
+  "t": 51.932,
+  "room": "E"
+ },
+ {
+  "type": "empty",
+  "t": 52.262,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 52.724,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 53.186,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 53.648,
+  "room": "E",
+  "weapon": 2
+ },
+ {
+  "type": "room",
+  "t": 53.978,
+  "room": "D",
+  "id": "D"
+ },
+ {
+  "type": "empty",
+  "t": 54.407,
+  "room": "D",
+  "weapon": 2
+ },
+ {
+  "type": "weapon",
+  "t": 54.407,
+  "room": "D",
+  "weapon": 1
+ },
+ {
+  "type": "shot",
+  "t": 54.869,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 55.001,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 55.199,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 55.298,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 55.529,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 55.628,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 55.859,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 55.925,
+  "room": "D",
+  "a": 2,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 55.925,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 56.123,
+  "room": "D",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 2
+ },
+ {
+  "type": "shot",
+  "t": 56.189,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 56.486,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 56.684,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 56.816,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 56.915,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 57.146,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 57.146,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "kill",
+  "t": 57.377,
+  "room": "D",
+  "a": 1,
+  "b": 4,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 57.377,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 57.509,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 57.806,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 58.103,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 58.268,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 58.433,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 58.532,
+  "room": "D",
+  "a": 2,
+  "b": 1,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 58.532,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 58.763,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 59.06,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 59.357,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 59.654,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 59.786,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 59.918,
+  "room": "D",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 2
+ },
+ {
+  "type": "shot",
+  "t": 59.984,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 60.017,
+  "room": "D",
+  "a": 1,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 60.017,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 60.314,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 60.545,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 60.611,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 60.776,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 60.908,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "reflect",
+  "t": 61.073,
+  "room": "D",
+  "weapon": 1,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 61.205,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 61.502,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 61.799,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 62.096,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 62.393,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 62.69,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 62.987,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 63.284,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 63.581,
+  "room": "D",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 63.878,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "shot",
+  "t": 63.911,
+  "room": "C",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 64.076,
+  "room": "C",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "hurt",
+  "t": 64.769,
+  "room": "C",
+  "hearts": 4
+ },
+ {
+  "type": "jump",
+  "t": 66.947,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 68.432,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 69.752,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 71.138,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 72.458,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 73.976,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "question",
+  "t": 75.197,
+  "room": "C",
+  "id": "orb-C2",
+  "family": 2,
+  "k": 7
+ },
+ {
+  "type": "correct",
+  "t": 75.197,
+  "room": "C",
+  "id": "orb-C2",
+  "family": 2,
+  "k": 7
+ },
+ {
+  "type": "jump",
+  "t": 75.791,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 77.078,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 78.266,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 79.52,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 80.741,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 81.764,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 83.084,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 84.305,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 11
+ },
+ {
+  "type": "hit",
+  "t": 84.371,
+  "room": "C",
+  "weapon": 2,
+  "target": {
+   "kind": "seal",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 84.668,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 10
+ },
+ {
+  "type": "seal",
+  "t": 84.734,
+  "room": "C",
+  "id": "seal-h",
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 84.734,
+  "room": "C",
+  "weapon": 2,
+  "target": {
+   "kind": "seal",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 85.031,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 85.328,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "room",
+  "t": 85.394,
+  "room": "H",
+  "id": "H"
+ },
+ {
+  "type": "hurt",
+  "t": 87.473,
+  "room": "H",
+  "hearts": 3
+ },
+ {
+  "type": "hurt",
+  "t": 89.189,
+  "room": "H",
+  "hearts": 2
+ },
+ {
+  "type": "jump",
+  "t": 90.014,
+  "room": "H",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 91.268,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "hit",
+  "t": 91.367,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "block",
+   "product": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 91.631,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 6
+ },
+ {
+  "type": "block",
+  "t": 91.73,
+  "room": "H",
+  "id": "block-4",
+  "weapon": 2,
+  "product": 4
+ },
+ {
+  "type": "hit",
+  "t": 91.73,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "block",
+   "product": 4
+  }
+ },
+ {
+  "type": "jump",
+  "t": 91.912,
+  "room": "H",
+  "boots": true
+ },
+ {
+  "type": "item",
+  "t": 92.823,
+  "room": "H",
+  "id": "x2exp",
+  "kind": "expansion",
+  "family": 2
+ },
+ {
+  "type": "shot",
+  "t": 93.087,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "hit",
+  "t": 93.285,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 93.45,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "kill",
+  "t": 93.648,
+  "room": "H",
+  "a": 2,
+  "b": 2,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 93.648,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 93.813,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "pickup",
+  "t": 94.077,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "hit",
+  "t": 94.077,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 94.176,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "hit",
+  "t": 94.275,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 94.539,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "kill",
+  "t": 94.638,
+  "room": "H",
+  "a": 3,
+  "b": 2,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 94.638,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 94.902,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "pickup",
+  "t": 94.902,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 95.199,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 95.496,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "shot",
+  "t": 95.793,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "shot",
+  "t": 96.09,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 6
+ },
+ {
+  "type": "shot",
+  "t": 96.387,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 5
+ },
+ {
+  "type": "room",
+  "t": 96.684,
+  "room": "I",
+  "id": "I"
+ },
+ {
+  "type": "shot",
+  "t": 96.717,
+  "room": "I",
+  "weapon": 2,
+  "ammo": 4
+ },
+ {
+  "type": "shrine",
+  "t": 98.499,
+  "room": "I"
+ },
+ {
+  "type": "question",
+  "t": 98.565,
+  "room": "I",
+  "id": "shrine-I-x2",
+  "family": 2,
+  "k": 6
+ },
+ {
+  "type": "correct",
+  "t": 98.565,
+  "room": "I",
+  "id": "shrine-I-x2",
+  "family": 2,
+  "k": 6
+ },
+ {
+  "type": "boss-start",
+  "t": 101.007,
+  "room": "J",
+  "id": "trine"
+ },
+ {
+  "type": "room",
+  "t": 101.007,
+  "room": "J",
+  "id": "J"
+ },
+ {
+  "type": "shot",
+  "t": 103.053,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 15
+ },
+ {
+  "type": "jump",
+  "t": 103.086,
+  "room": "J",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 103.35,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 14
+ },
+ {
+  "type": "plate-hit",
+  "t": 103.548,
+  "room": "J",
+  "boss": "trine",
+  "plate": 0,
+  "a": 2,
+  "b": 3,
+  "weapon": 2,
+  "hp": 4
+ },
+ {
+  "type": "hit",
+  "t": 103.548,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 103.713,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 13
+ },
+ {
+  "type": "plate-hit",
+  "t": 103.944,
+  "room": "J",
+  "boss": "trine",
+  "plate": 0,
+  "a": 2,
+  "b": 3,
+  "weapon": 2,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 103.944,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 104.076,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 12
+ },
+ {
+  "type": "plate-hit",
+  "t": 104.307,
+  "room": "J",
+  "boss": "trine",
+  "plate": 0,
+  "a": 2,
+  "b": 3,
+  "weapon": 2,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 104.307,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 104.406,
+  "room": "J",
+  "weapon": 1
+ },
+ {
+  "type": "shot",
+  "t": 104.439,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "jump",
+  "t": 104.538,
+  "room": "J",
+  "boots": true
+ },
+ {
+  "type": "reflect",
+  "t": 104.703,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 104.736,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 105,
+  "room": "J",
+  "boss": "trine",
+  "plate": 1,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 3
+ },
+ {
+  "type": "hit",
+  "t": 105,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 105.066,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 105.33,
+  "room": "J",
+  "boss": "trine",
+  "plate": 1,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 105.33,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 105.396,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 105.66,
+  "room": "J",
+  "boss": "trine",
+  "plate": 1,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 105.66,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 105.726,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 105.792,
+  "room": "J",
+  "boss": "trine",
+  "plate": 1,
+  "a": 1,
+  "b": 4,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 105.792,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 4
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 105.825,
+  "room": "J",
+  "weapon": 2
+ },
+ {
+  "type": "jump",
+  "t": 105.957,
+  "room": "J",
+  "boots": true
+ },
+ {
+  "type": "pickup",
+  "t": 105.957,
+  "room": "J",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 4
+ },
+ {
+  "type": "reflect",
+  "t": 105.957,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 106.056,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 15
+ },
+ {
+  "type": "plate-hit",
+  "t": 106.089,
+  "room": "J",
+  "boss": "trine",
+  "plate": 2,
+  "a": 2,
+  "b": 2,
+  "weapon": 2,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 106.089,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 106.419,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 14
+ },
+ {
+  "type": "shot",
+  "t": 106.716,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 13
+ },
+ {
+  "type": "plate-hit",
+  "t": 106.716,
+  "room": "J",
+  "boss": "trine",
+  "plate": 2,
+  "a": 2,
+  "b": 2,
+  "weapon": 2,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 106.716,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 106.749,
+  "room": "J",
+  "weapon": 1
+ },
+ {
+  "type": "shot",
+  "t": 107.079,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 107.376,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hurt",
+  "t": 107.409,
+  "room": "J",
+  "hearts": 4
+ },
+ {
+  "type": "shot",
+  "t": 107.673,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 107.673,
+  "room": "J",
+  "boss": "trine",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 107.673,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 108.003,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 108.003,
+  "room": "J",
+  "boss": "trine",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 1
+ },
+ {
+  "type": "hit",
+  "t": 108.003,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 108.319,
+  "room": "J",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "plate-hit",
+  "t": 108.385,
+  "room": "J",
+  "boss": "trine",
+  "plate": 3,
+  "a": 1,
+  "b": 3,
+  "weapon": 1,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 108.385,
+  "room": "J",
+  "weapon": 1,
+  "target": {
+   "kind": "plate",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 108.55,
+  "room": "J",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 4
+ },
+ {
+  "type": "weapon",
+  "t": 108.55,
+  "room": "J",
+  "weapon": 2
+ },
+ {
+  "type": "shot",
+  "t": 108.649,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 15
+ },
+ {
+  "type": "shot",
+  "t": 108.946,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 14
+ },
+ {
+  "type": "jump",
+  "t": 109.012,
+  "room": "J",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 109.243,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 13
+ },
+ {
+  "type": "plate-hit",
+  "t": 109.342,
+  "room": "J",
+  "boss": "trine",
+  "plate": 4,
+  "a": 2,
+  "b": 4,
+  "weapon": 2,
+  "hp": 6
+ },
+ {
+  "type": "hit",
+  "t": 109.342,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 109.606,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 12
+ },
+ {
+  "type": "plate-hit",
+  "t": 109.705,
+  "room": "J",
+  "boss": "trine",
+  "plate": 4,
+  "a": 2,
+  "b": 4,
+  "weapon": 2,
+  "hp": 4
+ },
+ {
+  "type": "hit",
+  "t": 109.705,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 109.969,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 11
+ },
+ {
+  "type": "plate-hit",
+  "t": 110.068,
+  "room": "J",
+  "boss": "trine",
+  "plate": 4,
+  "a": 2,
+  "b": 4,
+  "weapon": 2,
+  "hp": 2
+ },
+ {
+  "type": "hit",
+  "t": 110.068,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 110.332,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 10
+ },
+ {
+  "type": "plate-hit",
+  "t": 110.431,
+  "room": "J",
+  "boss": "trine",
+  "plate": 4,
+  "a": 2,
+  "b": 4,
+  "weapon": 2,
+  "hp": 0
+ },
+ {
+  "type": "hit",
+  "t": 110.431,
+  "room": "J",
+  "weapon": 2,
+  "target": {
+   "kind": "plate",
+   "a": 2,
+   "b": 4
+  }
+ },
+ {
+  "type": "jump",
+  "t": 110.563,
+  "room": "J",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 110.695,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 110.992,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "shot",
+  "t": 111.289,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "shot",
+  "t": 111.586,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 6
+ },
+ {
+  "type": "shot",
+  "t": 111.883,
+  "room": "J",
+  "weapon": 2,
+  "ammo": 5
+ },
+ {
+  "type": "boss-defeated",
+  "t": 111.916,
+  "room": "J",
+  "id": "trine"
+ },
+ {
+  "type": "item",
+  "t": 113.764,
+  "room": "J",
+  "id": "w3",
+  "kind": "weapon",
+  "family": 3
+ },
+ {
+  "type": "shot",
+  "t": 114.292,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 11
+ },
+ {
+  "type": "shot",
+  "t": 114.589,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 10
+ },
+ {
+  "type": "shot",
+  "t": 114.886,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 115.183,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 8
+ },
+ {
+  "type": "shot",
+  "t": 115.48,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 7
+ },
+ {
+  "type": "shot",
+  "t": 115.777,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 6
+ },
+ {
+  "type": "shot",
+  "t": 116.074,
+  "room": "J",
+  "weapon": 3,
+  "ammo": 5
+ },
+ {
+  "type": "room",
+  "t": 116.173,
+  "room": "I",
+  "id": "I"
+ },
+ {
+  "type": "shot",
+  "t": 116.602,
+  "room": "I",
+  "weapon": 3,
+  "ammo": 4
+ },
+ {
+  "type": "shot",
+  "t": 116.899,
+  "room": "I",
+  "weapon": 3,
+  "ammo": 3
+ },
+ {
+  "type": "shot",
+  "t": 117.196,
+  "room": "I",
+  "weapon": 3,
+  "ammo": 2
+ },
+ {
+  "type": "shot",
+  "t": 117.493,
+  "room": "I",
+  "weapon": 3,
+  "ammo": 1
+ },
+ {
+  "type": "shot",
+  "t": 117.79,
+  "room": "I",
+  "weapon": 3,
+  "ammo": 0
+ },
+ {
+  "type": "empty",
+  "t": 118.087,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "shrine",
+  "t": 118.12,
+  "room": "I"
+ },
+ {
+  "type": "empty",
+  "t": 118.549,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "respawn",
+  "t": 118.582,
+  "room": "I",
+  "id": "shrine-I-x2"
+ },
+ {
+  "type": "empty",
+  "t": 119.011,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 119.473,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 119.935,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "room",
+  "t": 120.166,
+  "room": "H",
+  "id": "H"
+ },
+ {
+  "type": "empty",
+  "t": 120.595,
+  "room": "H",
+  "weapon": 3
+ },
+ {
+  "type": "weapon",
+  "t": 120.595,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "shot",
+  "t": 121.057,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 4
+ },
+ {
+  "type": "hit",
+  "t": 121.123,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 121.42,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 3
+ },
+ {
+  "type": "hit",
+  "t": 121.453,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 121.783,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "kill",
+  "t": 121.816,
+  "room": "H",
+  "a": 3,
+  "b": 2,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 121.816,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 122.014,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 122.146,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 4
+ },
+ {
+  "type": "hit",
+  "t": 122.41,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 122.509,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 3
+ },
+ {
+  "type": "kill",
+  "t": 122.707,
+  "room": "H",
+  "a": 2,
+  "b": 2,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 122.707,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 122.872,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "shot",
+  "t": 123.169,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "pickup",
+  "t": 123.301,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 123.466,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 3
+ },
+ {
+  "type": "shot",
+  "t": 123.763,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "reflect",
+  "t": 123.829,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 124.027,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 124.06,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "reflect",
+  "t": 124.225,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 124.357,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "reflect",
+  "t": 124.456,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "empty",
+  "t": 124.654,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "reflect",
+  "t": 124.654,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 124.885,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "empty",
+  "t": 125.116,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "weapon",
+  "t": 125.248,
+  "room": "H",
+  "weapon": 1
+ },
+ {
+  "type": "shot",
+  "t": 125.578,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 125.743,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 125.908,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 126.04,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 126.238,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 126.37,
+  "room": "H",
+  "a": 3,
+  "b": 1,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 126.37,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 126.568,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "pickup",
+  "t": 126.634,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 2
+ },
+ {
+  "type": "shot",
+  "t": 126.865,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 127.162,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 127.228,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 127.492,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 127.492,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "hit",
+  "t": 127.723,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 127.855,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 127.954,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 128.119,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "shot",
+  "t": 128.185,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "hit",
+  "t": 128.185,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "kill",
+  "t": 128.416,
+  "room": "H",
+  "a": 2,
+  "b": 3,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 128.416,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 128.581,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "empty",
+  "t": 128.878,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "pickup",
+  "t": 128.944,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 129.34,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "shot",
+  "t": 129.637,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "shot",
+  "t": 129.934,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "empty",
+  "t": 130.231,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 130.693,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "empty",
+  "t": 131.155,
+  "room": "H",
+  "weapon": 2
+ },
+ {
+  "type": "room",
+  "t": 131.287,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "question",
+  "t": 135.247,
+  "room": "C",
+  "id": "orb-C3",
+  "family": 3,
+  "k": 10
+ },
+ {
+  "type": "correct",
+  "t": 135.247,
+  "room": "C",
+  "id": "orb-C3",
+  "family": 3,
+  "k": 10
+ },
+ {
+  "type": "shot",
+  "t": 135.709,
+  "room": "C",
+  "weapon": 3,
+  "ammo": 11
+ },
+ {
+  "type": "hit",
+  "t": 135.709,
+  "room": "C",
+  "weapon": 3,
+  "target": {
+   "kind": "block",
+   "product": 9
+  }
+ },
+ {
+  "type": "shot",
+  "t": 136.072,
+  "room": "C",
+  "weapon": 3,
+  "ammo": 10
+ },
+ {
+  "type": "hit",
+  "t": 136.072,
+  "room": "C",
+  "weapon": 3,
+  "target": {
+   "kind": "block",
+   "product": 9
+  }
+ },
+ {
+  "type": "shot",
+  "t": 136.435,
+  "room": "C",
+  "weapon": 3,
+  "ammo": 9
+ },
+ {
+  "type": "block",
+  "t": 136.435,
+  "room": "C",
+  "id": "block-9",
+  "weapon": 3,
+  "product": 9
+ },
+ {
+  "type": "hit",
+  "t": 136.435,
+  "room": "C",
+  "weapon": 3,
+  "target": {
+   "kind": "block",
+   "product": 9
+  }
+ },
+ {
+  "type": "room",
+  "t": 137.095,
+  "room": "K",
+  "id": "K"
+ },
+ {
+  "type": "item",
+  "t": 138.349,
+  "room": "K",
+  "id": "tank2",
+  "kind": "tank"
+ },
+ {
+  "type": "question",
+  "t": 143.464,
+  "room": "K",
+  "id": "orb-4",
+  "family": 4,
+  "k": 2
+ },
+ {
+  "type": "correct",
+  "t": 143.464,
+  "room": "K",
+  "id": "orb-4",
+  "family": 4,
+  "k": 2
+ },
+ {
+  "type": "room",
+  "t": 145.84,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "hurt",
+  "t": 150.79,
+  "room": "C",
+  "hearts": 5
+ },
+ {
+  "type": "jump",
+  "t": 153.1,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 154.585,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "respawn",
+  "t": 155.278,
+  "room": "C",
+  "id": "orb-C3"
+ },
+ {
+  "type": "jump",
+  "t": 155.905,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 157.291,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 158.611,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 160.096,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 161.317,
+  "room": "C",
+  "weapon": 4,
+  "ammo": 11
+ },
+ {
+  "type": "shot",
+  "t": 161.614,
+  "room": "C",
+  "weapon": 4,
+  "ammo": 10
+ },
+ {
+  "type": "room",
+  "t": 161.812,
+  "room": "B",
+  "id": "B"
+ },
+ {
+  "type": "hurt",
+  "t": 163.264,
+  "room": "B",
+  "hearts": 4
+ },
+ {
+  "type": "jump",
+  "t": 165.772,
+  "room": "B",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 167.191,
+  "room": "B",
+  "boots": true
+ },
+ {
+  "type": "item",
+  "t": 168.214,
+  "room": "B",
+  "id": "tank1",
+  "kind": "tank"
+ },
+ {
+  "type": "shot",
+  "t": 168.511,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 9
+ },
+ {
+  "type": "shot",
+  "t": 168.808,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 8
+ },
+ {
+  "type": "hit",
+  "t": 168.808,
+  "room": "B",
+  "weapon": 4,
+  "target": {
+   "kind": "seal",
+   "a": 4,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 169.171,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 7
+ },
+ {
+  "type": "hit",
+  "t": 169.171,
+  "room": "B",
+  "weapon": 4,
+  "target": {
+   "kind": "seal",
+   "a": 4,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 169.534,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 6
+ },
+ {
+  "type": "hit",
+  "t": 169.534,
+  "room": "B",
+  "weapon": 4,
+  "target": {
+   "kind": "seal",
+   "a": 4,
+   "b": 4
+  }
+ },
+ {
+  "type": "shot",
+  "t": 169.897,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 5
+ },
+ {
+  "type": "seal",
+  "t": 169.897,
+  "room": "B",
+  "id": "seal-b",
+  "weapon": 4
+ },
+ {
+  "type": "hit",
+  "t": 169.897,
+  "room": "B",
+  "weapon": 4,
+  "target": {
+   "kind": "seal",
+   "a": 4,
+   "b": 4
+  }
+ },
+ {
+  "type": "item",
+  "t": 171.679,
+  "room": "B",
+  "id": "tank3",
+  "kind": "tank"
+ },
+ {
+  "type": "hurt",
+  "t": 175.573,
+  "room": "B",
+  "hearts": 7
+ },
+ {
+  "type": "shot",
+  "t": 176.134,
+  "room": "B",
+  "weapon": 4,
+  "ammo": 4
+ },
+ {
+  "type": "weapon",
+  "t": 176.134,
+  "room": "B",
+  "weapon": 1
+ },
+ {
+  "type": "weapon",
+  "t": 176.266,
+  "room": "B",
+  "weapon": 3
+ },
+ {
+  "type": "shot",
+  "t": 176.431,
+  "room": "B",
+  "weapon": 3,
+  "ammo": 8
+ },
+ {
+  "type": "weapon",
+  "t": 176.464,
+  "room": "B",
+  "weapon": 1
+ },
+ {
+  "type": "kill",
+  "t": 176.497,
+  "room": "B",
+  "a": 1,
+  "b": 3,
+  "weapon": 3
+ },
+ {
+  "type": "hit",
+  "t": 176.497,
+  "room": "B",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 3
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 176.761,
+  "room": "B",
+  "kind": "ammo",
+  "family": 3,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 176.794,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 177.091,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 177.388,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 177.685,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 177.718,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "hit",
+  "t": 177.949,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 178.048,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 178.18,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 178.378,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 178.411,
+  "room": "B",
+  "a": 2,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 178.411,
+  "room": "B",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 178.708,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 179.005,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 179.302,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 179.599,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 179.896,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 180.193,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 180.49,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 180.787,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 181.084,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 181.381,
+  "room": "B",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "room",
+  "t": 181.612,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "question",
+  "t": 182.206,
+  "room": "C",
+  "id": "orb-C2",
+  "family": 2,
+  "k": 2
+ },
+ {
+  "type": "correct",
+  "t": 182.206,
+  "room": "C",
+  "id": "orb-C2",
+  "family": 2,
+  "k": 2
+ },
+ {
+  "type": "shot",
+  "t": 186.001,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 15
+ },
+ {
+  "type": "room",
+  "t": 186.1,
+  "room": "D",
+  "id": "D"
+ },
+ {
+  "type": "hurt",
+  "t": 187.585,
+  "room": "D",
+  "hearts": 6
+ },
+ {
+  "type": "jump",
+  "t": 188.476,
+  "room": "D",
+  "boots": true
+ },
+ {
+  "type": "weapon",
+  "t": 189.598,
+  "room": "D",
+  "weapon": 3
+ },
+ {
+  "type": "shot",
+  "t": 189.763,
+  "room": "D",
+  "weapon": 3,
+  "ammo": 10
+ },
+ {
+  "type": "hit",
+  "t": 189.862,
+  "room": "D",
+  "weapon": 3,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "shot",
+  "t": 190.126,
+  "room": "D",
+  "weapon": 3,
+  "ammo": 9
+ },
+ {
+  "type": "block",
+  "t": 190.225,
+  "room": "D",
+  "id": "block-6",
+  "weapon": 3,
+  "product": 6
+ },
+ {
+  "type": "hit",
+  "t": 190.225,
+  "room": "D",
+  "weapon": 3,
+  "target": {
+   "kind": "block",
+   "product": 6
+  }
+ },
+ {
+  "type": "jump",
+  "t": 190.324,
+  "room": "D",
+  "boots": true
+ },
+ {
+  "type": "item",
+  "t": 191.248,
+  "room": "D",
+  "id": "x3exp",
+  "kind": "expansion",
+  "family": 3
+ },
+ {
+  "type": "shot",
+  "t": 191.479,
+  "room": "D",
+  "weapon": 3,
+  "ammo": 12
+ },
+ {
+  "type": "shot",
+  "t": 191.776,
+  "room": "D",
+  "weapon": 3,
+  "ammo": 11
+ },
+ {
+  "type": "reflect",
+  "t": 191.776,
+  "room": "D",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 192.04,
+  "room": "D",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 192.073,
+  "room": "D",
+  "weapon": 3,
+  "ammo": 10
+ },
+ {
+  "type": "weapon",
+  "t": 192.172,
+  "room": "D",
+  "weapon": 2
+ },
+ {
+  "type": "reflect",
+  "t": 192.205,
+  "room": "D",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 192.37,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 14
+ },
+ {
+  "type": "kill",
+  "t": 192.436,
+  "room": "D",
+  "a": 1,
+  "b": 2,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 192.436,
+  "room": "D",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 1,
+   "b": 2
+  }
+ },
+ {
+  "type": "pickup",
+  "t": 192.601,
+  "room": "D",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 192.733,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 15
+ },
+ {
+  "type": "shot",
+  "t": 193.03,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 14
+ },
+ {
+  "type": "shot",
+  "t": 193.327,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 13
+ },
+ {
+  "type": "shot",
+  "t": 193.624,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 12
+ },
+ {
+  "type": "shot",
+  "t": 193.921,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 11
+ },
+ {
+  "type": "shot",
+  "t": 194.218,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 10
+ },
+ {
+  "type": "shot",
+  "t": 194.515,
+  "room": "D",
+  "weapon": 2,
+  "ammo": 9
+ },
+ {
+  "type": "room",
+  "t": 194.548,
+  "room": "C",
+  "id": "C"
+ },
+ {
+  "type": "hurt",
+  "t": 195.439,
+  "room": "C",
+  "hearts": 5
+ },
+ {
+  "type": "jump",
+  "t": 197.65,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 199.102,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 200.422,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 201.808,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "respawn",
+  "t": 202.237,
+  "room": "C",
+  "id": "orb-C2"
+ },
+ {
+  "type": "jump",
+  "t": 203.161,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 204.679,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 206.131,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 207.418,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 208.606,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 209.893,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 211.147,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 212.17,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "jump",
+  "t": 213.49,
+  "room": "C",
+  "boots": true
+ },
+ {
+  "type": "shot",
+  "t": 214.579,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 8
+ },
+ {
+  "type": "shot",
+  "t": 214.876,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 7
+ },
+ {
+  "type": "shot",
+  "t": 215.173,
+  "room": "C",
+  "weapon": 2,
+  "ammo": 6
+ },
+ {
+  "type": "room",
+  "t": 215.206,
+  "room": "H",
+  "id": "H"
+ },
+ {
+  "type": "shot",
+  "t": 215.668,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 5
+ },
+ {
+  "type": "shot",
+  "t": 215.965,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 4
+ },
+ {
+  "type": "hit",
+  "t": 216.196,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 216.328,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 3
+ },
+ {
+  "type": "hit",
+  "t": 216.493,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 216.691,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "kill",
+  "t": 216.724,
+  "room": "H",
+  "a": 2,
+  "b": 3,
+  "weapon": 2
+ },
+ {
+  "type": "hit",
+  "t": 216.724,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 3
+  }
+ },
+ {
+  "type": "shot",
+  "t": 217.054,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "shot",
+  "t": 217.351,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "pickup",
+  "t": 217.384,
+  "room": "H",
+  "kind": "ammo",
+  "family": 2,
+  "amount": 3
+ },
+ {
+  "type": "reflect",
+  "t": 217.45,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 217.648,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 2
+ },
+ {
+  "type": "reflect",
+  "t": 217.681,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 217.879,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 217.945,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 1
+ },
+ {
+  "type": "reflect",
+  "t": 218.11,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 218.242,
+  "room": "H",
+  "weapon": 2,
+  "ammo": 0
+ },
+ {
+  "type": "reflect",
+  "t": 218.275,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 218.308,
+  "room": "H",
+  "weapon": 3
+ },
+ {
+  "type": "reflect",
+  "t": 218.473,
+  "room": "H",
+  "weapon": 2,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 218.539,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 9
+ },
+ {
+  "type": "kill",
+  "t": 218.704,
+  "room": "H",
+  "a": 3,
+  "b": 1,
+  "weapon": 3
+ },
+ {
+  "type": "hit",
+  "t": 218.704,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 1
+  }
+ },
+ {
+  "type": "shot",
+  "t": 218.902,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 8
+ },
+ {
+  "type": "pickup",
+  "t": 219.166,
+  "room": "H",
+  "kind": "ammo",
+  "family": 3,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 219.199,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 10
+ },
+ {
+  "type": "shot",
+  "t": 219.496,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 9
+ },
+ {
+  "type": "reflect",
+  "t": 219.727,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 219.793,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 8
+ },
+ {
+  "type": "reflect",
+  "t": 219.925,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 220.09,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 7
+ },
+ {
+  "type": "reflect",
+  "t": 220.123,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 220.321,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 220.387,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 6
+ },
+ {
+  "type": "reflect",
+  "t": 220.519,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 220.684,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 5
+ },
+ {
+  "type": "weapon",
+  "t": 220.684,
+  "room": "H",
+  "weapon": 1
+ },
+ {
+  "type": "reflect",
+  "t": 220.717,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "reflect",
+  "t": 220.882,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 220.981,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 221.146,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 221.311,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 221.443,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 221.641,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 221.773,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 221.971,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "kill",
+  "t": 222.07,
+  "room": "H",
+  "a": 2,
+  "b": 2,
+  "weapon": 1
+ },
+ {
+  "type": "hit",
+  "t": 222.07,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 2,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 222.301,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "shot",
+  "t": 222.598,
+  "room": "H",
+  "weapon": 1,
+  "ammo": null
+ },
+ {
+  "type": "hit",
+  "t": 222.697,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "weapon",
+  "t": 222.763,
+  "room": "H",
+  "weapon": 3
+ },
+ {
+  "type": "hit",
+  "t": 222.895,
+  "room": "H",
+  "weapon": 1,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 222.961,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 4
+ },
+ {
+  "type": "hit",
+  "t": 223.159,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 223.324,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 3
+ },
+ {
+  "type": "kill",
+  "t": 223.489,
+  "room": "H",
+  "a": 3,
+  "b": 2,
+  "weapon": 3
+ },
+ {
+  "type": "hit",
+  "t": 223.489,
+  "room": "H",
+  "weapon": 3,
+  "target": {
+   "kind": "skeleton",
+   "a": 3,
+   "b": 2
+  }
+ },
+ {
+  "type": "shot",
+  "t": 223.687,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 2
+ },
+ {
+  "type": "pickup",
+  "t": 223.951,
+  "room": "H",
+  "kind": "ammo",
+  "family": 3,
+  "amount": 3
+ },
+ {
+  "type": "shot",
+  "t": 223.984,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 4
+ },
+ {
+  "type": "shot",
+  "t": 224.281,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 3
+ },
+ {
+  "type": "shot",
+  "t": 224.578,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 2
+ },
+ {
+  "type": "shot",
+  "t": 224.875,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 1
+ },
+ {
+  "type": "shot",
+  "t": 225.172,
+  "room": "H",
+  "weapon": 3,
+  "ammo": 0
+ },
+ {
+  "type": "empty",
+  "t": 225.469,
+  "room": "H",
+  "weapon": 3
+ },
+ {
+  "type": "room",
+  "t": 225.733,
+  "room": "I",
+  "id": "I"
+ },
+ {
+  "type": "empty",
+  "t": 226.129,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 226.591,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 227.053,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 227.515,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "shrine",
+  "t": 227.515,
+  "room": "I"
+ },
+ {
+  "type": "empty",
+  "t": 227.977,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 228.439,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 228.901,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 229.363,
+  "room": "I",
+  "weapon": 3
+ },
+ {
+  "type": "room",
+  "t": 229.693,
+  "room": "J",
+  "id": "J"
+ },
+ {
+  "type": "empty",
+  "t": 230.122,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 230.584,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 231.046,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 231.508,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 231.97,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 232.432,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 232.894,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "empty",
+  "t": 233.356,
+  "room": "J",
+  "weapon": 3
+ },
+ {
+  "type": "room",
+  "t": 233.653,
+  "room": "L",
+  "id": "L"
+ },
+ {
+  "type": "finish",
+  "t": 235.963,
+  "room": "L",
+  "percent": 100,
+  "items": [
+   "tank1",
+   "tank2",
+   "tank3",
+   "x2exp",
+   "x3exp",
+   "boots",
+   "orb-4"
+  ]
+ }
+]

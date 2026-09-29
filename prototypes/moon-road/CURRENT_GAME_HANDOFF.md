@@ -1,5 +1,16 @@
 # Studigo — Current Game Handoff
 
+## Golden image: POC IX Moon Keep (2026-09-29)
+
+**POC IX is the current golden image of the game.** William approved it as the reference build on 2026-09-29. It's tagged `golden/poc-ix-moon-keep` in git.
+
+- Beta test URL (GitHub Pages, separate from the Studigo app): https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/
+- Local: `/poc-ix/` after `node prepare.mjs` and a static server on `dist/`.
+- Not reachable from the Studigo main app. `apps/web` has no link to any prototype, and its old `/game` alpha returns 404 in deployed builds (dev only).
+- Freeze rule: do not edit `dist/poc-ix/`. New work (art, ×5 Clock Tower, Clock Shield, trial mini-boss) goes in `dist/poc-x/`. The one post-approval addition is the beta-test restart button (↺ in the header and in Pause, with a confirm), which William asked for so testers can start over.
+
+It's a first Metroidvania slice directed by William, using Metroid Fusion/Zero Mission, SotN, Mega Man and Grimvalor mechanics; the dragon stays a shooter. Its factor-locked world intentionally departs from POC VII's "no ability gates" rule, at William's direction. POC VII, POC VIII, `/journey/` and Core Clash below stay untouched as older controls. Rules, map, bosses, files, tests and known limits are in **POC-IX.md**. Spec and plan are under `docs/superpowers/`.
+
 ## Art transfer
 
 Read **ART_HANDOFF.md** for the actual generation/preparation workflow, frame map, Claude continuation prompt and reconstructed generation prompts. Original sheets are in `art-source/`, the exact pipeline is `scripts/normalize-art.py`, and `downloads/Studigo-Art-Pack.zip` includes originals plus every game-ready PNG and `frames.json`. `node prepare.mjs` still restores the exact runtime assets. Reuse the accepted artwork before generating anything new.

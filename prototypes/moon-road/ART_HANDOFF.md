@@ -25,7 +25,7 @@ Directory: prototypes/moon-road/
 - dist/game.js — reference for loading sprites, selecting poses and attaching boss-core effects.
 - dist/poc-viii/game.js — reference for the same dragon in the scrolling level.
 
-The repo's dist/assets and dist/vendor directories are generated/ignored. Their bytes are preserved in runtime/part-00.txt through part-16.txt. Run node prepare.mjs from prototypes/moon-road to recover them without a CDN or image model. This distinction matters: the runtime chunks were previously synced to GitHub, while the raw art-source sheets and normalizer were missing there. The art handoff adds those missing editable source files.
+Since the POC IX golden commit, dist/assets and dist/vendor are also committed (byte-identical to prepare.mjs output) so GitHub Pages can serve the builds. Their bytes are still preserved in runtime/part-00.txt through part-16.txt. Run node prepare.mjs from prototypes/moon-road to recover them without a CDN or image model. This distinction matters: the runtime chunks were previously synced to GitHub, while the raw art-source sheets and normalizer were missing there. The art handoff adds those missing editable source files.
 
 ## Ready-to-use asset contract
 

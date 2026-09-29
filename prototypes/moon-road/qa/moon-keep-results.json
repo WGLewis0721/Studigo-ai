@@ -1,0 +1,195 @@
+{
+  "date": "2026-09-29T14:51:37.197Z",
+  "viewport": {
+    "desktop": "960x540",
+    "touch": "844x390 hasTouch isMobile"
+  },
+  "checks": {
+    "twin-warden-beaten-with-x1": {
+      "ok": true,
+      "detail": [
+        {
+          "a": 1,
+          "b": 3,
+          "hp": 0
+        },
+        {
+          "a": 1,
+          "b": 2,
+          "hp": 0
+        },
+        {
+          "a": 1,
+          "b": 4,
+          "hp": 0
+        },
+        {
+          "a": 1,
+          "b": 3,
+          "hp": 0
+        }
+      ]
+    },
+    "x1-reflects-off-seal": {
+      "ok": true,
+      "detail": {
+        "kind": "seal",
+        "a": 1,
+        "b": 2
+      }
+    },
+    "boss-drops-x2": {
+      "ok": true,
+      "detail": {
+        "x": 470.1,
+        "owned": {
+          "1": true,
+          "2": true,
+          "3": false,
+          "4": false
+        },
+        "ammo": {
+          "2": 12,
+          "3": 0,
+          "4": 0
+        },
+        "weapon": 1,
+        "items": [
+          "boss:twin",
+          "w2"
+        ]
+      }
+    },
+    "x2-opens-1x2-seal": {
+      "ok": true
+    },
+    "moon-boots-collected": {
+      "ok": true
+    },
+    "not-now-has-no-cooldown": {
+      "ok": true
+    },
+    "wrong-answer-returns-to-play-no-reveal": {
+      "ok": true,
+      "detail": {
+        "q1": {
+          "family": 2,
+          "k": 5
+        },
+        "notice": "Keep going!"
+      }
+    },
+    "pause-freezes-active-clock": {
+      "ok": true,
+      "detail": {
+        "a0": 56.156,
+        "a1": 56.156
+      }
+    },
+    "orb-returns-after-20-active-seconds": {
+      "ok": true,
+      "detail": {
+        "interval": 20.027
+      }
+    },
+    "retry-uses-different-fact": {
+      "ok": true,
+      "detail": {
+        "q1": {
+          "family": 2,
+          "k": 5
+        },
+        "q2": {
+          "family": 2,
+          "k": 10
+        }
+      }
+    },
+    "correct-refills-to-capacity": {
+      "ok": true,
+      "detail": {
+        "2": 12,
+        "3": 0,
+        "4": 0
+      }
+    },
+    "learning-loop-no-page-errors": {
+      "ok": true,
+      "detail": []
+    },
+    "moon-boots-climb-upper-shaft": {
+      "ok": true
+    },
+    "block-4-breaks-with-two-x2-hits": {
+      "ok": true,
+      "detail": 2
+    },
+    "x3-breaks-block-9": {
+      "ok": true
+    },
+    "vault-orb-unlocks-x4": {
+      "ok": true
+    },
+    "x4-opens-4x4-closet": {
+      "ok": true
+    },
+    "full-run-100-percent": {
+      "ok": true,
+      "detail": {
+        "mapPercent": 100,
+        "hearts": "8/8",
+        "cap": {
+          "2": 16,
+          "3": 16,
+          "4": 12
+        }
+      }
+    },
+    "finale-opens-core-clash": {
+      "ok": true
+    },
+    "full-run-no-page-errors": {
+      "ok": true,
+      "detail": []
+    },
+    "touch-no-page-overflow": {
+      "ok": true
+    },
+    "touch-simultaneous-move-fire-jump": {
+      "ok": true,
+      "detail": {
+        "dx": 137.5,
+        "shots": 2
+      }
+    },
+    "touch-targets-at-least-40px": {
+      "ok": true,
+      "detail": {
+        "min": 44.8
+      }
+    },
+    "restart-button-confirms-and-restarts": {
+      "ok": true,
+      "detail": {
+        "asked": {
+          "mode": "confirm",
+          "shown": true
+        },
+        "cancelled": "play",
+        "fresh": {
+          "mode": "intro",
+          "room": "A",
+          "x": 272
+        }
+      }
+    },
+    "touch-no-page-errors": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "notes": [
+    "Full run: 27 room entries, 0 deaths, 37 reflections, 5 correct orb answers."
+  ],
+  "passed": true
+}
