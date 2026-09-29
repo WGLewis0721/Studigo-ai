@@ -23,6 +23,7 @@ function healthBar(g, x, y, hp, max, armor = 0, armorMax = 0) {
   g.fillStyle(0xe5b68a); g.fillRect(x - 27, y + 1, w * hp, 5);
   g.fillStyle(0xd8e2ec); g.fillRect(x - 27 + w * max, y + 1, w * armor, 5);
   for (let k = 1; k < total; k++) { g.fillStyle(0x111e30); g.fillRect(x - 27 + w * k, y + 1, 1, 5); }
+  if (armor > 0) { g.lineStyle(2, 0xd8e2ec, 0.95); g.strokeRect(x - 29, y - 1, 58, 9); }
 }
 
 // Armor soaks hits first: x1 chips one point; a matching power beam shatters all of it in one shot.
