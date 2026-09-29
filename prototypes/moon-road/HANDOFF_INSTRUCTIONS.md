@@ -1,3 +1,5 @@
+> **Before using this POC VIII direction, read `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` first.** That file is the authoritative golden-state handoff for Astra's current sprites, assets, look, controls, POC VII level behavior, Core Clash boss behavior, QA hooks, and preservation rules. POC VIII is an additive experiment, not permission to redesign or replace the golden controls.
+
 # Astra handoff — POC VIII: Graveyard 1·2·3
 
 Read this before changing the experimental Studigo game prototypes.
