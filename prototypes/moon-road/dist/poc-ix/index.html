@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1322">
+<title>Studigo · Moon Keep</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="stage">
+  <div id="world"></div>
+  <header>
+    <div class="brand">STUDIGO · MOON KEEP <b id="room-name">MOON GATE</b></div>
+    <span id="hearts" aria-label="Hearts"></span>
+    <canvas id="minimap" width="150" height="56" aria-hidden="true"></canvas>
+    <button id="map-btn" aria-label="Map">▦</button>
+    <button id="pause" aria-label="Pause">Ⅱ</button>
+    <button id="restart-btn" aria-label="Restart from the beginning">↺</button>
+  </header>
+  <div id="bossbar" hidden><span id="boss-name"></span><div id="boss-plates"></div></div>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <div id="banner" role="status" aria-live="polite" hidden></div>
+  <div id="nearby" hidden><span id="drop-name"></span><button id="open">OPEN <small>E</small></button></div>
+  <nav id="controls" hidden>
+    <div class="move"><button id="left" aria-label="Move left">◀</button><button id="right" aria-label="Move right">▶</button></div>
+    <div class="mid">
+      <button id="weapon" aria-label="Switch weapon"><span id="weapon-n">×1</span><small id="weapon-ammo">∞</small><span id="weapon-pips"></span></button>
+      <button id="auto" aria-label="Autoshoot" aria-pressed="false">◎<small>AUTO OFF</small></button>
+    </div>
+    <div class="actions"><button id="jump" aria-label="Jump">↑</button><button id="fire" aria-label="Fire">⊕</button></div>
+  </nav>
+
+  <section id="intro" class="overlay">
+    <div class="title">
+      <span class="eyebrow">STUDIGO · POC IX</span>
+      <h1>MOON <em>KEEP</em></h1>
+      <p>Explore the keep. Beat its wardens. Take their beams.</p>
+      <p class="sub"><b>×1 fights.</b> Seals and stone blocks need a power shot whose number fits.</p>
+      <button id="start" class="primary">ENTER THE KEEP ▸</button>
+      <small>← → move · Space jump (hold for height) · F shoot · E open orb<br>1–4 or C switch beam · M map · Q autoshoot · Esc pause</small>
+    </div>
+  </section>
+
+  <section id="question" class="overlay compact" hidden>
+    <div class="panel">
+      <button id="close" aria-label="Leave challenge">×</button>
+      <div class="gem">✦</div>
+      <div id="reward" class="eyebrow"></div>
+      <h2 id="equation"></h2>
+      <div id="answers"></div>
+      <button id="skip">NOT NOW</button>
+    </div>
+  </section>
+
+  <section id="paused" class="overlay compact" hidden>
+    <div class="panel"><h2>PAUSED</h2><button id="resume" class="primary">KEEP PLAYING ▸</button><button id="pause-restart" class="quiet">RESTART FROM THE BEGINNING</button></div>
+  </section>
+
+  <section id="map" class="overlay compact" hidden>
+    <div class="panel wide">
+      <button id="map-close" aria-label="Close map">×</button>
+      <span class="eyebrow">MOON KEEP</span>
+      <canvas id="bigmap" width="560" height="200"></canvas>
+      <div id="map-stats"></div>
+    </div>
+  </section>
+
+  <section id="finish" class="overlay compact" hidden>
+    <div class="panel">
+      <div class="gem">✦</div>
+      <span class="eyebrow">MOON VAULT REACHED</span>
+      <h2>CORE CLASH<br>AWAITS</h2>
+      <p id="finish-copy"></p>
+      <button id="enter-boss" class="primary">ENTER CORE CLASH ▸</button>
+      <button id="explore">KEEP EXPLORING</button>
+      <button id="restart">NEW RUN</button>
+    </div>
+  </section>
+
+  <section id="confirm-restart" class="overlay compact" hidden>
+    <div class="panel">
+      <span class="eyebrow">BETA TEST</span>
+      <h2>RESTART?</h2>
+      <p class="copy">Start again from the Moon Gate. Everything found this run is lost.</p>
+      <button id="restart-yes" class="primary">RESTART ▸</button>
+      <button id="restart-no" class="quiet">CANCEL</button>
+    </div>
+  </section>
+
+  <div id="loading">LOADING…</div>
+</main>
+<script src="../vendor/phaser-3.90.0.min.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

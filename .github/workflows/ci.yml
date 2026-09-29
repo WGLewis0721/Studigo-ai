@@ -20,5 +20,7 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Game prototype tests
+        run: node --test "prototypes/moon-road/test/**/*.test.mjs"
       - name: Build web app
         run: pnpm --filter @studigo/web build

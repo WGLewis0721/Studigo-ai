@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "touch": "simultaneous move, jump and fire",
+  "ignoreDrops": "completed whole level without opening or unlocking",
+  "respawnIntervals": [
+    20.015,
+    20.015
+  ],
+  "differentQuestions": true,
+  "questionAndPauseFreezeClock": true,
+  "unlockSurvivesCheckpoint": true,
+  "errors": [],
+  "viewport": "844x390",
+  "physicalIPhoneSafari": "not tested"
+}

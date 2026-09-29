@@ -1,0 +1,706 @@
+[
+  {
+    "type": "ready",
+    "active": 0
+  },
+  {
+    "type": "start",
+    "active": 0
+  },
+  {
+    "type": "jump",
+    "active": 0.079
+  },
+  {
+    "type": "shot",
+    "active": 0.079,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "hit",
+    "active": 0.345,
+    "enemy": 0,
+    "level": 1,
+    "marker": 2,
+    "weapon": 1,
+    "damage": 1,
+    "before": 2,
+    "hp": 1
+  },
+  {
+    "type": "shot",
+    "active": 0.428,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "hit",
+    "active": 0.628,
+    "enemy": 0,
+    "level": 1,
+    "marker": 2,
+    "weapon": 1,
+    "damage": 1,
+    "before": 1,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 0.628,
+    "enemy": 0,
+    "weapon": 1
+  },
+  {
+    "type": "question",
+    "active": 2.343,
+    "factor": 2,
+    "value": 4,
+    "attempt": 0
+  },
+  {
+    "type": "wrong",
+    "active": 2.343,
+    "factor": 2,
+    "readyAt": 22.342719999999886
+  },
+  {
+    "type": "pause",
+    "active": 2.409
+  },
+  {
+    "type": "resume",
+    "active": 2.409
+  },
+  {
+    "type": "respawn",
+    "active": 22.35,
+    "factor": 2
+  },
+  {
+    "type": "question",
+    "active": 22.817,
+    "factor": 2,
+    "value": 7,
+    "attempt": 1
+  },
+  {
+    "type": "refill",
+    "active": 22.817,
+    "factor": 2,
+    "ammo": 12,
+    "readyAt": 42.81689999999996
+  },
+  {
+    "type": "shot",
+    "active": 23.534,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 11
+  },
+  {
+    "type": "hit",
+    "active": 23.717,
+    "enemy": 1,
+    "level": 2,
+    "marker": 2,
+    "weapon": 2,
+    "damage": 2,
+    "before": 4,
+    "hp": 2
+  },
+  {
+    "type": "shot",
+    "active": 24.184,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 10
+  },
+  {
+    "type": "hit",
+    "active": 24.367,
+    "enemy": 1,
+    "level": 2,
+    "marker": 2,
+    "weapon": 2,
+    "damage": 2,
+    "before": 2,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 24.367,
+    "enemy": 1,
+    "weapon": 2
+  },
+  {
+    "type": "shot",
+    "active": 25.983,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 9
+  },
+  {
+    "type": "hit",
+    "active": 26.083,
+    "enemy": 2,
+    "level": 2,
+    "marker": 3,
+    "weapon": 2,
+    "damage": 2,
+    "before": 6,
+    "hp": 4
+  },
+  {
+    "type": "shot",
+    "active": 26.633,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 8
+  },
+  {
+    "type": "hit",
+    "active": 26.783,
+    "enemy": 2,
+    "level": 2,
+    "marker": 3,
+    "weapon": 2,
+    "damage": 2,
+    "before": 4,
+    "hp": 2
+  },
+  {
+    "type": "shot",
+    "active": 27.283,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 7
+  },
+  {
+    "type": "hit",
+    "active": 27.467,
+    "enemy": 2,
+    "level": 2,
+    "marker": 3,
+    "weapon": 2,
+    "damage": 2,
+    "before": 2,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 27.467,
+    "enemy": 2,
+    "weapon": 2
+  },
+  {
+    "type": "shot",
+    "active": 29.067,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 6
+  },
+  {
+    "type": "reflect",
+    "active": 29.083,
+    "enemy": 3,
+    "level": 1,
+    "marker": 3,
+    "weapon": 2,
+    "damage": 0,
+    "hp": 3
+  },
+  {
+    "type": "hurt",
+    "active": 30.517,
+    "health": 4
+  },
+  {
+    "type": "question",
+    "active": 31.483,
+    "factor": 3,
+    "value": 2,
+    "attempt": 0
+  },
+  {
+    "type": "wrong",
+    "active": 31.483,
+    "factor": 3,
+    "readyAt": 51.48323000000018
+  },
+  {
+    "type": "respawn",
+    "active": 42.833,
+    "factor": 2
+  },
+  {
+    "type": "respawn",
+    "active": 51.499,
+    "factor": 3
+  },
+  {
+    "type": "question",
+    "active": 52.132,
+    "factor": 3,
+    "value": 9,
+    "attempt": 1
+  },
+  {
+    "type": "refill",
+    "active": 52.132,
+    "factor": 3,
+    "ammo": 12,
+    "readyAt": 72.13239999999965
+  },
+  {
+    "type": "shot",
+    "active": 52.882,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 11
+  },
+  {
+    "type": "hit",
+    "active": 53.092,
+    "enemy": 4,
+    "level": 2,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 6,
+    "hp": 3
+  },
+  {
+    "type": "shot",
+    "active": 53.532,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 10
+  },
+  {
+    "type": "hit",
+    "active": 53.766,
+    "enemy": 4,
+    "level": 2,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 3,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 53.766,
+    "enemy": 4,
+    "weapon": 3
+  },
+  {
+    "type": "weapon",
+    "active": 54.749,
+    "weapon": 3
+  },
+  {
+    "type": "shot",
+    "active": 54.766,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 9
+  },
+  {
+    "type": "hit",
+    "active": 54.932,
+    "enemy": 3,
+    "level": 1,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 3,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 54.932,
+    "enemy": 3,
+    "weapon": 3
+  },
+  {
+    "type": "shot",
+    "active": 55.149,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 8
+  },
+  {
+    "type": "shot",
+    "active": 55.482,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 7
+  },
+  {
+    "type": "shot",
+    "active": 55.816,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 6
+  },
+  {
+    "type": "shot",
+    "active": 56.149,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 5
+  },
+  {
+    "type": "shot",
+    "active": 56.482,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 4
+  },
+  {
+    "type": "shot",
+    "active": 56.816,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 3
+  },
+  {
+    "type": "shot",
+    "active": 57.149,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 2
+  },
+  {
+    "type": "shot",
+    "active": 57.482,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 1
+  },
+  {
+    "type": "shot",
+    "active": 57.815,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 0
+  },
+  {
+    "type": "empty",
+    "active": 58.149,
+    "weapon": 3
+  },
+  {
+    "type": "empty",
+    "active": 58.482,
+    "weapon": 3
+  },
+  {
+    "type": "empty",
+    "active": 58.815,
+    "weapon": 3
+  },
+  {
+    "type": "empty",
+    "active": 59.149,
+    "weapon": 3
+  },
+  {
+    "type": "empty",
+    "active": 59.482,
+    "weapon": 3
+  },
+  {
+    "type": "respawn",
+    "active": 72.148,
+    "factor": 3
+  },
+  {
+    "type": "question",
+    "active": 72.898,
+    "factor": 3,
+    "value": 5,
+    "attempt": 2
+  },
+  {
+    "type": "refill",
+    "active": 72.898,
+    "factor": 3,
+    "ammo": 12,
+    "readyAt": 92.8982200000009
+  },
+  {
+    "type": "hurt",
+    "active": 75.048,
+    "health": 4
+  },
+  {
+    "type": "weapon",
+    "active": 75.548,
+    "weapon": 2
+  },
+  {
+    "type": "shot",
+    "active": 75.565,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 5
+  },
+  {
+    "type": "reflect",
+    "active": 75.765,
+    "enemy": 6,
+    "level": 3,
+    "marker": 3,
+    "weapon": 2,
+    "damage": 0,
+    "hp": 9
+  },
+  {
+    "type": "weapon",
+    "active": 76.431,
+    "weapon": 3
+  },
+  {
+    "type": "shot",
+    "active": 76.448,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 11
+  },
+  {
+    "type": "hit",
+    "active": 76.598,
+    "enemy": 6,
+    "level": 3,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 9,
+    "hp": 6
+  },
+  {
+    "type": "hurt",
+    "active": 76.815,
+    "health": 4
+  },
+  {
+    "type": "shot",
+    "active": 77.115,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 10
+  },
+  {
+    "type": "hit",
+    "active": 77.231,
+    "enemy": 6,
+    "level": 3,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 6,
+    "hp": 3
+  },
+  {
+    "type": "shot",
+    "active": 77.765,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 9
+  },
+  {
+    "type": "hit",
+    "active": 77.865,
+    "enemy": 6,
+    "level": 3,
+    "marker": 3,
+    "weapon": 3,
+    "damage": 3,
+    "before": 3,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 77.865,
+    "enemy": 6,
+    "weapon": 3
+  },
+  {
+    "type": "shot",
+    "active": 79.415,
+    "weapon": 3,
+    "damage": 3,
+    "ammo": 8
+  },
+  {
+    "type": "reflect",
+    "active": 79.598,
+    "enemy": 7,
+    "level": 2,
+    "marker": 2,
+    "weapon": 3,
+    "damage": 0,
+    "hp": 4
+  },
+  {
+    "type": "weapon",
+    "active": 80.048,
+    "weapon": 2
+  },
+  {
+    "type": "shot",
+    "active": 80.065,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 4
+  },
+  {
+    "type": "hit",
+    "active": 80.215,
+    "enemy": 7,
+    "level": 2,
+    "marker": 2,
+    "weapon": 2,
+    "damage": 2,
+    "before": 4,
+    "hp": 2
+  },
+  {
+    "type": "shot",
+    "active": 80.731,
+    "weapon": 2,
+    "damage": 2,
+    "ammo": 3
+  },
+  {
+    "type": "hit",
+    "active": 80.848,
+    "enemy": 7,
+    "level": 2,
+    "marker": 2,
+    "weapon": 2,
+    "damage": 2,
+    "before": 2,
+    "hp": 0
+  },
+  {
+    "type": "kill",
+    "active": 80.848,
+    "enemy": 7,
+    "weapon": 2
+  },
+  {
+    "type": "hurt",
+    "active": 82.398,
+    "health": 3
+  },
+  {
+    "type": "hurt",
+    "active": 84.464,
+    "health": 2
+  },
+  {
+    "type": "hurt",
+    "active": 86.181,
+    "health": 1
+  },
+  {
+    "type": "hurt",
+    "active": 87.898,
+    "health": 0
+  },
+  {
+    "type": "checkpoint",
+    "active": 87.898,
+    "unlocked": {
+      "1": true,
+      "2": true,
+      "3": true
+    }
+  },
+  {
+    "type": "weapon",
+    "active": 87.931,
+    "weapon": 1
+  },
+  {
+    "type": "shot",
+    "active": 87.964,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 88.298,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 88.631,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 88.964,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 89.298,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 89.631,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 89.964,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 90.298,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "shot",
+    "active": 90.631,
+    "weapon": 1,
+    "damage": 1,
+    "ammo": null
+  },
+  {
+    "type": "finish",
+    "active": 90.631,
+    "unlocked": {
+      "1": true,
+      "2": true,
+      "3": true
+    },
+    "ammo": {
+      "2": 3,
+      "3": 8
+    }
+  }
+]

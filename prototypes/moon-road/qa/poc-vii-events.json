@@ -1,0 +1,635 @@
+[
+  {
+    "type": "ready",
+    "active": 0
+  },
+  {
+    "type": "start",
+    "active": 0
+  },
+  {
+    "type": "shot",
+    "active": 0.03,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 0.363,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 0.446,
+    "weapon": 1,
+    "hp": 1
+  },
+  {
+    "type": "hit",
+    "active": 0.695,
+    "weapon": 1,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 0.729,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 1.062,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 1.394,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 1.727,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 1.777,
+    "weapon": 1,
+    "hp": 2
+  },
+  {
+    "type": "hit",
+    "active": 2.01,
+    "weapon": 1,
+    "hp": 1
+  },
+  {
+    "type": "shot",
+    "active": 2.094,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 2.244,
+    "weapon": 1,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 2.443,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "question",
+    "active": 2.743,
+    "factor": 3,
+    "value": 4,
+    "attempt": 0
+  },
+  {
+    "type": "wrong",
+    "active": 2.743,
+    "factor": 3,
+    "readyAt": 22.74347333333333
+  },
+  {
+    "type": "pause",
+    "active": 2.776
+  },
+  {
+    "type": "resume",
+    "active": 2.776
+  },
+  {
+    "type": "shot",
+    "active": 3.073,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 3.221,
+    "weapon": 1,
+    "hp": 2
+  },
+  {
+    "type": "shot",
+    "active": 3.431,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 3.453,
+    "weapon": 1,
+    "hp": 1
+  },
+  {
+    "type": "shot",
+    "active": 3.776,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 3.893,
+    "weapon": 1,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 4.126,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 4.459,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 4.793,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 5.126,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 5.259,
+    "weapon": 1,
+    "hp": 4
+  },
+  {
+    "type": "shot",
+    "active": 5.476,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 5.509,
+    "weapon": 1,
+    "hp": 3
+  },
+  {
+    "type": "hit",
+    "active": 5.759,
+    "weapon": 1,
+    "hp": 2
+  },
+  {
+    "type": "shot",
+    "active": 5.843,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 6.009,
+    "weapon": 1,
+    "hp": 1
+  },
+  {
+    "type": "shot",
+    "active": 6.193,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 6.259,
+    "weapon": 1,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 6.543,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "question",
+    "active": 6.593,
+    "factor": 4,
+    "value": 2,
+    "attempt": 0
+  },
+  {
+    "type": "wrong",
+    "active": 6.593,
+    "factor": 4,
+    "readyAt": 26.592663333333324
+  },
+  {
+    "type": "shot",
+    "active": 6.923,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 6.923,
+    "weapon": 1,
+    "hp": 4
+  },
+  {
+    "type": "hit",
+    "active": 7.134,
+    "weapon": 1,
+    "hp": 3
+  },
+  {
+    "type": "shot",
+    "active": 7.3,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 7.36,
+    "weapon": 1,
+    "hp": 2
+  },
+  {
+    "type": "hit",
+    "active": 7.625,
+    "weapon": 1,
+    "hp": 1
+  },
+  {
+    "type": "shot",
+    "active": 7.659,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 7.859,
+    "weapon": 1,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 8.009,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 8.342,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 8.675,
+    "weapon": 1,
+    "hp": 5
+  },
+  {
+    "type": "shot",
+    "active": 8.909,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "hit",
+    "active": 8.925,
+    "weapon": 1,
+    "hp": 4
+  },
+  {
+    "type": "hit",
+    "active": 9.159,
+    "weapon": 1,
+    "hp": 3
+  },
+  {
+    "type": "shot",
+    "active": 9.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 9.609,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 9.942,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 10.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 10.609,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 10.942,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 11.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 11.608,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 11.942,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 12.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 12.608,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 12.942,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 13.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 13.608,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 13.942,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "shot",
+    "active": 14.275,
+    "weapon": 1,
+    "damage": 1
+  },
+  {
+    "type": "respawn",
+    "active": 22.758,
+    "factor": 3
+  },
+  {
+    "type": "question",
+    "active": 24.208,
+    "factor": 3,
+    "value": 7,
+    "attempt": 1
+  },
+  {
+    "type": "unlock",
+    "active": 24.208,
+    "factor": 3
+  },
+  {
+    "type": "shot",
+    "active": 24.525,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 24.858,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 25.191,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 25.525,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 25.858,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 26.191,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 26.525,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "respawn",
+    "active": 26.608,
+    "factor": 4
+  },
+  {
+    "type": "shot",
+    "active": 26.858,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 27.191,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 27.525,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 27.858,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 28.191,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "question",
+    "active": 28.258,
+    "factor": 4,
+    "value": 9,
+    "attempt": 1
+  },
+  {
+    "type": "unlock",
+    "active": 28.258,
+    "factor": 4
+  },
+  {
+    "type": "hurt",
+    "active": 32.474,
+    "health": 4
+  },
+  {
+    "type": "hurt",
+    "active": 34.191,
+    "health": 3
+  },
+  {
+    "type": "hurt",
+    "active": 35.908,
+    "health": 2
+  },
+  {
+    "type": "hurt",
+    "active": 37.624,
+    "health": 1
+  },
+  {
+    "type": "hurt",
+    "active": 39.341,
+    "health": 0
+  },
+  {
+    "type": "checkpoint",
+    "active": 39.341,
+    "unlocked": {
+      "1": true,
+      "3": true,
+      "4": true
+    }
+  },
+  {
+    "type": "weapon",
+    "active": 39.507,
+    "weapon": 3
+  },
+  {
+    "type": "shot",
+    "active": 39.524,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "shot",
+    "active": 39.857,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "hit",
+    "active": 40.024,
+    "weapon": 3,
+    "hp": 0
+  },
+  {
+    "type": "shot",
+    "active": 40.241,
+    "weapon": 3,
+    "damage": 3
+  },
+  {
+    "type": "weapon",
+    "active": 40.357,
+    "weapon": 4
+  },
+  {
+    "type": "shot",
+    "active": 40.574,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "shot",
+    "active": 40.907,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "shot",
+    "active": 41.241,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "shot",
+    "active": 41.574,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "shot",
+    "active": 41.907,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "shot",
+    "active": 42.241,
+    "weapon": 4,
+    "damage": 4
+  },
+  {
+    "type": "finish",
+    "active": 42.241,
+    "unlocked": {
+      "1": true,
+      "3": true,
+      "4": true
+    }
+  }
+]
