@@ -1,0 +1,83 @@
+{
+  "date": "2026-09-29T15:58:03.223Z",
+  "viewport": "960x540",
+  "checks": {
+    "x4-opens-clock-tower-4x5-seal": {
+      "ok": true,
+      "detail": {
+        "2": 3,
+        "3": 9,
+        "4": 7,
+        "5": 0
+      }
+    },
+    "clock-tower-monsters-carry-5s-and-fall": {
+      "ok": true,
+      "detail": [
+        "skeleton 2·5 ×2",
+        "bat 5·3 ×3",
+        "skeleton 5·4 ×4",
+        "bat 1·5 ×1",
+        "skeleton 3·5 ×1"
+      ]
+    },
+    "warden-drops-x5-and-clock-shield": {
+      "ok": true,
+      "detail": {
+        "attempts": 1,
+        "shield": {
+          "owned": true,
+          "charges": 3,
+          "max": 3
+        },
+        "ammo5": 12
+      }
+    },
+    "x5-opens-5x5-trial-gate": {
+      "ok": true
+    },
+    "trial-reshuffles-problems": {
+      "ok": true,
+      "detail": [
+        "2·6",
+        "5·2",
+        "4·6"
+      ]
+    },
+    "trial-deflects-mismatched-beams": {
+      "ok": true,
+      "detail": 0
+    },
+    "trial-damage-follows-skeleton-rules": {
+      "ok": true,
+      "detail": [
+        "1·2 ×2=2",
+        "1·2 ×1=1",
+        "1·2 ×1=1",
+        "2·6 ×1=1",
+        "2·6 ×1=1",
+        "2·6 ×1=1",
+        "2·6 ×1=1",
+        "5·2 ×1=1",
+        "5·2 ×5=10",
+        "4·6 ×1=1"
+      ]
+    },
+    "trial-grants-shield-plus-one": {
+      "ok": true,
+      "detail": {
+        "owned": true,
+        "charges": 4,
+        "max": 4
+      }
+    },
+    "no-page-errors": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "notes": [
+    "Trial: 10 hits, double x5 hits: 1. Warden attempts: 1. Trial attempts: 1. Shield blocks this run: 0."
+  ],
+  "passed": true
+}

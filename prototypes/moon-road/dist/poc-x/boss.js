@@ -334,7 +334,8 @@ export function pendulumTrial(def, S) {
       if (overlaps(target.rect(), S.playerRect())) S.hurtPlayer(t0.x);
     },
     draw(g, t) {
-      g.lineStyle(3, 0x8a6a3a, 0.8); g.lineBetween(pivot.x, pivot.y, t0.x, t0.y - 40);
+      if (!boss.alive) { sprite.setVisible(false); badge.setVisible(false); hint.setVisible(false); return; }
+      if (!t0.dying) { g.lineStyle(3, 0x8a6a3a, 0.8); g.lineBetween(pivot.x, pivot.y, t0.x, t0.y - 40); }
       g.fillStyle(0xc89a52); g.fillCircle(pivot.x, pivot.y, 8);
       if (glowing() && !t0.dying) {
         g.fillStyle(COLOR[5], 0.16 + 0.1 * Math.sin(t * 12)); g.fillCircle(t0.x, t0.y, 86);

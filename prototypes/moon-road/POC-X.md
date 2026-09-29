@@ -58,6 +58,6 @@ The atrium and shaft keep the original observatory backdrop.
 
 ## Known limits
 
-- The QA bot proves reachability and rules, not difficulty feel. William is playtesting the Warden and trial next.
+- `qa/clock-tower-playtest.cjs` passed 9/9 on 2026-09-29. Warden and trial each fell on the first attempt; the trial showed `2·6 → 5·2 → 4·6` and a double ×5 hit for 10. An earlier run failed when a bat knocked the bot off a ledge, so the script now clears the Clock Gate before climbing. The bot proves reachability and rules, not difficulty feel; William is playtesting the balance next.
 - Shield absorbs are unit-tested. The scripted run didn't take a hit after getting the shield, so the in-browser absorb is still to be seen in play.
 - Physical iPhone Safari is untested.
