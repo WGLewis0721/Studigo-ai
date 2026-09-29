@@ -11,6 +11,10 @@
 
 It's a first Metroidvania slice directed by William, using Metroid Fusion/Zero Mission, SotN, Mega Man and Grimvalor mechanics; the dragon stays a shooter. Its factor-locked world intentionally departs from POC VII's "no ability gates" rule, at William's direction. POC VII, POC VIII, `/journey/` and Core Clash below stay untouched as older controls. Rules, map, bosses, files, tests and known limits are in **POC-IX.md**. Spec and plan are under `docs/superpowers/`.
 
+## Working build: POC X Moon Keep II (beta)
+
+`dist/poc-x/` is POC IX plus generated art, the ×5 Clock Tower (Clockwork Warden gives the ×5 beam and the Clock Shield), a `5 · 5`-gated Pendulum Trial (+1 shield charge), problems hovering over every non-boss monster, and the restart button. Read **POC-X.md**. Beta test URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
+
 ## Art transfer
 
 Read **ART_HANDOFF.md** for the actual generation/preparation workflow, frame map, Claude continuation prompt and reconstructed generation prompts. Original sheets are in `art-source/`, the exact pipeline is `scripts/normalize-art.py`, and `downloads/Studigo-Art-Pack.zip` includes originals plus every game-ready PNG and `frames.json`. `node prepare.mjs` still restores the exact runtime assets. Reuse the accepted artwork before generating anything new.

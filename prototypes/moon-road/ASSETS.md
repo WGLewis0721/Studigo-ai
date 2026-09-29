@@ -24,3 +24,17 @@ The Graveyard skeleton body is reused from William's supplied Higgsfield prototy
 ## Reuse and transfer
 
 See `ART_HANDOFF.md` for frame dimensions, animation ordering, generation prompt templates and Claude instructions. Original source PNGs and `scripts/normalize-art.py` are now directly tracked in the GitHub game branch. `downloads/Studigo-Art-Pack.zip` provides the originals, ready assets, frame metadata, script and provenance in one download. Runtime `dist/assets/` remains reconstructible with `node prepare.mjs`.
+
+## POC X generated art (2026-09-29)
+
+Generated with Higgsfield **Nano Banana** (`nano_banana_2`, 2k) on William's account. Each sheet used the accepted originals as image references so the new art matches them: `dist/assets/dragon.png`, `guardian.png`, `observatory.png` and `platform.png`, and for later sheets the first enemy sheet too. No stock art or third-party pack is used, and no license beyond the generator's terms is claimed. The raw outputs are kept unedited in `art-source/poc-x/*-raw.png`. `art-source/poc-x/process.py` makes the game files in `dist/poc-x/art/`: it keys out the magenta background, slices the cells, aligns feet, downscales to a crisp alpha, and detects the clock-dial centres. The originals in `dist/assets/` and `art-source/` are untouched.
+
+All four sprite sheets share this style clause: "in the exact same pixel-art style, outline weight, shading and palette as the reference sprites (16-bit, crisp dark outlines, soft top-left light)". Each sheet asked for a solid flat #FF00FF background with no text or grid lines.
+
+| Sheet | References | Prompt (abridged) |
+|---|---|---|
+| `enemies-raw.png` (16:9) | dragon, guardian | 4×2 side-view sheet. Row 1: cute-but-spooky skeleton warrior (bone white, slate belt): walk A, walk B, lunge, hurt. Row 2: bronze clockwork bat with gear wings, wings up and down; large armored skeleton warden with lantern and tattered purple cloak: idle, winding up to throw a bone. |
+| `bosses-raw.png` (16:9) | guardian, dragon, enemies | 4×2 facing left. Row 1: Clockwork Warden, a bronze-and-slate clockwork golem with a blank cream clock dial on its chest: idle, wind-up, slam, hurt. Row 2: collapse into gears; Pendulum Sentinel, a floating brass knight with a blank cream chest disc: idle, swing, hurt. |
+| `items-raw.png` (16:9) | dragon, core, enemies | 4×2 icons: energy tank, moon boots, ammo capsule, pink-red beam orb, bronze clock shield, gear with teal plus, pink heart gem, white crystal shard. The generator added text labels anyway; `process.py` crops them off. |
+| `backgrounds-raw.png` (16:9) | observatory | Four 16:9 side-scroller backdrops in a 2×2 grid, no characters, UI or foreground floor, darker toward the bottom: bone crypt catacombs; star observatory interior; hidden emerald vault; clockwork tower interior. |
+| `textures-raw.png` (3:2) | observatory, platform | Six seamless 16-bit wall textures in a 3×2 grid: moonlit blue-grey castle brick; warm crypt brick with bone fragments; indigo star-marble with gold veins; emerald vault stone; bronze riveted clockwork plates; slate stone with iron bands. |
