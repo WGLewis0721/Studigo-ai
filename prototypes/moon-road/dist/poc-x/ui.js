@@ -3,7 +3,7 @@ import {mapPercent} from './progress.js';
 
 const $ = s => document.querySelector(s);
 export const HEX = {1: '#d6e8ef', 2: '#ffb44a', 3: '#57b8ff', 4: '#7fe0a0', 5: '#ff6f8a'};
-const SHORT = {A: 'GATE', B: 'ATRIUM', C: 'SHAFT', D: 'CRYPT', E: 'SHRINE', F: 'TWIN', G: 'BOOTS', H: 'STAR WALK', I: 'SHRINE', J: 'TRINE', K: 'VAULT', L: 'EXIT ✦', M: 'CLOCK', N: 'GEARS', O: 'BELLS', P: 'WARDEN', Q: 'TRIAL'};
+const SHORT = {A: 'GATE', B: 'ATRIUM', C: 'SHAFT', D: 'CRYPT', E: 'SHRINE', F: 'TWIN', G: 'BOOTS', H: 'STAR WALK', I: 'SHRINE', J: 'TRINE', K: 'VAULT', M: 'CLOCK', N: 'GEARS', O: 'BELLS', P: 'WARDEN', Q: 'TRAINING', R: 'RUNES', S: 'PORTAL ✦'};
 const ZONE = {atrium: '#5d7896', shaft: '#4f6a8a', crypt: '#8a735c', stars: '#5a64b8', vault: '#6f8f64', clock: '#a06a30'};
 
 export const input = {left: new Set(), right: new Set(), fire: new Set(), jump: new Set(), jumpQueued: false, fireQueued: false, openQueued: false};
@@ -133,7 +133,7 @@ export function hud(S) {
   $('#nearby').hidden = S.mode !== 'play' || !S.nearOrb;
   if (S.nearOrb) {
     const o = S.nearOrb;
-    $('#drop-name').textContent = '×' + o.family + ' · ' + (o.unlock ? 'NEW BEAM' : 'REFILL AMMO');
+    $('#drop-name').textContent = o.bossOrb ? '✚ ORB · REFILL EVERY BEAM' : '×' + o.family + ' · ' + (o.unlock ? 'NEW BEAM' : 'REFILL AMMO');
   }
   minimap(S);
 }
@@ -159,8 +159,8 @@ function drawMap(ctx, S, cw, ch, ox, oy, labels) {
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
     for (const d of room.doors) {
-      const seal = d.via && room.entities.find(e => e.id === d.via);
-      const open = !seal || S.run.items.has(seal.id);
+      const seal = [].concat(d.via || []).map(v => room.entities.find(e => e.id === v)).find(e => e && !S.run.items.has(e.id));
+      const open = !seal;
       const dy = y + d.row * ch + ch * 0.62, dx = d.side === 'W' ? x : x + w - 3;
       ctx.fillStyle = open ? '#e8f1ff' : HEX[seal.type === 'block' ? 1 : Math.min(...[seal.a, seal.b].filter(n => n > 1))] || '#fff';
       ctx.fillRect(dx, dy - 2, 3, 5);

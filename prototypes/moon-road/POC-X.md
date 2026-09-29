@@ -1,6 +1,6 @@
-# POC X — Moon Keep II: Clock Tower (beta)
+# POC X — Moon Keep II: Clock Tower (golden image)
 
-The working build after the POC IX golden image. It's POC IX plus real generated art, the ×5 Clock Tower zone, the Clock Shield, and a mini-boss trial. POC IX stays frozen (tag `golden/poc-ix-moon-keep`).
+**Current golden image** (tag `golden/poc-x-moon-keep-ii`, approved by William 2026-09-29). It supersedes POC IX, which stays playable as the previous golden. It's POC IX plus real generated art, the ×5 Clock Tower zone, the Clock Shield, the Training Hall, match rewards, and the Rune Gate/Sanctum portal to Core Clash.
 
 - Route: `dist/poc-x/`. Beta test URL once merged: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
 - Not linked from the Studigo app.
@@ -19,7 +19,7 @@ The working build after the POC IX golden image. It's POC IX plus real generated
 
 The atrium and shaft keep the original observatory backdrop.
 
-**Problems hover over every non-boss monster.** Skeletons, bats and the trial mini-boss all show their `a · b` above them with a segmented health bar. Boss plates print on the boss itself; the Clockwork Warden's plates appear on its clock dial.
+**Problems hover over every non-boss monster.** Skeletons, bats and the training dummy all show their `a · b` above them with a segmented health bar. Boss plates print on the boss itself; the Clockwork Warden's plates appear on its clock dial.
 
 **×5 Clock Tower** (map row 0). The old ×5 teaser door on the Central Shaft is now a `4 · 5` seal, so ×4 from the Hidden Vault opens it (5 shots).
 
@@ -29,27 +29,25 @@ The atrium and shaft keep the original observatory backdrop.
 | N Gear Gallery (3×1) | Skeletons `2·5`, `5·4`, `3·5`; bats `5·3`, `1·5`; `15` block (×3 or ×5) hides energy tank 4 |
 | O Bell Shrine | Shrine with ×2, ×3, ×4 and ×5 refill orbs |
 | P Clockwork Warden | Boss. Plates `2·5, 1·5, 4·5, 3·5, 2·5, 4·5` (80 HP), beatable without ×5. Floor shockwaves (jump them) and arcing gears. Drops the **×5 beam** and the **Clock Shield**. The east door is a `5 · 5` seal (×5 only) |
-| Q Pendulum Trial | Mini-boss. Drops **+1 shield charge** |
+| Q Training Hall (36 tiles wide, 20% wider than a screen) | Save shrine, the practice dummy, and the **+1 shield charge** on a pedestal |
 
-**Clock Shield.** It starts with 3 charges. A charge absorbs a hit instead of a heart ("◆ BLOCKED"). Every non-boss kill restores one charge. The trial upgrade raises the maximum to 4. Charges show as ◆ next to the hearts, and a faint bubble surrounds the dragon while you have any.
+**Clock Shield.** It starts with 3 charges. A charge absorbs a hit instead of a heart ("◆ BLOCKED"). Every non-boss kill restores one charge. The Training Hall's upgrade raises the maximum to 4. Charges show as ◆ next to the hearts, and a faint bubble surrounds the dragon while you have any.
 
-**Pendulum Trial**, as William specified:
-- It uses the same rules as monsters: ×1 always works, a beam matching either number works, anything else reflects.
-- It has one health pool of 20, which is 25% of the Clockwork Warden's 80.
-- It starts on `1 · 2`, then reshuffles through 1–5 (every 2.6 s, or after 4 damage).
-- A 5 shows only briefly. While it does, the trial glows pink and a ×5 hit deals double (10).
-- It swings gently on a pendulum and has no projectiles. It's meant as a short trial of every beam, not a hard fight.
+**Training Hall dummy (William, 2026-09-29).** The Pendulum Sentinel is now a practice dummy with non-boss monster rules and rewards, and no risk:
+- ×1 always works and a beam matching either number works. Anything else reflects.
+- A matching power beam staggers it and shatters its silver armor.
+- Each problem is one "life". Clearing it counts as a kill: a match clear builds your streak, refunds rounds and drops ammo, and streak bonuses apply.
+- A new problem swings in after each clear. Problems shuffle through 1–5; a 5 glows, and ×5 then hits double.
+- It swings and throws chime rings that deal 0 damage. They show a "0" and never break your streak.
+- The room has a save shrine.
 
-**Right tool pays: match rewards (William, 2026-09-29).** A good shot could clear everything with ×1, so matching a non-boss monster's number with a power beam is now rewarded. ×1 itself loses nothing.
-- **Stagger.** A matching hit freezes the monster for 0.55 s. It can't move or hurt you, and "MATCH!" flashes gold.
-- **Silver armor.** Monsters carry silver armor worth about 10–20% on top of `a × b` (none at 4 HP or less), shown as silver segments at the end of the health bar. ×1 chips it one point at a time; a matching beam shatters all of it in one shot ("ARMOR BREAK!"). The HP under the armor is still exactly `a × b`, so the math stays honest.
-- **Free when correct.** A match kill refunds every round spent on that monster, plus one. When one beam did all the work it shows the sentence, e.g. `3 × 2 = 6`.
-- **Match streak.** Consecutive match kills show `MATCH ×N` in the HUD, and any hit you take resets it. Every third in a row gives a heart, a shield charge if hearts are full, or ammo.
-- The map and finish screens show match kills and your best streak. The first power beam you pick up (×2) shows a tip explaining all this.
+**Rune Gate and Rune Sanctum (the new way to Core Clash).** The old Moon Vault after the Trine Guardian is gone, and its portal moved here, off the Central Shaft hub. The shaft's east wall at map row 2 has a ledge (Moon Boots; a platform helps).
+- **R Rune Gate:** a low corridor with one gate per power beam, `×2 ×3 ×4 ×5`. One shot of the matching beam opens each.
+- **S Rune Sanctum:** a shrine with ×2–×5 refill orbs and four runes in each beam's colour and number.
+  - Only a rune's own beam charges it. It skip-counts like the stone blocks (`2, 4 … 10`, `3 … 15`, `4 … 20`, `5 … 25`), then shows `N × 5 = 5N`, glows, and refills that beam.
+  - When all four glow, the portal lights in their four colours. Walking in opens the same Core Clash choice as before (ENTER CORE CLASH / KEEP EXPLORING / NEW RUN), and the Core Clash encounter itself is unchanged.
 
-**Classic boss dodges (William, 2026-09-29).**
-- **Twin Warden:** full size, but the active twin now makes big leaps (~260 px high) that arc over the dragon and land beyond it. A shadow marks the landing spot, and you dodge by staying put or running under it.
-- **Clockwork Warden:** shrunk to ~180 px. Only its lower body (80×130) hurts on contact, so a Moon Boots jump clears it from a comfortable take-off window.
+**Boss orbs.** Every boss arena (Twin, Trine, Clockwork) has a ✚ knowledge orb above the floor while the boss is up. A right answer refills every beam you own and drops a heart if you're hurt. It asks about the beam the current plate needs. Same orb rules as elsewhere: no penalty, and a 20 s active-play retry.
 
 **Boss ammo safety (POC X).**
 - Breaking a plate drops enough ammo to finish the next plate, plus two for misses (at least 3). Respawning at a shrine tops every owned beam up to at least half capacity.
@@ -64,11 +62,15 @@ The atrium and shaft keep the original observatory backdrop.
 
 ## Tests
 
-- `node --test "test/**/*.test.mjs"` runs POC IX's 31 tests plus 34 for POC X. The POC X tests add ×5 rules, trial damage including the ×5 double, the shield, and 17-room world validation. The solver proves ×4 opens the Clock Tower, ×5 opens the trial, the Warden is beatable before ×5, and the trial has 25% of the Warden's health.
-- `node qa/clock-tower-playtest.cjs` is a real-input run from the start through the Clock Tower, Warden and trial. Results are in `qa/clock-tower-results.json` and `qa/clock-tower-*.png`.
+- `node --test "test/**/*.test.mjs"` runs 71 tests. They cover:
+  - rules for ×5, the dummy, runes, matches and armor;
+  - the shield and the streak;
+  - 18-room world validation, including the 36-tile Training Hall.
+
+  The solver proves ×4 opens the Clock Tower, ×5 opens the Training Hall and the Sanctum, all four runes charge, and there's exactly one portal.
 
 ## Known limits
 
-- `qa/clock-tower-playtest.cjs` passes 10/10 by real input as of the match-rewards update. A Moon Boots jump clears the Clockwork Warden with 0 hits. The Warden fell on the 2nd attempt after the shrine top-up, and the trial showed `2·4 → 5·6` with a double ×5 hit. Earlier runs tripped on bot combat (a bat knocking it off a ledge), so the script clears the Clock Gate first. The bot proves reachability and rules, not difficulty feel; William is playtesting the balance.
+- `qa/clock-tower-playtest.cjs`: a real-input run from the start through the Clock Tower. It covers the boss orb, jumping over the Warden, the Training Hall (save shrine, no damage, streaks, ammo drops, shield upgrade), the Rune Gate, all four runes, and the portal into Core Clash. Results are in `qa/clock-tower-results.json`.
 - Shield absorbs are unit-tested. The scripted run didn't take a hit after getting the shield, so the in-browser absorb is still to be seen in play.
 - Physical iPhone Safari is untested.

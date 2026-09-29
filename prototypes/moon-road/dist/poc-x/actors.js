@@ -1,6 +1,6 @@
 import {TILE, moveBody} from './physics.js';
-import {hitText, isMatch, armorFor} from './rules.js';
-import {collect, addAmmo, orbReady, healFull, shieldKill, recordMatch} from './progress.js';
+import {hitText, isMatch, armorFor, damageFor} from './rules.js';
+import {collect, addAmmo, orbReady, healFull, shieldKill, recordMatch, refill} from './progress.js';
 import {ART} from './art/art.js';
 
 export const COLOR = {1: 0xd6e8ef, 2: 0xffb44a, 3: 0x57b8ff, 4: 0x7fe0a0, 5: 0xff6f8a};
@@ -191,7 +191,7 @@ export function bat(e, S) {
 
 export function seal(e, S) {
   const x = e.tx * TILE, y = e.ty * TILE, c = e.a === 5 ? COLOR[5] : sealColor(e), max = e.a * e.b;
-  const text = label(S, x + 16, y + 64, `${e.a}\n·\n${e.b}`, 17, '#fff7df').setLineSpacing(-6);
+  const text = label(S, x + 16, y + 64, e.label || `${e.a}\n·\n${e.b}`, e.label ? 15 : 17, '#fff7df').setLineSpacing(-6);
   const tip = e.teaser ? label(S, x + (e.tx < 3 ? 70 : -40), y - 22, e.teaser, 12, '#ffb3c1') : null;
   const self = {
     type: 'seal', id: e.id, target: true, solid: true, alive: true, hp: max, max, flash: 0,
@@ -207,7 +207,7 @@ export function seal(e, S) {
         S.run.items.add(e.id);
         S.burst(x + 16, y + 64, c, 60);
         S.sfx(980, 0.3);
-        S.say(`${e.a} · ${e.b} SEAL OPEN`, 1.6);
+        S.say(e.label ? `${e.label} GATE OPEN` : `${e.a} · ${e.b} SEAL OPEN`, 1.6);
         S.log('seal', {id: e.id, weapon: w});
       }
     },
@@ -344,12 +344,12 @@ export function pickup(drop, x, y, S) {
 
 export function orb(e, S, x, y) {
   const id = e.id, family = e.family;
-  const sprite = S.add.image(x, y, 'core').setDisplaySize(40, 40).setTint(COLOR[family]).setDepth(5).setInteractive({useHandCursor: true});
-  const tag = label(S, x, y - 44, e.unlock ? `×${family} BEAM` : `×${family} AMMO`, 14, '#e7edc4');
+  const sprite = S.add.image(x, y, 'core').setDisplaySize(40, 40).setTint(e.bossOrb ? 0xfff0b0 : COLOR[family]).setDepth(5).setInteractive({useHandCursor: true});
+  const tag = label(S, x, y - 44, e.bossOrb ? '✚ REFILL' : e.unlock ? `×${family} BEAM` : `×${family} AMMO`, 14, '#e7edc4');
   sprite.on('pointerdown', () => S.openOrb(self));
   const self = {
-    type: 'orb', id, family, unlock: !!e.unlock, alive: true, x, y, wasReady: true,
-    visible: () => (e.unlock ? !S.run.owned[family] : S.run.owned[family]),
+    type: 'orb', id, family, unlock: !!e.unlock, bossOrb: !!e.bossOrb, alive: true, x, y, wasReady: true,
+    visible: () => (e.bossOrb ? !!(S.boss?.alive && S.bossIntro <= 0) : e.unlock ? !S.run.owned[family] : S.run.owned[family]),
     ready: () => self.visible() && orbReady(S.run, id),
     update() {
       const ready = self.ready();
@@ -403,25 +403,160 @@ export function shrine(e, S) {
 }
 
 export function finale(e, S) {
-  const x = (e.tx + 0.5) * TILE, y = e.ty * TILE;
+  const x = (e.tx + 0.5) * TILE, y = e.ty * TILE, needs = e.needs || [];
+  const open = () => needs.every(id => S.run.items.has(id));
   const beacon = S.add.image(x, y - 120, 'core').setDisplaySize(60, 60).setDepth(3);
-  const sign = label(S, x, y - 200, 'CORE CLASH →', 20, '#e7efc7');
+  const sign = label(S, x, y - 200, '', 18, '#e7efc7');
   let armed = true;
   const self = {
     type: 'finale', alive: true,
     update() {
       const near = Math.abs(S.p.x - x) < 60;
-      if (near && armed) { armed = false; S.finish(); }
+      if (near && armed && open()) { armed = false; S.finish(); }
       if (Math.abs(S.p.x - x) > 160) armed = true;
     },
     draw(g, t) {
-      beacon.setY(y - 120 + Math.sin(t * 2) * 7);
-      g.lineStyle(6, 0x759b97, 0.7); g.strokeRoundedRect(x - 44, y - 182, 88, 182, 36);
-      g.lineStyle(2, 0xc6e9ac, 0.8); g.strokeRoundedRect(x - 36, y - 173, 72, 173, 30);
-      g.fillStyle(0xbde8b8, 0.06); g.fillRect(x - 33, y - 140, 66, 140);
+      const on = open();
+      sign.setText(on ? 'CORE CLASH →' : 'CHARGE THE FOUR RUNES');
+      beacon.setY(y - 120 + Math.sin(t * 2) * 7).setVisible(on);
+      g.lineStyle(6, 0x759b97, on ? 0.8 : 0.35); g.strokeRoundedRect(x - 44, y - 182, 88, 182, 36);
+      if (!on) return;
+      [2, 3, 4, 5].forEach((n, i) => {
+        const k = t * 1.6 + i * Math.PI / 2;
+        g.lineStyle(3, COLOR[n], 0.75); g.strokeRoundedRect(x - 36 + Math.sin(k) * 3, y - 173 + Math.cos(k) * 3, 72, 173, 30);
+        g.fillStyle(COLOR[n], 0.9); g.fillCircle(x + Math.cos(k) * 30, y - 90 + Math.sin(k) * 70, 4);
+      });
+      g.fillStyle(0xfff4d0, 0.1 + 0.05 * Math.sin(t * 3)); g.fillRect(x - 33, y - 140, 66, 140);
     },
     destroy() { beacon.destroy(); sign.destroy(); },
   };
+  return self;
+}
+
+// Rune: charged only by its own beam, skip counting to 5N like the stone blocks. Charging refills that beam.
+export function rune(e, S) {
+  const x = (e.tx + 0.5) * TILE, y = e.ty * TILE + 16, c = COLOR[e.n];
+  const charged = () => S.run.items.has(e.id);
+  const mark = label(S, x, y, `×${e.n}`, 22, CSS[e.n]);
+  const count = label(S, x, y + 50, '', 13, CSS[e.n]);
+  const self = {
+    type: 'rune', id: e.id, target: !charged(), alive: true, x, y, hp: charged() ? 0 : e.product, max: e.product, flash: 0,
+    math: () => ({kind: 'rune', n: e.n, product: e.product}),
+    rect: () => ({x: x - 32, y: y - 32, w: 64, h: 64}),
+    applyDamage(w) {
+      self.hp = Math.max(0, self.hp - w);
+      self.flash = 0.2;
+      S.float(x, y - 58 - (self.hp ? 0 : 16), hitText(self.math(), w, self.hp), CSS[w], self.hp ? 22 : 26);
+      S.burst(x, y, c, 14);
+      S.sfx(300 + (e.product - self.hp) * 30, 0.08);
+      if (self.hp) return;
+      self.target = false;
+      S.run.items.add(e.id);
+      refill(S.run, e.n);
+      S.float(x, y + 74, `×${e.n} REFILLED`, CSS[e.n], 15);
+      S.burst(x, y, c, 60);
+      S.sfx(1320, 0.4);
+      S.log('rune', {n: e.n});
+      if ([2, 3, 4, 5].every(n => S.run.items.has(`rune-${n}`))) { S.banner('THE PORTAL OPENS', 'All four runes are charged'); S.cameras.main.flash(260, 230, 230, 255); }
+    },
+    update(dt) { self.flash = Math.max(0, self.flash - dt); },
+    draw(g, t) {
+      const on = charged(), lit = on ? 5 : Math.floor((e.product - self.hp) / e.n);
+      if (on) { g.fillStyle(c, 0.12 + 0.05 * Math.sin(t * 3)); g.fillCircle(x, y, 54 + Math.sin(t * 2) * 4); }
+      g.fillStyle(0x0b1322, 0.8); g.fillCircle(x, y, 30);
+      g.fillStyle(c, on ? 0.45 + 0.1 * Math.sin(t * 4) : 0.08 + 0.06 * lit);
+      g.fillCircle(x, y, 27);
+      g.lineStyle(3, self.flash ? 0xffffff : c, on ? 0.95 : 0.55); g.strokeCircle(x, y, 30);
+      for (let i = 0; i < 5; i++) {
+        const k = -Math.PI / 2 + i * Math.PI * 2 / 5;
+        g.fillStyle(i < lit ? c : 0x1a2436, i < lit ? 1 : 0.9); g.fillCircle(x + Math.cos(k) * 40, y + Math.sin(k) * 40, 5);
+      }
+      count.setText(on ? 'CHARGED' : `${e.product - self.hp} / ${e.product}`);
+    },
+    destroy() { mark.destroy(); count.destroy(); },
+  };
+  return self;
+}
+
+// Training dummy: the Pendulum Sentinel with monster rules and rewards, but nothing it does can hurt.
+// Each problem is a "life": clearing it counts as a kill (streak, refund, drops), then a new problem swings in.
+export function dummy(e, S) {
+  const pivot = {x: (e.tx + 0.5) * TILE, y: 70}, len = 250;
+  const sprite = S.add.sprite(pivot.x, 320, 'sentinel', 1).setDepth(4);
+  const badge = label(S, 0, 0, '', 20, '#f7ecd0');
+  const hint = label(S, 0, 0, '×5 = DOUBLE', 13, '#ffb3c1');
+  const bag = [];
+  const self = {
+    type: 'dummy', id: e.id, target: true, alive: true, x: pivot.x, y: 320, a: 1, b: 2,
+    hp: 2, max: 2, armor: 0, armorMax: 0, stun: 0, spent: {}, used: new Set(), matched: false,
+    hit: 0, swing: 0, shown: 0, idle: 0, next: 0, attack: 2.4, frame: 1,
+    math: () => ({kind: 'dummy', a: self.a, b: self.b}),
+    rect: () => ({x: self.x - 44, y: self.y - 64, w: 88, h: 124}),
+    glowing: () => self.a === 5 || self.b === 5,
+    newProblem(first) {
+      if (!bag.length) bag.push(...[1, 2, 3, 4, 5].sort(() => Math.random() - 0.5));
+      let a = first ? 1 : bag.pop();
+      if (a === self.a && bag.length && !first) { bag.unshift(a); a = bag.pop(); }
+      const bs = [2, 3, 4, 6].filter(n => n !== a);
+      Object.assign(self, {a, b: first ? 2 : bs[Math.floor(Math.random() * bs.length)], spent: {}, used: new Set(), matched: false, shown: 0, idle: 0, target: true});
+      self.max = self.hp = self.a * self.b;
+      self.armor = self.armorMax = armorFor(self.a, self.b);
+      if (!first) { S.sfx(self.glowing() ? 1320 : 880, 0.18); S.burst(self.x, self.y, self.glowing() ? COLOR[5] : 0xffe2a0, 20); }
+      S.log('dummy-problem', {a: self.a, b: self.b});
+    },
+    applyDamage(w) {
+      self.hit = 0.18;
+      self.idle = 0;
+      strike(self, w, S);
+      if (hitArmor(self, w, S)) return;
+      const dmg = damageFor(self.math(), w);
+      self.hp = Math.max(0, self.hp - dmg);
+      S.float(self.x + (Math.random() < 0.5 ? -1 : 1) * 60, self.y - 40, dmg > w ? `−${dmg} ×2!` : '−' + dmg, CSS[w], dmg > w ? 26 : 22);
+      if (self.hp) return;
+      const problem = {a: self.a, b: self.b};
+      onKill(S, self.x, self.y, w, problem, 'dummy', self);
+      if (isMatch(self.math(), w)) S.spawn(pickup({kind: 'ammo', family: w, amount: 2}, self.x, self.y, S));
+      self.target = false;
+      self.next = 0.8;
+    },
+    update(dt) {
+      self.hit = Math.max(0, self.hit - dt);
+      if (self.next > 0) { self.next -= dt; if (self.next <= 0) self.newProblem(); }
+      if (self.stun > 0) self.stun -= dt;
+      else self.swing += dt;
+      const ang = Math.sin(self.swing * 0.85) * 0.95;
+      self.x = pivot.x + Math.sin(ang) * len * 1.25;
+      self.y = pivot.y + Math.cos(ang) * len;
+      self.frame = self.hit || self.stun > 0 ? 2 : Math.abs(ang) > 0.6 ? 0 : 1;
+      self.shown += dt;
+      self.idle += dt;
+      // Untouched problems rotate so the player sees every beam; a 5 stays up only briefly.
+      if (self.target && (self.idle > 8 || (self.glowing() && self.shown > 4))) self.newProblem();
+      self.attack -= dt;
+      if (self.attack <= 0) {
+        self.attack = 3.2;
+        const dx = S.p.x - self.x, dy = S.p.y - 40 - self.y, d = Math.hypot(dx, dy) || 1;
+        S.enemyShot({x: self.x, y: self.y, vx: dx / d * 220, vy: dy / d * 220, g: 0, r: 10, color: 0xd8e2ec, harmless: true});
+        S.sfx(520, 0.08);
+      }
+    },
+    draw(g, t) {
+      g.lineStyle(3, 0x8a6a3a, 0.8); g.lineBetween(pivot.x, pivot.y, self.x, self.y - 40);
+      g.fillStyle(0xc89a52); g.fillCircle(pivot.x, pivot.y, 8);
+      if (self.glowing() && self.target) {
+        g.fillStyle(COLOR[5], 0.16 + 0.1 * Math.sin(t * 12)); g.fillCircle(self.x, self.y, 86);
+        g.lineStyle(3, COLOR[5], 0.8); g.strokeCircle(self.x, self.y, 78 + Math.sin(t * 12) * 4);
+      }
+      sprite.setFrame(self.frame).setPosition(self.x, self.y).setFlipX(S.p.x < self.x).setAlpha(self.target ? 1 : 0.55)
+        .setTint(self.stun > 0 ? (Math.floor(t * 20) % 2 ? 0xffe08a : 0xfff4c8) : self.hit ? 0xfff0d8 : self.glowing() ? 0xffd0dc : 0xffffff);
+      badge.setVisible(self.target).setPosition(self.x, self.y - 100 + Math.sin(t * 2.4) * 2).setText(`${self.a} · ${self.b}`)
+        .setColor(self.glowing() ? '#ffb3c1' : '#f7ecd0');
+      hint.setVisible(self.glowing() && self.target).setPosition(self.x, self.y - 124);
+      if (self.target) healthBar(g, self.x, self.y - 86, self.hp, self.max, self.armor, self.armorMax);
+    },
+    destroy() { sprite.destroy(); badge.destroy(); hint.destroy(); },
+  };
+  self.newProblem(true);
   return self;
 }
 
@@ -438,6 +573,8 @@ export function build(e, S) {
     }
     case 'orb': return S.run.items.has(e.id) ? [] : [orb(e, S, (e.tx + 0.5) * TILE, e.ty * TILE - 70)];
     case 'finale': return [finale(e, S)];
+    case 'rune': return [rune(e, S)];
+    case 'dummy': return [dummy(e, S)];
     default: return [];
   }
 }

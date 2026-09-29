@@ -1,19 +1,20 @@
 # Studigo — Current Game Handoff
 
-## Golden image: POC IX Moon Keep (2026-09-29)
+## Golden image: POC X Moon Keep II (2026-09-29)
 
-**POC IX is the current golden image of the game.** William approved it as the reference build on 2026-09-29. It's tagged `golden/poc-ix-moon-keep` in git.
+**POC X is the current golden image.** William approved it on 2026-09-29, and it's tagged `golden/poc-x-moon-keep-ii`. Beta URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
 
-- Beta test URL (GitHub Pages, separate from the Studigo app): https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/
-- Local: `/poc-ix/` after `node prepare.mjs` and a static server on `dist/`.
-- Not reachable from the Studigo main app. `apps/web` has no link to any prototype, and its old `/game` alpha returns 404 in deployed builds (dev only).
-- Freeze rule: do not edit `dist/poc-ix/`. New work (art, ×5 Clock Tower, Clock Shield, trial mini-boss) goes in `dist/poc-x/`. The one post-approval addition is the beta-test restart button (↺ in the header and in Pause, with a confirm), which William asked for so testers can start over.
+It is POC IX plus:
+- generated art;
+- the ×5 Clock Tower, with the Clockwork Warden, ×5 and the Clock Shield;
+- the Training Hall dummy;
+- rewards for matching beams, with silver armor;
+- the Rune Gate and Rune Sanctum, where four runes open the Core Clash portal;
+- boss knowledge orbs.
 
-It's a first Metroidvania slice directed by William, using Metroid Fusion/Zero Mission, SotN, Mega Man and Grimvalor mechanics; the dragon stays a shooter. Its factor-locked world intentionally departs from POC VII's "no ability gates" rule, at William's direction. POC VII, POC VIII, `/journey/` and Core Clash below stay untouched as older controls. Rules, map, bosses, files, tests and known limits are in **POC-IX.md**. Spec and plan are under `docs/superpowers/`.
+Read **POC-X.md**. Freeze rule: don't edit `dist/poc-x/`; start the next experiment in a new route.
 
-## Working build: POC X Moon Keep II (beta)
-
-`dist/poc-x/` is POC IX plus generated art, the ×5 Clock Tower (Clockwork Warden gives the ×5 beam and the Clock Shield), a `5 · 5`-gated Pendulum Trial (+1 shield charge), problems hovering over every non-boss monster, and the restart button. Read **POC-X.md**. Beta test URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
+The previous golden image, POC IX Moon Keep (tag `golden/poc-ix-moon-keep`), stays frozen and playable at `/poc-ix/`. None of the games is reachable from the Studigo app: `apps/web` has no links to them, and its `/game` alpha 404s outside dev.
 
 ## Art transfer
 

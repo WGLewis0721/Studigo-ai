@@ -90,8 +90,8 @@ test('x5 exists and bats follow skeleton rules', () => {
   assert.ok(canDamage({kind: 'seal', a: 4, b: 5}, 4));
 });
 
-test('trial: skeleton weakness, reflections, double x5 while a 5 shows', () => {
-  const t = (a, b) => ({kind: 'trial', a, b});
+test('training dummy: monster weakness, reflections, double x5 while a 5 shows', () => {
+  const t = (a, b) => ({kind: 'dummy', a, b});
   assert.equal(damageFor(t(1, 2), 1), 1);
   assert.equal(damageFor(t(3, 2), 3), 3);
   assert.equal(damageFor(t(3, 2), 4), 0);
@@ -111,7 +111,8 @@ test('a match is a power beam equal to one of a monster\'s numbers', () => {
   assert.ok(!isMatch({kind: 'skeleton', a: 1, b: 3}, 1), 'x1 is never the bonus beam');
   assert.ok(!isMatch({kind: 'skeleton', a: 2, b: 3}, 4));
   assert.ok(isMatch({kind: 'bat', a: 5, b: 3}, 5));
-  assert.ok(!isMatch({kind: 'trial', a: 2, b: 3}, 2), 'bosses and the trial use their own rules');
+  assert.ok(isMatch({kind: 'dummy', a: 2, b: 3}, 2), 'the training dummy follows monster rules');
+  assert.ok(!isMatch({kind: 'plate', a: 2, b: 3}, 2), 'boss plates use their own rules');
   assert.ok(!isMatch({kind: 'seal', a: 2, b: 3}, 2));
 });
 
@@ -125,4 +126,16 @@ test('silver armor adds about 10-20% on top of a x b, none for tiny monsters', (
     const pct = armorFor(a, b) / (a * b);
     assert.ok(pct >= 0.1 && pct <= 0.2, `${a}·${b} armor ${armorFor(a, b)} = ${Math.round(pct * 100)}%`);
   }
+});
+
+
+test('runes charge only with their own beam, skip counting to 5N', () => {
+  const rune = n => ({kind: 'rune', n, product: n * 5});
+  for (const n of [2, 3, 4, 5]) {
+    assert.equal(targetHp(rune(n)), n * 5);
+    for (const w of [1, 2, 3, 4, 5]) assert.equal(canDamage(rune(n), w), w === n, `rune ${n} with x${w}`);
+  }
+  assert.equal(hitText(rune(3), 3, 12), '3');
+  assert.equal(hitText(rune(3), 3, 0), '3 × 5 = 15');
+  assert.equal(reflectText(rune(4), 2), 'only ×4 charges it');
 });

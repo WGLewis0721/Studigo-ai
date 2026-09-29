@@ -109,8 +109,24 @@ function driver(page) {
       await page.keyboard.down('f');
       while (Date.now() - t0 < timeout) {
         s = await S();
+        if (s.mode === 'question' && s.question) {
+          // Finish an open orb question by clicking the right answer.
+          await page.click(`#answers button:text-is("${s.question.family * s.question.k}")`).catch(() => {});
+          await wait(250);
+          continue;
+        }
         if (!s.boss || !s.boss.alive || s.mode !== 'play') break;
         const plate = s.boss.plates[s.boss.index];
+        // Like a player would: out of the right ammo or low on hearts, go answer the boss orb.
+        const stuck = plate && ![1, 2, 3, 4, 5].some(w => s.owned[w] && (w === 1 ? plate.a === 1 || plate.b === 1 : (w === plate.a || w === plate.b) && s.ammo[w] > 0));
+        if ((stuck || s.hearts <= 2) && s.nearOrb && s.nearOrb.startsWith('bossorb')) {
+          await page.keyboard.up('f');
+          await key('e');
+          await wait(250);
+          await page.keyboard.down('f');
+          continue;
+        }
+        if ((stuck || s.hearts <= 2) && s.boss.kind !== 'twin' && Math.abs(s.x - 480) > 40) { await key(s.x < 480 ? 'd' : 'a', 120); continue; }
         if (plate) {
           const trial = s.boss.kind === 'trial';
           const fits = w => (w === 1 ? trial || plate.a === 1 || plate.b === 1 : w === plate.a || w === plate.b);
@@ -227,6 +243,13 @@ function driver(page) {
     await R.walkTo(420);
     if ((await S()).nearOrb) await R.answerOrb(true);
     await R.toRoom('d', 'P', 8000, false);
+    // Boss orb: once the intro ends, a right answer refills every beam.
+    await R.walkTo(480, 12);
+    await R.wait(300);
+    s = await S();
+    const orbQ = s.nearOrb === 'bossorb-clock' ? await R.answerOrb(true) : null;
+    s = await S();
+    check('boss-orb-refills-every-beam', orbQ && [2, 3, 4].every(n => s.ammo[n] === s.cap[n]) && s.mode === 'play', {nearOrb: orbQ ? 'bossorb-clock' : s.nearOrb, ammo: s.ammo});
     // Jump over the Clockwork Warden with Moon Boots before its first attack.
     await R.walkTo(490, 12);
     const before = (await page.evaluate(() => pocEvents())).length;
@@ -248,23 +271,69 @@ function driver(page) {
     s = await S();
     check('warden-drops-x5-and-clock-shield', s.owned[5] && s.shield.owned && s.shield.charges === 3 && s.shield.max === 3, {attempts: warden.attempts, shield: s.shield, ammo5: s.ammo[5]});
     s = await R.shootUntil(s => s.items.includes('seal-q'), 'd', 8000, 5);
-    check('x5-opens-5x5-trial-gate', s.items.includes('seal-q'));
+    check('x5-opens-5x5-training-gate', s.items.includes('seal-q'));
     await R.toRoom('d', 'Q', 8000, false);
-    await R.wait(1600);
-    setTimeout(() => shot('pendulum-trial'), 2500);
-    const trial = await R.fight('Q');
-    await R.walkTo(432, 12);
-    await R.wait(400);
+    // Training Hall: save shrine, harmless dummy, streaks and ammo drops with the matching beam.
+    await R.walkTo(144, 12);
+    const hallStart = await S();
+    await page.keyboard.down('f');
+    for (const t0 = Date.now(); Date.now() - t0 < 25000;) {
+      const m = await S(), d = m.targets.find(t => t.kind === 'dummy');
+      if (d) {
+        const glow = d.a === 5 || d.b === 5;
+        const pick = (glow && m.owned[5] && m.ammo[5] > 0 ? [5] : []).concat([5, 4, 3, 2]).find(w => m.owned[w] && m.ammo[w] > 0 && (w === d.a || w === d.b)) || 1;
+        if (pick !== m.weapon) await R.key(String(pick));
+        await R.key(d.x < m.x ? 'a' : 'd', 15);
+      }
+      if ((m.match?.streak || 0) >= 3) break;
+      await R.wait(60);
+    }
+    await page.keyboard.up('f');
+    await shot('training-hall');
+    let ev = await page.evaluate(() => pocEvents());
+    const hall = ev.filter(e => e.room === 'Q');
     s = await S();
-    const ev = await page.evaluate(() => pocEvents()), tr = ev.filter(e => e.room === 'Q');
-    const hits = tr.filter(e => e.type === 'trial-hit');
-    check('trial-reshuffles-problems', tr.filter(e => e.type === 'trial-shuffle').length >= 2, tr.filter(e => e.type === 'trial-shuffle').map(e => `${e.a}·${e.b}`));
-    check('trial-deflects-mismatched-beams', tr.some(e => e.type === 'reflect' && e.target.kind === 'trial') || hits.every(h => h.weapon === 1 || h.weapon === h.a || h.weapon === h.b), tr.filter(e => e.type === 'reflect').length);
-    check('trial-damage-follows-skeleton-rules', hits.every(h => h.damage === (h.weapon === 5 && (h.a === 5 || h.b === 5) ? 10 : h.weapon)), hits.map(h => `${h.a}·${h.b} ×${h.weapon}=${h.damage}`));
-    check('trial-grants-shield-plus-one', s.items.includes('shieldplus') && s.shield.max === 4 && s.shield.charges === 4, s.shield);
-    results.notes.push(`Trial: ${hits.length} hits, double x5 hits: ${hits.filter(h => h.damage === 10).length}. Warden attempts: ${warden.attempts}. Trial attempts: ${trial.attempts}. Shield blocks this run: ${ev.filter(e => e.type === 'shield').length}.`);
-    await shot('trial-cleared');
+    check('training-hall-has-save-point', hall.some(e => e.type === 'shrine') && s.room === 'Q');
+    check('training-dummy-deals-no-damage', !hall.some(e => e.type === 'hurt' || e.type === 'shield') && s.hearts >= hallStart.hearts, {hearts: s.hearts, harmlessHits: hall.filter(e => e.type === 'harmless-hit').length});
+    const clears = hall.filter(e => e.type === 'match-kill');
+    check('training-dummy-builds-streaks-and-drops-ammo', clears.length >= 2 && Math.max(0, ...clears.map(e => e.streak)) >= 2 && hall.some(e => e.type === 'pickup' && e.kind === 'ammo'), clears.map(e => `${e.a}·${e.b}×${e.weapon} streak ${e.streak}`));
+    check('training-dummy-follows-monster-rules', hall.filter(e => e.type === 'reflect').every(e => e.target.kind !== 'dummy' || (e.weapon > 1 && e.weapon !== e.target.a && e.weapon !== e.target.b)), hall.filter(e => e.type === 'reflect').length);
+    await R.walkTo(930, 12);
+    await R.hop(1008, 448);
+    await R.wait(300);
+    s = await S();
+    check('training-hall-shield-upgrade', s.items.includes('shieldplus') && s.shield.max === 4, s.shield);
+    // Back to the Central Shaft and down to the Rune Gate.
+    for (const r of ['P', 'O', 'N', 'M']) await R.toRoom('a', r, 60000);
+    await R.walkUntil('a', s => s.ground && s.y === 1024, 8000);
+    await R.toRoom('d', 'C', 15000, false);
+    s = await R.walkUntil('d', s => s.ground && (s.y === 1024 || s.y === 1152) && s.x > 660, 10000);
+    if (s.y !== 1024) await R.climb([[690, 790, 1024, 'ledgeR', 220]]);
+    await R.toRoom('d', 'R', 12000, false);
+    for (const n of [2, 3, 4, 5]) await R.shootUntil(s => s.items.includes(`gate-${n}`), 'd', 6000, n);
+    s = await S();
+    check('rune-gate-opens-with-one-shot-per-beam', [2, 3, 4, 5].every(n => s.items.includes(`gate-${n}`)), s.items.filter(i => i.startsWith('gate')));
+    await shot('rune-gate');
+    await R.toRoom('d', 'S', 12000, false);
+    for (const x of [107, 217, 327, 437]) { await R.walkTo(x, 12); if ((await S()).nearOrb) await R.answerOrb(true); }
+    for (const [i, n] of [2, 3, 4, 5].entries()) {
+      await R.walkTo(528 + i * 288 - 170, 12);
+      await R.shootUntil(s => s.items.includes(`rune-${n}`), 'd', 9000, n);
+    }
+    s = await S();
+    ev = await page.evaluate(() => pocEvents());
+    check('four-runes-charge-and-refill', [2, 3, 4, 5].every(n => s.items.includes(`rune-${n}`)) && ev.filter(e => e.type === 'rune').length === 4, s.items.filter(i => i.startsWith('rune')));
+    await shot('rune-sanctum');
+    await R.walkTo(1776, 20);
+    await R.wait(600);
+    s = await S();
+    check('portal-opens-core-clash-choice', s.mode === 'finish', s.mode);
+    await shot('portal');
     fs.writeFileSync(path.join(evidence, 'clock-tower-events.json'), JSON.stringify(ev, null, 1));
+    await page.click('#enter-boss');
+    await page.waitForURL(/poc-vii\/boss\.html/, {timeout: 5000}).catch(() => {});
+    check('portal-enters-original-core-clash', /poc-vii\/boss\.html/.test(page.url()), page.url());
+    results.notes.push(`Warden attempts: ${warden.attempts}. Training clears: ${clears.length}. Shield blocks this run: ${ev.filter(e => e.type === 'shield').length}.`);
   } catch (e) {
     let state = null;
     try { state = await page.evaluate(() => ({s: gameState(), events: pocEvents().slice(-20)})); } catch { /* page gone */ }
