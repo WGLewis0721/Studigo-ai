@@ -1,0 +1,19 @@
+{
+  "victory": true,
+  "unlocks": [
+    3,
+    4
+  ],
+  "respawn_intervals": [
+    20.03,
+    20.01
+  ],
+  "checkpoint_recoveries": 2,
+  "boss_hits": 25,
+  "damage_per_hit": [
+    2
+  ],
+  "input": "real keyboard and CDP simultaneous touch",
+  "viewport": "844x390",
+  "browser": "Chromium; physical iPhone Safari not tested"
+}
