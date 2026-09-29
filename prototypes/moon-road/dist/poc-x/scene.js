@@ -347,6 +347,7 @@ export class MoonKeep extends Phaser.Scene {
   hurtPlayer(fromX) {
     const p = this.p;
     if (p.inv > 0 || this.mode !== 'play') return;
+    P.breakStreak(this.run);
     if (P.absorb(this.run)) {
       p.inv = 1.1;
       p.vy = Math.min(p.vy, -180);
@@ -371,6 +372,8 @@ export class MoonKeep extends Phaser.Scene {
   respawn() {
     this.log('death');
     P.healFull(this.run);
+    // Coming back from a shrine tops every owned beam up to at least half, so a retry isn't a dead end.
+    for (const n of [2, 3, 4, 5]) if (this.run.owned[n]) this.run.ammo[n] = Math.max(this.run.ammo[n], Math.ceil(this.run.cap[n] / 2));
     this.mode = 'transition';
     this.cameras.main.fadeOut(260, 5, 8, 15);
     this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -378,7 +381,7 @@ export class MoonKeep extends Phaser.Scene {
       this.p.inv = 1.5;
       this.mode = 'play';
       this.cameras.main.fadeIn(260, 5, 8, 15);
-      this.say('Back at the shrine · everything you found is kept', 2.2);
+      this.say('Back at the shrine · everything you found is kept · beams topped up', 2.4);
     });
   }
 
@@ -640,13 +643,13 @@ export class MoonKeep extends Phaser.Scene {
     window.gameState = () => ({
       mode: S.mode, room: S.room.id, face: S.p.face, x: +S.p.x.toFixed(1), y: +S.p.y.toFixed(1), vy: +S.p.vy.toFixed(1), ground: S.p.ground,
       hearts: S.run.hearts, maxHearts: S.run.maxHearts, weapon: S.weapon, owned: {...S.run.owned}, ammo: {...S.run.ammo}, cap: {...S.run.cap},
-      boots: S.run.boots, shield: {...S.run.shield}, items: [...S.run.items], visited: [...S.run.visited], mapPercent: P.mapPercent(S.run, ROOM_COUNT), active: +S.run.active.toFixed(3),
+      boots: S.run.boots, shield: {...S.run.shield}, match: {...S.run.match}, items: [...S.run.items], visited: [...S.run.visited], mapPercent: P.mapPercent(S.run, ROOM_COUNT), active: +S.run.active.toFixed(3),
       nearOrb: S.nearOrb ? S.nearOrb.id : null,
       question: S.question ? {family: S.question.orb.family, k: S.question.k} : null,
       boss: S.boss ? {id: S.boss.id, kind: S.boss.kind, alive: S.boss.alive, index: S.boss.index, plates: S.boss.plates.map(p => ({a: p.a, b: p.b, hp: p.hp})), problem: S.boss.problem || null} : null,
       hazards: S.enemyShots.map(h => ({x: Math.round(h.x), y: Math.round(h.y), vx: Math.round(h.vx), wave: !!h.wave})),
       targets: S.targets().map(t => ({...center(t.rect()), ...t.math()})),
-      actors: S.actors.map(a => ({type: a.type, id: a.id, x: a.x, hp: a.hp, ...(a.math ? a.math() : {})})),
+      actors: S.actors.map(a => ({type: a.type, id: a.id, x: a.x, hp: a.hp, armor: a.armor, ...(a.math ? a.math() : {})})),
     });
     window.pocEvents = () => S.events.slice();
   }

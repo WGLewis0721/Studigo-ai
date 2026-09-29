@@ -120,7 +120,10 @@ function driver(page) {
         const t = s.targets[0];
         if (t) {
           const dx = t.x - s.x, dir = dx > 0 ? 'd' : 'a', away = dx > 0 ? 'a' : 'd';
-          if (Math.abs(dx) < 200 && s.x > 120 && s.x < 840) { await key(away, 120); await key(dir, 20); } else await key(dir, 20);
+          // A leaping Twin Warden passes overhead: hold position and let it land beyond.
+          const leaping = s.boss.kind === 'twin' && t.y < 330;
+          if (leaping) await key(dir, 10);
+          else if (Math.abs(dx) < 200 && s.x > 120 && s.x < 840) { await key(away, 120); await key(dir, 20); } else await key(dir, 20);
         }
         const wave = (s.hazards || []).find(h => h.wave && Math.abs(h.x - s.x) < 150 && Math.sign(s.x - h.x) === Math.sign(h.vx));
         if (wave && s.ground) { lastJump = Date.now(); await key('Space', 420); }
@@ -204,7 +207,15 @@ function driver(page) {
     check('x4-opens-clock-tower-4x5-seal', s.items.includes('seal-5'), s.ammo);
     await R.toRoom('a', 'M', 8000, false);
     // Clear the Clock Gate's skeleton and bat before climbing so a swoop can't knock the bot off a ledge.
-    await R.shootUntil(s => !s.targets.some(t => t.kind === 'skeleton' || t.kind === 'bat'), 'a', 30000, 1);
+    await R.key('1');
+    await page.keyboard.down('f');
+    for (const t0 = Date.now(); Date.now() - t0 < 30000;) {
+      const m = (await S()), foe = m.targets.find(t => t.kind === 'skeleton' || t.kind === 'bat');
+      if (!foe) break;
+      await R.key(foe.x < m.x ? 'a' : 'd', 25);
+      await R.wait(60);
+    }
+    await page.keyboard.up('f');
     await R.climb([[740, 620, 896, 'M28'], [540, 330, 768, 'M24'], [380, 560, 640, 'M20'], [650, 800, 480, 'M-ledge', 250]]);
     await R.toRoom('d', 'N');
     await R.wait(300);
@@ -216,7 +227,19 @@ function driver(page) {
     await R.walkTo(420);
     if ((await S()).nearOrb) await R.answerOrb(true);
     await R.toRoom('d', 'P', 8000, false);
-    await R.wait(1600);
+    // Jump over the Clockwork Warden with Moon Boots before its first attack.
+    await R.walkTo(490, 12);
+    const before = (await page.evaluate(() => pocEvents())).length;
+    await page.keyboard.down('Space');
+    await R.wait(40);
+    await page.keyboard.down('d');
+    await R.wait(1300);
+    await page.keyboard.up('d');
+    await page.keyboard.up('Space');
+    await R.wait(200);
+    const over = await S(), jumpEv = (await page.evaluate(() => pocEvents())).slice(before);
+    check('boots-jump-clears-clockwork-warden', over.x > 700 && !jumpEv.some(e => e.type === 'hurt' || e.type === 'shield'), {landedAt: Math.round(over.x), hurt: jumpEv.filter(e => e.type === 'hurt').length});
+    await R.wait(600);
     setTimeout(() => shot('clockwork-warden'), 6000);
     const warden = await R.fight('P');
     await R.walkTo(432, 12);

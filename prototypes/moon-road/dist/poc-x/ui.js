@@ -107,6 +107,14 @@ export function hud(S) {
   const r = S.run, w = S.weapon;
   $('#hearts').textContent = '♥'.repeat(r.hearts) + '♡'.repeat(r.maxHearts - r.hearts);
   $('#shield').hidden = !r.shield.owned;
+  $('#streak').hidden = r.match.streak < 1;
+  if ($('#streak').dataset.n !== String(r.match.streak)) {
+    $('#streak').dataset.n = r.match.streak;
+    $('#streak').textContent = 'MATCH ×' + r.match.streak;
+    $('#streak').style.animation = 'none';
+    void $('#streak').offsetWidth;
+    $('#streak').style.animation = '';
+  }
   $('#shield').textContent = '◆'.repeat(r.shield.charges) + '◇'.repeat(r.shield.max - r.shield.charges);
   $('#weapon-n').textContent = '×' + w;
   $('#weapon-n').style.color = HEX[w];
@@ -184,7 +192,7 @@ export function openMap(S) {
   drawMap(ctx, S, 60, 40, 10, 4, true);
   const found = COLLECTIBLES.filter(id => S.run.items.has(id)).length;
   const beams = [2, 3, 4, 5].filter(n => S.run.owned[n]).map(n => '×' + n).join(' ') || 'none yet';
-  $('#map-stats').innerHTML = `Explored <b>${mapPercent(S.run, Object.keys(ROOMS).length)}%</b> · Items <b>${found} / ${COLLECTIBLES.length}</b> · Beams <b>${beams}</b>${S.run.boots ? ' · <b>Moon Boots</b>' : ''}${S.run.shield.owned ? ` · <b>Clock Shield ${S.run.shield.max}</b>` : ''}`;
+  $('#map-stats').innerHTML = `Explored <b>${mapPercent(S.run, Object.keys(ROOMS).length)}%</b> · Items <b>${found} / ${COLLECTIBLES.length}</b> · Beams <b>${beams}</b>${S.run.boots ? ' · <b>Moon Boots</b>' : ''}${S.run.shield.owned ? ` · <b>Clock Shield ${S.run.shield.max}</b>` : ''}<br>Match kills <b>${S.run.match.clean}</b> · best streak <b>${S.run.match.best}</b>`;
 }
 
 export function question({family, k, values, reward}, onAnswer) {
@@ -202,7 +210,7 @@ export function question({family, k, values, reward}, onAnswer) {
 
 export function finish(S) {
   const found = COLLECTIBLES.filter(id => S.run.items.has(id)).length;
-  $('#finish-copy').textContent = `Explored ${mapPercent(S.run, Object.keys(ROOMS).length)}% · items ${found} / ${COLLECTIBLES.length}. The guardian keeps its original power-orb rules.`;
+  $('#finish-copy').textContent = `Explored ${mapPercent(S.run, Object.keys(ROOMS).length)}% · items ${found} / ${COLLECTIBLES.length} · match kills ${S.run.match.clean} (best streak ${S.run.match.best}). The guardian keeps its original power-orb rules.`;
   show('finish', true);
 }
 

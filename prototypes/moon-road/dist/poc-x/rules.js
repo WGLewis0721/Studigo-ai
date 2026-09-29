@@ -16,6 +16,18 @@ export function canDamage(t, w) {
   }
 }
 
+// A power beam that equals one of a monster's numbers is a match: it staggers and pays back.
+export function isMatch(t, w) {
+  return (t.kind === 'skeleton' || t.kind === 'bat') && w > 1 && (w === t.a || w === t.b);
+}
+
+// Silver armor adds ~10-20% on top of a monster's a x b health (none for 4 HP or less), so the
+// problem's product stays the real HP underneath.
+export function armorFor(a, b) {
+  const hp = a * b;
+  return hp < 5 ? 0 : Math.round(hp * 0.15);
+}
+
 // The trial glows while a 5 is showing: a x5 hit then counts double.
 export function damageFor(t, w) {
   if (!canDamage(t, w)) return 0;

@@ -8,6 +8,7 @@ export function newRun() {
     ammo: {2: 0, 3: 0, 4: 0, 5: 0},
     cap: {2: CAPACITY, 3: CAPACITY, 4: CAPACITY, 5: CAPACITY},
     shield: {owned: false, charges: 0, max: 0},
+    match: {streak: 0, best: 0, clean: 0},
     maxHearts: 5, hearts: 5, boots: false,
     items: new Set(), visited: new Set(),
     shrine: {room: 'A', x: 272},
@@ -46,6 +47,16 @@ export function collect(r, item) {
   else if (item.kind === 'shieldplus') { r.shield.max++; r.shield.charges = r.shield.max; }
   return true;
 }
+
+// Match kills build a streak; any hit taken resets it.
+export function recordMatch(r) {
+  r.match.streak++;
+  r.match.clean++;
+  r.match.best = Math.max(r.match.best, r.match.streak);
+  return r.match.streak;
+}
+
+export function breakStreak(r) { r.match.streak = 0; }
 
 // Each non-boss kill restores one shield charge.
 export function shieldKill(r) {

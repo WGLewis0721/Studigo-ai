@@ -100,3 +100,29 @@ test('trial: skeleton weakness, reflections, double x5 while a 5 shows', () => {
   assert.equal(damageFor(t(5, 2), 2), 2);
   assert.equal(damageFor(t(5, 2), 1), 1);
 });
+
+
+import {isMatch} from '../../dist/poc-x/rules.js';
+
+test('a match is a power beam equal to one of a monster\'s numbers', () => {
+  assert.ok(isMatch({kind: 'skeleton', a: 2, b: 3}, 2));
+  assert.ok(isMatch({kind: 'skeleton', a: 2, b: 3}, 3));
+  assert.ok(!isMatch({kind: 'skeleton', a: 2, b: 3}, 1));
+  assert.ok(!isMatch({kind: 'skeleton', a: 1, b: 3}, 1), 'x1 is never the bonus beam');
+  assert.ok(!isMatch({kind: 'skeleton', a: 2, b: 3}, 4));
+  assert.ok(isMatch({kind: 'bat', a: 5, b: 3}, 5));
+  assert.ok(!isMatch({kind: 'trial', a: 2, b: 3}, 2), 'bosses and the trial use their own rules');
+  assert.ok(!isMatch({kind: 'seal', a: 2, b: 3}, 2));
+});
+
+
+import {armorFor} from '../../dist/poc-x/rules.js';
+
+test('silver armor adds about 10-20% on top of a x b, none for tiny monsters', () => {
+  assert.equal(armorFor(1, 2), 0);
+  assert.equal(armorFor(2, 2), 0);
+  for (const [a, b] of [[1, 5], [2, 3], [2, 4], [3, 3], [2, 5], [3, 4], [3, 5], [4, 4], [4, 5], [5, 5]]) {
+    const pct = armorFor(a, b) / (a * b);
+    assert.ok(pct >= 0.1 && pct <= 0.2, `${a}·${b} armor ${armorFor(a, b)} = ${Math.round(pct * 100)}%`);
+  }
+});
