@@ -5,7 +5,7 @@
 The observatory, dragon animation sheet, and guardian pose sheet were created for this prototype with OpenAI's built-in image generation tool on 2026-09-28. They are original generated outputs, not assets copied from an existing game. No third-party art-pack license is claimed. Use is subject to the applicable OpenAI terms; this record is not a copyright or exclusivity guarantee.
 
 Source sheets: `art-source/observatory.png`, `art-source/dragon.png`, `art-source/guardian.png`.
-Game assets: `dist/assets/`. Normalization: `scripts/normalize-art.py`.
+Game assets: `dist/assets/`. Normalization: `scripts/normalize-art.py`. Candidate generation: `ART_GENERATION.md`, `scripts/art-prompts.json`, and `scripts/generate-art.mjs`.
 
 Art direction: 16-bit pixel-art moonlit ruined observatory; dark navy/indigo environment; jade dragon with gold horns, cream belly, purple scarf and compact blaster; substantial slate/brass floating guardian with a dark socket for its live energy core.
 
@@ -24,3 +24,8 @@ The Graveyard skeleton body is reused from William's supplied Higgsfield prototy
 ## Reuse and transfer
 
 See `ART_HANDOFF.md` for frame dimensions, animation ordering, generation prompt templates and Claude instructions. Original source PNGs and `scripts/normalize-art.py` are now directly tracked in the GitHub game branch. `downloads/Studigo-Art-Pack.zip` provides the originals, ready assets, frame metadata, script and provenance in one download. Runtime `dist/assets/` remains reconstructible with `node prepare.mjs`.
+
+
+## Generating new candidate art
+
+Use `ART_GENERATION.md`, `scripts/art-prompts.json`, and `scripts/generate-art.mjs` when new image-generated source art is needed. Generated candidates default to `art-source/generated/` and must be inspected, normalized, and playtested before replacing accepted assets.
