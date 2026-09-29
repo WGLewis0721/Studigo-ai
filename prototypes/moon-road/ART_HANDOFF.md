@@ -20,6 +20,9 @@ Directory: prototypes/moon-road/
 - art-source/guardian.png — original 1774×887 RGBA pose sheet.
 - art-source/observatory.png — original 1672×940 RGB environment.
 - scripts/normalize-art.py — exact cropping/alignment/packing pipeline.
+- scripts/generate-art.mjs — OpenAI Images API helper for generating new candidate source sheets.
+- scripts/art-prompts.json — editable prompt specs for candidate source generation.
+- ART_GENERATION.md — workflow for generating, reviewing, normalizing and accepting new art.
 - downloads/Studigo-Art-Pack.zip — original sources, ready PNGs, frame metadata, pipeline, provenance and this handoff.
 - dist/assets/ — game-ready files, reconstructed by node prepare.mjs in the repository; also included directly in the ZIP.
 - dist/game.js — reference for loading sprites, selecting poses and attaching boss-core effects.
@@ -72,6 +75,10 @@ python scripts/normalize-art.py
 ```
 
 The script computes its root from its own location. Keep art-source/, scripts/ and dist/assets/ in the same relative layout. It writes ready PNGs and frames.json. Regenerating/replacing a source sheet requires revisiting every crop rectangle, baseline, scale and guardian core coordinate; the current rectangles are specific to the current images. Compare output to the golden assets before replacing anything. Changing PNG compression/library versions may change file bytes without changing pixels.
+
+## Generate new art through the repo integration
+
+If an agent has OpenAI Images API access, use `scripts/generate-art.mjs` with `scripts/art-prompts.json` to create candidate source PNGs in `art-source/generated/`. Then inspect the result, update the normalizer crops if needed, and run `python scripts/normalize-art.py`. See `ART_GENERATION.md` for the exact workflow. Do not overwrite accepted sources until the candidate has been visually reviewed and browser-tested.
 
 ## How Claude or another agent should extend this art
 
