@@ -19,3 +19,10 @@ From this directory run `node prepare.mjs`, then `python -m http.server 8000 --d
 ## QA
 
 `qa/poc-vii-playtest.cjs` runs the mobile browser acceptance path. See `CURRENT_GAME_HANDOFF.md` for prerequisites and the results recorded in `qa/poc-vii-results.json`.
+
+
+## POC VIII — additive Graveyard stage
+
+[Play the connected stages](https://studigo-core-clash.william-glewis17.chatgpt.site/journey/): POC VII → Graveyard 1·2·3 → original Core Clash. [Test Graveyard directly](https://studigo-core-clash.william-glewis17.chatgpt.site/poc-viii/). Both original control routes stay unchanged.
+
+Read [POC-VIII.md](POC-VIII.md) for exact rules, source files, art provenance and browser QA. Unlimited ×1; limited ×2/×3; skeleton HP equals its two operands; special shots must match an operand or reflect. Optional orbs refill 12 rounds through a challenge and return after 20 active-play seconds. No new boss mechanic.

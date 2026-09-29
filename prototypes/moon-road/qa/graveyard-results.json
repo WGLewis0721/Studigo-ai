@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "viewport": "844x390 Chromium mobile",
+  "canonical2x3": {
+    "basicHits": 6,
+    "times2Hits": 3,
+    "times3Hits": 2
+  },
+  "reflection": "2→1x3, 2→3x3, 3→2x2 all zero",
+  "limitedAmmo": true,
+  "emptyOwnership": true,
+  "familyRefills": true,
+  "wrongNoPenalty": true,
+  "respawnIntervals": [
+    20.007,
+    20.016
+  ],
+  "questionsAndPauseFreezeClock": true,
+  "differentRetries": true,
+  "multitouch": true,
+  "checkpointOwnership": true,
+  "orbsOptional": true,
+  "journey": "POC VII → Graveyard → unchanged Core Clash",
+  "errors": [],
+  "physicalIPhoneSafari": "not tested"
+}

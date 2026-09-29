@@ -1,4 +1,16 @@
-# Studigo POC VII — Definitive Game Handoff
+# Studigo — Current Game Handoff
+
+## New additive stage: POC VIII (2026-09-29)
+
+Connected experiment: https://studigo-core-clash.william-glewis17.chatgpt.site/journey/
+
+This runs the original POC VII level, then offers **NEXT · GRAVEYARD 1·2·3**, then the original Core Clash boss. Direct stage test: https://studigo-core-clash.william-glewis17.chatgpt.site/poc-viii/
+
+Read **POC-VIII.md** for the exact new contract, source map, reference-art provenance, ammo/reflection rules, QA and continuation prompt. This is an additive experiment. The canonical POC VII control URL below and all its original source files remain unchanged; Core Clash also remains unchanged. Do not silently replace these controls. `/adventure/` remains rejected.
+
+Stage VIII starts fresh with unlimited ×1 and uses only limited-ammo ×2/×3, permanent run ownership, two visible enemy operands, operand-product HP, operand-only special hits, and reflected nonmatches. Orbs unlock/refill 12 rounds and respawn after 20 active-play seconds after either submitted answer. No weapon carryover into VIII or the original boss. The future boss mechanic is still undecided.
+
+## Preserved POC VII golden handoff
 
 **Use this handoff and the files on `feature/moon-road-core-clash` as the source of truth for the current game.** The definitive playable build is POC VII, a small side-scrolling action level that leads directly into the existing Core Clash boss fight.
 

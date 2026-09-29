@@ -1,0 +1,77 @@
+[
+  {
+    "path": "dist/poc-vii/index.html",
+    "unchanged": true,
+    "sha256": "47771be4fd63299fa11d9ddd34c7c41142ba7e03547ee711892762d0f76c22d1"
+  },
+  {
+    "path": "dist/poc-vii/boss.html",
+    "unchanged": true,
+    "sha256": "21204341dc09e99eb65bd4eb2f57c9818bcbf4e2fa1c6abdea641aaf7cc43da7"
+  },
+  {
+    "path": "dist/poc-vii/enter-boss.js",
+    "unchanged": true,
+    "sha256": "eef738dc5124dd65878fd39ac3ab58b11dd242eec2b40eb148b7c671f94c43a6"
+  },
+  {
+    "path": "dist/poc-vii/style.css",
+    "unchanged": true,
+    "sha256": "0106841f33f6b2dad9a9c82ccc7aa624daf7581327110de1cec75a7c9f169288"
+  },
+  {
+    "path": "dist/poc-vii/game.js",
+    "unchanged": true,
+    "sha256": "c3fdb3e1295661104918345a1e4525dead0f042613a154e716ae51aa67249397"
+  },
+  {
+    "path": "dist/index.html",
+    "unchanged": true,
+    "sha256": "aa59882005a3db960aaec1cb84b890f9b8729ce6f5c5843f1534f59949c32462"
+  },
+  {
+    "path": "dist/game.js",
+    "unchanged": true,
+    "sha256": "fb6e2e0e9d6b773b1d9bd0e166319af8df0097bba98195129b6cc9bccb92fd02"
+  },
+  {
+    "path": "dist/game.css",
+    "unchanged": true,
+    "sha256": "4ad056191ea3ab8d97fcc20cada8b782a6d906a11f24ecc0a4a0580046bce3f2"
+  },
+  {
+    "path": "dist/assets/dragon.png",
+    "unchanged": true,
+    "sha256": "3677483d4874d8ffae41c43819ef7d9805128140d4ac6715d7ab5dcb96b7749d"
+  },
+  {
+    "path": "dist/assets/core.png",
+    "unchanged": true,
+    "sha256": "c557553fddbc31891f7f2145e2cd5e8fd901a7ca8a010e00999a4943405a035f"
+  },
+  {
+    "path": "dist/assets/spark.png",
+    "unchanged": true,
+    "sha256": "0f189895322dc913fdaaef43fbb8483341f498c2205b0826ca6653377ee03610"
+  },
+  {
+    "path": "dist/assets/platform.png",
+    "unchanged": true,
+    "sha256": "0e347f8497d0e1835b20388e5f952efe908cf59e321be3bdeef2d1deb06a61a0"
+  },
+  {
+    "path": "dist/assets/frames.json",
+    "unchanged": true,
+    "sha256": "da70852bbb0250cb8317df6173029394798edc51ba94f5a87c046d609507b82a"
+  },
+  {
+    "path": "dist/assets/guardian.png",
+    "unchanged": true,
+    "sha256": "1e3aabe9ff79b0d8be0128f5b276db45088e8203e29a18eb2db19d05d7a2f836"
+  },
+  {
+    "path": "dist/assets/observatory.png",
+    "unchanged": true,
+    "sha256": "aa0c726363654cf61796a8295feb6a0fcad6fb8a561412855ea1868a72e5fd5c"
+  }
+]
