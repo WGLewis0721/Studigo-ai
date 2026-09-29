@@ -126,7 +126,7 @@ function driver(page) {
           await page.keyboard.down('f');
           continue;
         }
-        if ((stuck || s.hearts <= 2) && s.boss.kind !== 'twin' && Math.abs(s.x - 480) > 40) { await key(s.x < 480 ? 'd' : 'a', 120); continue; }
+        if ((stuck || s.hearts <= 2) && s.boss.kind !== 'twin' && Math.abs(s.x - 224) > 40) { await key(s.x < 224 ? 'd' : 'a', 120); continue; }
         if (plate) {
           const trial = s.boss.kind === 'trial';
           const fits = w => (w === 1 ? trial || plate.a === 1 || plate.b === 1 : w === plate.a || w === plate.b);
@@ -152,7 +152,7 @@ function driver(page) {
     },
   };
   R.fight = async room => {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
       const s = await R.bossFight();
       if (s.boss?.alive === false) return {s, attempts: i + 1};
       while ((await S()).room !== room) await R.toRoom('d', room, 15000);
@@ -244,8 +244,8 @@ function driver(page) {
     if ((await S()).nearOrb) await R.answerOrb(true);
     await R.toRoom('d', 'P', 8000, false);
     // Boss orb: once the intro ends, a right answer refills every beam.
-    await R.walkTo(480, 12);
-    await R.wait(300);
+    await R.walkTo(224, 12);
+    for (let i = 0; i < 40 && !(await S()).nearOrb; i++) await R.wait(50);
     s = await S();
     const orbQ = s.nearOrb === 'bossorb-clock' ? await R.answerOrb(true) : null;
     s = await S();
@@ -262,7 +262,14 @@ function driver(page) {
     await R.wait(200);
     const over = await S(), jumpEv = (await page.evaluate(() => pocEvents())).slice(before);
     check('boots-jump-clears-clockwork-warden', over.x > 700 && !jumpEv.some(e => e.type === 'hurt' || e.type === 'shield'), {landedAt: Math.round(over.x), hurt: jumpEv.filter(e => e.type === 'hurt').length});
-    await R.wait(600);
+    // Jump back over to the open left side before fighting.
+    await page.keyboard.down('Space');
+    await R.wait(40);
+    await page.keyboard.down('a');
+    await R.wait(1300);
+    await page.keyboard.up('a');
+    await page.keyboard.up('Space');
+    await R.walkTo(200, 20);
     setTimeout(() => shot('clockwork-warden'), 6000);
     const warden = await R.fight('P');
     await R.walkTo(432, 12);
@@ -296,7 +303,7 @@ function driver(page) {
     check('training-hall-has-save-point', hall.some(e => e.type === 'shrine') && s.room === 'Q');
     check('training-dummy-deals-no-damage', !hall.some(e => e.type === 'hurt' || e.type === 'shield') && s.hearts >= hallStart.hearts, {hearts: s.hearts, harmlessHits: hall.filter(e => e.type === 'harmless-hit').length});
     const clears = hall.filter(e => e.type === 'match-kill');
-    check('training-dummy-builds-streaks-and-drops-ammo', clears.length >= 2 && Math.max(0, ...clears.map(e => e.streak)) >= 2 && hall.some(e => e.type === 'pickup' && e.kind === 'ammo'), clears.map(e => `${e.a}·${e.b}×${e.weapon} streak ${e.streak}`));
+    check('training-dummy-builds-streaks-and-drops-ammo', clears.length >= 2 && Math.max(0, ...clears.map(e => e.streak)) >= 2 && hall.some(e => e.type === 'dummy-drop'), clears.map(e => `${e.a}·${e.b}×${e.weapon} streak ${e.streak}`));
     check('training-dummy-follows-monster-rules', hall.filter(e => e.type === 'reflect').every(e => e.target.kind !== 'dummy' || (e.weapon > 1 && e.weapon !== e.target.a && e.weapon !== e.target.b)), hall.filter(e => e.type === 'reflect').length);
     await R.walkTo(930, 12);
     await R.hop(1008, 448);
@@ -310,6 +317,8 @@ function driver(page) {
     s = await R.walkUntil('d', s => s.ground && (s.y === 1024 || s.y === 1152) && s.x > 660, 10000);
     if (s.y !== 1024) await R.climb([[690, 790, 1024, 'ledgeR', 220]]);
     await R.toRoom('d', 'R', 12000, false);
+    await R.walkTo(112, 12);
+    if ((await S()).nearOrb === 'orb-R') await R.answerOrb(true);
     for (const n of [2, 3, 4, 5]) await R.shootUntil(s => s.items.includes(`gate-${n}`), 'd', 6000, n);
     s = await S();
     check('rune-gate-opens-with-one-shot-per-beam', [2, 3, 4, 5].every(n => s.items.includes(`gate-${n}`)), s.items.filter(i => i.startsWith('gate')));

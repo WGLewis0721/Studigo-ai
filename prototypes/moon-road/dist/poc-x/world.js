@@ -142,7 +142,10 @@ const R = room('R', 'Rune Gate', 'vault', 4, 2, 1, 1);
 door(R, 'W', 0, 'C');
 door(R, 'E', 0, 'S', {via: ['gate-2', 'gate-3', 'gate-4', 'gate-5']});
 fill(R, 1, 1, 28, 10);
-add(R, ...[2, 3, 4, 5].map((n, i) => ({type: 'seal', id: `gate-${n}`, tx: 7 + i * 5, ty: 11, a: n, b: 1, label: `×${n}`})));
+add(R,
+  // A refill-all orb at the entrance, so arriving with empty beams is never a dead end.
+  {type: 'orb', id: 'orb-R', family: 2, refillAll: true, tx: 3, ty: 15},
+  ...[2, 3, 4, 5].map((n, i) => ({type: 'seal', id: `gate-${n}`, tx: 7 + i * 5, ty: 11, a: n, b: 1, label: `×${n}`})));
 
 // Four runes, one per power beam, charge by skip counting with their own beam; all four open the portal.
 const S = room('S', 'Rune Sanctum', 'vault', 5, 2, 2, 1);

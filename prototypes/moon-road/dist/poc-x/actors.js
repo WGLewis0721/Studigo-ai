@@ -344,12 +344,12 @@ export function pickup(drop, x, y, S) {
 
 export function orb(e, S, x, y) {
   const id = e.id, family = e.family;
-  const sprite = S.add.image(x, y, 'core').setDisplaySize(40, 40).setTint(e.bossOrb ? 0xfff0b0 : COLOR[family]).setDepth(5).setInteractive({useHandCursor: true});
-  const tag = label(S, x, y - 44, e.bossOrb ? '✚ REFILL' : e.unlock ? `×${family} BEAM` : `×${family} AMMO`, 14, '#e7edc4');
+  const sprite = S.add.image(x, y, 'core').setDisplaySize(40, 40).setTint(e.bossOrb || e.refillAll ? 0xfff0b0 : COLOR[family]).setDepth(5).setInteractive({useHandCursor: true});
+  const tag = label(S, x, y - 44, e.bossOrb || e.refillAll ? '✚ REFILL' : e.unlock ? `×${family} BEAM` : `×${family} AMMO`, 14, '#e7edc4');
   sprite.on('pointerdown', () => S.openOrb(self));
   const self = {
-    type: 'orb', id, family, unlock: !!e.unlock, bossOrb: !!e.bossOrb, alive: true, x, y, wasReady: true,
-    visible: () => (e.bossOrb ? !!(S.boss?.alive && S.bossIntro <= 0) : e.unlock ? !S.run.owned[family] : S.run.owned[family]),
+    type: 'orb', id, family, unlock: !!e.unlock, bossOrb: !!e.bossOrb, refillAll: !!(e.bossOrb || e.refillAll), alive: true, x, y, wasReady: true,
+    visible: () => (e.bossOrb ? !!(S.boss?.alive && S.bossIntro <= 0) : e.refillAll ? [2, 3, 4, 5].some(n => S.run.owned[n]) : e.unlock ? !S.run.owned[family] : S.run.owned[family]),
     ready: () => self.visible() && orbReady(S.run, id),
     update() {
       const ready = self.ready();
@@ -515,7 +515,7 @@ export function dummy(e, S) {
       if (self.hp) return;
       const problem = {a: self.a, b: self.b};
       onKill(S, self.x, self.y, w, problem, 'dummy', self);
-      if (isMatch(self.math(), w)) S.spawn(pickup({kind: 'ammo', family: w, amount: 2}, self.x, self.y, S));
+      if (isMatch(self.math(), w)) { S.spawn(pickup({kind: 'ammo', family: w, amount: 2}, self.x, self.y, S)); S.log('dummy-drop', {family: w}); }
       self.target = false;
       self.next = 0.8;
     },
@@ -571,7 +571,7 @@ export function build(e, S) {
       const x = (e.tx + 0.5) * TILE, y = e.ty * TILE;
       return [shrine(e, S), ...e.orbs.map((f, i) => orb({id: `${e.id}-x${f}`, family: f}, S, x + (i - (e.orbs.length - 1) / 2) * 110, y - 150))];
     }
-    case 'orb': return S.run.items.has(e.id) ? [] : [orb(e, S, (e.tx + 0.5) * TILE, e.ty * TILE - 70)];
+    case 'orb': return S.run.items.has(e.id) ? [] : [orb(e, S, (e.tx + 0.5) * TILE, e.ty * TILE - (e.refillAll ? 60 : 70))];
     case 'finale': return [finale(e, S)];
     case 'rune': return [rune(e, S)];
     case 'dummy': return [dummy(e, S)];

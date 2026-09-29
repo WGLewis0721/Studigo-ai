@@ -133,7 +133,7 @@ export function hud(S) {
   $('#nearby').hidden = S.mode !== 'play' || !S.nearOrb;
   if (S.nearOrb) {
     const o = S.nearOrb;
-    $('#drop-name').textContent = o.bossOrb ? '✚ ORB · REFILL EVERY BEAM' : '×' + o.family + ' · ' + (o.unlock ? 'NEW BEAM' : 'REFILL AMMO');
+    $('#drop-name').textContent = o.refillAll ? '✚ ORB · REFILL EVERY BEAM' : '×' + o.family + ' · ' + (o.unlock ? 'NEW BEAM' : 'REFILL AMMO');
   }
   minimap(S);
 }

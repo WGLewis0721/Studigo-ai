@@ -146,7 +146,8 @@ export class MoonKeep extends Phaser.Scene {
     if (def && !this.run.items.has('boss:' + def.id)) {
       this.boss = makeBoss(def, this);
       this.bossIntro = 1.5;
-      this.actors.push(orb({id: 'bossorb-' + def.id, family: 2, bossOrb: true}, this, 480, 270));
+      // Above the left platform in every arena: reachable from the platform or floor, away from where bosses roam.
+      this.actors.push(orb({id: 'bossorb-' + def.id, family: 2, bossOrb: true}, this, 224, 270));
       this.banner(def.name, 'Hit the plate numbers on its core · ✚ orb refills your beams');
       this.log('boss-start', {id: def.id});
     }
@@ -280,11 +281,11 @@ export class MoonKeep extends Phaser.Scene {
   openOrb(o) {
     if (this.mode !== 'play' || !o.ready() || Math.abs(this.p.x - o.x) > 150) return;
     const offset = [...o.id].reduce((n, c) => n + c.charCodeAt(0), 0);
-    const f = o.bossOrb ? this.bossOrbFamily() : o.family, k = fact(f, P.orbAttempt(this.run, o.id) + offset);
+    const f = o.refillAll ? this.bossOrbFamily() : o.family, k = fact(f, P.orbAttempt(this.run, o.id) + offset);
     this.mode = 'question';
     clearInput();
     this.question = {orb: o, k, family: f};
-    const reward = o.bossOrb ? 'REFILL EVERY BEAM · ♥ IF HURT' : o.unlock ? `UNLOCK ×${f} BEAM` : `REFILL ×${f} · ${this.run.cap[f]} ROUNDS`;
+    const reward = o.refillAll ? 'REFILL EVERY BEAM · ♥ IF HURT' : o.unlock ? `UNLOCK ×${f} BEAM` : `REFILL ×${f} · ${this.run.cap[f]} ROUNDS`;
     UI.question({family: f, k, values: choices(f, k), reward}, v => this.answer(v));
     this.sfx(780, 0.16);
     this.log('question', {id: o.id, family: f, k});
@@ -301,7 +302,7 @@ export class MoonKeep extends Phaser.Scene {
     this.fireCD = 0.3;
     clearInput();
     if (correct) {
-      if (o.bossOrb) {
+      if (o.refillAll) {
         for (const n of [2, 3, 4, 5]) P.refill(this.run, n);
         const hurt = this.run.hearts < this.run.maxHearts;
         if (hurt) this.spawn(pickup({kind: 'heart'}, this.p.x + (this.p.x < 480 ? 50 : -50), this.p.y - 120, this));
@@ -665,7 +666,7 @@ export class MoonKeep extends Phaser.Scene {
       hearts: S.run.hearts, maxHearts: S.run.maxHearts, weapon: S.weapon, owned: {...S.run.owned}, ammo: {...S.run.ammo}, cap: {...S.run.cap},
       boots: S.run.boots, shield: {...S.run.shield}, match: {...S.run.match}, items: [...S.run.items], visited: [...S.run.visited], mapPercent: P.mapPercent(S.run, ROOM_COUNT), active: +S.run.active.toFixed(3),
       nearOrb: S.nearOrb ? S.nearOrb.id : null,
-      question: S.question ? {family: S.question.orb.family, k: S.question.k} : null,
+      question: S.question ? {family: S.question.family, k: S.question.k} : null,
       boss: S.boss ? {id: S.boss.id, kind: S.boss.kind, alive: S.boss.alive, index: S.boss.index, plates: S.boss.plates.map(p => ({a: p.a, b: p.b, hp: p.hp})), problem: S.boss.problem || null} : null,
       hazards: S.enemyShots.map(h => ({x: Math.round(h.x), y: Math.round(h.y), vx: Math.round(h.vx), wave: !!h.wave})),
       targets: S.targets().map(t => ({...center(t.rect()), ...t.math()})),

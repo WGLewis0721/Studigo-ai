@@ -42,7 +42,7 @@ The atrium and shaft keep the original observatory backdrop.
 - The room has a save shrine.
 
 **Rune Gate and Rune Sanctum (the new way to Core Clash).** The old Moon Vault after the Trine Guardian is gone, and its portal moved here, off the Central Shaft hub. The shaft's east wall at map row 2 has a ledge (Moon Boots; a platform helps).
-- **R Rune Gate:** a low corridor with one gate per power beam, `×2 ×3 ×4 ×5`. One shot of the matching beam opens each.
+- **R Rune Gate:** a low corridor with one gate per power beam, `×2 ×3 ×4 ×5`. One shot of the matching beam opens each. A ✚ refill-all orb at the entrance means arriving with empty beams is never a dead end.
 - **S Rune Sanctum:** a shrine with ×2–×5 refill orbs and four runes in each beam's colour and number.
   - Only a rune's own beam charges it. It skip-counts like the stone blocks (`2, 4 … 10`, `3 … 15`, `4 … 20`, `5 … 25`), then shows `N × 5 = 5N`, glows, and refills that beam.
   - When all four glow, the portal lights in their four colours. Walking in opens the same Core Clash choice as before (ENTER CORE CLASH / KEEP EXPLORING / NEW RUN), and the Core Clash encounter itself is unchanged.
