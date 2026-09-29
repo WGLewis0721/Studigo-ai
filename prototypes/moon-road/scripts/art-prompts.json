@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "styleGuide": "16-bit-inspired pixel art for Studigo. Crisp deliberate pixels, strong silhouettes, dark navy/indigo moonlit ruins, jade dragon hero with gold horns, cream belly, purple scarf and compact blaster, slate/brass guardian boss with empty chest-core socket. Keep game readability at mobile phone size. Do not add text, UI labels, school worksheet elements, stock-game references, or smooth vector rendering.",
+  "assets": {
+    "dragon": {
+      "output": "art-source/generated/dragon.png",
+      "kind": "character-sheet",
+      "transparent": true,
+      "recommendedSize": "1536x1024",
+      "prompt": "Create a cohesive 16-bit-inspired 2D pixel-art action sprite sheet for Studigo. Small jade-green dragon hero with gold horns, cream belly, purple scarf and compact blaster; readable friendly action-game silhouette. Side view facing right. Transparent background. Arrange 12 fully contained poses in a 6-column, 2-row sheet: six run poses in the first row; idle, rising jump, falling, firing, landing and victory in the second row. Maintain identical character proportions, scale, palette and foot anchor across cells. Leave generous transparent cell padding. No labels, UI, scenery, detached projectile effects, or smooth vector art. Crisp pixel edges and deliberate shading."
+    },
+    "guardian": {
+      "output": "art-source/generated/guardian.png",
+      "kind": "boss-sheet",
+      "transparent": true,
+      "recommendedSize": "1536x1024",
+      "prompt": "Create a matching 16-bit-inspired side-view boss pose sheet for Studigo. Substantial floating stone-and-metal guardian with slate armor, brass accents, heavy readable arms, and a dark empty chest socket reserved for an animated core drawn in game. Transparent background. Arrange 8 fully contained poses in a 4-column, 2-row sheet: idle, attack anticipation, forward punch, recovery, phase awakening, hit reaction, collapse and shatter. Keep scale, proportions, facing direction and body anchor consistent. No labels, UI, scenery, or painted energy core. Clear silhouettes, crisp pixel edges and coherent shading."
+    },
+    "observatory": {
+      "output": "art-source/generated/observatory.png",
+      "kind": "environment",
+      "transparent": false,
+      "recommendedSize": "1536x1024",
+      "prompt": "Create a widescreen 16-bit-inspired pixel-art environment for a mobile side-scrolling action game. Moonlit ruined observatory with layered stone arches, distant mountains, a large moon above, dark navy/indigo/slate palette, cool moonlight and restrained warm brass details. Intentional foreground/background separation. Keep the central combat space uncluttered and the walkable stone floor near 80% of the image height. No characters, text or UI. Readable contrast around a small jade dragon hero and a large slate/brass guardian boss."
+    }
+  }
+}
