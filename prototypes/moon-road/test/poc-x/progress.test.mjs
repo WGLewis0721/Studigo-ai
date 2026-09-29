@@ -93,3 +93,15 @@ test('clock shield: 3 charges, absorbs hits, recharges on kills, +1 upgrade', ()
   r.shield.charges = 0;
   assert.equal(P.absorb(r), false);
 });
+
+
+test('match streak counts consecutive match kills and resets on a hit', () => {
+  const r = P.newRun();
+  assert.deepEqual(r.match, {streak: 0, best: 0, clean: 0});
+  assert.equal(P.recordMatch(r), 1);
+  assert.equal(P.recordMatch(r), 2);
+  assert.equal(P.recordMatch(r), 3);
+  P.breakStreak(r);
+  assert.equal(P.recordMatch(r), 1);
+  assert.deepEqual(r.match, {streak: 1, best: 3, clean: 4});
+});

@@ -12,12 +12,12 @@ function platesFor(def, S, onDefeat) {
   const state = {plates, index: 0, done: false, stuck: 0};
   const current = () => plates[state.index];
   const familyFor = p => [p.a, p.b].filter(n => n > 1 && S.run.owned[n]).sort((x, y) => y - x)[0];
-  // Enough rounds of the best owned matching beam to finish a plate.
+  // Enough rounds of the best owned matching beam to finish a plate, plus two for misses (at least 3).
   const supply = (p, x, y) => {
     const f = familyFor(p);
     if (!f) return;
-    const n = Math.ceil(p.hp / f) - S.run.ammo[f];
-    if (n > 0) S.spawn(pickup({kind: 'ammo', family: f, amount: n}, x, y, S));
+    const n = Math.max(3, Math.ceil(p.hp / f) + 2 - S.run.ammo[f]);
+    if (Math.ceil(p.hp / f) + 2 > S.run.ammo[f]) S.spawn(pickup({kind: 'ammo', family: f, amount: n}, x, y, S));
   };
   state.current = current;
   state.math = () => (state.done ? NONE : {kind: 'plate', a: current().a, b: current().b});
@@ -98,15 +98,19 @@ export function twinWarden(def, S) {
           tw.vy += 1150 * dt;
           tw.x = Math.max(90, Math.min(870, tw.x + tw.vx * dt));
           tw.y += tw.vy * dt;
-          if (tw.y >= FLOOR) { tw.y = FLOOR; tw.air = false; tw.timer = 0.8; S.cameras.main.shake(80, 0.002); }
+          if (tw.y >= FLOOR) { tw.y = FLOOR; tw.air = false; tw.timer = 0.9; S.cameras.main.shake(120, 0.004); S.burst(tw.x, FLOOR, 0xb8a888, 18); S.sfx(90, 0.2); }
         } else if (tw.timer <= 0) {
           const hop = active(tw) && tw.state !== 'hop';
           tw.state = hop ? 'hop' : 'throw';
           if (hop) {
+            // Big leap (~260 px high) that arcs over the dragon and lands beyond it; its shadow marks
+            // the landing spot. Classic dodge: run underneath while it's airborne.
             tw.air = true;
-            tw.vy = -560;
-            const land = S.p.x + (tw.x < S.p.x ? -150 : 150);
-            tw.vx = Math.max(-260, Math.min(260, (land - tw.x) / 0.97));
+            tw.vy = -780;
+            const land = Math.max(90, Math.min(870, S.p.x + (tw.x < S.p.x ? 190 : -190)));
+            tw.vx = Math.max(-420, Math.min(420, (land - tw.x) / (2 * 780 / 1150)));
+            tw.land = land;
+            S.sfx(240, 0.25);
           } else {
             const dx = S.p.x - tw.x;
             S.enemyShot({x: tw.x, y: tw.y - 130, vx: dx / 1.05, vy: -470, g: 900, r: 9, color: 0xeae3d4, spin: true});
@@ -125,6 +129,10 @@ export function twinWarden(def, S) {
           .setRotation(fall * (tw.i ? 1 : -1)).setAlpha(dying ? Math.max(0, 1 - dying * 0.7) : on ? 1 : 0.42 + 0.08 * Math.sin(t * 4))
           .setTint(tw.hit ? 0xffffff : on ? 0xf2eadb : 0x8a90b8);
         if (on && !dying) { g.lineStyle(3, 0xffd59a, 0.35 + 0.2 * Math.sin(t * 6)); g.strokeEllipse(tw.x, tw.y - 70, 120, 170); }
+        if (tw.air && !dying) {
+          const k = Math.max(0.3, 1 - (FLOOR - tw.y) / 300);
+          g.fillStyle(0x000000, 0.35 * k); g.fillEllipse(tw.x, FLOOR - 2, 90 * k, 16 * k);
+        }
       }
       const tw = twins[P.done ? 0 : P.current().owner];
       badge.setVisible(!P.done).setPosition(tw.x, tw.y - 185).setText(P.done ? '' : `${P.current().a} · ${P.current().b}`);
@@ -208,7 +216,9 @@ export function trineGuardian(def, S) {
 
 // Clockwork Warden: plates print on its clock dial; floor-shockwave slams and arcing gears.
 export function clockWarden(def, S) {
-  const F = ART.clockwarden, oy = (F.frameHeight - 4) / F.frameHeight, scale = 0.95;
+  // ~180 px tall. Only the lower body (80 x 130) hurts on contact, so a Moon Boots jump clears it
+  // from a ~75 px take-off window instead of a pixel-perfect one.
+  const F = ART.clockwarden, oy = (F.frameHeight - 4) / F.frameHeight, scale = 0.7;
   const sprite = S.add.sprite(640, FLOOR, 'clockwarden', 0).setOrigin(0.5, oy).setScale(scale).setDepth(4);
   const dial = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 21, fontStyle: 'bold', color: '#2a1a0c'}).setOrigin(0.5).setDepth(6);
   const b = {x: 640, state: 'walk', timer: 1.8, hit: 0, frame: 0, next: 'slam'};
@@ -216,7 +226,7 @@ export function clockWarden(def, S) {
   const P = platesFor(def, S, () => { dying = 0.001; S.sfx(70, 0.9); });
   const target = {
     target: true, alive: true,
-    rect: () => ({x: b.x - 78, y: FLOOR - 225, w: 156, h: 205}),
+    rect: () => ({x: b.x - 60, y: FLOOR - 172, w: 120, h: 162}),
     math: () => P.math(),
     applyDamage: w => { b.hit = 0.18; const d = dialAt(sprite, F, b.frame, oy); P.damage(w, d.x, d.y - 30); },
   };
@@ -243,20 +253,20 @@ export function clockWarden(def, S) {
         b.frame = 1;
         if (b.timer <= 0 && b.state === 'slam-wind') {
           b.state = 'slam'; b.timer = 0.5; b.frame = 2;
-          for (const dir of [-1, 1]) S.enemyShot({x: b.x + dir * 70, y: FLOOR - 14, vx: dir * 250, vy: 0, g: 0, r: 11, color: 0xffb25a, life: 3.6, wave: true});
+          for (const dir of [-1, 1]) S.enemyShot({x: b.x + dir * 56, y: FLOOR - 14, vx: dir * 250, vy: 0, g: 0, r: 11, color: 0xffb25a, life: 3.6, wave: true});
           S.cameras.main.shake(180, 0.006);
           S.sfx(90, 0.35);
         } else if (b.timer <= 0) {
           b.state = 'slam'; b.timer = 0.45; b.frame = 2;
           const dx = S.p.x - b.x;
-          for (const k of [0.8, 1.2]) S.enemyShot({x: b.x, y: FLOOR - 200, vx: dx / 1.1 * k, vy: -460, g: 900, r: 11, color: 0xd9a24c, spin: true});
+          for (const k of [0.8, 1.2]) S.enemyShot({x: b.x, y: FLOOR - 150, vx: dx / 1.1 * k, vy: -460, g: 900, r: 11, color: 0xd9a24c, spin: true});
           S.sfx(420, 0.12);
         }
       } else if (b.state === 'slam') {
         b.frame = 2;
         if (b.timer <= 0) { b.state = 'walk'; b.timer = 2.0; }
       }
-      if (overlaps({x: b.x - 70, y: FLOOR - 200, w: 140, h: 200}, S.playerRect())) S.hurtPlayer(b.x);
+      if (overlaps({x: b.x - 40, y: FLOOR - 130, w: 80, h: 130}, S.playerRect())) S.hurtPlayer(b.x);
     },
     draw(g, t) {
       sprite.setFrame(b.frame).setPosition(b.x + (b.hit ? Math.sin(t * 80) * 4 : 0), FLOOR).setFlipX(S.p.x > b.x)

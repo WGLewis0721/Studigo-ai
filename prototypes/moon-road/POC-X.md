@@ -40,8 +40,19 @@ The atrium and shaft keep the original observatory backdrop.
 - A 5 shows only briefly. While it does, the trial glows pink and a ×5 hit deals double (10).
 - It swings gently on a pendulum and has no projectiles. It's meant as a short trial of every beam, not a hard fight.
 
+**Right tool pays: match rewards (William, 2026-09-29).** A good shot could clear everything with ×1, so matching a non-boss monster's number with a power beam is now rewarded. ×1 itself loses nothing.
+- **Stagger.** A matching hit freezes the monster for 0.55 s. It can't move or hurt you, and "MATCH!" flashes gold.
+- **Silver armor.** Monsters carry silver armor worth about 10–20% on top of `a × b` (none at 4 HP or less), shown as silver segments at the end of the health bar. ×1 chips it one point at a time; a matching beam shatters all of it in one shot ("ARMOR BREAK!"). The HP under the armor is still exactly `a × b`, so the math stays honest.
+- **Free when correct.** A match kill refunds every round spent on that monster, plus one. When one beam did all the work it shows the sentence, e.g. `3 × 2 = 6`.
+- **Match streak.** Consecutive match kills show `MATCH ×N` in the HUD, and any hit you take resets it. Every third in a row gives a heart, a shield charge if hearts are full, or ammo.
+- The map and finish screens show match kills and your best streak. The first power beam you pick up (×2) shows a tip explaining all this.
+
+**Classic boss dodges (William, 2026-09-29).**
+- **Twin Warden:** full size, but the active twin now makes big leaps (~260 px high) that arc over the dragon and land beyond it. A shadow marks the landing spot, and you dodge by staying put or running under it.
+- **Clockwork Warden:** shrunk to ~180 px. Only its lower body (80×130) hurts on contact, so a Moon Boots jump clears it from a comfortable take-off window.
+
 **Boss ammo safety (POC X).**
-- Breaking a plate drops exactly enough ammo to finish the next plate.
+- Breaking a plate drops enough ammo to finish the next plate, plus two for misses (at least 3). Respawning at a shrine tops every owned beam up to at least half capacity.
 - If no owned beam with ammo can hurt the current plate, a capsule appears beside you after 3 s.
 - Kills now also drop ×5 ammo.
 

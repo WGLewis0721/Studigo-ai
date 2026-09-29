@@ -1,6 +1,6 @@
 import {TILE, moveBody} from './physics.js';
-import {hitText} from './rules.js';
-import {collect, addAmmo, orbReady, healFull, shieldKill} from './progress.js';
+import {hitText, isMatch, armorFor} from './rules.js';
+import {collect, addAmmo, orbReady, healFull, shieldKill, recordMatch} from './progress.js';
 import {ART} from './art/art.js';
 
 export const COLOR = {1: 0xd6e8ef, 2: 0xffb44a, 3: 0x57b8ff, 4: 0x7fe0a0, 5: 0xff6f8a};
@@ -16,23 +16,68 @@ function problem(S, x, y, e) {
   return label(S, x, y, `${e.a} · ${e.b}`, 17, '#f7ecd0');
 }
 
-function healthBar(g, x, y, hp, max) {
+// Health segments (a x b) plus silver armor segments capping the right end.
+function healthBar(g, x, y, hp, max, armor = 0, armorMax = 0) {
+  const total = max + armorMax, w = 54 / total;
   g.fillStyle(0x0b1322); g.fillRect(x - 28, y, 56, 7);
-  g.fillStyle(0xe5b68a); g.fillRect(x - 27, y + 1, 54 * hp / max, 5);
-  for (let k = 1; k < max; k++) { g.fillStyle(0x111e30); g.fillRect(x - 27 + 54 * k / max, y + 1, 1, 5); }
+  g.fillStyle(0xe5b68a); g.fillRect(x - 27, y + 1, w * hp, 5);
+  g.fillStyle(0xd8e2ec); g.fillRect(x - 27 + w * max, y + 1, w * armor, 5);
+  for (let k = 1; k < total; k++) { g.fillStyle(0x111e30); g.fillRect(x - 27 + w * k, y + 1, 1, 5); }
 }
 
-// Shared kill rewards: shield charge, then matched ammo, a heart, or ammo for the emptiest beam.
-function onKill(S, x, y, w, e, kind) {
+// Armor soaks hits first: x1 chips one point; a matching power beam shatters all of it in one shot.
+// Returns true when the hit was spent on armor.
+function hitArmor(self, w, S) {
+  if (self.armor <= 0) return false;
+  const shatter = isMatch(self.math(), w);
+  self.armor = shatter ? 0 : self.armor - 1;
+  S.float(self.x, self.y - (self.type === 'bat' ? 80 : 124), shatter ? 'ARMOR BREAK!' : self.armor ? 'ARMOR' : 'ARMOR GONE', shatter ? '#ffe08a' : '#d8e2ec', shatter ? 18 : 14);
+  S.burst(self.x, self.y - (self.type === 'bat' ? 0 : 40), 0xd8e2ec, shatter ? 26 : 8);
+  S.sfx(shatter ? 1500 : 620, 0.1);
+  return true;
+}
+
+const lowestBeam = S => [2, 3, 4, 5].filter(n => S.run.owned[n]).sort((m, n) => S.run.ammo[m] / S.run.cap[m] - S.run.ammo[n] / S.run.cap[n])[0];
+
+// A matching power hit: brief stagger (no movement, no contact damage) and the rounds are tallied for a refund.
+function strike(self, w, S) {
+  self.used.add(w);
+  if (!isMatch(self.math(), w)) return;
+  self.stun = 0.55;
+  self.spent[w] = (self.spent[w] || 0) + 1;
+  if (!self.matched) S.float(self.x, self.y - (self.type === 'bat' ? 104 : 150), 'MATCH!', '#ffe08a', 18);
+  self.matched = true;
+}
+
+// Shared kill rewards. A match kill refunds every round spent on the monster (+1), shows the
+// multiplication when one beam did all the work, and builds the streak; every third pays a bonus.
+function onKill(S, x, y, w, e, kind, self) {
   S.kills++;
   const before = S.run.shield.charges;
   shieldKill(S.run);
   if (S.run.shield.charges > before) S.float(x, y - 70, '+◆', '#8ff5e0', 18);
-  const low = [2, 3, 4, 5].filter(n => S.run.owned[n]).sort((m, n) => S.run.ammo[m] / S.run.cap[m] - S.run.ammo[n] / S.run.cap[n])[0];
-  if (w > 1 && (w === e.a || w === e.b) && S.run.owned[w]) S.spawn(pickup({kind: 'ammo', family: w, amount: 3}, x, y, S));
-  else if (S.kills % 3 === 0 && S.run.hearts < S.run.maxHearts) S.spawn(pickup({kind: 'heart'}, x, y, S));
-  else if (low && S.kills % 2 === 0) S.spawn(pickup({kind: 'ammo', family: low, amount: 2}, x, y, S));
-  S.log('kill', {kind, a: e.a, b: e.b, weapon: w, shield: S.run.shield.charges});
+  const math = {kind, a: e.a, b: e.b}, hp = e.a * e.b;
+  if (isMatch(math, w)) {
+    const refund = (self.spent[w] || 0) + 1, streak = recordMatch(S.run);
+    addAmmo(S.run, w, refund);
+    S.float(x, y - 100, self.used.size === 1 ? `${w} × ${hp / w} = ${hp}` : 'MATCH KILL', CSS[w], 24);
+    S.float(x, y - 72, `+${refund} ×${w} back`, CSS[w], 15);
+    S.burst(x, y, 0xffe08a, 34);
+    S.sfx(1320 + Math.min(streak, 6) * 90, 0.22);
+    if (streak % 3 === 0) {
+      let prize;
+      if (S.run.hearts < S.run.maxHearts) { S.spawn(pickup({kind: 'heart'}, x, y, S)); prize = '♥'; }
+      else if (S.run.shield.owned && S.run.shield.charges < S.run.shield.max) { S.run.shield.charges++; prize = '◆'; }
+      else { const low = lowestBeam(S); if (low) S.spawn(pickup({kind: 'ammo', family: low, amount: 4}, x, y, S)); prize = 'AMMO'; }
+      S.float(x, y - 128, `STREAK ${streak}! ${prize}`, '#ffe08a', 20);
+    }
+    S.log('match-kill', {kind, a: e.a, b: e.b, weapon: w, refund, streak, pure: self.used.size === 1});
+  } else {
+    const low = lowestBeam(S);
+    if (S.kills % 3 === 0 && S.run.hearts < S.run.maxHearts) S.spawn(pickup({kind: 'heart'}, x, y, S));
+    else if (low && S.kills % 2 === 0) S.spawn(pickup({kind: 'ammo', family: low, amount: 2}, x, y, S));
+  }
+  S.log('kill', {kind, a: e.a, b: e.b, weapon: w, shield: S.run.shield.charges, match: isMatch(math, w)});
 }
 
 export function skeleton(e, S) {
@@ -40,25 +85,28 @@ export function skeleton(e, S) {
   const sprite = S.add.sprite(home, y, 'skeleton', 0).setOrigin(0.5, (F.frameHeight - 4) / F.frameHeight).setDepth(4);
   const badge = problem(S, home, y - 106, e);
   const self = {
-    type: 'skeleton', id: e.id, target: true, alive: true, x: home, y, a: e.a, b: e.b, hp: max, max,
-    dir: 1, hit: 0, recoil: 0, dying: 0, phase: Math.random() * 6, lunge: false,
+    type: 'skeleton', id: e.id, target: true, alive: true, x: home, y, a: e.a, b: e.b, hp: max, max, armor: armorFor(e.a, e.b), armorMax: armorFor(e.a, e.b),
+    dir: 1, hit: 0, recoil: 0, dying: 0, phase: Math.random() * 6, lunge: false, stun: 0, spent: {}, used: new Set(), matched: false,
     math: () => ({kind: 'skeleton', a: e.a, b: e.b}),
     rect: () => ({x: self.x - 18, y: self.y - 76, w: 36, h: 76}),
     applyDamage(w) {
-      self.hp = Math.max(0, self.hp - w);
       self.hit = 0.2;
       self.recoil = Math.sign(self.x - S.p.x) || 1;
+      strike(self, w, S);
+      if (hitArmor(self, w, S)) return;
+      self.hp = Math.max(0, self.hp - w);
       S.float(self.x, self.y - 124, hitText(self.math(), w, self.hp), CSS[w]);
       if (!self.hp) {
         self.target = false;
         self.dying = 0.001;
         S.burst(self.x, self.y - 40, 0xffe4ae, 28);
-        onKill(S, self.x, self.y - 50, w, e, 'skeleton');
+        onKill(S, self.x, self.y - 50, w, e, 'skeleton', self);
       }
     },
     update(dt) {
       self.hit = Math.max(0, self.hit - dt);
       if (self.dying) { self.dying += dt; if (self.dying > 0.5) self.alive = false; return; }
+      if (self.stun > 0) { self.stun -= dt; return; }
       const p = S.p, near = Math.abs(p.y - self.y) < 90 && Math.abs(p.x - self.x) < 300;
       if (near) self.dir = Math.sign(p.x - self.x) || self.dir;
       self.lunge = near && Math.abs(p.x - self.x) < 110;
@@ -70,13 +118,13 @@ export function skeleton(e, S) {
     },
     draw(g, t) {
       const x = self.x + (self.hit ? self.recoil * self.hit * 30 : 0);
-      const frame = self.hit || self.dying ? 3 : self.lunge ? 2 : Math.floor(t * 5 + self.phase) % 2;
-      sprite.setFrame(frame).setPosition(x, self.y + (self.dying ? self.dying * 30 : 0)).setFlipX(self.dir < 0)
+      const frame = self.hit || self.dying || self.stun > 0 ? 3 : self.lunge ? 2 : Math.floor(t * 5 + self.phase) % 2;
+      sprite.setFrame(frame).setPosition(x + (self.stun > 0 ? Math.sin(t * 70) * 2 : 0), self.y + (self.dying ? self.dying * 30 : 0)).setFlipX(self.dir < 0)
         .setRotation(self.dying ? Math.min(1.4, self.dying * 4) * -self.recoil : 0)
         .setAlpha(self.dying ? Math.max(0, 1 - self.dying * 2) : 1)
-        .setTint(self.hit ? 0xffd9c9 : 0xffffff);
+        .setTint(self.stun > 0 ? (Math.floor(t * 20) % 2 ? 0xffe08a : 0xfff4c8) : self.hit ? 0xffd9c9 : 0xffffff);
       badge.setPosition(self.x, self.y - 106 + Math.sin(t * 2.4 + self.phase) * 2).setVisible(!self.dying);
-      if (!self.dying) healthBar(g, self.x, self.y - 94, self.hp, max);
+      if (!self.dying) healthBar(g, self.x, self.y - 94, self.hp, max, self.armor, self.armorMax);
     },
     destroy() { sprite.destroy(); badge.destroy(); },
   };
@@ -89,24 +137,27 @@ export function bat(e, S) {
   const sprite = S.add.sprite(hx, hy, 'bat', 0).setDepth(4);
   const badge = problem(S, hx, hy - 58, e);
   const self = {
-    type: 'bat', id: e.id, target: true, alive: true, x: hx, y: hy, a: e.a, b: e.b, hp: max, max,
-    hit: 0, dying: 0, phase: Math.random() * 6, state: 'hover', timer: 1 + Math.random(), tx: 0, ty: 0, face: 1,
+    type: 'bat', id: e.id, target: true, alive: true, x: hx, y: hy, a: e.a, b: e.b, hp: max, max, armor: armorFor(e.a, e.b), armorMax: armorFor(e.a, e.b),
+    hit: 0, dying: 0, phase: Math.random() * 6, state: 'hover', timer: 1 + Math.random(), tx: 0, ty: 0, face: 1, stun: 0, spent: {}, used: new Set(), matched: false,
     math: () => ({kind: 'bat', a: e.a, b: e.b}),
     rect: () => ({x: self.x - 24, y: self.y - 18, w: 48, h: 36}),
     applyDamage(w) {
-      self.hp = Math.max(0, self.hp - w);
       self.hit = 0.2;
+      strike(self, w, S);
+      if (hitArmor(self, w, S)) return;
+      self.hp = Math.max(0, self.hp - w);
       S.float(self.x, self.y - 80, hitText(self.math(), w, self.hp), CSS[w]);
       if (!self.hp) {
         self.target = false;
         self.dying = 0.001;
         S.burst(self.x, self.y, 0xe0a060, 26);
-        onKill(S, self.x, self.y, w, e, 'bat');
+        onKill(S, self.x, self.y, w, e, 'bat', self);
       }
     },
     update(dt) {
       self.hit = Math.max(0, self.hit - dt);
       if (self.dying) { self.dying += dt; self.y += 260 * dt; if (self.dying > 0.6) self.alive = false; return; }
+      if (self.stun > 0) { self.stun -= dt; return; }
       const p = S.p, px = p.x, py = p.y - 40;
       self.timer -= dt;
       if (self.state === 'hover') {
@@ -128,9 +179,9 @@ export function bat(e, S) {
     draw(g, t) {
       sprite.setFrame(Math.floor(t * 9 + self.phase) % 2).setPosition(self.x, self.y).setFlipX(self.face < 0)
         .setRotation(self.dying ? self.dying * 5 : 0).setAlpha(self.dying ? Math.max(0, 1 - self.dying * 1.7) : 1)
-        .setTint(self.hit ? 0xffe0c8 : 0xffffff);
+        .setTint(self.stun > 0 ? (Math.floor(t * 20) % 2 ? 0xffe08a : 0xfff4c8) : self.hit ? 0xffe0c8 : 0xffffff);
       badge.setPosition(self.x, self.y - 58).setVisible(!self.dying);
-      if (!self.dying) healthBar(g, self.x, self.y - 46, self.hp, max);
+      if (!self.dying) healthBar(g, self.x, self.y - 46, self.hp, max, self.armor, self.armorMax);
     },
     destroy() { sprite.destroy(); badge.destroy(); },
   };
@@ -242,6 +293,7 @@ export function item(e, S) {
       if (e.kind === 'weapon') S.weapon = e.family;
       const [title, sub] = ITEM_COPY[e.kind](e);
       S.banner(title, sub);
+      if (e.kind === 'weapon' && e.family === 2) S.say('Tip: match a monster’s number with ×2 — it staggers, and a match kill gives the rounds back', 4.5);
       S.burst(x, y, tint, 60);
       S.sfx(1318, 0.5);
       S.cameras.main.flash(160, 190, 230, 170);
