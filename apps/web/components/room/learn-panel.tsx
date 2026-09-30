@@ -5,6 +5,7 @@ import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { PageHead } from "./page-head";
+import { RichText } from "./rich-text";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -17,12 +18,18 @@ export function LearnPanel({
   roomId,
   topics,
   hasMaterials,
-  onChanged
+  onChanged,
+  embedded = false,
+  onCoachTopic
 }: {
   roomId: string;
   topics: Topic[];
   hasMaterials: boolean;
   onChanged: () => void;
+  /** Inside Coach the page heading belongs to Coach, not to this panel. */
+  embedded?: boolean;
+  /** Hand a topic to the Coach chat. */
+  onCoachTopic?: (topic: Topic) => void;
 }) {
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[] }>>({});
@@ -266,7 +273,7 @@ export function LearnPanel({
   if (!topics.length) {
     return (
       <div className="modeEmpty">
-        <PageHead title="Learn" sub="No topic map yet." state="explain" />
+        {!embedded && <PageHead title="Learn" sub="No topic map yet." state="explain" />}
         <p>Upload a teacher study guide and Studigo reads what it says you need to know. With only notes and textbook pages, it can build the map from those instead.</p>
         {error && (
           <p className="formError" role="alert">
@@ -290,7 +297,7 @@ export function LearnPanel({
   return (
     <div className="learnMode">
       <div className="learnHeader">
-        <PageHead title="Learn" sub={`${topics.length} topics from your study guide.`} state="explain" />
+        {embedded ? <p className="phSub topicsLead">{topics.length} {topics.length === 1 ? "topic" : "topics"} from your study guide. Open one for a lesson.</p> : <PageHead title="Learn" sub={`${topics.length} topics from your study guide.`} state="explain" />}
         <div className="learnHeaderActions">
           <button
             className="ghostButton"
@@ -384,8 +391,13 @@ export function LearnPanel({
 
                   {lesson && (
                     <>
-                      <p className="answerText">{lesson.text}</p>
+                      <RichText className="lessonText" text={lesson.text} />
                       <CitationChips citations={lesson.citations} />
+                      {onCoachTopic && (
+                        <button className="buttonPrimary coachThisTopic" type="button" onClick={() => onCoachTopic(topic)}>
+                          Coach me on this <span aria-hidden="true">→</span>
+                        </button>
+                      )}
 
                       <section className="socraticCheck">
                         <span className="tinyLabel">CHECK YOUR UNDERSTANDING</span>

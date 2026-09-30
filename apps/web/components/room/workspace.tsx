@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
 import { MaterialsPanel } from "./materials-panel";
-import { AskPanel } from "./ask-panel";
 import { CoachPanel } from "./coach-panel";
-import { LearnPanel } from "./learn-panel";
 import { QuizPanel } from "./quiz-panel";
 import { CardsPanel } from "./cards-panel";
 import { MasteryPanel } from "./mastery-panel";
@@ -27,9 +25,7 @@ import { roomShellFor } from "@/lib/room-shell";
 // Study plan indigo.
 const MODES = [
   { id: "materials", name: "Materials", copy: "Everything this room knows." },
-  { id: "ask", name: "Ask", copy: "Explain anything from your materials." },
-  { id: "coach", name: "Coach", copy: "Practice with the right method." },
-  { id: "learn", name: "Learn", copy: "Walk the guide in the right order." },
+  { id: "coach", name: "Coach", copy: "Ask, learn and practice in one place." },
   { id: "quiz", name: "Quiz", copy: "Practice exactly what is testable." },
   { id: "cards", name: "Flashcards", copy: "Drill the terms until they stick." },
   { id: "weak", name: "Weak areas", copy: "Where to focus next." },
@@ -41,8 +37,11 @@ const MODES = [
 
 type Mode = (typeof MODES)[number]["id"];
 
+/** Ask and Learn now live inside Coach; older links and plan actions still resolve. */
+type NavTarget = Mode | "ask" | "learn";
+
 const GROUPS: Array<{name:string;icon:GlyphName;modes:Mode[]}> = [
-  {name:"Study",icon:"learn",modes:["learn","ask","coach"]},
+  {name:"Coach",icon:"coach",modes:["coach"]},
   {name:"Practice",icon:"quiz",modes:["quiz","cards","test"]},
   {name:"Progress",icon:"mastery",modes:["mastery","weak"]},
   {name:"Plan",icon:"plan",modes:["plan","cram"]},
@@ -68,10 +67,11 @@ export function RoomWorkspace({
 }) {
   const router = useRouter();
   const readyDocuments = documents.filter((document) => document.status === "ready");
-  const defaultMode: Mode = readyDocuments.length ? "ask" : "materials";
+  const defaultMode: Mode = readyDocuments.length ? "coach" : "materials";
   const [mode, setMode] = useState<Mode>(
-    MODES.some((item) => item.id === initialMode) ? (initialMode as Mode) : defaultMode
+    MODES.some((item) => item.id === initialMode) ? (initialMode as Mode) : initialMode === "ask" || initialMode === "learn" ? "coach" : defaultMode
   );
+  const [coachView, setCoachView] = useState<"chat" | "topics">(initialMode === "learn" ? "topics" : "chat");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [focusTopicId, setFocusTopicId] = useState<string | null>(null);
 
@@ -81,11 +81,14 @@ export function RoomWorkspace({
   const plan = buildStudyPlan({ topics, areas, testDate: room.test_date, cardsDue: readiness.cardsDue, events: planEvents, now: asOf });
   const currentGroup = GROUPS.find(group => group.modes.includes(mode)) ?? GROUPS[0];
   const [cramStarted, setCramStarted] = useState(initialMode === "cram");
-  function navigate(nextMode: Mode, topicId: string | null = null) {
+  function navigate(target: NavTarget, topicId: string | null = null) {
+    const nextMode: Mode = target === "ask" || target === "learn" ? "coach" : target;
+    if (target === "learn") setCoachView("topics");
+    if (target === "ask") setCoachView("chat");
     setFocusTopicId(topicId);
     setMode(nextMode);
     if (nextMode === "cram") setCramStarted(true);
-    window.history.replaceState(null, "", `${window.location.pathname}?mode=${nextMode}`);
+    window.history.replaceState(null, "", `${window.location.pathname}?mode=${target}`);
   }
   function startPlannedAction(action: StudyAction) { navigate(action.mode, action.topicId); }
 
@@ -132,27 +135,26 @@ export function RoomWorkspace({
         <nav className="studyGroups" aria-label="Study Room sections">
           {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}><span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span><span>{group.name}</span></button>)}
         </nav>
-        <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
+        {currentGroup.modes.length > 1 && <nav className="studySubnav" aria-label={`${currentGroup.name} modes`}>
           {MODES.filter(item=>currentGroup.modes.includes(item.id)).map(item=><button key={item.id} type="button" data-tone={item.id} title={item.copy} aria-current={mode===item.id?"page":undefined} onClick={()=>navigate(item.id)}><span className="keycap studySubnavIcon"><ModeGlyph name={item.id} size={20} /></span><span className="studySubnavLabel">{item.name}</span></button>)}
-        </nav>
+        </nav>}
       </div>
 
       <div className="modeSurface">
         {mode === "materials" && (
           <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
         )}
-        {mode === "ask" && (
-          <AskPanel roomId={room.id} readyCount={readyDocuments.length} onOpenMaterials={() => setMode("materials")} />
-        )}
         {mode === "coach" && (
-          <CoachPanel roomId={room.id} readyCount={readyDocuments.length} topics={topics} onOpenMaterials={() => setMode("materials")} />
-        )}
-        {mode === "learn" && (
-          <LearnPanel
+          <CoachPanel
             roomId={room.id}
-            topics={focusTopicId ? topics.filter(t=>t.id===focusTopicId) : topics}
-            hasMaterials={readyDocuments.length > 0}
-            onChanged={refresh}
+            readyCount={readyDocuments.length}
+            topics={topics}
+            onOpenMaterials={() => setMode("materials")}
+            view={coachView}
+            onViewChange={setCoachView}
+            focusTopicId={focusTopicId}
+            onClearFocus={() => setFocusTopicId(null)}
+            onTopicsChanged={refresh}
           />
         )}
         {mode === "quiz" && (

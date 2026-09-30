@@ -1611,6 +1611,50 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .coachMode.activeSession .pageHead { display: none; }
 }
 
+/* Coach absorbs Ask and Learn: quiet controls, readable model text. */
+.coachTabs, .chatMode {
+  display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; width: fit-content;
+  background: color-mix(in oklab, var(--ink) 6%, var(--white));
+}
+.coachTabs button, .chatMode button {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
+  background: none; color: var(--ink-2); font: inherit; font-size: .88rem; font-weight: 700;
+}
+.coachTabs button[aria-pressed="true"], .chatMode button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .14); }
+.coachTabCount { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+.chatMode { margin-top: 6px; }
+.chatMode button { min-height: 26px; padding: 0 11px; font-size: .74rem; }
+.coachTopicsView { display: grid; gap: 14px; }
+.coachShowAll { justify-self: start; }
+.topicsLead { margin: 0; }
+.coachThisTopic { justify-self: start; }
+
+.richText { white-space: normal; overflow-wrap: anywhere; }
+.richText > :first-child { margin-top: 0; }
+.richText > :last-child { margin-bottom: 0; }
+.richText p { margin: 0 0 .7em; }
+.richText h4 { margin: 1em 0 .35em; font-family: var(--display); font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
+.richText ul, .richText ol { margin: 0 0 .7em; padding-left: 1.3em; display: grid; gap: .3em; }
+.richText li::marker { color: var(--tone-ink); }
+.richText code { padding: 1px 5px; border-radius: 6px; background: rgba(20, 27, 45, .07); font-family: var(--mono); font-size: .88em; }
+.richCite {
+  margin-left: 1px; padding: 0 4px; border-radius: 6px; font-size: .68rem; font-weight: 700; line-height: 1.5;
+  color: var(--tone-ink); background: var(--tone-soft); vertical-align: super;
+}
+.lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.68; color: var(--ink); }
+.coachChat .answerText .richText p { margin: 0 0 .5em; }
+.coachChat .answerText .richText h4 { font-size: .98rem; }
+@media (min-width: 701px) {
+  .coachMode { gap: 16px; }
+  .coachMode .coachSetupButton {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 14px; border: 0; border-radius: 14px; cursor: pointer;
+    background: color-mix(in oklab, var(--ink) 4%, var(--white)); color: var(--ink); font: inherit; text-align: left;
+  }
+  .coachMode .coachSetupButton strong { display: block; font-size: .92rem; }
+  .coachMode .coachSetupButton small { display: block; margin-top: 1px; color: var(--muted); font-size: .8rem; }
+  .coachSettings:not(.mobileOpen) { display: none; }
+}
+
 /* ---------------------------------------------------------------------------
    Responsive
    --------------------------------------------------------------------------- */
