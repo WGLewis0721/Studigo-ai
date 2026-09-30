@@ -1585,11 +1585,17 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   /* No window inside the phone screen: the conversation fills the page. */
   .coachDevice { padding-top: 0; }
   .cdHandle, .cdChin { display: none; }
-  .cdShell { padding: 0; border-radius: 0; background: none; box-shadow: none; }
+  .cdShell { z-index: auto; padding: 0; border-radius: 0; background: none; box-shadow: none; }
   .cdShell::before { display: none; }
   .cdScreen { padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .coachChat { height: min(72vh, 600px); min-height: 380px; margin-inline: -14px; border-radius: 0; box-shadow: 0 -1px 0 var(--hairline-strong), 0 1px 0 var(--hairline-strong); }
   .chatComposer input { font-size: 16px; }
+  /* Sheets sit above the bottom tab bar instead of sliding under it. */
+  .coachChat .coachSettings.mobileOpen,
+  .coachChat .coachSkillSheet {
+    bottom: calc(var(--m-tabbar, 70px) + 14px + var(--m-safe-bottom, 0px));
+    max-height: calc(100dvh - var(--m-tabbar, 70px) - 40px - var(--m-safe-bottom, 0px));
+  }
 }
 
 /* One page heading everywhere: mascot and title on one line, one short sentence under it. */
@@ -1673,17 +1679,24 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .chatModes small { max-width: 100%; font-size: .66rem; line-height: 1.2; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chatModes button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .14), inset 0 0 0 1.5px var(--tone); }
 .chatModes button[aria-pressed="true"] strong { color: var(--tone-ink); }
-.chatFocus { flex: 1 1 100%; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-.chatFocus::-webkit-scrollbar { display: none; }
-.chatFocus button {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px;
-  cursor: pointer; font: inherit; font-size: .8rem; font-weight: 700; white-space: nowrap;
-}
-.chatSkill { max-width: 52%; color: var(--tone-ink); background: var(--tone-soft); }
-.chatSkill:disabled { opacity: .55; cursor: default; }
-.chatSkillName { overflow: hidden; text-overflow: ellipsis; }
-.chatChip { color: var(--ink-2); background: color-mix(in oklab, var(--ink) 6%, var(--white)); }
 .coachChat[data-chat-mode="learn"] { --tone: var(--teal); }
+.chatMascot { position: relative; flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.chatMascotStatic { cursor: default; }
+.chatMascotDot {
+  position: absolute; right: 0; bottom: 1px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); box-shadow: 0 0 0 1px var(--hairline-strong);
+  background-image: radial-gradient(circle, var(--ink-2) 1.3px, transparent 1.5px); background-size: 4.5px 4.5px; background-position: center;
+}
+.chatMascot[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--tangerine); }
+.chatTopicRow { flex: 1 1 100%; display: flex; justify-content: flex-end; min-width: 0; }
+.chatTopic {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px;
+  font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer;
+  color: var(--tangerine-ink); background: var(--tangerine-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tangerine) 35%, white);
+}
+.coachChat[data-chat-mode="learn"] .chatTopic { color: var(--teal-ink); background: var(--teal-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 40%, white); }
+.chatTopicStatic { cursor: default; }
+.coachChat[data-chat-mode="learn"] .coachSkillList > button.active { background: var(--teal-soft); box-shadow: inset 0 0 0 1.5px var(--teal); }
+.chatTopicName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (min-width: 701px) {
   .coachChat .coachSettings { max-height: 46%; overflow-y: auto; margin: 0; border-radius: 0; box-shadow: 0 1px 0 var(--hairline-strong); }
   .coachChat .coachSkillSheet { display: grid; gap: 10px; max-height: 46%; overflow-y: auto; padding: 12px 14px; background: var(--white); box-shadow: 0 1px 0 var(--hairline-strong); }

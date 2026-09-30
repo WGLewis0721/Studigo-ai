@@ -172,7 +172,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), interactionId, conversationId: conversationId.current })
-          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current });
+          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, directives: [{ name: "Current topic", instruction: `The learner is currently studying "${selectedTopic.title}". If the question is ambiguous, read it in that context. Still answer only from the retrieved excerpts.` }] });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -219,30 +219,37 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
         <header className="chatHead">
-          <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
+          {chatMode === "coach" ? (
+            <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
+              <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
+              <span className="chatMascotDot" aria-hidden="true" />
+            </button>
+          ) : (
+            <span className="chatMascot chatMascotStatic"><StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark /></span>
+          )}
           <div className="chatModes" role="group" aria-label="How Studigo helps">
             <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => setChatMode("coach")}>
               <strong>Coach</strong><small>Practice and apply</small>
             </button>
-            <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => setChatMode("learn")}>
+            <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => { setPersonalizeOpen(false); setChatMode("learn"); }}>
               <strong>Learn</strong><small>Facts, with sources</small>
             </button>
           </div>
-          {chatMode === "coach" && (
-            <div className="chatFocus" aria-label="Coaching focus">
-              <button type="button" className="chatSkill" disabled={busy} title="Start coaching on this skill" onClick={() => void coach(`Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>
-                <span aria-hidden="true">▶</span><span className="chatSkillName">{selectedTopic.title}</span>
+          <div className="chatTopicRow">
+            {topics.length > 1 ? (
+              <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
+                <span className="chatTopicName">{selectedTopic.title}</span><span aria-hidden="true">▾</span>
               </button>
-              {topics.length > 1 && <button type="button" className="chatChip" onClick={() => { setPersonalizeOpen(false); setSkillPickerOpen(true); }}>Change</button>}
-              <button type="button" className="chatChip" aria-expanded={personalizeOpen} aria-controls="coach-personalization" onClick={() => { setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }} title={`Coaching style: ${style.name}`}>Style</button>
-            </div>
-          )}
+            ) : (
+              <span className="chatTopic chatTopicStatic" aria-label={`Topic: ${selectedTopic.title}`}><span className="chatTopicName">{selectedTopic.title}</span></span>
+            )}
+          </div>
         </header>
       {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
       {skillPickerOpen && (
         <section className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
           <div className="coachSettingsSheetHead">
-            <div><span className="tinyLabel">TODAY&apos;S SKILLS</span><strong id="coach-skill-sheet-title">Choose what to practice</strong></div>
+            <div><span className="tinyLabel">TOPIC</span><strong id="coach-skill-sheet-title">Pick a topic</strong></div>
             <button type="button" onClick={() => setSkillPickerOpen(false)}>Done</button>
           </div>
           <div className="coachSkillList">
@@ -301,7 +308,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
               <strong>Practice it.</strong>
               <p>Coach gives you problems, checks your work and tracks what you have mastered. Use it to rehearse steps and apply ideas. Not sure what a term means? Switch to Learn first.</p>
               <div className="starterList">
-                <button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button>
+                <button type="button" onClick={() => void coach(`Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>Coach me on {selectedTopic.title}</button>
                 <button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button>
               </div>
             </div>
@@ -310,9 +317,9 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
               <strong>Understand it.</strong>
               <p>Learn answers from your materials and shows the page it came from. Use it when an idea or term does not make sense yet. Then switch to Coach to practice it.</p>
               <div className="starterList">
+                <button type="button" onClick={() => void coach(`Explain ${selectedTopic.title} simply.`)}>Explain {selectedTopic.title}</button>
                 <button type="button" onClick={() => void coach("What does the study guide say I need to know?")}>What does my guide cover?</button>
                 <button type="button" onClick={() => void coach("What am I most likely to be tested on?")}>What will be on the test?</button>
-                <button type="button" onClick={() => void coach("Explain the hardest idea in this unit simply.")}>Explain the hardest idea</button>
               </div>
             </div>
           )
