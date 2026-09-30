@@ -4,6 +4,26 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Parallel P0 — Moon Keep II App Store production
+
+The game now has a separate production track alongside the Study Room product.
+
+**Current game baseline:** POC X — Moon Keep II is the approved golden build.
+Treat `prototypes/moon-road/dist/poc-x/` and tag
+`golden/poc-x-moon-keep-ii` as frozen gameplay reference. Read
+[`../prototypes/moon-road/POC-X.md`](../prototypes/moon-road/POC-X.md) and
+[`../prototypes/moon-road/CURRENT_GAME_HANDOFF.md`](../prototypes/moon-road/CURRENT_GAME_HANDOFF.md)
+before game-release work.
+
+**Commercial v1 direction:** premium paid iPhone/iPad game at **$3.99**, with no
+ads, no subscription, and no required account for the first App Store release.
+The production task is no longer to invent another POC; it is to package,
+measure, polish, validate, and ship the approved game.
+
+Game-release work must preserve POC X unless a task explicitly authorizes a
+gameplay change. New experiments belong in sibling routes/branches rather than
+silently changing the golden build.
+
 ## Current P0 — Downloadable study guide
 
 The #1 missing user-facing feature is a simple way to **download the study guide
@@ -236,6 +256,210 @@ next challenges from observable performance, all mini-games contribute to one
 concept-level learning state, and the learning control plane can determine the
 next action independently of generation while Coach uses generative AI to deliver
 that action naturally.
+## Game production track — Moon Keep II → App Store v1
+
+This track converts the approved browser game into a production iPhone/iPad
+product without restarting game design.
+
+### G0 — Freeze the golden game (complete)
+
+- [x] POC X Moon Keep II approved as the current golden image.
+- [x] Golden tag recorded: `golden/poc-x-moon-keep-ii`.
+- [x] Current game rules, art pipeline, tests, and handoff are documented.
+- [x] Browser build remains separately playable for regression comparison.
+- [x] Gameplay freeze rule established: do not edit `dist/poc-x/` casually.
+
+**Exit:** production work can compare against a stable, known-good game.
+
+### G1 — Choose and prove the iOS packaging architecture
+
+- [ ] Audit the existing Phaser build and the current `apps/desktop` Tauri
+      scaffold.
+- [ ] Compare a minimal Tauri-mobile, Capacitor, or equivalent native-wrapper
+      approach for this specific offline game.
+- [ ] Choose the smallest architecture that bundles the game locally, launches
+      without a website dependency, and produces a normal signed iOS/iPadOS app.
+- [ ] Keep gameplay code/assets local to the app for v1.
+- [ ] Document the decision, file layout, build commands, signing path, and
+      rollback plan in an App Store release plan.
+- [ ] Produce a simulator build before adding product features.
+
+**Exit:** a clean iOS simulator install launches Moon Keep II from local app
+assets with no GitHub Pages dependency.
+
+### G2 — Native lifecycle, controls, and offline reliability
+
+- [ ] Lock gameplay to the intended landscape presentation.
+- [ ] Verify iPhone/iPad safe areas and touch targets.
+- [ ] Preserve simultaneous move + jump + fire input.
+- [ ] Clear held controls correctly after backgrounding, locking, interruptions,
+      and foreground return.
+- [ ] Pause/resume safely across app lifecycle events.
+- [ ] Define and test sound behavior for mute, headphones, Bluetooth, and audio
+      interruptions.
+- [ ] Add optional haptics with an in-game setting.
+- [ ] Make the complete game playable with networking disabled from launch.
+- [ ] Remove prototype/debug-only surfaces from the release shell.
+
+**Exit:** the native shell behaves like a mobile game rather than a webpage in a
+container.
+
+### G3 — Save, resume, and player-state persistence
+
+- [ ] Add local save data for checkpoints/progression, unlocked powers,
+      collected upgrades, and settings.
+- [ ] Define exactly which combat resources persist and which reset on resume.
+- [ ] Restore safely after force-quit and device restart.
+- [ ] Add explicit **New Game** with confirmation.
+- [ ] Version the save schema so later releases can migrate it.
+- [ ] Handle corrupt/incompatible saves without trapping the player.
+- [ ] Add automated save/restore regression coverage.
+
+**Exit:** a player can leave for hours or days and reliably continue the same
+run.
+
+### G4 — Learning-evidence layer
+
+Do not use level completion as proof of multiplication mastery.
+
+- [ ] Add a short optional first-run baseline using roughly 10–12 facts.
+- [ ] Record locally, per fact:
+      exposures, first weapon choice, matching/nonmatching attempts, ×1 fallback,
+      response/selection time, question accuracy where applicable, repeated
+      errors, and improvement across exposures.
+- [ ] Distinguish factor/weapon recognition from multiplication-product recall.
+- [ ] Add a parent/progress view showing practiced facts, strongest facts,
+      facts needing practice, accuracy change, response-speed change, and play
+      time.
+- [ ] Add an optional later retention check so immediate familiarity is not
+      mislabeled as durable learning.
+- [ ] Keep learning telemetry local in v1.
+- [ ] Do not make unsupported claims such as "mastered" solely because a boss or
+      level was completed.
+- [ ] Run a small before/play/after/next-day playtest and record whether facts
+      encountered in the game improve more than held-back comparison facts.
+
+**Exit:** Studigo can show evidence of intended learning effects instead of only
+showing engagement or game completion.
+
+### G5 — Premium production-polish pass
+
+Preserve the existing combat/gameplay design while removing prototype feel.
+
+- [ ] Final title/launch flow.
+- [ ] Production pause/settings screens.
+- [ ] Loading and transition polish.
+- [ ] Save/checkpoint feedback.
+- [ ] Weapon-unlock presentation.
+- [ ] Boss introductions and completion/victory sequence.
+- [ ] Audio mix and feedback pass.
+- [ ] Haptic feedback pass.
+- [ ] Consistent hit-stop, particles, camera feedback, and damage readability.
+- [ ] Final HUD hierarchy and typography.
+- [ ] Disabled/pressed/touch states for every control.
+- [ ] Small-iPhone and iPad layout pass.
+- [ ] Accessibility review for contrast, readable text, motion/flash concerns,
+      and input clarity.
+- [ ] Remove placeholder/developer wording and dead-end UI.
+
+**Exit:** a new user can install the app without encountering anything that feels
+like a developer prototype.
+
+### G6 — Privacy, rights, and App Store compliance
+
+For v1, keep the product deliberately simple: paid download, no ads, no required
+account, no subscription, and no third-party tracking unless a later product
+decision explicitly changes that.
+
+- [ ] Audit every SDK and network request.
+- [ ] Decide whether to submit in Apple's Kids category only after checking the
+      current official requirements and consequences.
+- [ ] Prepare the privacy policy and accurate App Privacy disclosures.
+- [ ] Prepare age-rating answers.
+- [ ] Add parental gates wherever current Apple policy requires them.
+- [ ] Verify there are no unapproved external links/actions in child-facing UI.
+- [ ] Confirm Phaser licensing is shipped/documented correctly.
+- [ ] Confirm provenance/rights records for generated and reused art/audio.
+- [ ] Review accessibility and platform-permission declarations.
+- [ ] Run a final compliance audit against current official Apple documentation
+      immediately before submission.
+
+**Exit:** there are no known privacy, rights, policy, or metadata blockers for
+App Review.
+
+### G7 — App Store product assets and merchandising
+
+- [ ] Final app name/subtitle.
+- [ ] App icon master and required exports.
+- [ ] Launch/splash composition.
+- [ ] Real-gameplay App Store screenshots.
+- [ ] Optional short App Preview storyboard/video.
+- [ ] Store description, promotional text, and keywords.
+- [ ] Support URL and privacy-policy URL.
+- [ ] Copyright/credits screen.
+- [ ] Price configuration target: **$3.99 USD**.
+- [ ] Confirm paid-app agreements, tax, and banking setup before submission.
+- [ ] Ensure store art accurately represents the actual game.
+
+**Exit:** App Store Connect can be completed without placeholder assets or copy.
+
+### G8 — Real-device QA and TestFlight
+
+Test the exact release candidate rather than a nearby browser build.
+
+- [ ] Small supported iPhone.
+- [ ] Current standard-size iPhone.
+- [ ] Large iPhone/Pro Max class device.
+- [ ] iPad.
+- [ ] At least one physical iPhone; simulator-only acceptance is insufficient.
+- [ ] Clean install and first launch.
+- [ ] Full game start → Clock Tower → Rune Sanctum → Core Clash → completion.
+- [ ] Save, force-quit, restore, background/foreground, lock/unlock.
+- [ ] Offline launch and full offline play.
+- [ ] Rapid simultaneous multitouch.
+- [ ] Audio/headphone interruption behavior.
+- [ ] Every weapon, boss, checkpoint, shrine, gate, shield state, ammo recovery,
+      and New Game flow.
+- [ ] Verify the Clock Shield absorb path in a real browser/native play session;
+      it was previously unit-tested but not observed in the scripted browser run.
+- [ ] Fix all reproducible crashes, progression blockers, lost-save bugs, and
+      broken controls.
+- [ ] Upload the resulting release candidate to TestFlight.
+- [ ] Run external playtests with both children and parents, capturing game feel
+      and learning-evidence usability separately.
+
+**Exit:** the exact candidate intended for review has survived real-device and
+TestFlight use without release-blocking defects.
+
+### G9 — App Store submission and v1 release
+
+- [ ] Select the tested TestFlight build for App Review.
+- [ ] Complete all required App Store Connect metadata.
+- [ ] Add clear reviewer notes explaining controls, offline behavior, educational
+      mechanics, and how to reach later content.
+- [ ] Run a final clean-install smoke test against the submission candidate.
+- [ ] Submit for App Review.
+- [ ] Resolve review feedback without redesigning the golden game unless the
+      feedback exposes an actual product/compliance defect.
+- [ ] Tag the accepted production release and preserve the submitted source state.
+
+**Exit:** Moon Keep II is available as a production App Store product.
+
+### Production-ready release gate
+
+Do not call the game production-ready until all of the following are true:
+
+- POC X gameplay regression tests remain green;
+- the native app runs locally/offline;
+- save/resume is reliable;
+- learning evidence is measured without claiming unsupported mastery;
+- no prototype/debug surfaces remain;
+- privacy/rights/App Store disclosures are complete;
+- physical iPhone and iPad QA has passed;
+- the exact candidate has completed TestFlight validation;
+- all known P0/P1 defects are closed;
+- App Store metadata and assets are final.
+
 ## Active investigation — Coach practice-set generation
 
 Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
@@ -312,6 +536,25 @@ Only after individual-student value is proven:
 - Administrative controls.
 - District-specific Microsoft/Entra tenant restrictions when needed.
 - Required privacy/compliance work.
+
+## Immediate next 10 game-release tasks
+
+1. Write the App Store release architecture decision and choose the iOS wrapper
+   strategy for the existing Phaser game.
+2. Produce a clean simulator build that bundles POC X locally and runs offline.
+3. Add local versioned save/resume plus confirmed New Game behavior.
+4. Harden iOS lifecycle handling: background/foreground, lock/unlock, audio
+   interruption, and stuck-touch prevention.
+5. Add the local learning-evidence schema and a minimal baseline/progress view.
+6. Run the first before/play/after/next-day learning validation with a small
+   fact set and comparison facts.
+7. Complete the premium polish pass without changing POC X's gameplay grammar.
+8. Complete privacy/rights/App Store compliance and generated-asset provenance
+   review.
+9. Build the App Store icon/screenshots/copy and configure the $3.99 paid-product
+   metadata.
+10. Run physical-device QA, upload the exact candidate to TestFlight, fix all
+    P0/P1 defects, then submit that same tested build for App Review.
 
 ## Immediate next 10 engineering tasks
 
