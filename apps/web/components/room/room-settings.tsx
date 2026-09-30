@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
+import { CoachShellPicker } from "./coach-device";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -53,6 +54,8 @@ export function RoomSettings({ room, onClose }: { room: StudyRoom; onClose: () =
             defaultValue={room.test_date ? room.test_date.slice(0, 10) : ""}
           />
         </label>
+
+        <CoachShellPicker roomId={room.id} />
 
         {state.error && (
           <p className="formError" role="alert">
