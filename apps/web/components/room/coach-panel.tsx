@@ -67,7 +67,8 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
   const [tradition, setTradition] = useState(TRADITIONS[0]);
   const [practice, setPractice] = useState(PRACTICE_PROTOCOLS[0]);
   const [selectedTopic, setSelectedTopic] = useState<SkillTopic>(topics[0] ?? GENERAL_TOPIC);
-  const [replyMode, setReplyMode] = useState<ReplyMode>("coach");
+  // One-shot: the Ask button arms a single question answered from the materials, then disarms.
+  const [asking, setAsking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
@@ -127,7 +128,8 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
   }, [modalOpen]);
 
   async function coach(input: string, modeOverride?: ReplyMode) {
-    const replying = modeOverride ?? replyMode;
+    const replying: ReplyMode = modeOverride ?? (asking ? "ask" : "coach");
+    setAsking(false);
     const text = input.trim();
     if (!text || busy) return;
     setPrompt(""); setError(null); setBusy(true);
@@ -181,7 +183,6 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
 
   function coachTopic(topic: Topic) {
     setSelectedTopic(topic);
-    setReplyMode("coach");
     onViewChange("chat");
     void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach");
   }
@@ -289,10 +290,6 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
         <header className="chatHead">
           <StudigoMascot state={busy ? "thinking" : "welcome"} size={40} mark />
           <div><strong>Studigo Coach</strong><small>{busy ? "Typing…" : selectedTopic.title}</small></div>
-          <div className="chatMode" role="group" aria-label="How Studigo replies">
-            <button type="button" aria-pressed={replyMode === "coach"} onClick={() => setReplyMode("coach")}>Coach me</button>
-            <button type="button" aria-pressed={replyMode === "ask"} onClick={() => setReplyMode("ask")}>Just answer</button>
-          </div>
         </header>
         <div className="chatThread" role="log" aria-live="polite" aria-label="Coach messages">
         {messages.length === 0 ? (
@@ -304,7 +301,9 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
         {error && <p className="formError chatError" role="alert">{error}</p>}
         <StudigoComposer
           variant="chat"
-          placeholder="Message Studigo"
+          asking={asking}
+          onToggleAsk={() => setAsking((value) => !value)}
+          placeholder={asking ? "Ask about your materials" : "Message Studigo"}
           value={prompt}
           onChange={setPrompt}
           onSubmit={() => void coach(prompt)}
