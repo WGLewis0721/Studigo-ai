@@ -12,8 +12,7 @@ export function StudigoComposer({
   ariaLabel = "Ask Studigo",
   variant = "default",
   placeholder = "Ask Studigo",
-  asking = false,
-  onToggleAsk
+  accent
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -25,9 +24,8 @@ export function StudigoComposer({
   /** "chat" is the docked messenger-style bar used inside the Coach window. */
   variant?: "default" | "chat";
   placeholder?: string;
-  /** Chat variant only: a one-shot "question from my materials" switch. */
-  asking?: boolean;
-  onToggleAsk?: () => void;
+  /** Chat variant only: "learn" tints the bar teal so the mode is visible at the input. */
+  accent?: "learn";
 }) {
   const canSend = !disabled && Boolean(value.trim());
 
@@ -35,27 +33,13 @@ export function StudigoComposer({
     return (
       <form
         className={`chatComposer ${className}`.trim()}
-        data-asking={asking ? "true" : undefined}
+        data-accent={accent}
         onSubmit={(event) => {
           event.preventDefault();
           if (canSend) onSubmit();
         }}
       >
-        {asking && <span className="chatAskHint" role="status">Question · answered only from your materials</span>}
         <div className="chatRow">
-        {onToggleAsk && (
-          <button
-            className="chatAsk"
-            type="button"
-            aria-pressed={asking}
-            aria-label="Ask a question from my materials"
-            title="Ask a question from my materials"
-            onClick={onToggleAsk}
-            disabled={disabled}
-          >
-            ?
-          </button>
-        )}
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
