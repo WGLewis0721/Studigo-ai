@@ -340,3 +340,71 @@ Only after individual-student value is proven:
 Do not replace these with another foundation rewrite. The architecture has
 crossed the threshold where user-value, regression prevention, and reliability
 matter more than adding parallel infrastructure.
+
+---
+
+# Production + App Store commercialization gate — September 30, 2026
+
+This gate is now the release definition for both the Studigo learning app and the Core Clash/Moon Road game. Existing feature phases remain valid, but neither product should be called commercially production-ready until the applicable checks below pass.
+
+## Studigo learning app — remaining before taking money
+
+**Current assessment:** functional web product with substantial learning architecture; not yet a production-paid App Store product.
+
+### P0 — reliability and safety before billing
+- [ ] Complete the production user-validation cycle in Phase 3.5, including physical iPhone/Safari room creation, PDF download/open/print, and the deployed Coach practice-set flow.
+- [ ] Add automated two-user RLS isolation tests for rooms, documents, citations, downloads, and mutations.
+- [ ] Move large-document ingestion to a durable retryable worker and add bounded automatic retry/backoff.
+- [ ] Complete the Phase 4 RAG/citation evaluation set, prompt-injection tests, parser/file validation, malware scanning, auth-abuse/rate-limit tests, and production observability.
+- [ ] Define customer-visible service limits: upload size/count, AI usage limits, retention/deletion, supported file types, and failure/refund/support policy.
+- [ ] Finish privacy policy, terms, support contact, account deletion/data deletion flow, and production data-retention documentation.
+
+### P0 — commercial system
+- [ ] Freeze the paid product model (for example subscription tiers vs one-time access) and define exactly which capabilities are free/paid.
+- [ ] Use APEX as the hosted entitlement/source-of-truth layer for paid Studigo access; do not create a second client-owned balance/ledger.
+- [ ] For web sales, connect the chosen payment processor to APEX and prove purchase → entitlement → access → refund/revocation end to end.
+- [ ] Add customer billing/account UI: current plan, entitlement state, upgrade/manage/cancel path, and clear failed-payment state.
+- [ ] Add idempotent webhook/server-notification handling, reconciliation, support/audit visibility, and production alerts for payment/entitlement failures.
+- [ ] Run real test-mode purchase, renewal/cancel/refund, replay/idempotency, and entitlement-recovery acceptance before enabling live charges.
+
+### P1 — iOS/App Store client
+- [ ] Choose and implement the iOS delivery architecture. The existing PWA alone is not an App Store binary; preserve the hosted API/Supabase identity boundary and avoid duplicating learning state in the client.
+- [ ] Configure Apple Developer/App Store Connect, permanent bundle ID, signing, capabilities, app icon, launch assets, privacy manifest/required-reason APIs as applicable, and native-safe authentication.
+- [ ] Implement Sign in with Apple when required by the final authentication configuration while preserving the canonical Supabase user model.
+- [ ] Implement StoreKit/App Store In-App Purchase for digital Studigo subscriptions/features sold inside the iOS app, with server-side entitlement reconciliation into APEX.
+- [ ] Configure App Store Server Notifications and prove purchase, restore, renewal, cancellation, billing retry, refund, and revoked entitlement behavior.
+- [ ] Add Restore Purchases and ensure web-purchased and App-Store-purchased entitlements resolve to one customer access model without double-granting.
+- [ ] Physical-device QA on supported iPhone/iPad sizes: auth callbacks, uploads/file picker, camera/photo imports if exposed, Study Room, Coach, quiz/flashcards, PDF export/share, background/resume, poor network, accessibility, safe areas, keyboard, and orientation.
+- [ ] TestFlight internal → external beta with crash/performance telemetry and release-blocker triage.
+- [ ] Complete App Store metadata: name/subtitle/description/keywords/category, age rating, screenshots/previews, privacy answers, support URL, privacy URL, review credentials/instructions, pricing/availability, and IAP/subscription metadata.
+- [ ] Submit the first app + first IAP/subscription together where required, resolve review findings, and release only after the production backend and entitlement path are already accepted.
+
+**Studigo paid-production exit:** a new customer can sign up, pay through an approved channel, receive the correct entitlement exactly once, use the core study loop reliably, restore access on another device, cancel/refund without stale access, delete their account/data, and receive support from an auditable production system.
+
+## Studigo game / Moon Road / Core Clash — remaining before App Store sale
+
+**Current assessment:** strong browser prototype/golden slice, but still a prototype rather than a shippable $3.99 game. POC IX remains the current golden image on the game branch.
+
+### P0 — turn the slice into a product
+- [ ] Promote a deliberate release candidate from the prototype branch without modifying the POC IX golden build.
+- [ ] Define the 1.0 content scope: complete beginning → progression → ending, expected playtime, level count, multiplication families/difficulty coverage, save/checkpoint model, and replay loop.
+- [ ] Implement durable local save/progression, settings, audio controls, pause/resume, reset, and migration/version handling.
+- [ ] Connect gameplay telemetry to learning evidence without claiming mastery from completion alone: attempts, fact-family accuracy, retries, time-to-correct, delayed rematch performance, and transfer checks.
+- [ ] Define the learning-success acceptance test and verify with real child/parent playtests that learning interactions do not damage the “good game first” loop.
+- [ ] Finish production art/audio/content provenance and licenses; remove temporary/dev-only assets and tooling from the shipping bundle.
+- [ ] Add crash/error telemetry, performance budgets, deterministic release build, and automated smoke/playthrough coverage for the final level sequence.
+- [ ] Physical iPhone/iPad testing for touch concurrency, landscape/safe areas, interruption/resume, audio session, memory/thermal behavior, low-power devices, and offline play.
+
+### P1 — native packaging and commerce
+- [ ] Package the Phaser game in a production iOS shell or native host with no dependence on a development server/CDN.
+- [ ] Configure bundle ID, signing, icons, launch screen, supported orientations/devices, privacy metadata, age rating, support/privacy URLs, and App Store listing assets.
+- [ ] For the intended $3.99 model, prefer a paid-app purchase if 1.0 is a complete game with no separate digital unlock. If later selling levels/currency/content inside the app, use StoreKit IAP and server reconciliation where entitlement portability requires it.
+- [ ] Run TestFlight internal/external playtests and capture crashes, completion failures, control complaints, learning-loop drop-off, and device-specific regressions.
+- [ ] Submit the release candidate to App Review and resolve review issues without weakening the golden gameplay contract.
+
+**Game paid-production exit:** a customer can buy/install the game from the App Store, finish the complete 1.0 experience offline on supported devices, retain progress across normal app lifecycle events, and receive a stable product with documented support/privacy and validated learning instrumentation.
+
+## Shared commercialization rule
+
+Do not gate launch on every later roadmap idea. Gate it on **reliable core value + safe data handling + accepted commerce + supportability + store compliance**. New adaptive features, extra subjects, parent/school expansion, additional game worlds, and deeper personalization are post-launch unless testing shows one is necessary for the core promise.
+
