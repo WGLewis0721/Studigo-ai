@@ -7,6 +7,7 @@ import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel, coachMaterialState } from "@/lib/coach-material-state";
 import { StudigoComposer } from "./studigo-composer";
+import { CoachDevice } from "./coach-device";
 
 type CoachingStyle = {
   id: string;
@@ -157,6 +158,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   if (readyCount === 0) return <div className="modeEmpty"><StudigoMascot state="welcome" size={72} /><h2>Give Studigo something to coach.</h2><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
+    <CoachDevice>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       <div className="coachHeader">
         <div><span className="tinyLabel">THE COACHING FLOOR</span><h2>Practice the skill, not just the facts.</h2><p>Studigo keeps the teacher&apos;s content fixed and changes how it helps you practice.</p></div>
@@ -260,6 +262,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         ariaLabel="Ask Studigo"
       />
     </div>
+    </CoachDevice>
   );
 }
 
