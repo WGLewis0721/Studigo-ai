@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { PageHead } from "./page-head";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -265,12 +266,8 @@ export function LearnPanel({
   if (!topics.length) {
     return (
       <div className="modeEmpty">
-        <StudigoMascot state="explain" size={80} />
-        <h2>No topic map yet.</h2>
-        <p>
-          Upload a teacher study guide and Studigo reads what it says you need to know. If all you
-          have is notes and textbook pages, it can build the map from those instead.
-        </p>
+        <PageHead title="Learn" sub="No topic map yet." state="explain" />
+        <p>Upload a teacher study guide and Studigo reads what it says you need to know. With only notes and textbook pages, it can build the map from those instead.</p>
         {error && (
           <p className="formError" role="alert">
             {error}
@@ -293,10 +290,7 @@ export function LearnPanel({
   return (
     <div className="learnMode">
       <div className="learnHeader">
-        <div>
-          <span className="tinyLabel">WHAT THE TEACHER SAYS TO KNOW</span>
-          <h2>{topics.length} topics on the map.</h2>
-        </div>
+        <PageHead title="Learn" sub={`${topics.length} topics from your study guide.`} state="explain" />
         <div className="learnHeaderActions">
           <button
             className="ghostButton"

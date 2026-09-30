@@ -4,6 +4,7 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
+import { PageHead } from "./page-head";
 
 type Card = {
   id: string;
@@ -180,8 +181,7 @@ export function CardsPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
-        <StudigoMascot state="sources" size={80} />
-        <h2>Flashcards come from your materials.</h2>
+        <PageHead title="Flashcards" sub="Nothing to drill yet." state="sources" />
         <p>Add and process a document first, then Studigo pulls the terms worth drilling.</p>
       </div>
     );
@@ -201,12 +201,7 @@ export function CardsPanel({
           </div>
         )}
 
-        <span className="tinyLabel">FLASHCARDS</span>
-        <h2>{done ? "Nothing else due right now." : "Build a deck from this room."}</h2>
-        <p>
-          Cards are written only from your materials, and they come back on a schedule based on how
-          well you knew them.
-        </p>
+        <PageHead title="Flashcards" sub={done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."} />
 
         <label className="field">
           <span>Topic</span>

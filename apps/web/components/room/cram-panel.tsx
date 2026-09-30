@@ -6,6 +6,7 @@ import { LearnPanel } from './learn-panel';
 import { QuizPanel } from './quiz-panel';
 import { CardsPanel } from './cards-panel';
 import { StudigoMascot } from '@/components/studigo-mascot';
+import { PageHead } from './page-head';
 export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:string;topics:Topic[];areas:WeakArea[];testDate:string|null;onChanged:()=>void}) {
   const [minutes,setMinutes]=useState(30);const [session,setSession]=useState<StudyAction[]|null>(null);const [index,setIndex]=useState(0);
   const [remaining,setRemaining]=useState(0);const [running,setRunning]=useState(false);const deadline=useRef(0);const [done,setDone]=useState(false);
@@ -30,7 +31,7 @@ export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:strin
     </div>
     <footer className="cramFooter"><p>Save or grade your response before continuing.</p><button className="buttonPrimary" onClick={advance}>{index+1===session.length?'Finish session':'Next step'} →</button></footer>
   </section>;
-  return <section className="cramSetup"><header className="studySectionHeading"><div><span className="tinyLabel">TIME IS SHORT. FOCUS IS EVERYTHING.</span><h2>How much time have you got?</h2><p>{testDate?`Test date: ${new Date(testDate).toLocaleDateString()}. `:''}Start with the highest-priority gaps, then check what stuck.</p></div><StudigoMascot state="explain" size={80}/></header>
+  return <section className="cramSetup"><PageHead title="Cram" sub="Short on time? Start with the biggest gaps." state="explain"/>
     <div className="timeChoices" role="group" aria-label="Available study time">{[15,30,60,120].map(n=><button key={n} aria-pressed={minutes===n} onClick={()=>setMinutes(n)}>{n<60?`${n} min`:`${n/60} hour${n===120?'s':''}`}</button>)}</div>
     <ol className="cramPreview">{preview.map(s=><li key={s.key}><div><strong>{s.title}</strong><p>{s.reason}</p></div><b>{s.minutes} min</b></li>)}</ol>
     {!preview.length?<p>Add your study guide and build a topic map first.</p>:<button className="buttonPrimary" onClick={begin}>Start {minutes}-minute session <span>→</span></button>}
