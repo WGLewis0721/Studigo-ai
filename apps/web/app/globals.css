@@ -1377,6 +1377,22 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
 }
 
+/* First run is a full color field, like the homepage's closing field. */
+.firstRun {
+  position: relative; isolation: isolate; overflow: hidden; color: var(--ink);
+  background:
+    radial-gradient(80% 90% at 10% 0%, rgba(255, 255, 255, .5), transparent 60%),
+    linear-gradient(165deg, #ffab6e 0%, var(--tangerine) 50%, #f06a1c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -40px 80px -40px rgba(120, 40, 0, .35);
+}
+.firstRun p { color: #3b1c05; }
+.firstRunSteps li { background: rgba(255, 255, 255, .78); box-shadow: var(--edge), 0 1px 2px rgba(20, 27, 45, .08); }
+.firstRunSteps b { color: var(--tangerine-ink); }
+
+.authTitle { font-weight: 800; font-variation-settings: "opsz" 96; }
+.authQuote { font-weight: 800; }
+.tinyLabel { font-weight: 800; }
+
 @media (min-width: 1041px) {
   /* The rail floats as a frosted capsule, like .homeNavBar. */
   .appShell { padding: 12px; gap: 12px; grid-template-columns: 236px minmax(0, 1fr); }
