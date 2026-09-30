@@ -248,8 +248,8 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <section className="coachChat" aria-label="Coach conversation">
         <header className="chatHead">
-          <StudigoMascot state={busy ? "thinking" : "welcome"} size={36} mark />
-          <div><strong>Studigo Coach</strong><small>{busy ? "Typing…" : `Teaching from your materials · ${selectedTopic.title}`}</small></div>
+          <StudigoMascot state={busy ? "thinking" : "welcome"} size={40} mark />
+          <div><strong>Studigo Coach</strong><small>{busy ? "Typing…" : selectedTopic.title}</small></div>
         </header>
         <div className="chatThread" role="log" aria-live="polite" aria-label="Coach messages">
         {messages.length === 0 ? (
