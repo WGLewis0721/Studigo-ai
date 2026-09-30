@@ -1377,6 +1377,51 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
 }
 
+/* Mastery: the topic map is the homepage's dark device with filling tiles. */
+.masteryDeck {
+  padding: clamp(18px, 2.4vw, 28px); border-radius: 36px; color: #fff;
+  background: linear-gradient(180deg, #0f1420, #121827);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), inset 0 24px 60px rgba(0, 0, 0, .45), 0 1px 0 rgba(255, 255, 255, .08), 0 40px 80px -40px rgba(0, 0, 0, .8);
+}
+.masteryDeck .mdHead { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px 24px; margin-bottom: 18px; }
+.masteryDeck .mdHead .tinyLabel { display: block; font-size: .66rem; font-weight: 800; letter-spacing: .09em; color: var(--kiwi); }
+.masteryDeck .mdHead b { display: block; margin-top: 4px; font-family: var(--display); font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; }
+.mdLegend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; }
+.mdLegend dt { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; color: rgba(255, 255, 255, .8); }
+.mdLegend i { width: 14px; height: 14px; border-radius: 5px; }
+.lg-mastered { background: var(--kiwi); }
+.lg-learning { background: var(--dandelion); }
+.lg-blind { background: repeating-linear-gradient(135deg, var(--berry) 0 4px, color-mix(in oklab, var(--berry) 55%, black) 4px 8px); }
+.masteryDeck .mdTiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.masteryDeck .mdTile {
+  --fill: var(--kiwi);
+  position: relative; overflow: hidden; isolation: isolate; display: grid; align-content: space-between; gap: 10px;
+  width: 100%; min-height: 112px; padding: 12px; border: 0; border-radius: 16px; text-align: left; color: #fff; cursor: pointer;
+  background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  transition: transform .15s var(--ease-out), box-shadow .2s ease;
+}
+.masteryDeck .mdTile:hover { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
+.masteryDeck .mdTile:active { transform: translateY(1px); }
+.masteryDeck .mdTile::before {
+  content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: var(--v);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--fill) 62%, transparent), color-mix(in oklab, var(--fill) 26%, transparent));
+  box-shadow: inset 0 3px 0 var(--fill);
+}
+.masteryDeck .mdTile-learning { --fill: var(--dandelion); }
+.masteryDeck .mdTile-blind { --fill: var(--berry); }
+.masteryDeck .mdTile-blind::before { height: 100%; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--berry) 30%, transparent) 0 6px, transparent 6px 12px); box-shadow: inset 0 0 0 1.5px var(--berry); }
+.masteryDeck .mdTile-new::before { display: none; }
+.masteryDeck .mdTile b { font-size: .86rem; line-height: 1.25; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+.masteryDeck .mdTile small { font-family: var(--mono); font-size: .7rem; color: rgba(255, 255, 255, .82); }
+.masteryDeck .mdPriority { justify-self: start; font-style: normal; font-size: .58rem; font-weight: 800; letter-spacing: .08em; padding: 3px 7px; border-radius: 6px; color: var(--ink); background: var(--tangerine); }
+.masteryDeck .mdTile:focus-visible { outline-color: #fff; }
+.mdEmpty { margin: 0; color: rgba(255, 255, 255, .74); line-height: 1.6; }
+@media (max-width: 700px) {
+  .masteryDeck { border-radius: 28px; padding: 16px; }
+  .masteryDeck .mdTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .masteryDeck .mdTile { min-height: 104px; padding: 10px; }
+}
+
 /* First run is a full color field, like the homepage's closing field. */
 .firstRun {
   position: relative; isolation: isolate; overflow: hidden; color: var(--ink);

@@ -162,9 +162,11 @@ function CardsView() {
   return (
     <div className="mvCards">
       <div className="mvCard">
-        <small>FRONT</small>
-        <b>Occluded front</b>
-        <small>Tap to flip</small>
+        <div className="mvFace">
+          <small>FRONT</small>
+          <b>Occluded front</b>
+          <small>Tap to flip</small>
+        </div>
       </div>
       <div className="mvRatings">
         <span>Missed it</span>

@@ -128,30 +128,50 @@ export function MasteryPanel({
       <div className="readinessBreakdown">
         {[{name:"Strong",items:topics.filter(t=>t.status==="mastered")},{name:"Needs work",items:topics.filter(t=>t.last_practiced_at&&t.status!=="mastered")},{name:"Not practiced",items:topics.filter(t=>!t.last_practiced_at)}].map(group=><section key={group.name}><h3>{group.name} <span>{group.items.length}</span></h3><ul>{group.items.map(t=><li key={t.id}><button onClick={()=>onPractice(t.id)}>{t.title} →</button></li>)}</ul>{!group.items.length&&<p>None here.</p>}</section>)}
       </div>
-      <section className="masteryTable">
-        <span className="tinyLabel">EVERY TOPIC</span>
-        <ul>
-          {topics.map((topic) => (
-            <li key={topic.id}>
-              <div className="masteryTopicName">
-                <strong>{topic.title}</strong>
-                {topic.priority >= 90 && <b className="priorityTag">ON THE TEST</b>}
-              </div>
-              <div className="masteryBar">
-                <i
-                  className={`masteryFill ${topic.status}`}
-                  style={{ width: `${Math.max(2, Number(topic.mastery_score))}%` }}
-                />
-              </div>
-              <span className="masteryValue">{Math.round(topic.mastery_score)}%</span>
-            </li>
-          ))}
-          {!topics.length && (
-            <li className="emptyState">
-              Upload a study guide so Studigo knows what to measure you against.
-            </li>
-          )}
-        </ul>
+      <section className="masteryDeck" aria-labelledby="mastery-map-title">
+        <div className="mdHead">
+          <div>
+            <span className="tinyLabel" id="mastery-map-title">EVERY TOPIC</span>
+            <b>{topics.length ? `${topics.length} topics on the map` : "No topics yet"}</b>
+          </div>
+          <dl className="mdLegend" aria-label="Tile key">
+            <div><dt><i className="lg-mastered" />Strong</dt></div>
+            <div><dt><i className="lg-learning" />Needs work</dt></div>
+            <div><dt><i className="lg-blind" />Blind spot</dt></div>
+          </dl>
+        </div>
+        {topics.length > 0 ? (
+          <ul className="mdTiles">
+            {topics.map((topic) => {
+              const isNew = !topic.last_practiced_at;
+              const blind = !isNew && (areas.find((a) => a.topic.id === topic.id)?.blindSpots ?? 0) > 0;
+              const state = blind ? "blind" : isNew ? "new" : topic.status === "mastered" ? "mastered" : "learning";
+              const score = Math.round(Number(topic.mastery_score));
+              const label = blind
+                ? `Blind spot · ${score}%`
+                : isNew
+                  ? "Not practiced"
+                  : `${score}% · ${state === "mastered" ? "Strong" : "Needs work"}`;
+              return (
+                <li key={topic.id}>
+                  <button
+                    type="button"
+                    className={`mdTile mdTile-${state}`}
+                    style={{ ["--v" as string]: `${Math.max(4, score)}%` }}
+                    onClick={() => onPractice(topic.id)}
+                    aria-label={`${topic.title}: ${label}. Practice this topic.`}
+                  >
+                    {topic.priority >= 90 && <em className="mdPriority">ON THE TEST</em>}
+                    <b>{topic.title}</b>
+                    <small>{label}</small>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="mdEmpty">Upload a study guide so Studigo knows what to measure you against.</p>
+        )}
       </section>
     </div>
   );
