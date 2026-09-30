@@ -158,7 +158,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   if (readyCount === 0) return <div className="modeEmpty"><StudigoMascot state="welcome" size={72} /><h2>Give Studigo something to coach.</h2><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
-    <CoachDevice>
+    <CoachDevice roomId={roomId}>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       <div className="coachHeader">
         <div><span className="tinyLabel">THE COACHING FLOOR</span><h2>Practice the skill, not just the facts.</h2><p>Studigo keeps the teacher&apos;s content fixed and changes how it helps you practice.</p></div>
@@ -246,21 +246,29 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         </section>
       )}
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
-      <div className="coachThread">
+      <section className="coachChat" aria-label="Coach conversation">
+        <header className="chatHead">
+          <StudigoMascot state={busy ? "thinking" : "welcome"} size={36} mark />
+          <div><strong>Studigo Coach</strong><small>{busy ? "Typing…" : `Teaching from your materials · ${selectedTopic.title}`}</small></div>
+        </header>
+        <div className="chatThread" role="log" aria-live="polite" aria-label="Coach messages">
         {messages.length === 0 ? (
           <div className="coachEmpty"><strong>Ready when you are.</strong><p>Pick a skill above or ask for a diagnostic. Studigo will explain, demonstrate, watch your attempt, and choose what comes next.</p><div className="starterList"><button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button><button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button></div></div>
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{coachMaterialLabel({ content: message.content, grounded: message.grounded, streaming: message.streaming })}</span><p className="answerText">{message.content}{message.streaming && <span className="caret" aria-hidden="true" />}</p>{message.citations && <CitationChips citations={message.citations} />}</div>)}
         <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
-      </div>
-      {messages.length > 0 && <div className="starterList coachControls" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
-      {error && <p className="formError" role="alert">{error}</p>}
-      <StudigoComposer
-        value={prompt}
-        onChange={setPrompt}
-        onSubmit={() => void coach(prompt)}
-        disabled={busy}
-        ariaLabel="Ask Studigo"
-      />
+        </div>
+        {messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
+        {error && <p className="formError chatError" role="alert">{error}</p>}
+        <StudigoComposer
+          variant="chat"
+          placeholder="Message Studigo"
+          value={prompt}
+          onChange={setPrompt}
+          onSubmit={() => void coach(prompt)}
+          disabled={busy}
+          ariaLabel="Ask Studigo"
+        />
+      </section>
     </div>
     </CoachDevice>
   );
