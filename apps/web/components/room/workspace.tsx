@@ -17,7 +17,7 @@ import { rankWeakAreas, summarizeCalibration, buildStudyPlan, type PracticeEvide
 import { RoomSettings } from "./room-settings";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
 import { ModeGlyph, type GlyphName } from "@/components/mode-glyph";
-import { roomShellFor } from "@/lib/room-shell";
+import { useRoomTheme } from "@/lib/room-theme";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
 // Learn blueberry, Ask/Materials teal, Coach/Cram tangerine, Quiz dandelion,
@@ -73,6 +73,7 @@ export function RoomWorkspace({
   );
   const [coachView, setCoachView] = useState<"chat" | "topics">(initialMode === "learn" ? "topics" : "chat");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme] = useRoomTheme(room.id);
   const [focusTopicId, setFocusTopicId] = useState<string | null>(null);
 
   const refresh = () => router.refresh();
@@ -94,14 +95,14 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomDevice" data-shell={roomShellFor(room.id)}>
+    <div className="roomDevice" data-shell={theme} data-tone={theme}>
     <div className="roomWorkspace" data-tone={mode}>
       <header className="workspaceTopbar">
         <Link className="roomBackButton" href="/app" aria-label="All rooms">
           <span aria-hidden="true">‹</span>
         </Link>
         <div className="workspaceTitle roomTitleBlock">
-          <i className="roomGem roomGemLarge" data-tone={roomShellFor(room.id)} aria-hidden="true" />
+          <i className="roomGem roomGemLarge" data-tone={theme} aria-hidden="true" />
           <div>
             <span className="crumb">
               {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||

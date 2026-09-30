@@ -3,10 +3,10 @@ import { RoomWorkspace } from '@/components/room/workspace';
 import type { Topic } from '@/lib/rooms';
 
 // Synthetic visual/Coach fixture for local development only.
-export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string}>}) {
+export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string}>}) {
   if (process.env.NODE_ENV !== 'development') notFound();
-  const {mode='coach',phone}=await searchParams;
-  if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
+  const {mode='coach',phone,bare}=await searchParams;
+  if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
   const topics:Topic[]=[
     {id:'instinct-learned',title:'Instinctive and learned behaviors',mastery_score:42,status:'learning',priority:100,last_practiced_at:'2026-09-08T12:00:00Z'},
@@ -18,10 +18,11 @@ export default async function StudyFixture({searchParams}:{searchParams:Promise<
     {id:'solar-system',title:'Solar system objects and motion',mastery_score:63,status:'learning',priority:60,last_practiced_at:'2026-09-11T12:00:00Z'},
     {id:'forces',title:'Balanced and unbalanced forces',mastery_score:25,status:'learning',priority:55,last_practiced_at:'2026-09-10T12:00:00Z'}
   ].map((t,i)=>({...t,room_id:'fixture',objective:`I can explain and apply ${t.title.toLowerCase()} using evidence from the study guide.`,key_terms:[],order_index:i,origin:'study_guide',learner_edited:false})) as Topic[];
-  return <main style={{maxWidth:1180,margin:'24px auto',padding:'0 16px'}}><p className="hintText">LOCAL VISUAL FIXTURE · Synthetic evidence · Saving and AI require a configured project</p>
-    <RoomWorkspace initialMode={mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:'2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
+  const workspace=<RoomWorkspace initialMode={mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:'2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
       topics={topics} documents={[{id:'source',room_id:'fixture',name:'2022–2023 Fifth Grade Science study guide.pdf',mime_type:'application/pdf',size_bytes:1000,source_type:'study_guide',status:'ready',error_message:null,page_count:12,page_label:'Page',ocr_page_count:0,chunk_count:24,created_at:new Date(now).toISOString()}]}
       readiness={{readiness:49,averageMastery:66,topicCount:4,practicedTopicCount:3,masteredCount:1,questionsAnswered:12,correctAnswers:8,cardsDue:6}}
-      evidence={[0,0,100].map((score,i)=>({topic_id:'tornado',source:'quiz' as const,score,is_correct:score===100,created_at:`2026-09-08T12:0${i}:00Z`}))} planEvents={[]} asOf={now}/>
-  </main>;
+      evidence={[0,0,100].map((score,i)=>({topic_id:'tornado',source:'quiz' as const,score,is_correct:score===100,created_at:`2026-09-08T12:0${i}:00Z`}))} planEvents={[]} asOf={now}/>;
+  // ?bare=1 mounts the room inside the same shell as the signed-in app (no fixture chrome), for phone checks.
+  if(bare) return <div className="appShell"><div className="appMain">{workspace}</div></div>;
+  return <main style={{maxWidth:1180,margin:'24px auto',padding:'0 16px'}}><p className="hintText">LOCAL VISUAL FIXTURE · Synthetic evidence · Saving and AI require a configured project</p>{workspace}</main>;
 }

@@ -12,6 +12,7 @@ import { LearnPanel } from "./learn-panel";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
 import { PageHead } from "./page-head";
+import { useFitViewport } from "./use-fit-viewport";
 
 type CoachingStyle = {
   id: string;
@@ -86,6 +87,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
   const [error, setError] = useState<string | null>(null);
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  useFitViewport(view === "chat");
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
@@ -220,7 +222,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
         <header className="chatHead">
           {chatMode === "coach" ? (
-            <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
+            <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
               <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
               <span className="chatMascotDot" aria-hidden="true" />
             </button>
@@ -237,7 +239,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
           </div>
           <div className="chatTopicRow">
             {topics.length > 1 ? (
-              <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
+              <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
                 <span className="chatTopicName">{selectedTopic.title}</span><span aria-hidden="true">▾</span>
               </button>
             ) : (

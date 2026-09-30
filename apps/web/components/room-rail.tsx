@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { roomShellFor } from "@/lib/room-shell";
+import { RoomGem } from "./room-gem";
 
 export function RoomRail({ rooms }: { rooms: Array<{ id: string; title: string }> }) {
   const pathname = usePathname();
@@ -37,7 +37,7 @@ export function RoomRail({ rooms }: { rooms: Array<{ id: string; title: string }
               href={`/app/rooms/${room.id}`}
               aria-current={selected ? "page" : undefined}
             >
-              <i className="roomGem" data-tone={roomShellFor(room.id)} aria-hidden="true" />
+              <RoomGem roomId={room.id} />
               <span className="roomLinkTitle">{room.title}</span>
             </Link>
           );
