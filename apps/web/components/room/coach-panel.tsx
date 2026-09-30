@@ -8,6 +8,9 @@ import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel, coachMaterialState } from "@/lib/coach-material-state";
 import { StudigoComposer } from "./studigo-composer";
 import { CoachDevice } from "./coach-device";
+import { LearnPanel } from "./learn-panel";
+import { RichText } from "./rich-text";
+import type { Topic } from "@/lib/rooms";
 import { PageHead } from "./page-head";
 
 type CoachingStyle = {
@@ -44,11 +47,27 @@ const PRACTICE_PROTOCOLS: PracticeProtocol[] = [
 
 type Message = { id: string; role: "user" | "assistant"; content: string; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
 
-export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { roomId: string; readyCount: number; topics: Array<{ title: string; objective: string | null }>; onOpenMaterials: () => void }) {
+type CoachView = "chat" | "topics";
+type ReplyMode = "coach" | "ask";
+type SkillTopic = { title: string; objective: string | null };
+const GENERAL_TOPIC: SkillTopic = { title: "This unit", objective: "Start with a quick diagnostic on the most important skill." };
+
+export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged }: {
+  roomId: string;
+  readyCount: number;
+  topics: Topic[];
+  onOpenMaterials: () => void;
+  view: CoachView;
+  onViewChange: (view: CoachView) => void;
+  focusTopicId: string | null;
+  onClearFocus: () => void;
+  onTopicsChanged: () => void;
+}) {
   const [style, setStyle] = useState(STYLES[0]);
   const [tradition, setTradition] = useState(TRADITIONS[0]);
   const [practice, setPractice] = useState(PRACTICE_PROTOCOLS[0]);
-  const [selectedTopic, setSelectedTopic] = useState(topics[0]);
+  const [selectedTopic, setSelectedTopic] = useState<SkillTopic>(topics[0] ?? GENERAL_TOPIC);
+  const [replyMode, setReplyMode] = useState<ReplyMode>("coach");
   const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,6 +76,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
+  const askConversationId = useRef<string | null>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,7 +126,8 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     };
   }, [modalOpen]);
 
-  async function coach(input: string) {
+  async function coach(input: string, modeOverride?: ReplyMode) {
+    const replying = modeOverride ?? replyMode;
     const text = input.trim();
     if (!text || busy) return;
     setPrompt(""); setError(null); setBusy(true);
@@ -136,7 +157,9 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
       const body = isFixture
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
-        : JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), interactionId, conversationId: conversationId.current });
+        : replying === "coach"
+          ? JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), interactionId, conversationId: conversationId.current })
+          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -146,7 +169,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         for (const frame of frames) {
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
           const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
-          if (event.type === "start") conversationId.current = event.conversationId ?? null;
+          if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
           if (event.type === "delta" && event.text) setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message));
           if (event.type === "done") setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message));
           if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
@@ -156,12 +179,30 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
     finally { setBusy(false); }
   }
 
+  function coachTopic(topic: Topic) {
+    setSelectedTopic(topic);
+    setReplyMode("coach");
+    onViewChange("chat");
+    void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach");
+  }
+
   if (readyCount === 0) return <div className="modeEmpty"><PageHead title="Coach" sub="Nothing to coach from yet." /><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
     <CoachDevice roomId={roomId}>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       <PageHead title="Coach" sub="Guided practice on your teacher's material." state={busy ? "thinking" : "welcome"} />
+      <div className="coachTabs" role="group" aria-label="Coach sections">
+        <button type="button" aria-pressed={view === "chat"} onClick={() => onViewChange("chat")}>Chat</button>
+        <button type="button" aria-pressed={view === "topics"} onClick={() => onViewChange("topics")}>Topics{topics.length > 0 && <span className="coachTabCount">{topics.length}</span>}</button>
+      </div>
+      {view === "topics" ? (
+        <div className="coachTopicsView">
+          {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}
+          <LearnPanel embedded roomId={roomId} topics={focusTopicId ? topics.filter((topic) => topic.id === focusTopicId) : topics} hasMaterials onChanged={onTopicsChanged} onCoachTopic={coachTopic} />
+        </div>
+      ) : (
+      <>
       <button
         className="coachSetupButton"
         type="button"
@@ -248,11 +289,15 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
         <header className="chatHead">
           <StudigoMascot state={busy ? "thinking" : "welcome"} size={40} mark />
           <div><strong>Studigo Coach</strong><small>{busy ? "Typing…" : selectedTopic.title}</small></div>
+          <div className="chatMode" role="group" aria-label="How Studigo replies">
+            <button type="button" aria-pressed={replyMode === "coach"} onClick={() => setReplyMode("coach")}>Coach me</button>
+            <button type="button" aria-pressed={replyMode === "ask"} onClick={() => setReplyMode("ask")}>Just answer</button>
+          </div>
         </header>
         <div className="chatThread" role="log" aria-live="polite" aria-label="Coach messages">
         {messages.length === 0 ? (
-          <div className="coachEmpty"><strong>Ready when you are.</strong><p>Pick a skill above or ask for a diagnostic. Studigo will explain, demonstrate, watch your attempt, and choose what comes next.</p><div className="starterList"><button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button><button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button></div></div>
-        ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{coachMaterialLabel({ content: message.content, grounded: message.grounded, streaming: message.streaming })}</span><p className="answerText">{message.content}{message.streaming && <span className="caret" aria-hidden="true" />}</p>{message.citations && <CitationChips citations={message.citations} />}</div>)}
+          <div className="coachEmpty"><strong>Ready when you are.</strong><p>Pick a skill above or ask for a diagnostic. Studigo will explain, demonstrate, watch your attempt, and choose what comes next.</p><div className="starterList"><button type="button" onClick={() => void coach("Give me a quick diagnostic for the most important skill in this unit.")}>Start with a diagnostic</button><button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button><button type="button" onClick={() => void coach("What am I most likely to be tested on?", "ask")}>What will be on the test?</button><button type="button" onClick={() => void coach("What does the study guide say I need to know?", "ask")}>What does my guide cover?</button></div></div>
+        ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{coachMaterialLabel({ content: message.content, grounded: message.grounded, streaming: message.streaming })}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
         <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
         </div>
         {messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
@@ -267,6 +312,8 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials }: { ro
           ariaLabel="Ask Studigo"
         />
       </section>
+      </>
+      )}
     </div>
     </CoachDevice>
   );
