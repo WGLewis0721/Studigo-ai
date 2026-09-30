@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { PageHead } from "./page-head";
 
 const BLANK_MARKER = "____";
 
@@ -157,9 +158,8 @@ export function QuizPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
-        <StudigoMascot state="sources" size={80} />
-        <h2>Quiz mode needs material to quiz you on.</h2>
-        <p>Add and process a document, then Studigo writes questions only from what's in it.</p>
+        <PageHead title="Quiz" sub="Nothing to quiz on yet." state="sources" />
+        <p>Add and process a document, then Studigo writes questions only from what&apos;s in it.</p>
       </div>
     );
   }
@@ -196,13 +196,7 @@ export function QuizPanel({
           </div>
         )}
 
-        <span className="tinyLabel">PRACTICE WHAT'S TESTABLE</span>
-        <h2>{finished ? "Go again?" : "Build a practice set."}</h2>
-        <p>
-          Five questions written from this room's materials — multiple choice, true/false, fill in
-          the blank, and short answer. Leave the topic on “Where I'm weakest” and Studigo picks the
-          one you need most.
-        </p>
+        <PageHead title="Quiz" sub={finished ? "Go again with a new set." : "Five questions from your materials."} />
 
         <label className="field">
           <span>Topic</span>

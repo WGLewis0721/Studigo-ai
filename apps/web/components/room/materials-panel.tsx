@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import type { StudyDocument } from "@/lib/rooms";
+import { PageHead } from "./page-head";
 
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
@@ -150,12 +151,7 @@ export function MaterialsPanel({
   return (
     <div className="materialsPanel">
       <div className="materialsIntro">
-        <span className="tinyLabel">01 / FEED THE ROOM</span>
-        <h2>Start with the study guide.</h2>
-        <p>
-          Tell Studigo what each file is. Teacher study guides set the scope of the test; everything
-          else becomes supporting evidence.
-        </p>
+        <PageHead title="Materials" sub="Tell Studigo what each file is." state="sources" />
       </div>
 
       <div className="sourceTypePicker" role="radiogroup" aria-label="What kind of file is this?">

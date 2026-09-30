@@ -4,6 +4,7 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoComposer } from "./studigo-composer";
+import { PageHead } from "./page-head";
 
 type ChatMessage = {
   id: string;
@@ -139,12 +140,8 @@ export function AskPanel({
   if (readyCount === 0) {
     return (
       <div className="modeEmpty">
-        <StudigoMascot state="sources" size={80} />
-        <h2>Studigo has nothing to answer from yet.</h2>
-        <p>
-          Ask mode only answers from this room's own materials — that's the point. Add the study
-          guide, your notes, or the textbook pages first.
-        </p>
+        <PageHead title="Ask" sub="Nothing to answer from yet." state="sources" />
+        <p>Ask only answers from this room&apos;s own materials. Add the study guide, your notes, or the textbook pages first.</p>
         <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>
           Add materials <span aria-hidden="true">→</span>
         </button>
@@ -157,12 +154,7 @@ export function AskPanel({
       <div className="askThread" ref={scrollRef}>
         {messages.length === 0 && (
           <div className="askIntro">
-            <StudigoMascot state="welcome" size={88} />
-            <h2>Ask anything in this room.</h2>
-            <p>
-              Every answer comes from the {readyCount} processed{" "}
-              {readyCount === 1 ? "source" : "sources"} here, and shows you where it came from.
-            </p>
+            <PageHead title="Ask" sub={`Answers come only from your ${readyCount} ${readyCount === 1 ? "source" : "sources"}.`} />
             <div className="starterList">
               {STARTERS.map((starter) => (
                 <button key={starter} type="button" onClick={() => void ask(starter)}>

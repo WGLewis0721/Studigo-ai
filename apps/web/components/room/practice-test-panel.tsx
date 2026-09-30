@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CitationChips, type Citation } from './citations';
 import { StudigoMascot } from '@/components/studigo-mascot';
+import { PageHead } from './page-head';
 type Answer={selectedChoice:number|null;response:string};
 type Question={id:string;kind:'multiple_choice'|'short_answer';prompt:string;choices:string[];topic_id:string};
 type Review=Question&{score:number;is_correct:boolean;feedback:string;explanation:string;expected_answer:string|null;correct_choice:number|null;citations:Citation[];response:string|null;selected_choice:number|null};
@@ -47,7 +48,7 @@ export function PracticeTestPanel({roomId,topicCount,onGraded,onReviewTopic}:{ro
   const answered=(q:Question)=>q.kind==='multiple_choice'?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
   const completed=questions.filter(answered).length;const current=questions[index];
   if(active?.result) return <section className="testResults">
-    <header className="studySectionHeading"><div><span className="tinyLabel">PRACTICE TEST / COMPLETE</span><h2>{active.result.score>=80?'A strong rehearsal.':'Now you know where to focus.'}</h2><p>These graded answers have updated your topic mastery. Review the explanation and original source for each miss.</p></div><StudigoMascot state={active.result.score>=80?'celebrate':'explain'} size={88}/></header>
+    <PageHead title="Practice test" sub={active.result.score>=80?'A strong rehearsal. Review each miss below.':'Now you know where to focus.'} state={active.result.score>=80?'celebrate':'explain'}/>
     <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
     <div className="testTopicResults">{active.result.topics.map(t=><div key={t.topic_id}><strong>{t.title}</strong><span>{t.score}% · {t.misses} missed / {t.questions}</span><button onClick={()=>onReviewTopic(t.topic_id)}>{t.misses?'Review concept':'Keep practicing'} →</button></div>)}</div>
     <h3>Every answer, with its evidence.</h3>
@@ -66,7 +67,7 @@ export function PracticeTestPanel({roomId,topicCount,onGraded,onReviewTopic}:{ro
     <button className="buttonQuiet" disabled={busy} onClick={()=>setConfirmSubmit(true)}>Review and submit entire test</button>
     {confirmSubmit&&<div className="testSubmitReview" role="region" aria-label="Submit full test"><h3>Ready to submit?</h3><p>{questions.length-completed?`${questions.length-completed} unanswered questions will count as zero.`:'Every question has an answer.'} Submission is final for this test.</p><button disabled={busy} onClick={()=>setConfirmSubmit(false)}>Keep working</button><button className="buttonPrimary" disabled={busy} onClick={()=>void submit()}>{busy?'Grading the full test…':'Submit all answers'}</button></div>}
   </section>;
-  return <section className="practiceTestSetup"><header className="studySectionHeading"><div><span className="tinyLabel">REHEARSE THE REAL THING</span><h2>A whole test. One honest result.</h2><p>Multiple topics, weighted toward teacher priorities. A mix of multiple-choice and written answers. Feedback waits until you submit.</p></div></header>
+  return <section className="practiceTestSetup"><PageHead title="Practice test" sub="A full test, graded when you submit."/>
     <label className="field"><span>Questions</span><select value={count} onChange={e=>setCount(Number(e.target.value))} disabled={busy}>{[6,10,15,20].map(n=><option key={n} value={n}>{n} questions</option>)}</select></label>
     <p className="hintText">Covers up to {Math.min(count,topicCount)} of {topicCount} current topics. Choose more questions to cover a larger scope.</p>
     <button className="buttonPrimary" disabled={busy||topicCount<2} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>

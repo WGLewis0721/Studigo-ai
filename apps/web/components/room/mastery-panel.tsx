@@ -2,6 +2,7 @@
 
 import type { Calibration, WeakArea } from "@/lib/study-planning";
 import type { RoomReadiness, Topic } from "@/lib/rooms";
+import { PageHead } from "./page-head";
 
 function ReadinessRing({ value, practiced }: { value: number; practiced: boolean }) {
   return (
@@ -57,23 +58,17 @@ export function MasteryPanel({
   return (
     <div className="masteryMode">
       <div className="masteryHero">
-        <div>
-          <span className="tinyLabel">TEST READINESS</span>
-          <h2>
-            {!topics.length
+        <PageHead
+          title="Mastery"
+          state="explain"
+          sub={
+            !topics.length
               ? "Build a topic map first."
               : !practiced
-                ? "Nothing measured yet."
-                : readiness.readiness >= 80
-                  ? "You're in good shape."
-                  : "Here is what holds readiness back."}
-          </h2>
-          <p>
-            {!practiced
-              ? "Readiness comes from saved quiz answers and flashcard recall — it stays blank until you practice a topic."
-              : `Across ${readiness.topicCount} topics, weighted so unpracticed topics count as zero. ${readiness.correctAnswers} of ${readiness.questionsAnswered} saved practice responses successful.`}
-          </p>
-        </div>
+                ? "Practice a topic to start measuring."
+                : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`
+          }
+        />
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
       </div>
 
