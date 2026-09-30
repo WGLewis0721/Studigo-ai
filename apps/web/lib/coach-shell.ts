@@ -1,8 +1,8 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 export const COACH_SHELLS = [
-  { id: "tangerine", name: "Tangerine" },
   { id: "blueberry", name: "Blueberry" },
+  { id: "tangerine", name: "Tangerine" },
   { id: "grape", name: "Grape" },
   { id: "berry", name: "Berry" },
   { id: "kiwi", name: "Kiwi" },
@@ -13,7 +13,7 @@ export const COACH_SHELLS = [
 
 export type CoachShell = (typeof COACH_SHELLS)[number]["id"];
 
-const DEFAULT_SHELL: CoachShell = "tangerine";
+const DEFAULT_SHELL: CoachShell = "blueberry";
 const listeners = new Set<() => void>();
 
 const storageKey = (roomId: string) => `studigo.coachShell.${roomId}`;
