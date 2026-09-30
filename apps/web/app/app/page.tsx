@@ -1,9 +1,8 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { listRooms } from "@/lib/rooms";
 import { CreateRoomForm } from "@/components/create-room-form";
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { ROOM_SHELL_NAMES, roomShellFor } from "@/lib/room-shell";
+import { RoomCardLink } from "@/components/room-card-link";
 
 export const metadata: Metadata = { title: "Study rooms · Studigo" };
 export const dynamic = "force-dynamic";
@@ -55,10 +54,8 @@ export default async function RoomsPage() {
 
           {rooms.map((room) => {
             const testLabel = formatTestDate(room.test_date);
-            const shell = roomShellFor(room.id);
             return (
-              <Link className="roomCard" key={room.id} href={`/app/rooms/${room.id}`} data-tone={shell}>
-                <span className="roomCardShell" aria-hidden="true">{ROOM_SHELL_NAMES[shell].toUpperCase()}</span>
+              <RoomCardLink key={room.id} roomId={room.id} href={`/app/rooms/${room.id}`}>
                 <span className="roomCardMeta">
                   {[room.subject, room.course_name].filter(Boolean).join(" · ") || "STUDY ROOM"}
                 </span>
@@ -69,7 +66,7 @@ export default async function RoomsPage() {
                   </span>
                   {testLabel && <b>{testLabel}</b>}
                 </div>
-              </Link>
+              </RoomCardLink>
             );
           })}
         </section>

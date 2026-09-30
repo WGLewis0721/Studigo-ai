@@ -1,15 +1,16 @@
 "use client";
 
 import { useRef, type KeyboardEvent, type ReactNode } from "react";
-import { COACH_SHELLS, useCoachShell } from "@/lib/coach-shell";
+import { ROOM_THEMES, useRoomTheme } from "@/lib/room-theme";
 
 /**
- * The Coach lives inside a personal device, like the homepage hero. The shell
- * color is chosen in Room Settings. The screen keeps the Coach tone so buttons
- * and states inside do not change meaning when the shell does.
+ * The Coach lives inside a personal device, like the homepage hero. On wide
+ * screens the device wears the room color chosen in Room Settings; on phones
+ * the device is flat and the room color shows in the chat itself. The screen
+ * keeps the Coach tone so buttons and states do not change meaning.
  */
 export function CoachDevice({ roomId, children }: { roomId: string; children: ReactNode }) {
-  const [shell] = useCoachShell(roomId);
+  const [shell] = useRoomTheme(roomId);
   return (
     <div className="coachDevice" data-tone={shell}>
       <span className="cdHandle" aria-hidden="true" />
@@ -27,8 +28,8 @@ export function CoachDevice({ roomId, children }: { roomId: string; children: Re
   );
 }
 
-export function CoachShellPicker({ roomId }: { roomId: string }) {
-  const [shell, setShell] = useCoachShell(roomId);
+export function RoomColorPicker({ roomId }: { roomId: string }) {
+  const [shell, setShell] = useRoomTheme(roomId);
   const swatchRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function onKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -36,17 +37,17 @@ export function CoachShellPicker({ roomId }: { roomId: string }) {
       event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
     if (!step) return;
     event.preventDefault();
-    const index = COACH_SHELLS.findIndex((item) => item.id === shell);
-    const next = (index + step + COACH_SHELLS.length) % COACH_SHELLS.length;
-    setShell(COACH_SHELLS[next].id);
+    const index = ROOM_THEMES.findIndex((item) => item.id === shell);
+    const next = (index + step + ROOM_THEMES.length) % ROOM_THEMES.length;
+    setShell(ROOM_THEMES[next].id);
     swatchRefs.current[next]?.focus();
   }
 
   return (
     <div className="cdPicker">
-      <span className="cdPickerLabel" id="coach-shell-label">Coach color</span>
+      <span className="cdPickerLabel" id="coach-shell-label">Room color</span>
       <div className="cdSwatches" role="radiogroup" aria-labelledby="coach-shell-label" onKeyDown={onKey}>
-        {COACH_SHELLS.map((item, index) => (
+        {ROOM_THEMES.map((item, index) => (
           <button
             key={item.id}
             ref={(node) => {
@@ -66,7 +67,7 @@ export function CoachShellPicker({ roomId }: { roomId: string }) {
           </button>
         ))}
       </div>
-      <small className="cdPickerHint">Colors the Coach device. Saved on this device.</small>
+      <small className="cdPickerHint">Tints the whole room. Applies now, saved on this device.</small>
     </div>
   );
 }

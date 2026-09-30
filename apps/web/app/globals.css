@@ -3162,6 +3162,92 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 /* ---------------------------------------------------------------------------
+   Room color. One choice in Room Settings tints the whole room: the canvas,
+   the bars, the navigation, the Coach chat. Study modes keep their own colors
+   for what they mean; this is the room's color, the way a device has one.
+   --------------------------------------------------------------------------- */
+.roomDevice[data-tone] {
+  --shell: var(--tone);
+  --th: var(--tone); --th-ink: var(--tone-ink); --th-on: var(--tone-on); --th-key: var(--tone-key);
+  --th-wash: color-mix(in oklab, var(--tone) 11%, var(--snow));
+  --th-bar: color-mix(in oklab, var(--tone) 20%, white);
+  --th-pane: color-mix(in oklab, var(--tone) 8%, white);
+  --th-line: color-mix(in oklab, var(--tone) 34%, white);
+}
+.roomDevice > .roomWorkspace { background: var(--th-wash); transition: background-color .35s ease; }
+.roomDevice .workspaceTopbar {
+  background: color-mix(in oklab, var(--th-bar) 90%, transparent);
+  border-bottom-color: var(--th-line);
+  transition: background-color .35s ease;
+}
+.roomDevice .studyNavigation { background: transparent; }
+.roomDevice .coachChat { background: var(--th-pane); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .chatHead { background: color-mix(in oklab, var(--th-bar) 94%, transparent); box-shadow: 0 1px 0 var(--th-line); }
+.roomDevice .chatComposer { background: var(--th-bar); }
+.roomDevice .chatComposer input { border-color: var(--th-line); }
+.roomDevice .coachChat .answerBubble { background: var(--white); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .coachChat .answerBubble[data-state="insufficient"] { background: #fdeede; }
+.roomDevice .chatChips button { background: var(--white); color: var(--th-ink); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .coachTabs { background: var(--th-bar); }
+.roomDevice .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: inset 0 0 0 1px var(--th-line); }
+
+@media (max-width: 700px) {
+  .roomDevice .studyGroups {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--th-bar) 70%, white), var(--th-bar));
+    outline-color: var(--th-line);
+  }
+  .roomDevice .studyGroups button[aria-current] {
+    color: var(--th-on); background: var(--th-key);
+    box-shadow: 0 3px 10px color-mix(in oklab, var(--th) 45%, transparent);
+  }
+  .roomDevice .studyGroups button[aria-current] .studyGroupIcon { color: var(--th-on); }
+}
+
+/* ---------------------------------------------------------------------------
+   Coach chat on a phone: the screen is exactly what the phone shows. Header,
+   tabs, message field and navigation hold still; only the messages scroll.
+   --vvh / --vvt come from use-fit-viewport (the visual viewport), so the field
+   stays above the keyboard instead of the page scrolling under it.
+   --------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .roomDevice:has(.coachChat) {
+    position: fixed; left: 0; right: 0; top: var(--vvt, 0px);
+    height: var(--vvh, 100dvh); min-height: 0; overflow: hidden; overscroll-behavior: none;
+  }
+  .roomDevice:has(.coachChat) > .roomWorkspace { height: 100%; min-height: 0; }
+  .roomDevice:has(.coachChat) .studyNavigation { flex: none; height: 0; min-height: 0; padding: 0; margin: 0; border: 0; overflow: visible; }
+  .roomDevice:has(.coachChat) .coachMaterial { display: none; }
+  .roomDevice:has(.coachChat) .modeSurface {
+    flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+    padding: 0 0 calc(var(--m-tabbar, 70px) + 14px + var(--m-safe-bottom, 0px));
+  }
+  .roomDevice:has(.coachChat) .modeSurface > .coachDevice,
+  .roomDevice:has(.coachChat) .cdShell,
+  .roomDevice:has(.coachChat) .cdScreen,
+  .roomDevice:has(.coachChat) .coachMode {
+    flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; padding: 0; margin: 0;
+  }
+  .roomDevice:has(.coachChat) .coachMode { gap: 0; padding-bottom: 0; }
+  .roomDevice:has(.coachChat) .coachMode > .pageHead { display: none; }
+  .roomDevice:has(.coachChat) .coachTabs { flex: none; margin: 8px 12px; }
+  .roomDevice:has(.coachChat) .coachChat {
+    flex: 1 1 0; height: auto; min-height: 0; margin-inline: 0; border-radius: 0;
+  }
+  .roomDevice:has(.coachChat) .chatThread {
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scroll-padding-bottom: 12px;
+  }
+  .roomDevice:has(.coachChat) .chatHead,
+  .roomDevice:has(.coachChat) .chatComposer,
+  .roomDevice:has(.coachChat) .chatChips { flex: none; }
+  /* With the keyboard up the tab bar steps aside and the field rests on the keys. */
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .studyGroups { display: none; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .modeSurface { padding-bottom: 0; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs { display: none; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes small { display: none; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 40px; }
+}
+
+/* ---------------------------------------------------------------------------
    Reduced motion: state changes stay, movement goes.
    --------------------------------------------------------------------------- */
 
