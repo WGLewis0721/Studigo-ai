@@ -1565,17 +1565,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .chatError { margin: 0 12px 6px; }
 .chatComposer { position: relative; display: block; padding: 8px 12px 10px; background: var(--white); }
 .chatRow { position: relative; }
-.chatComposer:has(.chatAsk) input { padding-left: 50px; }
-.chatAsk {
-  position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 1; width: 28px; height: 28px; display: grid; place-items: center; padding: 0;
-  border: 0; border-radius: 50%; cursor: pointer; font: inherit; font-size: .95rem; font-weight: 800;
-  color: var(--ink-2); background: color-mix(in oklab, var(--ink) 8%, var(--white));
-}
-.chatAsk:disabled { opacity: .4; cursor: default; }
-.chatAsk[aria-pressed="true"] { color: var(--ink); background-color: var(--teal); }
-.chatAskHint { display: block; margin: 0 4px 6px; font-size: .74rem; font-weight: 700; color: var(--teal-ink); }
-.chatComposer[data-asking="true"] { --chat-key: var(--teal); --chat-on: var(--ink); }
-.chatComposer[data-asking="true"] input { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in oklab, var(--teal) 22%, transparent); }
+.chatComposer[data-accent="learn"] { --chat-key: var(--teal); --chat-on: var(--ink); }
+.chatComposer[data-accent="learn"] input { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in oklab, var(--teal) 22%, transparent); }
 .chatComposer input {
   width: 100%; min-height: 38px; padding: 0 46px 0 16px; border: 1px solid rgba(20, 27, 45, .2); border-radius: 20px; outline: 0;
   background: var(--white); color: var(--ink); font: inherit; font-size: 1rem; box-sizing: border-box;
@@ -1624,18 +1615,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 /* Coach absorbs Ask and Learn: quiet controls, readable model text. */
-.coachTabs, .chatMode {
+.coachTabs {
   display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; width: fit-content;
   background: color-mix(in oklab, var(--ink) 6%, var(--white));
 }
-.coachTabs button, .chatMode button {
+.coachTabs button {
   display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
   background: none; color: var(--ink-2); font: inherit; font-size: .88rem; font-weight: 700;
 }
-.coachTabs button[aria-pressed="true"], .chatMode button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .14); }
+.coachTabs button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .14); }
 .coachTabCount { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
-.chatMode { margin-top: 6px; }
-.chatMode button { min-height: 26px; padding: 0 11px; font-size: .74rem; }
 .coachTopicsView { display: grid; gap: 14px; }
 .coachShowAll { justify-self: start; }
 .topicsLead { margin: 0; }
@@ -1666,6 +1655,52 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .coachMode .coachSetupButton small { display: block; margin-top: 1px; color: var(--muted); font-size: .8rem; }
   .coachSettings:not(.mobileOpen) { display: none; }
 }
+
+/* Coach pane header: a clear Coach / Learn switch, with the coaching focus tucked underneath. */
+.coachChat .chatHead {
+  display: flex; flex-wrap: wrap; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px 10px;
+  padding: 10px 12px; text-align: left;
+}
+.chatModes {
+  flex: 1 1 0; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 16px;
+  background: color-mix(in oklab, var(--ink) 6%, var(--white));
+}
+.chatModes button {
+  display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 6px 6px 7px; border: 0; border-radius: 13px; cursor: pointer;
+  background: none; color: var(--ink-2); font: inherit; text-align: center;
+}
+.chatModes strong { font-family: var(--display); font-size: .95rem; font-weight: 800; letter-spacing: -.01em; }
+.chatModes small { max-width: 100%; font-size: .66rem; line-height: 1.2; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chatModes button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .14), inset 0 0 0 1.5px var(--tone); }
+.chatModes button[aria-pressed="true"] strong { color: var(--tone-ink); }
+.chatFocus { flex: 1 1 100%; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.chatFocus::-webkit-scrollbar { display: none; }
+.chatFocus button {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px;
+  cursor: pointer; font: inherit; font-size: .8rem; font-weight: 700; white-space: nowrap;
+}
+.chatSkill { max-width: 52%; color: var(--tone-ink); background: var(--tone-soft); }
+.chatSkill:disabled { opacity: .55; cursor: default; }
+.chatSkillName { overflow: hidden; text-overflow: ellipsis; }
+.chatChip { color: var(--ink-2); background: color-mix(in oklab, var(--ink) 6%, var(--white)); }
+.coachChat[data-chat-mode="learn"] { --tone: var(--teal); }
+@media (min-width: 701px) {
+  .coachChat .coachSettings { max-height: 46%; overflow-y: auto; margin: 0; border-radius: 0; box-shadow: 0 1px 0 var(--hairline-strong); }
+  .coachChat .coachSkillSheet { display: grid; gap: 10px; max-height: 46%; overflow-y: auto; padding: 12px 14px; background: var(--white); box-shadow: 0 1px 0 var(--hairline-strong); }
+  .coachChat .coachSkillSheet .coachSettingsSheetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .coachChat .coachSkillSheet .coachSettingsSheetHead button { min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 700; background: color-mix(in oklab, var(--ink) 6%, var(--white)); }
+  .coachSkillList { display: grid; gap: 6px; }
+  .coachSkillList > button {
+    display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 9px 12px; border: 0; border-radius: 14px;
+    cursor: pointer; text-align: left; font: inherit; color: var(--ink); background: color-mix(in oklab, var(--ink) 4%, var(--white));
+  }
+  .coachSkillList > button.active { background: var(--tone-soft); box-shadow: inset 0 0 0 1.5px var(--tone); }
+  .coachSkillList strong { display: block; font-size: .92rem; }
+  .coachSkillList small { display: block; color: var(--muted); font-size: .78rem; line-height: 1.35; }
+  .coachSkillIndex { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+}
+.answerBubble[data-mode="learn"] .answerKicker { color: var(--teal-ink); }
+.answerBubble[data-mode="coach"] .answerKicker { color: var(--tangerine-ink); }
 
 /* ---------------------------------------------------------------------------
    Responsive
