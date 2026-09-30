@@ -1455,6 +1455,66 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .roomDevice { border-radius: 0; }
 }
 
+/* Coach device: the homepage hero device, around the Coach. */
+.coachDeviceWrap { display: grid; gap: 22px; max-width: 1040px; }
+.coachDevice { position: relative; padding-top: 34px; }
+.cdHandle {
+  position: absolute; z-index: 0; top: 0; left: 50%; width: 30%; height: 78px; transform: translateX(-50%);
+  border: 12px solid color-mix(in oklab, var(--tone) 62%, white); border-bottom: 0; border-radius: 70px 70px 0 0;
+  opacity: .9; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .6), 0 -2px 0 rgba(255, 255, 255, .5);
+}
+.cdShell {
+  position: relative; z-index: 1; padding: 14px 14px 0; border-radius: 42px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .6) 0%, rgba(255, 255, 255, .14) 34%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(160deg, color-mix(in oklab, var(--tone) 55%, white), var(--tone) 52%, color-mix(in oklab, var(--tone) 82%, black));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 0 0 1px rgba(255, 255, 255, .35),
+    inset 0 -30px 50px -20px color-mix(in oklab, var(--tone) 60%, black),
+    0 50px 90px -50px color-mix(in oklab, var(--tone) 85%, black), 0 24px 40px -24px rgba(20, 27, 45, .4);
+  transition: background .3s ease;
+}
+.cdScreen {
+  position: relative; padding: clamp(16px, 2.4vw, 28px); border-radius: 30px; background: var(--white);
+  box-shadow: inset 0 0 0 1px rgba(20, 27, 45, .08), 0 0 0 3px rgba(255, 255, 255, .35), 0 2px 10px rgba(0, 0, 0, .12);
+}
+.cdScreen .coachMode { max-width: none; }
+.cdChin { height: 54px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+.cdBrand { font-family: var(--display); font-weight: 800; font-size: 1rem; letter-spacing: -.02em; color: color-mix(in oklab, var(--tone) 45%, black); text-shadow: 0 1px 0 rgba(255, 255, 255, .45); }
+.cdLed { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px #fff, 0 0 0 2px rgba(255, 255, 255, .4); }
+.cdGrille { width: 38px; height: 8px; background: radial-gradient(circle, color-mix(in oklab, var(--tone) 50%, black) 1.4px, transparent 1.6px) 0 0 / 6px 8px; opacity: .7; }
+.cdPicker { display: grid; justify-items: center; gap: 10px; }
+.cdPickerLabel { font-size: .84rem; font-weight: 600; color: var(--muted); }
+.cdSwatches {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 6px; border-radius: 26px;
+  background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+}
+.cdSwatch {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 13px 5px 6px;
+  border: 0; border-radius: 999px; background: none; cursor: pointer; font: inherit; font-size: .84rem; font-weight: 700; color: var(--ink-2);
+  transition: background .2s ease, box-shadow .2s ease;
+}
+.cdSwatch i {
+  width: 28px; height: 28px; border-radius: 50%; background-color: var(--tone); background-image: var(--gloss);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 3px rgba(0, 0, 0, .15), 0 2px 6px -1px var(--tone-glow);
+  transition: transform .25s var(--ease-spring);
+}
+.cdSwatch:hover i { transform: scale(1.08); }
+.cdSwatch[aria-checked="true"] { color: var(--ink); background: var(--tone-soft); box-shadow: inset 0 0 0 1.5px var(--tone); }
+.cdSwatch[aria-checked="true"] i { transform: scale(1.06); }
+@media (max-width: 700px) {
+  .coachDevice { padding-top: 26px; }
+  .cdHandle { height: 58px; border-width: 9px; }
+  .cdShell { padding: 8px 8px 0; border-radius: 30px; }
+  .cdScreen { padding: 12px; border-radius: 24px; }
+  .cdChin { height: 40px; }
+  .cdSwatch { padding-right: 6px; }
+  .cdSwatch:not([aria-checked="true"]) span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .cdSwatch[aria-checked="true"] { padding-right: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .cdShell, .cdSwatch, .cdSwatch i { transition: none; } }
+
+
 /* ---------------------------------------------------------------------------
    Responsive
    --------------------------------------------------------------------------- */
