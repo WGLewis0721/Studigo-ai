@@ -129,3 +129,24 @@ test('fx atlas has every frame the game asks for', () => {
     ...['t', 'm', 'b', 's'].flatMap(r => ['l', 'c', 'r', 's'].map(c => `block_${r}${c}`))].map(n => `${n}.png`);
   for (const n of want) assert.ok(have.has(n), n);
 });
+
+import {ART} from '../../dist/poc-xi/art/art.js';
+
+test('world atlas has the door, seal, rune, portal and ammo art the game asks for', () => {
+  const atlas = JSON.parse(readFileSync(new URL('../../dist/poc-xi/art/world.json', import.meta.url), 'utf8'));
+  const have = new Set(atlas.textures[0].frames.map(f => f.filename));
+  const want = ['door_frame', 'door_gate', 'door_lock', 'seal_slab', 'seal_glow', 'rune_altar', 'portal_arch', 'ammo_all',
+    ...[2, 3, 4, 5].flatMap(n => [`ammo_${n}`, `drop_${n}`])].map(n => `${n}.png`);
+  for (const n of want) assert.ok(have.has(n), n);
+});
+
+test('Warden walk cycle: four frames with a clock dial each', () => {
+  const w = ART.clockwardenWalk;
+  assert.equal(w.frames, 4);
+  assert.equal(w.dials.length, 4);
+  assert.equal(w.frameWidth, ART.clockwarden.frameWidth);
+  assert.equal(w.frameHeight, ART.clockwarden.frameHeight);
+  const png = readFileSync(new URL('../../dist/poc-xi/art/clockwarden-walk.png', import.meta.url));
+  assert.equal(png.readUInt32BE(16), w.frameWidth * 4);
+  assert.equal(png.readUInt32BE(20), w.frameHeight);
+});

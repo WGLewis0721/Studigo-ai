@@ -5,7 +5,7 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const exe = process.env.TEXTUREPACKER || 'C:/Program Files/CodeAndWeb/TexturePacker/bin/TexturePacker.exe';
-const ATLASES = {library: 'frames', fx: 'fx-frames'};
+const ATLASES = {library: 'frames', fx: 'fx-frames', world: 'world-frames'};
 const want = process.argv[2] && process.argv[2] !== 'all' ? [process.argv[2]] : Object.keys(ATLASES);
 for (const name of want) {
   if (!ATLASES[name]) { console.error(`unknown atlas ${name}`); process.exit(2); }

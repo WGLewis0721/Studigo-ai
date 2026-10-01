@@ -192,6 +192,10 @@ export function bat(e, S) {
 export function seal(e, S) {
   const x = e.tx * TILE, y = e.ty * TILE, c = e.a === 5 ? COLOR[5] : sealColor(e), max = e.a * e.b;
   const text = label(S, x + 16, y + 64, e.label || `${e.a}\n·\n${e.b}`, e.label ? 15 : 17, '#fff7df').setLineSpacing(-6);
+  const fam = Number(Object.keys(COLOR).find(k => COLOR[k] === c)) || 2;
+  const glow = S.add.image(x + 16, y + 64, 'world', 'seal_glow.png').setDepth(3).setTint(c);
+  const slab = S.add.image(x, y - 4, 'world', 'seal_slab.png').setOrigin(0).setDepth(4);
+  const emblem = S.add.image(x + 16, y + 24, 'fx', `beam${fam}_0.png`).setDepth(5).setRotation(-Math.PI / 2).setScale(0.9);
   const tip = e.teaser ? label(S, x + (e.tx < 3 ? 70 : -40), y - 22, e.teaser, 12, '#ffb3c1') : null;
   const self = {
     type: 'seal', id: e.id, target: true, solid: true, alive: true, hp: max, max, flash: 0,
@@ -213,15 +217,16 @@ export function seal(e, S) {
     },
     update(dt) { self.flash = Math.max(0, self.flash - dt); },
     draw(g, t) {
-      g.fillStyle(0x0c1524); g.fillRect(x + 2, y - 4, 28, 136);
-      g.fillStyle(c, 0.25 + 0.1 * Math.sin(t * 3)); g.fillRect(x + 4, y, 24, 128);
-      g.lineStyle(2, self.flash ? 0xffffff : c, 0.9); g.strokeRect(x + 4, y, 24, 128);
+      glow.setAlpha((self.flash ? 0.9 : 0.5) + 0.2 * Math.sin(t * 3));
+      slab.setTint(self.flash ? 0xffffff : 0xe8e4dc);
+      emblem.setFrame(`beam${fam}_${Math.floor(t * 4) % 2}.png`).setAlpha(0.85 + 0.15 * Math.sin(t * 5));
+      const step = 104 / max;
       for (let k = 0; k < max; k++) {
         g.fillStyle(k < self.hp ? c : 0x1a2436, 0.95);
-        g.fillRect(x + 7, y + 4 + k * (120 / max), 3, 120 / max - 2);
+        g.fillRect(x + 9, y + 12 + k * step, 3, Math.max(1, step - 1.5));
       }
     },
-    destroy() { text.destroy(); tip?.destroy(); },
+    destroy() { text.destroy(); tip?.destroy(); glow.destroy(); slab.destroy(); emblem.destroy(); },
   };
   return self;
 }
@@ -320,7 +325,7 @@ export function item(e, S) {
 
 export function pickup(drop, x, y, S) {
   const tint = drop.kind === 'heart' ? 0xffffff : COLOR[drop.family];
-  const sprite = S.add.sprite(x, y, 'items', ICON[drop.kind === 'heart' ? 'heart' : 'crystal']).setScale(0.55).setTint(tint).setDepth(3);
+  const sprite = (drop.kind === 'heart' ? S.add.sprite(x, y, 'items', ICON.heart).setScale(0.55).setTint(tint) : S.add.image(x, y, 'world', `drop_${drop.family}.png`)).setDepth(3);
   const body = {x, y, w: 14, h: 14}, self = {
     type: 'pickup', alive: true, vy: -220, life: 9,
     rect: () => ({x: body.x - 10, y: body.y - 16, w: 20, h: 20}),
@@ -349,7 +354,7 @@ export function pickup(drop, x, y, S) {
 
 export function orb(e, S, x, y) {
   const id = e.id, family = e.family;
-  const sprite = S.add.image(x, y, 'core').setDisplaySize(40, 40).setTint(e.bossOrb || e.refillAll ? 0xfff0b0 : COLOR[family]).setDepth(5).setInteractive({useHandCursor: true});
+  const sprite = S.add.image(x, y, 'world', e.bossOrb || e.refillAll ? 'ammo_all.png' : `ammo_${family}.png`).setDepth(5).setInteractive({useHandCursor: true});
   const tag = label(S, x, y - 44, e.bossOrb || e.refillAll ? '✚ REFILL' : e.unlock ? `×${family} BEAM` : `×${family} AMMO`, 14, '#e7edc4');
   sprite.on('pointerdown', () => S.openOrb(self));
   const self = {
@@ -412,6 +417,7 @@ export function finale(e, S) {
   const open = () => needs.every(id => S.run.items.has(id));
   const beacon = S.add.image(x, y - 120, 'core').setDisplaySize(60, 60).setDepth(3);
   const sign = label(S, x, y - 200, '', 18, '#e7efc7');
+  const arch = S.add.image(x, y, 'world', 'portal_arch.png').setOrigin(0.5, 1).setDepth(2.5);
   let armed = true;
   const self = {
     type: 'finale', alive: true,
@@ -424,16 +430,18 @@ export function finale(e, S) {
       const on = open();
       sign.setText(on ? 'CORE CLASH →' : 'CHARGE THE FOUR RUNES');
       beacon.setY(y - 120 + Math.sin(t * 2) * 7).setVisible(on);
-      g.lineStyle(6, 0x759b97, on ? 0.8 : 0.35); g.strokeRoundedRect(x - 44, y - 182, 88, 182, 36);
+      [[20, 38], [32, 28], [62, 28], [74, 38]].forEach(([gx, gy], i) => {
+        g.fillStyle(COLOR[i + 2], on ? 0.95 : 0.12); g.fillCircle(x - 48 + gx, y - 190 + gy, 4);
+      });
       if (!on) return;
       [2, 3, 4, 5].forEach((n, i) => {
         const k = t * 1.6 + i * Math.PI / 2;
-        g.lineStyle(3, COLOR[n], 0.75); g.strokeRoundedRect(x - 36 + Math.sin(k) * 3, y - 173 + Math.cos(k) * 3, 72, 173, 30);
-        g.fillStyle(COLOR[n], 0.9); g.fillCircle(x + Math.cos(k) * 30, y - 90 + Math.sin(k) * 70, 4);
+        g.lineStyle(3, COLOR[n], 0.75); g.strokeRoundedRect(x - 27 + Math.sin(k) * 2, y - 150 + Math.cos(k) * 3, 54, 150, 24);
+        g.fillStyle(COLOR[n], 0.9); g.fillCircle(x + Math.cos(k) * 24, y - 78 + Math.sin(k) * 62, 4);
       });
-      g.fillStyle(0xfff4d0, 0.1 + 0.05 * Math.sin(t * 3)); g.fillRect(x - 33, y - 140, 66, 140);
+      g.fillStyle(0xfff4d0, 0.1 + 0.05 * Math.sin(t * 3)); g.fillRect(x - 25, y - 140, 50, 140);
     },
-    destroy() { beacon.destroy(); sign.destroy(); },
+    destroy() { beacon.destroy(); sign.destroy(); arch.destroy(); },
   };
   return self;
 }
@@ -442,6 +450,7 @@ export function finale(e, S) {
 export function rune(e, S) {
   const x = (e.tx + 0.5) * TILE, y = e.ty * TILE + 16, c = COLOR[e.n];
   const charged = () => S.run.items.has(e.id);
+  const altar = S.add.image(x, y, 'world', 'rune_altar.png').setDepth(2.5);
   const mark = label(S, x, y, `×${e.n}`, 22, CSS[e.n]);
   const count = label(S, x, y + 50, '', 13, CSS[e.n]);
   const self = {
@@ -468,17 +477,16 @@ export function rune(e, S) {
     draw(g, t) {
       const on = charged(), lit = on ? 5 : Math.floor((e.product - self.hp) / e.n);
       if (on) { g.fillStyle(c, 0.12 + 0.05 * Math.sin(t * 3)); g.fillCircle(x, y, 54 + Math.sin(t * 2) * 4); }
-      g.fillStyle(0x0b1322, 0.8); g.fillCircle(x, y, 30);
       g.fillStyle(c, on ? 0.45 + 0.1 * Math.sin(t * 4) : 0.08 + 0.06 * lit);
-      g.fillCircle(x, y, 27);
-      g.lineStyle(3, self.flash ? 0xffffff : c, on ? 0.95 : 0.55); g.strokeCircle(x, y, 30);
+      g.fillCircle(x, y, 20);
+      g.lineStyle(2, self.flash ? 0xffffff : c, on ? 0.95 : 0.55); g.strokeCircle(x, y, 22);
       for (let i = 0; i < 5; i++) {
         const k = -Math.PI / 2 + i * Math.PI * 2 / 5;
         g.fillStyle(i < lit ? c : 0x1a2436, i < lit ? 1 : 0.9); g.fillCircle(x + Math.cos(k) * 40, y + Math.sin(k) * 40, 5);
       }
       count.setText(on ? 'CHARGED' : `${e.product - self.hp} / ${e.product}`);
     },
-    destroy() { mark.destroy(); count.destroy(); },
+    destroy() { altar.destroy(); mark.destroy(); count.destroy(); },
   };
   return self;
 }

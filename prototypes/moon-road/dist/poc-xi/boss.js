@@ -221,20 +221,23 @@ export function clockWarden(def, S) {
   const F = ART.clockwarden, oy = (F.frameHeight - 4) / F.frameHeight, scale = 0.7;
   const sprite = S.add.sprite(640, FLOOR, 'clockwarden', 0).setOrigin(0.5, oy).setScale(scale).setDepth(4);
   const dial = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 21, fontStyle: 'bold', color: '#2a1a0c'}).setOrigin(0.5).setDepth(6);
-  const b = {x: 640, state: 'walk', timer: 1.8, hit: 0, frame: 0, next: 'slam'};
+  const b = {x: 640, state: 'walk', timer: 1.8, hit: 0, frame: 0, next: 'slam', step: 0, walking: false, pace: 1, paceT: 1.2};
+  const FW = ART.clockwardenWalk;
+  const cur = () => (b.walking ? {F: FW, frame: Math.floor(b.step) % 4} : {F, frame: b.frame});
   let dying = 0;
   const P = platesFor(def, S, () => { dying = 0.001; S.sfx(70, 0.9); });
   const target = {
     target: true, alive: true,
     rect: () => ({x: b.x - 60, y: FLOOR - 172, w: 120, h: 162}),
     math: () => P.math(),
-    applyDamage: w => { b.hit = 0.18; const d = dialAt(sprite, F, b.frame, oy); P.damage(w, d.x, d.y - 30); },
+    applyDamage: w => { b.hit = 0.18; const c = cur(), d = dialAt(sprite, c.F, c.frame, oy); P.damage(w, d.x, d.y - 30); },
   };
   const boss = {
     name: def.name, id: def.id, kind: def.kind, alive: true, get plates() { return P.plates; }, get index() { return P.index; },
     targets: () => (P.done ? [] : [target]),
     update(dt) {
       b.hit = Math.max(0, b.hit - dt);
+      b.walking = false;
       if (dying) {
         dying += dt;
         b.frame = 4;
@@ -245,9 +248,26 @@ export function clockWarden(def, S) {
       b.timer -= dt;
       if (b.state === 'walk') {
         b.frame = b.hit ? 3 : 0;
-        const dx = S.p.x - b.x;
-        if (Math.abs(dx) > 220) b.x += Math.sign(dx) * 42 * dt;
-        b.x = Math.max(300, Math.min(660, b.x));
+        // Stomp toward the dragon when far, back off when crowded, otherwise pace; every footfall shakes the floor.
+        const dx = S.p.x - b.x, adx = Math.abs(dx);
+        b.paceT -= dt;
+        if (b.paceT <= 0) { b.pace = -b.pace; b.paceT = 1.2 + Math.random(); }
+        let v = adx > 230 ? Math.sign(dx) * 92 : adx < 140 ? -Math.sign(dx) * 66 : b.pace * 38;
+        const nx = Math.max(300, Math.min(660, b.x + v * dt));
+        if (nx === b.x) v = 0;
+        if (v && !b.hit) {
+          const before = Math.floor(b.step) % 4;
+          b.step += Math.abs(v) * dt / 26;
+          const after = Math.floor(b.step) % 4;
+          b.walking = true;
+          if (after !== before && (after === 1 || after === 3)) {
+            const side = after === 1 ? -1 : 1;
+            S.cameras.main.shake(70, 0.0022);
+            S.burst(b.x + side * 34, FLOOR, 0xb8a888, 7);
+            S.sfx(70, 0.1);
+          }
+        }
+        b.x = nx;
         if (b.timer <= 0) { b.state = b.next + '-wind'; b.timer = b.next === 'slam' ? 0.8 : 0.55; b.next = b.next === 'slam' ? 'gears' : 'slam'; S.sfx(260, 0.2); }
       } else if (b.state === 'slam-wind' || b.state === 'gears-wind') {
         b.frame = 1;
@@ -269,10 +289,11 @@ export function clockWarden(def, S) {
       if (overlaps({x: b.x - 40, y: FLOOR - 130, w: 80, h: 130}, S.playerRect())) S.hurtPlayer(b.x);
     },
     draw(g, t) {
-      sprite.setFrame(b.frame).setPosition(b.x + (b.hit ? Math.sin(t * 80) * 4 : 0), FLOOR).setFlipX(S.p.x > b.x)
+      const c = cur();
+      sprite.setTexture(b.walking ? 'clockwarden-walk' : 'clockwarden', c.frame).setPosition(b.x + (b.hit ? Math.sin(t * 80) * 4 : 0), FLOOR).setFlipX(S.p.x > b.x)
         .setAlpha(dying ? Math.max(0, 1 - (dying - 0.6)) : 1)
         .setTint(b.hit ? 0xfff0d8 : b.state === 'slam-wind' && Math.floor(t * 16) % 2 ? 0xffb09a : 0xffffff);
-      const d = dialAt(sprite, F, b.frame, oy);
+      const d = dialAt(sprite, c.F, c.frame, oy);
       dial.setVisible(!P.done).setPosition(d.x, d.y).setText(P.done ? '' : `${P.current().a}·${P.current().b}`);
       if (!P.done) { g.lineStyle(2, 0xffe2a0, 0.35 + 0.2 * Math.sin(t * 5)); g.strokeCircle(d.x, d.y, d.r + 4); }
     },

@@ -1,0 +1,356 @@
+{
+	"textures": [
+		{
+			"image": "world.png",
+			"format": "RGBA8888",
+			"size": {
+				"w": 250,
+				"h": 268
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "ammo_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 44
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 44
+					},
+					"frame": {
+						"x": 1,
+						"y": 195,
+						"w": 44,
+						"h": 44
+					}
+				},
+				{
+					"filename": "ammo_3.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 44
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 44
+					},
+					"frame": {
+						"x": 49,
+						"y": 195,
+						"w": 44,
+						"h": 44
+					}
+				},
+				{
+					"filename": "ammo_4.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 44
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 44
+					},
+					"frame": {
+						"x": 101,
+						"y": 159,
+						"w": 44,
+						"h": 44
+					}
+				},
+				{
+					"filename": "ammo_5.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 44
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 44
+					},
+					"frame": {
+						"x": 97,
+						"y": 207,
+						"w": 44,
+						"h": 44
+					}
+				},
+				{
+					"filename": "ammo_all.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 44
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 44
+					},
+					"frame": {
+						"x": 145,
+						"y": 221,
+						"w": 44,
+						"h": 44
+					}
+				},
+				{
+					"filename": "door_frame.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 154
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 154
+					},
+					"frame": {
+						"x": 101,
+						"y": 1,
+						"w": 44,
+						"h": 154
+					}
+				},
+				{
+					"filename": "door_gate.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 20,
+						"h": 128
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 20,
+						"h": 128
+					},
+					"frame": {
+						"x": 213,
+						"y": 1,
+						"w": 20,
+						"h": 128
+					}
+				},
+				{
+					"filename": "door_lock.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 20,
+						"h": 128
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 20,
+						"h": 128
+					},
+					"frame": {
+						"x": 229,
+						"y": 133,
+						"w": 20,
+						"h": 128
+					}
+				},
+				{
+					"filename": "drop_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 24
+					},
+					"frame": {
+						"x": 1,
+						"y": 243,
+						"w": 24,
+						"h": 24
+					}
+				},
+				{
+					"filename": "drop_3.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 24
+					},
+					"frame": {
+						"x": 29,
+						"y": 243,
+						"w": 24,
+						"h": 24
+					}
+				},
+				{
+					"filename": "drop_4.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 24
+					},
+					"frame": {
+						"x": 57,
+						"y": 243,
+						"w": 24,
+						"h": 24
+					}
+				},
+				{
+					"filename": "drop_5.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 24
+					},
+					"frame": {
+						"x": 193,
+						"y": 221,
+						"w": 24,
+						"h": 24
+					}
+				},
+				{
+					"filename": "portal_arch.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 96,
+						"h": 190
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 96,
+						"h": 190
+					},
+					"frame": {
+						"x": 1,
+						"y": 1,
+						"w": 96,
+						"h": 190
+					}
+				},
+				{
+					"filename": "rune_altar.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 76,
+						"h": 76
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 76,
+						"h": 76
+					},
+					"frame": {
+						"x": 149,
+						"y": 141,
+						"w": 76,
+						"h": 76
+					}
+				},
+				{
+					"filename": "seal_glow.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 128
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 128
+					},
+					"frame": {
+						"x": 185,
+						"y": 1,
+						"w": 24,
+						"h": 128
+					}
+				},
+				{
+					"filename": "seal_slab.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 32,
+						"h": 136
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 32,
+						"h": 136
+					},
+					"frame": {
+						"x": 149,
+						"y": 1,
+						"w": 32,
+						"h": 136
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:d000631e43ef929716c322e611c7ff70:4865e15c13d8f41e18340fb228f744c0:ab3b2bdf72ac48e8726e19fe12f70483$"
+	}
+}

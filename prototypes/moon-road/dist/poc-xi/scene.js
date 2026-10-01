@@ -35,10 +35,12 @@ export class MoonKeep extends Phaser.Scene {
     this.load.json('frames', '../assets/frames.json');
     for (const k of ['skeleton', 'bat', 'twin', 'clockwarden', 'sentinel', 'items'])
       this.load.spritesheet(k, `art/${k}.png`, {frameWidth: ART[k].frameWidth, frameHeight: ART[k].frameHeight});
+    this.load.spritesheet('clockwarden-walk', 'art/clockwarden-walk.png', {frameWidth: ART.clockwardenWalk.frameWidth, frameHeight: ART.clockwardenWalk.frameHeight});
     for (const k of ['crypt', 'stars', 'vault', 'clock']) this.load.image(`bg-${k}`, `art/bg-${k}.png`);
     for (const k of ['atrium', 'crypt', 'stars', 'vault', 'clock', 'shaft']) this.load.spritesheet(`tex-${k}`, `art/tex-${k}.png`, {frameWidth: 32, frameHeight: 32});
     this.load.atlas('library', 'art/library.png', 'art/library.json');
     this.load.atlas('fx', 'art/fx.png', 'art/fx.json');
+    this.load.atlas('world', 'art/world.png', 'art/world.json');
     this.load.on('loaderror', () => { document.querySelector('#loading').textContent = 'Could not load. Refresh to retry.'; });
   }
 
@@ -155,6 +157,13 @@ export class MoonKeep extends Phaser.Scene {
     this.bg.setTexture(this.zone.bg).setDisplaySize(1152, 648).setTint(this.zone.bgTint);
     this.drawTiles();
     this.drawDecor();
+    this.doorFx = room.doors.map(d => {
+      const sp = doorSpan(room, d), x = sp.tx * TILE, y = sp.ty0 * TILE;
+      const frame = this.add.image(x - 6, y - 20, 'world', 'door_frame.png').setOrigin(0).setDepth(3.1);
+      const gate = this.add.image(x + 6, y, 'world', 'door_gate.png').setOrigin(0).setDepth(3.05);
+      this.roomObjects.push(frame, gate);
+      return {d, s: sp, gate};
+    });
     this.actors = room.entities.flatMap(e => build(e, this));
     const def = room.entities.find(e => e.type === 'boss');
     if (def && !this.run.items.has('boss:' + def.id)) {
@@ -613,16 +622,13 @@ export class MoonKeep extends Phaser.Scene {
     this.bg.y = 324 - 108 * (this.H > 544 ? cam.scrollY / (this.H - 540) : 0.5);
     
     const locked = this.boss?.alive;
-    for (const d of this.room.doors) {
-      const s = doorSpan(this.room, d), x = s.tx * TILE, y = s.ty0 * TILE;
-      g.fillStyle(this.zone.edge); g.fillRect(x - 3, y - 10, TILE + 6, 10); g.fillRect(x - 3, y + 128, TILE + 6, 6);
+    for (const {d, s, gate} of this.doorFx) {
+      const x = s.tx * TILE, y = s.ty0 * TILE;
       const dist = Math.abs(p.x - (x + 16)), near = Math.abs(p.y - (s.ty1 + 1) * TILE) < 100;
       const open = locked || !d.to ? 0 : Phaser.Math.Clamp(1 - (dist - 70) / 90, 0, near ? 1 : 0);
       const h = 128 * (1 - open);
-      if (h > 1) {
-        g.fillStyle(locked ? 0xb2433a : 0x2f6aa8, 0.95); g.fillRect(x + 6, y, 20, h);
-        g.fillStyle(locked ? 0xff9a8a : 0x9fd3ff, 0.9); g.fillRect(x + 6, y, 3, h); g.fillRect(x + 23, y, 3, h);
-      }
+      gate.setVisible(h > 1);
+      if (h > 1) gate.setFrame(locked ? 'door_lock.png' : 'door_gate.png').setPosition(x + 6, y - (128 - h)).setCrop(0, 128 - h, 20, h);
     }
 
     for (const a of this.actors) a.draw(g, t);

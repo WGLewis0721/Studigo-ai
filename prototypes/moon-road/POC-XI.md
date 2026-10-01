@@ -29,3 +29,12 @@ LDtk conventions: IntGrid `Collision` 1 = wall, 2 = one-way platform. Skeleton/I
 **Round 1.** Orange dragon with feet grounded in every frame (`scripts/recolor-dragon.py` -> `art/dragon-orange.png`); the Pendulum dummy keeps one hanging pose; auto-fire stops once in-flight shots already cover the kill (`remainingHp` in `rules.js`) and shots fly at 960 px/s.
 
 **Round 2.** Distinct beam sprites per power (spark bolt, fireball, lance, crescent, star), muzzle flash, impact rings, a Clock Shield bubble with gear and charge pips, and carved-stone numbered blocks with brass studs, a number plaque and three crack stages. Hand-drawn by `scripts/make-poc-xi-fx.py` into `art-source/poc-xi/fx-frames/`, packed with `node scripts/pack-atlas.mjs fx` into `art/fx.png/.json`.
+
+**Round 3.** Distinct world pieces from `scripts/make-poc-xi-world.py` into `art/world.png/.json` (`node scripts/pack-atlas.mjs world`):
+- Doors: stone frame with a lintel gear, a blue-lamp portcullis that slides up as you approach, and a red chained, padlocked portcullis while a boss is alive.
+- Power seals and Rune Gates: carved slab with the opening beam's emblem and a glow strip in its colour.
+- Rune Sanctum: a brass rune altar under each rune, and a stone portal arch with four gem sockets.
+- Ammo: capsules and drops carry their beam's look (×2 fireball, ×3 lance, ×4 crescent, ×5 star; refill-all is a gold cross).
+- Clockwork Warden walk cycle: `scripts/make-warden-walk.py` rigs the standing sprite (legs lift and plant, torso bobs, arms swing) into `art/clockwarden-walk.png` plus per-frame dial anchors in `art.js`. In `boss.js` it stomps toward the dragon when far, backs off when crowded and paces otherwise, shaking the floor and kicking dust on each footfall. This is a procedural re-pose of the single standing frame, not newly painted art; a hand-painted or AI-generated cycle can replace the sheet without code changes.
+
+Planned: round 5 gives the shrines distinct art.
