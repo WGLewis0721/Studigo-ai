@@ -17,6 +17,10 @@ In order:
 
 Then inspect the current code before proposing changes.
 
+## Game prototype (Moon Keep / Core Clash)
+
+The multiplication Metroidvania lives in `prototypes/moon-road/` and is unrelated to the Next.js app at runtime. Before touching it read `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` and `POC-XI.md`; the authoring pipeline is in `TOOLCHAIN.md`. The current golden route is `dist/poc-xi/` (tag `golden/poc-xi-moon-keep`); golden routes are frozen, so new experiments go in a new sibling route. Never link the game from `apps/web`.
+
 ## Current state
 
 This repository is a foundation scaffold moving into MVP implementation.

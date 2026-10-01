@@ -21,9 +21,21 @@ Web Audio effects are synthesized locally. Fonts are device monospace fonts; no 
 
 Pixelorama (MIT), LDtk (MIT), TexturePacker (commercial, CodeAndWeb license accepted per machine), Blender and Godot (MIT/GPL, no output restrictions) are used on the developer machine to author art and levels. Their binaries and installers are not committed (see `.gitignore`); only their outputs (PNG strips, Phaser atlas JSON, `.ldtk` level JSON) are. TexturePacker free/trial output must not ship in a public build without an appropriate license. Phaser 4.2.1 is kept locally for reference only; the game ships Phaser 3.90.0. See TOOLCHAIN.md.
 
-## POC XI hand-built art
+## POC XI hand-built art and audio
 
-Beam, muzzle and impact sprites, the Clock Shield, carved number blocks, doors, portcullises, seal slabs, rune altars, the portal arch, ammo capsules and drops, shrines and the Moon Library props are drawn in code with Pillow (`scripts/make-poc-xi-fx.py`, `make-poc-xi-world.py`, `make-library-props.py`) and packed with TexturePacker; they are original and not AI-generated. The orange dragon sheet is a recolor of the existing generated dragon (`scripts/recolor-dragon.py`). The Clockwork Warden and Twin Warden walk cycles are procedural re-poses of the existing generated standing sprites (`make-warden-walk.py`, `make-twin-walk.py`); no new image-model output was used in POC XI.
+Original, not AI-generated, and drawn in code with Pillow (`scripts/make-poc-xi-fx.py`, `make-poc-xi-world.py`, `make-poc-xi-boss.py`, `make-library-props.py`) then packed with TexturePacker:
+- beam, muzzle and impact sprites, the Clock Shield, carved number blocks;
+- doors, portcullises, seal slabs, rune altars, the portal arch, ammo capsules and drops, shrines;
+- boss attack art (bone, arcane shards, gears, shockwave crests, charge orb, rune telegraph, floor cracks, steam, chime rings);
+- the Moon Library props.
+
+All of it snaps to one master palette and outline colour sampled from the accepted generated sprites (`scripts/pixel_style.py`); the palette is derived data, not a third-party asset.
+
+Derived from existing generated art, with no new image-model output: the orange dragon sheet (a recolor of the generated dragon, `scripts/recolor-dragon.py`) and the Clockwork Warden and Twin Warden walk cycles (procedural re-poses of their generated standing sprites, `make-warden-walk.py`, `make-twin-walk.py`).
+
+Audio: every sound, including the five distinct beam fire and impact voices, is synthesized at runtime with the Web Audio API (`beamSfx`, `beamHitSfx`, `tone` in `dist/poc-xi/scene.js`). There are no audio files and no music yet.
+
+Tools used to author (local only, not shipped): TexturePacker (commercial license, accepted per machine), LDtk, Pixelorama, Blender and Godot. Their binaries are never committed.
 
 ## POC VIII skeleton reference
 

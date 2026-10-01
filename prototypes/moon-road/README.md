@@ -1,22 +1,24 @@
 # Studigo Moon Road → Core Clash
 
-## Definitive playtest build
+## Current build
 
-**POC VII (canonical):** https://studigo-core-clash.william-glewis17.chatgpt.site/poc-vii/
-
-This is the version to play and continue developing. It faithfully tests optional, respawning ×3/×4 multiple-choice Knowledge Drops inside a small action-platformer. At the vault, **ENTER CORE CLASH** starts the existing standalone 50 HP boss fight. The boss's original rules and source are preserved.
+**POC XI Moon Keep (golden image):** https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-xi/. A multiplication Metroidvania: ×1 fights, power beams ×2-×5 open numbered seals and stone blocks, bosses hand out the beams, and four runes open the Core Clash portal. Read [CURRENT_GAME_HANDOFF.md](CURRENT_GAME_HANDOFF.md) and [POC-XI.md](POC-XI.md). Earlier goldens ([POC X](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/), [POC IX](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/)) are frozen. The POC VII/VIII material further down is the older ancestry of the game.
 
 ## Source of truth
 
-Work on `feature/moon-road-core-clash`. The game lives at `dist/poc-vii/`; its complete design, rules, asset references, controls, boss connection, and QA instructions are in `CURRENT_GAME_HANDOFF.md`. Read that before editing. `dist/index.html`, `dist/game.css`, and `dist/game.js` are the original Core Clash boss control. Keep them intact.
+Work happens on `main` through feature branches and PRs. Golden routes in `dist/` are frozen; start the next experiment in a new sibling route by copying the latest golden. Tooling, art pipeline and scripts: [TOOLCHAIN.md](TOOLCHAIN.md). Art provenance and licenses: [ASSETS.md](ASSETS.md).
 
-The previous `dist/adventure/` equal-group-mechanism experiment is legacy work, not the current game design. Do not use it as the behavioral or handoff baseline.
+The previous `dist/adventure/` equal-group-mechanism experiment is legacy work, not the current game design.
 
 ## Run locally
 
 `dist/assets/` and `dist/vendor/` are committed so GitHub Pages can serve every build. `node prepare.mjs` regenerates them from the pinned chunks. From this directory run `node prepare.mjs`, then `python -m http.server 8000 --directory dist`. Open `http://localhost:8000/poc-vii/`; open `/` for the original boss control. Runtime and art are reconstructed from local pinned chunks, with no CDN dependency. Asset provenance and licensing are in `ASSETS.md`.
 
-## QA
+## Tests
+
+From the repo root: `node --test "prototypes/moon-road/test/**/*.test.mjs"` (CI runs it on every PR).
+
+## QA (older routes)
 
 `qa/poc-vii-playtest.cjs` runs the mobile browser acceptance path. See `CURRENT_GAME_HANDOFF.md` for prerequisites and the results recorded in `qa/poc-vii-results.json`.
 

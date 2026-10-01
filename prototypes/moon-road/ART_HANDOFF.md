@@ -108,3 +108,12 @@ You are continuing Studigo, not redesigning its art. Use WGLewis0721/Studigo-ai,
 ## POC X art (2026-09-29, Claude)
 
 Following the steps above, POC X generated new sheets with Higgsfield Nano Banana, using the accepted dragon, guardian, observatory and platform images as references. The raw outputs are kept in `art-source/poc-x/`. `art-source/poc-x/process.py` normalizes them into `dist/poc-x/art/`, and the frame sizes, foot anchors and clock-dial centres are in `dist/poc-x/art/art.js`. Prompts and provenance are in ASSETS.md ("POC X generated art"). Re-run `python art-source/poc-x/process.py` after replacing a raw sheet. Its slicing uses a grid plus the largest component per cell, not hand-picked rectangles. The originals and `dist/assets/` are untouched.
+
+## POC XI additions (2026-09-30)
+
+The 128 / 256 sheet contract above still holds for the generated dragon and guardian. POC XI adds, under `dist/poc-xi/art/`:
+- `dragon-orange.png`: same 12 x 128 layout and frame indexes as `dragon.png`, recolored orange, with every standing frame shifted so the feet sit on row 122. Barrel-tip positions per frame are in `GUN_TIP` in `scene.js`; they are measured on this sheet.
+- `clockwarden-walk.png` (4 x 291 x 298) and `twin-walk.png` (4 x 179 x 176): procedural walk cycles; per-frame clock-dial anchors for the Warden are in `art.js` as `ART.clockwardenWalk`.
+- Atlases (Phaser format): `library`, `fx` (beams, muzzle, impacts, shield, blocks), `world` (doors, seals, runes, portal, ammo, shrines), `boss` (attack projectiles and telegraphs). Frame names end in `.png`.
+
+Regeneration order and the shared style rules are in TOOLCHAIN.md; provenance is in ASSETS.md.
