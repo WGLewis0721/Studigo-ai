@@ -228,7 +228,17 @@ export function seal(e, S) {
 
 export function block(e, S) {
   const x = e.tx * TILE, y = e.ty * TILE, w = e.tw * TILE, h = e.th * TILE;
+  const plaque = S.add.image(x + w / 2, y + h / 2, 'fx', 'plaque.png').setDisplaySize(Math.min(w - 8, 64), 34).setDepth(5);
   const text = label(S, x + w / 2, y + h / 2, String(e.product), 30, '#fff4d0');
+  // Carved stone, assembled per tile: single/edge/corner frames, brass studs on the corners, crack overlay by damage stage.
+  const tiles = [];
+  for (let j = 0; j < e.th; j++) for (let i = 0; i < e.tw; i++) {
+    const row = e.th === 1 ? 's' : j === 0 ? 't' : j === e.th - 1 ? 'b' : 'm', col = e.tw === 1 ? 's' : i === 0 ? 'l' : i === e.tw - 1 ? 'r' : 'c';
+    tiles.push({
+      stone: S.add.image(x + i * TILE, y + j * TILE, 'fx', `block_${row}${col}.png`).setOrigin(0).setDepth(4),
+      crack: S.add.image(x + i * TILE, y + j * TILE, 'fx', 'crack_1.png').setOrigin(0).setDepth(4).setFlipX((i + j) % 2 === 1).setFlipY(j % 2 === 1).setVisible(false),
+    });
+  }
   const self = {
     type: 'block', id: e.id, target: true, solid: true, alive: true, hp: e.product, max: e.product, flash: 0,
     math: () => ({kind: 'block', product: e.product}),
@@ -249,21 +259,16 @@ export function block(e, S) {
       }
     },
     update(dt) { self.flash = Math.max(0, self.flash - dt); },
-    draw(g) {
-      const cracks = 1 - self.hp / e.product;
-      g.fillStyle(self.flash ? 0x6b6356 : 0x4a4439); g.fillRect(x, y, w, h);
-      g.lineStyle(2, 0xb8a784, 0.9); g.strokeRect(x + 1, y + 1, w - 2, h - 2);
-      g.lineStyle(1, 0x2a251e, 0.9);
-      for (let i = 1; i < e.tw; i++) g.lineBetween(x + i * TILE, y + 2, x + i * TILE, y + h - 2);
-      for (let i = 1; i < e.th; i++) g.lineBetween(x + 2, y + i * TILE, x + w - 2, y + i * TILE);
-      if (cracks > 0) {
-        g.lineStyle(2, 0x15110c, 0.9);
-        g.lineBetween(x + w * 0.2, y + 4, x + w * (0.2 + cracks * 0.5), y + h * cracks);
-        g.lineBetween(x + w * 0.8, y + h - 4, x + w * (0.8 - cracks * 0.4), y + h * (1 - cracks * 0.8));
+    draw() {
+      const cracks = 1 - self.hp / e.product, stage = cracks <= 0 ? 0 : Math.min(3, Math.ceil(cracks * 3));
+      for (const t of tiles) {
+        t.stone.setTint(self.flash ? 0xffe6bc : 0xffffff);
+        t.crack.setVisible(stage > 0);
+        if (stage > 0) t.crack.setFrame(`crack_${stage}.png`);
       }
       text.setText(String(e.product));
     },
-    destroy() { text.destroy(); },
+    destroy() { text.destroy(); plaque.destroy(); tiles.forEach(t => { t.stone.destroy(); t.crack.destroy(); }); },
   };
   return self;
 }

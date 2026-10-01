@@ -1,5 +1,5 @@
 # Draws the Moon Library prop frames (half-res pixel art, nearest-neighbor 2x) into art-source/poc-xi/frames/.
-# Polish them in Pixelorama if you like, then run: node scripts/pack-library-atlas.mjs
+# Polish them in Pixelorama if you like, then run: node scripts/pack-atlas.mjs library
 from PIL import Image, ImageDraw
 from pathlib import Path
 out = Path(__file__).resolve().parents[1] / 'art-source/poc-xi/frames'

@@ -120,3 +120,12 @@ test('Moon Library opens only after the Trine Guardian and a x3/x4 seal; tank5 n
   assert.ok(s.rooms.has('T') && s.have.has('tank5'));
   assert.ok(!solve({without: ['w3', 'orb-4']}).rooms.has('T'));
 });
+
+test('fx atlas has every frame the game asks for', () => {
+  const atlas = JSON.parse(readFileSync(new URL('../../dist/poc-xi/art/fx.json', import.meta.url), 'utf8'));
+  const have = new Set(atlas.textures[0].frames.map(f => f.filename));
+  const want = ['plaque', 'shield_shell', 'shield_gear', 'shield_pip_on', 'shield_pip_off', 'crack_1', 'crack_2', 'crack_3',
+    ...[0, 1, 2].flatMap(i => [`muzzle_${i}`, `impact_${i}`]), ...[1, 2, 3, 4, 5].flatMap(n => [0, 1].map(f => `beam${n}_${f}`)),
+    ...['t', 'm', 'b', 's'].flatMap(r => ['l', 'c', 'r', 's'].map(c => `block_${r}${c}`))].map(n => `${n}.png`);
+  for (const n of want) assert.ok(have.has(n), n);
+});

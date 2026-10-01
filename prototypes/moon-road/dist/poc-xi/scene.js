@@ -38,6 +38,7 @@ export class MoonKeep extends Phaser.Scene {
     for (const k of ['crypt', 'stars', 'vault', 'clock']) this.load.image(`bg-${k}`, `art/bg-${k}.png`);
     for (const k of ['atrium', 'crypt', 'stars', 'vault', 'clock', 'shaft']) this.load.spritesheet(`tex-${k}`, `art/tex-${k}.png`, {frameWidth: 32, frameHeight: 32});
     this.load.atlas('library', 'art/library.png', 'art/library.json');
+    this.load.atlas('fx', 'art/fx.png', 'art/fx.json');
     this.load.on('loaderror', () => { document.querySelector('#loading').textContent = 'Could not load. Refresh to retry.'; });
   }
 
@@ -64,6 +65,10 @@ export class MoonKeep extends Phaser.Scene {
     this.tiles = this.add.graphics().setDepth(2);
     this.g = this.add.graphics().setDepth(3);
     this.fx = this.add.graphics().setDepth(7);
+    this.shotSprites = new Map();
+    this.muzzle = this.add.image(0, 0, 'fx', 'muzzle_0.png').setDepth(8).setVisible(false);
+    this.shield = {shell: this.add.image(0, 0, 'fx', 'shield_shell.png').setDepth(6).setVisible(false), gear: this.add.image(0, 0, 'fx', 'shield_gear.png').setDepth(6).setVisible(false),
+      pips: [0, 1, 2, 3].map(() => this.add.image(0, 0, 'fx', 'shield_pip_on.png').setDepth(6).setVisible(false)), prev: 0, flash: 0};
     this.hero = this.add.sprite(0, 0, 'dragon', 6).setOrigin(0.5, 1).setScale(116 / 128).setDepth(5);
     this.loadRoom(START.room);
     this.ui = this.handlers();
@@ -102,6 +107,12 @@ export class MoonKeep extends Phaser.Scene {
       const a = Math.random() * Math.PI * 2, v = 35 + Math.random() * 150;
       this.particles.push({x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.3 + Math.random() * 0.5, c});
     }
+  }
+
+  // Expanding impact ring in the beam's colour.
+  pop(x, y, color) {
+    const sp = this.add.image(x, y, 'fx', 'impact_0.png').setDepth(8).setTint(color);
+    this.tweens.add({targets: sp, scale: {from: 0.7, to: 1.5}, alpha: {from: 1, to: 0}, duration: 240, onComplete: () => sp.destroy()});
   }
 
   float(x, y, text, color, size = 22) {
@@ -544,11 +555,13 @@ export class MoonKeep extends Phaser.Scene {
       s.life = 0.55;
       this.float(r.x + r.w / 2, r.y - 26, reflectText(m, s.n), '#edcfff', 16);
       this.burst(s.x, s.y, 0xf4dbff, 16);
+      this.pop(s.x, s.y, 0xf4dbff);
       this.sfx(950, 0.12);
       this.log('reflect', {weapon: s.n, target: m});
       return;
     }
     s.life = 0;
+    this.pop(s.x, s.y, COLOR[s.n]);
     t.applyDamage(s.n);
     this.hitStop = s.n > 1 ? 0.045 : 0.015;
     if (s.n > 1) this.cameras.main.shake(65, 0.0018);
@@ -628,11 +641,14 @@ export class MoonKeep extends Phaser.Scene {
     }
     this.floaters = this.floaters.filter(q => q.life > 0);
 
+    const liveShots = new Set(this.shots);
+    for (const [s, sp] of this.shotSprites) if (!liveShots.has(s)) { sp.destroy(); this.shotSprites.delete(s); }
     for (const s of this.shots) {
-      f.lineStyle(s.n === 1 ? 3 : 7, s.reflected ? 0xefb5ff : COLOR[s.n]);
-      f.lineBetween(s.x - s.vx * 0.028, s.y - s.vy * 0.028, s.x, s.y);
-      f.fillStyle(0xfff3d2); f.fillCircle(s.x, s.y, s.n === 1 ? 2 : 4);
-      if (s.n > 1) { f.lineStyle(1, COLOR[s.n], 0.7); f.strokeCircle(s.x, s.y, 5 + s.n * 2); }
+      let sp = this.shotSprites.get(s);
+      if (!sp) { sp = this.add.image(s.x, s.y, 'fx', 'beam1_0.png').setDepth(7); this.shotSprites.set(s, sp); }
+      sp.setFrame(`beam${s.n}_${Math.floor(t * 16 + s.n) % 2}.png`).setPosition(s.x, s.y)
+        .setRotation(s.reflected ? t * 14 : Math.atan2(s.vy, s.vx)).setTint(s.reflected ? 0xefb5ff : 0xffffff).setAlpha(s.reflected ? Math.max(0.2, s.life * 1.5) : 1);
+      if (s.n > 1 && !s.reflected) { f.fillStyle(COLOR[s.n], 0.16); f.fillCircle(s.x, s.y, 14 + s.n * 2); }
     }
     for (const s of this.enemyShots) {
       if (s.wave) {
@@ -644,15 +660,10 @@ export class MoonKeep extends Phaser.Scene {
       f.fillStyle(s.color); f.fillCircle(s.x, s.y, s.r);
       if (s.spin) { f.lineStyle(3, 0x8a7f6c); const a = t * 14; f.lineBetween(s.x - Math.cos(a) * 12, s.y - Math.sin(a) * 12, s.x + Math.cos(a) * 12, s.y + Math.sin(a) * 12); }
     }
-    const sh = this.run.shield;
-    if (sh.owned && sh.charges > 0) {
-      f.lineStyle(2, 0x8ff5e0, 0.18 + 0.12 * sh.charges / sh.max + 0.06 * Math.sin(t * 4));
-      f.strokeEllipse(p.x, p.y - 40, 78, 100);
-    }
+    this.drawShield(t, p);
     if (p.fire > 0) {
-      f.fillStyle(COLOR[this.weapon]);
-      f.fillTriangle(p.x + p.face * 40, p.y - 56, p.x + p.face * 60, p.y - 46, p.x + p.face * 40, p.y - 36);
-    }
+      this.muzzle.setVisible(true).setPosition(p.x + p.face * 46, p.y - 47).setFrame(`muzzle_${p.fire > 0.09 ? 0 : p.fire > 0.045 ? 1 : 2}.png`).setTint(COLOR[this.weapon]).setFlipX(p.face < 0);
+    } else this.muzzle.setVisible(false);
     for (const q of this.particles) {
       q.life -= dt;
       q.x += q.vx * dt;
@@ -666,6 +677,23 @@ export class MoonKeep extends Phaser.Scene {
       const x = cam.scrollX + (i * 97 + t * 7) % 960, y = cam.scrollY + 120 + (i * 53) % 300;
       f.fillStyle(0xc4e6d6, 0.25); f.fillRect(x, y, 2, 2);
     }
+  }
+
+  drawShield(t, p) {
+    const sh = this.run.shield, S = this.shield, show = sh.owned && sh.charges > 0;
+    if (sh.charges < S.prev) { S.flash = 0.35; this.pop(p.x, p.y - 42, 0x8ff5e0); }
+    S.prev = sh.charges;
+    S.flash = Math.max(0, S.flash - 1 / 60);
+    for (const o of [S.shell, S.gear, ...S.pips]) o.setVisible(false);
+    if (!show) return;
+    const cx = p.x, cy = p.y - 42, k = sh.charges / sh.max;
+    S.shell.setVisible(true).setPosition(cx, cy).setScale(1 + (S.flash ? 0.18 * S.flash / 0.35 : 0)).setAlpha(0.45 + 0.25 * k + 0.08 * Math.sin(t * 4) + (S.flash ? 0.4 : 0)).setTint(S.flash ? 0xffffff : 0xdfffff);
+    S.gear.setVisible(true).setPosition(cx, cy - 58).setRotation(t * 1.4);
+    S.pips.forEach((pip, i) => {
+      if (i >= sh.max) return;
+      const a = t * 0.9 + i * Math.PI * 2 / sh.max;
+      pip.setVisible(true).setFrame(i < sh.charges ? 'shield_pip_on.png' : 'shield_pip_off.png').setPosition(cx + Math.cos(a) * 46, cy + Math.sin(a) * 58);
+    });
   }
 
   exposeHooks() {

@@ -28,4 +28,4 @@ Local tools live in `C:\Users\Willi\tools` (outside the repo, never commit binar
 
 ## Worked example
 
-POC XI (`dist/poc-xi/`, see POC-XI.md) uses the whole chain: `art-source/poc-xi/moon-library.ldtk` -> `scripts/ldtk-export.mjs` -> `levels.js`, and `scripts/make-library-props.py` -> `scripts/pack-library-atlas.mjs` -> `library.png/.json`. Copy that pattern for new rooms. `dist/` is gitignored, so new routes are added with `git add -f`.
+POC XI (`dist/poc-xi/`, see POC-XI.md) uses the whole chain: `art-source/poc-xi/moon-library.ldtk` -> `scripts/ldtk-export.mjs` -> `levels.js`, and `scripts/make-library-props.py` -> `scripts/pack-atlas.mjs library` -> `library.png/.json`. Copy that pattern for new rooms. `dist/` is gitignored, so new routes are added with `git add -f`.
