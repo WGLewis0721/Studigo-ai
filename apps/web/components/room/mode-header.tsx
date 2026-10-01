@@ -76,8 +76,35 @@ export function ChipButton({ children, onClick, label }: { children: ReactNode; 
   );
 }
 
+/**
+ * The Studigo rail: a slim band in the page's color that carries the wordmark
+ * and the status dots. It is the divider between a page's options and its
+ * content, and its color says which of the five pages you are on. Purely
+ * decorative, so it is hidden from assistive tech.
+ */
+export function StudigoRail() {
+  return (
+    <div className="studigoRail" aria-hidden="true">
+      <span className="railLed" />
+      <span className="railBrand">studigo</span>
+      <span className="railGrille" />
+    </div>
+  );
+}
+
+/** A page's header: its options row (children) with the Studigo rail beneath. */
+export function ModeFrame({ tone, children }: { tone: string; children: ReactNode }) {
+  return (
+    <div className="modeFrame" data-tone={tone}>
+      {children}
+      <StudigoRail />
+    </div>
+  );
+}
+
 export function ModeHeader({
   groupName,
+  frameTone,
   modes,
   current,
   onSelect,
@@ -87,6 +114,8 @@ export function ModeHeader({
   chipRef
 }: {
   groupName: string;
+  /** Tone of the page the header belongs to (colors the rail). */
+  frameTone: string;
   modes: HeaderMode[];
   current: string;
   onSelect: (id: string) => void;
@@ -96,26 +125,28 @@ export function ModeHeader({
   chipRef: (node: HTMLDivElement | null) => void;
 }) {
   return (
-    <header className="modeHead" data-tone={current}>
-      <span className="chatMascot chatMascotStatic">
-        <StudigoMascot state={mascot} size={38} mark />
-      </span>
-      {modes.length > 1 ? (
-        <div className="chatModes" role="group" aria-label={`${groupName} modes`}>
-          {modes.map((mode) => (
-            <button key={mode.id} type="button" data-tone={mode.id} aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
-              <strong>{mode.name}</strong>
-              <small>{mode.sub}</small>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="mhTitle">
-          <h2>{title}</h2>
-          <p>{sub}</p>
-        </div>
-      )}
-      <div className="chatTopicRow mhChipRow" ref={chipRef} />
-    </header>
+    <ModeFrame tone={frameTone}>
+      <header className="modeHead" data-tone={current}>
+        <span className="chatMascot chatMascotStatic">
+          <StudigoMascot state={mascot} size={38} mark />
+        </span>
+        {modes.length > 1 ? (
+          <div className="chatModes" role="group" aria-label={`${groupName} modes`}>
+            {modes.map((mode) => (
+              <button key={mode.id} type="button" data-tone={mode.id} aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
+                <strong>{mode.name}</strong>
+                <small>{mode.sub}</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mhTitle">
+            <h2>{title}</h2>
+            <p>{sub}</p>
+          </div>
+        )}
+        <div className="chatTopicRow mhChipRow" ref={chipRef} />
+      </header>
+    </ModeFrame>
   );
 }

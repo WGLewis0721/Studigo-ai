@@ -45,13 +45,29 @@ const headerName = (item: (typeof MODES)[number]) => ("short" in item ? item.sho
 /** Ask and Learn now live inside Coach; older links and plan actions still resolve. */
 type NavTarget = Mode | "ask" | "learn";
 
-const GROUPS: Array<{name:string;icon:GlyphName;modes:Mode[]}> = [
-  {name:"Coach",icon:"coach",modes:["coach"]},
-  {name:"Practice",icon:"quiz",modes:["quiz","cards","test"]},
-  {name:"Progress",icon:"mastery",modes:["mastery","weak"]},
-  {name:"Plan",icon:"plan",modes:["plan","cram"]},
-  {name:"Materials",icon:"materials",modes:["materials"]}
+// Each page (group) has one color. It shows on the Studigo rail under the page header
+// and on the page's dot in the selector, so you can tell which of the five you are on.
+const GROUPS: Array<{name:string;icon:GlyphName;tone:string;modes:Mode[]}> = [
+  {name:"Coach",icon:"coach",tone:"coach",modes:["coach"]},
+  {name:"Practice",icon:"quiz",tone:"quiz",modes:["quiz","cards","test"]},
+  {name:"Progress",icon:"mastery",tone:"mastery",modes:["mastery","weak"]},
+  {name:"Plan",icon:"plan",tone:"plan",modes:["plan","cram"]},
+  {name:"Materials",icon:"materials",tone:"materials",modes:["materials"]}
 ];
+
+/** The five pages. Wide screens show it in the top bar beside the room title; phones get the bottom tab bar. */
+function SectionNav({ current, onSelect, className }: { current: string; onSelect: (mode: Mode) => void; className?: string }) {
+  return (
+    <nav className={className ? `studyGroups ${className}` : "studyGroups"} aria-label="Study Room sections">
+      {GROUPS.map((group) => (
+        <button key={group.name} type="button" data-tone={group.tone} aria-current={current === group.name ? "page" : undefined} onClick={() => onSelect(group.modes[0])}>
+          <span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span>
+          <span>{group.name}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
 
 export function RoomWorkspace({
   room,
@@ -90,8 +106,9 @@ export function RoomWorkspace({
   const plan = buildStudyPlan({ topics, areas, testDate: room.test_date, cardsDue: readiness.cardsDue, events: planEvents, now: asOf });
   const currentGroup = GROUPS.find(group => group.modes.includes(mode)) ?? GROUPS[0];
   const currentMeta = MODES.find((item) => item.id === mode) ?? MODES[1];
-  // The Coach chat carries its own header inside its pane; every other page shares this one.
-  const showHeader = !(mode === "coach" && readyDocuments.length > 0);
+  // The Coach chat draws its own header (its Coach/Learn switch and topic are chat state);
+  // every other page shares the workspace header. Both end in the same Studigo rail.
+  const coachFramed = mode === "coach" && readyDocuments.length > 0;
   const [cramStarted, setCramStarted] = useState(initialMode === "cram");
   function navigate(target: NavTarget, topicId: string | null = null) {
     const nextMode: Mode = target === "ask" || target === "learn" ? "coach" : target;
@@ -119,9 +136,10 @@ export function RoomWorkspace({
               {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||
                 "STUDY ROOM"}
             </span>
-            <strong>{room.title}</strong>
+            <strong title={room.title}>{room.title}</strong>
           </div>
         </div>
+        <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} />
         <div className="topbarRight">
           <span className="sourceCount">
             {readyDocuments.length} of {documents.length}{" "}
@@ -144,15 +162,13 @@ export function RoomWorkspace({
       {settingsOpen && <RoomSettings room={room} onClose={() => setSettingsOpen(false)} />}
 
       <div className="studyNavigation">
-        <nav className="studyGroups" aria-label="Study Room sections">
-          {GROUPS.map(group => <button key={group.name} type="button" aria-current={currentGroup.name===group.name?"page":undefined} onClick={()=>navigate(group.modes[0])}><span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span><span>{group.name}</span></button>)}
-        </nav>
-
+        <SectionNav current={currentGroup.name} onSelect={(next) => navigate(next)} />
       </div>
 
-      {showHeader && (
+      {!coachFramed && (
         <ModeHeader
           groupName={currentGroup.name}
+          frameTone={currentGroup.tone}
           modes={currentGroup.modes.map((id) => MODES.find((item) => item.id === id)!).map((item) => ({ id: item.id, name: headerName(item), sub: item.sub }))}
           current={mode}
           onSelect={(id) => navigate(id as Mode)}
@@ -164,7 +180,7 @@ export function RoomWorkspace({
       )}
 
       <HeaderSlots.Provider value={slots}>
-      <div className="modeSurface">
+      <div className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"}>
         {mode === "materials" && (
           <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
         )}

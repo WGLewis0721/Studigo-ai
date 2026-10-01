@@ -1,32 +1,7 @@
 "use client";
 
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useRef, type KeyboardEvent } from "react";
 import { ROOM_THEMES, useRoomTheme } from "@/lib/room-theme";
-
-/**
- * The Coach lives inside a personal device, like the homepage hero. On wide
- * screens the device wears the room color chosen in Room Settings; on phones
- * the device is flat and the room color shows in the chat itself. The screen
- * keeps the Coach tone so buttons and states do not change meaning.
- */
-export function CoachDevice({ roomId, children }: { roomId: string; children: ReactNode }) {
-  const [shell] = useRoomTheme(roomId);
-  return (
-    <div className="coachDevice" data-tone={shell}>
-      <span className="cdHandle" aria-hidden="true" />
-      <div className="cdShell">
-        <div className="cdScreen" data-tone="coach">
-          {children}
-        </div>
-        <div className="cdChin" aria-hidden="true">
-          <span className="cdLed" />
-          <span className="cdBrand">studigo</span>
-          <span className="cdGrille" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function RoomColorPicker({ roomId }: { roomId: string }) {
   const [shell, setShell] = useRoomTheme(roomId);

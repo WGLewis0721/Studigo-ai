@@ -626,22 +626,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    --------------------------------------------------------------------------- */
 
 .materialsPanel { display: grid; gap: 20px; max-width: 980px; }
-.materialsIntro h2 { margin: 10px 0 8px; font-size: clamp(1.9rem, 3.4vw, 2.7rem); letter-spacing: -.03em; }
-.materialsIntro p { margin: 0; color: var(--ink-2); line-height: 1.65; max-width: 640px; }
-.sourceTypePicker { display: flex; flex-wrap: wrap; gap: 8px; }
-.sourceChip {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px;
-  border: 0; border-radius: 999px; background: var(--white); cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--hairline-strong); font-size: .86rem; font-weight: 700; color: var(--ink-2);
-}
-.sourceChip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--hairline-strong); }
-.sourceChip:hover { color: var(--ink); background: var(--snow-2); }
-.sourceChipActive, .sourceChipActive:hover {
-  color: var(--ink); background: var(--tone-soft);
-  box-shadow: inset 0 0 0 1.5px var(--tone), 0 4px 10px -6px var(--tone-glow);
-}
-.sourceChipActive::before { background: var(--tone-ink); box-shadow: none; }
-
 .dropzone {
   position: relative; display: grid; justify-items: center; gap: 10px; padding: 56px 20px 40px; text-align: center;
   border-radius: var(--r-2xl);
@@ -1446,28 +1430,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 
 /* Coach device: the homepage hero device, around the Coach. */
-.coachDeviceWrap { display: grid; gap: 22px; max-width: 1040px; }
-.coachDevice { position: relative; padding-top: 34px; }
-.cdHandle {
-  position: absolute; z-index: 0; top: 0; left: 50%; width: 30%; height: 78px; transform: translateX(-50%);
-  border: 12px solid color-mix(in oklab, var(--tone) 62%, white); border-bottom: 0; border-radius: 70px 70px 0 0;
-  opacity: .9; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .6), 0 -2px 0 rgba(255, 255, 255, .5);
-}
-.cdShell {
-  position: relative; z-index: 1; padding: 14px 14px 0; border-radius: 42px;
-  background: var(--tone);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 20px 40px -26px rgba(20, 27, 45, .4);
-  transition: background .3s ease;
-}
-.cdScreen {
-  position: relative; padding: clamp(16px, 2.4vw, 28px); border-radius: 30px; background: var(--white);
-  box-shadow: inset 0 0 0 1px rgba(20, 27, 45, .08), 0 0 0 3px rgba(255, 255, 255, .35), 0 2px 10px rgba(0, 0, 0, .12);
-}
-.cdScreen .coachMode { max-width: none; }
-.cdChin { height: 54px; display: flex; align-items: center; justify-content: center; gap: 14px; }
-.cdBrand { font-family: var(--display); font-weight: 800; font-size: 1rem; letter-spacing: -.02em; color: color-mix(in oklab, var(--tone) 45%, black); text-shadow: 0 1px 0 rgba(255, 255, 255, .45); }
-.cdLed { width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px #fff, 0 0 0 2px rgba(255, 255, 255, .4); }
-.cdGrille { width: 38px; height: 8px; background: radial-gradient(circle, color-mix(in oklab, var(--tone) 50%, black) 1.4px, transparent 1.6px) 0 0 / 6px 8px; opacity: .7; }
 .cdPicker { display: grid; justify-items: center; gap: 10px; }
 .cdPickerLabel { font-size: .84rem; font-weight: 600; color: var(--muted); }
 .cdSwatches {
@@ -1488,22 +1450,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .cdSwatch[aria-checked="true"] { color: var(--ink); background: var(--tone-soft); box-shadow: inset 0 0 0 1.5px var(--tone); }
 .cdSwatch[aria-checked="true"] i { transform: scale(1.06); }
 @media (max-width: 700px) {
-  .coachDevice { padding-top: 26px; }
-  .cdHandle { height: 58px; border-width: 9px; }
-  .cdShell { padding: 8px 8px 0; border-radius: 30px; }
-  .cdScreen { padding: 12px; border-radius: 24px; }
-  .cdChin { height: 40px; }
   .cdSwatch { padding-right: 6px; }
   .cdSwatch:not([aria-checked="true"]) span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .cdSwatch[aria-checked="true"] { padding-right: 13px; }
 }
-@media (prefers-reduced-motion: reduce) { .cdShell, .cdSwatch, .cdSwatch i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .cdSwatch, .cdSwatch i { transition: none; } }
 
 
-/* Coach chat: iMessage-style conversation. Bubble color follows the Coach color
-   from Room Settings (--chat-key is resolved on .coachDevice, so it passes through the screen). */
-.coachDevice { --chat-key: var(--tone-key); --chat-on: var(--tone-on); }
-.cdScreen .coachMode { padding-bottom: 0; }
+/* Coach chat: iMessage-style conversation. Bubble color follows the room color
+   from Room Settings. */
+.coachChat { --chat-key: var(--th-key, var(--tone-key)); --chat-on: var(--th-on, var(--tone-on)); }
 .cdPicker { justify-items: start; }
 .cdPickerHint { color: var(--muted); font-size: .78rem; }
 .roomSettings .cdPicker { margin: 4px 0 8px; }
@@ -1511,20 +1467,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   display: flex; flex-direction: column; height: clamp(400px, 66vh, 600px); overflow: hidden;
   border-radius: 24px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline-strong);
 }
-.chatHead {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 16px 8px; text-align: center;
-  background: rgba(247, 248, 251, .9); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
-  box-shadow: 0 1px 0 var(--hairline-strong);
-}
-.chatHead strong, .chatHead small { display: block; }
-.chatHead strong { font-size: .72rem; font-weight: 600; color: var(--ink); letter-spacing: 0; }
-.chatHead small { max-width: 100%; color: var(--muted); font-size: .68rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chatHead > div { min-width: 0; max-width: 100%; }
 .chatThread {
   flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; padding: 14px 12px;
   overflow-y: auto; overscroll-behavior: contain;
 }
-.coachChat .coachEmpty { margin: auto 0; max-width: 520px; padding: 4px 4px 10px; border: 0; background: none; box-shadow: none; }
+.coachChat .coachEmpty { margin: 0 0 auto; max-width: 520px; padding: 10px 4px 10px; border: 0; background: none; box-shadow: none; }
 .coachChat .coachEmpty strong { font-size: 1.15rem; }
 .coachChat .coachEmpty p { font-size: .92rem; }
 .coachChat .studentBubble {
@@ -1568,11 +1515,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .chatSend:disabled { opacity: 0; transform: translateY(-50%) scale(.6); pointer-events: none; }
 @media (max-width: 700px) {
   /* No window inside the phone screen: the conversation fills the page. */
-  .coachDevice { padding-top: 0; }
-  .cdHandle, .cdChin { display: none; }
-  .cdShell { z-index: auto; padding: 0; border-radius: 0; background: none; box-shadow: none; }
-  .cdShell::before { display: none; }
-  .cdScreen { padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .coachChat { height: min(72vh, 600px); min-height: 380px; margin-inline: -14px; border-radius: 0; box-shadow: 0 -1px 0 var(--hairline-strong), 0 1px 0 var(--hairline-strong); }
   .chatComposer input { font-size: 16px; }
   /* Sheets sit above the bottom tab bar instead of sliding under it. */
@@ -1628,11 +1570,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .coachSettings:not(.mobileOpen) { display: none; }
 }
 
-/* Coach pane header: a clear Coach / Learn switch, with the coaching focus tucked underneath. */
-.coachChat .chatHead {
-  display: flex; flex-wrap: wrap; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px 10px;
-  padding: 10px 12px; text-align: left;
-}
 .chatModes {
   flex: 1 1 0; min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; padding: 3px; border-radius: 16px;
   background: color-mix(in oklab, var(--ink) 6%, var(--white));
@@ -1659,7 +1596,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer;
   color: var(--tangerine-ink); background: var(--tangerine-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tangerine) 35%, white);
 }
-.coachChat[data-chat-mode="learn"] .chatTopic { color: var(--teal-ink); background: var(--teal-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 40%, white); }
 .chatTopicStatic { cursor: default; }
 .coachChat[data-chat-mode="learn"] .coachSkillList > button.active { background: var(--teal-soft); box-shadow: inset 0 0 0 1.5px var(--teal); }
 .chatTopicName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2183,7 +2119,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .learnMode,
   .masteryMode { gap: var(--m-gap-3); }
   .modeEmpty h2,
-  .materialsIntro h2,
   .quizSetup h2,
   .learnHeader h2,
   .masteryHero h2,
@@ -2200,8 +2135,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     min-height: 48px; padding: 0 18px; border-radius: 14px; box-shadow: none;
   }
   .buttonPrimary:hover { transform: none; box-shadow: none; }
-  .ghostButton,
-  .sourceChip { min-height: 44px; border-radius: 12px; }
+  .ghostButton { min-height: 44px; border-radius: 12px; }
   .formError, .formNotice { border-radius: 12px; }
 
   /* Coach: secondary setup in a sheet; the conversation remains the main view. */
@@ -2422,12 +2356,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .topicBody { padding: 0 13px 16px; }
   .termChip { border: 0; border-radius: 999px; background: rgba(20,27,45,.06); }
 
-  .sourceTypePicker {
-    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; scrollbar-width: none;
-  }
-  .sourceTypePicker::-webkit-scrollbar { display: none; }
-  .sourceChip { flex: 0 0 auto; padding-inline: 12px; border-color: rgba(20,27,45,.13); }
-  .dropzone { padding: 30px 16px; border-radius: 20px; border-color: rgba(20,27,45,.4); }
   .documentRow {
     grid-template-columns: auto minmax(0,1fr); gap: 10px 12px;
     padding: 13px; border-color: rgba(20,27,45,.1); border-radius: 16px;
@@ -2457,7 +2385,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .testQuestion { padding-top: 20px; }
   .testQuestion h3 { font-size: 1.45rem; line-height: 1.38; }
   .testSessionActions { margin: 22px 0; align-items: center; }
-  .planDay { padding: 20px 0 28px; }
+  .planDay { padding: 20px 16px 28px; }
   .planDayActions article { padding-left: 14px; margin-bottom: 22px; }
 }
 
@@ -3148,14 +3076,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .roomDevice .studyNavigation { background: transparent; }
 .roomDevice .coachChat { background: var(--th-pane); box-shadow: inset 0 0 0 1px var(--th-line); }
-.roomDevice .chatHead { background: color-mix(in oklab, var(--th-bar) 94%, transparent); box-shadow: 0 1px 0 var(--th-line); }
 .roomDevice .chatComposer { background: var(--th-bar); }
 .roomDevice .chatComposer input { border-color: var(--th-line); }
 .roomDevice .coachChat .answerBubble { background: var(--white); box-shadow: inset 0 0 0 1px var(--th-line); }
 .roomDevice .coachChat .answerBubble[data-state="insufficient"] { background: #fdeede; }
 .roomDevice .chatChips button { background: var(--white); color: var(--th-ink); box-shadow: inset 0 0 0 1px var(--th-line); }
-.roomDevice .coachTabs { background: var(--th-bar); }
-.roomDevice .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: inset 0 0 0 1px var(--th-line); }
 
 @media (max-width: 700px) {
   .roomDevice .studyGroups {
@@ -3193,27 +3118,28 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     /* The strip under the message field, behind the floating tab bar, is the field's own bar color. */
     background: var(--th-bar);
   }
-  .roomDevice:has(.coachChat) .modeSurface > .coachDevice,
-  .roomDevice:has(.coachChat) .cdShell,
-  .roomDevice:has(.coachChat) .cdScreen,
-  .roomDevice:has(.coachChat) .coachMode {
+  .roomDevice:has(.coachChat) .roomWorkspace .modeSurface.modeSurfaceFramed {
+    padding: 0 0 calc(var(--m-tabbar, 70px) + 14px + var(--m-safe-bottom, 0px));
+  }
+  /* The surface already stays put here, so the header frame sits in flow at its top (sticky would be offset inside it). */
+  .roomDevice:has(.coachChat) .modeSurface > .modeFrame { position: static; flex: none; }
+  .roomDevice:has(.coachChat) .modeSurface > .coachMode {
     flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; padding: 0; margin: 0;
   }
   .roomDevice:has(.coachChat) .coachMode { gap: 0; padding-bottom: 0; }
-  .roomDevice:has(.coachChat) .coachTabs { flex: none; margin: 8px 12px; }
   .roomDevice:has(.coachChat) .coachChat {
     flex: 1 1 0; height: auto; min-height: 0; margin-inline: 0; border-radius: 0;
   }
   .roomDevice:has(.coachChat) .chatThread {
     -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scroll-padding-bottom: 12px;
   }
-  .roomDevice:has(.coachChat) .chatHead,
   .roomDevice:has(.coachChat) .chatComposer,
   .roomDevice:has(.coachChat) .chatChips { flex: none; }
   /* With the keyboard up the tab bar steps aside and the field rests on the keys. */
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .studyGroups { display: none; }
-  html[data-keyboard="open"] .roomDevice:has(.coachChat) .modeSurface { padding-bottom: 0; }
-  html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs { display: none; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .roomWorkspace .modeSurface { padding-bottom: 0; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs,
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .studigoRail { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes small { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 40px; }
 }
@@ -3227,15 +3153,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .modeHead {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
   padding: 10px 12px; text-align: left;
-  background: rgba(247, 248, 251, .9); box-shadow: 0 1px 0 var(--hairline-strong);
+  background: rgba(247, 248, 251, .9);
   -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
 }
-.roomDevice .modeHead { background: color-mix(in oklab, var(--th-bar) 97%, transparent); box-shadow: 0 1px 0 var(--th-line); }
+.roomDevice .modeHead { background: color-mix(in oklab, var(--th-bar) 97%, transparent); }
 .modeHead .chatModes[role="group"] { flex: 1 1 0; }
 .mhTitle { flex: 1 1 0; min-width: 0; }
 .mhTitle h2 { margin: 0; font-family: var(--display); font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
 .mhTitle p { margin: 1px 0 0; color: var(--muted); font-size: .78rem; line-height: 1.25; }
 .mhChipRow:empty { display: none; }
+.mhChipRow { align-items: center; justify-content: space-between; }
+.mhChipRow > :only-child { margin-left: auto; }
+.modeHead .chatTopic, .modeHead .mhSelect { min-width: 0; flex: 0 1 auto; }
 .modeHead .chatTopic {
   color: var(--tone-ink); background: var(--tone-soft);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 40%, white);
@@ -3252,19 +3181,163 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .masteryHeroText p { font-size: 1.15rem; line-height: 1.35; color: rgba(255, 255, 255, .86); }
 @media (min-width: 701px) {
   .modeHead { padding: 12px clamp(16px, 3vw, 32px); gap: 8px 14px; }
-  .modeHead .chatModes[role="group"] { flex: 0 1 520px; }
-  .modeHead .mhChipRow { flex: 1 1 0; justify-content: flex-end; }
-  /* The Coach pane header uses the same arrangement as every other page. */
-  .coachChat .chatHead .chatModes { flex: 0 1 520px; }
-  .coachChat .chatHead .chatTopicRow { flex: 1 1 0; }
+  .modeHead .mhChipRow { flex: 1 1 0; justify-content: flex-end; gap: 10px; }
 }
 @media (max-width: 700px) {
   /* Groups live in the bottom bar, so the old nav wrapper takes no room; the header sits right under the top bar. */
   .studyNavigation { height: 0; min-height: 0; padding: 0; margin: 0; gap: 0; border: 0; overflow: visible; }
-  .modeHead { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
+  .modeFrame { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
   .modeHead .mhChipRow { flex: 1 1 100%; }
   .roomWorkspace .modeSurface { padding-top: 16px; }
 }
+
+/* ---------------------------------------------------------------------------
+   The Studigo rail. A slim band in the page's own color, carrying the wordmark
+   and the status dots, between a page's options and its content. Its color says
+   which of the five pages you are on (the selector's dot uses the same color).
+   --------------------------------------------------------------------------- */
+.studigoRail {
+  display: flex; align-items: center; justify-content: center; gap: 12px; height: 26px;
+  user-select: none; -webkit-user-select: none;
+  background: var(--tone-key); color: var(--tone-on);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .38), inset 0 -1px 0 rgba(20, 27, 45, .14);
+  transition: background-color .3s ease;
+}
+.railBrand { font-family: var(--display); font-weight: 800; font-size: .74rem; letter-spacing: .01em; line-height: 1; }
+.railLed { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff, 0 0 0 2px rgba(255, 255, 255, .4); }
+.railGrille {
+  flex: none; width: 38px; height: 8px; opacity: .6;
+  background: radial-gradient(circle, var(--tone-on) 1.2px, transparent 1.5px) 0 0 / 6px 8px;
+}
+
+/* Coach: its header lives in the same frame as every other page, so the page
+   padding moves from the surface onto the content beneath the frame. */
+.roomWorkspace .modeSurface.modeSurfaceFramed { padding: 0; }
+.modeSurfaceFramed > .coachMode {
+  max-width: 1000px; padding: clamp(20px, 3.4vw, 40px) clamp(16px, 3vw, 32px) 56px;
+}
+@media (max-width: 700px) {
+  .modeSurfaceFramed > .coachMode { padding: 16px var(--m-page, 14px) calc(var(--m-tabbar, 70px) + 30px + var(--m-safe-bottom, 0px)); }
+}
+@media (min-width: 701px) {
+  .modeHead { min-height: 82px; }
+  .modeFrame { container: mframe / inline-size; }
+}
+.modeHead .coachTabs { padding: 3px; flex: none; }
+.modeHead .coachTabs button { min-height: 28px; padding: 0 13px; font-size: .8rem; }
+.roomDevice .modeHead .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .modeHead .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
+
+/* Materials: a file's buttons drop to their own line when the column is narrow, so its name keeps room. */
+.documentList { container: docs / inline-size; }
+@container docs (max-width: 760px) {
+  .documentRow { grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; }
+  .documentActions { grid-column: 1 / -1; }
+}
+
+/* Materials: a drop target in the same card language as the other pages. */
+.dropzone {
+  padding: 34px 20px 30px; border-radius: 24px; background: var(--white);
+  box-shadow: var(--edge), var(--lift-1);
+  border: 1.5px dashed color-mix(in oklab, var(--tone) 60%, white);
+}
+.dropzone::before { content: none; }
+.dropzoneActive { background: var(--tone-soft); border-style: solid; box-shadow: var(--edge), 0 18px 40px -22px var(--tone-glow); transform: none; }
+.dropzone strong { font-size: 1.3rem; }
+.setupLead { margin-bottom: 4px; }
+
+/* ---------------------------------------------------------------------------
+   Wide screens: the page selector rides in the top bar beside the room title.
+   --------------------------------------------------------------------------- */
+.topbarNav { display: none; }
+@media (min-width: 701px) {
+  .studyNavigation { display: none; }
+  .workspaceTopbar { container: topbar / inline-size; justify-content: flex-start; gap: 14px 22px; }
+  .workspaceTopbar .workspaceTitle { flex: 0 1 auto; min-width: 0; }
+  .topbarNav { display: inline-flex; flex: none; }
+  .topbarNav button { min-height: 36px; padding: 0 14px; font-size: .88rem; }
+  .topbarNav .studyGroupIcon { display: none; }
+  .topbarRight { margin-left: auto; }
+  /* The room's subject line stays on one line so the title keeps its row. */
+  .workspaceTopbar .crumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Two options need less room than three; the context chip shrinks before anything overlaps. */
+  .modeHead .chatModes[role="group"] { flex: 0 1 360px; }
+  .modeHead .chatModes[role="group"]:has(> button:nth-child(3)) { flex-basis: 520px; }
+  .modeHead .chatTopic, .modeHead .mhSelect { min-width: 0; flex: 0 1 auto; }
+}
+/* A narrow main column (a small window, or a wider one beside the open sidebar): the title and
+   actions keep the first row and the page selector takes a row of its own, as a full-width switch. */
+@media (min-width: 701px) and (max-width: 980px) {
+  .roomWorkspace .workspaceTopbar { flex-wrap: wrap; gap: 10px 16px; }
+  .workspaceTopbar .workspaceTitle { flex: 1 1 0; }
+  .workspaceTopbar .topbarRight { width: auto; }
+  .workspaceTopbar .topbarNav { order: 3; flex: 1 1 100%; }
+  .workspaceTopbar .topbarNav button { flex: 1 1 0; justify-content: center; }
+}
+@media (min-width: 981px) and (max-width: 1160px) {
+  .appShell:not([data-rail="collapsed"]) .roomWorkspace .workspaceTopbar { flex-wrap: wrap; gap: 10px 16px; }
+  .appShell:not([data-rail="collapsed"]) .workspaceTopbar .workspaceTitle { flex: 1 1 0; }
+  .appShell:not([data-rail="collapsed"]) .workspaceTopbar .topbarNav { order: 3; flex: 1 1 100%; }
+  .appShell:not([data-rail="collapsed"]) .workspaceTopbar .topbarNav button { flex: 1 1 0; justify-content: center; }
+}
+@container topbar (max-width: 1240px) {
+  .workspaceTopbar .workspaceTitle strong { font-size: 1.2rem; }
+  .workspaceTopbar .sourceCount { display: none; }
+  .workspaceTopbar .studyGuideDownloadLabel { display: none; }
+  .workspaceTopbar .studyGuideDownload .buttonQuiet {
+    width: 40px; height: 40px; padding: 0; display: grid; place-items: center; border-radius: 12px;
+    background: var(--white); text-decoration: none; color: var(--ink);
+    box-shadow: var(--edge), inset 0 0 0 1px var(--hairline-strong), var(--lift-1);
+  }
+  .workspaceTopbar .studyGuideDownloadIcon { font-size: 1.1rem; font-weight: 800; }
+}
+@container topbar (max-width: 940px) {
+  .workspaceTopbar .workspaceTitle strong { font-size: 1.1rem; }
+}
+/* When the page is narrow the context chip drops under the switch, the way it sits on a phone. */
+@container mframe (max-width: 820px) {
+  .modeHead .chatModes[role="group"], .modeHead .chatModes[role="group"]:has(> button:nth-child(3)) { flex: 1 1 0; }
+  .modeHead .mhChipRow { flex: 1 1 100%; justify-content: space-between; }
+}
+
+/* ---------------------------------------------------------------------------
+   The sidebar collapses to a slim icon rail, like Claude and ChatGPT.
+   --------------------------------------------------------------------------- */
+.railHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.railToggle {
+  flex: none; display: grid; place-items: center; width: 36px; height: 36px; padding: 0;
+  border: 0; border-radius: 10px; background: none; color: var(--muted); cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.railToggle:hover { background: var(--snow-2); color: var(--ink); }
+.railToggle:focus-visible { outline: 2px solid var(--tone-ink); outline-offset: 2px; }
+@media (max-width: 780px) {
+  /* On phones the rail is a top strip, so there is nothing to collapse. */
+  .railHead { display: contents; }
+  .railToggle { display: none; }
+}
+@media (min-width: 781px) {
+  .appShell { transition: grid-template-columns .26s var(--ease-out); }
+  .appShell[data-rail="collapsed"],
+  .appShell[data-rail="collapsed"]:has(.roomDevice) { grid-template-columns: 76px minmax(0, 1fr); }
+  .appShell[data-rail="collapsed"] .appRail { padding: 14px 10px; align-items: center; }
+  .appShell[data-rail="collapsed"] .railHead { justify-content: center; }
+  .appShell[data-rail="collapsed"] .miniWordmark,
+  .appShell[data-rail="collapsed"] .railLabel,
+  .appShell[data-rail="collapsed"] .railEmpty,
+  .appShell[data-rail="collapsed"] .railText,
+  .appShell[data-rail="collapsed"] .roomLinkTitle,
+  .appShell[data-rail="collapsed"] .profileChip small,
+  .appShell[data-rail="collapsed"] .railSignOut { display: none; }
+  .appShell[data-rail="collapsed"] .railScroll { width: 100%; margin: 0; padding: 0; justify-items: center; }
+  .appShell[data-rail="collapsed"] .railItem,
+  .appShell[data-rail="collapsed"] .roomLink { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .appShell[data-rail="collapsed"] .roomList { justify-items: center; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--hairline); }
+  .appShell[data-rail="collapsed"] .roomGem { width: 22px; height: 22px; border-radius: 8px; }
+  .appShell[data-rail="collapsed"] .railFooter { justify-items: center; padding-top: 12px; }
+  .appShell[data-rail="collapsed"] .profileChip { grid-template-columns: 34px; padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .appShell { transition: none; } }
 
 /* ---------------------------------------------------------------------------
    Reduced motion: state changes stay, movement goes.

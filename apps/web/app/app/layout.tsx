@@ -1,41 +1,32 @@
-import { StudigoMascot } from "@/components/studigo-mascot";
-import Link from "next/link";
+import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { initialsFor, requireUser } from "@/lib/auth";
 import { listRooms } from "@/lib/rooms";
 import { signOutAction } from "@/lib/actions/auth";
-import { RoomRail } from "@/components/room-rail";
+import { RAIL_COLLAPSED, RAIL_COOKIE } from "@/lib/rail";
+import { AppShell } from "@/components/app-shell";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   const rooms = await listRooms();
+  const collapsed = (await cookies()).get(RAIL_COOKIE)?.value === RAIL_COLLAPSED;
 
   return (
-    <div className="appShell">
-      <aside className="appRail">
-        <Link className="miniWordmark" href="/app" aria-label="Studigo home">
-          <StudigoMascot size={36} mark />
-          <span className="wordmarkText">Studigo</span>
-        </Link>
-
-        <RoomRail rooms={rooms.map(({ id, title }) => ({ id, title }))} />
-
-        <div className="railFooter">
-          <div className="profileChip" aria-label="Signed in">
-            <span>{initialsFor(user)}</span>
-            <small>{user.email ?? "Guest session"}</small>
-          </div>
-          {!user.is_anonymous && (
-            <form action={signOutAction}>
-              <button className="railSignOut" type="submit">
-                Sign out
-              </button>
-            </form>
-          )}
-        </div>
-      </aside>
-
-      <div className="appMain">{children}</div>
-    </div>
+    <AppShell
+      initialCollapsed={collapsed}
+      rooms={rooms.map(({ id, title }) => ({ id, title }))}
+      profile={{ initials: initialsFor(user), label: user.email ?? "Guest session" }}
+      signOut={
+        user.is_anonymous ? null : (
+          <form action={signOutAction}>
+            <button className="railSignOut" type="submit">
+              Sign out
+            </button>
+          </form>
+        )
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

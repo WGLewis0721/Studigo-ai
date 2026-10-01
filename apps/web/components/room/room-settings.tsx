@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
-import { RoomColorPicker } from "./coach-device";
+import { RoomColorPicker } from "./room-color-picker";
 
 function SaveButton() {
   const { pending } = useFormStatus();
