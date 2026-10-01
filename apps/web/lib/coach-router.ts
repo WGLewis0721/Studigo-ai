@@ -433,7 +433,7 @@ export async function* runCoachTurn(args: {
 
     // The pending question is always rendered against the spec it was issued for.
     const pendingSpec = parseIssuedSpec(state.issuedChallenge?.spec);
-    const routeGuidance = pendingSpec ? renderRouteGuidance(pendingSpec) : undefined;
+    const routeGuidance = pendingSpec ? renderRouteGuidance(pendingSpec, args.route) : undefined;
 
     // "Make it simpler": wording only. Repeated requests get progressively
     // shorter, but never silently add answer choices or lower the reasoning task.
@@ -447,7 +447,7 @@ export async function* runCoachTurn(args: {
         violations: [`is too wordy for this learner's explicit simplify request; use at most ${maxWords} words`],
         expectedConcepts: state.expectedConcepts,
         chunks,
-        challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec) : undefined,
+        challengeGuidance: pendingSpec ? renderChallengeGuidance(pendingSpec, args.route) : undefined,
         maxWords
       });
       const nextQuestion = simpler || state.question;

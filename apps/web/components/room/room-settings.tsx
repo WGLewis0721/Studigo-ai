@@ -10,7 +10,7 @@ function SaveButton() {
   const { pending } = useFormStatus();
   return (
     <button className="buttonPrimary" type="submit" disabled={pending}>
-      {pending ? "Saving…" : "Save changes"}
+      {pending ? "Applying…" : "Apply"}
     </button>
   );
 }
@@ -64,6 +64,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
             {state.error}
           </p>
         )}
+        {state.appliedAt && <p role="status">Applied. Studigo will use your explanation level from the next reply.</p>}
 
         <div className="settingsActions">
           <SaveButton />

@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export type RoomFormState = { error?: string };
+export type RoomFormState = { error?: string; appliedAt?: number };
 
 function readTitle(formData: FormData) {
   return String(formData.get("title") || "").trim().slice(0, 160);
@@ -61,7 +61,7 @@ export async function renameRoomAction(
   _previous: RoomFormState,
   formData: FormData
 ): Promise<RoomFormState> {
-  await requireUser();
+  const user = await requireUser();
   const roomId = String(formData.get("roomId") || "");
   const title = readTitle(formData);
   if (!roomId) return { error: "Missing room." };
@@ -72,7 +72,7 @@ export async function renameRoomAction(
   catch { return { error: "Choose a valid test date." }; }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("study_rooms")
     .update({
       title,
@@ -81,13 +81,14 @@ export async function renameRoomAction(
       test_date: testDate,
       explain_level: readExplainLevel(formData)
     })
-    .eq("id", roomId);
+    .eq("id", roomId).eq("owner_id", user.id).select("id").maybeSingle();
 
   if (error) return { error: error.message };
+  if (!data) return { error: "Study Room not found. Your changes were not applied." };
 
   revalidatePath("/app");
   revalidatePath(`/app/rooms/${roomId}`);
-  return {};
+  return { appliedAt: Date.now() };
 }
 
 export async function deleteRoomAction(formData: FormData) {

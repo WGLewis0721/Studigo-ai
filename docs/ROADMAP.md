@@ -4,6 +4,28 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Shipped - October 1, 2026: Coach preferences and scrolling chrome
+
+- [x] Save coaching style, learning tradition, practice recipe and explanation
+      level per Study Room; reload and page navigation restore applied settings.
+- [x] Coach setup and Room Settings expose Apply, pending and success/error states.
+- [x] Rebuild delivery instructions during the background Apply request and use
+      the saved settings in subsequent Coach/Ask replies. Learn (the Ask path)
+      reads the saved explanation level on every turn, and the browser can no
+      longer override saved settings with draft directives.
+- [x] Preserve the pending learning encounter and evidence when delivery changes.
+- [x] Preserve the October 1 Safari-style collapsing tab bar.
+- [x] `20261001051830_coach_preferences.sql` is applied to the hosted Studigo
+      Supabase project (recorded there as version 20261001125650). The column,
+      its check constraint and the default were confirmed on the hosted database,
+      and all 17 existing rooms carry the default.
+- [x] Merged to `main` and deployed on Vercel. Typecheck and the full unit and
+      PGlite suites pass (325 tests). The sandbox cannot reach Google Fonts, so
+      `next build` was left to Vercel's build.
+- [ ] Smoke-test hosted saving with a real signed-in account (Apply, reload,
+      next reply uses the saved settings).
+- [ ] Verify real model delivery and physical iPhone/Safari behavior.
+
 ## Latest shipped - September 30, 2026
 
 Shipped to production from `main` (merge `2fdfe14`, deployed on Vercel).
@@ -490,4 +512,3 @@ This gate is now the release definition for both the Studigo learning app and th
 ## Shared commercialization rule
 
 Do not gate launch on every later roadmap idea. Gate it on **reliable core value + safe data handling + accepted commerce + supportability + store compliance**. New adaptive features, extra subjects, parent/school expansion, additional game worlds, and deeper personalization are post-launch unless testing shows one is necessary for the core promise.
-

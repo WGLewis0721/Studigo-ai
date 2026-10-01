@@ -1,7 +1,9 @@
 "use client";
 
+import { STYLES, TRADITIONS, PRACTICE_PROTOCOLS, compileCoachPreferences, sameCoachPreferences } from "@/lib/coach-preferences";
+import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters, selectLearningRoute } from "@/lib/coach-route-selection";
+import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
 import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
@@ -14,38 +16,6 @@ import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
 import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
-
-type CoachingStyle = {
-  id: string;
-  name: string;
-  description: string;
-  instruction: string;
-};
-
-const STYLES: CoachingStyle[] = [
-  { id: "default", name: "Studigo default", description: "Clear explanation, example, guided practice", instruction: "Use a balanced coach loop: explain briefly, demonstrate one example, ask the learner to try, diagnose the mistake, then assign the next best practice." },
-  { id: "direct", name: "Direct instruction", description: "Worked examples, correction, repetition", instruction: "Teach directly. Show worked examples, give one precise correction at a time, and use deliberate repetition until the learner is accurate." },
-  { id: "drill", name: "Deliberate practice", description: "Targeted reps that build automaticity", instruction: "Use deliberate practice when it fits: isolate one skill, give a carefully targeted sequence of up to 50 problems one at a time, vary difficulty gradually, give immediate specific feedback, and revisit errors. Do not assign busywork." },
-  { id: "socratic", name: "Socratic coach", description: "Questions that make the learner reason", instruction: "Ask short guiding questions instead of giving the answer. Let the learner explain their reasoning, then correct the exact misconception." },
-  { id: "progression", name: "Skill progression", description: "Small parts, connected phrases, performance", instruction: "Break the skill into small parts, demonstrate the complete performance, coach one part at a time, connect the parts, then test transfer in a new context. Correct, repeat, and increase challenge only after evidence of mastery." },
-  { id: "visual", name: "Concrete to abstract", description: "Models, diagrams, then symbols", instruction: "Start with a concrete or visual model, connect it to the idea, and only then move to symbolic or abstract practice. Keep the teacher's terminology." }
-];
-
-const TRADITIONS: CoachingStyle[] = [
-  { id: "tradition-default", name: "Teacher's method", description: "Stay faithful to the uploaded guide", instruction: "Prioritize the teacher's stated method, vocabulary, scope, and examples. Never replace the teacher's requirements with a different tradition." },
-  { id: "tradition-japanese", name: "Japanese-inspired", description: "Mastery, careful modeling, steady improvement", instruction: "Use a Japanese-inspired lesson rhythm: make the goal explicit, study one worked method carefully, ask the learner to explain the reasoning, practice a small progression, and reflect on one improvement. Treat errors as information, not failure." },
-  { id: "tradition-swedish", name: "Swedish-inspired", description: "Curiosity, independence, critical thinking", instruction: "Use a Swedish-inspired approach: invite the learner to question assumptions, compare strategies, explain evidence, and choose a next step. Preserve structure and accountability while giving the learner meaningful agency." },
-  { id: "tradition-singapore", name: "Singapore Math-inspired", description: "Concrete, pictorial, abstract", instruction: "For math, move deliberately from concrete objects or a bar/model representation to a drawing and then symbols. Ask the learner to connect each representation before increasing complexity." },
-  { id: "tradition-montessori", name: "Montessori-inspired", description: "Choice within a prepared sequence", instruction: "Offer a bounded choice of practice, let the learner attempt independently, use precise hands-off prompts, and reveal the correction only after self-checking. Keep the objective and teacher scope fixed." }
-];
-
-type PracticeProtocol = { id: string; name: string; instruction: string };
-
-const PRACTICE_PROTOCOLS: PracticeProtocol[] = [
-  { id: "adaptive", name: "Best next practice", instruction: "Choose the smallest next task that reveals understanding. Use retrieval, a worked example, or a transfer problem based on the learner's last response." },
-  { id: "repetition", name: "Focused repetition", instruction: "Use straightforward repetition when automaticity is the goal. Keep the target narrow, generate varied but equivalent items, give immediate feedback, and stop or reteach when the same error repeats." },
-  { id: "transfer", name: "Transfer practice", instruction: "After a learner can perform the modeled skill, vary the surface features and context so they must choose and apply the method, not just copy a pattern." }
-] as const;
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
@@ -66,8 +36,9 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged }: {
   roomId: string;
+  coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
   topics: Topic[];
   areas?: WeakArea[];
@@ -78,9 +49,12 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
   onClearFocus: () => void;
   onTopicsChanged: () => void;
 }) {
-  const [style, setStyle] = useState(STYLES[0]);
-  const [tradition, setTradition] = useState(TRADITIONS[0]);
-  const [practice, setPractice] = useState(PRACTICE_PROTOCOLS[0]);
+  const [draft, setDraft] = useState(coaching.applied);
+  const style = STYLES.find(option => option.id === draft.style) ?? STYLES[0];
+  const tradition = TRADITIONS.find(option => option.id === draft.tradition) ?? TRADITIONS[0];
+  const practice = PRACTICE_PROTOCOLS.find(option => option.id === draft.practice) ?? PRACTICE_PROTOCOLS[0];
+  const dirty = !sameCoachPreferences(draft, coaching.applied);
+  useEffect(() => { setDraft(coaching.applied); }, [coaching.applied]);
   const [selectedTopic, setSelectedTopic] = useState<SkillTopic>(topics[0] ?? GENERAL_TOPIC);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>("coach");
@@ -147,7 +121,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
     const replying: ReplyMode = modeOverride ?? (chatMode === "learn" ? "ask" : "coach");
     const messageMode: ChatMode = replying === "ask" ? "learn" : "coach";
     const text = input.trim();
-    if (!text || busy) return;
+    if (!text || busy || coaching.applying) return;
     setPrompt(""); setError(null); setBusy(true);
     const assistantId = crypto.randomUUID();
     // One UUID per submitted turn. It becomes the persisted user message's ID
@@ -163,11 +137,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
       // The learner's question stays clean for retrieval; pedagogy choices
       // travel as separate directives so they only ever shape how the coach
       // answers, never what gets searched for.
-      const directives = [
-        { name: "Coaching style", instruction: style.instruction },
-        { name: "Learning tradition", instruction: tradition.instruction },
-        { name: "Practice protocol", instruction: practice.instruction }
-      ];
+      const { directives } = compileCoachPreferences(coaching.applied);
       // Fixture and production hit the same request/response contract; only
       // the endpoint (and how it sources chunks) differs. One brain, one
       // client code path.
@@ -176,7 +146,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
       const body = isFixture
         ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, directives, mode: "coach", route: selectLearningRoute(style.id, tradition.id), interactionId, conversationId: conversationId.current })
+          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current })
           : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, directives: [{ name: "Current topic", instruction: `The learner is currently studying "${selectedTopic.title}". If the question is ambiguous, read it in that context. Still answer only from the retrieved excerpts.` }] });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
@@ -240,7 +210,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
     <ModeFrame tone="coach">
       <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         {view === "chat" && chatMode === "coach" ? (
-          <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
+          <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setDraft(coaching.applied); setPersonalizeOpen((open) => !open); }}>
             <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
             <span className="chatMascotDot" aria-hidden="true" />
           </button>
@@ -309,30 +279,44 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
         aria-modal={personalizeOpen ? true : undefined}
       >
         <div className="coachSettingsSheetHead">
-          <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this session</strong></div>
+          <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this room</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
         <div>
           <span className="tinyLabel">HOW TO COACH</span>
           <div className="coachStyleGrid" aria-label="Choose a coaching style">
-            {STYLES.map((option) => <button key={option.id} type="button" className={option.id === style.id ? "coachStyle active" : "coachStyle"} onClick={() => setStyle(option)}><strong>{option.name}</strong><span>{option.description}</span></button>)}
+            {STYLES.map((option) => <button key={option.id} type="button" aria-pressed={option.id === style.id} disabled={coaching.applying} className={option.id === style.id ? "coachStyle active" : "coachStyle"} onClick={() => setDraft(current => ({ ...current, style: option.id }))}><strong>{option.name}</strong><span>{option.description}</span></button>)}
           </div>
         </div>
         <div className="coachChoiceRow">
           <label>Learning tradition
-            <select value={tradition.id} onChange={(event) => setTradition(TRADITIONS.find((option) => option.id === event.target.value) ?? TRADITIONS[0])}>
+            <select value={tradition.id} disabled={coaching.applying} onChange={(event) => setDraft(current => ({ ...current, tradition: event.target.value }))}>
               {TRADITIONS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
             <small>{tradition.description}</small>
           </label>
           <label>Practice recipe
-            <select value={practice.id} onChange={(event) => setPractice(PRACTICE_PROTOCOLS.find((option) => option.id === event.target.value) ?? PRACTICE_PROTOCOLS[0])}>
+            <select value={practice.id} disabled={coaching.applying} onChange={(event) => setDraft(current => ({ ...current, practice: event.target.value }))}>
               {PRACTICE_PROTOCOLS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
             <small>{practice.name === "Focused repetition" ? "Use repetition when it is the right tool, not as busywork." : practice.instruction}</small>
           </label>
         </div>
+        <label className="field">Explanation level
+          <select value={draft.explainLevel} disabled={coaching.applying} onChange={event => setDraft(current => ({ ...current, explainLevel: event.target.value as typeof draft.explainLevel }))}>
+            <option value="simpler">Simpler: plain words and familiar examples</option>
+            <option value="standard">Standard: the level of the material</option>
+            <option value="deeper">Deeper: precise terms and more connections</option>
+          </select>
+        </label>
+        <div className="coachApplyActions">
+          <button className="buttonPrimary" type="button" disabled={!dirty || busy || coaching.applying} onClick={() => void coaching.apply(draft)}>{coaching.applying ? "Recalibrating…" : "Apply"}</button>
+          <small>{busy ? "Apply after Studigo finishes this reply." : dirty ? "Apply to save these choices for this room." : "Your settings are saved for this room."}</small>
+        </div>
+        {coaching.error && <p className="formError" role="alert">{coaching.error}</p>}
+        {coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
       </section>
+        {!personalizeOpen && coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
         <div className="chatThread" role="log" aria-live="polite" aria-label="Messages">
         {messages.length === 0 ? (
           chatMode === "coach" ? (
@@ -377,5 +361,5 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
 }
 
 export { STYLES };
-export type { CoachingStyle };
+export type { CoachingStyle } from "@/lib/coach-preferences";
         

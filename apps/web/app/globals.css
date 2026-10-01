@@ -3703,6 +3703,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .planTimeline { grid-template-columns: repeat(auto-fill, minmax(470px, 1fr)); align-items: start; }
   .cramPreview { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
 }
+/* Apply stays visible at the foot of the coaching sheet. */
+.coachApplyActions { display: flex; align-items: center; gap: 12px; }
+.coachApplyActions .buttonPrimary { min-height: 44px; flex: none; }
+.coachApplyActions small { color: var(--muted); font-size: .8rem; line-height: 1.4; }
+.coachPreferenceStatus { margin: 0; padding: 8px 12px; font-size: .8rem; color: var(--ink-2); }
+@media (max-width: 700px) {
+  .coachSettings.mobileOpen .coachApplyActions {
+    position: sticky; bottom: -20px; padding: 12px 0;
+    background: var(--white); z-index: 2;
+  }
+}
+
 
 /* ---------------------------------------------------------------------------
    Phone tab bar that shrinks while you scroll, like Safari's address bar.

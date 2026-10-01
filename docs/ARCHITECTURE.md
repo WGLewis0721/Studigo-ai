@@ -419,6 +419,34 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 
 ## Explanation level
 
+### Applying delivery preferences
+
+Coach setup edits a draft. **Apply** sends the four choices (coaching style,
+learning tradition, practice recipe, explanation level) to
+`POST /api/coach/preferences`. The asynchronous request validates the IDs,
+rebuilds the delivery configuration deterministically and commits the choices
+to the owned `study_rooms` row. The UI reports recalibrating, success or a
+retryable error; it changes the active choices only after the saved row returns.
+No model call or separate job queue is needed to rebuild this configuration.
+
+`study_rooms.coach_preferences` stores only the three option IDs;
+`explain_level` remains the shared explanation-level source. `/api/chat` reads
+and compiles the saved settings for every turn, rather than trusting draft
+directives or route IDs from the browser. Coach receives all four settings;
+Ask/Learn receives the explanation level. Existing topic explanations and
+Socratic checks already read the same level. Room Settings also uses Apply and
+checks that the update actually returned the learner's room.
+
+For a pending Coach encounter, a newly applied route changes rendering only.
+Its original ChallengeSpec, expected concepts, source chunks, encounter ID,
+support history and grading remain intact. New replies use the applied delivery
+settings; existing messages are preserved. Draft changes never affect a reply.
+
+The phone tab bar preserves the Safari-style collapse already shipped on
+October 1 (`use-collapsing-tab-bar.ts`). It shrinks 30% on downward scrolling
+and expands on upward scrolling; Coach chat remains stable so its composer
+does not jump. The preference fix does not add a second scroll controller.
+
 `study_rooms.explain_level` (`simpler` / `standard` / `deeper`) changes how Learn
 mode and the Socratic check pitch an idea. It never changes which excerpts are
 retrieved, which facts are stated, or the citation rule — every level is bound to

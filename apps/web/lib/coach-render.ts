@@ -10,6 +10,7 @@ import {
 } from "@/lib/learning";
 import routePolicies from "@/lib/generated/route-policies.json";
 import type { RoutePolicyProjection } from "@/lib/route-policy-projection";
+import { ROUTE_RECORDS } from "./learning/director";
 
 // ---------------------------------------------------------------------------
 // ChallengeSpec -> learner-facing Coach instructions.
@@ -55,8 +56,11 @@ const ROUTE_POLICIES = routePolicies as Record<string, RoutePolicyProjection>;
  * KB rules about when to change support or advance are superseded by the
  * spec, which has already made that decision.
  */
-export function renderRouteGuidance(spec: Pick<ChallengeSpec, "routeRecord">): string[] {
-  const policy = ROUTE_POLICIES[spec.routeRecord];
+export function renderRouteGuidance(spec: Pick<ChallengeSpec, "routeRecord">, deliveryRoute?: LearningRoute): string[] {
+  // A newly applied route changes delivery immediately, including hints for
+  // an issued question. Its original spec remains intact for learning evidence.
+  const record = deliveryRoute ? `knowledge/teaching-coaching/${ROUTE_RECORDS[deliveryRoute]}.md` : spec.routeRecord;
+  const policy = ROUTE_POLICIES[record];
   const invariant =
     "The route changes how you teach, never what is correct: keep the same facts, the same concepts, and the same standard for a correct answer.";
   if (!policy) return [invariant];
@@ -72,7 +76,7 @@ export function renderRouteGuidance(spec: Pick<ChallengeSpec, "routeRecord">): s
 }
 
 /** Renders the whole spec for question generation. Deterministic and pure. */
-export function renderChallengeGuidance(spec: ChallengeSpec): string[] {
+export function renderChallengeGuidance(spec: ChallengeSpec, deliveryRoute?: LearningRoute): string[] {
   const shortAnswerOk = spec.challengeKind === "recognize" || spec.challengeKind === "recall";
   return [
     CHALLENGE_KIND_GUIDANCE[spec.challengeKind],
@@ -85,7 +89,7 @@ export function renderChallengeGuidance(spec: ChallengeSpec): string[] {
     ...(spec.constraints.requireNewContext
       ? ["Set the question in a situation the excerpts do not describe, so the learner has to carry the idea somewhere new."]
       : []),
-    ...renderRouteGuidance(spec)
+    ...renderRouteGuidance(spec, deliveryRoute)
   ];
 }
 

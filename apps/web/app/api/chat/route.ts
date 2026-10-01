@@ -1,4 +1,5 @@
-import { LEARNING_ROUTES, type LearningRoute } from "@/lib/learning";
+import { compileCoachPreferences } from "@/lib/coach-preferences";
+import { readCoachPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction } from "@/lib/coach-interaction";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
@@ -13,15 +14,11 @@ type ChatRequest = {
   roomId?: string;
   question?: string;
   conversationId?: string | null;
-  /** Pedagogy choices from the UI (coaching style, learning tradition,
-   *  practice protocol). Kept separate from `question` so they only ever
-   *  shape the system prompt and never the retrieval query. */
+  /** Topic context for Ask. Teaching preferences are read from the room. */
   directives?: EngineDirective[];
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
   mode?: "ask" | "coach";
-  /** Learning route id; anything unrecognized falls back to the default. */
-  route?: string;
   /** Client-generated UUID, once per submitted turn. Becomes the user
    *  message's ID and the stable identity of any learning evidence. */
   interactionId?: string;
@@ -61,6 +58,12 @@ export async function POST(request: Request) {
   // user-scoped client above proves ownership; the service writer performs
   // the mutation so browsers do not need privileges on trusted state.
   const service = createServiceSupabaseClient();
+  let teaching;
+  try {
+    teaching = compileCoachPreferences(await readCoachPreferences(supabase, roomId));
+  } catch {
+    return Response.json({ error: "Could not load your coaching settings. Please retry." }, { status: 503 });
+  }
 
   let conversationId = body?.conversationId ?? null;
   if (conversationId) {
@@ -96,8 +99,11 @@ export async function POST(request: Request) {
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
-  const directives = sanitizeDirectives(body?.directives);
   const mode = body?.mode === "coach" ? "coach" : "ask";
+  // Stored preferences are authoritative, including after a reload or tab change.
+  // Ask accepts only topic context from the client; draft pedagogy cannot override Apply.
+  const topicContext = (sanitizeDirectives(body?.directives) ?? []).filter(item => item.name === "Current topic");
+  const directives = mode === "coach" ? teaching.directives : [...topicContext, teaching.directives[3]];
 
   // Coach turns can produce learning evidence, so they require a stable
   // interaction ID: the persisted user message's own ID. Exact retries reuse
@@ -120,7 +126,7 @@ export async function POST(request: Request) {
       .from("messages")
       .insert({ conversation_id: conversationId, role: "user", content: question });
   }
-  const route = LEARNING_ROUTES.includes(body?.route as LearningRoute) ? (body?.route as LearningRoute) : undefined;
+  const route = teaching.route;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
