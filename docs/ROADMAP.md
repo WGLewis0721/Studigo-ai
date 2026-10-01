@@ -4,6 +4,60 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Latest shipped - September 30, 2026
+
+Shipped to production from `main` (merge `2fdfe14`, deployed on Vercel).
+
+**Study Room redesign.** The room is five pages: Coach, Practice, Progress, Plan,
+Materials. Ask and Learn now live inside Coach behind an explicit Coach / Learn
+switch; Quiz, Flashcards and Practice Test sit under Practice; Mastery and Weak
+Areas under Progress; the study plan and Cram under Plan. Wide screens get a
+framed room with a Studigo rail and a page selector in the top bar; phones get a
+bottom tab bar and no device frame. Every page has one header (mascot, title, one
+short sentence). The room's shell color is picked in Room Settings.
+
+**Learn quality.**
+- A reply in any form works. Learn reads the learner's meaning, not a required
+  format. A number, a letter, "the second one" or a full sentence all resolve
+  against the latest practice set in the conversation.
+- Slight misspellings are read as what they obviously meant, and an obviously
+  irrelevant reply gets a friendly redirect with no penalty.
+- Factual answers and lessons are a scannable outline built from the study guide:
+  short headings in the guide's order, one cited bullet per fact, at most two
+  levels of nesting.
+- Four starter chips sit above the Learn input: How Learn works, Explain this
+  topic, What's in my guide?, Key terms. "How Learn works" is a canned local
+  explainer (no model call) that says what Learn does and how it differs from
+  Coach.
+- Learn has its own teal identity so the Coach / Learn switch reads as two voices.
+
+**Typed text is read like a person reads it** (one shared module, see
+`ARCHITECTURE.md`). Quiz and Practice Test fill-in-the-blank, Coach commands,
+practice requests, help and answer requests, and topic names all tolerate small
+misspellings. A near-miss on a graded blank is credited at 85, not 100.
+
+**Copy.** App copy and model output no longer use em dashes.
+
+**Verified:** typecheck, the web and AI unit suites, and screenshots at phone and
+desktop sizes. **Not verified:** real model output with the new prompts, the
+signed-in app, a physical iPhone.
+
+Still open from this pass:
+
+- [ ] Verify Learn against the real model: outline compliance, off-topic
+      redirects, typo handling. There is no eval for this yet, so by the AI-change
+      rule below it is experimentation until one exists.
+- [ ] Strict grading cannot tell apart real words that differ by one letter
+      (isotonic / isotopic, sulfate / sulfite) because there is no dictionary.
+      Options: score against the room's own key terms, or send ambiguous
+      near-misses to the short-answer grader.
+- [ ] Visual audit of the Cards and Practice Test pages (the fixture routes 500
+      without a backend, so they were not screenshotted).
+- [ ] Physical iPhone pass over the new phone layouts (Coach, Learn chips,
+      Progress ring, Plan buttons, Materials file cards).
+- [ ] Progress is the only dark page. It is a deliberate readout screen; revisit
+      it if user tests find it jarring next to the others.
+
 ## Current P0 — Downloadable study guide
 
 The #1 missing user-facing feature is a simple way to **download the study guide
@@ -122,6 +176,13 @@ Still open from the original Phase 1 list:
   `standard` / `deeper` is set per room and changes only how an idea is pitched;
   the excerpts, the citation rule and the facts are identical at every level.
 - [x] Examples grounded in source when possible.
+- [x] Factual answers and lessons as a cited outline built from the study guide,
+  not a block of prose.
+- [x] Replies accepted in any form. Learn judges meaning, tolerates small
+  misspellings, and redirects an obviously irrelevant reply without penalty.
+- [x] Four starter chips, including a local "How Learn works" explainer that
+  contrasts Learn with Coach.
+- [ ] Eval the above against the real model (see "Latest shipped").
 
 ### Flashcards
 - [x] Generate per topic.
@@ -132,7 +193,9 @@ Still open from the original Phase 1 list:
 ### Quiz mode
 - [x] MCQ, true/false, fill-in, short response. True/false and fill-in are graded
   deterministically server-side — no model call, so they are instant and free.
-  Fill-in accepts every listed spelling and forgives a single typo on a long term.
+  Fill-in accepts every listed spelling and reads past swapped letters, filler
+  ("it is the...") and a typo in a long or multi-word term. A typo is credited at
+  85, an exact match at 100.
 - [x] Explain correct/incorrect answers from source.
 - [x] Avoid leakage of answer in stem. Generation is instructed against it and a
   fill-in stem containing its own answer is discarded before a learner sees it.
@@ -256,6 +319,9 @@ customization options.
       absent, keeping the direct OpenAI path unchanged when present.
 - [ ] **Verify real generation on the deployed Vercel app** (the preview
       sandbox has env-injection + AI-Gateway-billing limits the deploy does not).
+- [x] A reply to a practice set (a number, a letter, "the second one", a full
+      sentence, or a misspelled command) resolves against the latest set in the
+      conversation instead of starting a new topic.
 - [x] Revert the temporary testing surfaces before beta: `/app` requires
       authentication again and `/dev/study` + `/api/dev/coach` are
       development-only.
@@ -281,7 +347,7 @@ Exit: beta behavior is measurable and failures are diagnosable.
 
 ## Phase 5 — Product polish
 
-- Final Studigo visual system and mascot direction. *(Visual system V2, "Personal Learning Device", is implemented across marketing, auth and the Study Room — see `docs/DESIGN_SYSTEM.md`. New mascot poses remain future work.)*
+- Final Studigo visual system and mascot direction. *(Visual system V2, "Personal Learning Device", is implemented across marketing, auth and the Study Room, see `docs/DESIGN_SYSTEM.md`. The room was reorganised into five pages with phone and desktop layouts on September 30, 2026. New mascot poses remain future work.)*
 - Authentication/onboarding polish.
 - Empty/loading/error states.
 - Mobile-first study interactions.
@@ -313,7 +379,7 @@ Only after individual-student value is proven:
 - District-specific Microsoft/Entra tenant restrictions when needed.
 - Required privacy/compliance work.
 
-## Immediate next 10 engineering tasks
+## Immediate next engineering tasks
 
 1. **Production-validate Study Guide PDF download** on desktop/mobile and print.
 2. Add remaining endpoint-level export tests for empty rooms, response headers,
@@ -336,6 +402,9 @@ Only after individual-student value is proven:
    against the real production model.
 10. Instrument production failure modes and user-critical funnel steps:
     create room → upload ready → first useful study action → Study Guide download.
+
+11. Verify the September 30 Learn changes against the real model and add a small
+    Learn eval (outline format, off-topic redirect, typo-tolerant grading).
 
 Do not replace these with another foundation rewrite. The architecture has
 crossed the threshold where user-value, regression prevention, and reliability
@@ -383,10 +452,10 @@ This gate is now the release definition for both the Studigo learning app and th
 
 ## Studigo game / Moon Road / Core Clash — remaining before App Store sale
 
-**Current assessment:** strong browser prototype/golden slice, but still a prototype rather than a shippable $3.99 game. POC IX remains the current golden image on the game branch.
+**Current assessment:** strong browser prototype/golden slice, but still a prototype rather than a shippable $3.99 game. POC XI is the current golden image (tag `golden/poc-xi-moon-keep`); POC X is the previous golden. See `prototypes/moon-road/CURRENT_GAME_HANDOFF.md`.
 
 ### P0 — turn the slice into a product
-- [ ] Promote a deliberate release candidate from the prototype branch without modifying the POC IX golden build.
+- [ ] Promote a deliberate release candidate from the prototype branch without modifying the POC XI golden build.
 - [ ] Define the 1.0 content scope: complete beginning → progression → ending, expected playtime, level count, multiplication families/difficulty coverage, save/checkpoint model, and replay loop.
 - [ ] Implement durable local save/progression, settings, audio controls, pause/resume, reset, and migration/version handling.
 - [ ] Connect gameplay telemetry to learning evidence without claiming mastery from completion alone: attempts, fact-family accuracy, retries, time-to-correct, delayed rematch performance, and transfer checks.

@@ -17,9 +17,33 @@ In order:
 
 Then inspect the current code before proposing changes.
 
-## Current state
+## Latest state (September 30, 2026)
 
-This repository is a foundation scaffold moving into MVP implementation.
+The core loop and the study modes are built and deployed from `main`. Read
+`docs/ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
+and what is still unverified.
+
+- The Study Room is five pages: Coach (holding Ask and Learn), Practice, Progress,
+  Plan, Materials.
+- Learn answers are a cited outline from the study guide, replies need no
+  specific format, and typed text is read through one shared module,
+  `packages/ai/src/typos.ts`. Keep new typed-text matching in that module and
+  pick the right strictness level (loose, strict, command repair) rather than
+  writing another edit-distance check. See `docs/ARCHITECTURE.md`, "Reading typed
+  text".
+- Model output and app copy avoid em dashes (`PLAIN_PUNCTUATION_RULE`).
+- Not verified against the real model: the new Learn prompts, outline
+  compliance, off-topic redirects and typo grading. Treat that as the next AI
+  task, and add an eval before tuning prompts further.
+- The game in `prototypes/moon-road/` is separate and frozen at its golden image
+  (currently POC XI). Do not edit a golden build; start the next experiment in a
+  new sibling route.
+
+## Original state (kept for context)
+
+This repository began as a foundation scaffold moving into MVP implementation.
+The lists below predate most of the build, so check the code and the roadmap
+before trusting a "not yet" item.
 
 Already established:
 

@@ -126,8 +126,13 @@ See `docs/AUTH.md` for the canonical auth/provider/session/security design.
 
 - `/login`, `/signup` — Supabase email/password, session refreshed in middleware.
 - `/app` — study rooms: create, open, rename, delete.
-- `/app/rooms/[roomId]` — one room with six modes: Materials, Ask, Learn, Quiz,
-  Flashcards, Mastery. Mode state is client-side; all data is server-loaded.
+- `/app/rooms/[roomId]`: one room with five pages (`GROUPS` in
+  `components/room/workspace.tsx`): Coach (Coach plus Ask and Learn behind a
+  Coach / Learn switch), Practice (Quiz, Flashcards, Practice Test), Progress
+  (Mastery, Weak Areas), Plan (study plan, Cram) and Materials. Older `ask` and
+  `learn` links still resolve into Coach. Mode state is client-side; all data is
+  server-loaded. Wide screens show a framed room with a Studigo rail and the page
+  selector in the top bar; phones show a bottom tab bar.
 
 ## Backend
 
@@ -357,9 +362,12 @@ different ways.
 | `short_answer` | model, against `expected_answer` | one model call |
 
 Only short answers reach a model, which is what keeps a 20-question practice
-test fast. Fill-in comparison strips case, accents, punctuation and articles, and
-forgives one edit on terms of five characters or more — long enough that a single
-edit is a typo rather than a different word.
+test fast. Fill-in comparison (`gradeBlankAnswer` in `packages/ai/src/study.ts`)
+strips case, accents, punctuation, articles and answer filler such as "it is the",
+then matches exactly (score 100) or as a typo (score 85) using
+`packages/ai/src/typos.ts`, described under "Reading typed text" below. The
+short-answer grader prompt also tells the model to read straight through spelling
+mistakes, shorthand and missing punctuation.
 
 `accepted_answers` is answer-key data. Like `correct_choice` and
 `expected_answer`, it is excluded from the column grant to `authenticated`, so
@@ -423,6 +431,59 @@ the learner's explanation and follows up on the gap. It is formative: it writes
 no attempt and moves no mastery, because a teaching conversation should not
 punish thinking out loud. Measurement stays in Quiz, where the learner knows they
 are being assessed.
+
+## Learn answers
+
+Learn is the Ask path with a different layout and voice, not a separate engine.
+
+- **Outline format.** Grounded answers pass `format: "outline"` to
+  `streamGroundedAnswer`, which appends `OUTLINE_FORMAT_RULE` (in
+  `packages/ai/src/grounding.ts`) to the system prompt: one bold short answer
+  first, short headings in the study guide's order, one cited bullet per fact,
+  at most two nesting levels, no paragraph longer than a sentence. A greeting or
+  an unsupported question gets one plain sentence instead. `explainTopic` writes
+  its lesson in the same outline style.
+- **Rendering.** `lib/rich-text.ts` parses nested lists (`ListItem` carries
+  `inline` and an optional `sublist`) and `components/room/rich-text.tsx` renders
+  them, so a nested bullet reads as a detail of the bullet above it.
+- **Plain punctuation.** `PLAIN_PUNCTUATION_RULE` (`packages/ai/src/client.ts`) is
+  part of the base system prompt, the outline rule and `structured()`, so model
+  output avoids em dashes.
+- **Socratic verdicts.** The check judges what the learner meant, not how they
+  phrased it. `normalizeSocraticResponse` maps the model's reply onto one verdict
+  (`understood`, `partial`, `not_sure`, `off_topic`) and only `understood` marks
+  the check done. Every verdict has fallback feedback, an off-topic reply is
+  redirected, and none of it is scored.
+- **Practice replies.** `extractLatestPracticeSetFromHistory`, `isPracticeReply`
+  and `resolvePracticeQuestion` in `lib/recommendation-engine.ts` resolve a
+  number, letter, ordinal or sentence against the latest practice set, and
+  `buildPracticeTutorDirective` frames the tutor reply.
+- **Starter chips.** `learnStarters()` and `LEARN_GUIDE_TEXT` live in
+  `lib/coach-route-selection.ts`. The "How Learn works" guide is a local message
+  (`kind: "guide"` in `coach-panel.tsx`): it never reaches the model and is
+  filtered out of the history sent with later questions.
+
+## Reading typed text
+
+`packages/ai/src/typos.ts` is the one place that decides whether two words are
+"the same word, mistyped". It has three strictness levels so that being generous
+in conversation never makes grading generous.
+
+| Level | Function | Used for | Rule |
+| --- | --- | --- | --- |
+| Loose | `wordsMatch` | Ranking and finding a named topic (`findNamedTopic`, `pickTopic`) | A near match is enough, because a wrong guess only changes a suggestion |
+| Strict | `typoOfWord`, `termMatch` | Grading blanks | Digits never bend. Words under five letters must match exactly. One edit allowed, two on terms of twelve letters or more with the same first three letters, which keeps endothermic and exothermic apart. A small `PROTECTED_WORDS` list (stick, stock, simple, and similar) is never treated as a typo of its neighbour |
+| Command repair | `repairCommandTypos` | Coach commands and practice requests | Closed vocabulary, short messages only, and used only as a fallback after the text as typed has failed to match, so anything that matched before still matches the same way |
+
+Callers: `detectTurnIntent` and `classifyControlWord` in `packages/ai/src/coach.ts`
+(command words in `COACH_COMMAND_WORDS`), `classifyIntent` in
+`lib/recommendation-engine.ts` (`PRACTICE_COMMAND_WORDS`), and `gradeBlankAnswer`.
+`lib/recommendation-engine.ts` re-exports `editDistance` and `wordsMatch` from the
+shared module.
+
+Known limit: there is no dictionary, so strict grading cannot separate two real
+words that differ by one letter (isotonic and isotopic, sulfate and sulfite).
+Short terms are protected by the length rule; long ones are a tracked roadmap item.
 
 ## Coach generative layer
 

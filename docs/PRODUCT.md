@@ -47,7 +47,9 @@ being filled with general model knowledge.
 2. Create Study Room.
 3. Upload study guide plus supporting materials.
 4. Studigo analyzes the material and produces a topic map.
-5. Student chooses: Ask, Learn, Quiz, Flashcards, Practice Test, Weak Areas.
+5. Student chooses a page: Coach (which holds Ask and Learn), Practice (Quiz,
+   Flashcards, Practice Test), Progress (Mastery, Weak Areas), Plan (the study
+   plan and Cram), or Materials.
 6. The student corrects anything Studigo read wrong: topics and flashcards are
    theirs to retitle, reword, add or remove, and their edits survive a re-ingest.
 7. Studigo tracks evidence of mastery over time.
@@ -142,6 +144,32 @@ never moves mastery, because a student will not think out loud if doing it badly
 costs them something. Measurement belongs in Quiz, where they know they are being
 measured.
 
+
+## Learn and Coach are two different jobs
+
+Learn is for understanding. It answers from the student's own materials, shows
+the page each answer came from, and explains an idea or term until it makes
+sense. Answers are a scannable outline taken from the teacher's study guide, not
+a wall of text. Learn never grades the student and never moves mastery, and when
+something is not in the materials it says so instead of guessing.
+
+Coach is for practice. It asks questions, checks the answers, and adapts. This
+is where mastery is earned, together with Quiz.
+
+The natural order is Learn first when a term is unclear, then Coach to practice
+it. The four starter chips above the Learn input teach this, and "How Learn
+works" explains it in the chat itself.
+
+## Typed answers are read the way a person would read them
+
+A student should never fail because of how they typed. In Learn and Coach a reply
+needs no special format: a number, a letter, "the second one", or a full sentence
+all work. Small misspellings are read as what the student meant, and an obviously
+irrelevant reply gets a friendly redirect instead of a penalty.
+
+Grading is stricter than conversation, on purpose. A graded blank accepts a typo
+in a real term but gives it 85 rather than 100, and short words and numbers are
+never bent into a different answer. See `ARCHITECTURE.md` for the three levels.
 
 ## Downloadable study guide contract
 

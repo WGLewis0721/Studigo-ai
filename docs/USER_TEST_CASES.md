@@ -76,6 +76,12 @@ The purpose is not to prove every backend component independently. The purpose i
 
 **Pass:** Studigo explains the topic at the room's explanation level, uses sources, asks at least one meaningful self-explanation/Socratic check, and does not move mastery from the formative conversation alone.
 
+## UT-06b - Reply to Learn in your own way
+
+**Task:** In Coach > Learn, tap "How Learn works", then ask for a topic. Answer a Socratic or practice question with a number, a short phrase with a misspelling, and a clearly unrelated sentence.
+
+**Pass:** The explainer says Learn answers from the materials, never grades, and that Coach is for practice. The topic answer is an outline with cited bullets, not a wall of text. The misspelled reply is understood. The unrelated reply is redirected kindly with no penalty and no mastery change.
+
 ## UT-07 — Ask for exactly N questions
 
 **Task:** "Give me 10 questions on this unit."

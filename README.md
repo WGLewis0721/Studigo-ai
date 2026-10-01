@@ -48,9 +48,16 @@ What works today:
   "not in your materials" response when the evidence is not there.
 - **Study-guide intelligence.** A teacher study guide automatically produces the
   topic map, each topic linked to the passages supporting it.
-- **Learn / Quiz / Flashcards.** Real modes over the same knowledge base:
-  grounded topic explanations, generated multiple-choice and short-answer
-  questions with model-graded free text, and spaced-repetition cards.
+- **Coach, with Ask and Learn inside.** The Study Room has five pages: Coach,
+  Practice, Progress, Plan and Materials. Learn answers from the room's own
+  materials as a cited outline built from the study guide, never grades, and
+  has four starter chips (including "How Learn works") that explain how it
+  differs from Coach. Replies need no special format: small misspellings are
+  understood and an irrelevant reply is redirected without penalty.
+- **Quiz / Flashcards / Practice Test.** Real modes over the same knowledge base:
+  generated multiple-choice, true/false, fill-in and short-answer questions with
+  model-graded free text, and spaced-repetition cards. Fill-in blanks read past
+  typos (credited at 85, exact at 100) through one shared typo module.
 - **Mastery.** Calculated from actual quiz and review performance — unpracticed
   topics count as zero, and a room with no practice shows no number at all.
 

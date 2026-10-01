@@ -133,7 +133,7 @@ so the whole room re-tints (the `--tone` custom property is registered with
 
 | Mode | Color | Why |
 | --- | --- | --- |
-| Learn | Blueberry | Calm, explanatory, trustworthy |
+| Learn | Teal inside Coach (`.coachChat[data-chat-mode="learn"]`); Blueberry in the older `data-tone="learn"` map | Learn is "your material speaking", so its chat, chips, composer and skill list run teal and the Coach / Learn switch reads as two voices |
 | Ask, Materials | Teal | "Your material speaking" — the source color; citations are teal everywhere |
 | Coach, Cram | Tangerine (Coach pairs it with Berry) | The companion's color; warmth and energy. Coach's whole-mode surfaces run tangerine → berry (`--tone-2`) |
 | Quiz | Dandelion | Attention, a focused challenge |
