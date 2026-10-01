@@ -37,6 +37,8 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
   const hostRef = useRef<HTMLDivElement>(null);
   const handle = useRef<CompanionHandle | null>(null);
   const latest = useRef({ tone, hasJob });
+  // Read once per visit to the room, not once per effect run (React runs effects twice in development).
+  const arriving = useRef<boolean | null>(null);
   const [prefs, updatePrefs] = useCompanionPrefs(roomId);
 
   useEffect(() => { latest.current = { tone, hasJob }; });
@@ -59,13 +61,15 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
     if (process.env.NEXT_PUBLIC_STUDIGO_COMPANION === "off") return;
     const workspace = workspaceRef.current, host = hostRef.current;
     if (!workspace || !host) return;
-    let arriving = false;
+    if (arriving.current === null) {
+      arriving.current = false;
+      try {
+        arriving.current = window.sessionStorage.getItem(LEAP_KEY) === "1";
+        window.sessionStorage.removeItem(LEAP_KEY);
+      } catch { /* storage is optional */ }
+    }
     try {
-      arriving = window.sessionStorage.getItem(LEAP_KEY) === "1";
-      window.sessionStorage.removeItem(LEAP_KEY);
-    } catch { /* storage is optional */ }
-    try {
-      const created = createCompanion(workspace, host, { prefs: readCompanionPrefs(roomId), onPrefs: updatePrefs, arriving });
+      const created = createCompanion(workspace, host, { prefs: readCompanionPrefs(roomId), onPrefs: updatePrefs, arriving: arriving.current });
       created.setTone(latest.current.tone);
       created.setJob(latest.current.hasJob);
       handle.current = created;
