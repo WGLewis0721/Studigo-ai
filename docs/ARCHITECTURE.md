@@ -261,9 +261,21 @@ The web app is the canonical client and should be installable on desktop/mobile 
 
 Tauri or any future native shell should resolve authentication to the same Supabase users and RLS model. Do not create a separate native-only account system.
 
-### Possible later mobile route
+### Mobile route: Expo / React Native
 
-If native store distribution becomes important, evaluate Capacitor, React Native/Expo, or platform-native shells based on actual requirements. Do not build all three.
+As of October 1, 2026, the App Store route is **Expo / React Native**. Do not start a parallel Capacitor or platform-native implementation unless this decision is explicitly revisited.
+
+The native application is a client of the existing hosted Studigo system:
+
+- reuse the same Supabase Auth identity and RLS-protected data;
+- call the hosted Studigo API for learning/AI operations;
+- keep mastery, Coach progression, retrieval, document processing, and adaptive-learning state server-owned;
+- share types/contracts where practical, but do not import server-only code or secrets into the mobile bundle;
+- use native file, share, authentication, safe-area, accessibility, and lifecycle behavior where iOS requires it.
+
+For paid access, web purchases flow through Stripe and iOS digital purchases flow through StoreKit/RevenueCat; both reconcile into APEX as the canonical entitlement layer.
+
+See [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md) for the release sequence and acceptance criteria.
 
 ## Security rules
 
