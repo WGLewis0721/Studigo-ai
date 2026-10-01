@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test lib/*.test.ts",
     "generate:routes": "tsx scripts/generate-route-policies.ts",
-    "eval:coach-styles": "tsx scripts/eval-coach-styles.ts"
+    "eval:coach-styles": "tsx scripts/eval-coach-styles.ts",
+    "generate:references": "tsx scripts/generate-teaching-references.ts"
   },
   "dependencies": {
     "@studigo/ai": "workspace:*",

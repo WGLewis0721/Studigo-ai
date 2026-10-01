@@ -72,9 +72,9 @@ test("Learn: every combination sends only the room level and topic, never the Co
   }
 });
 
-test("the explanation level changes only the level line; everything else is identical", () => {
+test("the explanation level changes only the level line and the level's model reply", () => {
   for (const prefs of ALL.filter(p => p.explainLevel === "standard")) {
-    const lines = (level: typeof LEVELS[number]) => compileCoachPreferences({ ...prefs, explainLevel: level }).directives.filter(d => d.name !== "Explanation level");
+    const lines = (level: typeof LEVELS[number]) => compileCoachPreferences({ ...prefs, explainLevel: level }).directives.filter(d => d.name !== "Explanation level" && d.name !== "Teaching reference");
     assert.deepEqual(lines("simpler"), lines("deeper"));
     const levels = LEVELS.map(level => compileCoachPreferences({ ...prefs, explainLevel: level }).directives.find(d => d.name === "Explanation level")!.instruction);
     assert.equal(new Set(levels).size, 3);

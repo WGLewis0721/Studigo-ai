@@ -75,3 +75,11 @@ Every record provides:
 - source notes and references.
 
 The knowledge base is descriptive, not a claim that every option is equally effective or universally appropriate.
+
+## Reference replies and explanation levels (October 2026)
+
+- `exemplars/` holds 26 reference replies on one sample situation (a learner calls a trained dog's sit an instinct): every coaching style at every explanation level (18), every learning tradition (5) and every practice recipe (3). Each has the situation, the good reply, why it fits and what to avoid.
+- `levels/` defines the three explanation levels with rules and the same idea written at that level.
+- `pnpm --filter @studigo/web generate:references` compiles all records into `apps/web/lib/generated/teaching-references.json`. A test fails if the JSON drifts from these files.
+- Each Coach turn receives the chosen style's record, the chosen tradition's record, the practice recipe, the level and the one matching reference reply. Learn receives only the level. Nothing is retrieved at request time, no extra model call is made, and a test caps the added text at 480 words.
+- Reference replies use a sample topic. The prompt tells the model to copy their moves, never their facts.

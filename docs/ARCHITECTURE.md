@@ -543,3 +543,7 @@ The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`
   - The issued spec must match the authenticated user, the room and the pending topic before the service-role write.
   - Commit order: record evidence, then save Coach state (one retry), then stream. A failed event write advances nothing. A retry after a failed state write re-records idempotently and keeps the committed result.
   - The director reloads persisted history for every new question.
+
+## Teaching references in Coach prompts
+
+`knowledge/teaching-coaching/` now has 43 records: the 14 option records, 26 reference replies (`exemplars/`) and 3 explanation levels (`levels/`). They are compiled at build time into `apps/web/lib/generated/teaching-references.json` (`lib/teaching-reference-projection.ts`, `pnpm generate:references`, drift test in `lib/teaching-reference.test.ts`). `compileCoachPreferences` adds a `Teaching reference` directive with both the style and the tradition records, the practice recipe and the reference reply for the chosen style at the room's level; the `Explanation level` directive carries the level's rules and sample, which Learn also receives. There is no runtime retrieval and no added model call, and the added text is capped (`REFERENCE_WORD_BUDGET`) so Coach latency is preserved.
