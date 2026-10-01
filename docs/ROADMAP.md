@@ -383,11 +383,11 @@ Exit: feels like a cohesive study companion rather than a developer tool.
 ## Phase 6 — Native/executable distribution
 
 - Decide whether desktop packaging is actually valuable.
-- Finalize hosted API boundary.
-- Reuse the same Supabase identity/account model in native shells.
-- Enable Tauri bundling/signing/updating if justified.
-- Evaluate mobile-store wrapper only if PWA limitations block product goals.
-- If true native Apple clients are built, evaluate native Sign in with Apple while preserving the shared Supabase user model.
+- Finalize the hosted API boundary used by both web and the chosen native client.
+- Build the iOS client with Expo / React Native according to [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md).
+- Reuse the same Supabase identity/account model in native clients.
+- Implement native-safe authentication, including Sign in with Apple when required, while preserving the shared Supabase user model.
+- Keep Tauri desktop bundling/signing/updating as a separate decision; do not use the desktop scaffold as the iOS architecture.
 
 ## Phase 7 — School/family expansion (post-validation)
 
