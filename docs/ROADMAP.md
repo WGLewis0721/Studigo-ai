@@ -440,6 +440,8 @@ This gate is now the release definition for both the Studigo learning app and th
 
 ## Studigo learning app — remaining before taking money
 
+**Chosen iOS path (October 1, 2026):** Expo / React Native client over the existing hosted Studigo backend and Supabase identity/data model. Web purchases use Stripe; iOS digital purchases use StoreKit/RevenueCat; both reconcile into APEX. See [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md).
+
 **Current assessment:** functional web product with substantial learning architecture; not yet a production-paid App Store product.
 
 ### P0 — reliability and safety before billing
@@ -459,10 +461,10 @@ This gate is now the release definition for both the Studigo learning app and th
 - [ ] Run real test-mode purchase, renewal/cancel/refund, replay/idempotency, and entitlement-recovery acceptance before enabling live charges.
 
 ### P1 — iOS/App Store client
-- [ ] Choose and implement the iOS delivery architecture. The existing PWA alone is not an App Store binary; preserve the hosted API/Supabase identity boundary and avoid duplicating learning state in the client.
+- [ ] Implement the chosen Expo / React Native iOS client. Preserve the hosted API/Supabase identity boundary and avoid duplicating learning state in the client.
 - [ ] Configure Apple Developer/App Store Connect, permanent bundle ID, signing, capabilities, app icon, launch assets, privacy manifest/required-reason APIs as applicable, and native-safe authentication.
 - [ ] Implement Sign in with Apple when required by the final authentication configuration while preserving the canonical Supabase user model.
-- [ ] Implement StoreKit/App Store In-App Purchase for digital Studigo subscriptions/features sold inside the iOS app, with server-side entitlement reconciliation into APEX.
+- [ ] Implement StoreKit/App Store In-App Purchase for digital Studigo subscriptions/features sold inside the iOS app, using RevenueCat for mobile purchase/subscription state and server-side entitlement reconciliation into APEX.
 - [ ] Configure App Store Server Notifications and prove purchase, restore, renewal, cancellation, billing retry, refund, and revoked entitlement behavior.
 - [ ] Add Restore Purchases and ensure web-purchased and App-Store-purchased entitlements resolve to one customer access model without double-granting.
 - [ ] Physical-device QA on supported iPhone/iPad sizes: auth callbacks, uploads/file picker, camera/photo imports if exposed, Study Room, Coach, quiz/flashcards, PDF export/share, background/resume, poor network, accessibility, safe areas, keyboard, and orientation.
