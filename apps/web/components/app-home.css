@@ -1,0 +1,67 @@
+/* The app's Home: Studigo on his stage, what is next, and the first-run setup.
+   Same tokens, keys and room cards as the rest of the app (globals.css); the
+   stage and its sill come from components/companion/companion.css. */
+
+.homeHero {
+  display: grid; grid-template-columns: 232px minmax(0, 1fr); grid-template-areas: "stage say" "stage next";
+  gap: 16px clamp(20px, 3vw, 40px); align-items: center; margin-bottom: clamp(30px, 4vw, 48px);
+}
+.homeStage { grid-area: stage; width: 232px; height: 250px; }
+.homeSay { grid-area: say; align-self: end; }
+.homeSay .pageTitle { margin-top: 8px; font-size: clamp(1.9rem, 3.2vw, 2.9rem); text-wrap: balance; }
+.homeSay .pageLede { margin-top: 8px; }
+.nextUp {
+  grid-area: next; align-self: start; max-width: 760px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: center; padding: 20px 22px 20px; border-radius: var(--r-xl);
+  background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), inset 0 4px 0 var(--tone), var(--lift-2);
+}
+.nextUpText { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.nextUp .tinyLabel { color: var(--tone-ink); }
+.nextUp h2 { margin: 2px 0 0; font-family: var(--display); font-size: clamp(1.4rem, 2vw, 1.75rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.1; text-wrap: balance; }
+.nextUp p { margin: 0; color: var(--ink-2); font-size: .95rem; line-height: 1.5; }
+.nextUp .nextUpProgress { padding: 5px 11px; border-radius: 999px; background: var(--tone-soft); color: var(--ink); font-family: var(--mono); font-size: .72rem; font-weight: 600; letter-spacing: .02em; }
+.nextUp .nextUpProgress { margin-top: 2px; }
+
+.roomsHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 0 16px; }
+.roomsHeading h2 { margin: 6px 0 0; font-family: var(--display); font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 800; letter-spacing: -.035em; }
+
+/* ---------- first run ---------- */
+.firstRoom {
+  display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 520px); gap: clamp(24px, 5vw, 72px); align-items: center; justify-content: center;
+  min-height: min(720px, calc(100dvh - 140px)); padding: clamp(8px, 2vw, 24px) 0;
+}
+.firstRoomStage { width: 100%; aspect-ratio: 1 / 1.05; }
+.firstRoomBody { display: grid; gap: 14px; align-content: start; }
+.firstRoomBody .pageTitle { margin: 0; font-size: clamp(2rem, 3.8vw, 3rem); outline: none; text-wrap: balance; }
+.firstRoomBody .pageLede { margin: 0 0 6px; }
+.firstRoomBody .buttonPrimary { justify-self: start; margin-top: 6px; }
+.firstRoomBody .field small { font-weight: 500; color: var(--muted); }
+.firstRoomBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 40px; margin-bottom: 6px; }
+.firstRoomBack { min-height: 40px; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: var(--white); cursor: pointer; font: inherit; font-size: .88rem; font-weight: 700; color: var(--ink-2); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline-strong); }
+.firstRoomDots { display: inline-flex; gap: 6px; }
+.firstRoomDots i { width: 8px; height: 8px; border-radius: 50%; background: var(--snow-3); transition: width .25s var(--ease-out), background-color .25s ease; }
+.firstRoomDots i[data-past] { background: color-mix(in oklab, var(--tone) 55%, white); }
+.firstRoomDots i[data-on] { width: 24px; border-radius: 999px; background: var(--tone-key); }
+.firstRoomPreview { min-height: 0; padding: 16px 18px 18px; max-width: 320px; }
+.firstRoomTry { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.firstRoomTry li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline); }
+.firstRoomTry li i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; font-style: normal; font-weight: 800; color: transparent; background: var(--snow-2); box-shadow: var(--recess); transition: background-color .2s ease, color .2s ease; }
+.firstRoomTry li[data-done] i { color: var(--kiwi-ink); background: var(--kiwi-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--kiwi) 55%, white); }
+.firstRoomTry b { display: block; font-size: .98rem; }
+.firstRoomTry span { color: var(--muted); font-size: .86rem; }
+
+@media (max-width: 980px) {
+  .homeHero { grid-template-columns: 190px minmax(0, 1fr); grid-template-areas: "stage say" "next next"; }
+  .homeStage { width: 190px; height: 214px; }
+  .homeSay { align-self: center; }
+}
+@media (max-width: 700px) {
+  .homeHero { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "say" "next"; gap: 16px; }
+  .homeStage { width: 100%; height: 214px; }
+  .homeSay .pageTitle { font-size: clamp(1.9rem, 8.4vw, 2.5rem); }
+  .nextUp { grid-template-columns: minmax(0, 1fr); }
+  .nextUp .buttonPrimary { justify-self: stretch; }
+  .firstRoom { grid-template-columns: minmax(0, 1fr); gap: 20px; min-height: 0; align-items: start; }
+  .firstRoomStage { aspect-ratio: auto; height: 236px; }
+  .firstRoomBody .buttonPrimary { justify-self: stretch; }
+}
