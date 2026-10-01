@@ -1,7 +1,7 @@
 "use client";
 
 import "./companion.css";
-import { createContext, useContext, useEffect, useMemo, useRef, type RefObject } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type RefObject } from "react";
 import type { CompanionEvent } from "@/lib/companion-logic";
 import { readCompanionPrefs, useCompanionPrefs } from "@/lib/companion-prefs";
 import { createCompanion, type CompanionHandle } from "./engine";
@@ -41,6 +41,19 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
 
   useEffect(() => { latest.current = { tone, hasJob }; });
 
+  /** He is an extra. If anything in his window throws, he is switched off and the room carries on. */
+  const safely = useCallback((use: (companion: CompanionHandle) => void) => {
+    const companion = handle.current;
+    if (!companion) return;
+    try {
+      use(companion);
+    } catch (error) {
+      console.error("Studigo's window stopped.", error);
+      handle.current = null;
+      try { companion.destroy(); } catch { /* already broken */ }
+    }
+  }, []);
+
   useEffect(() => {
     // A switch for launch day: set NEXT_PUBLIC_STUDIGO_COMPANION=off to ship the room without him.
     if (process.env.NEXT_PUBLIC_STUDIGO_COMPANION === "off") return;
@@ -62,17 +75,21 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
       console.error("Studigo's window could not start.", error);
       host.innerHTML = "";
     }
-    return () => { handle.current?.destroy(); handle.current = null; };
+    return () => {
+      const companion = handle.current;
+      handle.current = null;
+      try { companion?.destroy(); } catch { /* nothing left to clean up */ }
+    };
   }, [roomId, workspaceRef, updatePrefs]);
 
-  useEffect(() => { handle.current?.setTone(tone); }, [tone]);
-  useEffect(() => { handle.current?.setJob(hasJob); }, [hasJob]);
-  useEffect(() => { handle.current?.setPrefs(prefs); }, [prefs]);
+  useEffect(() => { safely((companion) => companion.setTone(tone)); }, [tone, safely]);
+  useEffect(() => { safely((companion) => companion.setJob(hasJob)); }, [hasJob, safely]);
+  useEffect(() => { safely((companion) => companion.setPrefs(prefs)); }, [prefs, safely]);
 
   const api = useMemo<CompanionApi>(() => ({
-    event: (name) => handle.current?.event(name),
-    thinking: (on) => handle.current?.thinking(on)
-  }), []);
+    event: (name) => safely((companion) => companion.event(name)),
+    thinking: (on) => safely((companion) => companion.thinking(on))
+  }), [safely]);
 
   return { hostRef, api };
 }
