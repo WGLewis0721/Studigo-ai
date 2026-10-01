@@ -77,17 +77,30 @@ export function ChipButton({ children, onClick, label }: { children: ReactNode; 
 }
 
 /**
- * The Studigo rail: a slim band in the page's color that carries the wordmark
- * and the status dots. It is the divider between a page's options and its
- * content, and its color says which of the five pages you are on. Purely
- * decorative, so it is hidden from assistive tech.
+ * The five pages, in the order of the page selector. The Studigo rail has one
+ * dot for each; the dot for the page you are on is lit. Keep in step with
+ * GROUPS in workspace.tsx (each page's tone is its id here).
  */
-export function StudigoRail() {
+export const PAGE_TONES = ["coach", "quiz", "mastery", "plan", "materials"] as const;
+
+/**
+ * The Studigo rail: a slim band in the page's color that carries the wordmark
+ * and five small dots, one per page, with the current page's dot lit. It is
+ * the divider between a page's options and its content, and its color says
+ * which of the five pages you are on. Purely decorative (the page selector
+ * says the same thing in words), so it is hidden from assistive tech.
+ */
+export function StudigoRail({ tone }: { tone: string }) {
+  const step = PAGE_TONES.indexOf(tone as (typeof PAGE_TONES)[number]);
   return (
     <div className="studigoRail" aria-hidden="true">
       <span className="railLed" />
       <span className="railBrand">studigo</span>
-      <span className="railGrille" />
+      <span className="railDots">
+        {PAGE_TONES.map((page, index) => (
+          <i key={page} data-lit={index === step ? "true" : undefined} />
+        ))}
+      </span>
     </div>
   );
 }
@@ -97,7 +110,7 @@ export function ModeFrame({ tone, children }: { tone: string; children: ReactNod
   return (
     <div className="modeFrame" data-tone={tone}>
       {children}
-      <StudigoRail />
+      <StudigoRail tone={tone} />
     </div>
   );
 }
