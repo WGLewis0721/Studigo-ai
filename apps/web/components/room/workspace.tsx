@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
@@ -94,6 +94,27 @@ export function RoomWorkspace({
   );
   const [coachView, setCoachView] = useState<"chat" | "topics">(initialMode === "learn" ? "topics" : "chat");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsClosing, setSettingsClosing] = useState(false);
+  const closeTimer = useRef(0);
+  // The menu eases back up before it unmounts (wide screens only; phones close it at once).
+  const closeSettings = useCallback(() => {
+    if (closeTimer.current) return;
+    const eased = window.matchMedia("(min-width: 701px) and (prefers-reduced-motion: no-preference)").matches;
+    if (!eased) { setSettingsOpen(false); return; }
+    setSettingsClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = 0;
+      setSettingsOpen(false);
+      setSettingsClosing(false);
+    }, 190);
+  }, []);
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") closeSettings(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [settingsOpen, closeSettings]);
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
   const [theme] = useRoomTheme(room.id);
   const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
   const [mascotState, setMascotState] = useState<MascotState>("welcome");
@@ -125,6 +146,7 @@ export function RoomWorkspace({
   return (
     <div className="roomDevice" data-shell={theme} data-tone={theme}>
     <div className="roomWorkspace" data-tone={mode}>
+      <div className="topbarWrap">
       <header className="workspaceTopbar">
         <Link className="roomBackButton" href="/app" aria-label="All rooms">
           <span aria-hidden="true">‹</span>
@@ -149,8 +171,8 @@ export function RoomWorkspace({
           <button
             className="iconButton"
             type="button"
-            onClick={() => setSettingsOpen((open) => !open)}
-            aria-expanded={settingsOpen}
+            onClick={() => (settingsOpen ? closeSettings() : setSettingsOpen(true))}
+            aria-expanded={settingsOpen && !settingsClosing}
             aria-label="Room settings"
           >
             •••
@@ -158,8 +180,9 @@ export function RoomWorkspace({
         </div>
       </header>
 
-      {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={() => setSettingsOpen(false)} />}
-      {settingsOpen && <RoomSettings room={room} onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={closeSettings} />}
+      {settingsOpen && <RoomSettings room={room} onClose={closeSettings} closing={settingsClosing} />}
+      </div>
 
       <div className="studyNavigation">
         <SectionNav current={currentGroup.name} onSelect={(next) => navigate(next)} />

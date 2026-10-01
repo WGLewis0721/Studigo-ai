@@ -3,13 +3,16 @@
 import { useRef, type KeyboardEvent } from "react";
 import { ROOM_THEMES, useRoomTheme } from "@/lib/room-theme";
 
+/** The swatches sit in a grid of this many columns; Up and Down move by a row. */
+const COLUMNS = 3;
+
 export function RoomColorPicker({ roomId }: { roomId: string }) {
   const [shell, setShell] = useRoomTheme(roomId);
   const swatchRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function onKey(event: KeyboardEvent<HTMLDivElement>) {
     const step =
-      event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
+      event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : event.key === "ArrowDown" ? COLUMNS : event.key === "ArrowUp" ? -COLUMNS : 0;
     if (!step) return;
     event.preventDefault();
     const index = ROOM_THEMES.findIndex((item) => item.id === shell);
@@ -31,14 +34,12 @@ export function RoomColorPicker({ roomId }: { roomId: string }) {
             type="button"
             role="radio"
             aria-checked={shell === item.id}
-            aria-label={item.name}
             tabIndex={shell === item.id ? 0 : -1}
             className="cdSwatch"
             data-tone={item.id}
             onClick={() => setShell(item.id)}
           >
-            <i aria-hidden="true" />
-            <span>{item.name}</span>
+            {item.name}
           </button>
         ))}
       </div>
