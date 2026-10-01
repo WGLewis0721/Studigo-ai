@@ -17,6 +17,10 @@ Phaser 3.90.0, MIT, https://phaser.io/ — bundled locally as `dist/vendor/phase
 
 Web Audio effects are synthesized locally. Fonts are device monospace fonts; no external font license or request.
 
+## Authoring tools (local only, not shipped)
+
+Pixelorama (MIT), LDtk (MIT), TexturePacker (commercial, CodeAndWeb license accepted per machine), Blender and Godot (MIT/GPL, no output restrictions) are used on the developer machine to author art and levels. Their binaries and installers are not committed (see `.gitignore`); only their outputs (PNG strips, Phaser atlas JSON, `.ldtk` level JSON) are. TexturePacker free/trial output must not ship in a public build without an appropriate license. Phaser 4.2.1 is kept locally for reference only; the game ships Phaser 3.90.0. See TOOLCHAIN.md.
+
 ## POC VIII skeleton reference
 
 The Graveyard skeleton body is reused from William's supplied Higgsfield prototype, `https://studigo-graveyard-123.higgsfield.app`, via its authorized source checkout (`app/public/client.js`, `drawSkeleton`, inspected 2026-09-29). The existing procedural skull, ribs, limbs and belt are rendered into a local Phaser canvas texture; number overlays and combat effects remain separate. No third-party pack license is claimed. See POC-VIII.md for provenance and preservation boundaries. All shared generated images remain unchanged.

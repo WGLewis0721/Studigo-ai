@@ -14,6 +14,7 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 - It plays in the browser with a keyboard or touch, and ↺ in the header restarts a run.
 - It's a standalone prototype served from GitHub Pages, not part of the Studigo app.
 - The source, rules and tests are in [`prototypes/moon-road/`](prototypes/moon-road/). Start with [POC-X.md](prototypes/moon-road/POC-X.md).
+- Making art or levels for the game? The local tools (Pixelorama, LDtk, TexturePacker, Blender, Godot) and the pipeline are in [TOOLCHAIN.md](prototypes/moon-road/TOOLCHAIN.md). Tool binaries stay on your machine and are never committed.
 
 ## Status
 
