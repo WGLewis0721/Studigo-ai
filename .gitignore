@@ -16,3 +16,11 @@ apps/desktop/src-tauri/target/
 *.tsbuildinfo
 
 supabase/.temp/
+
+# Local game-dev tool binaries/installers (Godot, Pixelorama, LDtk, TexturePacker, Blender) never belong in the repo
+*.exe
+*.msi
+*.pck
+*.blend1
+tools/
+**/backups/*.ldtk

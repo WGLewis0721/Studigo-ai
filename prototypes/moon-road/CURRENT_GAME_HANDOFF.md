@@ -121,6 +121,10 @@ At the vault finish, **ENTER CORE CLASH** navigates to `poc-vii/boss.html`. That
 
 The connected boss therefore retains the original 50 HP shield/orb encounter, zero boss damage from normal shots, autoshoot, the existing power challenge, five powered shots at two damage each, touch controls, and original animations. POC VII ×3/×4 run unlocks are not carried into or substituted for the boss's separate original orb rule. This preserves Core Clash itself while making it the level's final fight.
 
+## Authoring toolchain
+
+Art/level tools (Pixelorama, LDtk, TexturePacker, Blender + MCP, Godot reference) and the art-to-level pipeline are documented in TOOLCHAIN.md. They are local-only; never commit binaries or installers. New work still goes in sibling POC routes; golden routes stay frozen.
+
 ## Run locally
 
 From `prototypes/moon-road/`:

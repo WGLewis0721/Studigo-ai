@@ -46,3 +46,7 @@ The primary learner question is always:
 > What do I need to know, do I understand it, and what should I practice next?
 
 Optimize screens around that question.
+
+## Game toolchain
+
+Core Clash game work: see `prototypes/moon-road/TOOLCHAIN.md` for Pixelorama, LDtk, TexturePacker, Blender, Godot and the art pipeline.
