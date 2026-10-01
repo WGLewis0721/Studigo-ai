@@ -450,19 +450,33 @@ This gate is now the release definition for both the Studigo learning app and th
 
 **Studigo paid-production exit:** a new customer can sign up, pay through an approved channel, receive the correct entitlement exactly once, use the core study loop reliably, restore access on another device, cancel/refund without stale access, delete their account/data, and receive support from an auditable production system.
 
-## Studigo game / Moon Road / Core Clash — remaining before App Store sale
+## Studigo game / Moon Keep (Moon Road / Core Clash) — remaining before App Store sale
 
-**Current assessment:** strong browser prototype/golden slice, but still a prototype rather than a shippable $3.99 game. POC XI is the current golden image (tag `golden/poc-xi-moon-keep`); POC X is the previous golden. See `prototypes/moon-road/CURRENT_GAME_HANDOFF.md`.
+**Current assessment (September 30, 2026):** POC XI Moon Keep is the golden image: a polished, hand-playtested browser slice with 19 rooms, three bosses, a Core Clash portal, and a cohesive art, sound and animation pass. It is still a prototype, not a shippable $3.99 game. Earlier goldens POC X and POC IX stay frozen. Details: `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` and `POC-XI.md`.
+
+### Done so far (prototype)
+- [x] Metroidvania core: multiplication gates the world (seals, stone blocks, runes), ×1-×5 beams from bosses and orbs, match rewards, silver armor, Clock Shield, Training Hall, Rune Sanctum portal to Core Clash.
+- [x] Authoring pipeline: LDtk levels exported to the game, TexturePacker atlases, Pillow art generators on one shared palette, documented in `TOOLCHAIN.md` (also usable from Copilot and ChatGPT desktop through shell commands).
+- [x] First polish pass: distinct beam, door, seal, block, shrine and boss-attack art; per-beam synthesized sounds; barrel-tip muzzle; orange grounded hero; walk cycles for two bosses; squash/stretch and recoil; auto-fire that no longer wastes shots.
+- [x] 121 automated tests in CI (rules, physics, world graph and solver, atlas and art contracts).
 
 ### P0 — turn the slice into a product
-- [ ] Promote a deliberate release candidate from the prototype branch without modifying the POC XI golden build.
-- [ ] Define the 1.0 content scope: complete beginning → progression → ending, expected playtime, level count, multiplication families/difficulty coverage, save/checkpoint model, and replay loop.
-- [ ] Implement durable local save/progression, settings, audio controls, pause/resume, reset, and migration/version handling.
+- [ ] Promote a deliberate release candidate from a new route without modifying any golden build.
+- [ ] Define the 1.0 content scope: complete beginning to ending, expected playtime, zone/boss count, multiplication families and difficulty coverage (currently ×1-×5; decide on ×6-×10), checkpoint/save model, and replay loop.
+- [ ] Animation to Metroid Zero Mission / Castlevania standard: repaint or regenerate the sprite sheets with real frame-by-frame cycles (hero run/jump/fire/hurt/death, skeleton and bat attacks, true walk and attack cycles for the Clockwork Warden, Twin Warden and Trine Guardian), then run them through `pixel_style.py`.
+- [ ] Music and mix: composed or licensed score per zone, boss themes, volume/mute settings; keep synthesized SFX or replace with authored ones.
+- [ ] Durable local save/progression, settings, pause/resume, reset, and version migration (today every run restarts from the Moon Gate).
+- [ ] Balance and difficulty playtests with real children and parents: boss HP and ammo economy, auto-fire, shield, safety capsules.
 - [ ] Connect gameplay telemetry to learning evidence without claiming mastery from completion alone: attempts, fact-family accuracy, retries, time-to-correct, delayed rematch performance, and transfer checks.
-- [ ] Define the learning-success acceptance test and verify with real child/parent playtests that learning interactions do not damage the “good game first” loop.
-- [ ] Finish production art/audio/content provenance and licenses; remove temporary/dev-only assets and tooling from the shipping bundle.
-- [ ] Add crash/error telemetry, performance budgets, deterministic release build, and automated smoke/playthrough coverage for the final level sequence.
+- [ ] Define the learning-success acceptance test and verify with real playtests that learning interactions do not damage the "good game first" loop.
+- [ ] Finish production art/audio/content provenance and licenses (see `ASSETS.md`: generated sheets plus hand-built sprites); remove dev-only assets and tooling from the shipping bundle.
+- [ ] Automated playthrough for the current route (the Playwright scripts in `qa/` target earlier routes), plus crash/error telemetry, performance budgets and a deterministic release build.
 - [ ] Physical iPhone/iPad testing for touch concurrency, landscape/safe areas, interruption/resume, audio session, memory/thermal behavior, low-power devices, and offline play.
+
+### P1 — content and tooling follow-ups
+- [ ] Open `moon-library.ldtk` in LDtk, author further rooms there, and move more of the existing hand-coded rooms (`world.js`) into LDtk.
+- [ ] Exercise Pixelorama and Godot in the pipeline or drop them from the toolchain.
+- [ ] Decide whether to evaluate Phaser 4.x as a separate upgrade route.
 
 ### P1 — native packaging and commerce
 - [ ] Package the Phaser game in a production iOS shell or native host with no dependence on a development server/CDN.
