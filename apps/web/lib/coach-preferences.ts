@@ -1,4 +1,43 @@
 import { selectLearningRoute } from "./coach-route-selection";
+import referenceJson from "./generated/teaching-references.json";
+import type { TeachingReferences } from "./teaching-reference-projection";
+
+const REFERENCES = referenceJson as TeachingReferences;
+export const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
+/** Hard caps on what the references add to a prompt, so replies stay fast. */
+export const REFERENCE_WORD_BUDGET = { coach: 480, level: 110 };
+
+/** The room's explanation level as rules plus the same idea written at that level. Coach and Learn. */
+export function levelReference(level: CoachPreferences["explainLevel"]): string {
+  const ref = REFERENCES.levels[level];
+  if (!ref) return "";
+  return `Rules for this level: ${ref.rules.join(" ")} Same idea at this level: "${ref.sample}"`;
+}
+
+/**
+ * The teaching knowledge for one combination: the style's and the tradition's
+ * own records (both, every turn), the practice recipe, and the reference reply
+ * for this style at this level. Compiled from the bundled projection, so it
+ * costs no model call and no lookup.
+ */
+export function teachingReference(preferences: CoachPreferences): string {
+  const style = REFERENCES.styles[preferences.style];
+  const tradition = REFERENCES.traditions[preferences.tradition];
+  const practice = REFERENCES.practice[preferences.practice];
+  const model = REFERENCES.exemplars[`style:${preferences.style}:${preferences.explainLevel}`];
+  const traditionModel = preferences.tradition === "tradition-default" ? undefined : REFERENCES.exemplars[`tradition:${preferences.tradition}`];
+  const lines = [
+    "Use these as a pattern for the shape of your reply. The model replies use a sample topic: copy their moves, never their facts. Every fact comes only from the excerpts.",
+    style && `Style, ${style.label}. Moves in order: ${style.sequence.slice(0, 5).join(" ")} Rules: ${style.rules.slice(0, 3).join(" ")}`,
+    tradition && `Tradition, ${tradition.label}. Order of ideas: ${tradition.sequence.slice(0, 4).join(" ")} Rules: ${tradition.rules.slice(0, 2).join(" ")}`,
+    practice && `Practice, ${practice.label}: ${practice.rules.slice(0, 2).join(" ")}`,
+    model && `Model reply for this style at this level:\n"""\n${model.reply}\n"""\nWhy it works: ${model.why.join(" ")} Avoid: ${model.avoid.join(" ")}`,
+    traditionModel && `How this tradition changes a reply:\n"""\n${traditionModel.reply}\n"""`,
+    "When style and tradition pull different ways, keep the style's shape for each turn and the tradition's order of ideas across turns. The level changes only the wording."
+  ].filter(Boolean) as string[];
+  return lines.join("\n");
+}
+
 
 export type CoachPreferences = {
   style: string;
@@ -49,8 +88,9 @@ export function compileCoachPreferences(preferences: CoachPreferences) {
       { name: "Coaching style", instruction: style.instruction },
       { name: "Learning tradition", instruction: tradition.instruction },
       { name: "Practice protocol", instruction: practice.instruction },
-      { name: "Explanation level", instruction: `${levels[preferences.explainLevel]} Change delivery only; keep the same source facts, concepts, reasoning demand and grading standard.` },
-      { name: "How these combine", instruction: `The coaching style (${style.name}) sets the shape of each turn. The learning tradition (${tradition.name}) sets the order ideas are introduced in. The explanation level sets only the wording. Make the style visible in every reply: ${style.expect}` }
+      { name: "Explanation level", instruction: `${levels[preferences.explainLevel]} Change delivery only; keep the same source facts, concepts, reasoning demand and grading standard. ${levelReference(preferences.explainLevel)}`.trim() },
+      { name: "How these combine", instruction: `The coaching style (${style.name}) sets the shape of each turn. The learning tradition (${tradition.name}) sets the order ideas are introduced in. The explanation level sets only the wording. Make the style visible in every reply: ${style.expect}` },
+      { name: "Teaching reference", instruction: teachingReference(preferences) }
     ]
   };
 }

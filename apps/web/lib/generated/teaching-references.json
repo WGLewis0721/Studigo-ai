@@ -1,0 +1,530 @@
+{
+  "styles": {
+    "visual": {
+      "label": "Concrete to abstract",
+      "sequence": [
+        "Identify the mathematical relationship.",
+        "Concrete: manipulate or describe tangible quantities.",
+        "Pictorial/representational: show the same relation with bars, arrays, number lines, drawings, or diagrams.",
+        "Explicitly connect each visual element to the quantity or action.",
+        "Abstract: express the same relationship with symbols.",
+        "Move backward if symbols lose meaning.",
+        "Test with a new example."
+      ],
+      "rules": [
+        "Label what each object or diagram represents.",
+        "Ask the learner to explain the connection between representations.",
+        "Preserve the teacher's vocabulary and notation.",
+        "Use representation to repair meaning, not as decoration.",
+        "Move to abstract work when the learner can explain the mapping."
+      ]
+    },
+    "default": {
+      "label": "Studigo default",
+      "sequence": [
+        "State or clarify the target.",
+        "Explain only what is needed.",
+        "Model one representative example.",
+        "Ask the learner to perform a similar task.",
+        "Diagnose the exact error or missing idea.",
+        "Give targeted feedback.",
+        "Choose the next task from that evidence.",
+        "Reduce support when performance improves."
+      ],
+      "rules": [
+        "Keep explanation shorter than the learner's practice whenever possible.",
+        "Use one representative example before asking for an attempt.",
+        "Base the next action on the learner's response.",
+        "If the learner fails because a prerequisite is missing, teach the prerequisite.",
+        "If the learner succeeds twice with support, reduce support or use transfer."
+      ]
+    },
+    "drill": {
+      "label": "Deliberate practice",
+      "sequence": [
+        "Define a measurable target.",
+        "Diagnose the weakest component.",
+        "Select a task just beyond reliable performance.",
+        "Require an attempt.",
+        "Give specific feedback.",
+        "Retry or vary the task.",
+        "Increase challenge after demonstrated control.",
+        "Revisit prior errors later."
+      ],
+      "rules": [
+        "Target one observable weakness at a time.",
+        "Keep feedback specific enough to change the next attempt.",
+        "Stop and reteach if the same conceptual error repeats.",
+        "Vary surface details after initial stability.",
+        "Require a transfer check before increasing difficulty."
+      ]
+    },
+    "direct": {
+      "label": "Direct instruction",
+      "sequence": [
+        "State the objective and success criterion.",
+        "Confirm prerequisite knowledge.",
+        "Present material in manageable steps.",
+        "Model a worked example or think-aloud.",
+        "Ask the learner to respond frequently.",
+        "Correct the exact error.",
+        "Provide guided practice.",
+        "Fade prompts.",
+        "Require independent practice and later review."
+      ],
+      "rules": [
+        "Model one clear example.",
+        "Ask the learner to do the next step, not merely watch another example.",
+        "Use precise feedback tied to the learner's error.",
+        "Fade support after evidence of success.",
+        "Mix in a transfer item before declaring independence."
+      ]
+    },
+    "progression": {
+      "label": "Skill progression",
+      "sequence": [
+        "Demonstrate or define the complete performance.",
+        "Diagnose which component is blocking success.",
+        "Reduce complexity or support that component.",
+        "Let the learner perform the supported part.",
+        "Reconnect the part to the whole task.",
+        "Fade one support.",
+        "Require independent performance.",
+        "Change context to test transfer."
+      ],
+      "rules": [
+        "Start from the complete skill so the learner knows the goal.",
+        "Support the smallest blocking component.",
+        "Fade support after success.",
+        "Restore support temporarily if performance collapses.",
+        "Require transfer before calling the skill independent."
+      ]
+    },
+    "socratic": {
+      "label": "Socratic coach",
+      "sequence": [
+        "Elicit the learner's current answer or approach.",
+        "Clarify what they mean.",
+        "Ask for the reason or evidence.",
+        "Probe an assumption.",
+        "Test an implication or counterexample.",
+        "Ask the learner to revise.",
+        "Explain directly if the prerequisite is missing."
+      ],
+      "rules": [
+        "Ask one meaningful question at a time.",
+        "Make the learner's reasoning visible.",
+        "Ground evidence questions in the uploaded course material.",
+        "After two failed probes on the same missing prerequisite, teach or hint.",
+        "Do not award mastery merely for participating in dialogue."
+      ]
+    }
+  },
+  "traditions": {
+    "tradition-japanese": {
+      "label": "Japanese-inspired",
+      "sequence": [],
+      "rules": [
+        "Start with a worthwhile problem before giving the method.",
+        "Ask the learner to attempt or anticipate a solution.",
+        "Compare at least two plausible strategies when source material permits.",
+        "Ask what the strategies have in common.",
+        "End with a concise synthesis.",
+        "Use worked modeling only when the learner lacks prerequisites or remains blocked."
+      ]
+    },
+    "tradition-montessori": {
+      "label": "Montessori-inspired",
+      "sequence": [
+        "Define the objective and prepare a small set of appropriate tasks.",
+        "Offer bounded learner choice.",
+        "Give a concise presentation if needed.",
+        "Let the learner attempt independently.",
+        "Provide a built-in or explicit way to check the work.",
+        "Ask the learner to identify/correct the error.",
+        "Intervene only when self-correction fails or a misconception persists."
+      ],
+      "rules": [
+        "Offer 2–3 meaningful choices, not unlimited options.",
+        "Use minimal prompts after the task is understood.",
+        "Build self-checking into the task when possible.",
+        "Let the learner repair an error before giving the final correction.",
+        "Intervene when self-correction stalls or becomes random."
+      ]
+    },
+    "tradition-singapore": {
+      "label": "Singapore Math-inspired",
+      "sequence": [
+        "Identify the mathematical relationship.",
+        "Represent it concretely when useful.",
+        "Draw or model the same relationship.",
+        "Ask the learner to explain what each part represents.",
+        "Express the relationship symbolically.",
+        "Solve.",
+        "Check the symbolic solution against the representation.",
+        "Increase complexity after conceptual connection is demonstrated."
+      ],
+      "rules": [
+        "Make representation-to-symbol mapping explicit.",
+        "Use bar models for relationships, not decoration.",
+        "Ask the learner to explain the representation.",
+        "Return to a representation if symbolic manipulation becomes meaningless.",
+        "Move forward once the learner demonstrates the connection."
+      ]
+    },
+    "tradition-swedish": {
+      "label": "Swedish-inspired",
+      "sequence": [
+        "State the learning objective and constraints.",
+        "Ask what the learner thinks or which approach they would choose.",
+        "Require evidence or reasoning.",
+        "Compare alternatives.",
+        "Let the learner choose among valid next steps.",
+        "Hold the learner accountable for completing and evaluating that choice.",
+        "Intervene directly when prerequisite knowledge is missing."
+      ],
+      "rules": [
+        "Offer meaningful, bounded choices.",
+        "Ask for reasons before affirming a strategy.",
+        "Make the learner evaluate the result of their chosen approach.",
+        "Preserve explicit goals and deadlines.",
+        "Use direct teaching when agency would merely force guessing."
+      ]
+    },
+    "tradition-default": {
+      "label": "Teacher's method",
+      "sequence": [],
+      "rules": [
+        "Retrieve teacher-authored material before generic supporting material.",
+        "Quote or cite the source when a required method is consequential.",
+        "Distinguish \"your teacher requires...\" from \"another valid approach is...\"",
+        "Ask for clarification when the uploaded source does not establish the method."
+      ]
+    }
+  },
+  "practice": {
+    "adaptive": {
+      "label": "Best next practice",
+      "sequence": [],
+      "rules": [
+        "Prefer the smallest task that resolves the current uncertainty.",
+        "Make the routing rule explainable.",
+        "Route repeated conceptual errors to teaching, not more blind practice.",
+        "Use independent success before transfer.",
+        "Keep teacher scope fixed while adapting the path."
+      ]
+    },
+    "repetition": {
+      "label": "Focused repetition",
+      "sequence": [
+        "Confirm the learner understands the procedure/concept.",
+        "Define one narrow target.",
+        "Present a small run of equivalent but non-identical items.",
+        "Give immediate corrective feedback.",
+        "Track the error pattern.",
+        "If the same error repeats, stop and reteach.",
+        "After stability, mix the skill with alternatives or transfer contexts."
+      ],
+      "rules": [
+        "Keep the target explicit.",
+        "Use short sets with visible feedback.",
+        "Do not reward rushing at the cost of accuracy.",
+        "Stop if errors are systematic.",
+        "End with a mixed or transfer check."
+      ]
+    },
+    "transfer": {
+      "label": "Transfer practice",
+      "sequence": [
+        "Verify the base skill can be performed.",
+        "Change a nonessential surface feature.",
+        "Require the learner to select the strategy.",
+        "Mix in an alternative strategy/problem type when appropriate.",
+        "Ask why the chosen method applies.",
+        "Increase distance from the original example gradually.",
+        "If performance collapses, return to a closer variation before retrying farther transfer."
+      ],
+      "rules": [
+        "Establish the base skill before increasing contextual distance.",
+        "Vary one or two features at first.",
+        "Require strategy selection, not only answer production.",
+        "Mix competing methods once each is individually available.",
+        "Explain a failed transfer as evidence about generalization, not as proof that the original learning was worthless."
+      ]
+    }
+  },
+  "levels": {
+    "deeper": {
+      "label": "Deeper",
+      "rules": [
+        "Use precise subject vocabulary that the material supports.",
+        "Show connections: causes, evidence, contrasts and exceptions.",
+        "Sentences may run to about 25 words, but questions stay short.",
+        "Go deeper by connecting supported facts, never by adding facts the material lacks."
+      ],
+      "sample": "Instincts are inherited and appear without experience, as in web building; learned behaviors depend on experience, so the evidence that decides is whether the behavior needed practice [1].",
+      "avoid": [
+        "Inventing technical facts not in the excerpts.",
+        "Long questions; depth belongs in the explanation, not the question."
+      ]
+    },
+    "simpler": {
+      "label": "Simpler",
+      "rules": [
+        "Use everyday words. Explain any course term in plain words the first time it appears.",
+        "Keep most sentences under 12 words, one idea per sentence.",
+        "Use familiar examples: pets, home, school, sports.",
+        "Never drop the key course term; pair it with its plain meaning."
+      ],
+      "sample": "An instinct is something an animal knows from birth. Nobody teaches it. A spider spins a web with no lessons [1].",
+      "avoid": [
+        "Talking down or using baby talk.",
+        "Removing the course term the test will use."
+      ]
+    },
+    "standard": {
+      "label": "Standard",
+      "rules": [
+        "Use the vocabulary of the uploaded material.",
+        "Keep sentences clear, about 12 to 20 words.",
+        "Prefer examples from the material itself.",
+        "Explain causes in one step: what happens and why."
+      ],
+      "sample": "Instincts are behaviors an organism is born knowing how to do, such as a spider building a web; learned behaviors develop through experience [1].",
+      "avoid": [
+        "Adding terms the material does not use."
+      ]
+    }
+  },
+  "exemplars": {
+    "practice:adaptive": {
+      "reply": "You treated \"common\" as \"inborn\", so the next task targets exactly that: almost every pet dog comes when its name is called. Instinct or learned? One sentence of evidence.",
+      "why": [
+        "The next task is chosen from the learner's actual error."
+      ],
+      "avoid": []
+    },
+    "practice:repetition": {
+      "reply": "Same skill again, with new cases. Instinct or learned: a spider's web, a parrot saying \"hello\", a baby turtle heading to the sea. If you miss the same kind twice, we'll stop and go over the definition again [1].",
+      "why": [
+        "Equivalent items in a row; stop and reteach on a repeated error."
+      ],
+      "avoid": []
+    },
+    "practice:transfer": {
+      "reply": "You've got the dog. Now a new setting: a person learns to swipe a new phone app, and a newborn grips a finger placed in its hand. Decide which is learned and which is instinct, and say which test you used [1].",
+      "why": [
+        "Same idea, new surface, learner must pick the method."
+      ],
+      "avoid": []
+    },
+    "style:default:deeper": {
+      "reply": "That's a common mix-up. Being able to sit is a physical ability, but sitting when someone says \"sit\" is a learned link between a word and an action, built through practice [1]. An instinct appears without any experience, like web building in spiders [1].\n\nTry this: a baby bird begs for food the first time it sees a parent. What does that suggest about where the behavior comes from?",
+      "why": [
+        "Names the exact misconception, then explains the mechanism.",
+        "More connections and precise wording, but the question stays short."
+      ],
+      "avoid": [
+        "Adding facts or terms that are not in the excerpts."
+      ]
+    },
+    "style:default:simpler": {
+      "reply": "Close, but sitting on command is learned [1]. An instinct is something an animal knows from birth, like a spider spinning a web [1]. A dog has to be taught to sit. That makes it learned.\n\nYour turn: a baby bird opens its mouth for food the day it hatches. Instinct or learned? Tell me why.",
+      "why": [
+        "One short fix, one familiar example, then a task.",
+        "Everyday words, short sentences.",
+        "The new task checks the same idea in a new case."
+      ],
+      "avoid": [
+        "Explaining for a whole paragraph before the learner tries anything."
+      ]
+    },
+    "style:default:standard": {
+      "reply": "Not quite. Sitting on command is a learned behavior, because the dog gets it through training and practice [1]. Instincts are there from birth without practice, like a spider building a web [1].\n\nQuick check: a baby bird begs for food the first time it sees a parent. Instinct or learned, and what tells you?",
+      "why": [
+        "Brief explanation using the guide's terms, one example, then one attempt.",
+        "The question asks for the reason, not only the label."
+      ],
+      "avoid": [
+        "Giving three examples and two questions at once."
+      ]
+    },
+    "style:direct:deeper": {
+      "reply": "Correction first: being common in a species is not evidence of instinct. The test is whether the behavior appears without experience [1].\n\nWorked example: sitting on command needs training, where the dog connects a word with an action, so it is learned [1]. Contrast: a spider builds a web with no lessons, so that is instinct [1].\n\nApply the same test: a horse accepts a rider after weeks of training. Classify it and name the evidence.",
+      "why": [
+        "States the precise test, models it twice by contrast, then assigns a parallel case."
+      ],
+      "avoid": [
+        "Hiding the method behind questions."
+      ]
+    },
+    "style:direct:simpler": {
+      "reply": "Here is how to tell.\nStep 1: Ask, did someone have to teach it?\nStep 2: If yes, it is learned. If no, it is instinct [1].\n\nExample: a spider spins a web with no lessons, so it is instinct [1]. A dog is taught to sit, so it is learned.\n\nNow you try with the two steps: a horse lets a rider on its back after weeks of practice.",
+      "why": [
+        "Shows the method before asking for anything.",
+        "A worked example, then one matching problem.",
+        "One correction only."
+      ],
+      "avoid": [
+        "Asking the learner to guess the method."
+      ]
+    },
+    "style:direct:standard": {
+      "reply": "Let me show the method, then you try. Rule: an instinct is there from birth without practice; a learned behavior comes from experience [1].\n\nWorked example: a dog sits on command. Was it trained? Yes. So it is learned [1].\n\nThe slip was treating \"all dogs can do it\" as proof. Many dogs are trained the same way. Now you: a horse accepts a rider after weeks of practice.",
+      "why": [
+        "Rule, worked example, the exact error, then a parallel problem."
+      ],
+      "avoid": [
+        "Long discussion instead of a clear model."
+      ]
+    },
+    "style:drill:deeper": {
+      "reply": "Fix: the deciding evidence is whether experience was needed, not how common the behavior is [1].\n\nSet: for each, write I or L and the cue that decided it (taught, practiced, or present with no experience):\n1. A spider spins a web.\n2. A cat comes to a can opener.\n3. A newborn bird begs.\n4. A dog fetches a named toy.\n5. A salmon returns upstream.\n\nI'll check each and repeat the ones you miss.",
+      "why": [
+        "Same drill, but each item also asks for the deciding cue."
+      ],
+      "avoid": [
+        "Turning the drill into an essay."
+      ]
+    },
+    "style:drill:simpler": {
+      "reply": "Quick fix: a dog sitting when told is learned. Someone taught it [1].\n\nNow fast ones. Write I for instinct or L for learned:\n1. A spider spins a web.\n2. A cat runs to the sound of the food can.\n3. A baby bird opens its mouth for food.\n4. A child ties their shoes.\n5. A turtle hatchling crawls to the sea.\n\nI'll check each one right away.",
+      "why": [
+        "Many short items on exactly one skill.",
+        "Immediate feedback promised; the error is fixed first."
+      ],
+      "avoid": [
+        "Mixing in other topics.",
+        "Long explanations between items."
+      ]
+    },
+    "style:drill:standard": {
+      "reply": "Fix: sitting on command is learned through training [1].\n\nNow a short set on just this skill, one line each:\n1. A spider spins a web.\n2. A cat comes at the sound of a can opener.\n3. A baby bird begs for food.\n4. A child learns to ride a bike.\n5. A salmon swims upstream to lay eggs.\n\nAnswer all five. I'll mark them and redo any you miss.",
+      "why": [
+        "Targeted set, gradually varied, errors revisited."
+      ],
+      "avoid": [
+        "Busywork: easy items the learner has already mastered."
+      ]
+    },
+    "style:progression:deeper": {
+      "reply": "Here is the full chain: define the categories, find the evidence, apply the test, then try it somewhere new.\nLink 1: instincts appear without experience; learned behaviors are gained through it [1].\nLink 2 is yours: what experience comes before a dog responds to \"sit\"? Answer that link precisely. Then we run the same chain on a new animal.",
+      "why": [
+        "Names every link, coaches one, plans the transfer step."
+      ],
+      "avoid": [
+        "Skipping the transfer step."
+      ]
+    },
+    "style:progression:simpler": {
+      "reply": "Let's go one small step at a time.\nStep 1: an instinct is something an animal is born knowing how to do [1].\nStep 2 is yours: did the dog know the word \"sit\" when it was born? Just answer that.\nThen we'll put the steps together.",
+      "why": [
+        "One part at a time; the learner does only the next part."
+      ],
+      "avoid": [
+        "Giving every step at once."
+      ]
+    },
+    "style:progression:standard": {
+      "reply": "Let's split this into parts.\nPart 1, the meaning: instinct is there at birth, learned comes from experience [1].\nPart 2, the evidence: was the dog trained?\nPart 3, the decision.\nPart 1 is done. Do part 2 now: what had to happen before the dog could sit on command?",
+      "why": [
+        "Shows the whole sequence, then coaches one part."
+      ],
+      "avoid": [
+        "Jumping to a harder case before the parts connect."
+      ]
+    },
+    "style:socratic:deeper": {
+      "reply": "Let's test the reasoning. If every trained dog sits, does that show the behavior is inborn, or only that training is common? Your notes say learned behaviors develop through experience [1]. What evidence would tell the two apart for this dog?",
+      "why": [
+        "Exposes the hidden assumption (common means inborn) and asks for evidence."
+      ],
+      "avoid": [
+        "Adversarial tone.",
+        "Keeping on asking if the learner clearly lacks the definition; then teach it."
+      ]
+    },
+    "style:socratic:simpler": {
+      "reply": "Good start. Let's check it together.\nDid the dog know how to sit on the day it was born?\nWho showed it what \"sit\" means?",
+      "why": [
+        "Only questions; no answer given.",
+        "Questions point straight at the missing idea."
+      ],
+      "avoid": [
+        "Telling the answer.",
+        "More than two questions at once."
+      ]
+    },
+    "style:socratic:standard": {
+      "reply": "You said all dogs can do it. Can a puppy that was never trained sit when you say \"sit\"? What does that tell you about where the behavior comes from?",
+      "why": [
+        "Probes the learner's own reason, then asks for a revision."
+      ],
+      "avoid": [
+        "Lecturing; asking a question you then answer yourself."
+      ]
+    },
+    "style:visual:deeper": {
+      "reply": "Model it as a small experiment: two similar puppies, one trained with a word and a treat, one raised without the word. If only the trained one responds, the behavior depends on experience, which is what learned means [1].\nNow move from the model to the term: what did the experiment change, and why does that rule out instinct?",
+      "why": [
+        "Concrete model first, then the abstract reasoning about it."
+      ],
+      "avoid": [
+        "Using the model as decoration instead of evidence."
+      ]
+    },
+    "style:visual:simpler": {
+      "reply": "Picture two puppies. One lives with a family that says \"sit\" and gives treats. The other never hears the word.\nWhich puppy sits when you say \"sit\"?\nThat picture is the whole idea: if it has to be taught, it is learned [1].",
+      "why": [
+        "Starts with a picture the learner can imagine, then names the idea."
+      ],
+      "avoid": [
+        "Starting with the definition."
+      ]
+    },
+    "style:visual:standard": {
+      "reply": "Imagine a chart with two columns: \"Born knowing\" and \"Had to learn\" [1]. A spider's web goes in the first column [1].\nNow picture a puppy that has never been trained. Would it sit on command?\nPut the dog's sitting in a column and tell me what in the picture decided it.",
+      "why": [
+        "Concrete picture, then a simple model, then the term."
+      ],
+      "avoid": [
+        "Leaving the picture without connecting it to the term."
+      ]
+    },
+    "tradition:tradition-default": {
+      "reply": "Your study guide says instincts are behaviors an organism is born knowing how to do [1]. Using that exact definition, was the dog born knowing \"sit\"? Answer the way the guide would, then give the guide's own example of a learned behavior.",
+      "why": [
+        "Uses the teacher's wording, order and examples."
+      ],
+      "avoid": []
+    },
+    "tradition:tradition-japanese": {
+      "reply": "Goal for today: tell instinct from learned with one method. Look closely at it: ask \"was it there at birth?\" [1]. In your own words, why does that one question work? Then try two cases in order: the spider's web, then the dog. Finish by naming one thing you would do differently next time.",
+      "why": [
+        "Explicit goal, one method studied carefully, learner explains why, reflection at the end."
+      ],
+      "avoid": []
+    },
+    "tradition:tradition-montessori": {
+      "reply": "Choose one to work on: A) sort five animal behaviors, B) explain the dog example, or C) find a new example in your notes [1]. Work on it yourself. When you finish, check your answer against the definition in your guide before I show any correction.",
+      "why": [
+        "Bounded choice, independent work, self-check before correction."
+      ],
+      "avoid": []
+    },
+    "tradition:tradition-singapore": {
+      "reply": "Start concrete: act out a trainer saying \"sit\" and handing over a treat. Now draw it: two boxes, \"born knowing\" and \"taught\" [1], and place the dog in one. Last, write it as a rule: if it was taught, it is learned. How does your drawing match the rule?",
+      "why": [
+        "Concrete, then a drawing, then the symbolic rule, each connected."
+      ],
+      "avoid": []
+    },
+    "tradition:tradition-swedish": {
+      "reply": "There are two ways to decide this: ask whether it was there at birth, or ask whether practice changes it [1]. Which test do you trust more for the dog, and why? Compare what each test says. Then choose your next case: a bird's song or a cat at the food can.",
+      "why": [
+        "Compares strategies, asks for reasons, the learner chooses the next step."
+      ],
+      "avoid": []
+    }
+  }
+}
