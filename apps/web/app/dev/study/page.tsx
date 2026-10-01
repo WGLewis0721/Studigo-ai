@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
 import { RoomWorkspace } from '@/components/room/workspace';
+import { AppShell } from '@/components/app-shell';
 import type { Topic } from '@/lib/rooms';
 
 // Synthetic visual/Coach fixture for local development only.
-export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string}>}) {
+export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string}>}) {
   if (process.env.NODE_ENV !== 'development') notFound();
-  const {mode='coach',phone,bare}=await searchParams;
+  const {mode='coach',phone,bare,shell,rail}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
   const topics:Topic[]=[
@@ -23,6 +24,8 @@ export default async function StudyFixture({searchParams}:{searchParams:Promise<
       readiness={{readiness:49,averageMastery:66,topicCount:4,practicedTopicCount:3,masteredCount:1,questionsAnswered:12,correctAnswers:8,cardsDue:6}}
       evidence={[0,0,100].map((score,i)=>({topic_id:'tornado',source:'quiz' as const,score,is_correct:score===100,created_at:`2026-09-08T12:0${i}:00Z`}))} planEvents={[]} asOf={now}/>;
   // ?bare=1 mounts the room inside the same shell as the signed-in app (no fixture chrome), for phone checks.
+  // ?shell=1 mounts the room inside the real sidebar (with sample rooms); ?rail=collapsed starts it collapsed.
+  if(shell) return <AppShell initialCollapsed={rail==='collapsed'} rooms={[{id:'fixture',title:'Fifth Grade Science'},{id:'algebra',title:'Algebra I'},{id:'history',title:'US History: Reconstruction'}]} profile={{initials:'WL',label:'william@example.com'}}>{workspace}</AppShell>;
   if(bare) return <div className="appShell"><div className="appMain">{workspace}</div></div>;
   return <main style={{maxWidth:1180,margin:'24px auto',padding:'0 16px'}}><p className="hintText">LOCAL VISUAL FIXTURE · Synthetic evidence · Saving and AI require a configured project</p>{workspace}</main>;
 }

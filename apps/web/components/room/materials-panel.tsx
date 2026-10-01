@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import type { StudyDocument } from "@/lib/rooms";
-import { HeaderMascot } from "./mode-header";
+import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
@@ -151,22 +151,21 @@ export function MaterialsPanel({
   return (
     <div className="materialsPanel">
       <HeaderMascot state="sources" />
-      <p className="setupLead">Tell Studigo what each file is, then add it.</p>
-
-      <div className="sourceTypePicker" role="radiogroup" aria-label="What kind of file is this?">
-        {SOURCE_TYPES.map((type) => (
-          <button
-            key={type}
-            type="button"
-            role="radio"
-            aria-checked={sourceType === type}
-            className={`sourceChip ${sourceType === type ? "sourceChipActive" : ""}`}
-            onClick={() => setSourceType(type)}
-          >
-            {SOURCE_TYPE_LABELS[type]}
-          </button>
-        ))}
-      </div>
+      <HeaderChip>
+        <ChipSelect
+          label={`Adding: ${SOURCE_TYPE_LABELS[sourceType]}`}
+          ariaLabel="What kind of file is this?"
+          value={sourceType}
+          onChange={(value) => setSourceType(value as SourceType)}
+        >
+          {SOURCE_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {SOURCE_TYPE_LABELS[type]}
+            </option>
+          ))}
+        </ChipSelect>
+      </HeaderChip>
+      <p className="setupLead">Set the file type above, then add your files.</p>
 
       <div
         className={`dropzone ${dragging ? "dropzoneActive" : ""}`}

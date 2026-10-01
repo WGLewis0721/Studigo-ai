@@ -7,7 +7,7 @@ import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel, coachMaterialState } from "@/lib/coach-material-state";
 import { StudigoComposer } from "./studigo-composer";
-import { CoachDevice } from "./coach-device";
+import { ModeFrame } from "./mode-header";
 import { LearnPanel } from "./learn-panel";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
@@ -203,12 +203,48 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
   if (readyCount === 0) return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
-    <CoachDevice roomId={roomId}>
+    <>
+    <ModeFrame tone="coach">
+      <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
+        {view === "chat" && chatMode === "coach" ? (
+          <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
+            <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
+            <span className="chatMascotDot" aria-hidden="true" />
+          </button>
+        ) : (
+          <span className="chatMascot chatMascotStatic"><StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark /></span>
+        )}
+        {view === "chat" ? (
+          <div className="chatModes" role="group" aria-label="How Studigo helps">
+            <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => setChatMode("coach")}>
+              <strong>Coach</strong><small>Practice and apply</small>
+            </button>
+            <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => { setPersonalizeOpen(false); setChatMode("learn"); }}>
+              <strong>Learn</strong><small>Facts, with sources</small>
+            </button>
+          </div>
+        ) : (
+          <div className="mhTitle">
+            <h2>Topics</h2>
+            <p>Pick one to learn it or be coached on it.</p>
+          </div>
+        )}
+        <div className="chatTopicRow mhChipRow">
+          <div className="coachTabs" role="group" aria-label="Coach sections">
+            <button type="button" aria-pressed={view === "chat"} onClick={() => onViewChange("chat")}>Chat</button>
+            <button type="button" aria-pressed={view === "topics"} onClick={() => onViewChange("topics")}>Topics{topics.length > 0 && <span className="coachTabCount">{topics.length}</span>}</button>
+          </div>
+          {view === "chat" && (topics.length > 1 ? (
+            <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
+              <span className="chatTopicName">{selectedTopic.title}</span><span aria-hidden="true">▾</span>
+            </button>
+          ) : (
+            <span className="chatTopic chatTopicStatic" aria-label={`Topic: ${selectedTopic.title}`}><span className="chatTopicName">{selectedTopic.title}</span></span>
+          ))}
+        </div>
+      </header>
+    </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
-      <div className="coachTabs" role="group" aria-label="Coach sections">
-        <button type="button" aria-pressed={view === "chat"} onClick={() => onViewChange("chat")}>Chat</button>
-        <button type="button" aria-pressed={view === "topics"} onClick={() => onViewChange("topics")}>Topics{topics.length > 0 && <span className="coachTabCount">{topics.length}</span>}</button>
-      </div>
       {view === "topics" ? (
         <div className="coachTopicsView">
           {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}
@@ -218,33 +254,6 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
       <>
       {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
-        <header className="chatHead">
-          {chatMode === "coach" ? (
-            <button type="button" className="chatMascot" aria-label="Coaching style" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching style" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setPersonalizeOpen((open) => !open); }}>
-              <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
-              <span className="chatMascotDot" aria-hidden="true" />
-            </button>
-          ) : (
-            <span className="chatMascot chatMascotStatic"><StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark /></span>
-          )}
-          <div className="chatModes" role="group" aria-label="How Studigo helps">
-            <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => setChatMode("coach")}>
-              <strong>Coach</strong><small>Practice and apply</small>
-            </button>
-            <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => { setPersonalizeOpen(false); setChatMode("learn"); }}>
-              <strong>Learn</strong><small>Facts, with sources</small>
-            </button>
-          </div>
-          <div className="chatTopicRow">
-            {topics.length > 1 ? (
-              <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
-                <span className="chatTopicName">{selectedTopic.title}</span><span aria-hidden="true">▾</span>
-              </button>
-            ) : (
-              <span className="chatTopic chatTopicStatic" aria-label={`Topic: ${selectedTopic.title}`}><span className="chatTopicName">{selectedTopic.title}</span></span>
-            )}
-          </div>
-        </header>
       {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
       {skillPickerOpen && (
         <section className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
@@ -342,7 +351,7 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
       </>
       )}
     </div>
-    </CoachDevice>
+    </>
   );
 }
 
