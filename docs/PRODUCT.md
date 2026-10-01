@@ -109,6 +109,20 @@ Not MVP:
 - Publisher textbook catalog.
 - Public sharing of copyrighted uploads.
 
+## Distribution and paid-access contract
+
+The web/PWA product remains supported. The chosen App Store client is a real **Expo / React Native** iOS application over the same Studigo account, data, and hosted learning system.
+
+- Supabase Auth remains the single user identity.
+- The mobile client must not duplicate mastery, progression, RAG, or source-of-truth learner state.
+- Web digital purchases use Stripe.
+- iOS digital purchases use StoreKit, with RevenueCat handling mobile subscription/receipt state.
+- APEX is the canonical Studigo entitlement/usage layer across purchase channels.
+- Restore Purchases, refunds/revocations, and cross-device access must reconcile to the same account.
+- The native app must provide account/data deletion and must not expose privileged provider or service-role credentials.
+
+The full release contract is in [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md).
+
 ## Privacy/product constraints
 
 Studigo may eventually be used by minors, so collect as little personal data as possible. Keep user uploads private by default. Do not expose source documents through public storage URLs. Retention/deletion controls, parental/school requirements, COPPA/FERPA analysis, and publisher licensing need explicit work before school-scale distribution.
