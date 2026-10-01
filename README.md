@@ -29,7 +29,7 @@ with Learn, Quiz, Flashcards, and mastery derived from real practice.
 - **AI layer:** provider-isolated OpenAI Responses + embeddings package.
 - **RAG:** Supabase Postgres + pgvector with room-scoped similarity search.
 - **Documents:** private uploads, metadata, processing states, and signed downloads.
-- **Executable layer:** installable PWA now; Tauri desktop shell is reserved as a separate wrapper.
+- **Executable layer:** installable PWA now; Tauri desktop shell is reserved separately, and the chosen App Store route is an Expo/React Native iOS client over the existing hosted backend.
 - **Handoff:** architecture, product constraints, implementation roadmap, and agent instructions in `docs/`.
 
 What works today:
@@ -82,7 +82,8 @@ metadata, examples, use cases, cautions, and research sources.
 
 Known limits: ingestion runs inside the request (idempotent and retryable, but a
 very large scanned PDF can exceed the function timeout) rather than on a durable
-queue, and native packaging is still the Tauri placeholder.
+queue. Native iOS packaging is not implemented yet; the selected release path is
+in [`docs/APP_STORE_RELEASE_PLAN.md`](docs/APP_STORE_RELEASE_PLAN.md).
 
 ### Active investigation — Coach "give me N questions"
 
@@ -138,6 +139,7 @@ knowledge/
 docs/
   PRODUCT.md           product behavior and UX principles
   ARCHITECTURE.md      system boundaries and data flow
+  APP_STORE_RELEASE_PLAN.md chosen Expo/iOS, commerce, TestFlight and release path
   AUTH.md              social OAuth, sessions, callback, auth UX/security
   DESIGN_SYSTEM.md     "Personal Learning Device" visual system and UI guardrails
   VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
@@ -212,11 +214,12 @@ Read these files in order before making major changes:
 
 1. `docs/PRODUCT.md`
 2. `docs/ARCHITECTURE.md`
-3. `docs/AUTH.md`
-4. `docs/DESIGN_SYSTEM.md`
-5. `knowledge/teaching-coaching/README.md`
-6. `docs/USER_TEST_CASES.md`
-7. `docs/ROADMAP.md`
-8. `docs/AI_HANDOFF.md`
+3. `docs/APP_STORE_RELEASE_PLAN.md`
+4. `docs/AUTH.md`
+5. `docs/DESIGN_SYSTEM.md`
+6. `knowledge/teaching-coaching/README.md`
+7. `docs/USER_TEST_CASES.md`
+8. `docs/ROADMAP.md`
+9. `docs/AI_HANDOFF.md`
 
 The next engineer should treat the core loop as real and protect it while shipping the next learner-value loop: upload → understand/practice → **download a trustworthy study guide**.
