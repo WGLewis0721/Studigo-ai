@@ -75,6 +75,7 @@ export async function* runFixtureEngine(args: FixtureEngineRequest): AsyncGenera
   yield* streamGroundedAnswer({
     question: args.question,
     instructions: instructions || undefined,
+    format: "outline",
     chunks: allChunks,
     history: args.history
   });

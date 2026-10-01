@@ -56,7 +56,7 @@ export function HeroStage() {
           </h1>
           <p className="heroLede reveal" style={{ ["--d" as string]: "300ms" }}>
             Drop in the study guide, slides and notes you were actually given. Studigo turns them
-            into your own Study Room — it teaches you, quizzes you, keeps track of what you know,
+            into your own Study Room. It teaches you, quizzes you, keeps track of what you know,
             and shows the exact page behind every answer.
           </p>
           <div className="heroActions reveal" style={{ ["--d" as string]: "400ms" }}>
@@ -94,7 +94,7 @@ export function HeroStage() {
                       <span className="dsKicker">FROM YOUR MATERIALS</span>
                       <p>
                         The cold air slides under the warm air and shoves it up fast. Warm, wet air
-                        rising quickly builds tall clouds — that&apos;s where the storms start.
+                        rising quickly builds tall clouds. That&apos;s where the storms start.
                       </p>
                       <span className="dsTicket"><i>1</i>Weather study guide <b>p. 3</b></span>
                     </div>

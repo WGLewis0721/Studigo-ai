@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="authAsideInner">
           <StudigoMascot state="welcome" size={96} />
           <p className="authQuote">
-            Your study guide, your textbook, your notes — one companion that answers from them and
+            Your study guide, your textbook, your notes: one companion that answers from them and
             shows the receipts.
           </p>
           <div className="authProof">

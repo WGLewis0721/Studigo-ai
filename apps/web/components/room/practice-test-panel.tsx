@@ -35,9 +35,9 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     saveChain.current=saveChain.current.catch(()=>{}).then(async()=>{
       if(version!==saveVersion.current)return;
       const r=await fetch('/api/practice-tests',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({testId:active?.id,answers:next})});
-      if(!r.ok){setSaveState('Draft not saved — keep this test open and retry.');return;}
+      if(!r.ok){setSaveState('Draft not saved. Keep this test open and retry.');return;}
       if(version===saveVersion.current)setSaveState('Draft saved');
-    }).catch(()=>{setSaveState('Draft not saved — check your connection.');});
+    }).catch(()=>{setSaveState('Draft not saved. Check your connection.');});
   }
   async function submit() {
     if(!active||operation.current)return;operation.current=true;setBusy(true);setError(null);

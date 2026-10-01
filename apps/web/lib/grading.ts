@@ -72,7 +72,7 @@ export async function gradeAnswer(args: {
         feedback: grade.isCorrect
           ? grade.score === 100
             ? "Correct."
-            : `Correct — the material spells it “${grade.matched}”.`
+            : `Correct. The material spells it “${grade.matched}”.`
           : `Not quite. The answer is “${question.expected_answer}”.`
       };
     }

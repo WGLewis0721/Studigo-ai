@@ -10,13 +10,24 @@ import {
   citationsForQuestions,
   classifyIntent,
   dedupeQuestions,
+  buildPracticeTutorDirective,
+  editDistance,
+  explicitQuestionNumber,
+  findNamedTopic,
   extractLatestPracticePromptsFromHistory,
+  extractLatestPracticeSetFromHistory,
   extractPriorPromptsFromHistory,
   formatQuestionsForChat,
+  isPracticeAnswerRequest,
   isPracticeHelpRequest,
+  isPracticeReply,
   practicePromptForFollowup,
   isNearDuplicateText,
-  resolvePracticeTopic
+  resolvePracticeQuestion,
+  resolvePracticeTopic,
+  scoreReplyAgainstBlocks,
+  wordsMatch,
+  type PracticeSet
 } from "./recommendation-engine";
 
 function topic(overrides: Partial<Topic> = {}): Topic {
@@ -367,7 +378,7 @@ void ({} as PracticeEvidence);
 test("practice follow-up helpers recognize a stuck learner and preserve the original question", () => {
   const history = [
     { role: "user" as const, content: "give me 3 questions" },
-    { role: "assistant" as const, content: "1. What are the three forms of water? [1]\n\n2. What causes evaporation? [1]\n\n3. What is condensation? [1]" }
+    { role: "assistant" as const, content: "Here are 3 practice questions grounded in your Study Room materials, focused on water:\n\n1. What are the three forms of water? [1]\n\n2. What causes evaporation? [1]\n\n3. What is condensation? [1]" }
   ];
   assert.deepEqual(extractLatestPracticePromptsFromHistory(history), [
     "What are the three forms of water?",
@@ -379,4 +390,169 @@ test("practice follow-up helpers recognize a stuck learner and preserve the orig
   assert.equal(isPracticeHelpRequest("I don't know"), true);
   assert.equal(isPracticeHelpRequest("hint please"), true);
   assert.equal(isPracticeHelpRequest("liquid, gas, solid"), false);
+});
+
+
+// ---------------------------------------------------------------------------
+// Replying to a practice set without a number, an exact word, or perfect spelling
+// ---------------------------------------------------------------------------
+
+const SET_TEXT = [
+  "Here are 4 practice questions grounded in your Study Room materials, focused on the water cycle:",
+  "",
+  "1. What are the three forms of water? [1]",
+  "",
+  "2. What process turns liquid water into vapor? [2]",
+  "   a) Condensation",
+  "   b) Evaporation",
+  "   c) Precipitation",
+  "",
+  "3. (True or False) Clouds form when vapor cools and condenses. [2]",
+  "",
+  "4. Why does ice float on liquid water? [3]",
+  "",
+  "Answer any of these and I'll check the idea, not whether your wording matches the study guide.",
+  "If you're stuck, say \u201chint\u201d or \u201cI don't know.\u201d I'll nudge you first, then show a model answer if you need it."
+].join("\n");
+
+const SET: PracticeSet = extractLatestPracticeSetFromHistory([
+  { role: "user", content: "give me 4 questions" },
+  { role: "assistant", content: SET_TEXT }
+])!;
+
+test("a practice set is read with its multiple-choice options and without the closing guidance", () => {
+  assert.equal(SET.prompts.length, 4);
+  assert.equal(SET.prompts[0], "What are the three forms of water?");
+  assert.match(SET.blocks[1], /b\) Evaporation/);
+  assert.doesNotMatch(SET.blocks[3], /Answer any of these/);
+});
+
+test("a numbered outline is not mistaken for a practice set", () => {
+  const outline = "**Short answer:** Water cycles.\n\n## Steps\n\n1. Evaporation lifts vapor [1]\n2. Condensation forms clouds [2]";
+  assert.equal(extractLatestPracticeSetFromHistory([{ role: "assistant", content: outline }]), null);
+  assert.deepEqual(extractLatestPracticePromptsFromHistory([{ role: "assistant", content: outline }]), []);
+});
+
+test("a practice set stops being the thing being answered once the conversation has moved on", () => {
+  const moved = [
+    { role: "assistant" as const, content: SET_TEXT },
+    ...Array.from({ length: 8 }, (_, index) => ({
+      role: index % 2 === 0 ? ("user" as const) : ("assistant" as const),
+      content: `message ${index}`
+    }))
+  ];
+  assert.equal(extractLatestPracticeSetFromHistory(moved), null);
+});
+
+test("the question number is read however the learner writes it, but a number inside an answer is not one", () => {
+  assert.equal(explicitQuestionNumber("2. evaporation"), 2);
+  assert.equal(explicitQuestionNumber("2) evaporation"), 2);
+  assert.equal(explicitQuestionNumber("#3 true"), 3);
+  assert.equal(explicitQuestionNumber("q4: density"), 4);
+  assert.equal(explicitQuestionNumber("Question 2 is b"), 2);
+  assert.equal(explicitQuestionNumber("for question two I think b"), 2);
+  assert.equal(explicitQuestionNumber("the third one is true"), 3);
+  assert.equal(explicitQuestionNumber("it takes 3 forms"), null);
+  assert.equal(explicitQuestionNumber("ice, liquid and vapor"), null);
+  assert.equal(explicitQuestionNumber("I have one question about this"), null);
+});
+
+test("slight misspellings count as the same word, and short or different words do not", () => {
+  assert.equal(editDistance("evaporation", "evaperation"), 1);
+  assert.equal(editDistance("form", "from"), 1, "a swapped pair is one edit");
+  assert.equal(wordsMatch("evaperation", "evaporation"), true);
+  assert.equal(wordsMatch("condensasion", "condensation"), true);
+  assert.equal(wordsMatch("vapour", "vapor"), true);
+  assert.equal(wordsMatch("evaporating", "evaporation"), true, "a shared stem");
+  assert.equal(wordsMatch("ice", "ace"), false, "three letters or fewer must match exactly");
+  assert.equal(wordsMatch("pizza", "precipitation"), false);
+  assert.equal(wordsMatch("density", "evaporation"), false);
+});
+
+test("a reply that names no question is matched to the question it is about, misspellings included", () => {
+  assert.deepEqual(resolvePracticeQuestion("evaperation", SET), { index: 1, by: "wording" });
+  assert.deepEqual(resolvePracticeQuestion("b", SET), { index: null, by: null }, "a bare letter fits no question uniquely");
+  assert.deepEqual(resolvePracticeQuestion("ice is less dense so it floats", SET), { index: 3, by: "wording" });
+  assert.equal(resolvePracticeQuestion("clouds form when vapour cools", SET).index, 2);
+  assert.deepEqual(resolvePracticeQuestion("2) heat", SET), { index: 1, by: "number" });
+  assert.deepEqual(resolvePracticeQuestion("anything at all", { prompts: ["Only one?"], blocks: ["1. Only one?"] }), { index: 0, by: "only" });
+});
+
+test("an unrelated or ambiguous reply is never silently graded against question one", () => {
+  assert.deepEqual(resolvePracticeQuestion("pizza", SET), { index: null, by: null });
+  assert.deepEqual(resolvePracticeQuestion("water", SET), { index: null, by: null }, "water appears in several questions");
+  assert.deepEqual(scoreReplyAgainstBlocks("pizza", SET.blocks), [0, 0, 0, 0]);
+});
+
+test("a hedged answer, a hint request or a bare word is a practice reply; a new question or small talk is not", () => {
+  for (const reply of ["evaporation", "is it evaporation?", "i think b", "2", "idk", "i dont know", "hnit please", "can you give me a hint?", "liquid, solid, gas", "pizza"]) {
+    assert.equal(isPracticeReply(reply), true, reply);
+  }
+  for (const reply of ["thanks", "ok", "Thank you!", "why does ice float?", "what is a front", "explain condensation", ""]) {
+    assert.equal(isPracticeReply(reply), false, reply);
+  }
+});
+
+test("help and answer requests are recognised through shorthand and typos without catching real answers", () => {
+  for (const reply of ["idk", "dunno", "i dont know", "i dnt know", "not sure", "no idea", "hnit", "show me the answer", "what's the answer"]) {
+    assert.equal(isPracticeHelpRequest(reply), true, reply);
+  }
+  for (const reply of ["liquid, gas, solid", "mint", "the sun heats the water", "helps plants grow"]) {
+    assert.equal(isPracticeHelpRequest(reply), false, reply);
+  }
+  assert.equal(isPracticeAnswerRequest("show me the answer"), true);
+  assert.equal(isPracticeAnswerRequest("hint please"), false);
+});
+
+test("the tutor is told which question it is grading, to ignore spelling, and what to do with an unrelated reply", () => {
+  const decided = buildPracticeTutorDirective({ set: SET, resolution: { index: 1, by: "number" }, wantsHelp: false, wantsAnswer: false });
+  assert.match(decided, /practice question 2/);
+  assert.match(decided, /b\) Evaporation/);
+  assert.doesNotMatch(decided, /did not say which/);
+  assert.match(decided, /spelling/i);
+  assert.match(decided, /unrelated/i);
+
+  const guessed = buildPracticeTutorDirective({ set: SET, resolution: { index: 3, by: "wording" }, wantsHelp: false, wantsAnswer: false });
+  assert.match(guessed, /most likely answers question 4/);
+  assert.match(guessed, /What are the three forms of water/, "the whole set is shown so the guess can be overruled");
+
+  const unknown = buildPracticeTutorDirective({ set: SET, resolution: { index: null, by: null }, wantsHelp: false, wantsAnswer: false });
+  assert.match(unknown, /ask which question they mean/);
+
+  const stuck = buildPracticeTutorDirective({ set: SET, resolution: { index: 0, by: "number" }, wantsHelp: true, wantsAnswer: false });
+  assert.match(stuck, /Do not mark them wrong/);
+  const reveal = buildPracticeTutorDirective({ set: SET, resolution: { index: 0, by: "number" }, wantsHelp: true, wantsAnswer: true });
+  assert.match(reveal, /model answer/);
+});
+
+// ---------------------------------------------------------------------------
+// Typos in requests and topic names
+// ---------------------------------------------------------------------------
+
+test("a practice request is understood through typos in its command words", () => {
+  assert.deepEqual(classifyIntent("qiuz me"), { type: "practice_questions", count: 5 });
+  assert.deepEqual(classifyIntent("give me 3 qestions"), { type: "practice_questions", count: 3 });
+  assert.deepEqual(classifyIntent("give me 4 practise questions"), { type: "practice_questions", count: 4 });
+  assert.deepEqual(classifyIntent("5 practcie questions please"), { type: "practice_questions", count: 5 });
+  assert.equal(classifyIntent("what is a questionnaire").type, "qa");
+  assert.equal(classifyIntent("explain photosynthesis").type, "qa");
+});
+
+test("a topic is found by name through misspellings and word endings, never by guesswork between two", () => {
+  const topics = [
+    topic({ id: "t1", title: "Photosynthesis" }),
+    topic({ id: "t2", title: "Balanced and unbalanced forces" }),
+    topic({ id: "t3", title: "Phase changes and conservation of matter" })
+  ];
+  assert.equal(findNamedTopic(topics, "questions on photosythesis")?.id, "t1");
+  assert.equal(findNamedTopic(topics, "quiz me on unbalenced forces and balanced")?.id, "t2");
+  assert.equal(findNamedTopic(topics, "phase change and conservation of mater")?.id, "t3");
+  assert.equal(findNamedTopic(topics, "Photosynthesis")?.id, "t1", "an exact title still wins");
+  assert.equal(findNamedTopic(topics, "give me some practice"), undefined);
+  assert.equal(findNamedTopic(topics, "forces"), undefined, "one word of a three-word title is not naming it");
+
+  const similar = [topic({ id: "a", title: "Rock layers" }), topic({ id: "b", title: "Rock layers" })];
+  assert.equal(findNamedTopic(similar, "rock layers please")?.id, "a", "an identical title is matched exactly first");
+  const near = [topic({ id: "a", title: "Cell division" }), topic({ id: "b", title: "Cell divisions" })];
+  assert.equal(findNamedTopic(near, "cel divison"), undefined, "two equally close topics name neither");
 });

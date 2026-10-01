@@ -1306,8 +1306,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .planDayActions article { padding-left: 18px; border-left: 3px solid var(--tone); }
 .planDayActions h3 { font-size: 1.3rem; margin: 6px 0; letter-spacing: -.03em; }
 .planDayActions p { font-size: .92rem; line-height: 1.6; color: var(--ink-2); margin: 0 0 12px; }
-.planActionButtons { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.planActionButtons button:not(.buttonPrimary) { border: 0; background: none; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--ink-2); }
+.planActionButtons { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 18px; }
+.planActionButtons button:not(.buttonPrimary) { border: 0; padding: 8px 0; min-height: 40px; background: none; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--ink-2); }
 .planActionButtons .buttonPrimary { min-height: 40px; padding: 0 16px; font-size: .88rem; }
 
 /* ---------------------------------------------------------------------------
@@ -1374,20 +1374,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .masteryDeck .mdTile {
   --fill: var(--kiwi);
   position: relative; overflow: hidden; isolation: isolate; display: grid; align-content: space-between; gap: 10px;
-  width: 100%; min-height: 112px; padding: 12px; border: 0; border-radius: 16px; text-align: left; color: #fff; cursor: pointer;
-  background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  width: 100%; min-height: 112px; padding: 12px 12px 27px; border: 0; border-radius: 16px; text-align: left; color: #fff; cursor: pointer;
+  background: color-mix(in oklab, var(--fill) 15%, rgba(255, 255, 255, .05)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
   transition: transform .15s var(--ease-out), box-shadow .2s ease;
 }
 .masteryDeck .mdTile:hover { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .35); }
 .masteryDeck .mdTile:active { transform: translateY(1px); }
+/* Earned mastery as a bar along the foot of the tile, the same reading as the bars in Practice. */
 .masteryDeck .mdTile::before {
-  content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: var(--v);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--fill) 62%, transparent), color-mix(in oklab, var(--fill) 26%, transparent));
-  box-shadow: inset 0 3px 0 var(--fill);
+  content: ""; position: absolute; z-index: -1; left: 12px; right: 12px; bottom: 11px; height: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--fill) var(--v), rgba(255, 255, 255, .16) var(--v));
 }
 .masteryDeck .mdTile-learning { --fill: var(--dandelion); }
 .masteryDeck .mdTile-blind { --fill: var(--berry); }
-.masteryDeck .mdTile-blind::before { height: 100%; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--berry) 30%, transparent) 0 6px, transparent 6px 12px); box-shadow: inset 0 0 0 1.5px var(--berry); }
+.masteryDeck .mdTile-blind::before { inset: 0; height: auto; border-radius: 0; background: repeating-linear-gradient(135deg, color-mix(in oklab, var(--berry) 30%, transparent) 0 6px, transparent 6px 12px); box-shadow: inset 0 0 0 1.5px var(--berry); }
+.masteryDeck .mdTile-new { background: rgba(255, 255, 255, .05); }
 .masteryDeck .mdTile-new::before { display: none; }
 .masteryDeck .mdTile b { font-size: .86rem; line-height: 1.25; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
 .masteryDeck .mdTile small { font-family: var(--mono); font-size: .7rem; color: rgba(255, 255, 255, .82); }
@@ -1499,6 +1500,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .chatComposer { position: relative; display: block; padding: 8px 12px 10px; background: var(--white); }
 .chatRow { position: relative; }
 .chatComposer[data-accent="learn"] { --chat-key: var(--teal); --chat-on: var(--ink); }
+/* Learn is the teal mode everywhere in the chat: its bubbles, starters, headings and citations, not just the send button. */
+.coachChat[data-chat-mode="learn"] { --chat-key: var(--teal); --chat-on: var(--ink); --tone: var(--teal); --tone-ink: var(--teal-ink); --tone-soft: color-mix(in oklab, var(--teal) 14%, white); }
 .chatComposer[data-accent="learn"] input { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in oklab, var(--teal) 22%, transparent); }
 .chatComposer input {
   width: 100%; min-height: 38px; padding: 0 46px 0 16px; border: 1px solid rgba(20, 27, 45, .2); border-radius: 20px; outline: 0;
@@ -1549,17 +1552,28 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .richText > :first-child { margin-top: 0; }
 .richText > :last-child { margin-bottom: 0; }
 .richText p { margin: 0 0 .7em; }
-.richText h4 { margin: 1em 0 .35em; font-family: var(--display); font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
-.richText ul, .richText ol { margin: 0 0 .7em; padding-left: 1.3em; display: grid; gap: .3em; }
+/* Answers and lessons are outlines: a bold answer line, small tinted section labels, and tight cited bullets. */
+.richText > p:first-child > strong:first-child { color: var(--tone-ink); }
+.richText h4 {
+  margin: 1.15em 0 .5em; padding-bottom: .3em; border-bottom: 1px solid color-mix(in oklab, var(--tone) 24%, transparent);
+  font-family: var(--display); font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--tone-ink);
+}
+.richText ul, .richText ol { margin: 0 0 .55em; padding-left: 1.15em; display: grid; gap: .35em; line-height: 1.45; }
+.richText ul { list-style: disc; }
+.richText li > ul { list-style: circle; }
 .richText li::marker { color: var(--tone-ink); }
+.richText li > ul, .richText li > ol { margin: .3em 0 .1em; padding-left: 1.05em; gap: .2em; font-size: .94em; color: color-mix(in oklab, var(--ink) 82%, var(--white)); }
+.richText li > ul > li::marker, .richText li > ol > li::marker { color: var(--muted); }
 .richText code { padding: 1px 5px; border-radius: 6px; background: rgba(20, 27, 45, .07); font-family: var(--mono); font-size: .88em; }
 .richCite {
   margin-left: 1px; padding: 0 4px; border-radius: 6px; font-size: .68rem; font-weight: 700; line-height: 1.5;
   color: var(--tone-ink); background: var(--tone-soft); vertical-align: super;
 }
-.lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.68; color: var(--ink); }
+.lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.6; color: var(--ink); }
+.lessonText ul, .lessonText ol { gap: .45em; line-height: 1.5; }
 .coachChat .answerText .richText p { margin: 0 0 .5em; }
-.coachChat .answerText .richText h4 { font-size: .98rem; }
+.coachChat .answerText .richText h4 { font-size: .72rem; }
+.coachChat .answerBubble .answerText + .sourceStack { margin-top: 12px; }
 @media (min-width: 701px) {
   .coachMode { gap: 16px; }
   .coachMode .coachSetupButton {
@@ -2357,14 +2371,21 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .topicBody { padding: 0 13px 16px; }
   .termChip { border: 0; border-radius: 999px; background: rgba(20,27,45,.06); }
 
+  /* A file reads top to bottom on a phone: its kind, then its whole name, then its actions. */
   .documentRow {
-    grid-template-columns: auto minmax(0,1fr); gap: 10px 12px;
-    padding: 13px; border-color: rgba(20,27,45,.1); border-radius: 16px;
+    grid-template-columns: minmax(0,1fr); gap: 10px;
+    padding: 14px 14px 14px 20px; border-color: rgba(20,27,45,.1); border-radius: 16px;
   }
-  .documentActions { grid-column: 1 / -1; gap: 16px; }
+  .documentBadge { justify-self: start; }
+  .documentMeta strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .documentActions { grid-column: auto; gap: 8px; }
 
-  .masteryHero { gap: 16px; align-items: flex-start; }
-  .progressRing { width: 82px; }
+  .masteryHero { gap: 16px; align-items: center; flex-wrap: nowrap; }
+  .masteryHero > div:first-child { flex: 1 1 0; min-width: 0; }
+  .progressRing { width: 92px; }
+  .progressRing circle { stroke-width: 12; }
+  .ringLabel strong { font-size: 1.3rem; }
+  .ringLabel span { margin-top: 3px; font-size: .58rem; }
   .statRow { grid-template-columns: repeat(2,1fr); gap: 8px; }
   .statRow > div { padding: 13px; border-color: rgba(20,27,45,.09); border-radius: 15px; }
   .statRow dd { font-size: 1.55rem; }
@@ -3082,6 +3103,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice .coachChat .answerBubble { background: var(--white); box-shadow: inset 0 0 0 1px var(--th-line); }
 .roomDevice .coachChat .answerBubble[data-state="insufficient"] { background: #fdeede; }
 .roomDevice .chatChips button { background: var(--white); color: var(--th-ink); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .coachChat[data-chat-mode="learn"] .chatChips button { color: var(--teal-ink); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 38%, white); }
 
 @media (max-width: 700px) {
   .roomDevice .studyGroups {
@@ -3264,6 +3286,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @container docs (max-width: 760px) {
   .documentRow { grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; }
   .documentActions { grid-column: 1 / -1; }
+}
+/* Narrower still (a phone): the kind, the whole name, then the buttons, one under the other. */
+@container docs (max-width: 520px) {
+  .documentRow { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .documentBadge { justify-self: start; }
+  .documentActions { grid-column: auto; }
 }
 
 /* Materials: a drop target in the same card language as the other pages. */
@@ -3556,7 +3584,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .planDayActions article { padding-left: 14px; }
   .planDayActions h3 { font-size: 1.05rem; margin: 4px 0; }
   .planDayActions p { font-size: .86rem; line-height: 1.5; margin-bottom: 10px; }
-  .planActionButtons { gap: 10px; }
+  .planActionButtons { gap: 2px 16px; }
   .planActionButtons .buttonPrimary { min-height: 34px; padding: 0 14px; font-size: .82rem; }
   .planActionButtons button:not(.buttonPrimary) { font-size: .82rem; }
 

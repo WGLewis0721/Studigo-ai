@@ -1,7 +1,7 @@
 "use client";
 
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { COACH_CONTROL_COMMANDS, selectLearningRoute } from "@/lib/coach-route-selection";
+import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters, selectLearningRoute } from "@/lib/coach-route-selection";
 import { useEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
@@ -48,7 +48,7 @@ const PRACTICE_PROTOCOLS: PracticeProtocol[] = [
 ] as const;
 
 type ChatMode = "coach" | "learn";
-type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
+type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
 
 type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
@@ -57,6 +57,7 @@ const GENERAL_TOPIC: SkillTopic = { title: "This unit", objective: "Start with a
 
 function answerLabel(message: Message): string {
   const state = coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming });
+  if (message.kind === "guide") return "LEARN · HOW IT WORKS";
   if (message.mode === "learn") {
     if (state === "streaming") return "LEARN · READING YOUR MATERIALS…";
     return state === "grounded" ? "LEARN · FROM YOUR MATERIALS" : "LEARN · NOT IN YOUR MATERIALS";
@@ -156,7 +157,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
     // Snapshot the conversation so far — before the new user turn and the
     // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
-    const priorHistory = messages.filter((message) => !message.streaming).map((message) => ({ role: message.role, content: message.content }));
+    const priorHistory = messages.filter((message) => !message.streaming && message.kind !== "guide").map((message) => ({ role: message.role, content: message.content }));
     setMessages((current) => [...current, { id: interactionId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]);
     try {
       // The learner's question stays clean for retrieval; pedagogy choices
@@ -194,6 +195,17 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
       }
     } catch (coachError) { setError(coachError instanceof Error ? coachError.message : "Something went wrong."); setMessages((current) => current.filter((message) => message.id !== assistantId)); }
     finally { setBusy(false); }
+  }
+
+  /** The "How Learn works" starter: answered locally with fixed copy, no model call. */
+  function showLearnGuide(text: string) {
+    if (busy) return;
+    setError(null);
+    setMessages((current) => [
+      ...current,
+      { id: crypto.randomUUID(), role: "user", content: text, mode: "learn", kind: "guide" },
+      { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
+    ]);
   }
 
   function coachTopic(topic: Topic) {
@@ -317,7 +329,7 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
             <select value={practice.id} onChange={(event) => setPractice(PRACTICE_PROTOCOLS.find((option) => option.id === event.target.value) ?? PRACTICE_PROTOCOLS[0])}>
               {PRACTICE_PROTOCOLS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
-            <small>{practice.name === "Focused repetition" ? "Use repetition when it is the right tool—not as busywork." : practice.instruction}</small>
+            <small>{practice.name === "Focused repetition" ? "Use repetition when it is the right tool, not as busywork." : practice.instruction}</small>
           </label>
         </div>
       </section>
@@ -335,17 +347,13 @@ export function CoachPanel({ roomId, readyCount, topics, areas = [], onOpenMater
           ) : (
             <div className="coachEmpty">
               <strong>Understand it.</strong>
-              <p>Learn answers from your materials and shows the page it came from. Use it when an idea or term does not make sense yet. Then switch to Coach to practice it.</p>
-              <div className="starterList">
-                <button type="button" onClick={() => void coach(`Explain ${selectedTopic.title} simply.`)}>Explain {selectedTopic.title}</button>
-                <button type="button" onClick={() => void coach("What does the study guide say I need to know?")}>What does my guide cover?</button>
-                <button type="button" onClick={() => void coach("What am I most likely to be tested on?")}>What will be on the test?</button>
-              </div>
+              <p>Learn answers from your materials and shows the page it came from. Use it when an idea or term does not make sense yet. Then switch to Coach to practice it. Tap a starter below to see how it works.</p>
             </div>
           )
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
         <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
         </div>
+        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
         <StudigoComposer

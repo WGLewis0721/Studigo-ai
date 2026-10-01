@@ -11,10 +11,14 @@ export type Inline =
   | { type: "code"; value: string }
   | { type: "cite"; value: string };
 
+/** One bullet. A bullet indented under it becomes its sublist, which is how an outline nests. */
+export type ListItem = { inline: Inline[]; sublist: ListBlock | null };
+export type ListBlock = { type: "list"; ordered: boolean; items: ListItem[] };
+
 export type Block =
   | { type: "heading"; inline: Inline[] }
   | { type: "paragraph"; inline: Inline[] }
-  | { type: "list"; ordered: boolean; items: Inline[][] };
+  | ListBlock;
 
 const INLINE = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\s][^*\n]*?\*|\[\d{1,2}(?:\s*,\s*\d{1,2})*\])/g;
 
@@ -36,21 +40,56 @@ export function parseInline(text: string): Inline[] {
 }
 
 const HEADING = /^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$/;
-const BULLET = /^\s*[-*•]\s+(.*)$/;
-const ORDERED = /^\s*\d{1,2}[.)]\s+(.*)$/;
+const BULLET = /^(\s*)[-*•]\s+(.*)$/;
+const ORDERED = /^(\s*)\d{1,2}[.)]\s+(.*)$/;
+
+type RawItem = { indent: number; ordered: boolean; text: string };
+
+/** Indentation counts a tab as four spaces, so a model that tabs its sub-bullets still nests. */
+function indentOf(whitespace: string): number {
+  return whitespace.replace(/\t/g, "    ").length;
+}
+
+/**
+ * Builds nested lists from consecutive list lines. A line indented deeper than the line above it
+ * starts a sublist under that line; a line indented less closes the deeper lists. Only the order
+ * of indents matters, not their width, so two, three or four spaces per level all work.
+ */
+function buildList(items: RawItem[]): ListBlock {
+  const root: ListBlock = { type: "list", ordered: items[0].ordered, items: [] };
+  const stack: Array<{ indent: number; list: ListBlock }> = [{ indent: items[0].indent, list: root }];
+
+  for (const item of items) {
+    while (stack.length > 1 && item.indent < stack[stack.length - 1].indent) stack.pop();
+    let top = stack[stack.length - 1];
+
+    if (item.indent > top.indent) {
+      const parent = top.list.items[top.list.items.length - 1];
+      if (parent) {
+        const child: ListBlock = { type: "list", ordered: item.ordered, items: [] };
+        parent.sublist = child;
+        stack.push({ indent: item.indent, list: child });
+        top = stack[stack.length - 1];
+      }
+    }
+
+    top.list.items.push({ inline: parseInline(item.text), sublist: null });
+  }
+  return root;
+}
 
 export function parseRichText(source: string): Block[] {
   const blocks: Block[] = [];
   let paragraph: string[] = [];
-  let list: { ordered: boolean; items: string[] } | null = null;
+  let list: RawItem[] = [];
 
   const flushParagraph = () => {
     if (paragraph.length) blocks.push({ type: "paragraph", inline: parseInline(paragraph.join(" ")) });
     paragraph = [];
   };
   const flushList = () => {
-    if (list) blocks.push({ type: "list", ordered: list.ordered, items: list.items.map(parseInline) });
-    list = null;
+    if (list.length) blocks.push(buildList(list));
+    list = [];
   };
 
   for (const raw of source.replace(/\r\n?/g, "\n").split("\n")) {
@@ -69,18 +108,18 @@ export function parseRichText(source: string): Block[] {
     }
     const bullet = BULLET.exec(line);
     const ordered = bullet ? null : ORDERED.exec(line);
-    const item = bullet ?? ordered;
-    if (item) {
+    const match = bullet ?? ordered;
+    if (match) {
       flushParagraph();
-      const isOrdered = Boolean(ordered);
-      if (list && list.ordered !== isOrdered) flushList();
-      list ??= { ordered: isOrdered, items: [] };
-      list.items.push(item[1]);
+      const raw: RawItem = { indent: indentOf(match[1]), ordered: Boolean(ordered), text: match[2] };
+      // A top-level list keeps one style: switching between bullets and numbers starts a new list.
+      if (list.length && raw.indent <= list[0].indent && raw.ordered !== list[0].ordered) flushList();
+      list.push(raw);
       continue;
     }
     // A wrapped continuation of the previous list item.
-    if (list && /^\s{2,}\S/.test(raw)) {
-      list.items[list.items.length - 1] += ` ${line.trim()}`;
+    if (list.length && /^\s{2,}\S/.test(raw)) {
+      list[list.length - 1].text += ` ${line.trim()}`;
       continue;
     }
     flushList();

@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { parseRichText, type Inline } from "@/lib/rich-text";
+import { parseRichText, type Inline, type ListBlock } from "@/lib/rich-text";
 
 function renderInline(inline: Inline[]) {
   return inline.map((part, index) => {
@@ -18,20 +18,27 @@ function renderInline(inline: Inline[]) {
   });
 }
 
+function renderList(block: ListBlock, key: number | string) {
+  const Tag = block.ordered ? "ol" : "ul";
+  return (
+    <Tag key={key}>
+      {block.items.map((item, itemIndex) => (
+        <li key={itemIndex}>
+          {renderInline(item.inline)}
+          {item.sublist ? renderList(item.sublist, "sub") : null}
+        </li>
+      ))}
+    </Tag>
+  );
+}
+
 /** Readable model text: real headings, lists and emphasis. Renders React nodes only. */
 export function RichText({ text, className = "" }: { text: string; className?: string }) {
   return (
     <div className={`richText ${className}`.trim()}>
       {parseRichText(text).map((block, index) => {
         if (block.type === "heading") return <h4 key={index}>{renderInline(block.inline)}</h4>;
-        if (block.type === "list") {
-          const Tag = block.ordered ? "ol" : "ul";
-          return (
-            <Tag key={index}>
-              {block.items.map((item, itemIndex) => <li key={itemIndex}>{renderInline(item)}</li>)}
-            </Tag>
-          );
-        }
+        if (block.type === "list") return renderList(block, index);
         return <p key={index}>{renderInline(block.inline)}</p>;
       })}
     </div>

@@ -19,7 +19,7 @@ function ReadinessRing({ value, practiced }: { value: number; practiced: boolean
         />
       </svg>
       <div className="ringLabel">
-        <strong>{practiced ? `${value}%` : "—"}</strong>
+        <strong>{practiced ? `${value}%` : "–"}</strong>
         <span>ready</span>
       </div>
     </div>

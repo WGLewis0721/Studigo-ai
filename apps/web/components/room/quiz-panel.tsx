@@ -187,7 +187,7 @@ export function QuizPanel({
             {blindSpots > 0 && (
               <p className="calibrationNote">
                 You were confident on {blindSpots} answer{blindSpots === 1 ? "" : "s"} you got
-                wrong. Those are blind spots — Weak Areas now ranks them first.
+                wrong. Those are blind spots. Weak Areas now ranks them first.
               </p>
             )}
             {blindSpots === 0 && luckyGuesses > 0 && (
@@ -347,7 +347,7 @@ export function QuizPanel({
           )}
           {result.confidence === 1 && result.isCorrect && (
             <p className="blindSpotFlag">
-              You knew that one — you just didn't trust it yet.
+              You knew that one. You just didn't trust it yet.
             </p>
           )}
           <p>{result.feedback}</p>

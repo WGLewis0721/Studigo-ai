@@ -1,5 +1,5 @@
 import type { Citation, GeneratedQuestion, RetrievedChunk } from "@studigo/ai";
-import { generateQuizQuestions } from "@studigo/ai";
+import { editDistance, generateQuizQuestions, repairCommandTypos, wordsMatch } from "@studigo/ai";
 import { rankWeakAreas, type PracticeEvidence } from "@/lib/study-planning";
 import type { Topic } from "@/lib/rooms";
 
@@ -61,16 +61,27 @@ const NUMBER_WORDS: Record<string, number> = {
 // \d{1,3} (not {1,2}) so a three-digit ask like "500 questions" is still
 // recognized as a practice-question request before being clamped below.
 const COUNTED_QUESTION_PATTERN =
-  /\b(\d{1,3}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|couple|few|several|some)\s+(?:more\s+|new\s+|practice\s+|additional\s+)*questions?\b/i;
+  /\b(\d{1,3}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|couple|few|several|some)\s+(?:more\s+|new\s+|practi[sc]e\s+|additional\s+)*questions?\b/i;
 
 // Catches requests that ask for practice questions without a parseable count.
 const GENERIC_PRACTICE_PATTERN =
-  /\b(quiz|test)\s+me\b|\bgive\s+me\s+(?:some|a\s+few|practice)\s+questions?\b|\bask\s+me\s+(?:some\s+)?questions?\b|\bpractice\s+questions?\b/i;
+  /\b(quiz|test)\s+me\b|\bgive\s+me\s+(?:some|a\s+few|practice)\s+questions?\b|\bask\s+me\s+(?:some\s+)?questions?\b|\bpracti[sc]e\s+questions?\b/i;
+
+/** The words a practice request is built from, for reading "qiuz me" or "5 qestions" as what was meant. */
+const PRACTICE_COMMAND_WORDS = ["question", "questions", "quiz", "test", "practice", "give", "more", "show", "answer", "hint", "stuck", "nudge", "know", "unsure"] as const;
+const PRACTICE_REQUEST_MAX_WORDS = 14;
 
 export function classifyIntent(message: string): EngineIntent {
   const text = message.trim().toLowerCase();
   if (!text) return { type: "qa" };
+  const direct = classifyIntentExact(text);
+  if (direct.type !== "qa") return direct;
+  // Not a practice request as typed: read it once more with command-word typos put right.
+  const repaired = repairCommandTypos(text, PRACTICE_COMMAND_WORDS, PRACTICE_REQUEST_MAX_WORDS);
+  return repaired === text ? direct : classifyIntentExact(repaired);
+}
 
+function classifyIntentExact(text: string): EngineIntent {
   const countedMatch = text.match(COUNTED_QUESTION_PATTERN);
   if (!countedMatch && !GENERIC_PRACTICE_PATTERN.test(text)) return { type: "qa" };
 
@@ -93,6 +104,47 @@ export function classifyIntent(message: string): EngineIntent {
 
 export type ResolvedPracticeTopic = { topic: Topic; reason: string };
 
+const TITLE_FILLER = new Set(["and", "the", "of", "in", "on", "for", "to", "a", "an", "with", "vs"]);
+
+function titleWords(title: string): string[] {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 3 && !TITLE_FILLER.has(word));
+}
+
+/**
+ * The topic a message names, if any. The exact title anywhere in the message wins. Otherwise a
+ * topic counts as named when the message contains every meaningful word of its title (two thirds
+ * of them for a long title), allowing for misspellings and word endings, so "questions on
+ * photosythesis" or "unbalenced forces" still finds the topic. The topic with the most matching
+ * words wins; a tie names no topic rather than guessing one.
+ */
+export function findNamedTopic(topics: Topic[], message: string): Topic | undefined {
+  const text = message.toLowerCase();
+  const exact = topics.find((topic) => topic.title && text.includes(topic.title.toLowerCase()));
+  if (exact) return exact;
+
+  const messageWords = text.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length >= 3);
+  let best: { topic: Topic; matched: number } | null = null;
+  let tied = false;
+  for (const topic of topics) {
+    const words = titleWords(topic.title ?? "");
+    if (!words.length) continue;
+    const matched = words.filter((word) => messageWords.some((messageWord) => wordsMatch(messageWord, word))).length;
+    const needed = words.length <= 3 ? words.length : Math.ceil((words.length * 2) / 3);
+    if (matched < needed) continue;
+    if (!best || matched > best.matched) {
+      best = { topic, matched };
+      tied = false;
+    } else if (matched === best.matched) {
+      tied = true;
+    }
+  }
+  return best && !tied ? best.topic : undefined;
+}
+
 export function resolvePracticeTopic(args: {
   message: string;
   topics: Topic[];
@@ -101,8 +153,7 @@ export function resolvePracticeTopic(args: {
 }): ResolvedPracticeTopic | null {
   if (!args.topics.length) return null;
 
-  const text = args.message.toLowerCase();
-  const named = args.topics.find((topic) => topic.title && text.includes(topic.title.toLowerCase()));
+  const named = findNamedTopic(args.topics, args.message);
   if (named) return { topic: named, reason: "The learner named this topic directly." };
 
   const ranked = rankWeakAreas(args.topics, args.evidence, args.now);
@@ -219,38 +270,241 @@ export function extractPriorPromptsFromHistory(
   return prompts;
 }
 
+/**
+ * A practice set is recognised by the header `formatQuestionsForChat` writes, not by numbered
+ * lines alone. Any numbered list in an answer (steps in a process, an outline) would otherwise be
+ * mistaken for a set, and the learner's next message graded against it.
+ */
+const PRACTICE_SET_HEADER = /^\s*Here (?:is|are) \d{1,2} practice questions?\b/i;
+/** A set counts as the thing being answered only while it is recent in the conversation. */
+const PRACTICE_REPLY_WINDOW = 8;
+
+export type PracticeSet = {
+  /** The question text of each numbered question, without its number or citation. */
+  prompts: string[];
+  /** The full text of each question, including multiple-choice options, for matching and grading. */
+  blocks: string[];
+};
+
+export function isPracticeSetMessage(content: string): boolean {
+  return PRACTICE_SET_HEADER.test(content);
+}
+
+function parsePracticeSet(content: string): PracticeSet {
+  const prompts: string[] = [];
+  const blocks: string[][] = [];
+  let open = false;
+  for (const line of content.split("\n")) {
+    const numbered = line.match(NUMBERED_QUESTION_LINE);
+    if (numbered) {
+      prompts.push(numbered[1].trim());
+      blocks.push([line.trim()]);
+      open = true;
+    } else if (open && /^\s+[a-z]\)\s+\S/i.test(line)) {
+      blocks[blocks.length - 1].push(line.trim());
+    } else if (line.trim()) {
+      open = false;
+    }
+  }
+  return { prompts, blocks: blocks.map((lines) => lines.join("\n")) };
+}
+
+/** The most recent practice set the Coach wrote, if it is still recent enough to be what the learner is answering. */
+export function extractLatestPracticeSetFromHistory(
+  history: Array<{ role: "user" | "assistant"; content: string }> = []
+): PracticeSet | null {
+  const floor = Math.max(0, history.length - PRACTICE_REPLY_WINDOW);
+  for (let index = history.length - 1; index >= floor; index -= 1) {
+    const message = history[index];
+    if (message.role !== "assistant" || !isPracticeSetMessage(message.content)) continue;
+    const set = parsePracticeSet(message.content);
+    return set.prompts.length ? set : null;
+  }
+  return null;
+}
+
 /** Returns only the most recent numbered practice set in the conversation. */
 export function extractLatestPracticePromptsFromHistory(
   history: Array<{ role: "user" | "assistant"; content: string }> = []
 ): string[] {
-  for (let index = history.length - 1; index >= 0; index -= 1) {
-    const message = history[index];
-    if (message.role !== "assistant") continue;
-    const prompts = message.content
-      .split("\n")
-      .map((line) => line.match(NUMBERED_QUESTION_LINE)?.[1]?.trim())
-      .filter((prompt): prompt is string => Boolean(prompt));
-    if (prompts.length) return prompts;
+  return extractLatestPracticeSetFromHistory(history)?.prompts ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// 3a'. Reading a learner's reply. None of this requires the learner to write in a particular
+//      shape: a number, a letter, a full sentence or the exact words are all optional, and a
+//      misspelled word still counts as that word.
+// ---------------------------------------------------------------------------
+
+// editDistance and wordsMatch live in @studigo/ai (typos.ts) so grading, the Coach and this file agree on what a typo is.
+export { editDistance, wordsMatch };
+
+/** Words that say nothing about which question a reply is answering. */
+const REPLY_FILLER = new Set([
+  "answer", "question", "questions", "number", "think", "maybe", "guess", "probably", "please",
+  "yes", "yeah", "just", "really", "something", "thing", "things", "like", "also", "know", "pretty"
+]);
+
+function replyContentWords(text: string): string[] {
+  return [...contentWordSet(text)].filter((word) => word.length >= 3 && !REPLY_FILLER.has(word) && !/^\d+$/.test(word));
+}
+
+/** For each question, how many distinct content words of the reply show up in it (misspellings allowed). */
+export function scoreReplyAgainstBlocks(message: string, blocks: string[]): number[] {
+  const replyWords = replyContentWords(message);
+  return blocks.map((block) => {
+    const blockWords = [...contentWordSet(block)];
+    return replyWords.filter((word) => blockWords.some((blockWord) => wordsMatch(word, blockWord))).length;
+  });
+}
+
+const ORDINALS: Record<string, number> = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9, tenth: 10
+};
+const CARDINALS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10
+};
+const ORDINAL_WORDS = Object.keys(ORDINALS).join("|");
+const QUESTION_NUMBER_WORDS = [...Object.keys(ORDINALS), ...Object.keys(CARDINALS)].join("|");
+
+/**
+ * The question number a learner names, in any of the usual ways: "2.", "2)", "#2", "q2",
+ * "question 2", "number two", "the second one". A number that is merely part of the answer
+ * ("it takes 3 forms") is not a question number.
+ */
+export function explicitQuestionNumber(message: string): number | null {
+  const text = message.trim();
+  const patterns: Array<[RegExp, (match: RegExpMatchArray) => number]> = [
+    [/^(?:q(?:uestion)?\.?\s*#?\s*|#\s*|no\.?\s*|number\s*)(\d{1,2})\b/i, (m) => Number(m[1])],
+    [/^(\d{1,2})\s*[.):\-]/, (m) => Number(m[1])],
+    [/(?:\b(?:question|q|number|no\.)|#)\s*(\d{1,2})\b/i, (m) => Number(m[1])],
+    [
+      new RegExp(`\\b(?:question|number|no\\.?)\\s+(${QUESTION_NUMBER_WORDS})\\b`, "i"),
+      (m) => ORDINALS[m[1].toLowerCase()] ?? CARDINALS[m[1].toLowerCase()]
+    ],
+    [new RegExp(`\\b(?:the\\s+)?(${ORDINAL_WORDS})\\s+(?:one|question)\\b`, "i"), (m) => ORDINALS[m[1].toLowerCase()]]
+  ];
+  for (const [pattern, read] of patterns) {
+    const match = text.match(pattern);
+    if (match) return read(match);
   }
-  return [];
+  return null;
+}
+
+export type PracticeResolution = {
+  /** Which question the reply answers, or null when it cannot be told from the reply alone. */
+  index: number | null;
+  /** How it was decided. "wording" is a best guess from shared words, not a certainty. */
+  by: "number" | "only" | "wording" | null;
+};
+
+/**
+ * Decides which question of a practice set a reply is answering without requiring the learner to
+ * say. A named number or a one-question set is certain. Otherwise the reply is compared with the
+ * words of each question and its options (spelling errors allowed), and a clear single winner is
+ * a guess. When nothing clearly wins, the caller shows the model the whole set instead.
+ */
+export function resolvePracticeQuestion(message: string, set: PracticeSet): PracticeResolution {
+  const count = set.prompts.length;
+  if (count === 0) return { index: null, by: null };
+  if (count === 1) return { index: 0, by: "only" };
+
+  const named = explicitQuestionNumber(message);
+  if (named !== null && named >= 1 && named <= count) return { index: named - 1, by: "number" };
+
+  const scores = scoreReplyAgainstBlocks(message, set.blocks);
+  const best = Math.max(...scores);
+  if (best >= 1 && scores.filter((score) => score === best).length === 1) {
+    return { index: scores.indexOf(best), by: "wording" };
+  }
+  return { index: null, by: null };
 }
 
 const PRACTICE_HELP_PATTERN =
-  /\b(i\s+(?:do\s*n't|dont)\s+know|idk|not\s+sure|i\s+am\s+stuck|i'm\s+stuck|stuck|hint|help|nudge|show\s+(?:me\s+)?(?:the\s+)?answer|tell\s+(?:me\s+)?(?:the\s+)?answer)\b/i;
+  /\b(?:i\s+)?(?:do\s*n'?t|dn'?t|dont)\s+(?:know|kno|knw|no)\b|\b(idk|dunno|not\s+sure|unsure|no\s+(?:idea|clue)|i\s+(?:am|m|'m)\s+stuck|i'm\s+stuck|stuck|hint|hnit|hitn|help|hlep|hepl|halp|nudge|give\s+up|skip)\b|\b(?:show|tell|give|reveal|what'?s|what\s+is)\s+(?:me\s+)?(?:the\s+)?answer\b|\banswer\s+please\b/i;
 
 /** Learner explicitly signals that they need scaffolding rather than grading. */
 export function isPracticeHelpRequest(message: string): boolean {
-  return PRACTICE_HELP_PATTERN.test(message.trim());
+  const text = message.trim();
+  return PRACTICE_HELP_PATTERN.test(text) || PRACTICE_HELP_PATTERN.test(repairCommandTypos(text, PRACTICE_COMMAND_WORDS));
+}
+
+/** The learner wants the answer itself, not just a nudge. */
+export function isPracticeAnswerRequest(message: string): boolean {
+  const text = message.trim();
+  return ANSWER_REQUEST.test(text) || ANSWER_REQUEST.test(repairCommandTypos(text, PRACTICE_COMMAND_WORDS));
+}
+
+const ANSWER_REQUEST =
+  /\b(?:show|tell|give|reveal)\s+(?:me\s+)?(?:the\s+)?(?:correct\s+)?answer\b|\bwhat'?s\s+the\s+answer\b|\bwhat\s+is\s+the\s+answer\b|\banswer\s+please\b|\bgive\s+up\b/i;
+
+const SMALL_TALK_ONLY =
+  /^(?:thanks?|thank\s*(?:you|u)|thx|thnx|thanx|ty|ok(?:ay)?|k|cool|great|nice|awesome|got\s*it|gotcha|nvm|never\s*mind|hi|hello|hey|bye)[\s.!]*$/i;
+
+/** A message that asks something new rather than answering the practice question. */
+const NEW_QUESTION_START =
+  /^\s*(?:what|whats|what's|why|how|when|where|who|which|explain|define|describe|tell\s+me|can\s+you|could\s+you|would\s+you|please\s+explain|compare|summari[sz]e)\b/i;
+
+/**
+ * Is this message a reply to the practice set the Coach just wrote, as opposed to a new request?
+ * A reply can be a bare word, a hedge that happens to end in a question mark ("evaporation?"),
+ * or a request for a hint. A fresh question ("why does ice float?") or small talk is not.
+ */
+export function isPracticeReply(message: string): boolean {
+  const text = message.trim();
+  if (!text || text.length > 1000) return false;
+  if (SMALL_TALK_ONLY.test(text)) return false;
+  if (isPracticeHelpRequest(text)) return true;
+  return !NEW_QUESTION_START.test(text);
+}
+
+/**
+ * What the tutor is told when a learner replies to a practice set. It names the question (or lets
+ * the model work it out), says that spelling and wording do not matter, and says what to do with
+ * an unrelated reply, a "not sure", and a reply that is really a new question.
+ */
+export function buildPracticeTutorDirective(args: {
+  set: PracticeSet;
+  resolution: PracticeResolution;
+  wantsHelp: boolean;
+  wantsAnswer: boolean;
+}): string {
+  const { set, resolution } = args;
+  const decided = resolution.by === "number" || resolution.by === "only";
+
+  const target = decided
+    ? `The learner is responding to practice question ${(resolution.index ?? 0) + 1}:\n${set.blocks[resolution.index ?? 0]}`
+    : [
+        "The learner did not say which practice question they are answering. This is the set:",
+        set.blocks.join("\n"),
+        resolution.index !== null
+          ? `Their reply most likely answers question ${resolution.index + 1}, but if it clearly answers a different one, use that one instead.`
+          : "Work out which question the reply answers from what it says and from the earlier conversation, since they may be working through the set in order. If you cannot tell, say so in one sentence and ask which question they mean instead of guessing.",
+        'Begin your reply by saying which question you are responding to, like "On question 2:". Respond to one question only.'
+      ].join("\n");
+
+  const mode = args.wantsAnswer
+    ? "The learner explicitly asked for the answer. Give a concise source-grounded model answer, then one sentence explaining it."
+    : args.wantsHelp
+      ? "The learner is stuck or unsure. Do not mark them wrong. Rephrase the question more simply and give one concrete source-grounded hint. Do not reveal the full answer unless they ask for it."
+      : "If the reply is correct, affirm it briefly and note any terminology difference. If it is partly correct, name what is right and give one targeted nudge for what is missing. If it is unrelated to the question, follow the rule for unrelated replies. Do not reveal the full answer on the first unrelated or wrong reply.";
+
+  return [
+    target,
+    "Judge the idea, not the wording or the spelling. Read through typos, shorthand, a missing capital, a wrong plural, or a one-word answer: a misspelled correct answer is a correct answer. Equivalent wording and valid examples count even when the study guide phrases it differently.",
+    "For a multiple-choice question, a letter or the text of an option is an answer. For a true or false question, true, false, t, f, yes and no are answers.",
+    "Rule for unrelated replies: if the reply has nothing to do with the question (a random word, a joke, food, a greeting, another subject), say so in one friendly sentence, do not grade it as a content mistake, do not praise it, restate the question in simpler words, and give one concrete hint from the excerpts. Never answer an unrelated reply by saying the materials do not cover it.",
+    "If the learner is really asking you a question about the course instead of answering, answer it briefly from the excerpts and then return to the practice question.",
+    mode,
+    "Keep the response short and teacher-like: at most four short sentences. Cite the source with [n] when stating course content."
+  ].join("\n\n");
 }
 
 /** Selects a numbered question when the learner names one; otherwise starts at #1. */
 export function practicePromptForFollowup(message: string, prompts: string[]): string | null {
   if (!prompts.length) return null;
-  const numbered = message.match(/(?:question\s*|#)?(\d{1,2})\s*(?:[.):\-]|\b)/i);
-  if (numbered) {
-    const requested = Number(numbered[1]);
-    if (requested >= 1 && requested <= prompts.length) return prompts[requested - 1];
-  }
+  const named = explicitQuestionNumber(message);
+  if (named !== null && named >= 1 && named <= prompts.length) return prompts[named - 1];
   return prompts[0];
 }
 

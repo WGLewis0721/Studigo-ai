@@ -19,7 +19,7 @@ const sources = [
   { rank: "03", type: "presentation", name: "Slides", note: "What was actually taught." },
   { rank: "04", type: "worksheet", name: "Worksheets", note: "The kind of questions to expect." },
   { rank: "05", type: "student_notes", name: "Your notes", note: "Your words, kept." },
-  { rank: "06", type: "textbook", name: "Textbook", note: "Explains — never expands the test." }
+  { rank: "06", type: "textbook", name: "Textbook", note: "Explains, never expands the test." }
 ];
 
 const tiles = [
@@ -89,7 +89,7 @@ export default function HomePage() {
             <h2 id="sources-title">Feed it the real stuff.</h2>
             <p>
               Studigo doesn&apos;t guess what your test covers. It reads what your teacher handed out,
-              ranks it, and keeps the study guide in charge — the textbook can explain, but it
+              ranks it, and keeps the study guide in charge. The textbook can explain, but it
               can&apos;t quietly add chapters.
             </p>
             <ul className="sourcesPromises">
@@ -128,13 +128,13 @@ export default function HomePage() {
             <h2 id="mastery-title">It knows what you know. Not how long you stared.</h2>
             <p>
               Mastery moves only with saved quiz answers and flashcard recall. Unpracticed topics
-              count as zero, and confident-but-wrong answers get flagged as blind spots — so the
+              count as zero, and confident-but-wrong answers get flagged as blind spots, so the
               number means something the night before.
             </p>
             <dl className="masteryLegend">
               <div><dt><i className="lg-mastered" /> Strong</dt><dd>Answered right, more than once</dd></div>
               <div><dt><i className="lg-learning" /> Needs work</dt><dd>Practiced, still slipping</dd></div>
-              <div><dt><i className="lg-blind" /> Blind spot</dt><dd>You were sure — and wrong</dd></div>
+              <div><dt><i className="lg-blind" /> Blind spot</dt><dd>You were sure and wrong</dd></div>
             </dl>
           </div>
           <div className="masteryDevice" role="img" aria-label="Illustrative mastery map for a sample weather unit: 71 percent ready, three topics strong, tornado formation flagged as a blind spot.">
@@ -212,7 +212,7 @@ export default function HomePage() {
           <div>
             <h2 id="cta-title">Tonight&apos;s chapter, already read.</h2>
             <p>Start a room with the guide you were handed. Ask it the thing you&apos;re stuck on and see where the answer comes from.</p>
-            <Link className="buttonPrimary ctaKey" href="/signup">Start studying — free <span aria-hidden="true">→</span></Link>
+            <Link className="buttonPrimary ctaKey" href="/signup">Start studying for free <span aria-hidden="true">→</span></Link>
           </div>
           <div className="ctaArt" aria-hidden="true">
             <StudigoMascot state="welcome" size={220} />

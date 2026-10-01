@@ -10,7 +10,7 @@ const MODES: Array<{ id: ModeId; glyph: GlyphName; name: string; color: string; 
   {
     id: "coach", glyph: "coach", name: "Coach", color: "Tangerine",
     headline: "A tutor that waits for your answer.",
-    copy: "It asks, listens, and nudges the exact gap — then picks your next rep. Styles range from Socratic to straight-up worked examples."
+    copy: "It asks, listens, and nudges the exact gap, then picks your next rep. Styles range from Socratic to straight-up worked examples."
   },
   {
     id: "learn", glyph: "learn", name: "Learn", color: "Blueberry",
@@ -98,10 +98,10 @@ function CoachView() {
           <small>Topic: Air masses &amp; fronts</small>
         </div>
       </div>
-      <p className="mvBubble mvBubbleCoach">When the cold front arrives, which air mass ends up on top — and why?</p>
+      <p className="mvBubble mvBubbleCoach">When the cold front arrives, which air mass ends up on top, and why?</p>
       <p className="mvBubble mvBubbleYou">The warm air, because it&apos;s lighter?</p>
       <p className="mvBubble mvBubbleCoach">
-        Right direction. <b>Lighter</b> is the key word — can you say what makes warm air lighter? Your guide
+        Right direction. <b>Lighter</b> is the key word. Can you say what makes warm air lighter? Your guide
         uses the word <em>density</em>.
       </p>
       <span className="mvTicket"><i>2</i>Weather study guide <b>p. 4</b></span>
