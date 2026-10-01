@@ -182,4 +182,33 @@ d.rectangle([14, 38, 29, 43], fill=rgba(BRASS)); d.rectangle([14, 0, 29, 3], fil
 outline(im).save(out / 'ammo_all.png')
 
 # unlock orb frame: same capsule shell, empty (the game tints/overlays the beam on top)
+# ---------- shrine: carved plinth with a brass brazier (native 60 x 92), flame frames and a gem ----------
+im, d = canvas(30, 46)
+d.rectangle([0, 38, 29, 45], fill=rgba(STONE_D)); d.rectangle([1, 38, 28, 44], fill=rgba(STONE)); speckle(d, (1, 38, 28, 44), 22, (STONE_D, STONE_L))
+d.line([(1, 38), (28, 38)], fill=rgba(STONE_L)); d.rectangle([3, 34, 26, 37], fill=rgba(STONE)); d.line([(3, 34), (26, 34)], fill=rgba(STONE_L))
+d.rectangle([2, 40, 27, 41], fill=rgba(BRASS)); d.point((2, 40), fill=rgba(BRASS_L))
+d.polygon([(8, 34), (22, 34), (20, 14), (10, 14)], fill=rgba(STONE)); speckle(d, (9, 15, 21, 33), 26, (STONE_D, STONE_L))
+d.line([(10, 14), (8, 34)], fill=rgba(STONE_L)); d.line([(20, 14), (22, 34)], fill=rgba(STONE_D))
+for y, w in ((19, 2), (25, 2), (30, 2)):
+    d.line([(15 - w, y), (15 + w, y)], fill=(143, 245, 224, 255)); d.point((15, y - 1), fill=(143, 245, 224, 255))
+d.rectangle([9, 14, 21, 15], fill=rgba(BRASS)); d.line([(9, 14), (21, 14)], fill=rgba(BRASS_L))
+d.polygon([(4, 6), (26, 6), (22, 13), (8, 13)], fill=rgba(BRASS)); d.polygon([(6, 7), (24, 7), (21, 12), (9, 12)], fill=rgba(BRASS_D))
+d.line([(4, 6), (26, 6)], fill=rgba(BRASS_L)); d.ellipse([7, 4, 23, 8], fill=rgba((26, 20, 22)))
+d.arc([5, 5, 14, 12], 180, 270, fill=rgba(BRASS_L))
+save(im, 'shrine_base')
+
+for f in range(3):
+    im, d = canvas(14, 20)
+    sway = (-1, 0, 1)[f]
+    d.polygon([(7, 19), (2, 13), (4, 6 - f), (7, 0 + f), (10, 6 - f), (12, 13)], fill=(255, 150, 54, 255))
+    d.polygon([(7, 19), (4, 14), (5 + sway, 8), (7 + sway, 3 + f), (9 + sway, 8), (10, 14)], fill=(255, 210, 96, 255))
+    d.polygon([(7, 19), (5, 15), (7, 9 + f), (9, 15)], fill=(255, 250, 214, 255))
+    save(im, f'shrine_flame_{f}', ink=False)
+
+im, d = canvas(7, 9)
+d.polygon([(3, 0), (6, 3), (3, 8), (0, 3)], fill=(255, 255, 255, 255))
+d.polygon([(3, 1), (5, 3), (3, 6), (1, 3)], fill=(214, 224, 236, 255))
+d.point((2, 2), fill=(255, 255, 255, 255))
+save(im, 'shrine_gem')
+
 print('world frames:', len(list(out.glob('*.png'))))

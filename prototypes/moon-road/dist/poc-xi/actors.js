@@ -385,6 +385,12 @@ export function orb(e, S, x, y) {
 export function shrine(e, S) {
   const x = (e.tx + 0.5) * TILE, y = e.ty * TILE;
   let armed = true;
+  // Carved plinth with a brazier: the flame burns bright while this is the respawn point, and one gem per beam it refills circles above.
+  const base = S.add.image(x, y, 'world', 'shrine_base.png').setOrigin(0.5, 1).setDepth(3);
+  const flame = S.add.image(x, y - 76, 'world', 'shrine_flame_0.png').setOrigin(0.5, 1).setDepth(3.2);
+  const fams = (e.orbs && e.orbs.length ? e.orbs : [0]);
+  const gems = fams.map(f => S.add.image(x, y - 110, 'world', 'shrine_gem.png').setDepth(3.3).setTint(f ? COLOR[f] : 0x8ff5e0));
+  const active = () => S.run.shrine && S.run.shrine.room === S.room.id && S.run.shrine.x === x;
   const self = {
     type: 'shrine', id: e.id, alive: true, x, y,
     update() {
@@ -395,19 +401,22 @@ export function shrine(e, S) {
         healFull(S.run);
         S.say('SHRINE · SAVED AND HEALED', 1.8);
         S.sfx(660, 0.3);
-        S.burst(x, y - 60, 0xd5eda7, 30);
+        S.burst(x, y - 80, 0xffdda0, 30);
+        S.pop(x, y - 78, 0xffdda0);
         S.log('shrine', {room: S.room.id});
       }
       if (!near) armed = true;
     },
     draw(g, t) {
-      g.fillStyle(0x0d1a28); g.fillRect(x - 22, y - 12, 44, 12);
-      g.fillStyle(0x2c4152); g.fillRect(x - 10, y - 70, 20, 58);
-      g.fillStyle(0x7d9b8f); g.fillRect(x - 16, y - 76, 32, 7);
-      g.fillStyle(0xf4dfa4, 0.95); g.fillRect(x - 5, y - 64, 10, 14);
-      g.fillStyle(0xffdda0, 0.1 + 0.04 * Math.sin(t * 3)); g.fillCircle(x, y - 58, 38);
+      const on = active();
+      flame.setFrame(`shrine_flame_${Math.floor(t * 9) % 3}.png`).setScale(on ? 1 + 0.05 * Math.sin(t * 7) : 0.55).setAlpha(on ? 1 : 0.55).setTint(on ? 0xffffff : 0x9ab4ff);
+      if (on) { g.fillStyle(0xffdda0, 0.1 + 0.04 * Math.sin(t * 3)); g.fillCircle(x, y - 80, 46); }
+      gems.forEach((gem, i) => {
+        const a = t * (on ? 1.4 : 0.6) + i * Math.PI * 2 / gems.length;
+        gem.setPosition(x + Math.cos(a) * 26, y - 112 + Math.sin(a) * 7).setAlpha(on ? 1 : 0.6).setDepth(Math.sin(a) > 0 ? 3.3 : 2.9);
+      });
     },
-    destroy() {},
+    destroy() { base.destroy(); flame.destroy(); gems.forEach(gem => gem.destroy()); },
   };
   return self;
 }

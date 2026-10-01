@@ -150,3 +150,13 @@ test('Warden walk cycle: four frames with a clock dial each', () => {
   assert.equal(png.readUInt32BE(16), w.frameWidth * 4);
   assert.equal(png.readUInt32BE(20), w.frameHeight);
 });
+
+test('Twin Warden walk sheet and shrine art exist', () => {
+  assert.equal(ART.twinWalk.frames, 4);
+  assert.equal(ART.twinWalk.frameWidth, ART.twin.frameWidth);
+  const png = readFileSync(new URL('../../dist/poc-xi/art/twin-walk.png', import.meta.url));
+  assert.equal(png.readUInt32BE(16), ART.twinWalk.frameWidth * 4);
+  const atlas = JSON.parse(readFileSync(new URL('../../dist/poc-xi/art/world.json', import.meta.url), 'utf8'));
+  const have = new Set(atlas.textures[0].frames.map(f => f.filename));
+  for (const n of ['shrine_base', 'shrine_flame_0', 'shrine_flame_1', 'shrine_flame_2', 'shrine_gem']) assert.ok(have.has(`${n}.png`), n);
+});

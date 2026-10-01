@@ -35,6 +35,7 @@ export class MoonKeep extends Phaser.Scene {
     this.load.json('frames', '../assets/frames.json');
     for (const k of ['skeleton', 'bat', 'twin', 'clockwarden', 'sentinel', 'items'])
       this.load.spritesheet(k, `art/${k}.png`, {frameWidth: ART[k].frameWidth, frameHeight: ART[k].frameHeight});
+    this.load.spritesheet('twin-walk', 'art/twin-walk.png', {frameWidth: ART.twinWalk.frameWidth, frameHeight: ART.twinWalk.frameHeight});
     this.load.spritesheet('clockwarden-walk', 'art/clockwarden-walk.png', {frameWidth: ART.clockwardenWalk.frameWidth, frameHeight: ART.clockwardenWalk.frameHeight});
     for (const k of ['crypt', 'stars', 'vault', 'clock']) this.load.image(`bg-${k}`, `art/bg-${k}.png`);
     for (const k of ['atrium', 'crypt', 'stars', 'vault', 'clock', 'shaft']) this.load.spritesheet(`tex-${k}`, `art/tex-${k}.png`, {frameWidth: 32, frameHeight: 32});

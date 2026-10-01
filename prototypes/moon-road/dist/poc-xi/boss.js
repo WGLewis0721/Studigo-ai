@@ -67,7 +67,7 @@ function dialAt(sprite, F, frame, originY) {
 export function twinWarden(def, S) {
   const twins = [0, 1].map(i => ({
     i, x: i ? 800 : 440, y: FLOOR, vx: 0, vy: 0, air: false, state: 'idle', timer: 1.6 + i * 0.9, hit: 0,
-    throwT: 0, sprite: S.add.sprite(0, 0, 'twin', 0).setOrigin(0.5, (ART.twin.frameHeight - 4) / ART.twin.frameHeight).setDepth(4),
+    throwT: 0, step: 0, walking: false, sprite: S.add.sprite(0, 0, 'twin', 0).setOrigin(0.5, (ART.twin.frameHeight - 4) / ART.twin.frameHeight).setDepth(4),
   }));
   const badge = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 22, fontStyle: 'bold', color: '#fff3d6', stroke: '#200a10', strokeThickness: 5}).setOrigin(0.5).setDepth(6);
   let dying = 0;
@@ -119,13 +119,29 @@ export function twinWarden(def, S) {
             tw.timer = active(tw) ? 1.3 : 3.2;
           }
         }
+        tw.walking = false;
+        if (!tw.air && tw.throwT <= 0 && !P.done) {
+          // Walk: the live twin stalks the dragon and keeps its range; the dormant one drifts away from it.
+          const dx = S.p.x - tw.x, adx = Math.abs(dx), other = twins[1 - tw.i];
+          const v = active(tw) ? (adx > 270 ? Math.sign(dx) * 78 : adx < 150 ? -Math.sign(dx) * 54 : 0) : (adx < 340 ? -Math.sign(dx) * 44 : 0);
+          const nx = Math.max(90, Math.min(870, tw.x + v * dt));
+          if (v && (Math.abs(nx - other.x) >= 80 || Math.abs(nx - other.x) > Math.abs(tw.x - other.x))) {
+            const before = Math.floor(tw.step) % 4;
+            tw.step += Math.abs(v) * dt / 20;
+            tw.x = nx;
+            tw.walking = true;
+            const after = Math.floor(tw.step) % 4;
+            if (after !== before && (after === 1 || after === 3) && active(tw)) { S.burst(tw.x + (after === 1 ? -14 : 14), FLOOR, 0xb8a888, 3); S.sfx(110, 0.05); }
+          }
+        }
         if (overlaps(targets[tw.i].rect(), S.playerRect())) S.hurtPlayer(tw.x);
       }
     },
     draw(g, t) {
       for (const tw of twins) {
         const on = active(tw), fall = dying ? Math.min(1.4, dying * 2) : 0;
-        tw.sprite.setFrame(tw.throwT > 0 ? 1 : 0).setPosition(tw.x + (tw.hit ? Math.sin(t * 90) * 5 : 0), tw.y).setFlipX(S.p.x < tw.x)
+        const stride = tw.walking && !tw.air && tw.throwT <= 0 && !dying;
+        tw.sprite.setTexture(stride ? 'twin-walk' : 'twin', stride ? Math.floor(tw.step) % 4 : tw.throwT > 0 ? 1 : 0).setPosition(tw.x + (tw.hit ? Math.sin(t * 90) * 5 : 0), tw.y).setFlipX(S.p.x < tw.x)
           .setRotation(fall * (tw.i ? 1 : -1)).setAlpha(dying ? Math.max(0, 1 - dying * 0.7) : on ? 1 : 0.42 + 0.08 * Math.sin(t * 4))
           .setTint(tw.hit ? 0xffffff : on ? 0xf2eadb : 0x8a90b8);
         if (on && !dying) { g.lineStyle(3, 0xffd59a, 0.35 + 0.2 * Math.sin(t * 6)); g.strokeEllipse(tw.x, tw.y - 70, 120, 170); }
@@ -146,7 +162,7 @@ export function trineGuardian(def, S) {
   const scale = 230 / 256, frames = S.cache.json.get('frames').guardian;
   const sprite = S.add.sprite(480, 380, 'guardian', 0).setOrigin(0.5, 1).setScale(scale).setDepth(4);
   const badge = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 22, fontStyle: 'bold', color: '#fff3d6', stroke: '#1a0c22', strokeThickness: 5}).setOrigin(0.5).setDepth(6);
-  const b = {x: 480, y: 380, state: 'float', timer: 2.2, hit: 0, frame: 0, tx: 480, from: null};
+  const b = {x: 480, y: 380, state: 'float', timer: 2.2, hit: 0, frame: 0, tx: 480, from: null, vx: 0, ghost: 0};
   let dying = 0, clock = 0;
   const P = platesFor(def, S, () => { dying = 0.001; S.sfx(80, 0.8); });
   const core = () => {
@@ -175,8 +191,12 @@ export function trineGuardian(def, S) {
       b.timer -= dt;
       if (b.state === 'float') {
         b.frame = b.hit ? 5 : 0;
-        b.x += (480 + Math.sin(clock * 0.7) * 260 - b.x) * Math.min(1, dt * 1.5);
-        b.y = 380 + Math.sin(clock * 2.2) * 14;
+        // Drift across the arena, shading toward the dragon so it never just hangs in one spot.
+        const want = Math.max(150, Math.min(810, 0.62 * (480 + Math.sin(clock * 0.7) * 260) + 0.38 * S.p.x));
+        const nx = b.x + (want - b.x) * Math.min(1, dt * 1.8);
+        b.vx = (nx - b.x) / Math.max(dt, 0.001);
+        b.x = nx;
+        b.y = 380 + Math.sin(clock * 2.2) * 16 + Math.sin(clock * 5.3) * 3;
         if (b.timer <= 0) { b.state = Math.random() < 0.55 ? 'volley' : 'telegraph'; b.timer = b.state === 'volley' ? 0.55 : 0.65; b.tx = S.p.x; }
       } else if (b.state === 'volley') {
         b.frame = 2;
@@ -191,6 +211,7 @@ export function trineGuardian(def, S) {
         if (b.timer <= 0) { b.state = 'dive'; b.timer = 0.45; b.from = {x: b.x, y: b.y}; S.sfx(200, 0.3); }
       } else if (b.state === 'dive') {
         const k = 1 - b.timer / 0.45;
+        b.vx = (b.tx - b.from.x) / 0.45;
         b.x = b.from.x + (b.tx - b.from.x) * k;
         b.y = b.from.y + (FLOOR - b.from.y) * k;
         if (b.timer <= 0) { b.state = 'rise'; b.timer = 0.8; S.cameras.main.shake(120, 0.005); }
@@ -201,9 +222,18 @@ export function trineGuardian(def, S) {
       if (overlaps({x: b.x - 60, y: b.y - 170, w: 120, h: 160}, S.playerRect())) S.hurtPlayer(b.x);
     },
     draw(g, t) {
-      sprite.setFrame(b.frame).setPosition(b.x, b.y)
+      // Lean into movement, wind up (squash + shake) before a dive, stretch through it, and leave afterimages.
+      const lean = dying ? 0 : Math.max(-0.14, Math.min(0.14, b.vx * 0.00045)), dive = b.state === 'dive', wind = b.state === 'telegraph';
+      sprite.setFrame(b.frame).setPosition(b.x + (wind ? Math.sin(t * 70) * 2 : 0), b.y).setRotation(lean)
+        .setScale(scale * (dive ? 0.92 : wind ? 1.05 : 1), scale * (dive ? 1.12 : wind ? 0.93 : 1))
         .setAlpha(dying ? Math.max(0, 1 - (dying - 0.5) * 1.1) : 1)
-        .setTint(b.hit ? 0xffffff : b.state === 'telegraph' && Math.floor(t * 16) % 2 ? 0xff9a8a : 0xffffff);
+        .setTint(b.hit ? 0xffffff : wind && Math.floor(t * 16) % 2 ? 0xff9a8a : 0xffffff);
+      b.ghost -= 1 / 60;
+      if (dive && b.ghost <= 0) {
+        b.ghost = 0.045;
+        const gh = S.add.sprite(b.x, b.y, 'guardian', b.frame).setOrigin(0.5, 1).setScale(scale).setDepth(3).setAlpha(0.35).setTint(0xc9a7ff);
+        S.tweens.add({targets: gh, alpha: 0, duration: 280, onComplete: () => gh.destroy()});
+      }
       const c = core();
       badge.setVisible(!P.done).setPosition(c.x, c.y - 70).setText(P.done ? '' : `${P.current().a} · ${P.current().b}`);
       if (!P.done) { g.fillStyle(0xfff0c0, 0.18 + 0.1 * Math.sin(t * 5)); g.fillCircle(c.x, c.y, 26); }

@@ -22,8 +22,9 @@ def region(poly):
 
 # masks (pixel coords in the standing frame)
 PENDULUM = region([(141, 205), (169, 205), (169, 264), (141, 264)])  # hangs from the pelvis: stays with the torso
-LEG_L = region([(108, 205), (153, 205), (153, 298), (80, 298), (80, 263), (108, 263)])  # fist overlaps the thigh above y262
-LEG_R = region([(168, 205), (196, 205), (196, 263), (236, 263), (236, 298), (168, 298)])
+KNEE = 248  # only the shin and foot lift; thigh and knee guard stay with the torso, which hides the cut seam
+LEG_L = region([(108, KNEE), (153, KNEE), (153, 298), (80, 298), (80, 263), (108, 263)])
+LEG_R = region([(168, KNEE), (196, KNEE), (196, 263), (236, 263), (236, 298), (168, 298)])
 ARM_L = region([(30, 150), (106, 150), (106, 262), (30, 262)])
 ARM_R = region([(198, 150), (256, 150), (256, 262), (198, 262)])
 from PIL import ImageChops
@@ -59,9 +60,9 @@ def pose(part, pivot, angle=0, dx=0, dy=0):
 
 # (left-leg lift, left-leg swing, right-leg lift, right-leg swing, body dy, body dx, arm swing deg)
 CYCLE = [
-    dict(ll=(14, 3), lr=(0, 0), by=-4, bx=-3, al=-7, ar=5),   # left foot lifted
+    dict(ll=(13, 4), lr=(0, 0), by=-4, bx=-3, al=-7, ar=5),   # left foot lifted
     dict(ll=(0, 0), lr=(0, 0), by=3, bx=0, al=0, ar=0),        # footfall, body drops
-    dict(ll=(0, 0), lr=(14, -3), by=-4, bx=3, al=5, ar=-7),    # right foot lifted
+    dict(ll=(0, 0), lr=(13, -4), by=-4, bx=3, al=5, ar=-7),    # right foot lifted
     dict(ll=(0, 0), lr=(0, 0), by=3, bx=0, al=0, ar=0),        # footfall
 ]
 def despeckle(img, min_area=120):
@@ -93,8 +94,8 @@ def despeckle(img, min_area=120):
 frames = []
 for c in CYCLE:
     f = Image.new('RGBA', (W, H))
-    f.alpha_composite(pose(leg_l, (126, 205), c['ll'][1], 0, -c['ll'][0]))
-    f.alpha_composite(pose(leg_r, (190, 205), c['lr'][1], 0, -c['lr'][0]))
+    f.alpha_composite(pose(leg_l, (126, KNEE), c['ll'][1], 0, -c['ll'][0]))
+    f.alpha_composite(pose(leg_r, (190, KNEE), c['lr'][1], 0, -c['lr'][0]))
     f.alpha_composite(pose(torso, (150, 205), 0, c['bx'], c['by']))
     f.alpha_composite(pose(arm_l, (80, 150), c['al'], c['bx'], c['by']))
     f.alpha_composite(pose(arm_r, (225, 150), c['ar'], c['bx'], c['by']))

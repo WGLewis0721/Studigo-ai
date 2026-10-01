@@ -4,8 +4,8 @@
 			"image": "world.png",
 			"format": "RGBA8888",
 			"size": {
-				"w": 250,
-				"h": 268
+				"w": 314,
+				"h": 254
 			},
 			"scale": 1,
 			"frames": [
@@ -66,8 +66,8 @@
 						"h": 44
 					},
 					"frame": {
-						"x": 101,
-						"y": 159,
+						"x": 97,
+						"y": 195,
 						"w": 44,
 						"h": 44
 					}
@@ -87,8 +87,8 @@
 						"h": 44
 					},
 					"frame": {
-						"x": 97,
-						"y": 207,
+						"x": 261,
+						"y": 1,
 						"w": 44,
 						"h": 44
 					}
@@ -108,8 +108,8 @@
 						"h": 44
 					},
 					"frame": {
-						"x": 145,
-						"y": 221,
+						"x": 261,
+						"y": 49,
 						"w": 44,
 						"h": 44
 					}
@@ -171,8 +171,8 @@
 						"h": 128
 					},
 					"frame": {
-						"x": 229,
-						"y": 133,
+						"x": 237,
+						"y": 1,
 						"w": 20,
 						"h": 128
 					}
@@ -192,8 +192,8 @@
 						"h": 24
 					},
 					"frame": {
-						"x": 1,
-						"y": 243,
+						"x": 101,
+						"y": 159,
 						"w": 24,
 						"h": 24
 					}
@@ -213,8 +213,8 @@
 						"h": 24
 					},
 					"frame": {
-						"x": 29,
-						"y": 243,
+						"x": 261,
+						"y": 97,
 						"w": 24,
 						"h": 24
 					}
@@ -234,8 +234,8 @@
 						"h": 24
 					},
 					"frame": {
-						"x": 57,
-						"y": 243,
+						"x": 289,
+						"y": 97,
 						"w": 24,
 						"h": 24
 					}
@@ -255,8 +255,8 @@
 						"h": 24
 					},
 					"frame": {
-						"x": 193,
-						"y": 221,
+						"x": 289,
+						"y": 125,
 						"w": 24,
 						"h": 24
 					}
@@ -297,8 +297,8 @@
 						"h": 76
 					},
 					"frame": {
-						"x": 149,
-						"y": 141,
+						"x": 209,
+						"y": 133,
 						"w": 76,
 						"h": 76
 					}
@@ -344,6 +344,111 @@
 						"w": 32,
 						"h": 136
 					}
+				},
+				{
+					"filename": "shrine_base.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 60,
+						"h": 92
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 60,
+						"h": 92
+					},
+					"frame": {
+						"x": 145,
+						"y": 159,
+						"w": 60,
+						"h": 92
+					}
+				},
+				{
+					"filename": "shrine_flame_0.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 40
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 40
+					},
+					"frame": {
+						"x": 209,
+						"y": 213,
+						"w": 28,
+						"h": 40
+					}
+				},
+				{
+					"filename": "shrine_flame_1.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 40
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 40
+					},
+					"frame": {
+						"x": 241,
+						"y": 213,
+						"w": 28,
+						"h": 40
+					}
+				},
+				{
+					"filename": "shrine_flame_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 40
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 40
+					},
+					"frame": {
+						"x": 273,
+						"y": 213,
+						"w": 28,
+						"h": 40
+					}
+				},
+				{
+					"filename": "shrine_gem.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 14,
+						"h": 18
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 14,
+						"h": 18
+					},
+					"frame": {
+						"x": 185,
+						"y": 133,
+						"w": 14,
+						"h": 18
+					}
 				}
 			]
 		}
@@ -351,6 +456,6 @@
 	"meta": {
 		"app": "https://www.codeandweb.com/texturepacker",
 		"version": "3.0",
-		"smartupdate": "$TexturePacker:SmartUpdate:d000631e43ef929716c322e611c7ff70:4865e15c13d8f41e18340fb228f744c0:ab3b2bdf72ac48e8726e19fe12f70483$"
+		"smartupdate": "$TexturePacker:SmartUpdate:3ec76fe154f37c0b11f02951ef6833ee:1fc3f601b6ff9c2d89cc756dddd537fb:ab3b2bdf72ac48e8726e19fe12f70483$"
 	}
 }

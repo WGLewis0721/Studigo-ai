@@ -37,4 +37,9 @@ LDtk conventions: IntGrid `Collision` 1 = wall, 2 = one-way platform. Skeleton/I
 - Ammo: capsules and drops carry their beam's look (×2 fireball, ×3 lance, ×4 crescent, ×5 star; refill-all is a gold cross).
 - Clockwork Warden walk cycle: `scripts/make-warden-walk.py` rigs the standing sprite (legs lift and plant, torso bobs, arms swing) into `art/clockwarden-walk.png` plus per-frame dial anchors in `art.js`. In `boss.js` it stomps toward the dragon when far, backs off when crowded and paces otherwise, shaking the floor and kicking dust on each footfall. This is a procedural re-pose of the single standing frame, not newly painted art; a hand-painted or AI-generated cycle can replace the sheet without code changes.
 
-Planned: round 5 gives the shrines distinct art.
+**Round 4: bosses move like the monsters.**
+- Twin Warden: a four-frame walk cycle (`scripts/make-twin-walk.py` -> `art/twin-walk.png`). The live twin stalks the dragon and keeps its range, the dormant one drifts away, with dust on each footfall. Hops and bone throws are unchanged.
+- Trine Guardian: drifts across the arena shaded toward the dragon, leans into its movement, winds up (squash and shake) before a dive, stretches through it and leaves afterimages.
+- Clockwork Warden: the walk now lifts only the shin and foot (knee guard stays put), which removes the cut-line artifacts from round 3.
+
+**Round 5: shrines.** A carved plinth with a brass brazier replaces the grey rectangles (`shrine_*` frames in the world atlas). The flame burns bright while the shrine is your respawn point and sits low and cold otherwise. One gem per beam the shrine refills circles above it, in that beam's colour (a plain teal gem for save-only shrines), and touching it plays a flare.
