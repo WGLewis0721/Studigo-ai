@@ -26,6 +26,7 @@ import {
   type RetrievedChunk,
   type GroundedStreamEvent
 } from "@studigo/ai";
+import { findNamedTopic } from "@/lib/recommendation-engine";
 import { fetchChunksByIds, retrieveForRoom } from "@/lib/retrieval";
 import type { Topic } from "@/lib/rooms";
 import { randomUUID } from "node:crypto";
@@ -216,9 +217,8 @@ async function saveCoachState(supabase: SupabaseClient, conversationId: string, 
 }
 
 function pickTopic(topics: Topic[], question: string): Topic | undefined {
-  const lower = question.toLowerCase();
   return (
-    topics.find((topic) => topic.title && lower.includes(topic.title.toLowerCase())) ??
+    findNamedTopic(topics, question) ??
     [...topics].sort((a, b) => b.priority - a.priority || a.order_index - b.order_index)[0]
   );
 }
@@ -336,7 +336,7 @@ export async function* runCoachTurn(args: {
       const control = classifyAffirmOrDecline(question);
       if (control === "decline") {
         await commit(IDLE_COACH_STATE);
-        const text = "No problem — say the word whenever you want to pick this back up.";
+        const text = "No problem. Say the word whenever you want to pick this back up.";
         yield { type: "delta", text };
         // Pure conversational acknowledgement — no course fact is stated, so
         // this is never "grounded" no matter how it reads.
@@ -385,7 +385,7 @@ export async function* runCoachTurn(args: {
       // "next" / "stop" while a question is pending: the learner skipped it.
       await recordSkip(state);
       await commit(IDLE_COACH_STATE);
-      const text = "Sure — let's move on. What would you like to work on?";
+      const text = "Sure, let's move on. What would you like to work on?";
       yield { type: "delta", text };
       // Pure conversational acknowledgement — no course fact is stated.
       yield { type: "done", answer: { text, citations: [], grounded: false } };
@@ -723,7 +723,7 @@ async function* openCoachQuestion(args: {
   issued?: IssuedChallenge;
 }): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
   if (!args.topic) {
-    const text = "Add a study guide topic first — I need at least one active topic in this room before I can coach it.";
+    const text = "Add a study guide topic first. I need at least one active topic in this room before I can coach it.";
     yield { type: "delta", text };
     yield { type: "done", answer: { text, citations: [], grounded: false } };
     return { stateBefore: "idle", turnIntent: "answer", semanticScore: null, outcome: "irrelevant", stateAfter: "idle" };

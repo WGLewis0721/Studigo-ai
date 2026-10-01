@@ -404,7 +404,7 @@ export function LearnPanel({
                         {!check ? (
                           <>
                             <p className="hintText">
-                              Explain it back in your own words. This is practice, not a test — it
+                              Explain it back in your own words. This is practice, not a test. It
                               is never scored and never changes your mastery.
                             </p>
                             <button

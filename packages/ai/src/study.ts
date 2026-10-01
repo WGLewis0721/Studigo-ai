@@ -1,10 +1,12 @@
 import {
+  PLAIN_PUNCTUATION_RULE,
   UNTRUSTED_MATERIAL_RULE,
   asUntrustedMaterial,
   chatModel,
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
+import { stripAnswerFiller, termMatch } from "./typos";
 
 /** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
 export async function structured<T>(args: {
@@ -16,7 +18,7 @@ export async function structured<T>(args: {
   const response = await client().responses.create({
     model: chatModel(),
     input: [
-      { role: "system", content: args.system },
+      { role: "system", content: `${args.system} ${PLAIN_PUNCTUATION_RULE}` },
       { role: "user", content: args.user }
     ],
     text: {
@@ -333,9 +335,12 @@ export function normalizeBlankAnswer(value: string) {
 }
 
 /**
- * Grades a fill-in-the-blank answer without a model call. Exact after
- * normalization, or a near-miss within one edit — a learner who typed
- * "photosynthesis" as "photosynthisis" knows the term.
+ * Grades a fill-in-the-blank answer without a model call. The answer is read the way a teacher
+ * would read it: case, accents, articles and filler such as "I think it's" are ignored, and a
+ * misspelling still counts as knowing the term ("photosynthisis", "photosyntehsis",
+ * "photo synthesis"). A typo earns 85, not full marks, so the record shows it was not spelled
+ * right. Strictness lives in `termMatch`: short words and anything with a digit must be exact,
+ * and a different term is never forgiven as a typo.
  */
 export function gradeBlankAnswer(args: {
   learnerAnswer: string;
@@ -344,37 +349,23 @@ export function gradeBlankAnswer(args: {
   const answer = normalizeBlankAnswer(args.learnerAnswer);
   if (!answer) return { isCorrect: false, score: 0, matched: null };
 
+  // The answer as typed first, then with leading and trailing filler taken off.
+  const candidates = [answer];
+  const stripped = stripAnswerFiller(answer);
+  if (stripped && stripped !== answer) candidates.push(stripped);
+
+  let best: { score: number; matched: string } | null = null;
   for (const accepted of args.acceptedAnswers) {
     const target = normalizeBlankAnswer(accepted);
     if (!target) continue;
-    if (answer === target) return { isCorrect: true, score: 100, matched: accepted };
-    // Tolerate one typo, and only on terms long enough for that to be a typo.
-    if (target.length >= 5 && editDistanceWithin(answer, target, 1)) {
-      return { isCorrect: true, score: 85, matched: accepted };
+    for (const candidate of candidates) {
+      const match = termMatch(candidate, target);
+      if (match === "exact") return { isCorrect: true, score: 100, matched: accepted };
+      if (match === "typo" && !best) best = { score: 85, matched: accepted };
     }
   }
 
-  return { isCorrect: false, score: 0, matched: null };
-}
-
-/** True when `a` can be turned into `b` with at most `max` edits. */
-function editDistanceWithin(a: string, b: string, max: number) {
-  if (Math.abs(a.length - b.length) > max) return false;
-
-  let previous = Array.from({ length: b.length + 1 }, (_, index) => index);
-  for (let i = 1; i <= a.length; i += 1) {
-    const current = [i];
-    let rowBest = i;
-    for (let j = 1; j <= b.length; j += 1) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
-      rowBest = Math.min(rowBest, current[j]);
-    }
-    if (rowBest > max) return false;
-    previous = current;
-  }
-
-  return previous[b.length] <= max;
+  return best ? { isCorrect: true, score: best.score, matched: best.matched } : { isCorrect: false, score: 0, matched: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -407,6 +398,7 @@ export async function gradeShortAnswer(args: {
     "You grade one short answer from a learner against the course's model answer.",
     "Score the understanding, not the wording: a correct idea in the learner's own words scores high; a right-sounding phrase with the wrong idea does not.",
     "Never require the learner to reproduce the model answer verbatim, use identical vocabulary, or match its sentence structure. Equivalent meaning counts.",
+    "Read straight through spelling mistakes, typos, shorthand, missing punctuation and a misspelled key term: they never lower the score. Grade the idea.",
     "score 85-100: correct and complete. 60-84: the core idea with a gap. 30-59: partly right. 0-29: incorrect or empty.",
     "For a partial answer, feedback should preserve what is correct and give one concrete nudge toward the missing idea. A partially correct answer is not fully correct just because it contains some expected terms.",
     "If the learner gives a non-responsive or unrelated answer, do not merely say wrong and do not pretend it is a content misconception. Briefly redirect to what the question is asking, rephrase it more simply, and give one useful hint from the model answer/context.",

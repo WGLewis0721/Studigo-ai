@@ -1,4 +1,5 @@
 import { UNTRUSTED_MATERIAL_RULE, asUntrustedMaterial } from "./client";
+import { repairCommandTypos } from "./typos";
 import { structured } from "./study";
 import { buildContextBlock, type RetrievedChunk } from "./grounding";
 import { LANGUAGE_FLOOR_RULES } from "./coach-language";
@@ -182,7 +183,7 @@ const NEXT_PATTERN = /^(next|another|another\s+one|more|keep\s+going|continue)[.
 // "Exit" words always mean the learner wants out of whatever is pending,
 // unlike a plain "no" which may legitimately be answering a yes/no question.
 const EXIT_PATTERN = /^(stop|that'?s\s+all|i'?m\s+done)[.!]?$/i;
-const HELP_PATTERN = /\b(i\s+(?:do\s*n't|dont)\s+know|idk|not\s+sure|i'?m\s+stuck|stuck|hint|help|nudge)\b/i;
+const HELP_PATTERN = /\b(i\s+(?:do\s*n'?t|dn'?t|dont|do\s+not)\s+know|idk|dunno|not\s+sure|unsure|no\s+idea|i'?m\s+stuck|stuck|hint|help|nudge)\b/i;
 const SHOW_ANSWER_PATTERN =
   /\b(show\s+(?:me\s+)?(?:the\s+)?answer|tell\s+me\s+the\s+answer|what'?s\s+the\s+answer|give\s+me\s+the\s+answer)\b/i;
 const SIMPLIFY_PATTERN =
@@ -193,6 +194,17 @@ const EXAMPLE_PATTERN =
   /\b(show\s+me\s+an?\s+example|give\s+me\s+an?\s+example|(?:an?\s+)?example\s+please|can\s+i\s+(?:see|have|get)\s+an?\s+example)\b/i;
 const CHALLENGE_PATTERN =
   /\b(challenge\s+me|make\s+it\s+harder|(?:a\s+)?harder\s+(?:one|question)|something\s+harder)\b/i;
+/**
+ * The closed list of words the Coach commands are built from. A short message is read with
+ * near-miss spellings of these put right ("shwo me the answr", "hnit"), so a typo never turns a
+ * request for help into a graded wrong answer. Longer replies are content and are never touched.
+ */
+const COACH_COMMAND_WORDS = [
+  "answer", "show", "tell", "give", "hint", "stuck", "simpler", "simplify", "simply", "shorter", "example",
+  "challenge", "harder", "choices", "repeat", "understand", "nudge", "know", "easier", "wordy", "fewer",
+  "help", "continue", "another", "next", "stop"
+] as const;
+
 /** The Coach controls are commands, not content: a long reply that merely
  *  mentions "an example" or "simpler" is still an answer attempt. */
 const MAX_COMMAND_WORDS = 8;
@@ -203,7 +215,10 @@ function isShortCommand(text: string): boolean {
 
 /** The bare discourse-move classification, independent of pending state. */
 export function classifyControlWord(text: string): "affirm" | "decline" | "next" | "exit" | null {
-  const trimmed = text.trim();
+  return classifyControlWordExact(text.trim()) ?? classifyControlWordExact(repairCommandTypos(text.trim(), COACH_COMMAND_WORDS));
+}
+
+function classifyControlWordExact(trimmed: string): "affirm" | "decline" | "next" | "exit" | null {
   if (AFFIRM_PATTERN.test(trimmed)) return "affirm";
   if (NEXT_PATTERN.test(trimmed)) return "next";
   if (EXIT_PATTERN.test(trimmed)) return "exit";
@@ -220,7 +235,16 @@ export function classifyControlWord(text: string): "affirm" | "decline" | "next"
  * always commands.
  */
 export function detectTurnIntent(text: string, state: CoachState): TurnIntent {
-  const trimmed = text.trim();
+  const direct = detectTurnIntentExact(text.trim(), state);
+  if (direct !== "answer") return direct;
+  // Nothing matched as typed. Try once more with command-word typos put right ("shwo me the
+  // answr"). This is only for spotting a command: the learner's own words are never rewritten or
+  // graded in this form, and anything that matched as typed keeps its meaning.
+  const repaired = repairCommandTypos(text.trim(), COACH_COMMAND_WORDS);
+  return repaired === text.trim() ? direct : detectTurnIntentExact(repaired, state);
+}
+
+function detectTurnIntentExact(trimmed: string, state: CoachState): TurnIntent {
   if (!trimmed) return "irrelevant";
   if (SHOW_ANSWER_PATTERN.test(trimmed)) return "show_answer";
   if (CHOICES_PATTERN.test(trimmed)) return "repeat_choices";
@@ -231,7 +255,7 @@ export function detectTurnIntent(text: string, state: CoachState): TurnIntent {
   }
   if (HELP_PATTERN.test(trimmed)) return "help_request";
 
-  const control = classifyControlWord(trimmed);
+  const control = classifyControlWordExact(trimmed);
 
   if (state.kind === "awaiting_control" && control) return "conversation_control";
   if (state.kind === "awaiting_answer" && (control === "next" || control === "exit")) return "conversation_control";

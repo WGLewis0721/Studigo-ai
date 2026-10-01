@@ -13,6 +13,7 @@ import {
   buildPracticeTutorDirective,
   editDistance,
   explicitQuestionNumber,
+  findNamedTopic,
   extractLatestPracticePromptsFromHistory,
   extractLatestPracticeSetFromHistory,
   extractPriorPromptsFromHistory,
@@ -522,4 +523,36 @@ test("the tutor is told which question it is grading, to ignore spelling, and wh
   assert.match(stuck, /Do not mark them wrong/);
   const reveal = buildPracticeTutorDirective({ set: SET, resolution: { index: 0, by: "number" }, wantsHelp: true, wantsAnswer: true });
   assert.match(reveal, /model answer/);
+});
+
+// ---------------------------------------------------------------------------
+// Typos in requests and topic names
+// ---------------------------------------------------------------------------
+
+test("a practice request is understood through typos in its command words", () => {
+  assert.deepEqual(classifyIntent("qiuz me"), { type: "practice_questions", count: 5 });
+  assert.deepEqual(classifyIntent("give me 3 qestions"), { type: "practice_questions", count: 3 });
+  assert.deepEqual(classifyIntent("give me 4 practise questions"), { type: "practice_questions", count: 4 });
+  assert.deepEqual(classifyIntent("5 practcie questions please"), { type: "practice_questions", count: 5 });
+  assert.equal(classifyIntent("what is a questionnaire").type, "qa");
+  assert.equal(classifyIntent("explain photosynthesis").type, "qa");
+});
+
+test("a topic is found by name through misspellings and word endings, never by guesswork between two", () => {
+  const topics = [
+    topic({ id: "t1", title: "Photosynthesis" }),
+    topic({ id: "t2", title: "Balanced and unbalanced forces" }),
+    topic({ id: "t3", title: "Phase changes and conservation of matter" })
+  ];
+  assert.equal(findNamedTopic(topics, "questions on photosythesis")?.id, "t1");
+  assert.equal(findNamedTopic(topics, "quiz me on unbalenced forces and balanced")?.id, "t2");
+  assert.equal(findNamedTopic(topics, "phase change and conservation of mater")?.id, "t3");
+  assert.equal(findNamedTopic(topics, "Photosynthesis")?.id, "t1", "an exact title still wins");
+  assert.equal(findNamedTopic(topics, "give me some practice"), undefined);
+  assert.equal(findNamedTopic(topics, "forces"), undefined, "one word of a three-word title is not naming it");
+
+  const similar = [topic({ id: "a", title: "Rock layers" }), topic({ id: "b", title: "Rock layers" })];
+  assert.equal(findNamedTopic(similar, "rock layers please")?.id, "a", "an identical title is matched exactly first");
+  const near = [topic({ id: "a", title: "Cell division" }), topic({ id: "b", title: "Cell divisions" })];
+  assert.equal(findNamedTopic(near, "cel divison"), undefined, "two equally close topics name neither");
 });

@@ -39,3 +39,24 @@ test("yes/no/next stay state-aware control commands", () => {
   assert.equal(detectTurnIntent("no", yesNo), "answer");
   assert.equal(detectTurnIntent("next", IDLE_COACH_STATE), "answer");
 });
+
+test("a typo in a command still reads as the command, never as a wrong answer", () => {
+  assert.equal(detectTurnIntent("shwo me the answr", pending), "show_answer");
+  assert.equal(detectTurnIntent("hnit please", pending), "help_request");
+  assert.equal(detectTurnIntent("i dnt know", pending), "help_request");
+  assert.equal(detectTurnIntent("im stcuk", pending), "help_request");
+  assert.equal(detectTurnIntent("make it simpelr", pending), "simplify");
+  assert.equal(detectTurnIntent("chalenge me", pending), "challenge");
+  assert.equal(detectTurnIntent("show me an exmaple", pending), "example");
+  assert.equal(detectTurnIntent("what are the anwser choices", pending), "repeat_choices");
+  const control: CoachState = { version: 1, kind: "awaiting_control", action: "more_practice", topicId: null, sourceChunkIds: [] };
+  assert.equal(detectTurnIntent("nxet", control), "conversation_control");
+});
+
+test("repairing typos never turns a real answer into a command", () => {
+  for (const reply of ["ice", "heat flows to the ice", "a simple machine", "the stick was struck", "evaporation", "pizza", "it melts"]) {
+    assert.equal(detectTurnIntent(reply, pending), "answer", reply);
+  }
+  // A reply that matched as typed keeps its meaning.
+  assert.equal(detectTurnIntent("Too many words", pending), "simplify");
+});

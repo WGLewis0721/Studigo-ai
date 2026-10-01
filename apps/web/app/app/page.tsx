@@ -27,7 +27,7 @@ export default async function RoomsPage() {
           <span className="tinyLabel">YOUR STUDY ROOMS</span>
           <h1 className="pageTitle">What are you studying for?</h1>
           <p className="pageLede">
-            Each Study Room holds one test&apos;s worth of material — and gets its own color.
+            Each Study Room holds one test&apos;s worth of material and gets its own color.
           </p>
         </div>
       </header>
@@ -40,8 +40,8 @@ export default async function RoomsPage() {
               <div>
                 <h2>Let&apos;s set up your first Study Room.</h2>
                 <p>
-                  Create one for the next thing you&apos;re tested on — “Biology Midterm”, “Weather
-                  Unit”, “ELA Week 4” — then drop the study guide in.
+                  Create one for the next thing you&apos;re tested on, like “Biology Midterm”, “Weather
+                  Unit” or “ELA Week 4”, then drop the study guide in.
                 </p>
                 <ol className="firstRunSteps">
                   <li><b>01</b>Name the room for your next test</li>

@@ -1,5 +1,5 @@
 import type { Citation, GeneratedQuestion, RetrievedChunk } from "@studigo/ai";
-import { generateQuizQuestions } from "@studigo/ai";
+import { editDistance, generateQuizQuestions, repairCommandTypos, wordsMatch } from "@studigo/ai";
 import { rankWeakAreas, type PracticeEvidence } from "@/lib/study-planning";
 import type { Topic } from "@/lib/rooms";
 
@@ -61,16 +61,27 @@ const NUMBER_WORDS: Record<string, number> = {
 // \d{1,3} (not {1,2}) so a three-digit ask like "500 questions" is still
 // recognized as a practice-question request before being clamped below.
 const COUNTED_QUESTION_PATTERN =
-  /\b(\d{1,3}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|couple|few|several|some)\s+(?:more\s+|new\s+|practice\s+|additional\s+)*questions?\b/i;
+  /\b(\d{1,3}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|couple|few|several|some)\s+(?:more\s+|new\s+|practi[sc]e\s+|additional\s+)*questions?\b/i;
 
 // Catches requests that ask for practice questions without a parseable count.
 const GENERIC_PRACTICE_PATTERN =
-  /\b(quiz|test)\s+me\b|\bgive\s+me\s+(?:some|a\s+few|practice)\s+questions?\b|\bask\s+me\s+(?:some\s+)?questions?\b|\bpractice\s+questions?\b/i;
+  /\b(quiz|test)\s+me\b|\bgive\s+me\s+(?:some|a\s+few|practice)\s+questions?\b|\bask\s+me\s+(?:some\s+)?questions?\b|\bpracti[sc]e\s+questions?\b/i;
+
+/** The words a practice request is built from, for reading "qiuz me" or "5 qestions" as what was meant. */
+const PRACTICE_COMMAND_WORDS = ["question", "questions", "quiz", "test", "practice", "give", "more", "show", "answer", "hint", "stuck", "nudge", "know", "unsure"] as const;
+const PRACTICE_REQUEST_MAX_WORDS = 14;
 
 export function classifyIntent(message: string): EngineIntent {
   const text = message.trim().toLowerCase();
   if (!text) return { type: "qa" };
+  const direct = classifyIntentExact(text);
+  if (direct.type !== "qa") return direct;
+  // Not a practice request as typed: read it once more with command-word typos put right.
+  const repaired = repairCommandTypos(text, PRACTICE_COMMAND_WORDS, PRACTICE_REQUEST_MAX_WORDS);
+  return repaired === text ? direct : classifyIntentExact(repaired);
+}
 
+function classifyIntentExact(text: string): EngineIntent {
   const countedMatch = text.match(COUNTED_QUESTION_PATTERN);
   if (!countedMatch && !GENERIC_PRACTICE_PATTERN.test(text)) return { type: "qa" };
 
@@ -93,6 +104,47 @@ export function classifyIntent(message: string): EngineIntent {
 
 export type ResolvedPracticeTopic = { topic: Topic; reason: string };
 
+const TITLE_FILLER = new Set(["and", "the", "of", "in", "on", "for", "to", "a", "an", "with", "vs"]);
+
+function titleWords(title: string): string[] {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 3 && !TITLE_FILLER.has(word));
+}
+
+/**
+ * The topic a message names, if any. The exact title anywhere in the message wins. Otherwise a
+ * topic counts as named when the message contains every meaningful word of its title (two thirds
+ * of them for a long title), allowing for misspellings and word endings, so "questions on
+ * photosythesis" or "unbalenced forces" still finds the topic. The topic with the most matching
+ * words wins; a tie names no topic rather than guessing one.
+ */
+export function findNamedTopic(topics: Topic[], message: string): Topic | undefined {
+  const text = message.toLowerCase();
+  const exact = topics.find((topic) => topic.title && text.includes(topic.title.toLowerCase()));
+  if (exact) return exact;
+
+  const messageWords = text.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length >= 3);
+  let best: { topic: Topic; matched: number } | null = null;
+  let tied = false;
+  for (const topic of topics) {
+    const words = titleWords(topic.title ?? "");
+    if (!words.length) continue;
+    const matched = words.filter((word) => messageWords.some((messageWord) => wordsMatch(messageWord, word))).length;
+    const needed = words.length <= 3 ? words.length : Math.ceil((words.length * 2) / 3);
+    if (matched < needed) continue;
+    if (!best || matched > best.matched) {
+      best = { topic, matched };
+      tied = false;
+    } else if (matched === best.matched) {
+      tied = true;
+    }
+  }
+  return best && !tied ? best.topic : undefined;
+}
+
 export function resolvePracticeTopic(args: {
   message: string;
   topics: Topic[];
@@ -101,8 +153,7 @@ export function resolvePracticeTopic(args: {
 }): ResolvedPracticeTopic | null {
   if (!args.topics.length) return null;
 
-  const text = args.message.toLowerCase();
-  const named = args.topics.find((topic) => topic.title && text.includes(topic.title.toLowerCase()));
+  const named = findNamedTopic(args.topics, args.message);
   if (named) return { topic: named, reason: "The learner named this topic directly." };
 
   const ranked = rankWeakAreas(args.topics, args.evidence, args.now);
@@ -285,45 +336,8 @@ export function extractLatestPracticePromptsFromHistory(
 //      misspelled word still counts as that word.
 // ---------------------------------------------------------------------------
 
-/** Damerau-Levenshtein distance (optimal string alignment): an edit, a gap or a swapped pair is one step. */
-export function editDistance(a: string, b: string): number {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  const rows = a.length + 1;
-  const cols = b.length + 1;
-  const table: number[][] = Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
-  for (let i = 0; i < rows; i += 1) table[i][0] = i;
-  for (let j = 0; j < cols; j += 1) table[0][j] = j;
-  for (let i = 1; i < rows; i += 1) {
-    for (let j = 1; j < cols; j += 1) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      table[i][j] = Math.min(table[i - 1][j] + 1, table[i][j - 1] + 1, table[i - 1][j - 1] + cost);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
-        table[i][j] = Math.min(table[i][j], table[i - 2][j - 2] + 1);
-      }
-    }
-  }
-  return table[a.length][b.length];
-}
-
-/**
- * Do two words count as the same word? Equal, a slight misspelling (one edit in a short word,
- * two in a long one), or one shared stem such as evaporate and evaporation. Words of three
- * letters or fewer must match exactly, because one edit changes them into other words.
- */
-export function wordsMatch(a: string, b: string): boolean {
-  if (a === b) return true;
-  const shortest = Math.min(a.length, b.length);
-  if (shortest < 4) return false;
-
-  let prefix = 0;
-  while (prefix < shortest && a[prefix] === b[prefix]) prefix += 1;
-  if (prefix >= 5 && prefix >= Math.ceil(shortest * 0.7)) return true;
-
-  const allowed = Math.max(a.length, b.length) >= 8 ? 2 : 1;
-  return Math.abs(a.length - b.length) <= allowed && editDistance(a, b) <= allowed;
-}
+// editDistance and wordsMatch live in @studigo/ai (typos.ts) so grading, the Coach and this file agree on what a typo is.
+export { editDistance, wordsMatch };
 
 /** Words that say nothing about which question a reply is answering. */
 const REPLY_FILLER = new Set([
@@ -411,15 +425,18 @@ const PRACTICE_HELP_PATTERN =
 
 /** Learner explicitly signals that they need scaffolding rather than grading. */
 export function isPracticeHelpRequest(message: string): boolean {
-  return PRACTICE_HELP_PATTERN.test(message.trim());
+  const text = message.trim();
+  return PRACTICE_HELP_PATTERN.test(text) || PRACTICE_HELP_PATTERN.test(repairCommandTypos(text, PRACTICE_COMMAND_WORDS));
 }
 
 /** The learner wants the answer itself, not just a nudge. */
 export function isPracticeAnswerRequest(message: string): boolean {
-  return /\b(?:show|tell|give|reveal)\s+(?:me\s+)?(?:the\s+)?(?:correct\s+)?answer\b|\bwhat'?s\s+the\s+answer\b|\bwhat\s+is\s+the\s+answer\b|\banswer\s+please\b|\bgive\s+up\b/i.test(
-    message.trim()
-  );
+  const text = message.trim();
+  return ANSWER_REQUEST.test(text) || ANSWER_REQUEST.test(repairCommandTypos(text, PRACTICE_COMMAND_WORDS));
 }
+
+const ANSWER_REQUEST =
+  /\b(?:show|tell|give|reveal)\s+(?:me\s+)?(?:the\s+)?(?:correct\s+)?answer\b|\bwhat'?s\s+the\s+answer\b|\bwhat\s+is\s+the\s+answer\b|\banswer\s+please\b|\bgive\s+up\b/i;
 
 const SMALL_TALK_ONLY =
   /^(?:thanks?|thank\s*(?:you|u)|thx|thnx|thanx|ty|ok(?:ay)?|k|cool|great|nice|awesome|got\s*it|gotcha|nvm|never\s*mind|hi|hello|hey|bye)[\s.!]*$/i;

@@ -22,8 +22,8 @@ export function rankWeakAreas(topics: Topic[], evidence: PracticeEvidence[], now
     // does not know that they do not know it. That is the costliest gap.
     const blindSpots = recent.filter(a=>a.source==='quiz' && !a.is_correct && a.confidence===3).length;
     const reasons: string[] = [];
-    if (unpracticed) reasons.push('Not practiced yet — understanding has not been measured.');
-    if (blindSpots) reasons.push(`${blindSpots} confident ${blindSpots===1?'answer was':'answers were'} wrong — a blind spot, not a gap you already know about.`);
+    if (unpracticed) reasons.push('Not practiced yet. Understanding has not been measured.');
+    if (blindSpots) reasons.push(`${blindSpots} confident ${blindSpots===1?'answer was':'answers were'} wrong. That is a blind spot, not a gap you already know about.`);
     if (quiz.length && misses) reasons.push(`${misses} of the last ${quiz.length} quiz questions missed.`);
     if (recallMisses) reasons.push(`${recallMisses} of the last ${cards.length} flashcard recalls missed (self-reported).`);
     if (topic.priority >= 90) reasons.push('High priority in the current study scope.');
@@ -158,7 +158,7 @@ export function summarizeCalibration(evidence: PracticeEvidence[]): Calibration 
   const summary = label === 'Overconfident'
     ? `You were sure on ${blindSpots} answer${blindSpots === 1 ? '' : 's'} you got wrong. Check those topics without your notes before the test.`
     : label === 'Underconfident'
-      ? `You guessed correctly ${underconfident} time${underconfident === 1 ? '' : 's'}. You know more than you are giving yourself credit for — the recall is there.`
+      ? `You guessed correctly ${underconfident} time${underconfident === 1 ? '' : 's'}. You know more than you are giving yourself credit for. The recall is there.`
       : 'Your sense of what you know matches how you actually perform, so you can trust where you feel shaky.';
 
   return { reported: rated.length, blindSpots, underconfident, accuracy, label, summary };

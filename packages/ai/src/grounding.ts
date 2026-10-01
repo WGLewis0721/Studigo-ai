@@ -1,4 +1,5 @@
 import {
+  PLAIN_PUNCTUATION_RULE,
   UNTRUSTED_MATERIAL_RULE,
   asUntrustedMaterial,
   chatModel,
@@ -44,6 +45,7 @@ export const STUDIGO_SYSTEM_PROMPT = [
   "Never invent a source, page number, fact, assignment requirement, or test topic.",
   "If the excerpts do not support an answer, say exactly that you cannot answer it from the current materials and name what the learner should upload.",
   "Explain at the learner's level, in plain language, and keep it tight: lead with the answer, then the reasoning that matters.",
+  PLAIN_PUNCTUATION_RULE,
   UNTRUSTED_MATERIAL_RULE
 ].join(" ");
 
@@ -59,7 +61,8 @@ export const OUTLINE_STYLE_RULE = [
   "Bold a key term from the course the first time it appears.",
   "Use a nested bullet, indented two spaces, only for a detail that belongs to the bullet above it, and never nest more than two levels.",
   "End every bullet that states a fact with its [n] citation.",
-  "Never write a paragraph longer than one sentence."
+  "Never write a paragraph longer than one sentence.",
+  PLAIN_PUNCTUATION_RULE
 ].join(" ");
 
 export const OUTLINE_FORMAT_RULE = [

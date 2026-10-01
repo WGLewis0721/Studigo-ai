@@ -150,7 +150,7 @@ async function* runPracticeQuestionFlow(
 ): AsyncGenerator<GroundedStreamEvent> {
   const resolved = resolvePracticeTopic({ message: args.question, topics: args.topics, evidence: args.evidence });
   if (!resolved) {
-    const text = "Add a study guide topic first — I need at least one active topic in this room before I can write practice questions.";
+    const text = "Add a study guide topic first. I need at least one active topic in this room before I can write practice questions.";
     yield { type: "delta", text };
     yield { type: "done", answer: { text, citations: [], grounded: false } };
     return;
