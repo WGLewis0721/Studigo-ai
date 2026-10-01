@@ -1,0 +1,104 @@
+{
+	"textures": [
+		{
+			"image": "library.png",
+			"format": "RGBA8888",
+			"size": {
+				"w": 70,
+				"h": 190
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "books.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 48,
+						"h": 28
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 48,
+						"h": 28
+					},
+					"frame": {
+						"x": 1,
+						"y": 161,
+						"w": 48,
+						"h": 28
+					}
+				},
+				{
+					"filename": "lantern.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 24,
+						"h": 48
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 24,
+						"h": 48
+					},
+					"frame": {
+						"x": 45,
+						"y": 101,
+						"w": 24,
+						"h": 48
+					}
+				},
+				{
+					"filename": "lectern.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 40,
+						"h": 56
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 40,
+						"h": 56
+					},
+					"frame": {
+						"x": 1,
+						"y": 101,
+						"w": 40,
+						"h": 56
+					}
+				},
+				{
+					"filename": "shelf.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 64,
+						"h": 96
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 64,
+						"h": 96
+					},
+					"frame": {
+						"x": 1,
+						"y": 1,
+						"w": 64,
+						"h": 96
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:4179bba5b4f2704b189553a5853833e1:0fb0bfc22758028b39ee82bdf25bd5b5:fa530a7f52c38ccac3e6ef4928253b70$"
+	}
+}

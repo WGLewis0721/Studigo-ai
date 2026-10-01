@@ -25,3 +25,7 @@ Local tools live in `C:\Users\Willi\tools` (outside the repo, never commit binar
 
 - Claude Code: shell + file access to all tools above; Blender via MCP.
 - GitHub Copilot Desktop and ChatGPT Desktop: no MCP here; they read `AGENTS.md` / `.github/copilot-instructions.md` and this file, and drive the tools through the shell/CLI commands listed.
+
+## Worked example
+
+POC XI (`dist/poc-xi/`, see POC-XI.md) uses the whole chain: `art-source/poc-xi/moon-library.ldtk` -> `scripts/ldtk-export.mjs` -> `levels.js`, and `scripts/make-library-props.py` -> `scripts/pack-atlas.mjs library` -> `library.png/.json`. Copy that pattern for new rooms. `dist/` is gitignored, so new routes are added with `git add -f`.

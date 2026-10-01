@@ -1,0 +1,2213 @@
+{
+  "__header__": {
+    "fileType": "LDtk Project JSON",
+    "app": "LDtk",
+    "doc": "https://ldtk.io/json",
+    "schema": "https://ldtk.io/files/JSON_SCHEMA.json",
+    "appAuthor": "Sebastien Benard",
+    "appVersion": "1.5.3",
+    "url": "https://ldtk.io"
+  },
+  "iid": "c599eb9e-e92a-48fc-8ed5-18f0b6eb1c85",
+  "jsonVersion": "1.5.3",
+  "appBuildId": 473703,
+  "nextUid": 132,
+  "identifierStyle": "Capitalize",
+  "toc": [],
+  "worldLayout": "Free",
+  "worldGridWidth": 960,
+  "worldGridHeight": 544,
+  "defaultLevelWidth": 960,
+  "defaultLevelHeight": 544,
+  "defaultPivotX": 0,
+  "defaultPivotY": 0,
+  "defaultGridSize": 32,
+  "defaultEntityWidth": 32,
+  "defaultEntityHeight": 32,
+  "bgColor": "#0A1322",
+  "defaultLevelBgColor": "#0A1322",
+  "minifyJson": false,
+  "externalLevels": false,
+  "exportTiled": false,
+  "simplifiedExport": false,
+  "imageExportMode": "None",
+  "exportLevelBg": true,
+  "pngFilePattern": null,
+  "backupOnSave": false,
+  "backupLimit": 10,
+  "backupRelPath": null,
+  "levelNamePattern": "Level_%idx",
+  "tutorialDesc": null,
+  "customCommands": [],
+  "flags": [],
+  "defs": {
+    "layers": [
+      {
+        "__type": "Entities",
+        "identifier": "Entities",
+        "type": "Entities",
+        "uid": 121,
+        "doc": null,
+        "uiColor": null,
+        "gridSize": 32,
+        "guideGridWid": 0,
+        "guideGridHei": 0,
+        "displayOpacity": 1,
+        "inactiveOpacity": 0.6,
+        "hideInList": false,
+        "hideFieldsWhenInactive": true,
+        "canSelectWhenInactive": true,
+        "renderInWorldView": true,
+        "pxOffsetX": 0,
+        "pxOffsetY": 0,
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "parallaxScaling": true,
+        "requiredTags": [],
+        "excludedTags": [],
+        "intGridValues": [],
+        "intGridValuesGroups": [],
+        "autoRuleGroups": [],
+        "autoSourceLayerDefUid": null,
+        "tilesetDefUid": null,
+        "tilePivotX": 0,
+        "tilePivotY": 0,
+        "biomeFieldUid": null,
+        "uiFilterTags": [],
+        "useAsDefaultPerLevel": false
+      },
+      {
+        "__type": "IntGrid",
+        "identifier": "Collision",
+        "type": "IntGrid",
+        "uid": 120,
+        "doc": null,
+        "uiColor": null,
+        "gridSize": 32,
+        "guideGridWid": 0,
+        "guideGridHei": 0,
+        "displayOpacity": 1,
+        "inactiveOpacity": 0.6,
+        "hideInList": false,
+        "hideFieldsWhenInactive": true,
+        "canSelectWhenInactive": true,
+        "renderInWorldView": true,
+        "pxOffsetX": 0,
+        "pxOffsetY": 0,
+        "parallaxFactorX": 0,
+        "parallaxFactorY": 0,
+        "parallaxScaling": true,
+        "requiredTags": [],
+        "excludedTags": [],
+        "intGridValues": [
+          {
+            "value": 1,
+            "identifier": "wall",
+            "color": "#5A6C8C",
+            "tile": null,
+            "groupUid": 0
+          },
+          {
+            "value": 2,
+            "identifier": "platform",
+            "color": "#E0B36A",
+            "tile": null,
+            "groupUid": 0
+          }
+        ],
+        "intGridValuesGroups": [],
+        "autoRuleGroups": [],
+        "autoSourceLayerDefUid": null,
+        "tilesetDefUid": null,
+        "tilePivotX": 0,
+        "tilePivotY": 0,
+        "biomeFieldUid": null,
+        "uiFilterTags": [],
+        "useAsDefaultPerLevel": false
+      }
+    ],
+    "entities": [
+      {
+        "identifier": "Skeleton",
+        "uid": 103,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#E8E0C8",
+        "width": 32,
+        "height": 32,
+        "resizableX": false,
+        "resizableY": false,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 0,
+        "fieldDefs": [
+          {
+            "identifier": "a",
+            "doc": null,
+            "__type": "Int",
+            "uid": 100,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                2
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "b",
+            "doc": null,
+            "__type": "Int",
+            "uid": 101,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                2
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "range",
+            "doc": null,
+            "__type": "Int",
+            "uid": 102,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                3
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      },
+      {
+        "identifier": "Bat",
+        "uid": 107,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#8A78C8",
+        "width": 32,
+        "height": 32,
+        "resizableX": false,
+        "resizableY": false,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 0,
+        "fieldDefs": [
+          {
+            "identifier": "a",
+            "doc": null,
+            "__type": "Int",
+            "uid": 104,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                1
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "b",
+            "doc": null,
+            "__type": "Int",
+            "uid": 105,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                2
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "range",
+            "doc": null,
+            "__type": "Int",
+            "uid": 106,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                4
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      },
+      {
+        "identifier": "Item",
+        "uid": 111,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#E6B860",
+        "width": 32,
+        "height": 32,
+        "resizableX": false,
+        "resizableY": false,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 0,
+        "fieldDefs": [
+          {
+            "identifier": "itemId",
+            "doc": null,
+            "__type": "String",
+            "uid": 108,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "tank5"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "kind",
+            "doc": null,
+            "__type": "String",
+            "uid": 109,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "tank"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "via",
+            "doc": null,
+            "__type": "String",
+            "uid": 110,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                ""
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      },
+      {
+        "identifier": "Block",
+        "uid": 114,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#9FB6C9",
+        "width": 96,
+        "height": 64,
+        "resizableX": true,
+        "resizableY": true,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 0,
+        "fieldDefs": [
+          {
+            "identifier": "blockId",
+            "doc": null,
+            "__type": "String",
+            "uid": 112,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "block-12"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "product",
+            "doc": null,
+            "__type": "Int",
+            "uid": 113,
+            "type": "F_Int",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_Int",
+              "params": [
+                12
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      },
+      {
+        "identifier": "Shrine",
+        "uid": 117,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#3F8A78",
+        "width": 32,
+        "height": 32,
+        "resizableX": false,
+        "resizableY": false,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 0,
+        "fieldDefs": [
+          {
+            "identifier": "shrineId",
+            "doc": null,
+            "__type": "String",
+            "uid": 115,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "shrine-T"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          },
+          {
+            "identifier": "orbs",
+            "doc": null,
+            "__type": "String",
+            "uid": 116,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "2,3"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      },
+      {
+        "identifier": "Prop",
+        "uid": 119,
+        "tags": [],
+        "exportToToc": false,
+        "allowOutOfBounds": false,
+        "doc": null,
+        "color": "#B07A56",
+        "width": 32,
+        "height": 32,
+        "resizableX": false,
+        "resizableY": false,
+        "minWidth": null,
+        "maxWidth": null,
+        "minHeight": null,
+        "maxHeight": null,
+        "keepAspectRatio": false,
+        "tileOpacity": 1,
+        "fillOpacity": 0.3,
+        "lineOpacity": 1,
+        "hollow": false,
+        "renderMode": "Rectangle",
+        "showName": true,
+        "tilesetId": null,
+        "tileRenderMode": "FitInside",
+        "tileRect": null,
+        "uiTileRect": null,
+        "nineSliceBorders": [],
+        "maxCount": 0,
+        "limitScope": "PerLevel",
+        "limitBehavior": "MoveLastOne",
+        "pivotX": 0,
+        "pivotY": 1,
+        "fieldDefs": [
+          {
+            "identifier": "frame",
+            "doc": null,
+            "__type": "String",
+            "uid": 118,
+            "type": "F_String",
+            "isArray": false,
+            "canBeNull": false,
+            "arrayMinLength": null,
+            "arrayMaxLength": null,
+            "editorDisplayMode": "Hidden",
+            "editorDisplayScale": 1,
+            "editorDisplayPos": "Above",
+            "editorLinkStyle": "StraightArrow",
+            "editorDisplayColor": null,
+            "editorAlwaysShow": false,
+            "editorShowInWorld": true,
+            "editorCutLongValues": true,
+            "editorTextSuffix": null,
+            "editorTextPrefix": null,
+            "useForSmartColor": false,
+            "exportToToc": false,
+            "searchable": false,
+            "min": null,
+            "max": null,
+            "regex": null,
+            "acceptFileTypes": null,
+            "defaultOverride": {
+              "id": "V_String",
+              "params": [
+                "shelf.png"
+              ]
+            },
+            "textLanguageMode": null,
+            "symmetricalRef": false,
+            "autoChainRef": true,
+            "allowOutOfLevelRef": true,
+            "allowedRefs": "OnlySame",
+            "allowedRefsEntityUid": null,
+            "allowedRefTags": [],
+            "tilesetUid": null
+          }
+        ]
+      }
+    ],
+    "tilesets": [],
+    "enums": [],
+    "externalEnums": [],
+    "levelFields": []
+  },
+  "levels": [
+    {
+      "identifier": "T_Moon_Library",
+      "iid": "f585e5c8-19cf-4a5c-9d1c-37ea618d72a0",
+      "uid": 1,
+      "worldX": 0,
+      "worldY": 0,
+      "worldDepth": 0,
+      "pxWid": 960,
+      "pxHei": 544,
+      "__bgColor": "#0A1322",
+      "bgColor": null,
+      "useAutoIdentifier": false,
+      "bgRelPath": null,
+      "bgPos": null,
+      "bgPivotX": 0.5,
+      "bgPivotY": 0.5,
+      "__smartColor": "#7A92B8",
+      "__bgPos": null,
+      "externalRelPath": null,
+      "fieldInstances": [],
+      "layerInstances": [
+        {
+          "__identifier": "Entities",
+          "__type": "Entities",
+          "__cWid": 30,
+          "__cHei": 17,
+          "__gridSize": 32,
+          "__opacity": 1,
+          "__pxTotalOffsetX": 0,
+          "__pxTotalOffsetY": 0,
+          "__tilesetDefUid": null,
+          "__tilesetRelPath": null,
+          "iid": "78a446ac-ab74-48b7-8422-8e4ea45f1c75",
+          "levelId": 1,
+          "layerDefUid": 121,
+          "pxOffsetX": 0,
+          "pxOffsetY": 0,
+          "visible": true,
+          "optionalRules": [],
+          "intGridCsv": [],
+          "autoLayerTiles": [],
+          "seed": 4242,
+          "overrideTilesetUid": null,
+          "gridTiles": [],
+          "entityInstances": [
+            {
+              "__identifier": "Shrine",
+              "__grid": [
+                5,
+                14
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#3F8A78",
+              "__worldX": 160,
+              "__worldY": 448,
+              "iid": "d6041aed-3440-4c7d-aa51-9db10ee629ca",
+              "width": 32,
+              "height": 32,
+              "defUid": 117,
+              "px": [
+                160,
+                448
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "shrineId",
+                  "__type": "String",
+                  "__value": "shrine-T",
+                  "__tile": null,
+                  "defUid": 115,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "shrine-T"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "orbs",
+                  "__type": "String",
+                  "__value": "2,3",
+                  "__tile": null,
+                  "defUid": 116,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "2,3"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Skeleton",
+              "__grid": [
+                9,
+                14
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#E8E0C8",
+              "__worldX": 288,
+              "__worldY": 448,
+              "iid": "00cf0682-5dde-4687-b264-1a701ad52bf7",
+              "width": 32,
+              "height": 32,
+              "defUid": 103,
+              "px": [
+                288,
+                448
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "a",
+                  "__type": "Int",
+                  "__value": 2,
+                  "__tile": null,
+                  "defUid": 100,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        2
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "b",
+                  "__type": "Int",
+                  "__value": 3,
+                  "__tile": null,
+                  "defUid": 101,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        3
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "range",
+                  "__type": "Int",
+                  "__value": 3,
+                  "__tile": null,
+                  "defUid": 102,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Skeleton",
+              "__grid": [
+                20,
+                14
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#E8E0C8",
+              "__worldX": 640,
+              "__worldY": 448,
+              "iid": "287abcdf-7d3b-41c2-b42b-00b5c5a1e22d",
+              "width": 32,
+              "height": 32,
+              "defUid": 103,
+              "px": [
+                640,
+                448
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "a",
+                  "__type": "Int",
+                  "__value": 4,
+                  "__tile": null,
+                  "defUid": 100,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        4
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "b",
+                  "__type": "Int",
+                  "__value": 1,
+                  "__tile": null,
+                  "defUid": 101,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        1
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "range",
+                  "__type": "Int",
+                  "__value": 3,
+                  "__tile": null,
+                  "defUid": 102,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        3
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Bat",
+              "__grid": [
+                18,
+                6
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#8A78C8",
+              "__worldX": 576,
+              "__worldY": 192,
+              "iid": "02717cb2-b742-4153-b9f2-2b2c29960fd1",
+              "width": 32,
+              "height": 32,
+              "defUid": 107,
+              "px": [
+                576,
+                192
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "a",
+                  "__type": "Int",
+                  "__value": 1,
+                  "__tile": null,
+                  "defUid": 104,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        1
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "b",
+                  "__type": "Int",
+                  "__value": 4,
+                  "__tile": null,
+                  "defUid": 105,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        4
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "range",
+                  "__type": "Int",
+                  "__value": 4,
+                  "__tile": null,
+                  "defUid": 106,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        4
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Block",
+              "__grid": [
+                23,
+                7
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#9FB6C9",
+              "__worldX": 736,
+              "__worldY": 224,
+              "iid": "a503d76e-806d-43d7-8708-127586729409",
+              "width": 96,
+              "height": 64,
+              "defUid": 114,
+              "px": [
+                736,
+                224
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "blockId",
+                  "__type": "String",
+                  "__value": "block-12",
+                  "__tile": null,
+                  "defUid": 112,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "block-12"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "product",
+                  "__type": "Int",
+                  "__value": 12,
+                  "__tile": null,
+                  "defUid": 113,
+                  "realEditorValues": [
+                    {
+                      "id": "V_Int",
+                      "params": [
+                        12
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Item",
+              "__grid": [
+                24,
+                8
+              ],
+              "__pivot": [
+                0,
+                0
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#E6B860",
+              "__worldX": 768,
+              "__worldY": 256,
+              "iid": "e3a69ce8-cf3f-4ff2-90eb-c327768763a2",
+              "width": 32,
+              "height": 32,
+              "defUid": 111,
+              "px": [
+                768,
+                256
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "itemId",
+                  "__type": "String",
+                  "__value": "tank5",
+                  "__tile": null,
+                  "defUid": 108,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "tank5"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "kind",
+                  "__type": "String",
+                  "__value": "tank",
+                  "__tile": null,
+                  "defUid": 109,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "tank"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "__identifier": "via",
+                  "__type": "String",
+                  "__value": "block-12",
+                  "__tile": null,
+                  "defUid": 110,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "block-12"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                3,
+                15
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 96,
+              "__worldY": 480,
+              "iid": "0e57f568-02d9-405d-bade-397224de42c4",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                96,
+                480
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "shelf.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "shelf.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                12,
+                15
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 384,
+              "__worldY": 480,
+              "iid": "7088c393-1816-40fb-89b9-365ddb0a406f",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                384,
+                480
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "shelf.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "shelf.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                27,
+                15
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 864,
+              "__worldY": 480,
+              "iid": "187b47ca-4806-438d-b626-657a428390ef",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                864,
+                480
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "shelf.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "shelf.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                8,
+                3
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 256,
+              "__worldY": 96,
+              "iid": "ec34db1a-a8ae-4104-9613-b87f0f6800b6",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                256,
+                96
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "lantern.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "lantern.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                15,
+                3
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 480,
+              "__worldY": 96,
+              "iid": "2e13ee32-72bd-4078-a0c2-1a2560bced99",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                480,
+                96
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "lantern.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "lantern.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                14,
+                15
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 448,
+              "__worldY": 480,
+              "iid": "4edf547e-0912-4287-9356-c16cf7167755",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                448,
+                480
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "lectern.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "lectern.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "__identifier": "Prop",
+              "__grid": [
+                17,
+                15
+              ],
+              "__pivot": [
+                0,
+                1
+              ],
+              "__tags": [],
+              "__tile": null,
+              "__smartColor": "#B07A56",
+              "__worldX": 544,
+              "__worldY": 480,
+              "iid": "bdb183fb-1815-4531-91b6-53e3b32dcebc",
+              "width": 32,
+              "height": 32,
+              "defUid": 119,
+              "px": [
+                544,
+                480
+              ],
+              "fieldInstances": [
+                {
+                  "__identifier": "frame",
+                  "__type": "String",
+                  "__value": "books.png",
+                  "__tile": null,
+                  "defUid": 118,
+                  "realEditorValues": [
+                    {
+                      "id": "V_String",
+                      "params": [
+                        "books.png"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "__identifier": "Collision",
+          "__type": "IntGrid",
+          "__cWid": 30,
+          "__cHei": 17,
+          "__gridSize": 32,
+          "__opacity": 1,
+          "__pxTotalOffsetX": 0,
+          "__pxTotalOffsetY": 0,
+          "__tilesetDefUid": null,
+          "__tilesetRelPath": null,
+          "iid": "ba3dc966-6253-4861-8008-fa33a27ad43e",
+          "levelId": 1,
+          "layerDefUid": 120,
+          "pxOffsetX": 0,
+          "pxOffsetY": 0,
+          "visible": true,
+          "optionalRules": [],
+          "intGridCsv": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            0,
+            2,
+            2,
+            2,
+            2,
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "autoLayerTiles": [],
+          "seed": 4242,
+          "overrideTilesetUid": null,
+          "gridTiles": [],
+          "entityInstances": []
+        }
+      ],
+      "__neighbours": []
+    }
+  ],
+  "worldIid": "70fe831f-5685-4de8-ba84-05f2eee3c9d4",
+  "dummyWorldIid": "4e9bc5b4-08af-4d4f-b4d2-d88ba5ce5ee3"
+}
