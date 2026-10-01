@@ -38,7 +38,7 @@ Opening a room, or finishing onboarding, plays one move: he leaps from the stage
 
 ## Marketing homepage
 
-`homepage/` is a concept homepage for this direction, at `http://localhost:4173/homepage/`. It is a preview, not the live site: the footer says so, and the "Start studying for free" button opens the app demo.
+`homepage/` is the concept this direction started from, at `http://localhost:4173/homepage/`. It is frozen. The live homepage is the port of it in `apps/web/app/page.tsx`, `apps/web/app/home.css` and `apps/web/components/home/`, with a "for the grown-ups" section added, real sign-in links and no concept labels. Change the live one there, not here.
 
 Direction: **pocket device**. Snow page, tangerine as the one accent, the product shown as a physical object with a spec sheet beside it. Same type and tokens as the app.
 
@@ -64,10 +64,11 @@ A static comp of the desktop and mobile layouts is on the Design canvas "Studigo
 - `flows.js` / `flows.css` — Home and onboarding.
 - `app.js` — a stand-in for the Study Room (scripted Coach, a five-question quiz, flashcards, Plan, Cram). With `?embed` it runs inside the homepage's phone and talks to it with `postMessage`.
 - `studigo.css` — the app's styles.
-- `homepage/index.html`, `site.css`, `site.js` — the marketing homepage.
+- `homepage/index.html`, `site.css`, `site.js` — the frozen concept homepage.
+- `build_public_demo.py` — builds the copy of this demo that the live homepage embeds, `apps/web/public/demo/`. That copy is the phone only (no side panel), is not indexed, has no sign-in step, and uses WebP sprites. Run the script after changing the demo; do not edit the copy by hand.
 
 ## Next
 
-1. Port the homepage into `apps/web` on a branch from `origin/main`.
+1. Bring the app up to the homepage: `docs/COMPANION_PARITY_PLAN.md`.
 2. The real iOS app in Expo / React Native, per `docs/APP_STORE_RELEASE_PLAN.md`.
 3. A rigged 3D Studigo and a rendered intro video, once there are credits for it and Blender is running.

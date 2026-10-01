@@ -24,7 +24,7 @@ const MIN_SEEK_DELTA_S = 0.008;
 // Never seek to exactly 0 or duration; both can stall or show a blank frame.
 const TIMELINE_EPSILON = 0.03;
 
-export function MascotVideoTracker({ size = 150, priority = false }: { size?: number; priority?: boolean }) {
+export function MascotVideoTracker({ size = 150, priority = false, sizes = STILL_SIZES }: { size?: number; priority?: boolean; sizes?: string }) {
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const originRef = useRef({ x: 0, radius: TRACKING_RADIUS_MIN });
@@ -190,7 +190,7 @@ export function MascotVideoTracker({ size = 150, priority = false }: { size?: nu
           src={STILL_SRC}
           width={560}
           height={560}
-          sizes={STILL_SIZES}
+          sizes={sizes}
           alt=""
           draggable={false}
           priority={priority}
