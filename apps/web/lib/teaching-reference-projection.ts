@@ -35,7 +35,7 @@ export function projectTeachingReferences(files: Array<{ path: string; markdown:
       if (!ex.reply) throw new Error(`${path} has no "Good reply"`);
       const style = front(markdown, "style")!, tradition = front(markdown, "tradition")!, practice = front(markdown, "practice")!, level = front(markdown, "explain_level")!;
       // The file name says what the reply demonstrates; the other fields are the defaults it was written under.
-      const file = path.split("/").pop()!;
+      const file = path.split(/[\\/]/).pop()!;
       if (file.startsWith("style-")) out.exemplars[`style:${style}:${level}`] = ex;
       else if (file.startsWith("tradition-")) out.exemplars[`tradition:${tradition}`] = ex;
       else if (file.startsWith("practice-")) out.exemplars[`practice:${practice}`] = ex;
