@@ -1,0 +1,163 @@
+/* Home and onboarding: the two screens where Studigo is seen full body.
+   Room cards, fields, the color picker and the upload row reuse the app's own
+   styles (ported from globals.css on origin/main). */
+
+/* ---------- views ---------- */
+.roomDevice { transition: opacity .32s ease, visibility 0s linear 0s, inset .3s var(--ease-out); }
+.screen:not([data-view="room"]) .roomDevice { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .32s ease, visibility 0s linear .32s; }
+.view {
+  position: absolute; inset: 0 0 var(--kb-h) 0; z-index: 45; display: flex; flex-direction: column; overflow: hidden;
+  padding: var(--safe-top) 0 0; background: var(--snow); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(14px);
+  transition: opacity .32s ease, transform .42s var(--ease-out), visibility 0s linear .42s, inset .3s var(--ease-out);
+}
+.screen[data-view="home"] .homeView, .screen[data-view="onboarding"] .obView {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+  transition: opacity .32s ease, transform .42s var(--ease-out), visibility 0s linear 0s, inset .3s var(--ease-out);
+}
+
+/* ---------- his stage: the same screen-in-a-bezel as his window, room-sized ---------- */
+.stageScreen {
+  position: relative; flex: none; border-radius: 34px;
+  background: radial-gradient(120% 90% at 62% 0%, #fffaf1, #f4dfbd);
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 27, 45, .05), inset 0 4px 12px rgba(20, 27, 45, .07),
+    0 0 0 5px var(--white), 0 0 0 6.5px color-mix(in oklab, var(--tone) 58%, white),
+    0 20px 34px -18px color-mix(in oklab, var(--tone) 70%, transparent);
+  transition: box-shadow .35s ease, height .3s var(--ease-out);
+}
+.stageSill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 26px; border-radius: 0 0 34px 34px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background-color: var(--tone-key); background-image: var(--gloss); color: var(--tone-on);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(20, 27, 45, .16); transition: background-color .35s ease;
+}
+.stgAnchor { position: absolute; pointer-events: none; }
+
+/* ---------- Home ---------- */
+.homeTop { flex: none; display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 18px; }
+.wordmarkText { font-family: var(--display); font-weight: 800; font-size: 1.35rem; letter-spacing: -.04em; }
+.profileChip { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; font-size: .68rem; font-weight: 800; background: linear-gradient(160deg, var(--grape), var(--blueberry)); box-shadow: var(--edge); }
+.homeScroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; display: grid; gap: 16px; align-content: start; padding: 10px 18px 34px; }
+.homeScroll::-webkit-scrollbar { display: none; }
+.homeStage { height: 226px; }
+.homeStage .stgAnchor { right: 6px; bottom: 15px; width: 196px; height: 196px; }
+.homeSay {
+  position: absolute; left: 16px; top: 18px; width: 156px; padding: 12px 14px 13px; border-radius: 20px 20px 20px 6px;
+  background: var(--white); box-shadow: 0 0 0 1px color-mix(in oklab, var(--tone) 35%, white), 0 12px 24px -14px rgba(20, 27, 45, .35);
+  animation: cmpSay .34s var(--ease-spring) .25s backwards; transform-origin: 100% 60%;
+}
+.homeSay .tinyLabel { color: var(--tone-ink); font-size: .62rem; margin-bottom: 4px; }
+.homeSay p { margin: 0; font-size: .92rem; line-height: 1.32; color: var(--ink-2); }
+.homeSay b { display: block; color: var(--ink); font-family: var(--display); font-weight: 800; font-size: 1.12rem; letter-spacing: -.03em; line-height: 1.12; margin-bottom: 3px; }
+.nextUp { display: grid; gap: 4px; justify-items: start; padding: 18px; border-radius: var(--r-lg); background: var(--white); box-shadow: var(--edge), inset 0 0 0 1.5px color-mix(in oklab, var(--tone) 45%, white), var(--lift-2); }
+.nextUp .tinyLabel { color: var(--tone-ink); }
+.nextUp h2 { margin: 2px 0 0; font-size: 1.4rem; font-weight: 800; line-height: 1.1; letter-spacing: -.035em; }
+.nextUp p { margin: 0 0 10px; color: var(--ink-2); font-size: .88rem; }
+.homeHead { display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px; }
+.roomsGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.roomCard {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 6px; min-height: 148px; padding: 16px 16px 14px;
+  border: 0; border-radius: 26px; text-align: left; color: var(--ink); cursor: pointer;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .35) 55%, rgba(255, 255, 255, .15)), color-mix(in oklab, var(--tone) 55%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 0 0 1px color-mix(in oklab, var(--tone) 40%, white), inset 0 -18px 30px -12px color-mix(in oklab, var(--tone) 45%, transparent), 0 18px 36px -22px color-mix(in oklab, var(--tone) 80%, transparent);
+  transition: transform .2s var(--ease-out), background-color .3s ease;
+}
+.roomCard::before { content: ""; position: absolute; z-index: -1; left: 10px; right: 10px; top: 5px; height: 42%; border-radius: 20px 20px 60% 60% / 20px 20px 30% 30%; background: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0)); }
+.roomCard:active { transform: scale(.97); }
+.roomCardMeta { font-size: .64rem; letter-spacing: .08em; font-weight: 800; color: color-mix(in oklab, var(--tone-ink) 80%, var(--ink)); }
+.roomCard strong { font-family: var(--display); font-size: 1.3rem; font-weight: 800; line-height: 1.05; letter-spacing: -.035em; }
+.roomCardFooter { margin-top: auto; display: grid; gap: 6px; justify-items: start; font-size: .78rem; font-weight: 600; color: var(--ink-2); }
+.roomCardFooter b { padding: 4px 9px; border-radius: 999px; font-size: .7rem; font-weight: 700; background: rgba(255, 255, 255, .85); box-shadow: var(--edge), 0 1px 2px rgba(20, 27, 45, .08); }
+.roomNew {
+  display: grid; place-content: center; justify-items: center; gap: 8px; min-height: 148px; border-radius: 26px; cursor: pointer; background: none;
+  border: 1.5px dashed var(--hairline-strong); color: var(--ink-2); font-size: .9rem; font-weight: 700;
+}
+.roomNew i { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; font-style: normal; font-size: 1.4rem; font-weight: 500; line-height: 1; background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline-strong), var(--lift-1); }
+
+/* ---------- onboarding ---------- */
+.obBar { flex: none; display: grid; grid-template-columns: 44px 1fr 64px; align-items: center; gap: 8px; height: 48px; padding: 0 12px; }
+.obBack { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; background: rgba(20, 27, 45, .055); font-family: -apple-system, BlinkMacSystemFont, var(--sans); font-size: 2rem; line-height: 1; }
+.obBack span { transform: translateY(-2px); }
+.obBack[hidden], .obSkip[hidden] { display: block; visibility: hidden; }
+.obSkip { justify-self: end; min-height: 44px; padding: 0 8px; border: 0; background: none; cursor: pointer; color: var(--muted); font-size: .9rem; font-weight: 700; }
+.obDots { display: flex; justify-content: center; gap: 7px; }
+.obDots i { width: 7px; height: 7px; border-radius: 999px; background: var(--snow-3); transition: width .3s var(--ease-out), background-color .3s ease; }
+.obDots i[data-on] { width: 22px; background: var(--tone-key); }
+.obDots i[data-past] { background: color-mix(in oklab, var(--tone) 45%, white); }
+.obStage { margin: 8px 18px 0; height: 268px; }
+.obStage .stgAnchor { left: 50%; bottom: 14px; height: calc(100% - 24px); aspect-ratio: 1; transform: translateX(-50%); }
+[data-keyboard="open"] .obStage { height: 148px; }
+.obBody { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 22px 22px 6px; }
+.obBody::-webkit-scrollbar { display: none; }
+.obStep { display: grid; gap: 14px; animation: obIn .36s var(--ease-out) backwards; }
+.obStep.still { animation: none; }
+@keyframes obIn { from { opacity: 0; transform: translateX(18px); } }
+.obStep h1 { margin: 0; font-size: 2rem; font-weight: 800; line-height: 1.04; letter-spacing: -.035em; font-variation-settings: "opsz" 96; }
+.obLede { margin: -6px 0 2px; color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
+[data-keyboard="open"] .obLede, [data-keyboard="open"] .obChips { display: none; }
+[data-keyboard="open"] .obBody { padding-top: 14px; }
+.obFoot { flex: none; padding: 10px 22px 30px; }
+[data-keyboard="open"] .obFoot { padding-bottom: 12px; }
+.obFoot:empty { display: none; }
+.obFoot .buttonPrimary { width: 100%; min-height: 52px; font-size: 1rem; }
+.obProviders { display: grid; gap: 10px; margin-top: 4px; }
+/* Provider controls keep the provider's own look: no Studigo color, no gloss. */
+.appleButton, .googleButton {
+  width: 100%; min-height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Roboto", var(--sans); font-weight: 600; font-size: 1rem; cursor: pointer;
+}
+.appleButton { border: 1px solid #000; background: #000; color: #fff; }
+.googleButton { border: 1px solid #747775; background: #fff; color: #1f1f1f; }
+.obQuiet { min-height: 44px; border: 0; background: none; cursor: pointer; color: var(--blueberry-ink); font-size: .92rem; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.obNote { text-align: center; font-size: .76rem; }
+.field { display: grid; gap: 7px; }
+.field > span { font-size: .78rem; font-weight: 700; color: var(--ink-2); }
+.field input {
+  width: 100%; min-height: 50px; padding: 11px 14px; border: 1px solid var(--hairline-strong); border-radius: 12px;
+  background: var(--white); color: var(--ink); box-shadow: inset 0 1px 2px rgba(20, 27, 45, .06); font-size: 16px; font-weight: 600;
+}
+.field input:focus-visible { outline: none; border-color: var(--tone-ink); box-shadow: 0 0 0 4px color-mix(in oklab, var(--tone) 24%, transparent); }
+.obChips { display: grid; gap: 8px; }
+.obChips > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.obChips button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer; background: var(--white); font-size: .86rem; font-weight: 700; box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+.obChips button[aria-pressed="true"] { background: var(--tone-soft); color: var(--tone-ink); box-shadow: inset 0 0 0 1.5px var(--tone); }
+.cdSwatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.cdSwatch {
+  position: relative; display: grid; place-items: center; min-height: 46px; padding: 0 10px; border: 0; border-radius: 14px; cursor: pointer;
+  font-size: .86rem; font-weight: 800; letter-spacing: -.005em; color: var(--tone-on); background-color: var(--tone-key);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .38), inset 0 -2px 0 rgba(20, 27, 45, .14); transition: transform .2s var(--ease-spring), box-shadow .2s ease;
+}
+.cdSwatch:active { transform: scale(.97); }
+.cdSwatch[aria-checked="true"] { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .38), inset 0 -2px 0 rgba(20, 27, 45, .14), 0 0 0 2px var(--white), 0 0 0 4px var(--tone-ink); }
+.cdSwatch[aria-checked="true"]::after { content: "✓"; position: absolute; top: -7px; right: -7px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--tone-ink); color: var(--white); font-size: .7rem; font-weight: 900; line-height: 1; box-shadow: 0 0 0 2px var(--white); }
+.obPreview { min-height: 0; padding: 14px 16px; cursor: default; border-radius: 20px; }
+.obPreview strong { font-size: 1.2rem; }
+.obDrop { padding: 20px 16px 18px; border-radius: 20px; gap: 6px; }
+.obDrop strong { font-size: 1.1rem; }
+.obDrop small { font-size: .8rem; }
+.obDrop .buttonPrimary { margin-top: 6px; min-height: 44px; }
+.uploadQueue { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.queueItem { display: grid; grid-template-columns: 18px 1fr; gap: 4px 12px; align-items: center; padding: 14px 16px; border-radius: 16px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-1); animation: obIn .3s var(--ease-out) backwards; }
+.queueItem strong { font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queueItem small { grid-column: 2; color: var(--muted); font-size: .8rem; font-weight: 600; }
+.queueSpinner { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--tone-soft); border-top-color: var(--tone-ink); animation: spin .8s linear infinite; }
+.queue-done .queueSpinner { animation: none; border: 0; background: var(--kiwi); box-shadow: 0 0 0 3px var(--kiwi-soft); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.obTry { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.obTry li { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline), var(--lift-1); transition: box-shadow .25s ease, background-color .25s ease; }
+.obTry i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-style: normal; font-size: .9rem; font-weight: 900; color: transparent; background: var(--snow-2); box-shadow: var(--recess); transition: background-color .25s ease, color .25s ease, transform .3s var(--ease-spring); }
+.obTry b { display: block; font-size: .95rem; }
+.obTry span { color: var(--muted); font-size: .82rem; }
+.obTry li[data-done] { background: var(--kiwi-soft); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--kiwi) 60%, white); }
+.obTry li[data-done] i { color: var(--ink); background: var(--kiwi); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); transform: scale(1.08); }
+
+/* ---------- full body in the app's own completion and empty states ---------- */
+.fullMascot { display: block; width: 96px; height: 96px; }
+.quizScoreCard .fullMascot { float: right; width: 104px; height: 104px; margin: -8px -10px 0 6px; }
+.modeEmpty .fullMascot { margin: 4px 0 -4px -10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .view, .roomDevice { transition: opacity .2s ease, visibility 0s !important; transform: none !important; }
+}
