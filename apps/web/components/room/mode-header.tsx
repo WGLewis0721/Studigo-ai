@@ -16,19 +16,31 @@ export type HeaderMode = { id: string; name: string; sub: string };
 type Slots = {
   /** "portal" sends chips up into the page header; "inline" keeps them where they are (nested panels). */
   placement: "portal" | "inline";
+  /** Where chips go on wide screens: the right end of the header row. */
   chipHost: HTMLElement | null;
+  /** Where chips go on phones: a line just under the Studigo rail, so the header stays one row. */
+  chipBarHost: HTMLElement | null;
   setMascot: (state: MascotState) => void;
 };
 
 const noop = () => {};
-export const INLINE_SLOTS: Slots = { placement: "inline", chipHost: null, setMascot: noop };
+export const INLINE_SLOTS: Slots = { placement: "inline", chipHost: null, chipBarHost: null, setMascot: noop };
 export const HeaderSlots = createContext<Slots>(INLINE_SLOTS);
 
-/** Renders its children in the page header's chip slot (or in place when nested). */
+/**
+ * Renders its children in the page header's chip slot (or in place when nested).
+ * Wide screens show the header copy and phones show the one under the rail; CSS
+ * hides the other, so the layout is right on first paint at either size.
+ */
 export function HeaderChip({ children }: { children: ReactNode }) {
-  const { placement, chipHost } = useContext(HeaderSlots);
+  const { placement, chipHost, chipBarHost } = useContext(HeaderSlots);
   if (placement === "inline") return <div className="mhInlineChip">{children}</div>;
-  return chipHost ? createPortal(children, chipHost) : null;
+  return (
+    <>
+      {chipHost ? createPortal(children, chipHost) : null}
+      {chipBarHost ? createPortal(children, chipBarHost) : null}
+    </>
+  );
 }
 
 /** Sets the header mascot's mood while this is mounted. */
@@ -124,7 +136,8 @@ export function ModeHeader({
   title,
   sub,
   mascot,
-  chipRef
+  chipRef,
+  chipBarRef
 }: {
   groupName: string;
   /** Tone of the page the header belongs to (colors the rail). */
@@ -136,8 +149,10 @@ export function ModeHeader({
   sub: string;
   mascot: MascotState;
   chipRef: (node: HTMLDivElement | null) => void;
+  chipBarRef: (node: HTMLDivElement | null) => void;
 }) {
   return (
+    <>
     <ModeFrame tone={frameTone}>
       <header className="modeHead" data-tone={current}>
         <span className="chatMascot chatMascotStatic">
@@ -161,5 +176,7 @@ export function ModeHeader({
         <div className="chatTopicRow mhChipRow" ref={chipRef} />
       </header>
     </ModeFrame>
+    <div className="mhChipBar" data-tone={current} ref={chipBarRef} />
+    </>
   );
 }

@@ -3,13 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CitationChips, type Citation } from './citations';
 import { StudigoMascot } from '@/components/studigo-mascot';
 import { ChipSelect, HeaderChip, HeaderMascot } from './mode-header';
+import { TopicReadout } from './topic-readout';
+import type { Topic } from '@/lib/rooms';
 type Answer={selectedChoice:number|null;response:string};
 type Question={id:string;kind:'multiple_choice'|'short_answer';prompt:string;choices:string[];topic_id:string};
 type Review=Question&{score:number;is_correct:boolean;feedback:string;explanation:string;expected_answer:string|null;correct_choice:number|null;citations:Citation[];response:string|null;selected_choice:number|null};
 type Result={score:number;questionCount:number;topics:Array<{topic_id:string;title:string;questions:number;score:number;misses:number}>;reviews:Review[]};
 type Test={id:string;status:'draft'|'submitted';created_at:string;draft_answers?:Record<string,Answer>;result:Result|null;topic_snapshot:Array<{id:string;title:string;questions:number}>};
 
-export function PracticeTestPanel({roomId,topicCount,onGraded,onReviewTopic}:{roomId:string;topicCount:number;onGraded:()=>void;onReviewTopic:(id:string)=>void}) {
+export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReviewTopic}:{roomId:string;topicCount:number;topics?:Topic[];onGraded:()=>void;onReviewTopic:(id:string)=>void}) {
   const [tests,setTests]=useState<Test[]>([]);const [active,setActive]=useState<Test|null>(null);const [questions,setQuestions]=useState<Question[]>([]);
   const [answers,setAnswers]=useState<Record<string,Answer>>({});const [index,setIndex]=useState(0);const [count,setCount]=useState(10);
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);const [saveState,setSaveState]=useState('');const [confirmSubmit,setConfirmSubmit]=useState(false);
@@ -69,12 +71,18 @@ export function PracticeTestPanel({roomId,topicCount,onGraded,onReviewTopic}:{ro
     {confirmSubmit&&<div className="testSubmitReview" role="region" aria-label="Submit full test"><h3>Ready to submit?</h3><p>{questions.length-completed?`${questions.length-completed} unanswered questions will count as zero.`:'Every question has an answer.'} Submission is final for this test.</p><button disabled={busy} onClick={()=>setConfirmSubmit(false)}>Keep working</button><button className="buttonPrimary" disabled={busy} onClick={()=>void submit()}>{busy?'Grading the full test…':'Submit all answers'}</button></div>}
   </section>;
   return <section className="practiceTestSetup">
+    <div className="setupMain">
     <HeaderChip><ChipSelect label={`${count} questions`} ariaLabel="Number of test questions" value={String(count)} onChange={v=>setCount(Number(v))} disabled={busy}>{[6,10,15,20].map(n=><option key={n} value={n}>{n} questions</option>)}</ChipSelect></HeaderChip>
+    <div className="setupHeading"><span className="tinyLabel">NEXT TEST</span><h3>{count} questions</h3></div>
     <p className="setupLead">A full test, graded when you submit.</p>
     <p className="hintText">Covers up to {Math.min(count,topicCount)} of {topicCount} current topics. Choose more questions to cover a larger scope.</p>
     <button className="buttonPrimary" disabled={busy||topicCount<2} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>
     {topicCount<2&&<p className="hintText">Add a study guide with at least two topics first. Quiz works for a single topic.</p>}
     {error&&<p className="formError" role="alert">{error}</p>}
+    </div>
+    <div className="setupAside">
+    <TopicReadout topics={topics} heading="TOPICS IN SCOPE"/>
     {tests.length>0&&<section className="savedTests"><h3>Your tests</h3>{tests.map(t=><button key={t.id} disabled={busy} onClick={()=>void open(t.id)}><span>{t.status==='draft'?'Continue draft':'Review completed test'}</span><small>{new Date(t.created_at).toLocaleDateString()} · {t.topic_snapshot.length} topics {t.result?`· ${t.result.score}%`:''}</small><span>→</span></button>)}</section>}
+    </div>
   </section>;
 }

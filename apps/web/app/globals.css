@@ -595,6 +595,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    animation would become the containing block for the fixed mobile composer,
    sheets and Coach shortcuts, pinning them to the content instead of the screen. */
 .modeSurface > * { animation: modeEnter .38s var(--ease-out) backwards; }
+/* Coach draws its header inside the surface; like every other page's header, it holds still. */
+.modeSurface > .modeFrame { animation: none; }
 @keyframes modeEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes modeFade { from { opacity: 0; } to { opacity: 1; } }
 /* Phones host fixed controls inside the mode container: fade only, never move it. */
@@ -3163,8 +3165,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .mhChipRow:empty { display: none; }
 .mhChipRow { align-items: center; justify-content: space-between; }
 .mhChipRow > :only-child { margin-left: auto; }
-.modeHead .chatTopic, .modeHead .mhSelect { min-width: 0; flex: 0 1 auto; }
-.modeHead .chatTopic {
+.modeHead .chatTopic, .modeHead .mhSelect, .mhChipBar .chatTopic, .mhChipBar .mhSelect { min-width: 0; flex: 0 1 auto; }
+.modeHead .chatTopic, .mhChipBar .chatTopic {
   color: var(--tone-ink); background: var(--tone-soft);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 40%, white);
 }
@@ -3186,7 +3188,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   /* Groups live in the bottom bar, so the old nav wrapper takes no room; the header sits right under the top bar. */
   .studyNavigation { height: 0; min-height: 0; padding: 0; margin: 0; gap: 0; border: 0; overflow: visible; }
   .modeFrame { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
-  .modeHead .mhChipRow { flex: 1 1 100%; }
+  /* Every page's header is one row at one height (mascot and the page's switch or title), so the
+     Studigo rail sits in the same place on all five. What you can change on the page (topic,
+     date, file type) sits on a line just under the rail. */
+  .modeHead { flex-wrap: nowrap; min-height: 75px; box-sizing: border-box; }
+  .modeHead .mhChipRow { display: none; }
+  .mhChipBar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px var(--m-page, 14px) 0; }
+  .mhChipBar:empty { display: none; }
+  .mhChipBar > :only-child { margin-left: auto; }
+  .roomDevice:has(.coachChat) .mhChipBar { flex: none; padding-bottom: 10px; }
   .roomWorkspace .modeSurface { padding-top: 16px; }
 }
 
@@ -3233,6 +3243,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 /* On wide screens every page's header is the same one row at the same height, so the
    Studigo rail sits in the same place on all five pages whatever is in the header. */
 @media (min-width: 701px) {
+  .mhChipBar { display: none; }
   .modeHead { flex-wrap: nowrap; height: 82px; box-sizing: border-box; padding-block: 0; }
   .modeHead .chatModes[role="group"] { flex: 0 1 360px; min-width: 0; }
   .modeHead .chatModes[role="group"]:has(> button:nth-child(3)) { flex-basis: 520px; }
@@ -3243,10 +3254,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .modeHead .mhChipRow { flex: 1 1 0; min-width: 0; flex-wrap: nowrap; justify-content: flex-end; }
   .modeHead .coachTabs { flex: none; }
 }
-.modeHead .coachTabs { padding: 3px; flex: none; }
-.modeHead .coachTabs button { min-height: 28px; padding: 0 13px; font-size: .8rem; }
-.roomDevice .modeHead .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
-.roomDevice .modeHead .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
+.modeHead .coachTabs, .mhChipBar .coachTabs { padding: 3px; flex: none; }
+.modeHead .coachTabs button, .mhChipBar .coachTabs button { min-height: 28px; padding: 0 13px; font-size: .8rem; }
+.roomDevice .modeHead .coachTabs, .roomDevice .mhChipBar .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
+.roomDevice .modeHead .coachTabs button[aria-pressed="true"], .roomDevice .mhChipBar .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
 
 /* Materials: a file's buttons drop to their own line when the column is narrow, so its name keeps room. */
 .documentList { container: docs / inline-size; }
@@ -3315,25 +3326,38 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .workspaceTopbar .workspaceTitle strong { font-size: 1.1rem; }
 }
 /* ---------------------------------------------------------------------------
-   Wide screens, Coach chat: the page holds still and only the conversation
-   scrolls. The shell, header, rail and study-guide card are fixed to the window;
-   the chat takes what is left and scrolls its own messages.
+   Wide screens: the room is one fixed frame. The window never scrolls. The top bar,
+   the page header and the Studigo rail hold still, and each page scrolls inside the
+   colored border. Coach's chat is the exception: it keeps its own message scroll.
    --------------------------------------------------------------------------- */
 @media (min-width: 701px) {
-  .appShell:has(.coachChat) { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; grid-template-rows: auto minmax(0, 1fr); }
-  .appShell:has(.coachChat) > .appMain { min-height: 0; display: flex; flex-direction: column; }
-  .appShell:has(.coachChat) .roomDevice { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-  .appShell:has(.coachChat) .roomDevice > .roomWorkspace { flex: 1 1 0; min-height: 0; }
-  .appShell:has(.coachChat) .modeSurface { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .appShell:has(.roomWorkspace) { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; grid-template-rows: auto minmax(0, 1fr); }
+  .appShell:has(.roomWorkspace) > .appMain { min-height: 0; display: flex; flex-direction: column; }
+  .appShell:has(.roomWorkspace) .roomDevice { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .appShell:has(.roomWorkspace) .roomDevice > .roomWorkspace { flex: 1 1 0; min-height: 0; }
+  .roomWorkspace > .topbarWrap, .roomWorkspace > .modeFrame, .roomWorkspace > .mhChipBar { flex: none; }
+  .appShell:has(.roomWorkspace) .modeSurface {
+    flex: 1 1 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--th, var(--tone)) 45%, white) transparent;
+  }
+  /* Coach draws its header inside the surface; while the surface scrolls (Topics) the header stays put. */
+  .modeSurface > .modeFrame { position: sticky; top: 0; z-index: 6; }
+}
+@media (min-width: 781px) {
+  .appShell:has(.roomWorkspace) { grid-template-rows: minmax(0, 1fr); }
+}
+/* Coach chat: the surface itself holds still and only the conversation scrolls. */
+@media (min-width: 701px) {
+  .appShell:has(.coachChat) .modeSurface { display: flex; flex-direction: column; overflow: hidden; }
   .appShell:has(.coachChat) .modeSurface > .coachMode { flex: 1 1 0; min-height: 0; width: 100%; padding-bottom: clamp(16px, 2.4vw, 28px); gap: 14px; }
   .appShell:has(.coachChat) .coachMaterial { flex: none; padding: 14px 18px; gap: 16px; }
   .appShell:has(.coachChat) .coachMaterial h3 { margin: 4px 0; font-size: 1.15rem; }
   .appShell:has(.coachChat) .coachMaterial p { font-size: .9rem; line-height: 1.5; }
   .appShell:has(.coachChat) .coachMaterialExample { padding: 10px 14px; }
   .appShell:has(.coachChat) .coachChat { flex: 1 1 0; height: auto; min-height: 140px; }
-}
-@media (min-width: 781px) {
-  .appShell:has(.coachChat) { grid-template-rows: minmax(0, 1fr); }
+  .coachBody { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .coachMain { min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+  .coachAside { display: none; }
 }
 /* A short window gives the conversation the room instead of the study-guide card: always
    when the window is very short, and once you are chatting when it is moderately short. */
@@ -3342,6 +3366,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 @media (min-width: 701px) and (max-height: 920px) {
   .appShell:has(.coachChat) .coachMode.activeSession .coachMaterial { display: none; }
+}
+/* Phones: the new wrappers add no box, so the phone layout is unchanged. */
+@media (max-width: 700px) {
+  .coachBody, .coachMain { display: contents; }
+  .coachAside { display: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -3450,4 +3479,198 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .flashcardBack { transform: none; visibility: hidden; }
   .flashcardFlipped .flashcardBack { visibility: visible; }
   .flashcardFlipped .flashcardFront { visibility: hidden; }
+}
+
+/* ---------------------------------------------------------------------------
+   Desktop proportions. Phones set the base sizes above (big targets, big type,
+   round corners). On a large screen the same sizes read as a scaled-up phone, so
+   inside the room the controls, cards and type come down to desktop scale, the width
+   caps lift, and pages lay out in columns that use the screen. Container queries
+   read the page's own width, so an open or collapsed sidebar is handled too.
+   --------------------------------------------------------------------------- */
+@media (min-width: 701px) {
+  .modeSurface { container: surface / inline-size; }
+}
+.setupMain, .setupAside { display: contents; }
+.topicReadout, .libraryHeading, .setupHeading { display: none; }
+.materialsIntake, .materialsLibrary { display: grid; gap: 20px; }
+
+@media (min-width: 701px) {
+  /* A plan day stacks its date over its sessions: the date column left too little room for them. */
+  .planDay { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .planDayLabel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .planActionButtons { flex-wrap: wrap; }
+}
+@media (min-width: 1024px) {
+  .roomWorkspace { --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-2xl: 26px; }
+
+  /* The page: tighter padding, no width caps (very wide screens center at 1800px). */
+  .roomWorkspace .modeSurface { padding: 22px clamp(20px, 2.2vw, 36px) 32px; }
+  .modeSurfaceFramed > .coachMode { padding: 20px clamp(20px, 2.2vw, 36px) 32px; max-width: none; }
+  .materialsPanel, .coachMode, .learnMode, .masteryMode, .weakAreasPanel, .studyPlanPanel, .quizSetup, .practiceTestSetup, .cramSetup {
+    max-width: 1800px; margin-inline: auto; width: 100%;
+  }
+  .materialsPanel, .masteryMode, .learnMode, .weakAreaList, .planTimeline, .cramPreview, .savedTests { max-width: none; }
+  .quizMode { max-width: 900px; }
+  .cardsMode { max-width: 760px; }
+  .testSession { max-width: 960px; }
+
+  /* Controls and cards at desktop size. */
+  .roomWorkspace .buttonPrimary, .roomWorkspace .keyButton { min-height: 40px; padding: 0 18px; border-radius: 11px; font-size: .88rem; gap: 8px; }
+  .modeEmpty h2 { font-size: 1.9rem; }
+  .modeEmpty h3 { font-size: 1.25rem; }
+  .setupLead { font-size: .94rem; margin-bottom: 2px; }
+  .dropzone { padding: 26px 20px 24px; border-radius: 18px; gap: 8px; }
+  .dropzone strong { font-size: 1.1rem; }
+  .documentRow { padding-block: 12px; }
+
+  .coachMaterial { padding: 16px 18px; gap: 16px; }
+  .coachMaterial h3 { font-size: 1.15rem; }
+  .coachChat { border-radius: 18px; }
+  .coachChat .coachEmpty strong { font-size: 1.05rem; }
+  .coachChat .coachEmpty { max-width: 640px; }
+
+  .masteryHero { padding: 18px 26px; gap: 20px; border-radius: 20px; }
+  .masteryHeroText p { font-size: 1.02rem; }
+  .progressRing { width: 104px; }
+  .progressRing circle { stroke-width: 10; }
+  .ringLabel strong { font-size: 1.6rem; }
+  .masteryDeck { padding: 20px; border-radius: 22px; }
+  .masteryMode, .planTimeline, .weakAreaList { gap: 14px; }
+  .weakSpots li { padding: 12px 14px; border-radius: 14px; }
+  .weakSpots button { min-height: 34px; padding: 0 13px; font-size: .8rem; }
+  .statRow > div { padding: 12px 16px; border-radius: 14px; }
+  .statRow dd { font-size: 1.5rem; }
+  .calibrationCard { padding: 16px 18px; }
+  .calibrationCard h3 { font-size: 1.15rem; }
+  .calibrationScore strong { font-size: 2rem; }
+
+  .weakAreaList > li { padding: 16px 18px; gap: 16px; }
+  .priorityNumber { width: 42px; height: 42px; border-radius: 12px; font-size: .9rem; }
+  .weakAreaBody h3 { font-size: 1.15rem; margin: 4px 0 6px; }
+  .weakAreaBody ul { font-size: .86rem; line-height: 1.5; }
+
+  .planDay { padding: 16px 20px; border-radius: 18px; }
+  .planDayLabel strong { font-size: 1.2rem; margin-bottom: 2px; }
+  .planDayActions { gap: 14px; }
+  .planDayActions article { padding-left: 14px; }
+  .planDayActions h3 { font-size: 1.05rem; margin: 4px 0; }
+  .planDayActions p { font-size: .86rem; line-height: 1.5; margin-bottom: 10px; }
+  .planActionButtons { gap: 10px; }
+  .planActionButtons .buttonPrimary { min-height: 34px; padding: 0 14px; font-size: .82rem; }
+  .planActionButtons button:not(.buttonPrimary) { font-size: .82rem; }
+
+  .topicHead { padding: 12px 14px; gap: 12px; }
+  .topicMarker { width: 34px; height: 34px; border-radius: 11px; }
+  .topicCopy strong { font-size: .95rem; }
+  .topicCopy small { font-size: .8rem; }
+  .topicBody { padding: 0 14px 16px 60px; }
+
+  .quizMode { padding: 24px 28px; }
+  .cramActivity { padding: 18px; }
+  .timeChoices { margin-bottom: 16px; }
+  .timeChoices button { min-width: 92px; min-height: 38px; padding: 0 16px; font-size: .88rem; border-radius: 11px; }
+  .cramPreview li { padding: 12px 16px; }
+  .cramPreview p { font-size: .84rem; margin-top: 3px; }
+}
+/* On a short window the side panel lists the next three topics, not four, so its button stays in view. */
+@media (min-width: 701px) and (max-height: 860px) {
+  .asideList li:nth-child(n + 4) { display: none; }
+}
+
+/* Two columns once the page is wide enough for them. */
+@container surface (min-width: 980px) {
+  /* Coach: the chat, with the room's own numbers beside it. */
+  .coachBody { grid-template-columns: minmax(0, 1fr) clamp(280px, 26%, 360px); }
+  .coachAside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+  .asideCard {
+    display: grid; gap: 8px; padding: 16px 18px; border-radius: var(--r-lg);
+    background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+  }
+  .asideCard h3 { margin: 0; font-size: 1.1rem; line-height: 1.2; letter-spacing: -.02em; }
+  .asideCard p { margin: 0; color: var(--ink-2); font-size: .86rem; line-height: 1.5; }
+  .asideMeter { display: grid; gap: 6px; margin-top: 2px; }
+  .asideMeterBar { height: 8px; border-radius: 999px; background: var(--snow-2); box-shadow: var(--recess); overflow: hidden; }
+  .asideMeterBar span { display: block; height: 100%; border-radius: inherit; background-color: var(--dandelion); background-image: var(--gloss); transition: width .5s var(--ease-out); }
+  .asideMeter small { color: var(--ink-2); font-size: .78rem; font-weight: 700; }
+  .asideTerms { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .asideTerms li { padding: 4px 9px; border-radius: 8px; background: var(--snow-2); box-shadow: inset 0 0 0 1px var(--hairline); font-size: .76rem; font-weight: 700; }
+  .asideList { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .asideList button {
+    display: grid; gap: 1px; width: 100%; padding: 9px 11px; border: 0; border-radius: 11px; background: transparent; text-align: left; cursor: pointer;
+    transition: background .15s ease;
+  }
+  .asideList button:hover { background: var(--tone-soft); }
+  .asideList strong { font-size: .88rem; line-height: 1.25; }
+  .asideList small { color: var(--muted); font-size: .76rem; font-weight: 600; }
+  .asideAll {
+    display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--white); color: var(--tone-ink); font-size: .86rem; font-weight: 800;
+    box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+  }
+  .asideAll:hover { background: var(--tone-soft); }
+
+  /* Practice and Cards setup: the start card, and every topic with its real mastery. */
+  .quizSetup { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 24px; align-items: start; justify-items: stretch; }
+  .setupMain { display: grid; gap: 14px; justify-items: start; align-content: start; }
+  .setupAside { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .setupHeading { display: grid; gap: 4px; }
+  .setupHeading h3 { margin: 0; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.025em; }
+  .topicReadout {
+    display: grid; gap: 10px; padding: 16px 18px; border-radius: var(--r-xl);
+    background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+  }
+  .topicReadout ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .trRow {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 160px) 86px; align-items: center; gap: 16px;
+    width: 100%; padding: 9px 12px; border: 0; border-radius: 11px; background: transparent; text-align: left; cursor: pointer;
+    transition: background .15s ease, box-shadow .15s ease;
+  }
+  .trRow:hover { background: var(--snow-2); }
+  .trRow[aria-pressed="true"] { background: var(--tone-soft); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--tone) 60%, white); }
+  .trRowAll { grid-template-columns: minmax(0, 1fr) auto; }
+  div.trRow { cursor: default; }
+  div.trRow:hover { background: transparent; }
+  .trName { font-size: .9rem; font-weight: 700; line-height: 1.25; }
+  .trRow small { color: var(--muted); font-family: var(--mono); font-size: .74rem; font-weight: 600; text-align: right; white-space: nowrap; }
+  .trMeter { height: 8px; border-radius: 999px; background: var(--snow-2); box-shadow: var(--recess); overflow: hidden; }
+  .trMeter i { display: block; height: 100%; border-radius: inherit; background: var(--snow-3); }
+  .trMeter[data-state="learning"] i { background-color: var(--dandelion); background-image: var(--gloss); }
+  .trMeter[data-state="mastered"] i { background-color: var(--kiwi); background-image: var(--gloss); }
+
+  /* Practice test: set up on the left, past tests on the right. */
+  .practiceTestSetup { grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: 24px; align-items: start; justify-items: stretch; }
+  .practiceTestSetup .setupMain { display: grid; gap: 14px; justify-items: start; align-content: start; }
+  .practiceTestSetup .savedTests {
+    margin-top: 0; padding: 16px 18px; border-radius: var(--r-xl); align-content: start;
+    background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+  }
+  .practiceTestSetup .savedTests > button { background: var(--snow-2); }
+
+  /* Materials: add files on the left, the library on the right. */
+  .materialsPanel { grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .materialsIntake, .materialsLibrary { align-content: start; min-width: 0; }
+  .materialsIntake { position: sticky; top: 0; }
+  .libraryHeading { display: block; }
+  .materialsLibrary { gap: 10px; }
+
+  /* Progress: the readout across the top; the topic map, counts and calibration on the left,
+     what to practice next down the right. */
+  .masteryMode { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); grid-template-rows: auto max-content max-content max-content 1fr; align-items: start; }
+  .masteryMode > * { grid-column: 1; }
+  .masteryMode > .masteryHero { grid-column: 1 / -1; }
+  .masteryMode > .weakSpots { grid-column: 2; grid-row: 2 / -1; }
+  .statRow { max-width: none; }
+
+  /* Topics: the list in two columns. */
+  .topicList { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+}
+
+/* Lists of cards fill the width: a card per column, as many columns as fit. */
+@container surface (min-width: 760px) {
+  .weakAreaList { grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); }
+  .weakAreaList > li { grid-template-columns: 42px minmax(0, 1fr); gap: 6px 16px; }
+  .weakAreaList > li > .buttonPrimary { grid-column: 2; justify-self: start; margin-top: 6px; }
+  .planTimeline { grid-template-columns: repeat(auto-fill, minmax(470px, 1fr)); align-items: start; }
+  .cramPreview { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
 }

@@ -96,6 +96,7 @@ export function RoomWorkspace({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
   const closeTimer = useRef(0);
+  const surfaceRef = useRef<HTMLDivElement>(null);
   // The menu eases back up before it unmounts (wide screens only; phones close it at once).
   const closeSettings = useCallback(() => {
     if (closeTimer.current) return;
@@ -115,10 +116,16 @@ export function RoomWorkspace({
     return () => window.removeEventListener("keydown", onKey);
   }, [settingsOpen, closeSettings]);
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+  // On wide screens the page scrolls inside the room frame, so a new page (or Coach's
+  // Chat/Topics switch) starts at the top instead of keeping the last page's scroll.
+  useEffect(() => {
+    if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
+  }, [mode, coachView]);
   const [theme] = useRoomTheme(room.id);
   const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
+  const [chipBarHost, setChipBarHost] = useState<HTMLElement | null>(null);
   const [mascotState, setMascotState] = useState<MascotState>("welcome");
-  const slots = useMemo(() => ({ placement: "portal" as const, chipHost, setMascot: setMascotState }), [chipHost]);
+  const slots = useMemo(() => ({ placement: "portal" as const, chipHost, chipBarHost, setMascot: setMascotState }), [chipHost, chipBarHost]);
   const [focusTopicId, setFocusTopicId] = useState<string | null>(null);
 
   const refresh = () => router.refresh();
@@ -199,11 +206,12 @@ export function RoomWorkspace({
           sub={currentMeta.copy}
           mascot={mascotState}
           chipRef={setChipHost}
+          chipBarRef={setChipBarHost}
         />
       )}
 
       <HeaderSlots.Provider value={slots}>
-      <div className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"}>
+      <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"}>
         {mode === "materials" && (
           <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
         )}
@@ -212,6 +220,7 @@ export function RoomWorkspace({
             roomId={room.id}
             readyCount={readyDocuments.length}
             topics={topics}
+            areas={areas}
             onOpenMaterials={() => setMode("materials")}
             view={coachView}
             onViewChange={setCoachView}
@@ -250,7 +259,7 @@ export function RoomWorkspace({
           />
         )}
         {mode === "weak" && <WeakAreasPanel areas={areas} onStudy={(next,id)=>navigate(next,id)}/>}
-        {mode === "test" && <PracticeTestPanel roomId={room.id} topicCount={topics.length} onGraded={refresh} onReviewTopic={id=>navigate("learn",id)}/>}
+        {mode === "test" && <PracticeTestPanel roomId={room.id} topicCount={topics.length} topics={topics} onGraded={refresh} onReviewTopic={id=>navigate("learn",id)}/>}
         {mode === "plan" && <StudyPlanPanel roomId={room.id} days={plan} testDate={room.test_date} onStart={startPlannedAction} onChanged={refresh} onSetDate={()=>setSettingsOpen(true)}/>}
         {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
 

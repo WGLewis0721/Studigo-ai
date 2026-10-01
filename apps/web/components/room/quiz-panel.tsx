@@ -1,5 +1,6 @@
 "use client";
 
+import { TopicReadout } from "./topic-readout";
 import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
@@ -174,6 +175,7 @@ export function QuizPanel({
 
     return (
       <div className="quizSetup">
+        <div className="setupMain">
         {finished && average !== null && (
           <div className="quizScoreCard">
             <span className="tinyLabel">SET COMPLETE</span>
@@ -214,6 +216,10 @@ export function QuizPanel({
           </ChipSelect>
         </HeaderChip>
 
+        <div className="setupHeading">
+          <span className="tinyLabel">NEXT SET</span>
+          <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where you\u2019re weakest"}</h3>
+        </div>
         <p className="setupLead">{finished ? "Go again with a new set." : "Five questions, written only from your materials."}</p>
 
         {error && (
@@ -225,6 +231,8 @@ export function QuizPanel({
         <button className="buttonPrimary" type="button" onClick={() => void build()} disabled={loading}>
           {loading ? "Writing questions…" : "Start quiz"} <span aria-hidden="true">→</span>
         </button>
+        </div>
+        <TopicReadout topics={topics} selectedId={topicId} onSelect={setTopicId} heading="TOPICS AND MASTERY" allLabel="Where I'm weakest" allHint="Studigo picks" />
       </div>
     );
   }
