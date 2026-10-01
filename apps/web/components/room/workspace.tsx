@@ -193,7 +193,7 @@ export function RoomWorkspace({
       </header>
 
       {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={closeSettings} />}
-      {settingsOpen && <RoomSettings room={{ ...room, explain_level: coaching.applied.explainLevel }} onClose={closeSettings} closing={settingsClosing} />}
+      {settingsOpen && <RoomSettings room={room} onClose={closeSettings} closing={settingsClosing} />}
       </div>
 
       <div className="studyNavigation">

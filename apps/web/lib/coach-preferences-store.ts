@@ -13,9 +13,10 @@ export async function applyCoachPreferences(supabase: SupabaseClient, roomId: st
   // Compile before committing. Returning the actual saved row prevents an RLS
   // zero-row update from being presented as a successful Apply.
   compileCoachPreferences(preferences);
-  const { explainLevel, ...choices } = preferences;
+  // Explanation level is a room setting (Room Settings); Coach setup never writes it.
+  const { style, tradition, practice } = preferences;
   const { data, error } = await supabase.from("study_rooms")
-    .update({ coach_preferences: choices, explain_level: explainLevel })
+    .update({ coach_preferences: { style, tradition, practice } })
     .eq("id", roomId).eq("owner_id", userId)
     .select("coach_preferences, explain_level").maybeSingle();
   if (error) throw new Error("Could not apply your coaching settings. Please retry.");
