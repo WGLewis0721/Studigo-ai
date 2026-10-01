@@ -1,6 +1,6 @@
-# POC XI — Moon Library (toolchain proof)
+# POC XI — Moon Keep with the Moon Library (golden image)
 
-A sibling of the golden POC X (`dist/poc-x/` is untouched). `dist/poc-xi/` is POC X plus one new room, **T Moon Library**, used to prove the LDtk → TexturePacker → Phaser pipeline from [TOOLCHAIN.md](TOOLCHAIN.md).
+**Current golden image** (tag `golden/poc-xi-moon-keep`, approved by William 2026-09-30). It supersedes POC X, which stays playable and frozen at `dist/poc-x/`. `dist/poc-xi/` is POC X plus one new room, **T Moon Library**, used to prove the LDtk → TexturePacker → Phaser pipeline from [TOOLCHAIN.md](TOOLCHAIN.md).
 
 - Route: `dist/poc-xi/`. Not linked from the Studigo app.
 - Entry: east door of the Trine Guardian room (map 8,1), behind a `3 · 4` seal (×3 or ×4 beam). Beat the Trine Guardian first.

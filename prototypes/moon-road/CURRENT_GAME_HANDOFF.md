@@ -1,20 +1,18 @@
 # Studigo — Current Game Handoff
 
-## Golden image: POC X Moon Keep (2026-09-29)
+## Golden image: POC XI Moon Keep (2026-09-30)
 
-**POC X is the current golden image.** William approved it on 2026-09-29, and it's tagged `golden/poc-x-moon-keep-ii`. Beta URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
+**POC XI is the current golden image.** William approved it on 2026-09-30, and it's tagged `golden/poc-xi-moon-keep`. Beta URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-xi/
 
-It is POC IX plus:
-- generated art;
-- the ×5 Clock Tower, with the Clockwork Warden, ×5 and the Clock Shield;
-- the Training Hall dummy;
-- rewards for matching beams, with silver armor;
-- the Rune Gate and Rune Sanctum, where four runes open the Core Clash portal;
-- boss knowledge orbs.
+It is POC X plus:
+- the Moon Library, a room authored in LDtk (`art-source/poc-xi/moon-library.ldtk`), reached through the Trine Guardian's east door;
+- a full art and animation polish: orange, grounded dragon; distinct beam sprites and sounds; barrel-tip muzzle flash; Clock Shield bubble; carved number blocks, doors, seals, rune altars, portal and shrines; ammo capsules that look like their beam;
+- walk cycles for the Clockwork Warden and Twin Warden, a leaning, afterimage-leaving Trine Guardian, and distinct attack art for every boss;
+- auto-fire that no longer wastes shots on a kill already in flight.
 
-Read **POC-X.md**. Freeze rule: don't edit `dist/poc-x/`; start the next experiment in a new route.
+Read **POC-XI.md** (and TOOLCHAIN.md for the LDtk, TexturePacker and Pixelorama pipeline). Freeze rule: don't edit `dist/poc-xi/`; start the next experiment in a new route.
 
-The previous golden image, POC IX Moon Keep (tag `golden/poc-ix-moon-keep`), stays frozen and playable at `/poc-ix/`. None of the games is reachable from the Studigo app: `apps/web` has no links to them, and its `/game` alpha 404s outside dev.
+The previous golden image, POC X Moon Keep (tag `golden/poc-x-moon-keep-ii`), stays frozen and playable at `/poc-x/`, and POC IX (tag `golden/poc-ix-moon-keep`) at `/poc-ix/`. None of the games is reachable from the Studigo app: `apps/web` has no links to them, and its `/game` alpha 404s outside dev.
 
 ## Art transfer
 
