@@ -1549,17 +1549,28 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .richText > :first-child { margin-top: 0; }
 .richText > :last-child { margin-bottom: 0; }
 .richText p { margin: 0 0 .7em; }
-.richText h4 { margin: 1em 0 .35em; font-family: var(--display); font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
-.richText ul, .richText ol { margin: 0 0 .7em; padding-left: 1.3em; display: grid; gap: .3em; }
+/* Answers and lessons are outlines: a bold answer line, small tinted section labels, and tight cited bullets. */
+.richText > p:first-child > strong:first-child { color: var(--tone-ink); }
+.richText h4 {
+  margin: 1.15em 0 .5em; padding-bottom: .3em; border-bottom: 1px solid color-mix(in oklab, var(--tone) 24%, transparent);
+  font-family: var(--display); font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--tone-ink);
+}
+.richText ul, .richText ol { margin: 0 0 .55em; padding-left: 1.15em; display: grid; gap: .35em; line-height: 1.45; }
+.richText ul { list-style: disc; }
+.richText li > ul { list-style: circle; }
 .richText li::marker { color: var(--tone-ink); }
+.richText li > ul, .richText li > ol { margin: .3em 0 .1em; padding-left: 1.05em; gap: .2em; font-size: .94em; color: color-mix(in oklab, var(--ink) 82%, var(--white)); }
+.richText li > ul > li::marker, .richText li > ol > li::marker { color: var(--muted); }
 .richText code { padding: 1px 5px; border-radius: 6px; background: rgba(20, 27, 45, .07); font-family: var(--mono); font-size: .88em; }
 .richCite {
   margin-left: 1px; padding: 0 4px; border-radius: 6px; font-size: .68rem; font-weight: 700; line-height: 1.5;
   color: var(--tone-ink); background: var(--tone-soft); vertical-align: super;
 }
-.lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.68; color: var(--ink); }
+.lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.6; color: var(--ink); }
+.lessonText ul, .lessonText ol { gap: .45em; line-height: 1.5; }
 .coachChat .answerText .richText p { margin: 0 0 .5em; }
-.coachChat .answerText .richText h4 { font-size: .98rem; }
+.coachChat .answerText .richText h4 { font-size: .72rem; }
+.coachChat .answerBubble .answerText + .sourceStack { margin-top: 12px; }
 @media (min-width: 701px) {
   .coachMode { gap: 16px; }
   .coachMode .coachSetupButton {

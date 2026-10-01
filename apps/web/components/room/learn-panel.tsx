@@ -118,7 +118,9 @@ export function LearnPanel({
             ...check.turns,
             { answer, feedback: payload.feedback as string, understood: Boolean(payload.understood) }
           ],
-          done: Boolean(payload.understood) || !payload.followUp
+          // The check only ends when the learner has shown they have the idea. Any other reply
+          // (a half answer, "not sure", something unrelated) keeps a question open.
+          done: Boolean(payload.understood)
         }
       }));
       setCheckDraft("");

@@ -10,12 +10,17 @@ import {
   buildPracticeQuestionSet,
   citationsForQuestions,
   classifyIntent,
-  extractLatestPracticePromptsFromHistory,
+  buildPracticeTutorDirective,
+  extractLatestPracticeSetFromHistory,
   extractPriorPromptsFromHistory,
   formatQuestionsForChat,
+  isPracticeAnswerRequest,
   isPracticeHelpRequest,
-  practicePromptForFollowup,
-  resolvePracticeTopic
+  isPracticeReply,
+  resolvePracticeQuestion,
+  resolvePracticeTopic,
+  type PracticeResolution,
+  type PracticeSet
 } from "@/lib/recommendation-engine";
 
 export type EngineDirective = { name: string; instruction: string };
@@ -104,25 +109,19 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
     return;
   }
 
-  // If the Coach's last substantive reply was a numbered practice set, a
-  // short learner reply is most likely an answer to that practice, not a new
-  // retrieval query. Ground the follow-up on the original question so an
-  // irrelevant answer like "pizza" cannot send retrieval off-topic.
-  const latestPracticePrompts = extractLatestPracticePromptsFromHistory(args.history);
-  const conversationalOnly = /^(thanks|thank you|ok|okay|cool|got it|nevermind|never mind)[.!]?$/i.test(args.question.trim());
-  const looksLikePracticeReply =
-    latestPracticePrompts.length > 0 &&
-    !conversationalOnly &&
-    args.question.trim().length > 0 &&
-    args.question.length <= 1000 &&
-    !/[?]$/.test(args.question.trim());
-
-  if (looksLikePracticeReply) {
-    const practicePrompt = practicePromptForFollowup(args.question, latestPracticePrompts);
-    if (practicePrompt) {
-      yield* runPracticeFollowup({ ...args, practicePrompt });
-      return;
-    }
+  // If the Coach recently wrote a practice set, a short learner reply is most likely an answer to
+  // it, not a new retrieval query. The reply does not have to name a question, use a number or
+  // spell everything right: resolvePracticeQuestion decides which question it answers when it can,
+  // and otherwise the model is shown the whole set. Grounding follows the questions, so an
+  // unrelated answer like "pizza" cannot send retrieval off-topic.
+  const practiceSet = extractLatestPracticeSetFromHistory(args.history);
+  if (practiceSet && isPracticeReply(args.question)) {
+    yield* runPracticeFollowup({
+      ...args,
+      practiceSet,
+      resolution: resolvePracticeQuestion(args.question, practiceSet)
+    });
+    return;
   }
 
   const learnerStateDirective = buildLearnerStateDirective(topics, evidence);
@@ -140,6 +139,7 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
   yield* streamGroundedAnswer({
     question: args.question,
     instructions: instructions || undefined,
+    format: "outline",
     chunks,
     history: args.history
   });
@@ -227,13 +227,26 @@ async function* runPracticeQuestionFlow(
 }
 
 async function* runPracticeFollowup(
-  args: EngineRequest & { practicePrompt: string }
+  args: EngineRequest & { practiceSet: PracticeSet; resolution: PracticeResolution }
 ): AsyncGenerator<GroundedStreamEvent> {
+  const { practiceSet, resolution } = args;
+  const decided = resolution.by === "number" || resolution.by === "only";
+  const decidedPrompt = resolution.index !== null ? practiceSet.prompts[resolution.index] : null;
+
+  // Ground on the question the learner named. When it is a guess or unknown, ground on every
+  // question in the set (a guess first), so whichever one the model settles on has its source.
+  const query = decided && decidedPrompt
+    ? decidedPrompt
+    : [decidedPrompt, ...practiceSet.prompts.filter((prompt) => prompt !== decidedPrompt)]
+        .filter((prompt): prompt is string => Boolean(prompt))
+        .join("\n")
+        .slice(0, 1500);
+
   const chunks = await retrieveForRoom({
     supabase: args.supabase,
     roomId: args.roomId,
-    query: args.practicePrompt,
-    matchCount: 10
+    query,
+    matchCount: decided ? 10 : 12
   });
 
   if (!chunks.length) {
@@ -242,21 +255,12 @@ async function* runPracticeFollowup(
     return;
   }
 
-  const wantsHelp = isPracticeHelpRequest(args.question);
-  const wantsAnswer = /\b(show|tell|give)\s+(?:me\s+)?(?:the\s+)?answer\b/i.test(args.question);
-
-  const tutorDirective = [
-    `The learner is responding to this practice question: "${args.practicePrompt}"`,
-    "Evaluate semantic understanding, not verbatim overlap with the study guide or a model answer. Equivalent wording and valid examples count.",
-    "Distinguish four states: correct, partially correct, non-responsive/off-topic, and explicitly asking for help.",
-    wantsAnswer
-      ? "The learner explicitly asked for the answer. Give a concise source-grounded model answer, then one sentence explaining it."
-      : wantsHelp
-        ? "The learner is stuck. Do not mark them wrong. Rephrase the question more simply and give one concrete source-grounded hint. Do not reveal the full answer unless they ask for it."
-        : "If correct, affirm it briefly and explain any terminology difference. If partially correct, name what is right and give one targeted nudge for what is missing. If non-responsive or off-topic, do not score it as ordinary content failure: redirect to the question, rephrase it more simply, and give one concrete hint. Do not reveal the full answer on the first off-topic response.",
-    "Examples of the policy: for a question asking for three forms/states of water, an unrelated response such as 'pizza' gets a redirect plus a hint; a response that shows the right concept but incomplete or less precise terminology gets partial-credit coaching; semantically correct examples such as ice/liquid water/water vapor count even if the source phrases them differently.",
-    "Keep the response short and teacher-like. Cite the source when stating course content."
-  ].join(" ");
+  const tutorDirective = buildPracticeTutorDirective({
+    set: practiceSet,
+    resolution,
+    wantsHelp: isPracticeHelpRequest(args.question),
+    wantsAnswer: isPracticeAnswerRequest(args.question)
+  });
 
   const instructions = [
     ...(args.directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`),
@@ -264,9 +268,14 @@ async function* runPracticeFollowup(
   ].join("\n\n");
 
   yield* streamGroundedAnswer({
-    question: `Practice question: ${args.practicePrompt}\nLearner response: ${args.question}`,
+    question:
+      decided && decidedPrompt
+        ? `Practice question: ${decidedPrompt}\nLearner response: ${args.question}`
+        : `Learner response to one of the practice questions: ${args.question}`,
     instructions,
-    chunks
+    chunks,
+    // The conversation is only needed to tell which question an unnamed reply is about.
+    history: decided ? undefined : args.history
   });
 }
 

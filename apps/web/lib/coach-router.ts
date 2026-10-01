@@ -417,6 +417,7 @@ export async function* runCoachTurn(args: {
       const grounded = await deps.answerFromRetrievedContext({
         question: state.question,
         chunks,
+        format: "outline",
         instructions: [SHOW_ANSWER_INSTRUCTIONS, ...pedagogyDirectives].join("\n")
       });
       await record(supportEvents("revealed", SUPPORT_GIVEN.reveal, 0));
@@ -591,6 +592,7 @@ export async function* runCoachTurn(args: {
       const grounded = await deps.answerFromRetrievedContext({
         question,
         chunks: clarificationChunks,
+        format: "outline",
         instructions: pedagogyDirectives.length ? pedagogyDirectives.join("\n") : undefined
       });
 

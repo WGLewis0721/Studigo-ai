@@ -4,7 +4,7 @@ import {
   chatModel,
   client
 } from "./client";
-import { buildContextBlock, type RetrievedChunk } from "./grounding";
+import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
 
 /** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
 export async function structured<T>(args: {
@@ -518,6 +518,13 @@ const LEVEL_RULES: Record<ExplainLevel, string> = {
     "Pitch this for a learner who already has the basics: be precise, use the course's technical vocabulary directly, and spend the space on mechanism, edge cases and why it works rather than on restating definitions. Add nothing the excerpts do not support."
 };
 
+/** The sections of a lesson, in order. Each appears only when the excerpts support it. */
+export const EXPLAIN_OUTLINE_STRUCTURE = [
+  "Start with one bold line saying what the topic is.",
+  "Then, only where the excerpts support them and in this order: a ## Key points for the test section, a ## Example from the material section, and a ## Common mistake section.",
+  "Leave a section out rather than pad it."
+].join(" ");
+
 export async function explainTopic(args: {
   topicTitle: string;
   objective: string | null;
@@ -536,8 +543,10 @@ export async function explainTopic(args: {
         content: [
           "You are Studigo, teaching one topic from one course's own materials.",
           "Use only the numbered excerpts supplied. Cite inline with [n] for every substantive claim.",
-          "Structure: what this topic is, the parts that matter for the test, a worked example or concrete case from the material, and the one thing learners most often get wrong about it (only if the material shows it).",
-          "Keep it under 400 words. Never add material the excerpts do not contain.",
+          "Write the lesson as a study outline, the way a good set of notes reads.",
+          EXPLAIN_OUTLINE_STRUCTURE,
+          OUTLINE_STYLE_RULE,
+          "Keep the whole lesson under 300 words. Never add material the excerpts do not contain.",
           LEVEL_RULES[args.level ?? "standard"],
           UNTRUSTED_MATERIAL_RULE
         ].join(" ")
@@ -563,8 +572,17 @@ export async function explainTopic(args: {
 
 export type SocraticQuestion = { question: string };
 
+/**
+ * What the learner's reply was, so the check can answer a typo-ridden right idea, a half answer,
+ * "I don't know" and an unrelated reply each in the way that fits, rather than grading all of
+ * them as the same kind of wrong.
+ */
+export const SOCRATIC_VERDICTS = ["understood", "partial", "not_sure", "off_topic"] as const;
+export type SocraticVerdict = (typeof SOCRATIC_VERDICTS)[number];
+
 export type SocraticResponse = {
-  /** Did the learner's answer show they understand it? */
+  verdict: SocraticVerdict;
+  /** Did the learner's answer show they understand it? True only for the "understood" verdict. */
   understood: boolean;
   /** Addressed to the learner, grounded in the excerpts. */
   feedback: string;
@@ -582,13 +600,47 @@ const SOCRATIC_QUESTION_SCHEMA = {
 const SOCRATIC_RESPONSE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["understood", "feedback", "follow_up"],
+  required: ["verdict", "feedback", "follow_up"],
   properties: {
-    understood: { type: "boolean" },
+    verdict: { type: "string", enum: [...SOCRATIC_VERDICTS] },
     feedback: { type: "string" },
     follow_up: { type: ["string", "null"] }
   }
 };
+
+const SOCRATIC_FALLBACK_FEEDBACK: Record<SocraticVerdict, string> = {
+  understood: "That shows you have the idea.",
+  partial: "You have part of it. Take another pass at the piece that is missing.",
+  not_sure: "That is fine, this is a place to think out loud. Give it a first guess in your own words.",
+  off_topic: "That does not answer the question yet, so let's go back to it."
+};
+
+/**
+ * Turns the model's raw reply into a response the check can always act on. The check only ever
+ * ends on "understood": any other verdict keeps a question open, using the model's follow-up when
+ * it wrote one and the original question when it did not, so a reply never dead-ends the learner.
+ */
+export function normalizeSocraticResponse(
+  raw: { verdict?: unknown; understood?: unknown; feedback?: unknown; follow_up?: unknown },
+  question: string
+): SocraticResponse {
+  const verdict: SocraticVerdict = (SOCRATIC_VERDICTS as readonly unknown[]).includes(raw.verdict)
+    ? (raw.verdict as SocraticVerdict)
+    : raw.understood === true
+      ? "understood"
+      : "partial";
+
+  const feedback = typeof raw.feedback === "string" ? raw.feedback.trim() : "";
+  const followUp = typeof raw.follow_up === "string" ? raw.follow_up.trim() : "";
+  const understood = verdict === "understood";
+
+  return {
+    verdict,
+    understood,
+    feedback: feedback || SOCRATIC_FALLBACK_FEEDBACK[verdict],
+    followUp: understood ? null : followUp || question.trim() || null
+  };
+}
 
 /**
  * Asks the learner to explain the idea back. This is formative: it is never
@@ -633,13 +685,17 @@ export async function respondToSocraticAnswer(args: {
   chunks: RetrievedChunk[];
   level?: ExplainLevel;
 }): Promise<SocraticResponse> {
-  const result = await structured<{ understood: boolean; feedback: string; follow_up: string | null }>({
+  const result = await structured<{ verdict: string; feedback: string; follow_up: string | null }>({
     system: [
       "You are Studigo, responding to a learner who has just explained an idea back to you in their own words.",
-      "Judge the understanding, not the wording or the spelling.",
-      "Feedback is at most three sentences, addressed to the learner: name what they got right first, then the one thing that is missing or wrong, grounded in the excerpts. Cite with [n] when you correct a fact.",
-      "If they have the idea, set understood to true and follow_up to null. If something important is missing, set understood to false and make follow_up one question that points at the gap without giving the answer away.",
-      "Never invent material beyond the excerpts. If their answer is off-topic or empty, say so plainly and re-ask.",
+      "Judge the idea, not the writing. Read straight through spelling mistakes, typos, shorthand, missing punctuation and loose wording: a right idea that is misspelled is a right idea.",
+      "Set verdict to exactly one of these. understood: the answer shows the central idea, even if it is brief or clumsy. partial: some of the idea is right but something important is missing or wrong. not_sure: the learner says they do not know, are unsure, or ask for help. off_topic: the reply has nothing to do with the question, such as a random word, a joke, a greeting or another subject.",
+      "Feedback is at most three sentences, addressed to the learner, and matches the verdict.",
+      "For understood and partial: name what they got right first, then for partial the one thing that is missing or wrong, grounded in the excerpts. Cite with [n] when you correct a fact.",
+      "For not_sure: be warm, give one small hint from the excerpts that does not give away the answer, and say a first guess is welcome.",
+      "For off_topic: say plainly in one sentence that it does not answer the question. Do not treat it as a near miss, do not correct it as if it were a wrong fact, and do not praise it.",
+      "If the verdict is understood, set follow_up to null. For every other verdict, set follow_up to one short question: for partial, point at the gap without giving the answer away; for not_sure or off_topic, ask the original question again in simpler words.",
+      "Never invent material beyond the excerpts.",
       LEVEL_RULES[args.level ?? "standard"],
       UNTRUSTED_MATERIAL_RULE
     ].join(" "),
@@ -655,10 +711,5 @@ export async function respondToSocraticAnswer(args: {
     schema: SOCRATIC_RESPONSE_SCHEMA
   });
 
-  const followUp = result.follow_up ? String(result.follow_up).trim() : "";
-  return {
-    understood: Boolean(result.understood),
-    feedback: result.feedback.trim(),
-    followUp: result.understood || !followUp ? null : followUp
-  };
+  return normalizeSocraticResponse(result, args.question);
 }

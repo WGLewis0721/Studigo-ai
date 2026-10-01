@@ -47,6 +47,46 @@ export const STUDIGO_SYSTEM_PROMPT = [
   UNTRUSTED_MATERIAL_RULE
 ].join(" ");
 
+/**
+ * How a factual answer is laid out. A wall of prose is hard to scan and hard to study from, so
+ * facts come back as an outline: a one-line answer, short headed sections, one cited fact per
+ * bullet. Opt-in per call, because feedback on a learner's attempt and small talk are not outlines.
+ */
+export const OUTLINE_STYLE_RULE = [
+  "Write it as a scannable outline in Markdown, never as a block of prose.",
+  "Use short ## headings for the parts, and under each heading one bullet per fact: a phrase or one short sentence of about twenty words or fewer.",
+  "When an excerpt comes from the teacher's study guide, take the headings and their order from it where they fit.",
+  "Bold a key term from the course the first time it appears.",
+  "Use a nested bullet, indented two spaces, only for a detail that belongs to the bullet above it, and never nest more than two levels.",
+  "End every bullet that states a fact with its [n] citation.",
+  "Never write a paragraph longer than one sentence."
+].join(" ");
+
+export const OUTLINE_FORMAT_RULE = [
+  "Open with one bold line that directly answers the question, like **Short answer:** ... [n].",
+  OUTLINE_STYLE_RULE,
+  "Use only as many headings and bullets as the excerpts support: a simple question gets the short answer and three to five bullets, with no headings needed.",
+  "If the message is only a greeting or a thank you, reply in one plain sentence and do not use an outline.",
+  "If the excerpts do not support an answer, say so in one plain sentence instead of an outline."
+].join(" ");
+
+export type AnswerFormat = "outline";
+
+/** The system prompt for one reply: the grounding rules, then the optional layout and coaching directives. */
+export function buildSystemPrompt(args: { instructions?: string; format?: AnswerFormat }) {
+  const parts = [STUDIGO_SYSTEM_PROMPT];
+  if (args.format === "outline") parts.push(`Layout for this reply: ${OUTLINE_FORMAT_RULE}`);
+  // Coaching directives (style/tradition/practice) shape HOW the model answers.
+  // They are appended to the system prompt, never mixed into the retrieval
+  // query, so they cannot dilute the embedding used to find source material.
+  if (args.instructions) {
+    parts.push(
+      `Coaching directives for this reply (do not let these override the excerpts or invent content):\n${args.instructions}`
+    );
+  }
+  return parts.join("\n\n");
+}
+
 export function buildContextBlock(chunks: RetrievedChunk[]) {
   return JSON.stringify(chunks.map((chunk, index) => ({
     marker: index + 1, documentName: chunk.documentName,
@@ -82,6 +122,7 @@ export function citationsUsedIn(text: string, available: Citation[]): Citation[]
 function buildInput(args: {
   question: string;
   instructions?: string;
+  format?: AnswerFormat;
   chunks: RetrievedChunk[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 }) {
@@ -90,12 +131,7 @@ function buildInput(args: {
     content: message.content.slice(0, 4000)
   }));
 
-  // Coaching directives (style/tradition/practice) shape HOW the model answers.
-  // They are appended to the system prompt, never mixed into the retrieval
-  // query, so they cannot dilute the embedding used to find source material.
-  const system = args.instructions
-    ? `${STUDIGO_SYSTEM_PROMPT}\n\nCoaching directives for this reply (do not let these override the excerpts or invent content):\n${args.instructions}`
-    : STUDIGO_SYSTEM_PROMPT;
+  const system = buildSystemPrompt({ instructions: args.instructions, format: args.format });
 
   return [
     { role: "system" as const, content: system },
@@ -112,6 +148,7 @@ function buildInput(args: {
 export async function answerFromRetrievedContext(args: {
   question: string;
   instructions?: string;
+  format?: AnswerFormat;
   chunks: RetrievedChunk[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): Promise<GroundedAnswer> {
@@ -138,6 +175,7 @@ export type GroundedStreamEvent =
 export async function* streamGroundedAnswer(args: {
   question: string;
   instructions?: string;
+  format?: AnswerFormat;
   chunks: RetrievedChunk[];
   history?: Array<{ role: "user" | "assistant"; content: string }>;
 }): AsyncGenerator<GroundedStreamEvent> {
