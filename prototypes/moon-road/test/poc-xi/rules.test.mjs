@@ -139,3 +139,27 @@ test('runes charge only with their own beam, skip counting to 5N', () => {
   assert.equal(hitText(rune(3), 3, 0), '3 × 5 = 15');
   assert.equal(reflectText(rune(4), 2), 'only ×4 charges it');
 });
+
+import {remainingHp} from '../../dist/poc-xi/rules.js';
+
+const mon = (a, b, hp = a * b, armor = 0) => ({hp, armor, math: () => ({kind: 'skeleton', a, b})});
+const shot = (t, n, extra = {}) => ({target: t, n, life: 0.5, ...extra});
+
+test('remainingHp: in-flight shots that finish the kill leave nothing to fire', () => {
+  const t = mon(2, 3);
+  assert.equal(remainingHp(t, []), 6);
+  assert.equal(remainingHp(t, [shot(t, 1), shot(t, 1)]), 4);
+  assert.equal(remainingHp(t, Array(6).fill(0).map(() => shot(t, 1))), 0);
+  assert.equal(remainingHp(t, [shot(t, 2), shot(t, 3)]), 1);
+});
+
+test('remainingHp: ignores dead, reflected, mismatched and other-target shots', () => {
+  const t = mon(2, 3), other = mon(2, 3);
+  assert.equal(remainingHp(t, [shot(t, 1, {life: 0}), shot(t, 1, {reflected: true}), shot(t, 4), shot(other, 1)]), 6);
+});
+
+test('remainingHp: armor soaks one shot per point, a match shatters it', () => {
+  const t = mon(2, 3, 6, 2);
+  assert.equal(remainingHp(t, [shot(t, 1), shot(t, 1), shot(t, 1)]), 5);
+  assert.equal(remainingHp(t, [shot(t, 2), shot(t, 1)]), 5);
+});

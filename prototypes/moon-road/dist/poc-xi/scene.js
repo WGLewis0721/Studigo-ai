@@ -1,6 +1,6 @@
 import {TILE, makeGrid, moveBody} from './physics.js';
 import {ROOMS, START, ROOM_COUNT, COLLECTIBLES, doorSpan} from './world.js';
-import {canDamage, reflectText, fact, choices} from './rules.js';
+import {canDamage, reflectText, fact, choices, remainingHp} from './rules.js';
 import * as P from './progress.js';
 import * as UI from './ui.js';
 import {input, clearInput} from './ui.js';
@@ -9,6 +9,7 @@ import {makeBoss} from './boss.js';
 import {ART} from './art/art.js';
 
 const Phaser = window.Phaser;
+const SHOT_SPEED = 960;
 const RUN = 250, GRAVITY = 1150, JUMP = 520, BOOTS_JUMP = 700, MAX_FALL = 900, CUT = 170;
 const ZONES = {
   atrium: {name: 'MOON ATRIUM', bg: 'bg', bgTint: 0x8296b2, tex: 'tex-atrium', texTint: 0xb4bccc, edge: 0x8fb0d0, plat: 0x9fb6c9},
@@ -29,7 +30,7 @@ export class MoonKeep extends Phaser.Scene {
     this.load.image('bg', '../assets/observatory.png');
     this.load.image('platform', '../assets/platform.png');
     this.load.image('core', '../assets/core.png');
-    this.load.spritesheet('dragon', '../assets/dragon.png', {frameWidth: 128, frameHeight: 128});
+    this.load.spritesheet('dragon', 'art/dragon-orange.png', {frameWidth: 128, frameHeight: 128});
     this.load.spritesheet('guardian', '../assets/guardian.png', {frameWidth: 256, frameHeight: 256});
     this.load.json('frames', '../assets/frames.json');
     for (const k of ['skeleton', 'bat', 'twin', 'clockwarden', 'sentinel', 'items'])
@@ -474,7 +475,12 @@ export class MoonKeep extends Phaser.Scene {
     }
 
     this.fireCD -= dt;
-    const wantsFire = input.fire.size || input.fireQueued || (this.autoFire && this.aimTarget());
+    let wantsFire = input.fire.size || input.fireQueued;
+    if (!wantsFire && this.autoFire) {
+      // Don't fire shots that are already committed to a kill; a miss frees the shot and auto re-fires.
+      const t = this.aimTarget();
+      wantsFire = !!t && !(t.hp !== undefined && remainingHp(t, this.shots) <= 0);
+    }
     if (wantsFire && this.fireCD <= 0) { this.shoot(); input.fireQueued = false; }
 
     for (const a of [...this.actors]) if (a.alive) a.update(dt);
@@ -523,7 +529,7 @@ export class MoonKeep extends Phaser.Scene {
     let dx = p.face, dy = 0;
     if (t) { const c = center(t.rect()); dx = c.x - ox; dy = c.y - oy; }
     const len = Math.hypot(dx, dy) || 1;
-    this.shots.push({x: ox, y: oy, vx: dx / len * 780, vy: dy / len * 780, n: w, life: 1.1});
+    this.shots.push({x: ox, y: oy, vx: dx / len * SHOT_SPEED, vy: dy / len * SHOT_SPEED, n: w, life: 1.1, target: t});
     this.burst(ox, oy, COLOR[w], w === 1 ? 5 : 12);
     this.sfx(w === 1 ? 410 : 200 - w * 10, 0.08);
     this.log('shot', {weapon: w, ammo: w === 1 ? null : run.ammo[w]});
@@ -611,7 +617,7 @@ export class MoonKeep extends Phaser.Scene {
 
     const moving = input.left.size || input.right.size;
     const fr = p.land > 0 ? 10 : !p.ground ? (p.vy < 0 ? 7 : 8) : p.fire > 0 ? 9 : moving && this.mode === 'play' ? Math.floor(t * 12) % 6 : 6;
-    this.hero.setPosition(p.x, p.y + 7 + (fr === 6 ? Math.sin(t * 3) : 0)).setFrame(fr).setFlipX(p.face < 0)
+    this.hero.setPosition(p.x, p.y + 7).setFrame(fr).setFlipX(p.face < 0)
       .setAlpha(p.inv > 0 && Math.floor(t * 15) % 2 ? 0.45 : 1);
 
     for (const q of this.floaters) {

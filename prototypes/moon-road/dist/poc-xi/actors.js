@@ -527,7 +527,7 @@ export function dummy(e, S) {
       const ang = Math.sin(self.swing * 0.85) * 0.95;
       self.x = pivot.x + Math.sin(ang) * len * 1.25;
       self.y = pivot.y + Math.cos(ang) * len;
-      self.frame = self.hit || self.stun > 0 ? 2 : Math.abs(ang) > 0.6 ? 0 : 1;
+      self.ang = ang;
       self.shown += dt;
       self.idle += dt;
       // Untouched problems rotate so the player sees every beam; a 5 stays up only briefly.
@@ -547,7 +547,10 @@ export function dummy(e, S) {
         g.fillStyle(COLOR[5], 0.16 + 0.1 * Math.sin(t * 12)); g.fillCircle(self.x, self.y, 86);
         g.lineStyle(3, COLOR[5], 0.8); g.strokeCircle(self.x, self.y, 78 + Math.sin(t * 12) * 4);
       }
-      sprite.setFrame(self.frame).setPosition(self.x, self.y).setFlipX(S.p.x < self.x).setAlpha(self.target ? 1 : 0.55)
+      // One hanging body (frame 1); the swing leans it and a hit squashes it, instead of swapping poses.
+      const kick = self.hit ? Math.sin(self.hit * 55) * (self.hit / 0.18) : 0;
+      sprite.setFrame(1).setPosition(self.x, self.y).setFlipX(S.p.x < self.x).setAlpha(self.target ? 1 : 0.55)
+        .setRotation(-(self.ang || 0) * 0.3 + kick * 0.12).setScale(1 + (self.hit ? 0.06 * kick : 0), 1 - (self.hit ? 0.06 * kick : 0))
         .setTint(self.stun > 0 ? (Math.floor(t * 20) % 2 ? 0xffe08a : 0xfff4c8) : self.hit ? 0xfff0d8 : self.glowing() ? 0xffd0dc : 0xffffff);
       badge.setVisible(self.target).setPosition(self.x, self.y - 100 + Math.sin(t * 2.4) * 2).setText(`${self.a} · ${self.b}`)
         .setColor(self.glowing() ? '#ffb3c1' : '#f7ecd0');

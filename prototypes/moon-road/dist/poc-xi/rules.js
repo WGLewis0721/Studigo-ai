@@ -62,3 +62,16 @@ export function choices(family, k, rand = Math.random) {
   }
   return values;
 }
+
+// Auto-fire guard: the target's HP after every live, un-reflected in-flight shot aimed at it lands.
+// Silver armor soaks one shot per point (a matching power beam shatters it outright), as in the actors.
+export function remainingHp(t, shots) {
+  const m = t.math();
+  let hp = t.hp, armor = t.armor || 0;
+  for (const s of shots) {
+    if (s.target !== t || s.life <= 0 || s.reflected || !canDamage(m, s.n)) continue;
+    if (armor > 0) { armor = isMatch(m, s.n) ? 0 : armor - 1; continue; }
+    hp -= damageFor(m, s.n);
+  }
+  return hp;
+}
