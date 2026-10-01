@@ -65,10 +65,10 @@ A static comp of the desktop and mobile layouts is on the Design canvas "Studigo
 - `app.js` — a stand-in for the Study Room (scripted Coach, a five-question quiz, flashcards, Plan, Cram). With `?embed` it runs inside the homepage's phone and talks to it with `postMessage`.
 - `studigo.css` — the app's styles.
 - `homepage/index.html`, `site.css`, `site.js` — the frozen concept homepage.
-- `build_public_demo.py` — builds the copy of this demo that the live homepage embeds, `apps/web/public/demo/`. That copy is the phone only (no side panel), is not indexed, has no sign-in step, and uses WebP sprites. Run the script after changing the demo; do not edit the copy by hand.
+- `build_public_demo.py` — builds the two shipped copies: `apps/web/public/mascot/companion/` (the one set of sprites the live site uses, waist-up poses as WebP) and `apps/web/public/demo/` (the phone the homepage embeds: no side panel, not indexed, no sign-in step, sprites read from `/mascot/companion`). Run the script after changing the demo or the art; do not edit the copies by hand.
 
 ## Next
 
-1. Bring the app up to the homepage: `docs/COMPANION_PARITY_PLAN.md`.
+1. The app now has his window, seat and stage (`apps/web/components/companion/`). This folder is the concept it came from; behavior changes belong in the app, not here.
 2. The real iOS app in Expo / React Native, per `docs/APP_STORE_RELEASE_PLAN.md`.
 3. A rigged 3D Studigo and a rendered intro video, once there are credits for it and Blender is running.
