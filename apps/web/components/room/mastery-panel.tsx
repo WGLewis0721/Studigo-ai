@@ -2,7 +2,7 @@
 
 import type { Calibration, WeakArea } from "@/lib/study-planning";
 import type { RoomReadiness, Topic } from "@/lib/rooms";
-import { PageHead } from "./page-head";
+import { HeaderMascot } from "./mode-header";
 
 function ReadinessRing({ value, practiced }: { value: number; practiced: boolean }) {
   return (
@@ -58,17 +58,17 @@ export function MasteryPanel({
   return (
     <div className="masteryMode">
       <div className="masteryHero">
-        <PageHead
-          title="Mastery"
-          state="explain"
-          sub={
-            !topics.length
+        <HeaderMascot state="explain" />
+        <div className="masteryHeroText">
+          <span className="tinyLabel">READINESS</span>
+          <p>
+            {!topics.length
               ? "Build a topic map first."
               : !practiced
                 ? "Practice a topic to start measuring."
-                : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`
-          }
-        />
+                : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`}
+          </p>
+        </div>
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
       </div>
 

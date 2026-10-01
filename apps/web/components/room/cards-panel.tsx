@@ -4,7 +4,7 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
-import { PageHead } from "./page-head";
+import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 type Card = {
   id: string;
@@ -181,7 +181,8 @@ export function CardsPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
-        <PageHead title="Flashcards" sub="Nothing to drill yet." state="sources" />
+        <HeaderMascot state="sources" />
+        <h3>Nothing to drill yet.</h3>
         <p>Add and process a document first, then Studigo pulls the terms worth drilling.</p>
       </div>
     );
@@ -201,19 +202,24 @@ export function CardsPanel({
           </div>
         )}
 
-        <PageHead title="Flashcards" sub={done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."} />
-
-        <label className="field">
-          <span>Topic</span>
-          <select value={topicId} onChange={(event) => setTopicId(event.target.value)}>
+        <HeaderChip>
+          <ChipSelect
+            label={topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Everything in this room"}
+            ariaLabel="Flashcard topic"
+            value={topicId}
+            onChange={setTopicId}
+            disabled={generating}
+          >
             <option value="">Everything in this room</option>
             {topics.map((topic) => (
               <option key={topic.id} value={topic.id}>
                 {topic.title}
               </option>
             ))}
-          </select>
-        </label>
+          </ChipSelect>
+        </HeaderChip>
+
+        <p className="setupLead">{done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."}</p>
 
         {error && (
           <p className="formError" role="alert">

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { PageHead } from "./page-head";
+import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const BLANK_MARKER = "____";
 
@@ -158,7 +158,8 @@ export function QuizPanel({
   if (!hasMaterials) {
     return (
       <div className="modeEmpty">
-        <PageHead title="Quiz" sub="Nothing to quiz on yet." state="sources" />
+        <HeaderMascot state="sources" />
+        <h3>Nothing to quiz on yet.</h3>
         <p>Add and process a document, then Studigo writes questions only from what&apos;s in it.</p>
       </div>
     );
@@ -196,19 +197,24 @@ export function QuizPanel({
           </div>
         )}
 
-        <PageHead title="Quiz" sub={finished ? "Go again with a new set." : "Five questions from your materials."} />
-
-        <label className="field">
-          <span>Topic</span>
-          <select value={topicId} onChange={(event) => setTopicId(event.target.value)}>
-            <option value="">Where I'm weakest</option>
+        <HeaderChip>
+          <ChipSelect
+            label={topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where I'm weakest"}
+            ariaLabel="Quiz topic"
+            value={topicId}
+            onChange={setTopicId}
+            disabled={loading}
+          >
+            <option value="">Where I&apos;m weakest</option>
             {topics.map((topic) => (
               <option key={topic.id} value={topic.id}>
                 {topic.title} · {Math.round(topic.mastery_score)}%
               </option>
             ))}
-          </select>
-        </label>
+          </ChipSelect>
+        </HeaderChip>
+
+        <p className="setupLead">{finished ? "Go again with a new set." : "Five questions, written only from your materials."}</p>
 
         {error && (
           <p className="formError" role="alert">

@@ -6,7 +6,7 @@ import { LearnPanel } from './learn-panel';
 import { QuizPanel } from './quiz-panel';
 import { CardsPanel } from './cards-panel';
 import { StudigoMascot } from '@/components/studigo-mascot';
-import { PageHead } from './page-head';
+import { INLINE_SLOTS, HeaderSlots } from './mode-header';
 export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:string;topics:Topic[];areas:WeakArea[];testDate:string|null;onChanged:()=>void}) {
   const [minutes,setMinutes]=useState(30);const [session,setSession]=useState<StudyAction[]|null>(null);const [index,setIndex]=useState(0);
   const [remaining,setRemaining]=useState(0);const [running,setRunning]=useState(false);const deadline=useRef(0);const [done,setDone]=useState(false);
@@ -24,14 +24,16 @@ export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:strin
     <ol className="cramTrack">{session.map((s,i)=><li key={s.key} aria-current={i===index?'step':undefined}><span>{i+1}</span>{s.title}<small>{s.minutes} min</small></li>)}</ol>
     {!remaining&&<p className="formNotice" role="status">Time for the next step. Finish your current answer before moving on.</p>}
     <p className="hintText">{step.reason}</p>
+    <HeaderSlots.Provider value={INLINE_SLOTS}>
     <div className="cramActivity" key={`${index}:${step.topicId}`}>
       {step.mode==='learn'&&<LearnPanel roomId={roomId} topics={topics.filter(t=>t.id===step.topicId)} hasMaterials onChanged={onChanged}/>}
       {step.mode==='quiz'&&<QuizPanel roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onGraded={onChanged}/>}
       {step.mode==='cards'&&<CardsPanel roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onReviewed={onChanged}/>}
     </div>
+    </HeaderSlots.Provider>
     <footer className="cramFooter"><p>Save or grade your response before continuing.</p><button className="buttonPrimary" onClick={advance}>{index+1===session.length?'Finish session':'Next step'} →</button></footer>
   </section>;
-  return <section className="cramSetup"><PageHead title="Cram" sub="Short on time? Start with the biggest gaps." state="explain"/>
+  return <section className="cramSetup"><p className="setupLead">Short on time? Start with the biggest gaps.</p>
     <div className="timeChoices" role="group" aria-label="Available study time">{[15,30,60,120].map(n=><button key={n} aria-pressed={minutes===n} onClick={()=>setMinutes(n)}>{n<60?`${n} min`:`${n/60} hour${n===120?'s':''}`}</button>)}</div>
     <ol className="cramPreview">{preview.map(s=><li key={s.key}><div><strong>{s.title}</strong><p>{s.reason}</p></div><b>{s.minutes} min</b></li>)}</ol>
     {!preview.length?<p>Add your study guide and build a topic map first.</p>:<button className="buttonPrimary" onClick={begin}>Start {minutes}-minute session <span>→</span></button>}
