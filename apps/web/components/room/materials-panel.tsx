@@ -165,6 +165,7 @@ export function MaterialsPanel({
           ))}
         </ChipSelect>
       </HeaderChip>
+      <div className="materialsIntake">
       <p className="setupLead">Set the file type above, then add your files.</p>
 
       <div
@@ -221,6 +222,10 @@ export function MaterialsPanel({
         </ul>
       )}
 
+      </div>
+
+      <div className="materialsLibrary">
+      <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>
       <ul className="documentList">
         {documents.length === 0 && (
           <li className="emptyState">Nothing here yet. The study guide is the best first upload.</li>
@@ -265,6 +270,7 @@ export function MaterialsPanel({
           </li>
         ))}
       </ul>
+      </div>
     </div>
   );
 }

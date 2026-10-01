@@ -1,5 +1,6 @@
 "use client";
 
+import { TopicReadout } from "./topic-readout";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
@@ -193,6 +194,7 @@ export function CardsPanel({
   if (!cards.length || done) {
     return (
       <div className="quizSetup">
+        <div className="setupMain">
         {done && (
           <div className="quizScoreCard">
             <StudigoMascot state="celebrate" size={64} />
@@ -219,6 +221,10 @@ export function CardsPanel({
           </ChipSelect>
         </HeaderChip>
 
+        <div className="setupHeading">
+          <span className="tinyLabel">NEXT DECK</span>
+          <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Everything in this room"}</h3>
+        </div>
         <p className="setupLead">{done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."}</p>
 
         {error && (
@@ -230,6 +236,8 @@ export function CardsPanel({
         <button className="buttonPrimary" type="button" onClick={() => void generate()} disabled={generating}>
           {generating ? "Writing cards…" : "Add 10 cards"} <span aria-hidden="true">→</span>
         </button>
+        </div>
+        <TopicReadout topics={topics} selectedId={topicId} onSelect={setTopicId} heading="TOPICS AND MASTERY" allLabel="Everything in this room" allHint="All topics" />
       </div>
     );
   }
