@@ -1398,7 +1398,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 700px) {
   .masteryDeck { border-radius: 28px; padding: 16px; }
   .masteryDeck .mdTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .masteryDeck .mdTile { min-height: 104px; padding: 10px; }
+  .masteryDeck .mdTile { min-height: 112px; padding: 10px 10px 27px; }
+  .masteryDeck .mdTile::before { left: 10px; right: 10px; bottom: 10px; }
 }
 
 /* First run is a full color field, like the homepage's closing field. */
@@ -3701,4 +3702,60 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .weakAreaList > li > .buttonPrimary { grid-column: 2; justify-self: start; margin-top: 6px; }
   .planTimeline { grid-template-columns: repeat(auto-fill, minmax(470px, 1fr)); align-items: start; }
   .cramPreview { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+}
+
+/* ---------------------------------------------------------------------------
+   Phone tab bar that shrinks while you scroll, like Safari's address bar.
+   use-collapsing-tab-bar.ts writes --tb on the bar: 0 is full size, 1 is compact.
+   Compact is 30% smaller. Height and width go to 70%, the icons ease down to 80%,
+   and the labels fade out because they would be too small to read.
+   data-state is "moving" while a finger is on the page (the bar follows it
+   directly) and "full" or "compact" once it settles (CSS eases the last part).
+   --------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .studyGroups:not(.topbarNav) {
+    --k: calc(1 - .3 * var(--tb, 0));
+    margin-inline: calc(14.5% * var(--tb, 0));
+    min-height: calc(var(--m-tabbar, 70px) * var(--k));
+    padding: calc(6px * var(--k));
+    border-radius: calc(25px * var(--k));
+  }
+  .studyGroups:not(.topbarNav) button {
+    min-height: calc(56px * var(--k));
+    gap: calc(4px * (1 - var(--tb, 0)));
+    border-radius: calc(19px * var(--k));
+  }
+  /* The compact bar keeps a full-size thumb target: the button's tappable area reaches into the bar's padding. */
+  .studyGroups:not(.topbarNav) button { position: relative; }
+  .studyGroups:not(.topbarNav) button::after { content: ""; position: absolute; inset: -5px 0; }
+  .studyGroups:not(.topbarNav) .studyGroupLabel {
+    display: block;
+    max-height: calc(10px * (1 - var(--tb, 0)));
+    opacity: calc(1 - 2.4 * var(--tb, 0));
+    overflow: hidden;
+  }
+  .studyGroups:not(.topbarNav) .studyGroupIcon svg {
+    width: calc(24px * (1 - .2 * var(--tb, 0)));
+    height: calc(24px * (1 - .2 * var(--tb, 0)));
+  }
+
+  .studyGroups:not(.topbarNav):is([data-state="full"], [data-state="compact"]) {
+    transition:
+      transform .24s cubic-bezier(.2,.8,.2,1), opacity .18s ease,
+      margin .28s cubic-bezier(.2,.8,.2,1), min-height .28s cubic-bezier(.2,.8,.2,1),
+      padding .28s cubic-bezier(.2,.8,.2,1), border-radius .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .studyGroups:not(.topbarNav):is([data-state="full"], [data-state="compact"]) button {
+    transition: min-height .28s cubic-bezier(.2,.8,.2,1), gap .28s cubic-bezier(.2,.8,.2,1), border-radius .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .studyGroups:not(.topbarNav):is([data-state="full"], [data-state="compact"]) .studyGroupLabel {
+    transition: max-height .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+  }
+  .studyGroups:not(.topbarNav):is([data-state="full"], [data-state="compact"]) .studyGroupIcon svg {
+    transition: width .28s cubic-bezier(.2,.8,.2,1), height .28s cubic-bezier(.2,.8,.2,1);
+  }
+}
+@media (max-width: 700px) and (prefers-reduced-motion: reduce) {
+  .studyGroups:not(.topbarNav), .studyGroups:not(.topbarNav) button,
+  .studyGroups:not(.topbarNav) .studyGroupLabel, .studyGroups:not(.topbarNav) .studyGroupIcon svg { transition: none !important; }
 }

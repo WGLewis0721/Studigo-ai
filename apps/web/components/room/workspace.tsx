@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
@@ -19,6 +19,7 @@ import { StudyGuideDownloadButton } from "./study-guide-download-button";
 import { ModeGlyph, type GlyphName } from "@/components/mode-glyph";
 import { useRoomTheme } from "@/lib/room-theme";
 import { HeaderSlots, ModeHeader } from "./mode-header";
+import { useCollapsingTabBar } from "./use-collapsing-tab-bar";
 import type { MascotState } from "@/components/studigo-mascot";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
@@ -56,13 +57,13 @@ const GROUPS: Array<{name:string;icon:GlyphName;tone:string;modes:Mode[]}> = [
 ];
 
 /** The five pages. Wide screens show it in the top bar beside the room title; phones get the bottom tab bar. */
-function SectionNav({ current, onSelect, className }: { current: string; onSelect: (mode: Mode) => void; className?: string }) {
+function SectionNav({ current, onSelect, className, navRef }: { current: string; onSelect: (mode: Mode) => void; className?: string; navRef?: RefObject<HTMLElement | null> }) {
   return (
-    <nav className={className ? `studyGroups ${className}` : "studyGroups"} aria-label="Study Room sections">
+    <nav ref={navRef} className={className ? `studyGroups ${className}` : "studyGroups"} aria-label="Study Room sections">
       {GROUPS.map((group) => (
         <button key={group.name} type="button" data-tone={group.tone} aria-current={current === group.name ? "page" : undefined} onClick={() => onSelect(group.modes[0])}>
           <span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span>
-          <span>{group.name}</span>
+          <span className="studyGroupLabel">{group.name}</span>
         </button>
       ))}
     </nav>
@@ -133,6 +134,8 @@ export function RoomWorkspace({
   const calibration = summarizeCalibration(evidence);
   const plan = buildStudyPlan({ topics, areas, testDate: room.test_date, cardsDue: readiness.cardsDue, events: planEvents, now: asOf });
   const currentGroup = GROUPS.find(group => group.modes.includes(mode)) ?? GROUPS[0];
+  const tabBarRef = useRef<HTMLElement>(null);
+  useCollapsingTabBar(tabBarRef, mode);
   const currentMeta = MODES.find((item) => item.id === mode) ?? MODES[1];
   // The Coach chat draws its own header (its Coach/Learn switch and topic are chat state);
   // every other page shares the workspace header. Both end in the same Studigo rail.
@@ -192,7 +195,7 @@ export function RoomWorkspace({
       </div>
 
       <div className="studyNavigation">
-        <SectionNav current={currentGroup.name} onSelect={(next) => navigate(next)} />
+        <SectionNav navRef={tabBarRef} current={currentGroup.name} onSelect={(next) => navigate(next)} />
       </div>
 
       {!coachFramed && (
