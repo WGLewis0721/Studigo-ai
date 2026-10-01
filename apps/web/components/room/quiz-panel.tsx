@@ -6,6 +6,8 @@ import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
+import { useCompanion } from "@/components/companion/companion";
+import { StudigoFigure } from "@/components/companion/figure";
 
 const BLANK_MARKER = "____";
 
@@ -86,6 +88,7 @@ export function QuizPanel({
   const [grading, setGrading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const companion = useCompanion();
 
   const current = questions[index];
   const finished = questions.length > 0 && index >= questions.length;
@@ -141,6 +144,7 @@ export function QuizPanel({
         ...previous,
         { score: payload.score as number, confidence, isCorrect: Boolean(payload.isCorrect) }
       ]);
+      companion.event(payload.isCorrect ? "correct" : confidence === 3 ? "blindspot" : "wrong");
       startTransition(onGraded);
     } catch (gradeError) {
       setError(gradeError instanceof Error ? gradeError.message : "Something went wrong.");
@@ -150,6 +154,7 @@ export function QuizPanel({
   }
 
   function next() {
+    if (index + 1 >= questions.length) companion.event("setDone");
     setIndex((value) => value + 1);
     setSelected(null);
     setWritten("");
@@ -178,6 +183,7 @@ export function QuizPanel({
         <div className="setupMain">
         {finished && average !== null && (
           <div className="quizScoreCard">
+            <StudigoFigure pose="celebrate" label="Studigo celebrating" />
             <span className="tinyLabel">SET COMPLETE</span>
             <strong>{average}%</strong>
             <small>

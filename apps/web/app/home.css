@@ -374,10 +374,6 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .guide { transition: opacity .2s ease; }
 }
 
-/* ---------- meet: the one honest note about what is not in the app yet ---------- */
-.home .meetNote { margin: 14px 0 0; max-width: 46ch; padding: 12px 14px; border-radius: 14px; background: var(--snow-2); box-shadow: var(--recess); color: var(--ink-2); font-size: .9rem; line-height: 1.5; }
-.home .meetNote b { color: var(--tangerine-ink); font-family: var(--mono); font-size: .68rem; font-weight: 600; letter-spacing: .1em; margin-right: 8px; }
-
 /* ---------- for the grown-ups: a spec sheet of what it does and does not do ---------- */
 .home .grownGrid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(28px, 6vw, 88px); align-items: start; }
 .home .grownSheet { list-style: none; margin: 0; padding: 8px 26px 12px; border-radius: 30px; background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-2); }

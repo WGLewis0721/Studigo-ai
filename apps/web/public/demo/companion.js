@@ -177,7 +177,7 @@
       const node = document.createElement("div");
       node.className = "stg"; node.hidden = true; node.dataset.pose = "center";
       node.setAttribute("role", "button"); node.setAttribute("tabindex", "0"); node.setAttribute("aria-label", "Studigo. Tap to play, stroke to pet.");
-      node.innerHTML = `<span class="stgShadow"></span><div class="stgBody">${FULL.map((pose) => `<img class="stgPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRROR[pose] ? "data-flip" : ""} src="assets/full/${MIRROR[pose] || pose}.webp" alt="" draggable="false">`).join("")}</div><div class="cmpFx"></div>`;
+      node.innerHTML = `<span class="stgShadow"></span><div class="stgBody">${FULL.map((pose) => `<img class="stgPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRROR[pose] ? "data-flip" : ""} src="/mascot/companion/full/${MIRROR[pose] || pose}.webp" alt="" draggable="false">`).join("")}</div><div class="cmpFx"></div>`;
       screen.appendChild(node);
       this.node = node; this.fx = node.querySelector(".cmpFx");
       node.querySelectorAll(".stgPose").forEach((img) => { this.poses[img.dataset.pose] = img; });
@@ -434,7 +434,7 @@
       <section class="cmpSheet" role="dialog" aria-modal="true" aria-labelledby="cmpSheetTitle">
         <div class="cmpSheetHead"><div><span class="tinyLabel">STUDIGO</span><strong id="cmpSheetTitle">Your study companion</strong></div><button type="button" data-close>Done</button></div>
         <div class="cmpCardTop">
-          <button class="cmpPlay" type="button" data-play aria-label="Studigo. Tap to play."><img src="assets/full/center.webp" alt=""></button>
+          <button class="cmpPlay" type="button" data-play aria-label="Studigo. Tap to play."><img src="/mascot/companion/full/center.webp" alt=""></button>
           <div class="cmpAbout"><strong>He studies with you.</strong><p>He watches where you tap, reads along while you type, and steps aside when you scroll. Tap him. Stroke him. Drag him to another corner.</p></div>
         </div>
         <dl class="cmpStats">
@@ -450,7 +450,7 @@
       if (event.target.closest("[data-close]")) closeCard();
       if (event.target.closest("[data-seat]")) { closeCard(); if (rt.mode === "window") seatTap(); }
       const play = event.target.closest("[data-play]");
-      if (play) { const img = play.querySelector("img"); img.src = "assets/full/celebrate.webp"; pulse("playing", 900, play); setTimeout(() => { img.src = "assets/full/center.webp"; }, 900); }
+      if (play) { const img = play.querySelector("img"); img.src = "/mascot/companion/full/celebrate.webp"; pulse("playing", 900, play); setTimeout(() => { img.src = "/mascot/companion/full/center.webp"; }, 900); }
     });
     wrap.addEventListener("change", (event) => { const key = event.target.dataset.set; if (key) { st[key] = event.target.checked; save(); emit(); } });
     screen.appendChild(wrap);
@@ -518,7 +518,7 @@
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
       <div class="cmpWin">
         <div class="cmpScreen"></div>
-        <div class="cmpStage"><div class="cmpBody">${POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRROR[pose] ? "data-flip" : ""} src="assets/${MIRROR[pose] || pose}.webp" alt="" draggable="false">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
+        <div class="cmpStage"><div class="cmpBody">${POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRROR[pose] ? "data-flip" : ""} src="/mascot/companion/${MIRROR[pose] || pose}.webp" alt="" draggable="false">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
         <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet, hold for his card."></div>
         <button class="cmpSill" type="button" aria-label="Open Studigo's card"><span class="led"></span><span class="sillBrand">studigo</span></button>
         <button class="cmpCorner cmpGrip" type="button" aria-label="Move Studigo"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor"><circle cx="3" cy="3" r="1.3"/><circle cx="9" cy="3" r="1.3"/><circle cx="3" cy="9" r="1.3"/><circle cx="9" cy="9" r="1.3"/><circle cx="6" cy="6" r="1.3"/></g></svg></button>

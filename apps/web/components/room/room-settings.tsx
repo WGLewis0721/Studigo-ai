@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
 import { RoomColorPicker } from "./room-color-picker";
+import { RoomCompanionSettings } from "@/components/companion/companion";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -58,6 +59,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
         </div>
 
         <RoomColorPicker roomId={room.id} />
+        <RoomCompanionSettings roomId={room.id} />
 
         {state.error && (
           <p className="formError" role="alert">
