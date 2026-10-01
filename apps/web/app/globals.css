@@ -1598,27 +1598,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
 }
 
-/* One page heading everywhere: mascot and title on one line, one short sentence under it. */
-.pageHead { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; margin: 0 0 4px; }
-.pageHead .studigoMascot { flex: none; }
-.phText { min-width: 0; flex: 1; }
-.pageHead .phTitle {
-  margin: 0; font-family: var(--display); font-weight: 800; font-variation-settings: "opsz" 96;
-  font-size: clamp(1.7rem, 4.6vw, 2.3rem); line-height: 1.05; letter-spacing: -.035em; max-width: none; color: var(--ink);
-}
-.pageHead .phSub { margin: 4px 0 0; max-width: 60ch; color: var(--ink-2); font-size: .95rem; line-height: 1.4; }
-.phAction { flex: none; }
-.masteryHero .pageHead { margin: 0; flex: 1 1 320px; }
-.masteryHero .pageHead .phTitle { color: #fff; margin: 0; font-size: clamp(1.7rem, 4.6vw, 2.3rem); }
-.masteryHero .pageHead .phSub { color: rgba(255, 255, 255, .74); margin: 4px 0 0; }
-.modeEmpty .pageHead { margin-bottom: 4px; }
-@media (max-width: 700px) {
-  .pageHead { gap: 12px; }
-  .pageHead .studigoMascot { width: 46px !important; height: 46px !important; }
-  .pageHead .phTitle { font-size: 1.75rem; }
-  .pageHead .phSub { font-size: .88rem; }
-  .coachMode.activeSession .pageHead { display: none; }
-}
+.phSub { margin: 4px 0 0; max-width: 60ch; color: var(--ink-2); font-size: .95rem; line-height: 1.4; }
+@media (max-width: 700px) { .phSub { font-size: .88rem; } }
 
 /* Coach absorbs Ask and Learn: quiet controls, readable model text. */
 .coachTabs {
@@ -1668,7 +1649,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   padding: 10px 12px; text-align: left;
 }
 .chatModes {
-  flex: 1 1 0; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 16px;
+  flex: 1 1 0; min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; padding: 3px; border-radius: 16px;
   background: color-mix(in oklab, var(--ink) 6%, var(--white));
 }
 .chatModes button {
@@ -3228,7 +3209,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; padding: 0; margin: 0;
   }
   .roomDevice:has(.coachChat) .coachMode { gap: 0; padding-bottom: 0; }
-  .roomDevice:has(.coachChat) .coachMode > .pageHead { display: none; }
   .roomDevice:has(.coachChat) .coachTabs { flex: none; margin: 8px 12px; }
   .roomDevice:has(.coachChat) .coachChat {
     flex: 1 1 0; height: auto; min-height: 0; margin-inline: 0; border-radius: 0;
@@ -3245,6 +3225,54 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes small { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 40px; }
+}
+
+/* ---------------------------------------------------------------------------
+   One header for every room page, the Coach chat header's arrangement: mascot,
+   a switch between the page's modes (each with a short line), and a chip on
+   the right for the context you can change. Panels fill the chip; they do not
+   draw their own headings.
+   --------------------------------------------------------------------------- */
+.modeHead {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  padding: 10px 12px; text-align: left;
+  background: rgba(247, 248, 251, .9); box-shadow: 0 1px 0 var(--hairline-strong);
+  -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
+}
+.roomDevice .modeHead { background: color-mix(in oklab, var(--th-bar) 97%, transparent); box-shadow: 0 1px 0 var(--th-line); }
+.modeHead .chatModes[role="group"] { flex: 1 1 0; }
+.mhTitle { flex: 1 1 0; min-width: 0; }
+.mhTitle h2 { margin: 0; font-family: var(--display); font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.mhTitle p { margin: 1px 0 0; color: var(--muted); font-size: .78rem; line-height: 1.25; }
+.mhChipRow:empty { display: none; }
+.modeHead .chatTopic {
+  color: var(--tone-ink); background: var(--tone-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 40%, white);
+}
+.mhSelect { position: relative; }
+.mhSelect select {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer;
+  font-size: 16px; appearance: none; -webkit-appearance: none;
+}
+.mhSelect:focus-within { outline: 2px solid var(--tone); outline-offset: 2px; }
+.mhInlineChip { margin: 0 0 12px; }
+.setupLead { margin: 0 0 14px; color: var(--ink-2); font-size: .98rem; line-height: 1.45; }
+.masteryHeroText { display: grid; gap: 6px; }
+.masteryHeroText p { font-size: 1.15rem; line-height: 1.35; color: rgba(255, 255, 255, .86); }
+@media (min-width: 701px) {
+  .modeHead { padding: 12px clamp(16px, 3vw, 32px); gap: 8px 14px; }
+  .modeHead .chatModes[role="group"] { flex: 0 1 520px; }
+  .modeHead .mhChipRow { flex: 1 1 0; justify-content: flex-end; }
+  /* The Coach pane header uses the same arrangement as every other page. */
+  .coachChat .chatHead .chatModes { flex: 0 1 520px; }
+  .coachChat .chatHead .chatTopicRow { flex: 1 1 0; }
+}
+@media (max-width: 700px) {
+  /* Groups live in the bottom bar, so the old nav wrapper takes no room; the header sits right under the top bar. */
+  .studyNavigation { height: 0; min-height: 0; padding: 0; margin: 0; gap: 0; border: 0; overflow: visible; }
+  .modeHead { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
+  .modeHead .mhChipRow { flex: 1 1 100%; }
+  .roomWorkspace .modeSurface { padding-top: 16px; }
 }
 
 /* ---------------------------------------------------------------------------

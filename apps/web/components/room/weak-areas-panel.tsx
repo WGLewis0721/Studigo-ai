@@ -1,10 +1,10 @@
 "use client";
 import type { WeakArea } from '@/lib/study-planning';
 import { StudigoMascot } from '@/components/studigo-mascot';
-import { PageHead } from './page-head';
+import { HeaderMascot } from './mode-header';
 export function WeakAreasPanel({areas,onStudy}:{areas:WeakArea[];onStudy:(mode:'learn'|'quiz'|'cards',topicId:string)=>void}) {
   return <section className="weakAreasPanel">
-    <PageHead title="Weak spots" sub="What needs your attention next." state="explain"/>
+    <HeaderMascot state="explain"/>
     {!areas.length?<div className="modeEmpty"><h3>No weak areas to rank right now.</h3><p>If you have topics, keep recall fresh with a practice test. Otherwise, add a study guide first.</p></div>:
       <ol className="weakAreaList">{areas.map((area,index)=><li key={area.topic.id}>
         <span className="priorityNumber">{String(index+1).padStart(2,'0')}</span>

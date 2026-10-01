@@ -11,7 +11,6 @@ import { CoachDevice } from "./coach-device";
 import { LearnPanel } from "./learn-panel";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
-import { PageHead } from "./page-head";
 import { useFitViewport } from "./use-fit-viewport";
 
 type CoachingStyle = {
@@ -201,12 +200,11 @@ export function CoachPanel({ roomId, readyCount, topics, onOpenMaterials, view, 
     void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach");
   }
 
-  if (readyCount === 0) return <div className="modeEmpty"><PageHead title="Coach" sub="Nothing to coach from yet." /><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
+  if (readyCount === 0) return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
   return (
     <CoachDevice roomId={roomId}>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
-      <PageHead title="Coach" sub="Guided practice on your teacher's material." state={busy ? "thinking" : "welcome"} />
       <div className="coachTabs" role="group" aria-label="Coach sections">
         <button type="button" aria-pressed={view === "chat"} onClick={() => onViewChange("chat")}>Chat</button>
         <button type="button" aria-pressed={view === "topics"} onClick={() => onViewChange("topics")}>Topics{topics.length > 0 && <span className="coachTabCount">{topics.length}</span>}</button>
