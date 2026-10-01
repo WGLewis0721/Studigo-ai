@@ -23,7 +23,8 @@ import {
   type PracticeSet
 } from "@/lib/recommendation-engine";
 
-export type EngineDirective = { name: string; instruction: string };
+import { formatDirectives, type EngineDirective } from "./directive-format";
+export type { EngineDirective };
 
 export type EngineRequest = {
   supabase: SupabaseClient;
@@ -126,9 +127,7 @@ export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<Gro
 
   const learnerStateDirective = buildLearnerStateDirective(topics, evidence);
 
-  const instructions = [...(args.directives ?? []).map((directive) => `[${directive.name.toUpperCase()}] ${directive.instruction}`), learnerStateDirective]
-    .filter((line): line is string => Boolean(line))
-    .join("\n\n");
+  const instructions = formatDirectives(args.directives, [learnerStateDirective]);
 
   const chunks = await retrieveForRoom({
     supabase: args.supabase,

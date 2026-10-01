@@ -24,3 +24,4 @@ supabase/.temp/
 *.blend1
 tools/
 **/backups/*.ldtk
+apps/web/eval-results/

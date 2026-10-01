@@ -1,4 +1,4 @@
-import { compileCoachPreferences } from "@/lib/coach-preferences";
+import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction } from "@/lib/coach-interaction";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
@@ -59,8 +59,10 @@ export async function POST(request: Request) {
   // the mutation so browsers do not need privileges on trusted state.
   const service = createServiceSupabaseClient();
   let teaching;
+  let preferences;
   try {
-    teaching = compileCoachPreferences(await readCoachPreferences(supabase, roomId));
+    preferences = await readCoachPreferences(supabase, roomId);
+    teaching = compileCoachPreferences(preferences);
   } catch {
     return Response.json({ error: "Could not load your coaching settings. Please retry." }, { status: 503 });
   }
@@ -102,8 +104,7 @@ export async function POST(request: Request) {
   const mode = body?.mode === "coach" ? "coach" : "ask";
   // Stored preferences are authoritative, including after a reload or tab change.
   // Ask accepts only topic context from the client; draft pedagogy cannot override Apply.
-  const topicContext = (sanitizeDirectives(body?.directives) ?? []).filter(item => item.name === "Current topic");
-  const directives = mode === "coach" ? teaching.directives : [...topicContext, teaching.directives[3]] /* Learn: room explanation level only */;
+  const directives = directivesForTurn(mode, preferences, sanitizeDirectives(body?.directives) ?? []);
 
   // Coach turns can produce learning evidence, so they require a stable
   // interaction ID: the persisted user message's own ID. Exact retries reuse

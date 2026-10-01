@@ -108,3 +108,16 @@ export function describeCoaching(preferences: CoachPreferences) {
     style, tradition, practice
   };
 }
+
+type Directive = { name: string; instruction: string };
+/**
+ * Which saved settings reach a reply. Coach gets all of them; Learn (the Ask
+ * path) gets only the room's explanation level plus the client's topic hint.
+ * Draft pedagogy from the browser never gets through.
+ */
+export function directivesForTurn(mode: "coach" | "ask", preferences: CoachPreferences, clientDirectives: Directive[] = []) {
+  const compiled = compileCoachPreferences(preferences);
+  if (mode === "coach") return compiled.directives;
+  const topic = clientDirectives.filter(item => item.name === "Current topic");
+  return [...topic, compiled.directives.find(item => item.name === "Explanation level")!];
+}
