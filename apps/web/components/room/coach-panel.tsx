@@ -1,6 +1,6 @@
 "use client";
 
-import { STYLES, TRADITIONS, PRACTICE_PROTOCOLS, compileCoachPreferences, sameCoachPreferences } from "@/lib/coach-preferences";
+import { STYLES, TRADITIONS, PRACTICE_PROTOCOLS, compileCoachPreferences, describeCoaching, sameCoachPreferences } from "@/lib/coach-preferences";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -54,7 +54,9 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const tradition = TRADITIONS.find(option => option.id === draft.tradition) ?? TRADITIONS[0];
   const practice = PRACTICE_PROTOCOLS.find(option => option.id === draft.practice) ?? PRACTICE_PROTOCOLS[0];
   const dirty = !sameCoachPreferences(draft, coaching.applied);
+  const active = describeCoaching(coaching.applied);
   useEffect(() => { setDraft(coaching.applied); }, [coaching.applied]);
+  const openSetup = () => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setDraft(coaching.applied); setPersonalizeOpen(true); };
   const [selectedTopic, setSelectedTopic] = useState<SkillTopic>(topics[0] ?? GENERAL_TOPIC);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>("coach");
@@ -282,10 +284,19 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this room</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
+        <div className="coachExpect" aria-live="polite">
+          <span className="tinyLabel">{dirty ? "AFTER YOU APPLY" : "IN USE NOW"}</span>
+          <strong>{style.name} · {tradition.name}</strong>
+          <ul>
+            <li><b>Each reply:</b> {style.expect}</li>
+            <li><b>Order of ideas:</b> {tradition.expect}</li>
+            <li><b>Practice:</b> {practice.expect}</li>
+          </ul>
+        </div>
         <div>
           <span className="tinyLabel">HOW TO COACH</span>
           <div className="coachStyleGrid" aria-label="Choose a coaching style">
-            {STYLES.map((option) => <button key={option.id} type="button" aria-pressed={option.id === style.id} disabled={coaching.applying} className={option.id === style.id ? "coachStyle active" : "coachStyle"} onClick={() => setDraft(current => ({ ...current, style: option.id }))}><strong>{option.name}</strong><span>{option.description}</span></button>)}
+            {STYLES.map((option) => <button key={option.id} type="button" aria-pressed={option.id === style.id} disabled={coaching.applying} className={option.id === style.id ? "coachStyle active" : "coachStyle"} onClick={() => setDraft(current => ({ ...current, style: option.id }))}><strong>{option.name}</strong><span>{option.expect}</span></button>)}
           </div>
         </div>
         <div className="coachChoiceRow">
@@ -293,22 +304,16 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             <select value={tradition.id} disabled={coaching.applying} onChange={(event) => setDraft(current => ({ ...current, tradition: event.target.value }))}>
               {TRADITIONS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
-            <small>{tradition.description}</small>
+            <small>{tradition.expect}</small>
           </label>
           <label>Practice recipe
             <select value={practice.id} disabled={coaching.applying} onChange={(event) => setDraft(current => ({ ...current, practice: event.target.value }))}>
               {PRACTICE_PROTOCOLS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
             </select>
-            <small>{practice.name === "Focused repetition" ? "Use repetition when it is the right tool, not as busywork." : practice.instruction}</small>
+            <small>{practice.expect}</small>
           </label>
         </div>
-        <label className="field">Explanation level
-          <select value={draft.explainLevel} disabled={coaching.applying} onChange={event => setDraft(current => ({ ...current, explainLevel: event.target.value as typeof draft.explainLevel }))}>
-            <option value="simpler">Simpler: plain words and familiar examples</option>
-            <option value="standard">Standard: the level of the material</option>
-            <option value="deeper">Deeper: precise terms and more connections</option>
-          </select>
-        </label>
+        <p className="coachLevelNote">Explanation level: <b>{active.level}</b>. It applies to Coach and Learn and is set in Room settings.</p>
         <div className="coachApplyActions">
           <button className="buttonPrimary" type="button" disabled={!dirty || busy || coaching.applying} onClick={() => void coaching.apply(draft)}>{coaching.applying ? "Recalibrating…" : "Apply"}</button>
           <small>{busy ? "Apply after Studigo finishes this reply." : dirty ? "Apply to save these choices for this room." : "Your settings are saved for this room."}</small>
@@ -317,12 +322,18 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         {coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
       </section>
         {!personalizeOpen && coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
+        {chatMode === "coach" && view === "chat" && !personalizeOpen && (
+          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={`Coaching: ${active.label}, ${active.level}. Change`}>
+            <span>Coaching</span><strong>{active.label}</strong><em>{active.level}</em>
+          </button>
+        )}
         <div className="chatThread" role="log" aria-live="polite" aria-label="Messages">
         {messages.length === 0 ? (
           chatMode === "coach" ? (
             <div className="coachEmpty">
               <strong>Practice it.</strong>
-              <p>Coach gives you problems, checks your work and tracks what you have mastered. Use it to rehearse steps and apply ideas. Not sure what a term means? Switch to Learn first.</p>
+              <p>Coach gives you problems, checks your work and tracks what you have mastered. Not sure what a term means? Switch to Learn first.</p>
+              <p className="coachEmptyStyle"><b>{active.style.name}:</b> {active.style.expect}</p>
               <div className="starterList">
                 <button type="button" onClick={() => void coach(`Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>Coach me on {selectedTopic.title}</button>
                 <button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button>

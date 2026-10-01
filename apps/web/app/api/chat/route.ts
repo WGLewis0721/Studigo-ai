@@ -103,7 +103,7 @@ export async function POST(request: Request) {
   // Stored preferences are authoritative, including after a reload or tab change.
   // Ask accepts only topic context from the client; draft pedagogy cannot override Apply.
   const topicContext = (sanitizeDirectives(body?.directives) ?? []).filter(item => item.name === "Current topic");
-  const directives = mode === "coach" ? teaching.directives : [...topicContext, teaching.directives[3]];
+  const directives = mode === "coach" ? teaching.directives : [...topicContext, teaching.directives[3]] /* Learn: room explanation level only */;
 
   // Coach turns can produce learning evidence, so they require a stable
   // interaction ID: the persisted user message's own ID. Exact retries reuse

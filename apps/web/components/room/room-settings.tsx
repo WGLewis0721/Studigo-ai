@@ -40,7 +40,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
             <input name="courseName" defaultValue={room.course_name ?? ""} maxLength={160} />
           </label>
           <label className="field">
-            <span>Explanation level</span>
+            <span>Explanation level <small>(Coach and Learn, whole room)</small></span>
             <select name="explainLevel" defaultValue={room.explain_level}>
               <option value="simpler">Simpler: plain words, more everyday examples</option>
               <option value="standard">Standard: the level of the material</option>
@@ -64,7 +64,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
             {state.error}
           </p>
         )}
-        {state.appliedAt && <p role="status">Applied. Studigo will use your explanation level from the next reply.</p>}
+        {state.appliedAt && <p role="status">Applied. Coach and Learn will use this explanation level from the next reply.</p>}
 
         <div className="settingsActions">
           <SaveButton />
