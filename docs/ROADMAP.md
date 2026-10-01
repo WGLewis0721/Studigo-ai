@@ -4,6 +4,21 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Shipped - October 1, 2026: Companion homepage
+
+- [x] The homepage is the "pocket device" direction: intro, a phone running the
+      interactive demo, Studigo following down the page, pinned Modes, and a new
+      "For the grown-ups" section. See `DESIGN_SYSTEM.md`, Marketing.
+- [x] "Sign in" goes to `/app`; "Start studying for free" goes to `/signup`.
+- [x] The demo the phone runs is a static copy in `apps/web/public/demo/`, built
+      by `design/companion-demo/build_public_demo.py`. The middleware skips
+      `/demo/`.
+- [ ] The app does not have the companion window, the Home stage or the new
+      onboarding yet. The homepage says his window is "arriving". Closing that
+      gap is `COMPANION_PARITY_PLAN.md`; remove the note when stage 2 ships.
+- [ ] Performance pass on the homepage (the intro delays the first large paint
+      on a first visit) and a real-device check on iPhone Safari.
+
 ## Shipped - October 1, 2026: Coach preferences and scrolling chrome
 
 - [x] Save coaching style, learning tradition, practice recipe and explanation

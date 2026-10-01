@@ -203,10 +203,15 @@ Small labels are uppercase, 0.7rem, 700, +0.08em — the printing on a device.
 Motion communicates state or character. One choreographed load sequence beats
 many unrelated animations.
 
-- **Marketing load:** headline lines rise in sequence → the device lifts → source
-  objects drift in → the citation ticket lands. Shell-color changes crossfade.
-- **Scroll:** where `animation-timeline: view()` is supported, cartridges, tiles
-  and cards rise as they enter. Progressive enhancement only.
+- **Marketing load:** on a visitor's first view in a tab, a short intro: the
+  companion's screen wakes, he leaps in, waves, and jumps into the phone. It can
+  be skipped, is not shown with reduced motion, and switches itself off if the
+  page script never starts. Then headline lines rise in sequence and the phone
+  lifts. Shell-color changes crossfade.
+- **Scroll:** sections rise as they enter; the Modes section pins one device
+  while the room changes mode and color. The companion follows down the page
+  (see The companion). All of it is progressive enhancement: without script the
+  page is simply visible.
 - **Workspace:** the room re-tints over 0.5s when the mode changes; each mode's
   content enters with a 6px rise. Keys press down.
 - **Flashcards:** a real 3D flip.
@@ -228,9 +233,18 @@ as a pasted square.
 `StudigoMascot` is the one component. Its state follows real events: `welcome`,
 `explain`, `thinking` (while retrieving/streaming), `sources`, `celebrate`
 (a finished deck, a strong test). Sizes: 28–40px in identity and answer labels,
-56–96px in empty/completion states, at most ~150px beside the marketing product
-view. The full figure is never cropped except in the circular `mark`. No
-fullscreen mascot, no mascot-led readiness, no reward economy.
+56–96px in empty/completion states. The full figure is never cropped except in
+the circular `mark`. No mascot-led readiness, no reward economy.
+
+**The marketing page is the exception, on purpose.** There the companion is the
+product being shown, so he appears full body: in the intro, loose on the page at
+up to ~170px (he leaves the demo phone when you scroll, reacts to the section
+you are reading, follows the cursor, takes the other corner when he would cover
+what you are reading, and lands beside the last button), and waist-up in his
+window inside the demo phone. He still never changes mastery and there is still
+no reward economy. The app is catching up to this in stages; until it does, the
+page says his window is "arriving" rather than claiming it. The stages and the
+rules for the app are in [`COMPANION_PARITY_PLAN.md`](COMPANION_PARITY_PLAN.md).
 
 Use it for: greeting, thinking, explanation, source retrieval, encouragement,
 meaningful success, and empty states.
@@ -239,13 +253,21 @@ meaningful success, and empty states.
 
 ### Marketing (`app/page.tsx`, `app/home.css`)
 
-A product launch, in this order: floating frosted nav → **hero device** (the
-Study Room as a translucent colored device, with a working shell-color picker)
-→ the five-step loop as keys → **Sources** teal color field (priority as
-cartridges in a tray) → **Modes** showcase (tabs, each an oversized mode view in
-its color) → **Mastery** graphite field with a kiwi readout → **Receipts**
-(answer, ticket, the cited page) → questions → Tangerine closing field.
-All example progress is labeled illustrative.
+The "pocket device" direction: the product shown as an object you want to own,
+with its details listed like a spec sheet. In this order: intro → floating
+frosted nav → **hero** (a phone running the interactive demo from
+`public/demo/`, a spec table with a working room-color picker) → the five-step
+loop as keys → **Meet Studigo** (the cursor-following portrait) → **Modes** (one
+pinned device, four modes) → **Sources** teal color field (priority as
+cartridges in a tray) → **Mastery** with a graphite readout → **Receipts**
+(answer, ticket, the cited page) → **For the grown-ups** (what it does and does
+not do, each line restating a rule in `PRODUCT.md`) → questions → Tangerine
+closing field. All example progress is labeled illustrative.
+
+Styles are scoped under `.home`. Behavior is one client component,
+`components/home/home-motion.tsx`, driving server-rendered markup. "Sign in"
+goes to `/app` (signed-out visitors are sent to the sign-in page and then on to
+the app); "Start studying for free" goes to `/signup`.
 
 ### Study Room
 
