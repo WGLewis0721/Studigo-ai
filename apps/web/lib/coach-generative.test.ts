@@ -32,6 +32,15 @@ import {
 import { selectLearningRoute } from "./coach-route-selection";
 import type { Topic } from "./rooms";
 
+test("Apply changes delivery for an issued challenge without mutating its learning target", () => {
+  const spec = specFor("predict");
+  const before = structuredClone(spec);
+  const guidance = renderChallengeGuidance(spec, "montessori_inspired").join("\n");
+  assert.match(guidance, /Montessori/);
+  assert.match(guidance, /Reasoning task: predict/);
+  assert.deepEqual(spec, before);
+});
+
 // Invariant tests for the generative Coach layer. Nothing here asserts exact
 // model prose: prompts are checked for the rules they carry, and sample
 // questions are checked with the deterministic language-floor lint.

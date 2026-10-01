@@ -21,6 +21,7 @@ import { useRoomTheme } from "@/lib/room-theme";
 import { HeaderSlots, ModeHeader } from "./mode-header";
 import { useCollapsingTabBar } from "./use-collapsing-tab-bar";
 import type { MascotState } from "@/components/studigo-mascot";
+import { useCoachPreferences } from "./use-coach-preferences";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
 // Learn blueberry, Ask/Materials teal, Coach/Cram tangerine, Quiz dandelion,
@@ -88,6 +89,7 @@ export function RoomWorkspace({
   asOf: number;
 }) {
   const router = useRouter();
+  const coaching = useCoachPreferences(room);
   const readyDocuments = documents.filter((document) => document.status === "ready");
   const defaultMode: Mode = readyDocuments.length ? "coach" : "materials";
   const [mode, setMode] = useState<Mode>(
@@ -191,7 +193,7 @@ export function RoomWorkspace({
       </header>
 
       {settingsOpen && <button className="roomSettingsBackdrop" type="button" aria-label="Close room settings" onClick={closeSettings} />}
-      {settingsOpen && <RoomSettings room={room} onClose={closeSettings} closing={settingsClosing} />}
+      {settingsOpen && <RoomSettings room={{ ...room, explain_level: coaching.applied.explainLevel }} onClose={closeSettings} closing={settingsClosing} />}
       </div>
 
       <div className="studyNavigation">
@@ -220,6 +222,7 @@ export function RoomWorkspace({
         )}
         {mode === "coach" && (
           <CoachPanel
+            coaching={coaching}
             roomId={room.id}
             readyCount={readyDocuments.length}
             topics={topics}

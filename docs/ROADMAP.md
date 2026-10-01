@@ -4,6 +4,25 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Ready locally — October 1, 2026: Coach preferences and scrolling chrome
+
+- [x] Save coaching style, learning tradition, practice recipe and explanation
+      level per Study Room; reload and page navigation restore applied settings.
+- [x] Coach setup and Room Settings expose Apply, pending and success/error states.
+- [x] Rebuild delivery instructions during the background Apply request and use
+      the saved settings in subsequent Coach/Ask replies.
+- [x] Preserve the pending learning encounter and evidence when delivery changes.
+- [x] Preserve the October 1 Safari-style collapsing tab bar from current main.
+- [x] Validate: 327 tests passed, production build passed, phone-sized browser
+      fixture passed Apply/reload/draft dismissal and 70px ↔ 56px scroll behavior.
+- [ ] Publish the reconciled feature branch and PR (user authorized October 1).
+- [ ] Apply `20261001051830_coach_preferences.sql` to the verified Studigo
+      Supabase project, merge/deploy and smoke-test hosted saving.
+- [ ] Verify real model delivery and physical iPhone/Safari behavior after release.
+
+The implementation is **not deployed**. The September 30 release below remains
+the current production baseline.
+
 ## Latest shipped - September 30, 2026
 
 Shipped to production from `main` (merge `2fdfe14`, deployed on Vercel).
@@ -490,4 +509,3 @@ This gate is now the release definition for both the Studigo learning app and th
 ## Shared commercialization rule
 
 Do not gate launch on every later roadmap idea. Gate it on **reliable core value + safe data handling + accepted commerce + supportability + store compliance**. New adaptive features, extra subjects, parent/school expansion, additional game worlds, and deeper personalization are post-launch unless testing shows one is necessary for the core promise.
-

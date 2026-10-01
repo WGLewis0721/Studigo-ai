@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { SourceType } from "@studigo/documents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { CoachPreferences } from "./coach-preferences";
 
 export type StudyRoom = {
   id: string;
@@ -10,6 +11,7 @@ export type StudyRoom = {
   test_date: string | null;
   /** How Studigo pitches explanations in this room. Never changes the facts. */
   explain_level: "simpler" | "standard" | "deeper";
+  coach_preferences?: Omit<CoachPreferences, "explainLevel">;
   created_at: string;
   updated_at: string;
 };
@@ -88,7 +90,7 @@ async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title, subject, course_name, test_date, explain_level, created_at, updated_at")
+    .select("id, title, subject, course_name, test_date, explain_level, coach_preferences, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
   // A real query failure (bad schema, connection issue, ...) is not "not
