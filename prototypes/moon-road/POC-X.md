@@ -1,6 +1,6 @@
-# POC X — Moon Keep: Clock Tower (golden image)
+# POC X — Moon Keep: Clock Tower (previous golden image)
 
-**Current golden image** (tag `golden/poc-x-moon-keep-ii`, approved by William 2026-09-29). It supersedes POC IX, which stays playable as the previous golden. It's POC IX plus real generated art, the ×5 Clock Tower zone, the Clock Shield, the Training Hall, match rewards, and the Rune Gate/Sanctum portal to Core Clash.
+**Previous golden image** (tag `golden/poc-x-moon-keep-ii`, approved by William 2026-09-29), superseded by POC XI on 2026-09-30. It supersedes POC IX. It's POC IX plus real generated art, the ×5 Clock Tower zone, the Clock Shield, the Training Hall, match rewards, and the Rune Gate/Sanctum portal to Core Clash.
 
 - Route: `dist/poc-x/`. Beta test URL once merged: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
 - Not linked from the Studigo app.
