@@ -89,6 +89,8 @@ make these match:
 - Empty and completion states use the full-body poses at 96px or less.
 - Sign-in pages take the homepage's look (snow, the cream screen with its
   sill) so homepage, sign-in and app read as one product.
+- A favicon and app icons in the canonical art. The site has none today, and
+  the web manifest lists no icons.
 - A performance pass on the homepage and a real iPhone Safari check.
 
 ### Stage 6. iOS
