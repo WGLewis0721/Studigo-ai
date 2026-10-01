@@ -1,4 +1,4 @@
-// POC X (Moon Keep II) browser acceptance: golden route to x4, then the Clock Tower, Clockwork Warden,
+// POC X (Moon Keep) browser acceptance: golden route to x4, then the Clock Tower, Clockwork Warden,
 // x5 gate and Pendulum Trial. Real keyboard/mouse only; reads gameState()/pocEvents(), never mutates.
 // Usage: node qa/clock-tower-playtest.cjs  (PLAYWRIGHT_CHROMIUM_EXECUTABLE optional)
 const fs = require('fs'), path = require('path'), http = require('http');

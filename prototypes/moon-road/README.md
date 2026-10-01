@@ -31,10 +31,10 @@ Read [POC-VIII.md](POC-VIII.md) for exact rules, source files, art provenance an
 
 A longer sibling of POC VII (`dist/poc-vii/` untouched) with the same optional ×3/×4 question drops, 20 s active-play respawn, shots and ENTER CORE CLASH exit. Route: Moon Road → Whisper Grove (×3 drop) → Four Winds (×4 drop) → Echo Court → Vault. Adds lantern checkpoints, floor vents, hovering and heavy enemies, high-ledge hearts. Whole level is finishable with the basic shot. Open `/poc-vii-level/`.
 
-## POC IX — Moon Keep (previous golden image)
+## POC IX — Moon Keep, first slice (previous golden image)
 
 Previous golden image (tag `golden/poc-ix-moon-keep`). Beta test: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/ — or `/poc-ix/` locally. Frozen. A 12-room connected keep where multiplication gates the world: seals open only with a matching ×N beam (×1 never opens them), stone blocks skip-count to their product, and two plate bosses (Twin Warden, Trine Guardian) drop ×2 and ×3 Mega Man-style. Moon Boots, energy tanks, ammo expansions, a hidden ×4 vault, a minimap and a % map. The POC VII orb loop is unchanged. Ends at the original Core Clash. Read [POC-IX.md](POC-IX.md). Tests: `node --test test/*.test.mjs` and `node qa/moon-keep-playtest.cjs`.
 
-## POC X — Moon Keep II (current golden image)
+## POC X — Moon Keep (current golden image)
 
 **Current golden image** (tag `golden/poc-x-moon-keep-ii`). Beta test: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/ — or `/poc-x/` locally. It's the golden POC IX with new generated art (sprites, backdrops, wall textures), the ×5 Clock Tower, the Clock Shield, the Training Hall, match rewards, and the Rune Gate/Sanctum portal to Core Clash. Read [POC-X.md](POC-X.md). Tests: `node --test "test/**/*.test.mjs"` and `node qa/clock-tower-playtest.cjs`.

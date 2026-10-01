@@ -1,6 +1,6 @@
 # Studigo — Current Game Handoff
 
-## Golden image: POC X Moon Keep II (2026-09-29)
+## Golden image: POC X Moon Keep (2026-09-29)
 
 **POC X is the current golden image.** William approved it on 2026-09-29, and it's tagged `golden/poc-x-moon-keep-ii`. Beta URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/
 

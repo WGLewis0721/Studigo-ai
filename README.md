@@ -8,9 +8,9 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 ## Play the math game (beta)
 
-**▶ [Play Moon Keep II](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/)**. It's a multiplication Metroidvania prototype and the current golden build.
+**▶ [Play Moon Keep](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-x/)**. It's a multiplication Metroidvania prototype and the current golden build.
 
-- The previous golden build is [Moon Keep](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/).
+- The previous golden build is [Moon Keep (POC IX)](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/).
 - It plays in the browser with a keyboard or touch, and ↺ in the header restarts a run.
 - It's a standalone prototype served from GitHub Pages, not part of the Studigo app.
 - The source, rules and tests are in [`prototypes/moon-road/`](prototypes/moon-road/). Start with [POC-X.md](prototypes/moon-road/POC-X.md).
