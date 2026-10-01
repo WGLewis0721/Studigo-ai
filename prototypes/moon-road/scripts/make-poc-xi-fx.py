@@ -1,6 +1,10 @@
 # POC XI round 2 art: beam projectiles, muzzle/impact flashes, Clock Shield and carved number blocks.
 # Hand-drawn at half resolution, outlined, then nearest-neighbor 2x into art-source/poc-xi/fx-frames/.
 # Then pack: node scripts/pack-atlas.mjs fx
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parent))
+from pixel_style import OUTLINE, snap
 import math
 import random
 from pathlib import Path
@@ -11,7 +15,7 @@ out.mkdir(parents=True, exist_ok=True)
 for old in out.glob('*.png'):
     old.unlink()
 
-INK = (14, 10, 18, 255)
+INK = OUTLINE
 WHITE = (255, 250, 232, 255)
 BEAM = {
     1: ((214, 232, 239), (150, 196, 214), (255, 255, 255)),
@@ -38,6 +42,7 @@ def outline(im, color=INK):
 def save(im, name, ink=True):
     if ink:
         im = outline(im)
+    im = snap(im, keep_alpha=not ink)
     im.resize((im.width * 2, im.height * 2), Image.Resampling.NEAREST).save(out / f'{name}.png')
 
 

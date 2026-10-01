@@ -160,3 +160,10 @@ test('Twin Warden walk sheet and shrine art exist', () => {
   const have = new Set(atlas.textures[0].frames.map(f => f.filename));
   for (const n of ['shrine_base', 'shrine_flame_0', 'shrine_flame_1', 'shrine_flame_2', 'shrine_gem']) assert.ok(have.has(`${n}.png`), n);
 });
+
+test('boss attack atlas has every projectile and telegraph frame the bosses use', () => {
+  const atlas = JSON.parse(readFileSync(new URL('../../dist/poc-xi/art/boss.json', import.meta.url), 'utf8'));
+  const have = new Set(atlas.textures[0].frames.map(f => f.filename));
+  const want = ['bone', 'shard', 'gear', 'wave', 'chime', 'floor_crack', ...[0, 1, 2].flatMap(i => [`charge_${i}`, `rune_mark_${i}`, `steam_${i}`])].map(n => `${n}.png`);
+  for (const n of want) assert.ok(have.has(n), n);
+});

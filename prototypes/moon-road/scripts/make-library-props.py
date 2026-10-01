@@ -1,5 +1,9 @@
 # Draws the Moon Library prop frames (half-res pixel art, nearest-neighbor 2x) into art-source/poc-xi/frames/.
 # Polish them in Pixelorama if you like, then run: node scripts/pack-atlas.mjs library
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parent))
+from pixel_style import OUTLINE, snap
 from PIL import Image, ImageDraw
 from pathlib import Path
 out = Path(__file__).resolve().parents[1] / 'art-source/poc-xi/frames'
@@ -8,7 +12,7 @@ WOOD, WOOD_D, WOOD_L = (78, 52, 40), (46, 30, 26), (112, 78, 56)
 BOOKS = [(63, 138, 120), (214, 170, 82), (122, 88, 170), (96, 112, 150), (176, 74, 82)]
 GOLD, GLOW = (230, 184, 96), (255, 232, 160)
 
-def save(im, name): im.resize((im.width * 2, im.height * 2), Image.Resampling.NEAREST).save(out / f'{name}.png')
+def save(im, name): snap(im).resize((im.width * 2, im.height * 2), Image.Resampling.NEAREST).save(out / f'{name}.png')
 
 def books(d, x0, x1, y1, h):
     x = x0

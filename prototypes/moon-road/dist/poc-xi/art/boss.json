@@ -1,0 +1,335 @@
+{
+	"textures": [
+		{
+			"image": "boss.png",
+			"format": "RGBA8888",
+			"size": {
+				"w": 118,
+				"h": 200
+			},
+			"scale": 1,
+			"frames": [
+				{
+					"filename": "bone.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 44,
+						"h": 18
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 44,
+						"h": 18
+					},
+					"frame": {
+						"x": 1,
+						"y": 151,
+						"w": 44,
+						"h": 18
+					}
+				},
+				{
+					"filename": "charge_0.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 32,
+						"h": 32
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 32,
+						"h": 32
+					},
+					"frame": {
+						"x": 85,
+						"y": 1,
+						"w": 32,
+						"h": 32
+					}
+				},
+				{
+					"filename": "charge_1.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 32,
+						"h": 32
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 32,
+						"h": 32
+					},
+					"frame": {
+						"x": 85,
+						"y": 37,
+						"w": 32,
+						"h": 32
+					}
+				},
+				{
+					"filename": "charge_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 32,
+						"h": 32
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 32,
+						"h": 32
+					},
+					"frame": {
+						"x": 85,
+						"y": 73,
+						"w": 32,
+						"h": 32
+					}
+				},
+				{
+					"filename": "chime.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 26,
+						"h": 26
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 26,
+						"h": 26
+					},
+					"frame": {
+						"x": 1,
+						"y": 173,
+						"w": 26,
+						"h": 26
+					}
+				},
+				{
+					"filename": "floor_crack.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 68,
+						"h": 12
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 68,
+						"h": 12
+					},
+					"frame": {
+						"x": 49,
+						"y": 151,
+						"w": 68,
+						"h": 12
+					}
+				},
+				{
+					"filename": "gear.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 30,
+						"h": 30
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 30,
+						"h": 30
+					},
+					"frame": {
+						"x": 49,
+						"y": 167,
+						"w": 30,
+						"h": 30
+					}
+				},
+				{
+					"filename": "rune_mark_0.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 80,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 80,
+						"h": 24
+					},
+					"frame": {
+						"x": 1,
+						"y": 1,
+						"w": 80,
+						"h": 24
+					}
+				},
+				{
+					"filename": "rune_mark_1.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 80,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 80,
+						"h": 24
+					},
+					"frame": {
+						"x": 1,
+						"y": 29,
+						"w": 80,
+						"h": 24
+					}
+				},
+				{
+					"filename": "rune_mark_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 80,
+						"h": 24
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 80,
+						"h": 24
+					},
+					"frame": {
+						"x": 1,
+						"y": 57,
+						"w": 80,
+						"h": 24
+					}
+				},
+				{
+					"filename": "shard.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 48,
+						"h": 22
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 48,
+						"h": 22
+					},
+					"frame": {
+						"x": 1,
+						"y": 125,
+						"w": 48,
+						"h": 22
+					}
+				},
+				{
+					"filename": "steam_0.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 28
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 28
+					},
+					"frame": {
+						"x": 83,
+						"y": 167,
+						"w": 28,
+						"h": 28
+					}
+				},
+				{
+					"filename": "steam_1.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 28
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 28
+					},
+					"frame": {
+						"x": 57,
+						"y": 109,
+						"w": 28,
+						"h": 28
+					}
+				},
+				{
+					"filename": "steam_2.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 28,
+						"h": 28
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 28,
+						"h": 28
+					},
+					"frame": {
+						"x": 89,
+						"y": 109,
+						"w": 28,
+						"h": 28
+					}
+				},
+				{
+					"filename": "wave.png",
+					"rotated": false,
+					"trimmed": false,
+					"sourceSize": {
+						"w": 52,
+						"h": 36
+					},
+					"spriteSourceSize": {
+						"x": 0,
+						"y": 0,
+						"w": 52,
+						"h": 36
+					},
+					"frame": {
+						"x": 1,
+						"y": 85,
+						"w": 52,
+						"h": 36
+					}
+				}
+			]
+		}
+	],
+	"meta": {
+		"app": "https://www.codeandweb.com/texturepacker",
+		"version": "3.0",
+		"smartupdate": "$TexturePacker:SmartUpdate:e98ae1ef29a6034e0bc443e9ef9e2b8e:fdca6498c4a3e5d0ba7cbaeb7e65001c:46ed12eff2905e238af2d2a3f055c310$"
+	}
+}

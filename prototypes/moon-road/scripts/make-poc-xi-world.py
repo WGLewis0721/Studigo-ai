@@ -1,6 +1,10 @@
 # POC XI round 3 art: doors, portcullis gates, power seals, rune altar, portal arch, ammo capsules and drops.
 # Hand-drawn at half resolution (nearest 2x) into art-source/poc-xi/world-frames/. Run make-poc-xi-fx.py first
 # (ammo capsules reuse the beam sprites). Then: node scripts/pack-atlas.mjs world
+import sys
+from pathlib import Path as _P
+sys.path.insert(0, str(_P(__file__).resolve().parent))
+from pixel_style import OUTLINE, snap
 import math
 import random
 from pathlib import Path
@@ -13,7 +17,7 @@ out.mkdir(parents=True, exist_ok=True)
 for old in out.glob('*.png'):
     old.unlink()
 
-INK = (14, 10, 18, 255)
+INK = OUTLINE
 STONE, STONE_L, STONE_D, MORTAR = (104, 94, 78), (150, 136, 108), (68, 60, 50), (34, 29, 24)
 BRASS, BRASS_L, BRASS_D = (214, 168, 84), (255, 226, 150), (130, 92, 42)
 IRON, IRON_L, IRON_D = (96, 108, 128), (160, 176, 198), (46, 54, 70)
@@ -35,6 +39,7 @@ def outline(im):
 def save(im, name, ink=True, scale=2):
     if ink:
         im = outline(im)
+    im = snap(im, keep_alpha=not ink)
     im.resize((im.width * scale, im.height * scale), Image.Resampling.NEAREST).save(out / f'{name}.png')
 
 
@@ -167,10 +172,10 @@ for n in (2, 3, 4, 5):
     d.rectangle([14, 38, 29, 43], fill=rgba(BRASS)); d.line([(14, 38), (29, 38)], fill=rgba(BRASS_L)); d.line([(14, 43), (29, 43)], fill=rgba(BRASS_D))
     d.rectangle([14, 0, 29, 3], fill=rgba(BRASS)); d.line([(14, 0), (29, 0)], fill=rgba(BRASS_L))
     im = outline(im)
-    im.save(out / f'ammo_{n}.png')
+    snap(im).save(out / f'ammo_{n}.png')
     drop = beam_emblem(n, 20, ROT[n])
     dc = Image.new('RGBA', (24, 24)); dc.alpha_composite(drop, ((24 - drop.width) // 2, (24 - drop.height) // 2))
-    outline(dc).save(out / f'drop_{n}.png')
+    snap(outline(dc)).save(out / f'drop_{n}.png')
 
 # refill-all / boss knowledge orb: a gold cross in a brass-capped crystal ball
 im = Image.new('RGBA', (44, 44)); d = ImageDraw.Draw(im)
@@ -179,7 +184,7 @@ d.rectangle([19, 10, 24, 33], fill=rgba(BRASS_L)); d.rectangle([10, 19, 33, 24],
 d.rectangle([20, 11, 23, 32], fill=(255, 250, 220, 255)); d.rectangle([11, 20, 32, 23], fill=(255, 250, 220, 255))
 d.arc([7, 7, 27, 27], 190, 270, fill=(255, 255, 255, 190), width=2)
 d.rectangle([14, 38, 29, 43], fill=rgba(BRASS)); d.rectangle([14, 0, 29, 3], fill=rgba(BRASS))
-outline(im).save(out / 'ammo_all.png')
+snap(outline(im)).save(out / 'ammo_all.png')
 
 # unlock orb frame: same capsule shell, empty (the game tints/overlays the beam on top)
 # ---------- shrine: carved plinth with a brass brazier (native 60 x 92), flame frames and a gem ----------

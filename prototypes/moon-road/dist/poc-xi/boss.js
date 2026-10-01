@@ -98,7 +98,7 @@ export function twinWarden(def, S) {
           tw.vy += 1150 * dt;
           tw.x = Math.max(90, Math.min(870, tw.x + tw.vx * dt));
           tw.y += tw.vy * dt;
-          if (tw.y >= FLOOR) { tw.y = FLOOR; tw.air = false; tw.timer = 0.9; S.cameras.main.shake(120, 0.004); S.burst(tw.x, FLOOR, 0xb8a888, 18); S.sfx(90, 0.2); }
+          if (tw.y >= FLOOR) { tw.y = FLOOR; tw.air = false; tw.timer = 0.9; S.cameras.main.shake(120, 0.004); S.burst(tw.x, FLOOR, 0xb8a888, 18); S.crack(tw.x, FLOOR - 2); S.pop(tw.x, FLOOR - 10, 0xd8c8a8); S.sfx(90, 0.2); }
         } else if (tw.timer <= 0) {
           const hop = active(tw) && tw.state !== 'hop';
           tw.state = hop ? 'hop' : 'throw';
@@ -107,13 +107,14 @@ export function twinWarden(def, S) {
             // the landing spot. Classic dodge: run underneath while it's airborne.
             tw.air = true;
             tw.vy = -780;
+            S.puff(tw.x - 16, FLOOR - 6); S.puff(tw.x + 16, FLOOR - 6);
             const land = Math.max(90, Math.min(870, S.p.x + (tw.x < S.p.x ? 190 : -190)));
             tw.vx = Math.max(-420, Math.min(420, (land - tw.x) / (2 * 780 / 1150)));
             tw.land = land;
             S.sfx(240, 0.25);
           } else {
             const dx = S.p.x - tw.x;
-            S.enemyShot({x: tw.x, y: tw.y - 130, vx: dx / 1.05, vy: -470, g: 900, r: 9, color: 0xeae3d4, spin: true});
+            S.enemyShot({x: tw.x, y: tw.y - 130, vx: dx / 1.05, vy: -470, g: 900, r: 9, color: 0xeae3d4, spin: true, sprite: 'bone', sc: 1.1});
             S.sfx(300, 0.08);
             tw.throwT = 0.4;
             tw.timer = active(tw) ? 1.3 : 3.2;
@@ -161,6 +162,7 @@ export function twinWarden(def, S) {
 export function trineGuardian(def, S) {
   const scale = 230 / 256, frames = S.cache.json.get('frames').guardian;
   const sprite = S.add.sprite(480, 380, 'guardian', 0).setOrigin(0.5, 1).setScale(scale).setDepth(4);
+  const charge = S.add.image(0, 0, 'boss', 'charge_0.png').setDepth(6).setVisible(false);
   const badge = S.add.text(0, 0, '', {fontFamily: 'monospace', fontSize: 22, fontStyle: 'bold', color: '#fff3d6', stroke: '#1a0c22', strokeThickness: 5}).setOrigin(0.5).setDepth(6);
   const b = {x: 480, y: 380, state: 'float', timer: 2.2, hit: 0, frame: 0, tx: 480, from: null, vx: 0, ghost: 0};
   let dying = 0, clock = 0;
@@ -197,12 +199,12 @@ export function trineGuardian(def, S) {
         b.vx = (nx - b.x) / Math.max(dt, 0.001);
         b.x = nx;
         b.y = 380 + Math.sin(clock * 2.2) * 16 + Math.sin(clock * 5.3) * 3;
-        if (b.timer <= 0) { b.state = Math.random() < 0.55 ? 'volley' : 'telegraph'; b.timer = b.state === 'volley' ? 0.55 : 0.65; b.tx = S.p.x; }
+        if (b.timer <= 0) { b.state = Math.random() < 0.55 ? 'volley' : 'telegraph'; b.timer = b.state === 'volley' ? 0.55 : 0.65; b.tx = S.p.x; if (b.state === 'telegraph') S.runeMark(b.tx, FLOOR - 4, 0.65); }
       } else if (b.state === 'volley') {
         b.frame = 2;
         if (b.timer <= 0) {
           const c = core(), ang = Math.atan2(S.p.y - 40 - c.y, S.p.x - c.x);
-          for (const d of [-0.28, 0, 0.28]) S.enemyShot({x: c.x, y: c.y, vx: Math.cos(ang + d) * 290, vy: Math.sin(ang + d) * 290, g: 0, r: 10, color: 0xc9a7ff});
+          for (const d of [-0.28, 0, 0.28]) S.enemyShot({x: c.x, y: c.y, vx: Math.cos(ang + d) * 290, vy: Math.sin(ang + d) * 290, g: 0, r: 10, color: 0xc9a7ff, sprite: 'shard', aim: true, sc: 1.1});
           S.sfx(520, 0.15);
           b.state = 'float'; b.timer = 2.1;
         }
@@ -214,7 +216,7 @@ export function trineGuardian(def, S) {
         b.vx = (b.tx - b.from.x) / 0.45;
         b.x = b.from.x + (b.tx - b.from.x) * k;
         b.y = b.from.y + (FLOOR - b.from.y) * k;
-        if (b.timer <= 0) { b.state = 'rise'; b.timer = 0.8; S.cameras.main.shake(120, 0.005); }
+        if (b.timer <= 0) { b.state = 'rise'; b.timer = 0.8; S.cameras.main.shake(120, 0.005); S.crack(b.x, FLOOR - 2); S.pop(b.x, FLOOR - 10, 0xc9a7ff); S.burst(b.x, FLOOR, 0xc9a7ff, 22); }
       } else if (b.state === 'rise') {
         b.y += (380 - b.y) * Math.min(1, dt * 3);
         if (b.timer <= 0) { b.state = 'float'; b.timer = 2.2; }
@@ -237,9 +239,11 @@ export function trineGuardian(def, S) {
       const c = core();
       badge.setVisible(!P.done).setPosition(c.x, c.y - 70).setText(P.done ? '' : `${P.current().a} · ${P.current().b}`);
       if (!P.done) { g.fillStyle(0xfff0c0, 0.18 + 0.1 * Math.sin(t * 5)); g.fillCircle(c.x, c.y, 26); }
-      if (b.state === 'telegraph') { g.lineStyle(2, 0xff9a8a, 0.6); g.lineBetween(b.tx, FLOOR, b.tx, FLOOR - 30); }
+      charge.setVisible(b.state === 'volley');
+      if (b.state === 'volley') charge.setPosition(c.x, c.y).setFrame(`charge_${Math.floor(t * 14) % 3}.png`).setScale(0.5 + 1.2 * (1 - b.timer / 0.55));
+      if (b.state === 'telegraph') { g.lineStyle(2, 0xc9a7ff, 0.35); g.lineBetween(b.tx, FLOOR - 4, b.tx, FLOOR - 40); }
     },
-    destroy() { sprite.destroy(); badge.destroy(); },
+    destroy() { sprite.destroy(); badge.destroy(); charge.destroy(); },
   };
   return boss;
 }
@@ -301,15 +305,18 @@ export function clockWarden(def, S) {
         if (b.timer <= 0) { b.state = b.next + '-wind'; b.timer = b.next === 'slam' ? 0.8 : 0.55; b.next = b.next === 'slam' ? 'gears' : 'slam'; S.sfx(260, 0.2); }
       } else if (b.state === 'slam-wind' || b.state === 'gears-wind') {
         b.frame = 1;
+        b.puffT = (b.puffT || 0) - dt;
+        if (b.puffT <= 0) { b.puffT = 0.11; S.puff(b.x - 64, FLOOR - 190); S.puff(b.x + 64, FLOOR - 190); }
         if (b.timer <= 0 && b.state === 'slam-wind') {
           b.state = 'slam'; b.timer = 0.5; b.frame = 2;
-          for (const dir of [-1, 1]) S.enemyShot({x: b.x + dir * 56, y: FLOOR - 14, vx: dir * 250, vy: 0, g: 0, r: 11, color: 0xffb25a, life: 3.6, wave: true});
+          for (const dir of [-1, 1]) S.enemyShot({x: b.x + dir * 56, y: FLOOR - 14, vx: dir * 250, vy: 0, g: 0, r: 11, color: 0xffb25a, life: 3.6, wave: true, sprite: 'wave', sc: 1.2});
           S.cameras.main.shake(180, 0.006);
+          S.crack(b.x - 56, FLOOR - 2); S.crack(b.x + 56, FLOOR - 2); S.burst(b.x, FLOOR, 0xe0b070, 24);
           S.sfx(90, 0.35);
         } else if (b.timer <= 0) {
           b.state = 'slam'; b.timer = 0.45; b.frame = 2;
           const dx = S.p.x - b.x;
-          for (const k of [0.8, 1.2]) S.enemyShot({x: b.x, y: FLOOR - 150, vx: dx / 1.1 * k, vy: -460, g: 900, r: 11, color: 0xd9a24c, spin: true});
+          for (const k of [0.8, 1.2]) S.enemyShot({x: b.x, y: FLOOR - 150, vx: dx / 1.1 * k, vy: -460, g: 900, r: 11, color: 0xd9a24c, spin: true, sprite: 'gear', sc: 1.5});
           S.sfx(420, 0.12);
         }
       } else if (b.state === 'slam') {

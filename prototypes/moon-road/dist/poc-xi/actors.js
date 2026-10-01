@@ -120,7 +120,9 @@ export function skeleton(e, S) {
     draw(g, t) {
       const x = self.x + (self.hit ? self.recoil * self.hit * 30 : 0);
       const frame = self.hit || self.dying || self.stun > 0 ? 3 : self.lunge ? 2 : Math.floor(t * 5 + self.phase) % 2;
-      sprite.setFrame(frame).setPosition(x + (self.stun > 0 ? Math.sin(t * 70) * 2 : 0), self.y + (self.dying ? self.dying * 30 : 0)).setFlipX(self.dir < 0)
+      // Walk bob, lunge anticipation squash, hit stretch.
+      const bob = self.lunge ? [1.06, 0.94] : self.hit ? [0.93, 1.07] : [1 - 0.012 * Math.sin(t * 10 + self.phase), 1 + 0.025 * Math.sin(t * 10 + self.phase)];
+      sprite.setFrame(frame).setPosition(x + (self.stun > 0 ? Math.sin(t * 70) * 2 : 0), self.y + (self.dying ? self.dying * 30 : 0)).setFlipX(self.dir < 0).setScale(bob[0], bob[1])
         .setRotation(self.dying ? Math.min(1.4, self.dying * 4) * -self.recoil : 0)
         .setAlpha(self.dying ? Math.max(0, 1 - self.dying * 2) : 1)
         .setTint(self.stun > 0 ? (Math.floor(t * 20) % 2 ? 0xffe08a : 0xfff4c8) : self.hit ? 0xffd9c9 : 0xffffff);
@@ -558,7 +560,7 @@ export function dummy(e, S) {
       if (self.attack <= 0) {
         self.attack = 3.2;
         const dx = S.p.x - self.x, dy = S.p.y - 40 - self.y, d = Math.hypot(dx, dy) || 1;
-        S.enemyShot({x: self.x, y: self.y, vx: dx / d * 220, vy: dy / d * 220, g: 0, r: 10, color: 0xd8e2ec, harmless: true});
+        S.enemyShot({x: self.x, y: self.y, vx: dx / d * 220, vy: dy / d * 220, g: 0, r: 10, color: 0xd8e2ec, harmless: true, sprite: 'chime', spin: true});
         S.sfx(520, 0.08);
       }
     },

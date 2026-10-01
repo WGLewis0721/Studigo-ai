@@ -10,6 +10,9 @@ import {ART} from './art/art.js';
 
 const Phaser = window.Phaser;
 const SHOT_SPEED = 960;
+// Barrel tip of the dragon gun in each 128 x 128 sheet frame (measured on dragon-orange.png), for the muzzle flash and shot origin.
+const GUN_TIP = [[114, 87], [116, 87], [113, 86], [114, 87], [113, 86], [113, 87], [102, 87], [109, 64], [101, 70], [117, 85], [115, 94], [41, 54]];
+const HERO_SCALE = 116 / 128;
 const RUN = 250, GRAVITY = 1150, JUMP = 520, BOOTS_JUMP = 700, MAX_FALL = 900, CUT = 170;
 const ZONES = {
   atrium: {name: 'MOON ATRIUM', bg: 'bg', bgTint: 0x8296b2, tex: 'tex-atrium', texTint: 0xb4bccc, edge: 0x8fb0d0, plat: 0x9fb6c9},
@@ -42,6 +45,7 @@ export class MoonKeep extends Phaser.Scene {
     this.load.atlas('library', 'art/library.png', 'art/library.json');
     this.load.atlas('fx', 'art/fx.png', 'art/fx.json');
     this.load.atlas('world', 'art/world.png', 'art/world.json');
+    this.load.atlas('boss', 'art/boss.png', 'art/boss.json');
     this.load.on('loaderror', () => { document.querySelector('#loading').textContent = 'Could not load. Refresh to retry.'; });
   }
 
@@ -69,10 +73,12 @@ export class MoonKeep extends Phaser.Scene {
     this.g = this.add.graphics().setDepth(3);
     this.fx = this.add.graphics().setDepth(7);
     this.shotSprites = new Map();
+    this.enemySprites = new Map();
+    this.marks = [];
     this.muzzle = this.add.image(0, 0, 'fx', 'muzzle_0.png').setDepth(8).setVisible(false);
     this.shield = {shell: this.add.image(0, 0, 'fx', 'shield_shell.png').setDepth(6).setVisible(false), gear: this.add.image(0, 0, 'fx', 'shield_gear.png').setDepth(6).setVisible(false),
       pips: [0, 1, 2, 3].map(() => this.add.image(0, 0, 'fx', 'shield_pip_on.png').setDepth(6).setVisible(false)), prev: 0, flash: 0};
-    this.hero = this.add.sprite(0, 0, 'dragon', 6).setOrigin(0.5, 1).setScale(116 / 128).setDepth(5);
+    this.hero = this.add.sprite(0, 0, 'dragon', 6).setOrigin(0.5, 1).setScale(HERO_SCALE).setDepth(5);
     this.loadRoom(START.room);
     this.ui = this.handlers();
     UI.bind(this.ui);
@@ -105,6 +111,74 @@ export class MoonKeep extends Phaser.Scene {
     } catch { /* audio is optional */ }
   }
 
+  audioCtx() {
+    this.audio ||= new (window.AudioContext || window.webkitAudioContext)();
+    this.audio.resume();
+    return this.audio;
+  }
+
+  // One synth voice: oscillator sweeping f0 -> f1 with an attack/decay envelope, optional vibrato; or filtered noise when type is 'noise'.
+  tone({type = 'sine', f0 = 440, f1 = f0, dur = 0.1, vol = 0.05, delay = 0, vib = 0, vibRate = 24, lp = 0, attack = 0.004} = {}) {
+    try {
+      const a = this.audioCtx(), t0 = a.currentTime + delay, gain = a.createGain();
+      let src;
+      if (type === 'noise') {
+        const len = Math.max(1, Math.floor(a.sampleRate * dur)), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        src = a.createBufferSource();
+        src.buffer = buf;
+      } else {
+        src = a.createOscillator();
+        src.type = type;
+        src.frequency.setValueAtTime(f0, t0);
+        src.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
+        if (vib) {
+          const lfo = a.createOscillator(), amt = a.createGain();
+          lfo.frequency.value = vibRate; amt.gain.value = vib;
+          lfo.connect(amt).connect(src.frequency);
+          lfo.start(t0); lfo.stop(t0 + dur);
+        }
+      }
+      let node = src;
+      if (lp) {
+        const f = a.createBiquadFilter();
+        f.type = 'lowpass';
+        f.frequency.setValueAtTime(lp, t0);
+        f.frequency.exponentialRampToValueAtTime(Math.max(80, lp * 0.15), t0 + dur);
+        src.connect(f); node = f;
+      }
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      node.connect(gain).connect(a.destination);
+      src.start(t0);
+      src.stop(t0 + dur + 0.02);
+    } catch { /* audio is optional */ }
+  }
+
+  // Each beam has its own voice so you can hear which one you fired.
+  beamSfx(n) {
+    const v = {
+      1: () => { this.tone({type: 'square', f0: 960, f1: 520, dur: 0.07, vol: 0.03}); },
+      2: () => { this.tone({type: 'noise', dur: 0.2, vol: 0.07, lp: 2400}); this.tone({type: 'sawtooth', f0: 260, f1: 70, dur: 0.2, vol: 0.05}); },
+      3: () => { this.tone({type: 'sine', f0: 1500, f1: 3200, dur: 0.1, vol: 0.05}); this.tone({type: 'triangle', f0: 3200, f1: 2200, dur: 0.09, vol: 0.025, delay: 0.05}); },
+      4: () => { this.tone({type: 'sawtooth', f0: 620, f1: 240, dur: 0.24, vol: 0.04, vib: 70, vibRate: 30, lp: 3000}); },
+      5: () => { [880, 1320, 1760, 2640].forEach((f, i) => this.tone({type: 'triangle', f0: f, f1: f * 0.98, dur: 0.1, vol: 0.035, delay: i * 0.035})); },
+    };
+    v[n]?.();
+  }
+
+  beamHitSfx(n) {
+    const v = {
+      1: () => this.tone({type: 'square', f0: 420, f1: 300, dur: 0.05, vol: 0.025}),
+      2: () => { this.tone({type: 'noise', dur: 0.12, vol: 0.06, lp: 1200}); this.tone({type: 'sine', f0: 120, f1: 50, dur: 0.14, vol: 0.07}); },
+      3: () => { this.tone({type: 'sine', f0: 2200, f1: 1800, dur: 0.12, vol: 0.05}); this.tone({type: 'triangle', f0: 3300, f1: 2800, dur: 0.1, vol: 0.02}); },
+      4: () => { this.tone({type: 'sawtooth', f0: 900, f1: 200, dur: 0.1, vol: 0.04, lp: 3500}); this.tone({type: 'noise', dur: 0.06, vol: 0.03, lp: 5000}); },
+      5: () => [1320, 1760, 2200].forEach((f, i) => this.tone({type: 'sine', f0: f, f1: f, dur: 0.14, vol: 0.04, delay: i * 0.045})),
+    };
+    v[n]?.();
+  }
+
   burst(x, y, c, count = 15) {
     for (let i = 0; i < count; i++) {
       const a = Math.random() * Math.PI * 2, v = 35 + Math.random() * 150;
@@ -116,6 +190,24 @@ export class MoonKeep extends Phaser.Scene {
   pop(x, y, color) {
     const sp = this.add.image(x, y, 'fx', 'impact_0.png').setDepth(8).setTint(color);
     this.tweens.add({targets: sp, scale: {from: 0.7, to: 1.5}, alpha: {from: 1, to: 0}, duration: 240, onComplete: () => sp.destroy()});
+  }
+
+  // Cracks in the floor where a boss slams or lands.
+  crack(x, y) {
+    const sp = this.add.image(x, y, 'boss', 'floor_crack.png').setDepth(2.6);
+    this.tweens.add({targets: sp, alpha: 0, duration: 900, delay: 400, onComplete: () => sp.destroy()});
+  }
+
+  // A puff of steam that rises and fades.
+  puff(x, y) {
+    const sp = this.add.image(x, y, 'boss', 'steam_0.png').setDepth(6.5).setAlpha(0.9);
+    this.tweens.add({targets: sp, y: y - 26, scale: 1.8, alpha: 0, duration: 520, onComplete: () => sp.destroy()});
+  }
+
+  // A glowing rune circle on the floor that telegraphs where an attack will land.
+  runeMark(x, y, dur) {
+    const sp = this.add.image(x, y, 'boss', 'rune_mark_0.png').setDepth(2.7).setAlpha(0.2);
+    this.marks.push({sp, born: this.clock, dur});
   }
 
   float(x, y, text, color, size = 22) {
@@ -520,6 +612,12 @@ export class MoonKeep extends Phaser.Scene {
     cam.scrollY += (ty - cam.scrollY) * Math.min(1, dt * (p.vy > 400 ? 12 : 7));
   }
 
+  // World position of the gun barrel tip for a hero frame (the hero sprite is bottom-centre anchored and may be flipped).
+  tipFor(fr) {
+    const p = this.p, [tx, ty] = GUN_TIP[fr], pose = this.heroPose || {sx: HERO_SCALE, sy: HERO_SCALE, recoil: 0};
+    return {x: p.x + pose.recoil + p.face * (tx - 64) * pose.sx, y: p.y + 7 - (128 - ty) * pose.sy};
+  }
+
   aimTarget() {
     const p = this.p, oy = p.y - 46;
     let best = null, bestD = Infinity;
@@ -546,13 +644,13 @@ export class MoonKeep extends Phaser.Scene {
       return;
     }
     p.fire = 0.13;
-    const ox = p.x + p.face * 40, oy = p.y - 46, t = this.aimTarget();
+    const tip = this.tipFor(p.land > 0 ? 10 : !p.ground ? (p.vy < 0 ? 7 : 8) : 9), ox = tip.x, oy = tip.y, t = this.aimTarget();
     let dx = p.face, dy = 0;
     if (t) { const c = center(t.rect()); dx = c.x - ox; dy = c.y - oy; }
     const len = Math.hypot(dx, dy) || 1;
     this.shots.push({x: ox, y: oy, vx: dx / len * SHOT_SPEED, vy: dy / len * SHOT_SPEED, n: w, life: 1.1, target: t});
     this.burst(ox, oy, COLOR[w], w === 1 ? 5 : 12);
-    this.sfx(w === 1 ? 410 : 200 - w * 10, 0.08);
+    this.beamSfx(w);
     this.log('shot', {weapon: w, ammo: w === 1 ? null : run.ammo[w]});
   }
 
@@ -571,6 +669,7 @@ export class MoonKeep extends Phaser.Scene {
       return;
     }
     s.life = 0;
+    this.beamHitSfx(s.n);
     this.pop(s.x, s.y, COLOR[s.n]);
     t.applyDamage(s.n);
     this.hitStop = s.n > 1 ? 0.045 : 0.015;
@@ -637,7 +736,16 @@ export class MoonKeep extends Phaser.Scene {
 
     const moving = input.left.size || input.right.size;
     const fr = p.land > 0 ? 10 : !p.ground ? (p.vy < 0 ? 7 : 8) : p.fire > 0 ? 9 : moving && this.mode === 'play' ? Math.floor(t * 12) % 6 : 6;
-    this.hero.setPosition(p.x, p.y + 7).setFrame(fr).setFlipX(p.face < 0)
+    // Squash and stretch, idle breathing, gun recoil and footfall dust so the dragon reads as one fluid body.
+    let sx = HERO_SCALE, sy = HERO_SCALE;
+    if (p.land > 0) { const k = p.land / 0.12; sx *= 1 + 0.12 * k; sy *= 1 - 0.1 * k; }
+    else if (!p.ground) { const k = Math.min(1, Math.abs(p.vy) / 700); sx *= 1 - 0.07 * k; sy *= 1 + 0.1 * k; }
+    else if (fr === 6) { sy *= 1 + 0.012 * Math.sin(t * 3.2); sx *= 1 - 0.006 * Math.sin(t * 3.2); }
+    const recoil = p.fire > 0 ? -p.face * 2.5 * (p.fire / 0.13) : 0;
+    if (this.mode === 'play' && p.ground && p.land <= 0 && fr !== this.prevFr && (fr === 1 || fr === 4)) this.burst(p.x - p.face * 10, p.y, 0xb8a888, 2);
+    this.prevFr = fr;
+    this.heroPose = {sx, sy, recoil};
+    this.hero.setPosition(p.x + recoil, p.y + 7).setFrame(fr).setFlipX(p.face < 0).setScale(sx, sy)
       .setAlpha(p.inv > 0 && Math.floor(t * 15) % 2 ? 0.45 : 1);
 
     for (const q of this.floaters) {
@@ -657,7 +765,18 @@ export class MoonKeep extends Phaser.Scene {
         .setRotation(s.reflected ? t * 14 : Math.atan2(s.vy, s.vx)).setTint(s.reflected ? 0xefb5ff : 0xffffff).setAlpha(s.reflected ? Math.max(0.2, s.life * 1.5) : 1);
       if (s.n > 1 && !s.reflected) { f.fillStyle(COLOR[s.n], 0.16); f.fillCircle(s.x, s.y, 14 + s.n * 2); }
     }
+    const liveEnemy = new Set(this.enemyShots);
+    for (const [s, sp] of this.enemySprites) if (!liveEnemy.has(s)) { sp.destroy(); this.enemySprites.delete(s); }
     for (const s of this.enemyShots) {
+      if (s.sprite) {
+        let sp = this.enemySprites.get(s);
+        if (!sp) { sp = this.add.image(s.x, s.y, 'boss', `${s.sprite}.png`).setDepth(6); this.enemySprites.set(s, sp); }
+        sp.setPosition(s.x, s.y + (s.wave ? 4 : 0)).setFlipX(!!s.wave && s.vx < 0)
+          .setRotation(s.spin ? t * 15 * (s.vx < 0 ? -1 : 1) : s.aim ? Math.atan2(s.vy, s.vx) : 0).setScale(s.sc || 1);
+        if (!s.wave) { f.fillStyle(s.color, 0.2); f.fillCircle(s.x, s.y, s.r + 5); }
+        for (let i = 1; i <= 3 && !s.wave; i++) { f.fillStyle(s.color, 0.16 - i * 0.04); f.fillCircle(s.x - s.vx * 0.022 * i, s.y - s.vy * 0.022 * i, s.r - i); }
+        continue;
+      }
       if (s.wave) {
         f.fillStyle(s.color, 0.3); f.fillEllipse(s.x, s.y + 6, 44, 30);
         f.fillStyle(s.color, 0.9); f.fillTriangle(s.x - 16, s.y + 16, s.x, s.y - 14, s.x + 16, s.y + 16);
@@ -667,9 +786,16 @@ export class MoonKeep extends Phaser.Scene {
       f.fillStyle(s.color); f.fillCircle(s.x, s.y, s.r);
       if (s.spin) { f.lineStyle(3, 0x8a7f6c); const a = t * 14; f.lineBetween(s.x - Math.cos(a) * 12, s.y - Math.sin(a) * 12, s.x + Math.cos(a) * 12, s.y + Math.sin(a) * 12); }
     }
+    this.marks = this.marks.filter(m => {
+      const k = (this.clock - m.born) / m.dur;
+      if (k >= 1) { m.sp.destroy(); return false; }
+      m.sp.setFrame(`rune_mark_${Math.floor(this.clock * 12) % 3}.png`).setAlpha(0.25 + 0.75 * k).setScale(0.6 + 0.5 * k, 1);
+      return true;
+    });
     this.drawShield(t, p);
     if (p.fire > 0) {
-      this.muzzle.setVisible(true).setPosition(p.x + p.face * 46, p.y - 47).setFrame(`muzzle_${p.fire > 0.09 ? 0 : p.fire > 0.045 ? 1 : 2}.png`).setTint(COLOR[this.weapon]).setFlipX(p.face < 0);
+      const tip = this.tipFor(fr);
+      this.muzzle.setVisible(true).setScale(0.5).setPosition(tip.x + p.face * 3, tip.y).setFrame(`muzzle_${p.fire > 0.09 ? 0 : p.fire > 0.045 ? 1 : 2}.png`).setTint(COLOR[this.weapon]).setFlipX(p.face < 0);
     } else this.muzzle.setVisible(false);
     for (const q of this.particles) {
       q.life -= dt;
