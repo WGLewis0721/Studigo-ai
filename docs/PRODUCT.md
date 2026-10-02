@@ -111,7 +111,7 @@ Not MVP:
 
 ## Distribution and paid-access contract
 
-The web/PWA product remains supported. The chosen App Store client is a real **Expo / React Native** iOS application over the same Studigo account, data, and hosted learning system.
+The web/PWA product remains supported. The chosen App Store client is a universal **Expo / React Native** iOS/iPadOS application over the same Studigo account, data, and hosted learning system.
 
 - Supabase Auth remains the single user identity.
 - The mobile client must not duplicate mastery, progression, RAG, or source-of-truth learner state.
@@ -173,6 +173,34 @@ is where mastery is earned, together with Quiz.
 The natural order is Learn first when a term is unclear, then Coach to practice
 it. The four starter chips above the Learn input teach this, and "How Learn
 works" explains it in the chat itself.
+
+
+## V3 coaching and adaptation contract
+
+The Study Room keeps one global **Explanation level**: `simpler`, `standard`
+or `deeper`. It applies across Coach and Learn and changes delivery only. A
+hard transfer task may still be written in simple language.
+
+The learner-facing Coach customization is intentionally reduced to three modes:
+
+- **Show me** — brief explanation, one representative example, then an attempt.
+- **Coach me** — default; questions, diagnosis, hints/scaffolds and adaptive retry.
+- **Challenge me** — less initial help, stronger retrieval/application pressure,
+  delayed hints and earlier transfer.
+
+These modes are delivery/support biases, not separate mastery systems. They do
+not change source truth, grading truth or the mastery target.
+
+The existing learning-tradition and practice-recipe research remains valuable,
+but it moves behind the interface as an internal strategy/reference library.
+The learner should not have to choose the algorithm that decides whether the
+next useful encounter is a worked example, focused retrieval, concrete
+representation or transfer.
+
+Progression belongs to the deterministic adaptive game director. The GenAI
+study partner receives the director's task plus grounded room evidence and
+renders it naturally. See `ADAPTIVE_LEARNING_ENGINE.md`,
+`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md` and the root `IMPLEMENTATION.md`.
 
 ## Typed answers are read the way a person would read them
 
