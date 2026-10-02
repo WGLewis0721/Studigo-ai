@@ -17,7 +17,7 @@ import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
 import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
-import type { ExplainLevel } from "@studigo/learning";
+import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
@@ -26,12 +26,6 @@ type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
 type SkillTopic = { id: string; title: string; objective: string | null };
 const GENERAL_TOPIC: SkillTopic = { id: "general", title: "This unit", objective: "Start with a quick diagnostic on the most important skill." };
-const EXPLAIN_OPTIONS: Array<{ id: ExplainLevel; label: string; copy: string }> = [
-  { id: "simpler", label: "Simpler", copy: "Plain words and familiar examples." },
-  { id: "standard", label: "Standard", copy: "Match the level of your materials." },
-  { id: "deeper", label: "Deeper", copy: "More precise vocabulary and connections." }
-];
-const LEVEL_LABEL: Record<ExplainLevel, string> = { simpler: "Simpler words", standard: "Standard words", deeper: "Deeper detail" };
 
 function answerLabel(message: Message): string {
   const state = coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming });
@@ -58,17 +52,15 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   onTopicsChanged: () => void;
 }) {
   const [draft, setDraft] = useState(coaching.applied);
-  const [learnDraft, setLearnDraft] = useState<ExplainLevel>(coaching.learnLevel);
-  const [coachApplyBoth, setCoachApplyBoth] = useState(false);
-  const [learnApplyBoth, setLearnApplyBoth] = useState(false);
-  const coachDirty = !sameCoachPreferences(draft, coaching.applied)
-    || (coachApplyBoth && coaching.learnLevel !== draft.explainLevel);
-  const learnDirty = learnDraft !== coaching.learnLevel
-    || (learnApplyBoth && coaching.applied.explainLevel !== learnDraft);
+  const [learnDraft, setLearnDraft] = useState<LearnPreferences>(coaching.learnApplied);
+  const coachDirty = !sameCoachPreferences(draft, coaching.applied);
+  const learnDirty = learnDraft.mode !== coaching.learnApplied.mode;
   const active = describeCoaching(coaching.applied);
   const draftMode = describeCoaching(draft);
+  const learnActive = describeLearning(coaching.learnApplied);
+  const learnDraftMode = describeLearning(learnDraft);
   useEffect(() => { setDraft(coaching.applied); }, [coaching.applied]);
-  useEffect(() => { setLearnDraft(coaching.learnLevel); }, [coaching.learnLevel]);
+  useEffect(() => { setLearnDraft(coaching.learnApplied); }, [coaching.learnApplied]);
   const defaultTopicIds = topics[0] ? [topics[0].id] : [];
   const [coachTopicIds, setCoachTopicIds] = useState<string[]>(defaultTopicIds);
   const [learnTopicIds, setLearnTopicIds] = useState<string[]>(defaultTopicIds);
@@ -130,7 +122,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     (document.activeElement as HTMLElement | null)?.blur();
     setSkillPickerOpen(false);
     setDraft(coaching.applied);
-    setLearnDraft(coaching.learnLevel);
+    setLearnDraft(coaching.learnApplied);
     setPersonalizeOpen(true);
   };
 
@@ -268,18 +260,12 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   async function applySurfaceSettings() {
     if (busy) return;
     if (chatMode === "coach") {
-      const ok = await coaching.apply(draft, coachApplyBoth);
-      if (ok) {
-        conversationId.current = null;
-        if (coachApplyBoth) askConversationId.current = null;
-      }
+      const ok = await coaching.apply(draft);
+      if (ok) conversationId.current = null;
       return;
     }
-    const ok = await coaching.applyLearn(learnDraft, learnApplyBoth);
-    if (ok) {
-      askConversationId.current = null;
-      if (learnApplyBoth) conversationId.current = null;
-    }
+    const ok = await coaching.applyLearn(learnDraft);
+    if (ok) askConversationId.current = null;
   }
 
   function applyTopicScope() {
@@ -388,7 +374,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <div><span className="tinyLabel">{chatMode === "coach" ? "COACH SETUP" : "LEARN SETUP"}</span><strong>{chatMode === "coach" ? "How should Studigo coach you?" : "How should Studigo explain things?"}</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
-        {chatMode === "coach" && (
+        {chatMode === "coach" ? (
           <>
             <div className="coachExpect" aria-live="polite">
               <span className="tinyLabel">{coachDirty ? "AFTER YOU APPLY" : "IN USE NOW"}</span>
@@ -402,20 +388,21 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               </div>
             </div>
           </>
+        ) : (
+          <>
+            <div className="coachExpect" aria-live="polite">
+              <span className="tinyLabel">{learnDirty ? "AFTER YOU APPLY" : "IN USE NOW"}</span>
+              <strong>{learnDraftMode.label}</strong>
+              <p>{learnDraftMode.expect}</p>
+            </div>
+            <div>
+              <span className="tinyLabel">LEARN MODE</span>
+              <div className="coachStyleGrid coachModeGrid" aria-label="Choose a learning mode">
+                {LEARN_MODE_OPTIONS.map((option) => <button key={option.id} type="button" aria-pressed={option.id === learnDraftMode.mode} disabled={coaching.learnApplying} className={option.id === learnDraftMode.mode ? "coachStyle active" : "coachStyle"} onClick={() => setLearnDraft({ mode: option.id })}><strong>{option.name}</strong><span>{option.expect}</span></button>)}
+              </div>
+            </div>
+          </>
         )}
-        <div>
-          <span className="tinyLabel">{chatMode === "coach" ? "COACH EXPLANATION LEVEL" : "LEARN EXPLANATION LEVEL"}</span>
-          <div className="coachStyleGrid explainLevelGrid" aria-label={chatMode === "coach" ? "Choose Coach explanation level" : "Choose Learn explanation level"}>
-            {EXPLAIN_OPTIONS.map((option) => {
-              const selected = chatMode === "coach" ? draft.explainLevel === option.id : learnDraft === option.id;
-              return <button key={option.id} type="button" aria-pressed={selected} disabled={coaching.applying || coaching.learnApplying} className={selected ? "coachStyle active" : "coachStyle"} onClick={() => chatMode === "coach" ? setDraft((current) => ({ ...current, explainLevel: option.id })) : setLearnDraft(option.id)}><strong>{option.label}</strong><span>{option.copy}</span></button>;
-            })}
-          </div>
-        </div>
-        <label className="coachApplyBoth">
-          <input type="checkbox" checked={chatMode === "coach" ? coachApplyBoth : learnApplyBoth} onChange={(event) => chatMode === "coach" ? setCoachApplyBoth(event.target.checked) : setLearnApplyBoth(event.target.checked)} />
-          <span>Apply this explanation level to both Coach and Learn</span>
-        </label>
         <div className="coachApplyActions">
           <button className="buttonPrimary" type="button" disabled={busy || coaching.applying || coaching.learnApplying || (chatMode === "coach" ? !coachDirty : !learnDirty)} onClick={() => void applySurfaceSettings()}>
             {(chatMode === "coach" ? coaching.applying : coaching.learnApplying) ? "Recalibrating…" : chatMode === "coach" ? "Apply Coach" : "Apply Learn"}
@@ -428,10 +415,9 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         {!personalizeOpen && (chatMode === "coach" ? coaching.status : coaching.learnStatus) && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? coaching.status : coaching.learnStatus}</p>}
         {!personalizeOpen && activeScopeStatus && <p className="coachPreferenceStatus" role="status">{activeScopeStatus}</p>}
         {view === "chat" && !personalizeOpen && (
-          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}, ${active.level}. Change` : `Learning: ${LEVEL_LABEL[coaching.learnLevel]}. Change`}>
+          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}. Change` : `Learning: ${learnActive.label}. Change`}>
             <span>{chatMode === "coach" ? "Coaching" : "Learning"}</span>
-            <strong>{chatMode === "coach" ? active.label : LEVEL_LABEL[coaching.learnLevel]}</strong>
-            {chatMode === "coach" && <em>{active.level}</em>}
+            <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
           </button>
         )}
         <div className="chatThread" role="log" aria-live="polite" aria-label="Messages">
