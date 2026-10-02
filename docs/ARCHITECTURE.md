@@ -483,15 +483,25 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 ### Applying delivery preferences
 
 V3 exposes one persistent learner-facing Coach preference:
-`coach_mode = show | coach | challenge`. Room Settings separately owns the
-global `study_rooms.explain_level = simpler | standard | deeper`, which remains
-canonical for both Coach and Learn.
+`coach_mode = show | coach | challenge`.
 
-Coach setup edits a draft. **Apply** posts the selected Coach mode to
-`POST /api/coach/preferences`. The request validates the mode, canonicalizes
-the temporary legacy compatibility fields, and commits the owned Study Room row.
-No model call or separate job is needed to "recalibrate"; subsequent turns read
-the saved room preference.
+`study_rooms.explain_level` remains the room-wide shared/default level. The
+room also stores nullable/effective surface values:
+
+- `coach_explain_level`
+- `learn_explain_level`
+
+Room Settings is the explicit **apply to both** path and writes all three values
+together. Coach and Learn sheets can later diverge their surface value without
+silently changing the other surface.
+
+**Apply Coach** posts the selected Coach mode + Coach explanation level to
+`POST /api/coach/preferences`. **Apply Learn** posts the Learn explanation
+level to `POST /api/learn/preferences`. Each endpoint supports an explicit
+`applyToBoth` flag. No model call or background job is required: subsequent
+turns read the saved surface preference. The browser also starts a fresh
+conversation context for the affected surface so an old pending prompt cannot
+mask the newly applied delivery setting.
 
 The current database JSON constraint still requires `style`, `tradition` and
 `practice`. During the compatibility window, new V3 writes derive those hidden
@@ -507,9 +517,14 @@ Direct instruction or Concrete-to-abstract -> Show me; Deliberate practice ->
 Challenge me; all other old styles -> Coach me.
 
 `/api/chat` reads saved preferences for every turn. Coach receives the saved
-Coach mode, the canonical internal strategy and the global explanation level.
-Ask/Learn receives **only** the global explanation level plus trusted topic
-context. Browser drafts cannot override saved pedagogy.
+Coach mode, canonical internal strategy and effective Coach explanation level.
+Ask/Learn receives **only** the effective Learn explanation level plus trusted
+topic scope. Browser drafts cannot override saved pedagogy.
+
+The client may send up to 80 selected topic IDs. The server intersects those IDs
+with the room's active topics before the Coach director sees them. A stale or
+cross-room-only selection fails closed. Multi-topic scope restricts the
+deterministic director; it never authorizes source access outside the room.
 
 For a pending Coach encounter, applying a different mode changes delivery only
 for subsequent rendering/turns. It does not rewrite the issued ChallengeSpec,

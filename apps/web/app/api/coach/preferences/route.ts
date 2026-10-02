@@ -10,8 +10,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Choose valid coaching settings." }, { status: 400 });
   }
   try {
-    const preferences = await applyCoachPreferences(supabase, body.roomId, user.id, body.preferences);
-    return Response.json({ preferences, status: "ready" }, { headers: { "Cache-Control": "no-store" } });
+    const result = await applyCoachPreferences(supabase, body.roomId, user.id, body.preferences, body.applyToBoth === true);
+    return Response.json({ ...result, status: "ready" }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not apply your settings.";
     return Response.json({ error: message }, { status: message === "Study Room not found." ? 404 : 503 });

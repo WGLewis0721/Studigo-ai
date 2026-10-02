@@ -52,9 +52,19 @@ export type EngineRequest = {
   userId?: string;
   /** The persisted user message for a Coach turn (ID + server time). */
   interaction?: CoachInteraction;
+  /** Learner-selected active-topic scope. The server intersects it with this room's active topics. */
+  selectedTopicIds?: string[];
 };
 
 const EVIDENCE_WINDOW = 300;
+
+export function scopeTopicsForRequest(roomTopics: Topic[], selectedTopicIds: readonly string[] | undefined): Topic[] {
+  if (!selectedTopicIds?.length) return roomTopics;
+  const selected = new Set(selectedTopicIds);
+  const scoped = roomTopics.filter((topic) => selected.has(topic.id));
+  if (!scoped.length) throw new Error("Your selected topics are no longer available. Pick a topic and try again.");
+  return scoped;
+}
 
 /**
  * One entry point that fuses the two halves of Studigo into a single request:
@@ -72,10 +82,11 @@ const EVIDENCE_WINDOW = 300;
  * composing retrieval + generation + analytics themselves.
  */
 export async function* runStudigoEngine(args: EngineRequest): AsyncGenerator<GroundedStreamEvent> {
-  const [topics, evidence] = await Promise.all([
+  const [roomTopics, evidence] = await Promise.all([
     fetchActiveTopics(args.supabase, args.roomId),
     fetchRecentEvidence(args.supabase, args.roomId)
   ]);
+  const topics = scopeTopicsForRequest(roomTopics, args.selectedTopicIds);
 
   // Coach mode is a stateful protocol (idle / awaiting_answer /
   // awaiting_control), not free-form Q&A, so it is routed to its own state

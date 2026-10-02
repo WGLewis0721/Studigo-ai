@@ -108,6 +108,24 @@ Legacy style/tradition/practice fields may remain temporarily for DB rollback/ba
 
 ---
 
+## 2. Surface-specific recalibration after physical-device testing
+
+October 2 iPhone testing showed that a saved setting could appear selected while
+the next reply was still carried by an older Coach/Learn conversation context.
+
+Target behavior:
+
+- **Apply Coach** saves Coach mode + Coach explanation level, then starts a fresh
+  Coach response context only.
+- **Apply Learn** saves Learn explanation level, then starts a fresh Learn
+  response context only.
+- either sheet can turn on **Apply this explanation level to both Coach and
+  Learn**; only then are both surfaces synchronized/recalibrated.
+- Room Settings remains the global/shared apply-to-both control.
+- recalibration never changes mastery, attempts, rematches or source data.
+
+---
+
 ## 2. Preserve the global Study Room explanation level
 
 Keep:
@@ -122,7 +140,8 @@ Meaning:
 
 > How should Studigo explain things in this Study Room?
 
-It applies to Coach and Learn.
+It is the shared/default value and Room Settings applies it to both Coach and
+Learn. Surface-specific Apply actions may diverge Coach and Learn afterward.
 
 Invariant:
 
@@ -145,17 +164,20 @@ PRIMARY MODE
 Coach | Learn
 always visible
 
-SECONDARY VIEW
+SECONDARY CONTROLS
 Chat | Topics
-always visible
+Topics opens the integrated study-scope selector
 ```
 
 ### Requirements
 
 - Coach/Learn stays visible in Chat and Topics.
-- Chat/Topics never replaces Coach/Learn.
-- changing Chat/Topics preserves Coach/Learn selection;
-- changing Coach/Learn preserves Chat/Topics selection;
+- Topics never replaces Coach/Learn.
+- the standalone green topic dropdown is removed;
+- Topics itself opens the selector;
+- selector rows use checkboxes for multi-select;
+- include Select all, Clear and Apply topics;
+- Apply topics resets Coach/Learn response context but not learning evidence;
 - phone uses the same prominent segmented control already used in the working Chat view;
 - wide/iPad layouts preserve the same information hierarchy even if spacing changes.
 
@@ -349,7 +371,7 @@ The learner sees a simpler interface than before:
 - three understandable Coach choices;
 - one global explanation setting;
 - one always-visible Coach/Learn decision;
-- one secondary Chat/Topics decision;
+- one integrated Chat/Topics scope control with no duplicate topic dropdown;
 - a companion whose face is never unintentionally cropped.
 
 At the same time, the deterministic adaptive engine remains fully intact underneath the experience.

@@ -22,6 +22,8 @@ type ChatRequest = {
   /** Client-generated UUID, once per submitted turn. Becomes the user
    *  message's ID and the stable identity of any learning evidence. */
   interactionId?: string;
+  /** Optional learner-selected study scope. Server intersects with active room topics. */
+  topicIds?: string[];
 };
 
 function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
@@ -45,6 +47,12 @@ export async function POST(request: Request) {
   const roomId = typeof body?.roomId==='string'?body.roomId.trim():'';
   const question = typeof body?.question==='string'?body.question.trim():'';
   const mode = body?.mode === "coach" ? "coach" : "ask";
+  const topicIds = Array.isArray(body?.topicIds)
+    ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
+    : [];
+  if (topicIds.length > 80 || topicIds.some((value) => !isInteractionId(value))) {
+    return Response.json({ error: "Choose valid Study Room topics." }, { status: 400 });
+  }
 
   if (!roomId || !question) {
     return Response.json({ error: "roomId and question are required" }, { status: 400 });
@@ -64,7 +72,7 @@ export async function POST(request: Request) {
   let teaching;
   let preferences;
   try {
-    preferences = await readCoachPreferences(supabase, roomId);
+    preferences = await readCoachPreferences(supabase, roomId, mode === "coach" ? "coach" : "learn");
     teaching = compileCoachPreferences(preferences);
   } catch {
     return Response.json({ error: "Could not load your coaching settings. Please retry." }, { status: 503 });
@@ -145,7 +153,7 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

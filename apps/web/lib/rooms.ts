@@ -12,8 +12,11 @@ export type StudyRoom = {
   subject: string | null;
   course_name: string | null;
   test_date: string | null;
-  /** How Studigo pitches explanations in this room. Never changes the facts. */
+  /** Shared/default explanation level. Room Settings writes this to both surfaces. */
   explain_level: "simpler" | "standard" | "deeper";
+  /** Surface-specific overrides. Null means fall back to explain_level. */
+  coach_explain_level?: "simpler" | "standard" | "deeper" | null;
+  learn_explain_level?: "simpler" | "standard" | "deeper" | null;
   coach_preferences?: Omit<CoachPreferences, "explainLevel">;
   created_at: string;
   updated_at: string;
@@ -95,7 +98,7 @@ async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title, subject, course_name, test_date, explain_level, coach_preferences, created_at, updated_at")
+    .select("id, title, subject, course_name, test_date, explain_level, coach_explain_level, learn_explain_level, coach_preferences, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
   // A real query failure (bad schema, connection issue, ...) is not "not
