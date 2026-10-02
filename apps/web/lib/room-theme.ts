@@ -46,6 +46,16 @@ function subscribe(notify: () => void) {
   };
 }
 
+/** Saves a room's color outside a component (first-run setup picks it before the room exists). */
+export function saveRoomTheme(roomId: string, next: RoomTheme) {
+  try {
+    window.localStorage.setItem(storageKey(roomId), next);
+  } catch {
+    /* storage can be blocked; the color just will not persist */
+  }
+  listeners.forEach((notify) => notify());
+}
+
 /**
  * A room's color is cosmetic and saved per room in this browser only. Room
  * Settings writes it; the room, its Coach and its cards read it and stay in

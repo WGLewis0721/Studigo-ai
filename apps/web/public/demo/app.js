@@ -148,7 +148,7 @@
     return `<div class="richText">${html}</div>`;
   }
   const cite = (page) => `<div class="sourceStack"><a class="sourceChipLink" href="#" data-act="noop" title="Open ${SOURCE}"><i>1</i><span class="sourceChipName">${SOURCE}</span><span class="sourceChipPage">page ${page}</span></a></div>`;
-  const mark = () => '<span class="studigoMascot"><img src="assets/mark.jpg" alt=""></span>';
+  const mark = () => '<span class="studigoMascot"><img src="/mascot/companion/mark.jpg" alt=""></span>';
 
   /* ---------- header, chips, tab bar ---------- */
   const groupOf = (mode) => GROUPS.find((group) => group.modes.includes(mode));
@@ -168,7 +168,7 @@
     }
     const dot = S.mode === "coach" && S.coachView === "chat" && S.chatMode === "coach" ? '<span class="chatMascotDot" aria-hidden="true"></span>' : "";
     const step = GROUPS.indexOf(group);
-    const seat = `<button type="button" class="chatMascot seat" data-act="seat" aria-label="Studigo's seat. Tap to call him out or send him back."><span class="studigoMascot"><img src="assets/center.webp" alt=""></span>${dot}</button>`;
+    const seat = `<button type="button" class="chatMascot seat" data-act="seat" aria-label="Studigo's seat. Tap to call him out or send him back."><span class="studigoMascot"><img src="/mascot/companion/center.webp" alt=""></span>${dot}</button>`;
     return `<header class="modeHead" data-tone="${headTone()}">${seat}${middle}</header>
       <div class="studigoRail" aria-hidden="true"><span class="railLed"></span><span class="railBrand">studigo</span><span class="railDots">${GROUPS.map((_, index) => `<i ${index === step ? "data-lit" : ""}></i>`).join("")}</span></div>`;
   }
@@ -315,7 +315,7 @@
       let card = "";
       if (done) {
         const right = done.filter((item) => item.isCorrect).length, blind = done.filter((item) => item.confidence === 3 && !item.isCorrect).length, lucky = done.filter((item) => item.confidence === 1 && item.isCorrect).length;
-        card = `<div class="quizScoreCard"><img class="fullMascot" src="assets/full/celebrate.webp" alt="Studigo celebrating"><span class="tinyLabel">SET COMPLETE</span><strong>${Math.round((right / done.length) * 100)}%</strong><small>${right} of ${done.length} right · your mastery has been updated</small>
+        card = `<div class="quizScoreCard"><img class="fullMascot" src="/mascot/companion/full/celebrate.webp" alt="Studigo celebrating"><span class="tinyLabel">SET COMPLETE</span><strong>${Math.round((right / done.length) * 100)}%</strong><small>${right} of ${done.length} right · your mastery has been updated</small>
           ${blind ? `<p class="calibrationNote">You were confident on ${blind} answer${blind === 1 ? "" : "s"} you got wrong. Those are blind spots. Weak Areas now ranks them first.</p>` : lucky ? `<p class="calibrationNote">You guessed right ${lucky} time${lucky === 1 ? "" : "s"}. Worth another pass before you count it as known.</p>` : ""}</div>`;
       }
       return `<div class="quizSetup">${card}<p class="setupLead">${done ? "Go again with a new set." : "Five questions, written only from your materials."}</p><button class="buttonPrimary" type="button" data-act="quizstart">Start quiz <span aria-hidden="true">→</span></button></div>`;
@@ -353,7 +353,7 @@
 
   function cardsHTML() {
     const deck = S.cards;
-    if (deck.done) return '<div class="modeEmpty"><img class="fullMascot" src="assets/full/wave.webp" alt="Studigo waving"><h3>All caught up.</h3><p>Every card that was due has been reviewed. Your next cards come back when they are due.</p><button class="buttonPrimary" type="button" data-act="cardsagain">Review again <span aria-hidden="true">→</span></button></div>';
+    if (deck.done) return '<div class="modeEmpty"><img class="fullMascot" src="/mascot/companion/full/wave.webp" alt="Studigo waving"><h3>All caught up.</h3><p>Every card that was due has been reviewed. Your next cards come back when they are due.</p><button class="buttonPrimary" type="button" data-act="cardsagain">Review again <span aria-hidden="true">→</span></button></div>';
     const card = CARDS[deck.index];
     return `<div class="cardsMode"><span class="tinyLabel">CARD ${deck.index + 1} OF ${CARDS.length} DUE</span>
       <button class="flashcard ${deck.flipped ? "flashcardFlipped" : ""}" type="button" data-act="flip"><span class="srOnly">${deck.flipped ? "Answer side. Press to show the question." : "Question side. Press to show the answer."}</span>

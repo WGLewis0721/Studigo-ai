@@ -1,4 +1,6 @@
+import "@/components/companion/companion.css";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { StudigoFigure } from "@/components/companion/figure";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -13,8 +15,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
       <aside className="authAside" aria-hidden="true">
+        <div className="stageScreen authStage">
+          <StudigoFigure pose="wave" size={190} />
+          <span className="stageSill"><span className="railLed" /><span className="railBrand">studigo</span></span>
+        </div>
         <div className="authAsideInner">
-          <StudigoMascot state="welcome" size={96} />
           <p className="authQuote">
             Your study guide, your textbook, your notes: one companion that answers from them and
             shows the receipts.

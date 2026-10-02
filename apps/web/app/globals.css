@@ -339,29 +339,32 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .googleButton:disabled { opacity: .6; cursor: wait; }
 .googleButton:focus-visible { outline: 3px solid var(--blueberry-ink); outline-offset: 3px; }
 
+/* The same closing field as the homepage: tangerine, with Studigo on his screen,
+   so homepage, sign-in and app read as one product. */
 .authAside {
+  --tone: var(--tangerine); --tone-key: var(--ink); --tone-on: #fff;
   position: relative; overflow: hidden; margin: 16px; border-radius: var(--r-2xl);
-  display: grid; place-items: center; padding: 48px;
+  display: grid; align-content: center; justify-items: center; gap: 26px; padding: 48px;
   color: var(--ink);
   background:
-    radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, .55), transparent 55%),
-    linear-gradient(160deg, #8fb5ff 0%, var(--blueberry) 55%, #2f63e0 100%);
-  box-shadow: var(--edge), inset 0 -30px 60px rgba(20, 40, 120, .18), var(--lift-2);
+    radial-gradient(80% 90% at 10% 0%, rgba(255, 255, 255, .5), transparent 60%),
+    linear-gradient(165deg, #ffab6e 0%, var(--tangerine) 50%, #f06a1c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -40px 80px -40px rgba(120, 40, 0, .35), var(--lift-2);
 }
+.authStage { width: min(280px, 100%); height: 260px; box-shadow: inset 0 4px 14px rgba(20, 27, 45, .08), 0 0 0 8px rgba(255, 255, 255, .9), 0 40px 60px -30px rgba(90, 30, 0, .6); }
+.authStage .studigoFigure { margin-bottom: 30px; }
 .authAsideInner {
-  position: relative; max-width: 380px; padding: 30px; border-radius: var(--r-xl);
-  background: rgba(255, 255, 255, .8);
-  backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  box-shadow: var(--edge), 0 30px 60px -30px rgba(10, 30, 90, .55);
+  position: relative; width: min(380px, 100%); padding: 26px 28px; border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, .9);
+  box-shadow: var(--edge), 0 30px 60px -30px rgba(90, 30, 0, .55);
 }
-.authAsideInner .studigoMascot { margin-bottom: 22px; --tone: var(--tangerine); }
 .authQuote { font-family: var(--display); font-size: 1.45rem; font-weight: 700; letter-spacing: -.025em; line-height: 1.25; margin: 0; }
 .authProof { display: grid; gap: 10px; margin-top: 24px; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
 .authProof span { display: flex; align-items: center; gap: 10px; }
 .authProof i {
   font-style: normal; font-family: var(--mono); font-size: .7rem; font-weight: 600;
   display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
-  color: #fff; background: var(--blueberry-ink); box-shadow: var(--edge);
+  color: #fff; background: var(--ink); box-shadow: var(--edge);
 }
 
 /* ---------------------------------------------------------------------------

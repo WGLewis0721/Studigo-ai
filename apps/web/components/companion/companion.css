@@ -1,0 +1,267 @@
+/* The Studigo companion in the app.
+
+   His window: a small screen set into a bezel of the current mode's color (the
+   same idea as .studigoMascot), with a sill. It is fixed to the viewport and the
+   engine keeps it in a free corner of the room (components/companion/engine.ts).
+   His stage: the full figure, on Home, in first-run setup and on the sign-in
+   pages (components/companion/stage.tsx). */
+
+.cmp {
+  --ring: var(--tangerine);
+  position: fixed; left: 0; top: 0; z-index: 58; width: 100px; height: 120px;
+  transform: translate(var(--x, 0px), var(--y, 0px)) scale(var(--sc, 1));
+  transition: transform .46s var(--ease-spring), opacity .22s ease;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.cmp[data-tone="coach"], .cmp[data-tone="cram"] { --ring: var(--tangerine); --ring-on: var(--ink); }
+.cmp[data-tone="quiz"] { --ring: var(--dandelion); --ring-on: var(--ink); }
+.cmp[data-tone="cards"] { --ring: var(--grape); --ring-on: #fff; }
+.cmp[data-tone="test"] { --ring: var(--graphite-2); --ring-on: #fff; }
+.cmp.dragging { transition: none; z-index: 70; }
+.cmp[data-state="seat"] { --sc: .3; opacity: 0; pointer-events: none; }
+.cmp.noMove { transition: none; }
+/* Before he lands, his window is there but empty. */
+.cmp[data-empty] .cmpStage { opacity: 0; }
+
+.cmpWin {
+  position: absolute; inset: 0; border-radius: 26px; background: var(--white);
+  box-shadow:
+    0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white),
+    0 16px 28px -12px color-mix(in oklab, var(--ring) 70%, transparent),
+    0 3px 8px rgba(20, 27, 45, .14);
+  transition: transform .34s var(--ease-out), box-shadow .3s ease;
+}
+.cmp.dragging .cmpWin { transform: rotate(-4deg) scale(1.06); box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white), 0 30px 40px -16px rgba(20, 27, 45, .45); }
+.cmp.tucked[data-side="r"] .cmpWin { transform: translateX(64px) rotate(5deg); }
+.cmp.tucked[data-side="l"] .cmpWin { transform: translateX(-64px) rotate(-5deg); }
+/* When he bursts out of the frame he hops inward, so his hands stay on screen. */
+.cmp[data-pose="celebrate"][data-side="r"] .cmpWin { transform: translateX(-22px); }
+.cmp[data-pose="celebrate"][data-side="l"] .cmpWin { transform: translateX(22px); }
+.cmp.thinking .cmpWin { animation: cmpThink 1.6s var(--ease-out) infinite; }
+@keyframes cmpThink {
+  50% { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white), 0 0 0 6px color-mix(in oklab, var(--ring) 28%, transparent), 0 3px 8px rgba(20, 27, 45, .14); }
+}
+.cmpScreen {
+  position: absolute; left: 4px; right: 4px; top: 4px; height: 92px; border-radius: 22px 22px 5px 5px;
+  background: radial-gradient(120% 90% at 50% 0%, #fffaf1, #f4dfbd);
+  box-shadow: inset 0 0 0 1px rgba(20, 27, 45, .05), inset 0 3px 8px rgba(20, 27, 45, .08);
+}
+/* He is clipped to the screen, except for the poses that burst out of it. */
+.cmpStage { position: absolute; left: 4px; right: 4px; top: 4px; height: 92px; clip-path: inset(0 round 22px 22px 0 0); pointer-events: none; transition: opacity .12s linear; }
+.cmp[data-pop] .cmpStage { clip-path: inset(-80px -80px 0 -80px); }
+.cmpBody {
+  position: absolute; left: 50%; top: 3px; width: 150px; height: 150px; margin-left: -75px; transform-origin: 50% 62%;
+  animation: cmpBreathe 3.8s ease-in-out infinite;
+}
+@keyframes cmpBreathe { 50% { transform: translateY(-1.4px) scale(1.014, 1.02); } }
+.cmpPose { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; opacity: 0; transition: opacity .13s linear; -webkit-user-drag: none; }
+.cmpPose:not([src]) { visibility: hidden; }
+.cmpPose.on { opacity: 1; }
+.cmpPose[data-flip] { transform: scaleX(-1); }
+.cmpPose[data-pose="lean"] { transform: translateY(-21px) scale(.96); }
+.cmpPose[data-pose="celebrate"] { transform: translateY(-9px) scale(1.14); }
+.cmpPose[data-pose="poke"] { transform: translateY(-4px) scale(1.04); }
+.cmpPose[data-pose="pet"], .cmpPose[data-pose="sleep"] { transform: translateY(2px); }
+
+.cmp[data-pose="celebrate"] .cmpBody { animation: cmpBounce .52s var(--ease-out) 4; }
+@keyframes cmpBounce { 0%, 100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-11px) scale(1.03, .98); } 70% { transform: translateY(1px) scale(.99, 1.02); } }
+.cmp[data-pose="poke"] .cmpBody { animation: cmpSquish .5s var(--ease-spring) 1; }
+@keyframes cmpSquish { 0% { transform: scale(1.12, .84); } 45% { transform: scale(.94, 1.08) translateY(-4px); } 100% { transform: none; } }
+.cmp[data-pose="pet"] .cmpBody { animation: cmpNuzzle 1.1s ease-in-out infinite; }
+@keyframes cmpNuzzle { 0%, 100% { transform: rotate(-3.5deg); } 50% { transform: rotate(3.5deg) translateY(-1px); } }
+.cmp[data-pose="sleep"] .cmpBody { animation: cmpDoze 4.6s ease-in-out infinite; }
+@keyframes cmpDoze { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(3px) rotate(2.5deg) scale(1.01, .99); } }
+.cmp[data-pose="lean"] .cmpBody { animation: cmpDrum 1.3s ease-in-out infinite; }
+@keyframes cmpDrum { 0%, 60%, 100% { transform: none; } 70% { transform: translateY(-1.5px) rotate(-1deg); } 85% { transform: translateY(0) rotate(.6deg); } }
+.cmp[data-pose="support"] .cmpBody { animation: cmpNod 1.5s ease-in-out 2; }
+@keyframes cmpNod { 0%, 100% { transform: none; } 30% { transform: rotate(-3deg) translateY(1px); } 60% { transform: rotate(1.5deg); } }
+.cmp.bob .cmpBody { animation: cmpBob .16s ease-out 1; }
+@keyframes cmpBob { 50% { transform: translateY(1.6px) rotate(-.6deg); } }
+.cmp.sway .cmpBody { animation: cmpSway 1.6s ease-in-out 1; }
+@keyframes cmpSway { 25% { transform: rotate(-2.6deg); } 70% { transform: rotate(2.2deg); } }
+.cmp.land .cmpBody { animation: cmpSquish .45s var(--ease-spring) 1; }
+.cmp.highfive .cmpWin { animation: cmpPop .34s var(--ease-spring) 1; }
+@keyframes cmpPop { 40% { transform: scale(1.12) rotate(3deg); } }
+
+/* Eyelids for the blink: only the front-facing pose has them. */
+.cmpLid {
+  position: absolute; top: 57.4px; width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; border-radius: 50%;
+  background: linear-gradient(180deg, #f49b57, #ea8443); border-bottom: 1.5px solid #7a3a16;
+  transform: scaleY(0); transform-origin: 50% 0; display: none;
+}
+.cmpLid.l { left: 57.6px; } .cmpLid.r { left: 94.4px; }
+.cmp[data-pose="center"] .cmpLid { display: block; }
+.cmp.blink .cmpLid { animation: cmpBlink .19s ease-in-out 1; }
+@keyframes cmpBlink { 45%, 60% { transform: scaleY(1); } }
+
+.cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 100px; border-radius: 26px 26px 0 0; cursor: pointer; }
+.cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.cmpSill {
+  position: absolute; left: 4px; right: 4px; bottom: 4px; height: 20px; padding: 0; border: 0; border-radius: 5px 5px 22px 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  background-color: var(--ring); background-image: var(--gloss); color: var(--ring-on, var(--ink));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(20, 27, 45, .16);
+  transition: background-color .3s ease;
+}
+.cmpSill::after { content: ""; position: absolute; inset: -4px -4px -12px; }
+.cmpSill .led, .cmpTab .led { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4); }
+.cmpSill .led { margin-right: 3px; }
+.sillBrand { font-family: var(--display); font-weight: 800; font-size: .6rem; letter-spacing: .01em; line-height: 1; }
+.cmpCorner {
+  position: absolute; top: -7px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center; background: var(--white); color: var(--ink-2);
+  box-shadow: 0 0 0 1px var(--hairline-strong), 0 2px 6px rgba(20, 27, 45, .16);
+  transition: opacity .2s ease;
+}
+.cmpCorner::after { content: ""; position: absolute; inset: -10px; }
+.cmpMin { right: -7px; }
+.cmpGrip { left: -7px; cursor: grab; touch-action: none; }
+.cmp.dragging .cmpGrip { cursor: grabbing; }
+.cmp.tucked .cmpCorner, .cmp.dragging .cmpMin, .cmp[data-empty] .cmpCorner { opacity: 0; }
+
+.cmpBubble {
+  position: absolute; top: 16px; right: calc(100% + 12px); width: max-content; max-width: 196px; padding: 9px 13px;
+  border: 0; border-radius: 18px 18px 5px 18px; background: var(--white); color: var(--ink); text-align: left; cursor: pointer;
+  font-family: var(--sans); font-size: .86rem; font-weight: 600; line-height: 1.3; letter-spacing: -.005em;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ring) 45%, white), 0 12px 26px -12px rgba(20, 27, 45, .4);
+  transform-origin: 100% 80%; animation: cmpSay .3s var(--ease-spring) backwards;
+}
+.cmp[data-side="l"] .cmpBubble { right: auto; left: calc(100% + 12px); border-radius: 18px 18px 18px 5px; transform-origin: 0 80%; }
+.cmpBubble[hidden] { display: none; }
+@keyframes cmpSay { from { opacity: 0; transform: scale(.7) translateX(10px); } }
+
+.cmpFx { position: absolute; inset: 0; pointer-events: none; }
+.fx {
+  position: absolute; left: var(--fx, 50%); top: var(--fy, 30%); width: 16px; height: 16px; margin: -8px 0 0 -8px; color: var(--c, var(--berry));
+  font-family: var(--display); font-weight: 800; font-size: 15px; line-height: 16px; text-align: center;
+  animation: fxFly var(--t, 1s) cubic-bezier(.2, .7, .3, 1) forwards;
+}
+.fx svg { display: block; width: 100%; height: 100%; }
+@keyframes fxFly {
+  0% { opacity: 0; transform: translate(0, 0) scale(.3) rotate(0deg); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, -60px)) scale(var(--s, 1)) rotate(var(--r, 0deg)); }
+}
+
+/* Sent to his seat on a page where he has a job: a small tab at the edge calls him back. */
+.cmpTab {
+  position: fixed; left: 0; top: 0; z-index: 58; width: 20px; height: 52px; padding: 0; border: 0; cursor: pointer;
+  display: grid; place-items: center; align-content: center; gap: 6px;
+  transform: translate(var(--tx, 0px), var(--ty, 0px));
+  border-radius: 12px 0 0 12px; color: var(--ink); background-color: var(--tangerine); background-image: var(--gloss);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 6px 14px -6px color-mix(in oklab, var(--tangerine) 80%, transparent);
+  animation: cmpTabIn .3s var(--ease-out) backwards;
+}
+.cmpTab::after { content: ""; position: absolute; inset: -8px -4px -8px -14px; }
+.cmpTab[data-side="l"] { border-radius: 0 12px 12px 0; }
+.cmpTab[data-side="l"] svg { transform: scaleX(-1); }
+.cmpTab[data-side="l"]::after { inset: -8px -14px -8px -4px; }
+.cmpTab[hidden] { display: none; }
+@keyframes cmpTabIn { from { opacity: 0; } }
+
+/* A sheet or menu is open: he gets out of the way entirely. */
+.roomWorkspace:has(.roomSettings, .coachSetupBackdrop, .coachSkillSheet) .cmp,
+.roomWorkspace:has(.roomSettings, .coachSetupBackdrop, .coachSkillSheet) .cmpTab { opacity: 0; pointer-events: none; }
+
+/* The page makes room for him. The engine sets these on .roomWorkspace. */
+.roomWorkspace .chatRow, .roomWorkspace .chatChips { margin-right: var(--dock-r, 0px); margin-left: var(--dock-l, 0px); transition: margin .3s var(--ease-out); }
+.roomWorkspace .chatError { margin-right: calc(12px + var(--dock-r, 0px)); margin-left: calc(12px + var(--dock-l, 0px)); transition: margin .3s var(--ease-out); }
+.roomWorkspace .chatThread::after { content: ""; display: block; flex: none; height: var(--dock-thread, 0px); }
+.roomWorkspace .modeSurface:not(.modeSurfaceFramed)::after { content: ""; display: block; flex: none; height: var(--dock-page, 0px); }
+
+/* His seat: the header avatar. Empty while he is out in his window. */
+.roomWorkspace .chatMascot .studigoMascot { transition: box-shadow .25s ease, background-color .25s ease; }
+.roomWorkspace .chatMascot .studigoMascot img { transition: opacity .22s ease, scale .3s var(--ease-spring); }
+.roomWorkspace[data-seat="empty"] .chatMascot .studigoMascot { background: color-mix(in oklab, var(--tone) 9%, white); box-shadow: inset 0 2px 5px rgba(20, 27, 45, .12), inset 0 0 0 1.5px color-mix(in oklab, var(--tone) 40%, white), 0 0 0 2px var(--white); }
+.roomWorkspace[data-seat="empty"] .chatMascot .studigoMascot img { opacity: 0; scale: .6; }
+.roomWorkspace.seatLand .chatMascot .studigoMascot { animation: cmpSquish .42s var(--ease-spring) 1; }
+
+/* His card: a bottom sheet in the app's own sheet language. */
+.cmpCard { position: fixed; inset: 0; z-index: 120; display: grid; align-items: end; justify-items: center; padding: 8px 8px max(16px, env(safe-area-inset-bottom)); }
+.cmpBackdrop { position: absolute; inset: 0; border: 0; background: rgba(20, 25, 36, .24); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: cmpFade .18s ease-out; }
+@keyframes cmpFade { from { opacity: 0; } }
+.cmpSheet {
+  position: relative; width: min(420px, 100%); max-height: calc(100dvh - 90px); overflow-y: auto; scrollbar-width: none;
+  display: grid; gap: 14px; padding: 16px 16px 18px; border: 1px solid rgba(20, 27, 45, .11); border-radius: 30px;
+  background: rgba(255, 255, 255, .98); box-shadow: 0 24px 70px rgba(20, 25, 36, .22);
+  color: var(--ink); font-family: var(--sans); animation: cmpSheetIn .26s var(--ease-out);
+}
+@keyframes cmpSheetIn { from { opacity: .72; transform: translateY(18px) scale(.992); } }
+.cmpSheetHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cmpSheetHead strong { display: block; margin-top: 3px; font-size: 1.12rem; letter-spacing: -.02em; }
+.cmpSheetHead button { min-width: 58px; min-height: 38px; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .07); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+.cmpCardTop { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px 14px 12px 8px; border-radius: 20px; background: var(--tangerine-soft); }
+.cmpPlay { width: 116px; height: 116px; padding: 0; border: 0; background: none; cursor: pointer; }
+.cmpPlay img { display: block; width: 100%; height: 100%; }
+.cmpPlay.playing img { animation: cmpBounce .45s var(--ease-out) 2; }
+.cmpAbout strong { display: block; margin-bottom: 4px; font-family: var(--display); font-size: 1.15rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.cmpAbout p { margin: 0; color: var(--ink-2); font-size: .84rem; line-height: 1.45; }
+.cmpToggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; align-items: center; min-height: 44px; cursor: pointer; }
+.cmpToggle b { font-size: .92rem; }
+.cmpToggle small { grid-column: 1; color: var(--muted); font-size: .78rem; line-height: 1.3; }
+.cmpToggle input { grid-column: 2; grid-row: 1 / span 2; appearance: none; -webkit-appearance: none; width: 48px; height: 30px; margin: 0; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .16); position: relative; cursor: pointer; transition: background-color .2s ease; }
+.cmpToggle input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(20, 27, 45, .3); transition: transform .22s var(--ease-spring); }
+.cmpToggle input:checked { background: var(--tangerine); }
+.cmpToggle input:checked::after { transform: translateX(18px); }
+.cmpToggle input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.cmpCardActions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Room Settings: the same two switches, where the room's other choices live. */
+.companionSettings { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+.companionSettings .cmpToggle small { font-size: .8rem; }
+
+/* ---------------------------------------------------------------------------
+   The stage: Studigo full body, standing in the page.
+   --------------------------------------------------------------------------- */
+.stg {
+  position: relative; display: block; width: var(--stage-size, 200px); aspect-ratio: 1; padding: 0; border: 0; background: none;
+  cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; transform-origin: 50% 40%;
+}
+.stg:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; border-radius: 24px; }
+.stgBody { position: absolute; inset: 0; transform-origin: 50% 94%; animation: cmpBreathe 3.8s ease-in-out infinite; }
+.stgPose { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; opacity: 0; transition: opacity .13s linear; -webkit-user-drag: none; pointer-events: none; }
+.stgPose:not([src]) { visibility: hidden; }
+.stgPose.on { opacity: 1; }
+.stgPose[data-flip] { transform: scaleX(-1); }
+.stg.mirror .stgPose[data-pose="leap"] { transform: scaleX(-1); }
+.stgShadow { position: absolute; left: 30%; right: 30%; bottom: 1%; height: 5.5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(70, 45, 10, .3), transparent); transition: opacity .2s ease, transform .2s ease; }
+.stg[data-pose="leap"] .stgShadow, .stg.flying .stgShadow { opacity: 0; }
+.stg[data-pose="celebrate"] .stgShadow { transform: scale(.8); opacity: .6; }
+.stg[data-pose="celebrate"] .stgBody { animation: cmpBounce .5s var(--ease-out) 2; }
+.stg[data-pose="wave"] .stgBody { animation: cmpSway 1.7s ease-in-out infinite; }
+.stg[data-pose="leap"] .stgBody { animation: none; }
+.stg.petting .stgBody { animation: cmpNuzzle 1.1s ease-in-out infinite; }
+.stg.sway .stgBody { animation: cmpSway 1.6s ease-in-out 1; }
+.stg.flying { pointer-events: none; z-index: 95; }
+.stg .cmpFx { inset: 6% 20% 40%; }
+
+/* His screen: the cream display with a sill that the stage stands in. */
+.stageScreen {
+  position: relative; overflow: hidden; display: grid; justify-items: center; align-items: end;
+  border-radius: 34px; background: radial-gradient(120% 90% at 50% 0%, #fffaf1, #f4dfbd);
+  box-shadow: inset 0 4px 14px rgba(20, 27, 45, .08), 0 0 0 6px var(--white), 0 0 0 8px color-mix(in oklab, var(--tone, var(--tangerine)) 60%, white), var(--lift-2);
+}
+.stageScreen .stg { margin-bottom: 26px; z-index: 1; }
+.stageScreen.leaping { overflow: visible; }
+.stageSill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 30px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background-color: var(--tone-key, var(--tangerine)); background-image: var(--gloss); color: var(--tone-on, var(--ink));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(20, 27, 45, .16);
+  border-radius: 0 0 34px 34px;
+}
+.stageSill .railBrand { font-size: .82rem; }
+
+/* Studigo full body as a still, for completion and empty states. */
+.studigoFigure { display: block; max-width: none; -webkit-user-drag: none; }
+.quizScoreCard .studigoFigure { float: right; margin: -10px -6px 4px 10px; }
+
+@media (min-width: 701px) {
+  /* Wide screens: the topbar menu sits above him, and his card is a small panel rather than a sheet. */
+  .cmp, .cmpTab { z-index: 15; }
+  .cmp.dragging { z-index: 16; }
+  .cmpCard { align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmp, .cmpWin, .cmpTab { transition: none; animation: none; }
+  .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble { animation: none !important; }
+}

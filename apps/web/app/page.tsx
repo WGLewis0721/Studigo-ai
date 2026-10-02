@@ -137,8 +137,8 @@ const Sill = ({ className }: { className: string }) => (
 
 export default function HomePage() {
   // The first two poses the intro needs; the rest load with the page script.
-  preload("/demo/assets/full/leap.webp", { as: "image" });
-  preload("/demo/assets/full/wave.webp", { as: "image" });
+  preload("/mascot/companion/full/leap.webp", { as: "image" });
+  preload("/mascot/companion/full/wave.webp", { as: "image" });
 
   return (
     <div className="home" data-tone="tangerine">
@@ -245,9 +245,6 @@ export default function HomePage() {
                 <i aria-hidden="true" />
                 <span className="fineOnly">Move your cursor. He is following it.</span>
                 <span className="coarseOnly">Tap him on the right. He reacts.</span>
-              </p>
-              <p className="meetNote rv" style={delay(440)}>
-                <b>ARRIVING</b>His window is on its way to every Study Room. The phone at the top of this page shows it early.
               </p>
             </div>
           </div>

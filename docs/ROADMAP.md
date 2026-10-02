@@ -4,6 +4,24 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+## Shipped - October 1, 2026: The companion in the app
+
+- [x] Studigo's window in the Study Room (Coach chat, Quiz, Flashcards,
+      Practice test), his seat in the header, and his card. He reacts to graded
+      answers, rated cards, finished sets, replies being written and typing.
+- [x] Speech is off by default: a per-room switch in Room Settings, saved in the
+      browser. So is whether his window is out.
+- [x] Home leads with his stage, the nearest test and a "next up" card built
+      from the room's real state. First run is a guided three-step setup.
+- [x] Sign-in pages share the homepage's closing field. The site has a favicon,
+      an Apple touch icon and manifest icons from the canonical portrait.
+- [x] One set of sprites in `public/mascot/companion/`; the homepage, the demo
+      phone and the app all read it. The homepage's "arriving" note is gone.
+- [x] `NEXT_PUBLIC_STUDIGO_COMPANION=off` ships the room without his window.
+- [ ] Not verified on a real iPhone or with a signed-in account against hosted
+      data: the room and Home were checked against local fixtures only.
+- [ ] The iOS app (`APP_STORE_RELEASE_PLAN.md`) is not started.
+
 ## Shipped - October 1, 2026: Companion homepage
 
 - [x] The homepage is the "pocket device" direction: intro, a phone running the
@@ -13,9 +31,7 @@ value.
 - [x] The demo the phone runs is a static copy in `apps/web/public/demo/`, built
       by `design/companion-demo/build_public_demo.py`. The middleware skips
       `/demo/`.
-- [ ] The app does not have the companion window, the Home stage or the new
-      onboarding yet. The homepage says his window is "arriving". Closing that
-      gap is `COMPANION_PARITY_PLAN.md`; remove the note when stage 2 ships.
+- [x] The app caught up the same day (see above); the "arriving" note is gone.
 - [ ] Performance pass on the homepage (the intro delays the first large paint
       on a first visit) and a real-device check on iPhone Safari.
 

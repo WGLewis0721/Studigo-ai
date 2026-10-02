@@ -11,7 +11,7 @@ const POSES = ["center", "left", "right", "up", "down", "up-right", "up-left", "
 type Pose = (typeof POSES)[number];
 const MIRROR: Partial<Record<Pose, Pose>> = { "up-left": "up-right", "down-left": "down-right" };
 const GAZE: Record<string, Pose> = { "0": "right", "1": "down-right", "2": "down", "3": "down-left", "4": "left", "-4": "left", "-3": "up-left", "-2": "up", "-1": "up-right" };
-const SPRITES = "/demo/assets/full";
+const SPRITES = "/mascot/companion/full";
 const INTRO_SEEN = "studigo.intro";
 const SHAPES = {
   heart: '<svg viewBox="0 0 16 16"><path fill="currentColor" d="M8 14.2 2.6 8.9a3.5 3.5 0 0 1 5-4.9l.4.4.4-.4a3.5 3.5 0 0 1 5 4.9Z"/></svg>',
@@ -200,13 +200,15 @@ function startHome(): () => void {
     const size = narrow() ? 112 : 172, pad = narrow() ? 4 : 22;
     return { size, x: at === "right" ? window.innerWidth - size - pad : pad, y: window.innerHeight - size - (narrow() ? 6 : 14) };
   };
-  /** How much of a dock corner sits on top of something a visitor would read or press (0 to 9). */
+  /** How much of a dock corner sits on top of something a visitor would read or press. Higher is worse. */
   const crowding = (at: Side) => {
     const spot = dockBox(at);
     let hits = 0;
     for (const fy of [0.2, 0.5, 0.8]) for (const fx of [0.2, 0.5, 0.8]) {
       const under = document.elementsFromPoint(spot.x + spot.size * fx, spot.y + spot.size * fy).find((el) => !guide.contains(el));
       if (!under) continue;
+      // Standing on the page's main button is the one thing he must never do.
+      if (under.closest(".buttonPrimary")) { hits += 9; continue; }
       const media = /^(img|iframe|video|button|a|input|summary|svg|path|circle|rect)$/i.test(under.tagName);
       if (media || Array.from(under.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim())) hits += 1;
     }

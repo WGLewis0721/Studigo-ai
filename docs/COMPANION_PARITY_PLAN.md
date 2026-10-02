@@ -1,7 +1,25 @@
 # Companion parity plan: bring the app up to the homepage
 
-Written October 1, 2026, the day the companion homepage shipped. A plan, not a
-record of work done. Update it as stages land.
+Written October 1, 2026, the day the companion homepage shipped.
+
+## Status
+
+Stages 1 to 4 shipped the same day, and most of stage 5. What is left:
+
+- **Stage 5, not done:** a side-by-side audit of type sizes, keys and motion
+  across every screen; a performance pass on the homepage; a check on a real
+  iPhone in Safari.
+- **Not verified with real data:** the room, Home and first-run setup were
+  checked against local fixtures (`/dev/study`, `/dev/home`), on a phone-sized
+  and a desktop viewport. Nobody has yet walked them with a signed-in account
+  against the hosted database.
+- **Stage 6, not started:** the iOS app.
+
+William's decisions, October 1, 2026: his window starts bottom right (he can be
+dragged anywhere); speech is off by default and is a per-room setting in Room
+Settings; Home says something about progress.
+
+The rest of this document is the plan as written, kept for the reasoning.
 
 ## The problem
 
@@ -40,7 +58,7 @@ keys. The gap is the companion and the two screens around the room.
 
 ### Stage 1. One engine, one set of art (small)
 
-- Move the sprite set to `apps/web/public/mascot/companion/` and point the
+- (Done.) Move the sprite set to `apps/web/public/mascot/companion/` and point the
   homepage guide and the demo at it. Record in `docs/brand/mascot/` that the
   generated poses were approved on October 1, 2026.
 - Port the demo's `companion.js` to a typed module with no DOM framework in it

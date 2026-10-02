@@ -56,7 +56,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // demo/ is the static phone demo embedded in the homepage: dozens of public
-  // files per visit, none of which need a session refresh.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|api/health|demo/).*)"]
+  // demo/ is the static phone demo embedded in the homepage and mascot/ is the
+  // companion's art: dozens of public files per visit, none of which need a
+  // session refresh.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|sw.js|manifest.webmanifest|api/health|demo/|mascot/|icons/).*)"]
 };

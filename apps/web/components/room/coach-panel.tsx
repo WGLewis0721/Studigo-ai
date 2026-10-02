@@ -10,6 +10,7 @@ import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel, coachMaterialState } from "@/lib/coach-material-state";
 import { StudigoComposer } from "./studigo-composer";
 import { ModeFrame } from "./mode-header";
+import { useCompanion } from "@/components/companion/companion";
 import { LearnPanel } from "./learn-panel";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
@@ -67,6 +68,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
   useFitViewport(view === "chat");
+  const { thinking: companionThinking } = useCompanion();
+  useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);

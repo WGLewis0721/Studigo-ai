@@ -230,11 +230,39 @@ set into a bezel of the current tone** — the device it inhabits. The cream of
 the source art becomes the screen material, so it reads as intended rather than
 as a pasted square.
 
-`StudigoMascot` is the one component. Its state follows real events: `welcome`,
-`explain`, `thinking` (while retrieving/streaming), `sources`, `celebrate`
-(a finished deck, a strong test). Sizes: 28–40px in identity and answer labels,
-56–96px in empty/completion states. The full figure is never cropped except in
-the circular `mark`. No mascot-led readiness, no reward economy.
+He is one character with three places, and he is only ever in one of them:
+
+- **His seat**: the round header avatar (`StudigoMascot` in its `mark` crop),
+  28–40px. Every page has it.
+- **His window**: waist-up, 100×120px, on the pages where he has a job (Coach
+  chat, Quiz, Flashcards, Practice test). It stands in a free corner beside the
+  work: the message field and anything above it move aside for him, he tucks to
+  the edge while the page scrolls, he takes another corner rather than sit on a
+  control, and he disappears while a sheet or menu is open. The learner can drag
+  him to a corner, or send him back to his seat (a small tab at the edge calls
+  him back). While he is out, the seat shows empty.
+- **His stage**: the full figure in a cream screen with a sill, on Home, in
+  first-run setup and on the sign-in pages.
+
+His reactions follow real events and nothing else: a graded answer, a rated
+card, a finished set, a reply being written, typing in a field, a tap or a
+stroke. **Speech is off by default.** It is a per-room switch in Room Settings
+(and on his card), saved in the browser like the room's color. His lines are
+short and follow the plain-punctuation rule.
+
+`StudigoMascot` still draws the seat and the small identity marks, with the
+states `welcome`, `explain`, `thinking`, `sources` and `celebrate`. Completion
+and empty states use the full figure as a still at 96px or less
+(`StudigoFigure`). The figure is never cropped except in the circular `mark`
+and the window. No mascot-led readiness, no reward economy, no streaks, and he
+never changes mastery: the companion code makes no network calls at all, and a
+unit test keeps it that way.
+
+Code: decisions with no DOM in `lib/companion-logic.ts` (reusable by the iOS
+app), the window in `components/companion/engine.ts` and `companion.tsx`, the
+stage in `components/companion/stage.tsx`, one set of sprites in
+`public/mascot/companion/`. Setting `NEXT_PUBLIC_STUDIGO_COMPANION=off` ships
+the room without his window.
 
 **The marketing page is the exception, on purpose.** There the companion is the
 product being shown, so he appears full body: in the intro, loose on the page at
@@ -242,9 +270,8 @@ up to ~170px (he leaves the demo phone when you scroll, reacts to the section
 you are reading, follows the cursor, takes the other corner when he would cover
 what you are reading, and lands beside the last button), and waist-up in his
 window inside the demo phone. He still never changes mastery and there is still
-no reward economy. The app is catching up to this in stages; until it does, the
-page says his window is "arriving" rather than claiming it. The stages and the
-rules for the app are in [`COMPANION_PARITY_PLAN.md`](COMPANION_PARITY_PLAN.md).
+no reward economy. What the page shows is what the app does; keep it that way.
+The history is in [`COMPANION_PARITY_PLAN.md`](COMPANION_PARITY_PLAN.md).
 
 Use it for: greeting, thinking, explanation, source retrieval, encouragement,
 meaningful success, and empty states.
@@ -296,8 +323,9 @@ the app); "Start studying for free" goes to `/signup`.
 
 ### Authentication
 
-Calm and minimal: form on snow, a blueberry polycarbonate panel with the
-companion and three promises. **Provider buttons keep the provider's look** —
+Calm and minimal: form on snow, beside the same tangerine closing field as the
+homepage with Studigo on his stage and three promises, so homepage, sign-in and
+app read as one product. **Provider buttons keep the provider's look** —
 no Studigo color, gloss or novelty shadow; name and logo obvious; full width on
 phones. Launch order: Google, Apple, Microsoft, then email under a divider.
 
@@ -306,7 +334,12 @@ phones. Launch order: Google, Apple, Microsoft, then email under a divider.
 - `app/app/loading.tsx`: the companion thinking and a sweeping key-color bar.
 - `app/app/error.tsx`: says nothing saved was lost; Try again / All rooms.
 - Every mode's empty state pairs the companion with one clear next action.
-- First run (no rooms) is a three-step onboarding card, not a blank grid.
+- First run (no rooms) is a guided setup led by Studigo on his stage: name the
+  room and its test date, pick its color, meet him. It asks for nothing else.
+  The room then opens on Materials, where the real upload is.
+- Home (with rooms) leads with his stage, the room whose test is nearest, and
+  one "next up" card. Its line and its progress count come from the room's real
+  state (`lib/home-next.ts`), or it says there is nothing to report.
 
 ## Responsive
 

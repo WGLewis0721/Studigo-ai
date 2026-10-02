@@ -26,10 +26,7 @@ function optional(formData: FormData, key: string) {
   return value ? value.slice(0, 160) : null;
 }
 
-export async function createRoomAction(
-  _previous: RoomFormState,
-  formData: FormData
-): Promise<RoomFormState> {
+async function insertRoom(formData: FormData): Promise<{ roomId: string } | { error: string }> {
   const user = await requireUser();
   const title = readTitle(formData);
   if (!title) return { error: "Give the room a name, like “Biology Midterm”." };
@@ -52,9 +49,26 @@ export async function createRoomAction(
     .single();
 
   if (error) return { error: error.message };
-
   revalidatePath("/app");
-  redirect(`/app/rooms/${data.id}`);
+  return { roomId: data.id as string };
+}
+
+export async function createRoomAction(
+  _previous: RoomFormState,
+  formData: FormData
+): Promise<RoomFormState> {
+  const created = await insertRoom(formData);
+  if ("error" in created) return { error: created.error };
+  redirect(`/app/rooms/${created.roomId}`);
+}
+
+/**
+ * First-run setup creates the room and then finishes in the browser (the room's
+ * color is saved there, and Studigo leaps in), so it returns the id instead of
+ * redirecting.
+ */
+export async function createFirstRoomAction(formData: FormData): Promise<{ roomId?: string; error?: string }> {
+  return insertRoom(formData);
 }
 
 export async function renameRoomAction(

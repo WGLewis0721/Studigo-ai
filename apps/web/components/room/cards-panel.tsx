@@ -1,11 +1,12 @@
 "use client";
 
 import { TopicReadout } from "./topic-readout";
-import { StudigoMascot } from "@/components/studigo-mascot";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
+import { useCompanion } from "@/components/companion/companion";
+import { StudigoFigure } from "@/components/companion/figure";
 
 type Card = {
   id: string;
@@ -49,6 +50,7 @@ export function CardsPanel({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ front: "", back: "" });
   const [, startTransition] = useTransition();
+  const companion = useCompanion();
 
   const loadDue = useCallback(async () => {
     setLoading(true);
@@ -164,6 +166,9 @@ export function CardsPanel({
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Review did not save.");
       reviewRef.current = null;
+      if (index + 1 >= cards.length) companion.event("setDone");
+      else if (rating === 3) companion.event("cardGood");
+      else if (rating === 1) companion.event("cardMiss");
       setFlipped(false);
       setEditing(false);
       setIndex((value) => value + 1);
@@ -197,7 +202,7 @@ export function CardsPanel({
         <div className="setupMain">
         {done && (
           <div className="quizScoreCard">
-            <StudigoMascot state="celebrate" size={64} />
+            <StudigoFigure pose="celebrate" label="Studigo celebrating" />
             <span className="tinyLabel">DECK CLEAR</span>
             <strong>{cards.length}</strong>
             <small>cards reviewed · they'll come back when they're due</small>

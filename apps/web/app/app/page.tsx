@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { listRooms } from "@/lib/rooms";
+import { getRoomReadiness, listRooms, listTopics } from "@/lib/rooms";
+import { loadStudyEvidence } from "@/lib/study-evidence";
+import { rankWeakAreas } from "@/lib/study-planning";
+import { buildHomeNext, pickFocusRoom, type HomeNext } from "@/lib/home-next";
 import { CreateRoomForm } from "@/components/create-room-form";
-import { StudigoMascot } from "@/components/studigo-mascot";
+import { FirstRoomSetup, HomeHero } from "@/components/app-home";
 import { RoomCardLink } from "@/components/room-card-link";
 
 export const metadata: Metadata = { title: "Study rooms · Studigo" };
@@ -17,41 +20,45 @@ function formatTestDate(value: string | null) {
   return `${days} day${days === 1 ? "" : "s"} to ${label}`;
 }
 
+/** What Home leads with, from the focus room's real state. If that cannot be read, Home still says which room is next. */
+async function loadNext(rooms: Awaited<ReturnType<typeof listRooms>>): Promise<HomeNext | null> {
+  const now = Date.now();
+  const room = pickFocusRoom(rooms, now);
+  if (!room) return null;
+  try {
+    const [topics, readiness, study] = await Promise.all([listTopics(room.id), getRoomReadiness(room.id), loadStudyEvidence(room.id)]);
+    return buildHomeNext(room, rankWeakAreas(topics, study.evidence, study.asOf), readiness, now);
+  } catch {
+    return buildHomeNext(room, [], { topicCount: 0, practicedTopicCount: 0, masteredCount: 0 }, now);
+  }
+}
+
 export default async function RoomsPage() {
   const rooms = await listRooms();
 
+  if (rooms.length === 0) {
+    return (
+      <div className="pageWrap">
+        <FirstRoomSetup />
+      </div>
+    );
+  }
+
+  const next = await loadNext(rooms);
+
   return (
     <div className="pageWrap">
-      <header className="pageHeader">
+      {next && <HomeHero next={next} />}
+
+      <div className="roomsHeading">
         <div>
           <span className="tinyLabel">YOUR STUDY ROOMS</span>
-          <h1 className="pageTitle">What are you studying for?</h1>
-          <p className="pageLede">
-            Each Study Room holds one test&apos;s worth of material and gets its own color.
-          </p>
+          <h2>Each room holds one test.</h2>
         </div>
-      </header>
+      </div>
 
       <div className="roomsLayout">
         <section className="roomsGrid" aria-label="Study rooms">
-          {rooms.length === 0 && (
-            <div className="firstRun" data-tone="tangerine">
-              <StudigoMascot state="welcome" size={96} />
-              <div>
-                <h2>Let&apos;s set up your first Study Room.</h2>
-                <p>
-                  Create one for the next thing you&apos;re tested on, like “Biology Midterm”, “Weather
-                  Unit” or “ELA Week 4”, then drop the study guide in.
-                </p>
-                <ol className="firstRunSteps">
-                  <li><b>01</b>Name the room for your next test</li>
-                  <li><b>02</b>Add the study guide, notes and slides</li>
-                  <li><b>03</b>Learn, quiz, and see what you know</li>
-                </ol>
-              </div>
-            </div>
-          )}
-
           {rooms.map((room) => {
             const testLabel = formatTestDate(room.test_date);
             return (

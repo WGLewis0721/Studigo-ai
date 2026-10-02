@@ -27,6 +27,11 @@ test("the bundled projection matches the knowledge base (run pnpm generate:refer
   assert.deepEqual(projectTeachingReferences(readKnowledgeFiles()), committed);
 });
 
+test("the projection is the same whichever path separator the files arrive with", () => {
+  const withSeparator = (sep: string) => readKnowledgeFiles().map(f => ({ ...f, path: f.path.split(/[\\/]/).join(sep) }));
+  assert.equal(JSON.stringify(projectTeachingReferences(withSeparator("\\"))), JSON.stringify(projectTeachingReferences(withSeparator("/"))));
+});
+
 test("no reference text uses an em dash", () => {
   assert.ok(!JSON.stringify(committed).includes("—"));
 });
