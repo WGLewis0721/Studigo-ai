@@ -54,15 +54,18 @@ before(async () => {
 after(async()=> { await db?.close(); });
 
 test('Coaching settings persist for the room owner and remain isolated', async()=>{
-  const chosen = JSON.stringify({style:'socratic',tradition:'tradition-montessori',practice:'transfer'});
+  const chosen = JSON.stringify({coach_mode:'challenge',style:'default',tradition:'tradition-default',practice:'transfer'});
   await as('authenticated',A,async()=>{
     const saved = await one(`update study_rooms set coach_preferences=$1, explain_level='simpler' where id=$2 returning coach_preferences, explain_level`,[chosen,id(1)]);
-    assert.equal(saved.coach_preferences.style,'socratic');
+    assert.equal(saved.coach_preferences.coach_mode,'challenge');
+    assert.equal(saved.coach_preferences.style,'default');
     assert.equal(saved.explain_level,'simpler');
     assert.equal((await db.query(`update study_rooms set coach_preferences=$1 where id=$2 returning id`,[chosen,id(2)])).rows.length,0);
     await assert.rejects(db.query(`update study_rooms set coach_preferences='{}' where id=$1`,[id(1)]),e=>e.code==='23514');
     await assert.rejects(db.query(`update study_rooms set coach_preferences='{"style":null,"tradition":"tradition-default","practice":"adaptive"}' where id=$1`,[id(1)]),e=>e.code==='23514');
     await assert.rejects(db.query(`update study_rooms set coach_preferences='{"style":"unknown","tradition":"tradition-default","practice":"adaptive"}' where id=$1`,[id(1)]),e=>e.code==='23514');
+    await assert.rejects(db.query(`update study_rooms set coach_preferences='{"coach_mode":"expert","style":"default","tradition":"tradition-default","practice":"adaptive"}' where id=$1`,[id(1)]),e=>e.code==='23514');
+    await db.query(`update study_rooms set coach_preferences='{"coach_mode":"coach","style":"default","tradition":"tradition-default","practice":"adaptive"}' where id=$1`,[id(1)]);
     await db.query(`update study_rooms set explain_level='standard' where id=$1`,[id(1)]);
   });
   assert.equal((await one('select coach_preferences from study_rooms where id=$1',[id(2)])).coach_preferences.style,'default');
