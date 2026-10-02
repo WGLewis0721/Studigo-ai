@@ -39,6 +39,10 @@ try {
   const pdf=await context.request.get(base+'/api/study-guide/download?roomId=math');assert.equal(pdf.status(),200);assert.equal((await pdf.body()).subarray(0,4).toString(),'%PDF');
   const source=await context.request.get(base+'/api/documents/download?documentId=math-guide&inline=1');assert.equal(source.status(),200);assert.ok((await source.text()).includes('Equivalent fractions'));
   checks.push('study-guide PDF and original-source citation links open through existing endpoints');
+  const learnPrefs=await context.request.post(base+'/api/learn/preferences',{data:{roomId:'math',explainLevel:'simpler'}});assert.equal(learnPrefs.status(),200,await learnPrefs.text());
+  const coachPrefs=await context.request.post(base+'/api/coach/preferences',{data:{roomId:'math',preferences:{coach_mode:'challenge',style:'default',tradition:'tradition-default',practice:'transfer',explainLevel:'deeper'}}});assert.equal(coachPrefs.status(),200,await coachPrefs.text());
+  const recalibrated=await coachPrefs.json();assert.equal(recalibrated.preferences.coach_mode,'challenge');assert.equal(recalibrated.learnExplainLevel,'simpler');
+  checks.push('new Coach/Learn settings endpoints persist separate levels through the existing local adapter');
   await page.goto(base+'/app/rooms/math?mode=cards');const generated=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/flashcards'&&r.request().method()==='POST');
   await page.getByRole('button',{name:'Add 10 cards',exact:false}).click();assert.equal((await (await generated).json()).cards.length,2);
   await page.getByRole('button',{name:'Show answer',exact:false}).click();const reviewed=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/flashcards/review');

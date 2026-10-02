@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { LocalBetaStore, BetaError } from './local-beta';
-import { integratedOperation, integratedTopics, integratedStudy } from './integrated-beta';
+import { integratedOperation, integratedTopics, integratedStudy, integratedRooms } from './integrated-beta';
+import { updateLocalRoom } from './local-beta-room-actions';
 const now='2026-10-01T12:00:00Z';
 function setup(){const store=new LocalBetaStore(':memory:');const session=randomUUID();
   const call=(path:string,body:Record<string,unknown>={},method='POST')=>integratedOperation(store,session,path,method,body,now) as any;
@@ -54,5 +55,37 @@ test('deleted source and foreign session fail closed before evidence is written'
     assert.throws(()=>integratedOperation(store,randomUUID(),'/quiz/attempt','POST',{questionId:id,selectedChoice:0},now),BetaError);
     store.transact(session,'remove-source',{},state=>{state.rooms.math.sources=[];return {state,response:true};});
     assert.throws(()=>call('/quiz/attempt',{questionId:id,selectedChoice:0}),BetaError);assert.equal(store.read(session).rooms.math.events.length,0);
+  }finally{store.close();}
+});
+
+test('surface recalibration survives reload without changing a pending rubric or learning evidence',()=>{
+  const {store,session,call}=setup();try {
+    call('/chat',{roomId:'math',mode:'coach',question:'Coach me through: Equivalent fractions',interactionId:randomUUID()});
+    const before=store.read(session).rooms.math;
+    const pending=structuredClone(before.pending),events=structuredClone(before.events);
+    const saved=call('/coach/preferences',{roomId:'math',preferences:{coach_mode:'challenge',style:'default',tradition:'tradition-default',practice:'transfer',explainLevel:'deeper'}});
+    assert.equal(saved.learnExplainLevel,'standard');
+    const learned=call('/learn/preferences',{roomId:'math',explainLevel:'simpler'});
+    assert.equal(learned.coachPreferences.explainLevel,'deeper');
+    assert.equal(learned.coachPreferences.coach_mode,'challenge');
+    const room=integratedRooms(store.read(session)).find(r=>r.id==='math')!;
+    assert.equal(room.explain_level,'standard');assert.equal(room.coach_explain_level,'deeper');assert.equal(room.learn_explain_level,'simpler');
+    assert.deepEqual(store.read(session).rooms.math.pending,pending);assert.deepEqual(store.read(session).rooms.math.events,events);
+    assert.equal(call('/learn',{roomId:'math',topicId:'fractions'}).explanation,before.room.topics[0].explanations.simpler);
+    assert.equal(call('/chat',{roomId:'math',mode:'ask',question:'Explain equivalent fractions',interactionId:randomUUID()}).text,before.room.topics[0].explanations.simpler);
+    assert.deepEqual(store.read(session).rooms.math.pending,pending);
+    assert.throws(()=>call('/learn/preferences',{roomId:'math',explainLevel:'invalid'}),BetaError);
+  }finally{store.close();}
+});
+
+test('apply-to-both and Room Settings reset both surface levels without changing Coach mode',()=>{
+  const {store,session,call}=setup();try {
+    call('/coach/preferences',{roomId:'science',preferences:{coach_mode:'show',style:'direct',tradition:'tradition-default',practice:'adaptive',explainLevel:'deeper'}});
+    const both=call('/learn/preferences',{roomId:'science',explainLevel:'simpler',applyToBoth:true});
+    assert.equal(both.coachPreferences.coach_mode,'show');assert.equal(both.coachPreferences.explainLevel,'simpler');
+    updateLocalRoom({store,id:session},{id:'science',title:'Science',subject:'Science',courseName:null,testDate:null,level:'standard'});
+    const room=integratedRooms(store.read(session)).find(r=>r.id==='science')!;
+    assert.equal(room.explain_level,'standard');assert.equal(room.coach_explain_level,'standard');assert.equal(room.learn_explain_level,'standard');
+    assert.equal(room.coach_preferences?.coach_mode,'show');assert.equal(store.read(session).rooms.science.events.length,0);
   }finally{store.close();}
 });

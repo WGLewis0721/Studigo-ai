@@ -21,6 +21,7 @@ export type Encounter = {
 export type RoomState = {
   room: FixtureRoom; events: LearningEvent[]; pending: Encounter | null;
   explainLevel: ExplainLevel; coachMode: CoachMode; selectedTopicId: string | null;
+  coachExplainLevel?: ExplainLevel | null; learnExplainLevel?: ExplainLevel | null;
   studyMode: 'study' | 'cram'; budgetMinutes: SessionPlan['budgetMinutes']; startedAt: string | null;
   issuedCount: number; sources: { id: string; name: string; text: string; page: number }[];
 };

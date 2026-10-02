@@ -13,6 +13,7 @@ export function updateLocalRoom(local:Local,input:{id:string;title:string;subjec
     const room=state.rooms[input.id];if(!room)throw new BetaError('Room not found',404);
     if(!input.title.trim()||input.title.length>160||!['simpler','standard','deeper'].includes(input.level))throw new BetaError('Invalid room settings');
     room.room.title=input.title;room.room.subject=input.subject??'';room.explainLevel=input.level as typeof room.explainLevel;
+    room.coachExplainLevel=room.explainLevel;room.learnExplainLevel=room.explainLevel;
     Object.assign(room,{testDate:input.testDate,courseName:input.courseName});
     const data=(state as typeof state&{integration?:{preferences:Record<string,{explainLevel:string}>}}).integration;
     if(data?.preferences[input.id])data.preferences[input.id].explainLevel=input.level;
