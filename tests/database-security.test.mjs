@@ -85,6 +85,12 @@ test('Coach and Learn explanation levels can diverge without crossing owners', a
   });
   const row=await one('select explain_level,coach_explain_level,learn_explain_level from study_rooms where id=$1',[id(1)]);
   assert.deepEqual(row,{explain_level:'deeper',coach_explain_level:'deeper',learn_explain_level:'deeper'});
+  // Leave the shared fixture at its canonical default for the independent
+  // "defaults to standard" regression later in this file.
+  await as('authenticated',A,()=>db.query(
+    "update study_rooms set explain_level='standard',coach_explain_level='standard',learn_explain_level='standard' where id=$1",
+    [id(1)]
+  ));
 });
 
 for (const [table,offset,column] of [
