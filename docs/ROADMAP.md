@@ -47,6 +47,11 @@ Execution is staged in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md):
 Research/reference map:
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
 
+Learner-facing finish plan:
+[`V3_LEARNER_UI_FINISH_PLAN.md`](V3_LEARNER_UI_FINISH_PLAN.md), including
+the persistent Coach/Learn regression fix and final companion frame/safe-face
+polish before native parity.
+
 ### V3 learner-facing UI regression to fix
 
 Observed on the current mobile build:
