@@ -115,14 +115,18 @@ the next reply was still carried by an older Coach/Learn conversation context.
 
 Target behavior:
 
-- **Apply Coach** saves Coach mode + Coach explanation level, then starts a fresh
-  Coach response context only.
-- **Apply Learn** saves Learn explanation level, then starts a fresh Learn
-  response context only.
-- either sheet can turn on **Apply this explanation level to both Coach and
-  Learn**; only then are both surfaces synchronized/recalibrated.
-- Room Settings remains the global/shared apply-to-both control.
+- **Apply Coach** saves Coach mode and starts a fresh Coach response context only.
+- **Apply Learn** saves Learn presentation mode and starts a fresh Learn response
+  context only.
+- explanation level is not shown in either surface sheet.
 - recalibration never changes mastery, attempts, rematches or source data.
+
+Learn presentation modes:
+- Big picture
+- Step by step
+- Examples first
+
+These are presentation-route preferences, not adaptive-learning controls.
 
 ---
 
@@ -140,8 +144,8 @@ Meaning:
 
 > How should Studigo explain things in this Study Room?
 
-It is the shared/default value and Room Settings applies it to both Coach and
-Learn. Surface-specific Apply actions may diverge Coach and Learn afterward.
+It is the single canonical value. Coach and Learn both use it. Surface-specific
+Apply actions cannot override or diverge it.
 
 Invariant:
 
