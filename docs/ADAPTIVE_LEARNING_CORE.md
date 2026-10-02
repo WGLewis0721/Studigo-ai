@@ -11,6 +11,17 @@ Challenge Director. No provider calls, embeddings, learned policy or new service
 is involved. Generative AI remains responsible for Coach delivery and semantic
 evaluation; the control plane determines progression from explicit results.
 
+A V3 Python/LangChain/ML service may exist **outside** this boundary for grounded
+retrieval, model rendering/evaluation and experimentation. That does not move
+progression authority out of `apps/web/lib/learning/`. A learned model may
+produce a candidate score behind a feature flag, but the deterministic reducer
+and Challenge Director remain the production source of progression until a
+separate evaluated policy explicitly replaces them.
+
+The room-wide `study_rooms.explain_level` is also outside the mastery policy:
+it changes wording/detail after the ChallengeSpec is chosen, never the reasoning
+rung or grading truth.
+
 The existing weighted `topics.mastery_score`, readiness, flashcard schedule,
 and the existing `packages/mastery` research primitives are preserved. This
 foundation does not replace their numerical scores or introduce another public
