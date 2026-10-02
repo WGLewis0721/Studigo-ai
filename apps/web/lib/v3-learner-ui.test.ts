@@ -44,8 +44,8 @@ test("topic picker supports multi-select, Select all, Clear and explicit Apply",
 });
 
 test("Coach and Learn have independent Apply paths with an explicit apply-to-both control", () => {
-  assert.match(coachPanel, />Apply Coach</);
-  assert.match(coachPanel, />Apply Learn</);
+  assert.match(coachPanel, /"Apply Coach"/);
+  assert.match(coachPanel, /"Apply Learn"/);
   assert.match(coachPanel, /Apply this explanation level to both Coach and Learn/);
   assert.match(coachPanel, /coaching\.apply\(draft, coachApplyBoth\)/);
   assert.match(coachPanel, /coaching\.applyLearn\(learnDraft, learnApplyBoth\)/);
