@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { SourceType } from "@studigo/documents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CoachPreferences } from "./coach-preferences";
+import type { LearnPreferences } from "./learn-preferences";
 import { serverLocalSession } from './local-beta-context';
 import { integratedRooms, integratedTopics, integratedDocuments, integratedReadiness } from './integrated-beta';
 import { loadCanonicalTopicViews, type CanonicalTopicEvidence } from './canonical-topic-view';
@@ -12,12 +13,10 @@ export type StudyRoom = {
   subject: string | null;
   course_name: string | null;
   test_date: string | null;
-  /** Shared/default explanation level. Room Settings writes this to both surfaces. */
+  /** One global explanation level for this Study Room. Coach and Learn both read it. */
   explain_level: "simpler" | "standard" | "deeper";
-  /** Surface-specific overrides. Null means fall back to explain_level. */
-  coach_explain_level?: "simpler" | "standard" | "deeper" | null;
-  learn_explain_level?: "simpler" | "standard" | "deeper" | null;
   coach_preferences?: Omit<CoachPreferences, "explainLevel">;
+  learn_preferences?: LearnPreferences;
   created_at: string;
   updated_at: string;
 };
@@ -98,7 +97,7 @@ async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title, subject, course_name, test_date, explain_level, coach_explain_level, learn_explain_level, coach_preferences, created_at, updated_at")
+    .select("id, title, subject, course_name, test_date, explain_level, coach_preferences, learn_preferences, created_at, updated_at")
     .eq("id", roomId)
     .maybeSingle();
   // A real query failure (bad schema, connection issue, ...) is not "not

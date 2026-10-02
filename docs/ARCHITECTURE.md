@@ -482,26 +482,27 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 
 ### Applying delivery preferences
 
-V3 exposes one persistent learner-facing Coach preference:
-`coach_mode = show | coach | challenge`.
+There is exactly one explanation level for a Study Room:
+`study_rooms.explain_level = simpler | standard | deeper`.
 
-`study_rooms.explain_level` remains the room-wide shared/default level. The
-room also stores nullable/effective surface values:
+It is editable only in **Study Room Settings** and both Coach and Learn read the
+same value on every turn. The October 2 surface-specific columns
+`coach_explain_level` and `learn_explain_level` are deprecated rollback
+artifacts and are ignored by application code.
 
-- `coach_explain_level`
-- `learn_explain_level`
+Surface preferences are separate:
 
-Room Settings is the explicit **apply to both** path and writes all three values
-together. Coach and Learn sheets can later diverge their surface value without
-silently changing the other surface.
+- Coach: `coach_mode = show | coach | challenge`
+- Learn: `learn_preferences.mode = overview | step_by_step | examples_first`
 
-**Apply Coach** posts the selected Coach mode + Coach explanation level to
-`POST /api/coach/preferences`. **Apply Learn** posts the Learn explanation
-level to `POST /api/learn/preferences`. Each endpoint supports an explicit
-`applyToBoth` flag. No model call or background job is required: subsequent
-turns read the saved surface preference. The browser also starts a fresh
-conversation context for the affected surface so an old pending prompt cannot
-mask the newly applied delivery setting.
+**Apply Coach** writes only Coach mode. **Apply Learn** writes only Learn mode.
+Each starts a fresh conversation context for its own surface so stale prompt
+state cannot mask the newly applied preference. Neither endpoint writes
+`explain_level`.
+
+Learn mode controls presentation order only. It must not control source scope,
+reasoning level, grading, mastery, challenge progression, rematches, or the
+adaptive game director.
 
 The current database JSON constraint still requires `style`, `tradition` and
 `practice`. During the compatibility window, new V3 writes derive those hidden
@@ -516,10 +517,9 @@ Legacy rooms without `coach_mode` are deterministically migrated at read time:
 Direct instruction or Concrete-to-abstract -> Show me; Deliberate practice ->
 Challenge me; all other old styles -> Coach me.
 
-`/api/chat` reads saved preferences for every turn. Coach receives the saved
-Coach mode, canonical internal strategy and effective Coach explanation level.
-Ask/Learn receives **only** the effective Learn explanation level plus trusted
-topic scope. Browser drafts cannot override saved pedagogy.
+`/api/chat` reads saved preferences for every turn. Coach receives the saved Coach mode, canonical internal strategy and the
+Study Room's global explanation level. Ask/Learn receives its saved Learn
+presentation mode, the same global explanation level, and trusted topic scope. Browser drafts cannot override saved pedagogy.
 
 The client may send up to 80 selected topic IDs. Coach and Learn keep
 independent client-side scope state and each request sends the scope for the

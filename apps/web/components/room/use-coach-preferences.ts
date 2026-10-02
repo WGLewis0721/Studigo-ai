@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { compileCoachPreferences, normalizeCoachPreferences, type CoachPreferences } from "@/lib/coach-preferences";
+import { DEFAULT_LEARN_PREFERENCES, normalizeLearnPreferences, type LearnPreferences } from "@/lib/learn-preferences";
 import type { StudyRoom } from "@/lib/rooms";
-import type { ExplainLevel } from "@studigo/learning";
 
 export function useCoachPreferences(room: StudyRoom) {
-  const coachLevel = room.coach_explain_level ?? room.explain_level;
-  const learnInitial = room.learn_explain_level ?? room.explain_level;
-  const [applied, setApplied] = useState(() => normalizeCoachPreferences(room.coach_preferences, coachLevel));
-  const [learnLevel, setLearnLevel] = useState<ExplainLevel>(learnInitial);
+  const [applied, setApplied] = useState(() => normalizeCoachPreferences(room.coach_preferences, room.explain_level));
+  const [learnApplied, setLearnApplied] = useState<LearnPreferences>(() => normalizeLearnPreferences(room.learn_preferences));
   const [applying, setApplying] = useState(false);
   const [learnApplying, setLearnApplying] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -20,49 +18,43 @@ export function useCoachPreferences(room: StudyRoom) {
   const learnApplyingRef = useRef(false);
 
   useEffect(() => {
-    setApplied(normalizeCoachPreferences(room.coach_preferences, room.coach_explain_level ?? room.explain_level));
-    setLearnLevel(room.learn_explain_level ?? room.explain_level);
-  }, [room.id, room.explain_level, room.coach_explain_level, room.learn_explain_level, room.coach_preferences]);
+    setApplied(normalizeCoachPreferences(room.coach_preferences, room.explain_level));
+    setLearnApplied(normalizeLearnPreferences(room.learn_preferences));
+  }, [room.id, room.explain_level, room.coach_preferences, room.learn_preferences]);
 
   useEffect(() => {
     if (room.id !== "fixture") return;
     try {
-      const saved = JSON.parse(localStorage.getItem("studigo:fixture:coach") ?? "null");
-      const savedLearn = localStorage.getItem("studigo:fixture:learn-level");
-      if (saved) setApplied(normalizeCoachPreferences(saved, saved.explainLevel));
-      if (savedLearn === "simpler" || savedLearn === "standard" || savedLearn === "deeper") setLearnLevel(savedLearn);
-    } catch { /* Demo storage is optional. Production uses the room row. */ }
-  }, [room.id]);
+      const savedCoach = JSON.parse(localStorage.getItem("studigo:fixture:coach") ?? "null");
+      const savedLearn = JSON.parse(localStorage.getItem("studigo:fixture:learn") ?? "null");
+      if (savedCoach) setApplied(normalizeCoachPreferences(savedCoach, room.explain_level));
+      if (savedLearn) setLearnApplied(normalizeLearnPreferences(savedLearn));
+    } catch {
+      setLearnApplied(DEFAULT_LEARN_PREFERENCES);
+    }
+  }, [room.id, room.explain_level]);
 
-  const apply = useCallback(async (draft: CoachPreferences, applyToBoth = false) => {
+  const apply = useCallback(async (draft: CoachPreferences) => {
     if (applyingRef.current) return false;
     applyingRef.current = true;
     setApplying(true); setError(null); setStatus("Recalibrating Coach…");
     try {
-      let saved = draft;
-      let nextLearn = learnLevel;
+      let saved = { ...draft, explainLevel: room.explain_level };
       if (room.id === "fixture") {
-        compileCoachPreferences(draft);
-        localStorage.setItem("studigo:fixture:coach", JSON.stringify(draft));
-        if (applyToBoth) {
-          localStorage.setItem("studigo:fixture:learn-level", draft.explainLevel);
-          nextLearn = draft.explainLevel;
-        }
+        compileCoachPreferences(saved);
+        localStorage.setItem("studigo:fixture:coach", JSON.stringify(saved));
       } else {
         const response = await fetch("/api/coach/preferences", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId: room.id, preferences: draft, applyToBoth })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: room.id, preferences: saved })
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? "Could not apply your settings.");
         saved = result.preferences;
-        nextLearn = result.learnExplainLevel ?? nextLearn;
       }
       setApplied(saved);
-      if (applyToBoth) setLearnLevel(nextLearn);
-      setStatus(applyToBoth
-        ? "Applied to Coach and Learn. Both will recalibrate from the next reply."
-        : "Applied to Coach. Coach will recalibrate from the next reply.");
+      setStatus("Applied to Coach. Coach will recalibrate from the next reply.");
       return true;
     } catch (cause) {
       setStatus(null);
@@ -71,34 +63,28 @@ export function useCoachPreferences(room: StudyRoom) {
     } finally {
       applyingRef.current = false; setApplying(false);
     }
-  }, [room.id, learnLevel]);
+  }, [room.id, room.explain_level]);
 
-  const applyLearn = useCallback(async (level: ExplainLevel, applyToBoth = false) => {
+  const applyLearn = useCallback(async (preferences: LearnPreferences) => {
     if (learnApplyingRef.current) return false;
     learnApplyingRef.current = true;
     setLearnApplying(true); setLearnError(null); setLearnStatus("Recalibrating Learn…");
     try {
-      let nextCoach = applied;
+      let saved = normalizeLearnPreferences(preferences);
       if (room.id === "fixture") {
-        localStorage.setItem("studigo:fixture:learn-level", level);
-        if (applyToBoth) {
-          nextCoach = { ...applied, explainLevel: level };
-          localStorage.setItem("studigo:fixture:coach", JSON.stringify(nextCoach));
-        }
+        localStorage.setItem("studigo:fixture:learn", JSON.stringify(saved));
       } else {
         const response = await fetch("/api/learn/preferences", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId: room.id, explainLevel: level, applyToBoth })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: room.id, preferences: saved })
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? "Could not apply your Learn settings.");
-        nextCoach = result.coachPreferences ?? nextCoach;
+        saved = result.preferences;
       }
-      setLearnLevel(level);
-      if (applyToBoth) setApplied(nextCoach);
-      setLearnStatus(applyToBoth
-        ? "Applied to Learn and Coach. Both will recalibrate from the next reply."
-        : "Applied to Learn. Learn will recalibrate from the next reply.");
+      setLearnApplied(saved);
+      setLearnStatus("Applied to Learn. Learn will recalibrate from the next reply.");
       return true;
     } catch (cause) {
       setLearnStatus(null);
@@ -107,10 +93,10 @@ export function useCoachPreferences(room: StudyRoom) {
     } finally {
       learnApplyingRef.current = false; setLearnApplying(false);
     }
-  }, [room.id, applied]);
+  }, [room.id]);
 
   return {
     applied, applying, status, error, apply,
-    learnLevel, learnApplying, learnStatus, learnError, applyLearn
+    learnApplied, learnApplying, learnStatus, learnError, applyLearn
   };
 }
