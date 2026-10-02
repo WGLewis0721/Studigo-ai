@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const coachPanel = readFileSync(join(here, "../components/room/coach-panel.tsx"), "utf8");
 const routeSelection = readFileSync(join(here, "coach-route-selection.ts"), "utf8");
+const preferences = readFileSync(join(here, "coach-preferences.ts"), "utf8");
 
 test("V3 Coach setup exposes only the three simple modes", () => {
   assert.match(coachPanel, /COACH_MODE_OPTIONS\.map/);
@@ -29,7 +30,7 @@ test("Coach Learn is the persistent primary switch and Chat Topics stays seconda
 });
 
 test("persistent Challenge me and one-shot harder question use different learner copy", () => {
-  assert.match(coachPanel, /Challenge me/);
+  assert.match(preferences, /name: COACH_MODE_LABELS\.challenge/);
   assert.match(routeSelection, /Try a harder question/);
   assert.ok(!routeSelection.includes('{ label: "Challenge me", text: "Challenge me" }'));
 });
