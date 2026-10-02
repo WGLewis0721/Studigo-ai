@@ -71,6 +71,22 @@ test('Coaching settings persist for the room owner and remain isolated', async()
   assert.equal((await one('select coach_preferences from study_rooms where id=$1',[id(2)])).coach_preferences.style,'default');
 });
 
+test('Coach and Learn explanation levels can diverge without crossing owners', async()=>{
+  await as('authenticated',A,async()=>{
+    const own=await one(`update study_rooms
+      set coach_explain_level='simpler', learn_explain_level='deeper'
+      where id=$1 returning explain_level,coach_explain_level,learn_explain_level`,[id(1)]);
+    assert.equal(own.coach_explain_level,'simpler');
+    assert.equal(own.learn_explain_level,'deeper');
+    assert.equal(own.explain_level,'standard','surface overrides do not silently change the room-wide default');
+    assert.equal((await db.query(`update study_rooms set learn_explain_level='simpler' where id=$1 returning id`,[id(2)])).rows.length,0);
+    await assert.rejects(db.query(`update study_rooms set coach_explain_level='expert' where id=$1`,[id(1)]),e=>e.code==='23514');
+    await db.query(`update study_rooms set explain_level='deeper',coach_explain_level='deeper',learn_explain_level='deeper' where id=$1`,[id(1)]);
+  });
+  const row=await one('select explain_level,coach_explain_level,learn_explain_level from study_rooms where id=$1',[id(1)]);
+  assert.deepEqual(row,{explain_level:'deeper',coach_explain_level:'deeper',learn_explain_level:'deeper'});
+});
+
 for (const [table,offset,column] of [
   ['study_rooms',0,'title'],['documents',10,'name'],['document_chunks',20,'content'],
   ['topics',30,'mastery_score'],['conversations',40,'title'],['messages',50,'content'],
