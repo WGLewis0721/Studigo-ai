@@ -204,6 +204,19 @@ study partner receives the director's task plus grounded room evidence and
 renders it naturally. See `ADAPTIVE_LEARNING_ENGINE.md`,
 `ADAPTIVE_GAME_DIRECTOR_RESEARCH.md` and the root `IMPLEMENTATION.md`.
 
+### Coach surface navigation contract
+
+Inside the Coach page there are two separate choices and they must not collapse
+into each other:
+
+- **Coach / Learn** is the primary mode switch and remains visible everywhere in
+  the Coach surface, including when the learner is browsing Topics.
+- **Chat / Topics** is secondary navigation beneath that mode choice.
+
+Opening Topics must not replace the Coach/Learn selector with a page title.
+Switching either control preserves the other control's state. This hierarchy is
+part of the product contract for web/PWA and the future iOS/iPadOS client.
+
 ## Typed answers are read the way a person would read them
 
 A student should never fail because of how they typed. In Learn and Coach a reply
