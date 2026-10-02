@@ -5,12 +5,17 @@ import type { Topic } from '../rooms';
 
 export type SessionRequest = { supabase:SupabaseClient;userId:string;roomId:string;topics:Topic[];now:string;
   mode?:'study'|'cram';minutes?:15|30|60|120;selectedTopicId?:string|null;pendingTopicId?:string|null;elapsedSeconds?:number };
+/** Caller RLS plus DB nonblank-chunk checks, without transferring private source text. */
+export async function loadUsableSessionDocuments(supabase:SupabaseClient,roomId:string):Promise<Set<string>> {
+  const {data,error}=await supabase.rpc('read_session_source_scope',{p_room:roomId});
+  if(error||!Array.isArray(data))throw new Error('Could not verify usable session sources');
+  return new Set(data as string[]);
+}
 /** RLS-scoped, source-aware scheduling. All timestamps and evidence originate on the server. */
 export async function loadSessionRecommendation(args:SessionRequest) {
-  const {data:documents,error:documentError}=await args.supabase.from('documents').select('id').eq('room_id',args.roomId).eq('status','ready');
+  const ready=await loadUsableSessionDocuments(args.supabase,args.roomId);
   const {data:links,error:linkError}=await args.supabase.from('topics').select('id, source_document_ids').eq('room_id',args.roomId).eq('active',true);
-  if(documentError||linkError)throw new Error('Could not verify session source scope');
-  const ready=new Set((documents??[]).map((d:{id:string})=>d.id));
+  if(linkError)throw new Error('Could not verify session source scope');
   const linked=new Map<string,string[]>((links??[]).map((t:{id:string;source_document_ids:string[]|null})=>[t.id,t.source_document_ids??[]]));
   if(args.topics.length>200)throw new Error('This study scope exceeds the session scheduler limit');
   const concepts:SessionConcept[]=[];

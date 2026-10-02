@@ -27,12 +27,15 @@ export function nextChallenge(args: {
    * Omitted means "normal".
    */
   challengeRequest?: ChallengeRequest;
+  /** Server-derived review clock. A due review never overrides rematch/stretch. */
+  reviewDueAt?: string | null;
 }): ChallengeSpec {
   const { concept, learnerState: state, activity, route } = args;
   const challengeRequest = args.challengeRequest ?? 'normal';
   if (!sameConcept(concept, state) || args.recentEvents.some(e => !sameConcept(concept, e))) throw new Error('Challenge scope mismatch');
   if (!ACTIVITIES.includes(activity) || !LEARNING_ROUTES.includes(route) || !Number.isFinite(Date.parse(args.now))
-    || !CHALLENGE_REQUESTS.includes(challengeRequest)) throw new Error('Invalid challenge request');
+    || !CHALLENGE_REQUESTS.includes(challengeRequest)
+    || (args.reviewDueAt != null && !Number.isFinite(Date.parse(args.reviewDueAt)))) throw new Error('Invalid challenge request');
   const rematchDue = state.rematch !== null && Date.parse(args.now) >= Date.parse(state.rematch.dueAt);
   // Cards support recognition/recall, not transfer or teaching back. Their results
   // still enter the same state, but cannot manufacture higher-order evidence.
@@ -49,7 +52,9 @@ export function nextChallenge(args: {
   const stretchHonored = challengeRequest === 'stretch' && !canRematch
     && (activity === 'coach' || activity === 'flashcard');
   const ceiling = activity === 'flashcard' ? 1 : 9;
-  const reasoningLevel = (stretchHonored ? Math.min(ceiling, persistedDemand + 1) : persistedDemand) as ReasoningLevel;
+  const scheduledRecall = activity === 'coach' && challengeRequest === 'normal' && !state.rematch
+    && args.reviewDueAt != null && Date.parse(args.reviewDueAt) <= Date.parse(args.now);
+  const reasoningLevel = (scheduledRecall ? 1 : stretchHonored ? Math.min(ceiling, persistedDemand + 1) : persistedDemand) as ReasoningLevel;
   const action = canRematch ? 'rematch' : state.lastResult === 'correct' ? 'variation'
     : state.lastResult && ['partial', 'incorrect', 'help', 'revealed'].includes(state.lastResult) ? 'retry' : 'practice';
   const reasons = [canRematch ? `due_${state.rematch!.reason}` : `last_${state.lastResult ?? 'unpracticed'}`];
@@ -57,6 +62,7 @@ export function nextChallenge(args: {
   if (activity === 'flashcard' && state.reasoningLevel > 1) reasons.push('flashcard_recall_only');
   if (activity === 'practice_test') reasons.push('independent_assessment');
   if (stretchHonored) reasons.push('learner_requested_stretch');
+  if (scheduledRecall) reasons.push('scheduled_independent_recall');
   return { policyVersion: 1, concept: { ...concept }, activity, route,
     routeRecord: `knowledge/teaching-coaching/${ROUTE_RECORDS[route]}.md`,
     reasoningLevel, challengeKind: REASONING_LADDER[reasoningLevel],

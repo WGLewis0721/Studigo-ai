@@ -16,6 +16,7 @@
     "desktop:build": "pnpm --filter @studigo/desktop tauri build",
     "test": "pnpm -r test && node --test tests/database-security.test.mjs && node --test evals/rag/*.test.mjs",
     "test:rag": "node --test evals/rag/*.test.mjs",
+    "test:ml": "python -m unittest discover -s evals/ml -p test_*.py",
     "test:security": "node --test tests/database-security.test.mjs",
     "beta": "node scripts/local-beta.mjs"
   },

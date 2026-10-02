@@ -1,6 +1,7 @@
 import { requireApiUser } from '@/lib/auth';
 import { assertRoomAccess } from '@/lib/retrieval';
 import { loadConceptLearningState } from '@/lib/learning/persistence';
+import { loadUsableSessionDocuments } from '@/lib/learning/session-service';
 import { projectConcept,planSession,type SessionConcept } from '@studigo/learning';
 export const runtime='nodejs';
 /** Native/browser clients read canonical evidence, not a client-supplied mastery percentage. */
@@ -11,8 +12,7 @@ export async function GET(request:Request) {
   try {
     const {data,error}=await supabase.from('topics').select('id,title,objective,priority,order_index,origin,source_document_ids').eq('room_id',roomId).eq('active',true).order('order_index');
     if(error||!data||data.length>200)throw new Error('Invalid study scope');
-    const docs=await supabase.from('documents').select('id').eq('room_id',roomId).eq('status','ready');if(docs.error)throw new Error('Source scope unavailable');
-    const ready=new Set((docs.data??[]).map(d=>d.id));const concepts:SessionConcept[]=[];
+    const ready=await loadUsableSessionDocuments(supabase,roomId);const concepts:SessionConcept[]=[];
     for(let offset=0;offset<data.length;offset+=8)concepts.push(...await Promise.all(data.slice(offset,offset+8).map(async topic=>{
       const key={userId:user.id,roomId,topicId:topic.id};const {events}=await loadConceptLearningState(supabase,key);
       return {key,title:topic.title,objective:topic.objective??topic.title,priority:topic.priority,order:topic.order_index,teacherScoped:topic.origin==='study_guide',active:true,
