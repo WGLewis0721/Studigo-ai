@@ -177,9 +177,11 @@ works" explains it in the chat itself.
 
 ## V3 coaching and adaptation contract
 
-The Study Room keeps one global **Explanation level**: `simpler`, `standard`
-or `deeper`. It applies across Coach and Learn and changes delivery only. A
-hard transfer task may still be written in simple language.
+The Study Room keeps one shared/default **Explanation level**: `simpler`,
+`standard` or `deeper`. Room Settings is the explicit **apply to both**
+control. Coach and Learn may then keep independent effective explanation levels
+for their own response surface. A hard transfer task may still be written in
+simple language; language difficulty remains separate from reasoning difficulty.
 
 The learner-facing Coach customization is intentionally reduced to three modes:
 
@@ -192,6 +194,13 @@ The learner-facing Coach customization is intentionally reduced to three modes:
 
 These modes are delivery/support biases, not separate mastery systems. They do
 not change source truth, grading truth or the mastery target.
+
+Coach settings and Learn settings apply independently. **Apply Coach** saves the
+Coach mode plus Coach explanation level and starts a fresh Coach response
+context. **Apply Learn** saves the Learn explanation level and starts a fresh
+Learn response context. Either sheet may opt into **Apply this explanation level
+to both Coach and Learn**. Recalibration resets response context only; it never
+deletes prior mastery evidence, attempts or source material.
 
 The existing learning-tradition and practice-recipe research remains valuable,
 but it moves behind the interface as an internal strategy/reference library.
@@ -209,13 +218,17 @@ renders it naturally. See `ADAPTIVE_LEARNING_ENGINE.md`,
 Inside the Coach page there are two separate choices and they must not collapse
 into each other:
 
-- **Coach / Learn** is the primary mode switch and remains visible everywhere in
-  the Coach surface, including when the learner is browsing Topics.
-- **Chat / Topics** is secondary navigation beneath that mode choice.
+- **Coach / Learn** is the primary mode switch and remains visible everywhere.
+- **Chat** remains the conversation view.
+- **Topics** is the integrated study-scope control beside Chat. It opens the
+  topic selector directly; there is no second standalone topic dropdown.
+- The topic selector supports checkboxes, multi-select, Select all, Clear and an
+  explicit **Apply topics** action. Applying topic scope starts fresh Coach and
+  Learn response contexts without changing mastery/evidence.
 
-Opening Topics must not replace the Coach/Learn selector with a page title.
-Switching either control preserves the other control's state. This hierarchy is
-part of the product contract for web/PWA and the future iOS/iPadOS client.
+The full topic-management page remains available from the selector's
+**Manage topics** action. This hierarchy is part of the product contract for
+web/PWA and the future iOS/iPadOS client.
 
 ## Typed answers are read the way a person would read them
 
