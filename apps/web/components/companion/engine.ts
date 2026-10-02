@@ -77,6 +77,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   };
   /** His current size: k is the scale, W and H the window in CSS pixels. */
   let k = 1, W: number = WINDOW.w, H: number = WINDOW.h;
+  /** The size the learner asked for. What is shown (k) can be smaller when the room is tight. */
+  let desired = prefs.scale;
 
   /* ---------- his elements ---------- */
   host.innerHTML = `
@@ -167,9 +169,19 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     ws.style.setProperty("--dock-r", `${right}px`); ws.style.setProperty("--dock-l", `${left}px`);
     ws.style.setProperty("--dock-thread", `${thread}px`); ws.style.setProperty("--dock-page", `${page}px`);
   };
+  /** The largest he can be and still fit the space he has. */
+  function fit(scale: number, a: Area | null) {
+    const roomy = a ? Math.max(MIN_SCALE, (a.bottom - a.top) / WINDOW.h) : MAX_SCALE;
+    // A window with no width yet (a tab that has not been shown) says nothing about the room he will have.
+    const wide = window.innerWidth > 0 ? (window.innerWidth - 24) / WINDOW.w : MAX_SCALE;
+    return clampScale(Math.max(MIN_SCALE, Math.min(scale, roomy, wide)));
+  }
   function place() {
     if (dead) return;
     const a = area();
+    // His size follows the room he has: he shrinks to fit a tight spot and returns to the chosen size after.
+    const fitted = fit(desired, a);
+    if (fitted !== k) { k = fitted; ({ w: W, h: H } = sizeAt(k)); el.style.setProperty("--k", String(k)); }
     const waiting = prefs.seated && a !== null;
     tab.hidden = !waiting;
     if (waiting) {
@@ -197,18 +209,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const schedulePlace = () => { if (!placeFrame) placeFrame = window.requestAnimationFrame(() => { placeFrame = 0; place(); }); };
 
   /* ---------- his size ---------- */
-  /** The largest he can be and still fit the screen he is on. */
-  function fit(scale: number) {
-    const a = area();
-    const roomy = a ? Math.max(MIN_SCALE, (a.bottom - a.top) / WINDOW.h) : MAX_SCALE;
-    return clampScale(Math.min(scale, roomy, (window.innerWidth - 24) / WINDOW.w));
-  }
+  /** The size the learner chose (or is choosing mid-gesture); what is shown may be smaller to fit. */
   function applyScale(scale: number, save: boolean) {
-    k = fit(scale);
-    ({ w: W, h: H } = sizeAt(k));
-    el.style.setProperty("--k", String(k));
+    desired = clampScale(scale);
     place();
-    if (save && prefs.scale !== k) changePrefs({ scale: k });
+    if (save && prefs.scale !== k) { desired = k; changePrefs({ scale: k }); }
   }
   /** While the learner is resizing, the window follows the hand with no easing. */
   const sizing = (on: boolean) => { el.classList.toggle("sizing", on); if (on) bubble.hidden = true; };
@@ -554,8 +559,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }, { signal, passive: true });
 
   // He rides along whenever the page under him changes: a new page, the keyboard, a resize.
-  const onViewport = () => { if (fit(prefs.scale) !== k) applyScale(prefs.scale, false); else schedulePlace(); };
-  window.addEventListener("resize", onViewport, { signal });
+  window.addEventListener("resize", schedulePlace, { signal });
   window.addEventListener("scroll", schedulePlace, { signal, passive: true });
   window.visualViewport?.addEventListener("resize", schedulePlace, { signal });
   window.visualViewport?.addEventListener("scroll", schedulePlace, { signal });
@@ -605,7 +609,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       prefs = next;
       if (!rt.drag) rt.dock = next.dock;
       if (!next.speech) bubble.hidden = true;
-      if (!pinch && !resize && fit(next.scale) !== k) applyScale(next.scale, false);
+      if (!pinch && !resize) desired = next.scale;
       sync();
     },
     destroy() {
