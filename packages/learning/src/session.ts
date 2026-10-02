@@ -1,4 +1,4 @@
-import { replayLearningEvents } from './reducer';
+import { POLICY, replayLearningEvents } from './reducer';
 import type { ConceptLearningState, ConceptKey, LearningActivity, LearningEvent } from './types';
 
 const DAY = 86_400_000;
@@ -81,5 +81,5 @@ export function planSession(args: {
   if (!chosen) return { ...base, reasons: ['no_supported_concepts'] };
   return { ...base, status: 'ready', topicId: chosen.key.topicId, stateRevision: chosen.projection.revision,
     reasons: [args.selectedTopicId ? 'learner_choice' : due(chosen) ? 'due_review_or_rematch' : chosen.projection.stage === 'not_checked' ? 'cover_teacher_scope' : 'practice_from_evidence'],
-    offerTopicChange: chosen.projection.state.incorrectStreak >= 2 || chosen.projection.state.partialStreak >= 2 };
+    offerTopicChange: chosen.projection.state.failureStreak >= POLICY.failuresToSplit };
 }

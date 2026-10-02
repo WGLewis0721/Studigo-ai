@@ -6,7 +6,7 @@ export const POLICY = { independentSuccessesToAdvance: 2, failuresToSplit: 2,
 
 export function initialLearningState(key: ConceptKey): ConceptLearningState {
   return { ...key, policyVersion: 1, reasoningLevel: 0, scaffoldLevel: 0, taskSize: 'whole',
-    correctStreak: 0, partialStreak: 0, incorrectStreak: 0, independentSuccessCount: 0,
+    correctStreak: 0, partialStreak: 0, incorrectStreak: 0, failureStreak: 0, independentSuccessCount: 0,
     firstAttemptSuccessCount: 0, independentRecallCount: 0, successfulTransferCount: 0,
     hintDependentSuccessCount: 0, recoveryCount: 0, masteryEvidence: 'not_demonstrated',
     lastResult: null, lastPracticedAt: null, signals: [], rematch: null,
@@ -72,13 +72,14 @@ export function reduceLearningEvent(state: ConceptLearningState, event: Learning
       encounterId: event.encounterId, contextId: event.contextId, misconceptionId: event.misconceptionId };
   };
   if (event.result === 'skipped') {
-    next.correctStreak = next.partialStreak = next.incorrectStreak = 0;
+    next.correctStreak = next.partialStreak = next.incorrectStreak = next.failureStreak = 0;
     return next;
   }
   const independent = event.evidence === 'assessed' && encounter.scaffold === 0 && !encounter.revealed;
   const level = REASONING_LADDER.indexOf(event.challengeKind);
   if (event.result === 'correct') {
     next.partialStreak = next.incorrectStreak = 0;
+    if (event.evidence === 'assessed') next.failureStreak = 0;
     if (encounter.struggled && !encounter.recovered) {
       encounter.recovered = true;
       next.recoveryCount++;
@@ -129,9 +130,12 @@ export function reduceLearningEvent(state: ConceptLearningState, event: Learning
   next.correctStreak = 0;
   next.partialStreak = event.result === 'partial' ? state.partialStreak + 1 : 0;
   next.incorrectStreak = event.result === 'incorrect' ? state.incorrectStreak + 1 : 0;
+  if (event.evidence === 'assessed' && ['partial', 'incorrect'].includes(event.result)) {
+    next.failureStreak = state.failureStreak + 1;
+  }
   if (event.result === 'revealed') next.scaffoldLevel = 5;
   else support();
-  if (next.incorrectStreak >= POLICY.failuresToSplit) next.taskSize = 'single_step';
+  if (next.failureStreak >= POLICY.failuresToSplit) next.taskSize = 'single_step';
 
   if (event.evidence === 'assessed' && ['incorrect', 'partial'].includes(event.result)) {
     if (event.challengeKind === 'transfer' && event.newContext) {

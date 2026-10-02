@@ -32,13 +32,13 @@ Product decisions:
 
 Execution is staged in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md):
 
-1. **Phase 1 — Sonnet 6.1 Medium:** repo audit, architecture/RAG benchmark,
+1. **Phase 1 — GPT 6.1 Sol / low:** repo audit, architecture/RAG benchmark,
    versioned deterministic contracts, replay tests, Coach-mode migration
    foundation and optional Python service spike.
-2. **Phase 2 — Sonnet 6.1 High:** production integration across learning
+2. **Phase 2 — GPT 6.1 Sol / medium:** production integration across learning
    surfaces, grounded GenAI/RAG hardening, Python/ML evaluation harness,
    simplified Coach UI and native iOS/iPadOS core loop.
-3. **Phase 3 — Opus Medium:** final architecture, learning-science, security,
+3. **Phase 3 — GPT 6.1 Sol / xhigh:** final architecture, learning-science, security,
    cost/latency, native-device and documentation audit; simplify before release.
 
 Research/reference map:
