@@ -19,7 +19,7 @@ export type CoachDirector = {
     roomId: string;
     topic: Topic;
     route: LearningRoute;
-    /** Forwarded verbatim. Only "Challenge me" asks for "stretch". */
+    /** Forwarded verbatim. The one-shot "Try a harder question" control asks for "stretch". */
     challengeRequest: ChallengeRequest;
     now?:string;
     /** Trusted observations that will share this atomic issuance transaction. */
