@@ -33,6 +33,27 @@ Merged in PR #66 and deployed from `main`.
 - [ ] Physical iPhone/iPad visual acceptance: verify no facial feature is cropped
       and the intentional bezel overlap reads cleanly on the real device.
 
+## Active October 2 follow-up — recalibration + topic-scope cleanup
+
+Physical iPhone acceptance exposed three learner-facing issues after PR #66:
+
+- [x] Add independent **Apply Coach** and **Apply Learn** paths. Applying one
+      surface starts a fresh response context for that surface only.
+- [x] Add an explicit **apply explanation level to both Coach and Learn** toggle;
+      Room Settings remains the shared/global apply-to-both control.
+- [x] Persist separate effective Coach/Learn explanation levels while keeping
+      `study_rooms.explain_level` as the room-wide default.
+- [x] Make topic scope checkbox-based multi-select with **Select all**, **Clear**
+      and explicit **Apply topics**.
+- [x] Remove the standalone highlighted topic dropdown; the **Topics** button
+      beside Chat now opens the selector and shows selected/total count.
+- [x] Send selected topic IDs to the server and intersect them with active room
+      topics before the adaptive director sees them.
+- [ ] CI/typecheck/build and hosted Supabase migration.
+- [ ] Re-test the exact physical-iPhone failure: select Matter/Phase Changes,
+      apply, then ask about condensation/heat without the old Animal Responses
+      context leaking into the answer.
+
 ## After the study-guide P0 gate — V3 deterministic adaptive game director + iOS/iPadOS
 
 The next major implementation pass converges the existing control plane, grounded
