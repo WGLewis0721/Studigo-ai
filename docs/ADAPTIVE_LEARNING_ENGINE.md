@@ -1140,9 +1140,11 @@ Add rematch behavior for recurring misconceptions and transfer failures.
 
 Connect Quiz, Flashcards, Learn, Practice Test, Weak Areas, and Cram to the same event/state model.
 
-### Step 6 — Learning routes/builds
+### Step 6 — Simplified Coach modes + internal strategy library
 
-Move current style/tradition/practice directives behind explicit route policy.
+Expose only Show me / Coach me / Challenge me to the learner. Move the useful
+style/tradition/practice research behind the interface as explicit internal
+strategy/route policy. Keep the room explanation level independent.
 
 ### Step 7 — Beta evaluation
 
@@ -1170,17 +1172,23 @@ Do not add:
 - neural difficulty prediction;
 - agent swarms;
 - agent memory frameworks;
-- LangChain/LangGraph merely for orchestration;
-- another vector database;
+- autonomous LangChain/LangGraph loops that are only orchestration theater;
+- another vector database without an eval-backed reason;
 - a feature store;
 - a recommendation microservice;
-- a separate Python backend solely for adaptation;
+- a separate Python service that owns deterministic progression solely for novelty;
 - Kafka or an event bus;
 - a graph database for misconception history;
 - an "AI learning style detector";
 - opaque model-generated mastery scores.
 
 None are necessary to prove the learning loop.
+
+A Python/FastAPI + LangChain service is **not** a non-goal when it has a measured
+job: RAG composition, structured model pipelines, evaluation tooling or ML
+experimentation. The Phase 1 implementation spike must compare it with the
+existing TypeScript path. Framework choice is subordinate to citation quality,
+RLS/source safety, latency, cost, testability and maintainability.
 
 ---
 
