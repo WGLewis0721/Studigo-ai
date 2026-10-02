@@ -239,4 +239,3 @@ function chat(state:State,roomId:string,body:Record<string,unknown>,now:string,i
   const topicId=pending?.spec.concept.topicId??current.events.at(-1)?.topicId;
   return {text:display,citations:topicId?citation(state,roomId,topicId):[],grounded:true,conversationId:null};
 }
-

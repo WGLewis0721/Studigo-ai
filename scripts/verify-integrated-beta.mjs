@@ -58,4 +58,3 @@ try {
   await writeFile(output+'/results.json',JSON.stringify({checks,pageErrors:failures,synthetic:true,liveProvider:false},null,2));
   console.log(JSON.stringify({checks,output},null,2));
 } finally {await browser.close();}
-
