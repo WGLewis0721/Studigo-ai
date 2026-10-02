@@ -29,7 +29,7 @@ test("Coach Learn stays the persistent primary switch", () => {
 test("Topics is the integrated scope control, with no standalone green topic switcher", () => {
   assert.match(coachPanel, /aria-label="Coach sections and topic scope"/);
   assert.match(coachPanel, /aria-haspopup="dialog"/);
-  assert.match(coachPanel, /selectedTopicIds\.length\}\/\{topics\.length/);
+  assert.match(coachPanel, /activeTopicIds\.length\}\/\{topics\.length/);
   assert.ok(!coachPanel.includes('className="chatTopic"'), "standalone topic pill is removed");
   assert.ok(!coachPanel.includes('className="chatTopic chatTopicStatic"'), "standalone static topic pill is removed");
 });
@@ -38,9 +38,22 @@ test("topic picker supports multi-select, Select all, Clear and explicit Apply",
   assert.match(coachPanel, /type="checkbox"/);
   assert.match(coachPanel, />Select all</);
   assert.match(coachPanel, />Clear</);
-  assert.match(coachPanel, />Apply topics</);
+  assert.match(coachPanel, /"Apply to Coach"/);
+  assert.match(coachPanel, /"Apply to Learn"/);
   assert.match(coachPanel, /setTopicDraftIds/);
-  assert.match(coachPanel, /setSelectedTopicIds/);
+  assert.match(coachPanel, /setCoachTopicIds/);
+  assert.match(coachPanel, /setLearnTopicIds/);
+});
+
+
+test("Coach and Learn keep independent topic selections", () => {
+  assert.match(coachPanel, /const \[coachTopicIds, setCoachTopicIds\]/);
+  assert.match(coachPanel, /const \[learnTopicIds, setLearnTopicIds\]/);
+  assert.match(coachPanel, /replying === "coach" \? coachTopicIds : learnTopicIds/);
+  assert.match(coachPanel, /setCoachScopeStatus\(\`Applied \$\{count\} to Coach\. Learn topics were not changed\.\`\)/);
+  assert.match(coachPanel, /setLearnScopeStatus\(\`Applied \$\{count\} to Learn\. Coach topics were not changed\.\`\)/);
+  assert.ok(!coachPanel.includes("setCoachTopicIds(ordered);\n      setLearnTopicIds(ordered)"), "Coach Apply must not overwrite Learn");
+  assert.ok(!coachPanel.includes("setLearnTopicIds(ordered);\n      setCoachTopicIds(ordered)"), "Learn Apply must not overwrite Coach");
 });
 
 test("Coach and Learn have independent Apply paths with an explicit apply-to-both control", () => {
