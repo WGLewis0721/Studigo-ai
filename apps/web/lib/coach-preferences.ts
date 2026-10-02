@@ -2,6 +2,7 @@ import { selectLearningRoute } from "./coach-route-selection";
 import referenceJson from "./generated/teaching-references.json";
 import type { TeachingReferences } from "./teaching-reference-projection";
 import { COACH_MODES, migrateCoachMode, COACH_MODE_LABELS, type CoachMode } from "@studigo/learning";
+import { compileLearnPreferences, type LearnPreferences } from "./learn-preferences";
 
 const REFERENCES = referenceJson as TeachingReferences;
 export const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -190,9 +191,19 @@ type Directive = { name: string; instruction: string };
  * Coach gets its saved mode plus internal strategy and the global room level.
  * Learn gets only the global room level plus topic context.
  */
-export function directivesForTurn(mode: "coach" | "ask", preferences: CoachPreferences, clientDirectives: Directive[] = []) {
+export function directivesForTurn(
+  mode: "coach" | "ask",
+  preferences: CoachPreferences,
+  clientDirectives: Directive[] = [],
+  learnPreferences?: LearnPreferences
+) {
   const compiled = compileCoachPreferences(preferences);
   if (mode === "coach") return compiled.directives;
-  const topic = clientDirectives.filter(item => item.name === "Current topic");
-  return [...topic, compiled.directives.find(item => item.name === "Explanation level")!];
+  const topic = clientDirectives.filter(item => item.name === "Current topic" || item.name === "Current topics");
+  const learn = compileLearnPreferences(learnPreferences ?? { mode: "step_by_step" }, preferences.explainLevel);
+  return [
+    ...topic,
+    ...learn.directives,
+    compiled.directives.find(item => item.name === "Explanation level")!
+  ];
 }
