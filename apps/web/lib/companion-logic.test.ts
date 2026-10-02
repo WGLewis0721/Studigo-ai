@@ -4,8 +4,8 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  COMPANION_EVENTS, DEFAULT_PREFS, JOB_MODES, LEAN_AFTER_MS, LINES, SLEEP_AFTER_MS, WINDOW,
-  chooseDock, dirPose, dockFromDrop, idleStage, parsePrefs, reactionFor, readingPose, roomFor, spot,
+  COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, SLEEP_AFTER_MS, WINDOW,
+  chooseDock, clampScale, dirPose, dockFromDrop, idleStage, parsePrefs, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type Rect
 } from "./companion-logic";
 
@@ -22,8 +22,45 @@ test("speech is off unless it was saved on", () => {
 });
 
 test("saved preferences fall back field by field", () => {
-  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { speech: false, seated: true, tuck: false, dock: "br" });
-  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { speech: false, seated: false, tuck: true, dock: "tl" });
+  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { speech: false, seated: true, tuck: false, dock: "br", scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { speech: false, seated: false, tuck: true, dock: "tl", scale: 1 });
+});
+
+test("his size is saved for the device, kept within bounds, and a bad value means the default", () => {
+  assert.equal(parsePrefs(null, "1.5").scale, 1.5);
+  assert.equal(parsePrefs('{"speech":true}', "2").scale, 2);
+  assert.equal(parsePrefs('{"speech":true}', "2").speech, true);
+  assert.equal(parsePrefs("not json", "1.25").scale, 1.25);
+  assert.equal(parsePrefs(null, "9").scale, MAX_SCALE);
+  assert.equal(parsePrefs(null, "0.1").scale, MIN_SCALE);
+  for (const bad of [null, undefined, "", "big", "NaN", "-2", "0"]) assert.equal(parsePrefs(null, bad).scale, 1, `default size for ${String(bad)}`);
+  assert.equal(clampScale(1.2345), 1.23);
+  assert.deepEqual(sizeAt(2), { w: 200, h: 240 });
+});
+
+test("resizing keeps his docked corner still and puts the opposite corner under the pointer", () => {
+  // Docked bottom right with that corner at (800, 600): the pointer is where the top-left corner should be.
+  assert.equal(scaleFromDrag(800, 600, 700, 480), 1);
+  assert.equal(scaleFromDrag(800, 600, 600, 360), 2);
+  assert.equal(scaleFromDrag(800, 600, 650, 500), 1.5);
+  assert.equal(scaleFromDrag(800, 600, 100, 100), MAX_SCALE, "never larger than the limit");
+  assert.equal(scaleFromDrag(800, 600, 795, 598), MIN_SCALE, "never smaller than the limit");
+  // Docked bottom left: the same distances on the other side give the same size.
+  assert.equal(scaleFromDrag(200, 600, 400, 360), 2);
+});
+
+test("at a larger size he still avoids controls, and the page makes more room", () => {
+  const big = sizeAt(2), a: Area = { left: 10, top: 100, right: 1000, bottom: 700, inRow: false };
+  const at = spot("br", a, big);
+  assert.deepEqual(at, { x: a.right - 200, y: a.bottom - 240 });
+  const underBig = { left: at.x, top: at.y, right: at.x + 200, bottom: at.y + 240 };
+  assert.equal(chooseDock("br", a, [underBig], false, big), "bl");
+  // A control that is clear of him at the default size is under him at twice the size.
+  const nearby = { left: a.right - 190, top: a.bottom - 230, right: a.right - 110, bottom: a.bottom - 130 };
+  assert.equal(chooseDock("br", a, [nearby], false), "br");
+  assert.equal(chooseDock("br", a, [nearby], false, big), "bl");
+  assert.deepEqual(roomFor("br", area(true), 96, big), { right: 208, left: 0, thread: 152, page: 0 });
+  assert.deepEqual(roomFor("br", area(false), 0, big), { right: 0, left: 0, thread: 0, page: 224 });
 });
 
 test("he keeps the corner the learner chose when nothing is under it", () => {
@@ -109,10 +146,6 @@ test("idle: he leans after a long pause and dozes after a much longer one", () =
   assert.equal(idleStage(LEAN_AFTER_MS + 1), "lean");
   assert.equal(idleStage(SLEEP_AFTER_MS + 1), "sleep");
   assert.ok(LEAN_AFTER_MS >= 45_000, "a learner reading an answer is not nagged");
-});
-
-test("he has a job on the practice pages only", () => {
-  assert.deepEqual([...JOB_MODES].sort(), ["cards", "coach", "quiz", "test"]);
 });
 
 test("he never changes mastery: nothing in the companion talks to the network or to practice state", () => {

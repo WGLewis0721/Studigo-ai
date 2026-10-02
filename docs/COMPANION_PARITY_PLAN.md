@@ -17,7 +17,11 @@ Stages 1 to 4 shipped the same day, and most of stage 5. What is left:
 
 William's decisions, October 1, 2026: his window starts bottom right (he can be
 dragged anywhere); speech is off by default and is a per-room setting in Room
-Settings; Home says something about progress.
+Settings; Home says something about progress. Later the same day, after using
+it: he is out on every page of the room, not only Coach and Practice; his
+window can be resized (handle on desktop, pinch on a phone); scrolling fades
+him in place instead of nudging him aside; and rows that scroll sideways pass
+behind him.
 
 The rest of this document is the plan as written, kept for the reasoning.
 

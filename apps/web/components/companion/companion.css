@@ -6,25 +6,36 @@
    His stage: the full figure, on Home, in first-run setup and on the sign-in
    pages (components/companion/stage.tsx). */
 
+/* --k is his size (1 is the default); the engine sets it. The box is the scaled
+   size, so everything positioned against it (corners, speech, particles) stays
+   its own size while the window inside is scaled as one piece. */
 .cmp {
-  --ring: var(--tangerine);
-  position: fixed; left: 0; top: 0; z-index: 58; width: 100px; height: 120px;
+  --ring: var(--tangerine); --k: 1;
+  position: fixed; left: 0; top: 0; z-index: 58; width: calc(100px * var(--k)); height: calc(120px * var(--k));
   transform: translate(var(--x, 0px), var(--y, 0px)) scale(var(--sc, 1));
-  transition: transform .46s var(--ease-spring), opacity .22s ease;
+  transition: transform .46s var(--ease-spring), opacity .22s ease, width .3s var(--ease-out), height .3s var(--ease-out);
   touch-action: none; user-select: none; -webkit-user-select: none;
 }
 .cmp[data-tone="coach"], .cmp[data-tone="cram"] { --ring: var(--tangerine); --ring-on: var(--ink); }
 .cmp[data-tone="quiz"] { --ring: var(--dandelion); --ring-on: var(--ink); }
 .cmp[data-tone="cards"] { --ring: var(--grape); --ring-on: #fff; }
 .cmp[data-tone="test"] { --ring: var(--graphite-2); --ring-on: #fff; }
+.cmp[data-tone="mastery"] { --ring: var(--kiwi); --ring-on: var(--ink); }
+.cmp[data-tone="weak"] { --ring: var(--berry); --ring-on: #fff; }
+.cmp[data-tone="plan"] { --ring: var(--indigo); --ring-on: #fff; }
+.cmp[data-tone="materials"], .cmp[data-tone="ask"] { --ring: var(--teal); --ring-on: var(--ink); }
 .cmp.dragging { transition: none; z-index: 70; }
 .cmp[data-state="seat"] { --sc: .3; opacity: 0; pointer-events: none; }
 .cmp.noMove { transition: none; }
+/* While he is being resized he follows the hand exactly. */
+.cmp.sizing, .cmp.sizing .cmpScale, .cmp.sizing .cmpWin { transition: none; }
+/* While the page scrolls he stays put and turns see-through. */
+.cmp.ghost { opacity: .28; }
 /* Before he lands, his window is there but empty. */
 .cmp[data-empty] .cmpStage { opacity: 0; }
 
 .cmpWin {
-  position: absolute; inset: 0; border-radius: 26px; background: var(--white);
+  position: absolute; inset: 0; border-radius: calc(26px * var(--k)); background: var(--white);
   box-shadow:
     0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white),
     0 16px 28px -12px color-mix(in oklab, var(--ring) 70%, transparent),
@@ -32,11 +43,11 @@
   transition: transform .34s var(--ease-out), box-shadow .3s ease;
 }
 .cmp.dragging .cmpWin { transform: rotate(-4deg) scale(1.06); box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white), 0 30px 40px -16px rgba(20, 27, 45, .45); }
-.cmp.tucked[data-side="r"] .cmpWin { transform: translateX(64px) rotate(5deg); }
-.cmp.tucked[data-side="l"] .cmpWin { transform: translateX(-64px) rotate(-5deg); }
 /* When he bursts out of the frame he hops inward, so his hands stay on screen. */
-.cmp[data-pose="celebrate"][data-side="r"] .cmpWin { transform: translateX(-22px); }
-.cmp[data-pose="celebrate"][data-side="l"] .cmpWin { transform: translateX(22px); }
+.cmp[data-pose="celebrate"][data-side="r"] .cmpWin { transform: translateX(calc(-22px * var(--k))); }
+.cmp[data-pose="celebrate"][data-side="l"] .cmpWin { transform: translateX(calc(22px * var(--k))); }
+/* Everything drawn inside the window is laid out at the default size and scaled together. */
+.cmpScale { position: absolute; left: 0; top: 0; width: 100px; height: 120px; transform: scale(var(--k)); transform-origin: 0 0; transition: transform .3s var(--ease-out); }
 .cmp.thinking .cmpWin { animation: cmpThink 1.6s var(--ease-out) infinite; }
 @keyframes cmpThink {
   50% { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white), 0 0 0 6px color-mix(in oklab, var(--ring) 28%, transparent), 0 3px 8px rgba(20, 27, 45, .14); }
@@ -96,28 +107,57 @@
 
 .cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 100px; border-radius: 26px 26px 0 0; cursor: pointer; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+/* His name is a key: it opens his menu. The caret says so, it lifts under the
+   pointer, presses in when clicked, and stays lit while the menu is open. */
 .cmpSill {
   position: absolute; left: 4px; right: 4px; bottom: 4px; height: 20px; padding: 0; border: 0; border-radius: 5px 5px 22px 22px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 5px;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
   background-color: var(--ring); background-image: var(--gloss); color: var(--ring-on, var(--ink));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -1px 0 rgba(20, 27, 45, .16);
-  transition: background-color .3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(20, 27, 45, .2);
+  transition: background-color .3s ease, filter .15s ease, box-shadow .12s ease, transform .12s var(--ease-out);
 }
 .cmpSill::after { content: ""; position: absolute; inset: -4px -4px -12px; }
 .cmpSill .led, .cmpTab .led { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4); }
-.cmpSill .led { margin-right: 3px; }
+.cmpSill .led { margin-right: 1px; }
 .sillBrand { font-family: var(--display); font-weight: 800; font-size: .6rem; letter-spacing: .01em; line-height: 1; }
+.sillMore { flex: none; opacity: .75; transition: transform .2s var(--ease-out), opacity .15s ease; }
+.cmpSill:hover { filter: brightness(1.07) saturate(1.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 0 rgba(20, 27, 45, .24), 0 0 0 2px color-mix(in oklab, var(--ring) 45%, white); }
+.cmpSill:hover .sillMore { opacity: 1; transform: translateY(-1px); }
+.cmpSill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cmpSill:active, .cmpSill.pressed { transform: translateY(1px); filter: brightness(.94); box-shadow: inset 0 2px 4px rgba(20, 27, 45, .32); }
+.cmpSill[aria-expanded="true"] { background-color: var(--ink); background-image: none; color: #fff; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .4); }
+.cmpSill[aria-expanded="true"] .sillMore { opacity: 1; transform: rotate(180deg); }
+
+/* His handles sit on the frame at their own size, whatever size he is:
+   a grip to move him, a handle to resize him, and a key that sends him to his seat. */
 .cmpCorner {
-  position: absolute; top: -7px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  position: absolute; top: -9px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
   display: grid; place-items: center; background: var(--white); color: var(--ink-2);
   box-shadow: 0 0 0 1px var(--hairline-strong), 0 2px 6px rgba(20, 27, 45, .16);
-  transition: opacity .2s ease;
+  transition: opacity .2s ease, background-color .15s ease, color .15s ease;
 }
 .cmpCorner::after { content: ""; position: absolute; inset: -10px; }
-.cmpMin { right: -7px; }
-.cmpGrip { left: -7px; cursor: grab; touch-action: none; }
+.cmpCorner:hover { background: var(--ink); color: #fff; }
+.cmpCorner:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cmpGrip { left: 50%; top: -8px; width: 34px; height: 16px; margin-left: -17px; border-radius: 999px; cursor: grab; touch-action: none; }
 .cmp.dragging .cmpGrip { cursor: grabbing; }
-.cmp.tucked .cmpCorner, .cmp.dragging .cmpMin, .cmp[data-empty] .cmpCorner { opacity: 0; }
+/* The send-to-seat key takes the outer top corner, the resize handle the inner corner he grows toward. */
+.cmpMin { right: -9px; }
+.cmpSize { left: -9px; cursor: nwse-resize; touch-action: none; }
+.cmp[data-dock$="l"] .cmpMin { right: auto; left: -9px; }
+.cmp[data-dock="bl"] .cmpSize { left: auto; right: -9px; cursor: nesw-resize; }
+.cmp[data-dock="bl"] .cmpSize svg, .cmp[data-dock="tr"] .cmpSize svg { transform: scaleX(-1); }
+.cmp[data-dock="tr"] .cmpSize { top: auto; bottom: -9px; cursor: nesw-resize; }
+.cmp[data-dock="tl"] .cmpSize { top: auto; bottom: -9px; left: auto; right: -9px; }
+.cmp.ghost .cmpCorner, .cmp.dragging .cmpMin, .cmp.dragging .cmpSize, .cmp[data-empty] .cmpCorner { opacity: 0; }
+/* With a mouse the handles appear when you reach for him; on touch the grip and seat key stay visible. */
+@media (hover: hover) and (pointer: fine) {
+  .cmpCorner { opacity: 0; }
+  .cmp:hover .cmpCorner, .cmp:focus-within .cmpCorner, .cmp.sizing .cmpCorner { opacity: 1; }
+  .cmp.dragging .cmpMin, .cmp.dragging .cmpSize, .cmp.ghost .cmpCorner { opacity: 0; }
+}
+/* Resizing is a pinch on touch screens, so the handle is for pointers only. */
+@media (max-width: 700px), (pointer: coarse) { .cmpSize { display: none; } }
 
 .cmpBubble {
   position: absolute; top: 16px; right: calc(100% + 12px); width: max-content; max-width: 196px; padding: 9px 13px;
@@ -143,7 +183,7 @@
   100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, -60px)) scale(var(--s, 1)) rotate(var(--r, 0deg)); }
 }
 
-/* Sent to his seat on a page where he has a job: a small tab at the edge calls him back. */
+/* Sent to his seat: a small tab at the edge calls him back. */
 .cmpTab {
   position: fixed; left: 0; top: 0; z-index: 58; width: 20px; height: 52px; padding: 0; border: 0; cursor: pointer;
   display: grid; place-items: center; align-content: center; gap: 6px;
@@ -163,8 +203,12 @@
 .roomWorkspace:has(.roomSettings, .coachSetupBackdrop, .coachSkillSheet) .cmp,
 .roomWorkspace:has(.roomSettings, .coachSetupBackdrop, .coachSkillSheet) .cmpTab { opacity: 0; pointer-events: none; }
 
-/* The page makes room for him. The engine sets these on .roomWorkspace. */
-.roomWorkspace .chatRow, .roomWorkspace .chatChips { margin-right: var(--dock-r, 0px); margin-left: var(--dock-l, 0px); transition: margin .3s var(--ease-out); }
+/* The page makes room for him. The engine sets these on .roomWorkspace.
+   The message field and an error move aside. A row of chips does not: it scrolls
+   behind his window, with a spacer at each end so the last chip can clear him. */
+.roomWorkspace .chatRow { margin-right: var(--dock-r, 0px); margin-left: var(--dock-l, 0px); transition: margin .3s var(--ease-out); }
+.roomWorkspace .chatChips::before { content: ""; flex: 0 0 var(--dock-l, 0px); margin-right: -7px; }
+.roomWorkspace .chatChips::after { content: ""; flex: 0 0 var(--dock-r, 0px); margin-left: -7px; }
 .roomWorkspace .chatError { margin-right: calc(12px + var(--dock-r, 0px)); margin-left: calc(12px + var(--dock-l, 0px)); transition: margin .3s var(--ease-out); }
 .roomWorkspace .chatThread::after { content: ""; display: block; flex: none; height: var(--dock-thread, 0px); }
 .roomWorkspace .modeSurface:not(.modeSurfaceFramed)::after { content: ""; display: block; flex: none; height: var(--dock-page, 0px); }
@@ -176,39 +220,48 @@
 .roomWorkspace[data-seat="empty"] .chatMascot .studigoMascot img { opacity: 0; scale: .6; }
 .roomWorkspace.seatLand .chatMascot .studigoMascot { animation: cmpSquish .42s var(--ease-spring) 1; }
 
-/* His card: a bottom sheet in the app's own sheet language. */
+/* His menu: a bottom sheet on phones, a roomy panel on wide screens. */
 .cmpCard { position: fixed; inset: 0; z-index: 120; display: grid; align-items: end; justify-items: center; padding: 8px 8px max(16px, env(safe-area-inset-bottom)); }
 .cmpBackdrop { position: absolute; inset: 0; border: 0; background: rgba(20, 25, 36, .24); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: cmpFade .18s ease-out; }
 @keyframes cmpFade { from { opacity: 0; } }
 .cmpSheet {
-  position: relative; width: min(420px, 100%); max-height: calc(100dvh - 90px); overflow-y: auto; scrollbar-width: none;
-  display: grid; gap: 14px; padding: 16px 16px 18px; border: 1px solid rgba(20, 27, 45, .11); border-radius: 30px;
+  position: relative; width: min(520px, 100%); max-height: calc(100dvh - 70px); overflow-y: auto; scrollbar-width: none;
+  display: grid; gap: 16px; padding: 20px 20px 22px; border: 1px solid rgba(20, 27, 45, .11); border-radius: 32px;
   background: rgba(255, 255, 255, .98); box-shadow: 0 24px 70px rgba(20, 25, 36, .22);
   color: var(--ink); font-family: var(--sans); animation: cmpSheetIn .26s var(--ease-out);
 }
 @keyframes cmpSheetIn { from { opacity: .72; transform: translateY(18px) scale(.992); } }
 .cmpSheetHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.cmpSheetHead strong { display: block; margin-top: 3px; font-size: 1.12rem; letter-spacing: -.02em; }
-.cmpSheetHead button { min-width: 58px; min-height: 38px; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .07); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
-.cmpCardTop { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px 14px 12px 8px; border-radius: 20px; background: var(--tangerine-soft); }
-.cmpPlay { width: 116px; height: 116px; padding: 0; border: 0; background: none; cursor: pointer; }
+.cmpSheetHead strong { display: block; margin-top: 3px; font-family: var(--display); font-size: 1.4rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.cmpSheetHead button { min-width: 72px; min-height: 44px; font-size: 1rem; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .07); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+.cmpCardTop { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: center; padding: 14px 18px 14px 10px; border-radius: 24px; background: var(--tangerine-soft); }
+.cmpPlay { width: 150px; height: 150px; padding: 0; border: 0; background: none; cursor: pointer; }
 .cmpPlay img { display: block; width: 100%; height: 100%; }
 .cmpPlay.playing img { animation: cmpBounce .45s var(--ease-out) 2; }
-.cmpAbout strong { display: block; margin-bottom: 4px; font-family: var(--display); font-size: 1.15rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
-.cmpAbout p { margin: 0; color: var(--ink-2); font-size: .84rem; line-height: 1.45; }
-.cmpToggle { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; align-items: center; min-height: 44px; cursor: pointer; }
-.cmpToggle b { font-size: .92rem; }
-.cmpToggle small { grid-column: 1; color: var(--muted); font-size: .78rem; line-height: 1.3; }
-.cmpToggle input { grid-column: 2; grid-row: 1 / span 2; appearance: none; -webkit-appearance: none; width: 48px; height: 30px; margin: 0; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .16); position: relative; cursor: pointer; transition: background-color .2s ease; }
-.cmpToggle input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(20, 27, 45, .3); transition: transform .22s var(--ease-spring); }
+.cmpAbout strong { display: block; margin-bottom: 6px; font-family: var(--display); font-size: 1.45rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.cmpAbout p { margin: 0; color: var(--ink-2); font-size: 1rem; line-height: 1.45; }
+.cmpToggle, .cmpRange { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: center; min-height: 52px; cursor: pointer; }
+.cmpToggle b, .cmpRange b { font-size: 1.08rem; }
+.cmpToggle small, .cmpRange small { grid-column: 1; color: var(--muted); font-size: .92rem; line-height: 1.3; }
+.cmpToggle input { grid-column: 2; grid-row: 1 / span 2; appearance: none; -webkit-appearance: none; width: 56px; height: 34px; margin: 0; border: 0; border-radius: 999px; background: rgba(20, 27, 45, .16); position: relative; cursor: pointer; transition: background-color .2s ease; }
+.cmpToggle input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(20, 27, 45, .3); transition: transform .22s var(--ease-spring); }
 .cmpToggle input:checked { background: var(--tangerine); }
-.cmpToggle input:checked::after { transform: translateX(18px); }
-.cmpToggle input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-.cmpCardActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.cmpToggle input:checked::after { transform: translateX(22px); }
+.cmpToggle input:focus-visible, .cmpRange input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.cmpRange { grid-template-columns: minmax(0, 1fr) 52px; cursor: default; }
+.cmpRange input { grid-column: 1; width: 100%; margin: 6px 0 2px; accent-color: var(--tangerine); cursor: pointer; }
+.cmpRange output { grid-column: 2; grid-row: 1 / span 3; align-self: center; justify-self: end; font-family: var(--mono); font-size: .9rem; font-weight: 600; color: var(--ink-2); }
+.cmpCardActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cmpCardActions .ghostButton { min-height: 48px; padding: 0 18px; font-size: .98rem; }
 
 /* Room Settings: the same two switches, where the room's other choices live. */
 .companionSettings { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+.companionSettings .cmpToggle { min-height: 44px; }
+.companionSettings .cmpToggle b { font-size: .92rem; }
 .companionSettings .cmpToggle small { font-size: .8rem; }
+.companionSettings .cmpToggle input { width: 48px; height: 30px; }
+.companionSettings .cmpToggle input::after { width: 24px; height: 24px; }
+.companionSettings .cmpToggle input:checked::after { transform: translateX(18px); }
 
 /* ---------------------------------------------------------------------------
    The stage: Studigo full body, standing in the page.
@@ -256,12 +309,21 @@
 .quizScoreCard .studigoFigure { float: right; margin: -10px -6px 4px 10px; }
 
 @media (min-width: 701px) {
-  /* Wide screens: the topbar menu sits above him, and his card is a small panel rather than a sheet. */
+  /* Wide screens: the topbar menu sits above him, and his menu is a panel sized for the screen. */
   .cmp, .cmpTab { z-index: 15; }
   .cmp.dragging { z-index: 16; }
-  .cmpCard { align-items: center; }
+  .cmpCard { align-items: center; padding: 24px; }
+  .cmpSheet { width: min(680px, 100%); max-height: calc(100dvh - 48px); gap: 20px; padding: 28px 30px 30px; border-radius: 36px; }
+  .cmpSheetHead strong { font-size: 1.75rem; }
+  .cmpCardTop { grid-template-columns: 200px minmax(0, 1fr); gap: 22px; padding: 18px 24px 18px 14px; border-radius: 28px; }
+  .cmpPlay { width: 200px; height: 200px; }
+  .cmpAbout strong { font-size: 1.9rem; }
+  .cmpAbout p { font-size: 1.1rem; line-height: 1.5; }
+  .cmpToggle, .cmpRange { min-height: 60px; }
+  .cmpToggle b, .cmpRange b { font-size: 1.2rem; }
+  .cmpToggle small, .cmpRange small { font-size: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cmp, .cmpWin, .cmpTab { transition: none; animation: none; }
+  .cmp, .cmpWin, .cmpScale, .cmpTab, .cmpSill { transition: none; animation: none; }
   .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble { animation: none !important; }
 }

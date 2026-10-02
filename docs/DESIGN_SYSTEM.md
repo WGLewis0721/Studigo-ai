@@ -234,20 +234,25 @@ He is one character with three places, and he is only ever in one of them:
 
 - **His seat**: the round header avatar (`StudigoMascot` in its `mark` crop),
   28–40px. Every page has it.
-- **His window**: waist-up, 100×120px, on the pages where he has a job (Coach
-  chat, Quiz, Flashcards, Practice test). It stands in a free corner beside the
-  work: the message field and anything above it move aside for him, he tucks to
-  the edge while the page scrolls, he takes another corner rather than sit on a
-  control, and he disappears while a sheet or menu is open. The learner can drag
-  him to a corner, or send him back to his seat (a small tab at the edge calls
-  him back). While he is out, the seat shows empty.
+- **His window**: waist-up, 100×120px by default, in a corner of every page of
+  the room unless the learner sends him to his seat. It stands beside the work:
+  the message field moves aside for him, a row of chips scrolls behind him, he
+  takes another corner rather than sit on a control, and he disappears while a
+  sheet or menu is open. While the page scrolls he stays exactly where he is
+  and turns see-through; he does not move. The learner can drag him to a corner,
+  resize him from 75% to 200% (a corner handle with a mouse, a pinch on touch,
+  or the slider in his menu; the size is saved for the device), or send him to
+  his seat (a small tab at the edge calls him back). While he is out, the seat
+  shows empty. His name on the sill is a key that opens his menu: it carries a
+  caret, lifts under the pointer, presses in, and stays lit while the menu is
+  open.
 - **His stage**: the full figure in a cream screen with a sill, on Home, in
   first-run setup and on the sign-in pages.
 
 His reactions follow real events and nothing else: a graded answer, a rated
 card, a finished set, a reply being written, typing in a field, a tap or a
 stroke. **Speech is off by default.** It is a per-room switch in Room Settings
-(and on his card), saved in the browser like the room's color. His lines are
+(and in his menu), saved in the browser like the room's color. His lines are
 short and follow the plain-punctuation rule.
 
 `StudigoMascot` still draws the seat and the small identity marks, with the

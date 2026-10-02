@@ -28,20 +28,19 @@ export function useCompanion() {
  * element inside the workspace and provide `api` through CompanionContext.
  * If the engine cannot start, the room carries on without him.
  */
-export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
+export function useCompanionWindow({ roomId, workspaceRef, tone }: {
   roomId: string;
   workspaceRef: RefObject<HTMLElement | null>;
   tone: string;
-  hasJob: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const handle = useRef<CompanionHandle | null>(null);
-  const latest = useRef({ tone, hasJob });
+  const latest = useRef({ tone });
   // Read once per visit to the room, not once per effect run (React runs effects twice in development).
   const arriving = useRef<boolean | null>(null);
   const [prefs, updatePrefs] = useCompanionPrefs(roomId);
 
-  useEffect(() => { latest.current = { tone, hasJob }; });
+  useEffect(() => { latest.current = { tone }; });
 
   /** He is an extra. If anything in his window throws, he is switched off and the room carries on. */
   const safely = useCallback((use: (companion: CompanionHandle) => void) => {
@@ -71,7 +70,6 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
     try {
       const created = createCompanion(workspace, host, { prefs: readCompanionPrefs(roomId), onPrefs: updatePrefs, arriving: arriving.current });
       created.setTone(latest.current.tone);
-      created.setJob(latest.current.hasJob);
       handle.current = created;
       // Local fixtures have no grading API, so this is how his reactions are exercised by hand.
       if (process.env.NODE_ENV === "development") (window as unknown as { studigoCompanion?: CompanionHandle }).studigoCompanion = created;
@@ -87,7 +85,6 @@ export function useCompanionWindow({ roomId, workspaceRef, tone, hasJob }: {
   }, [roomId, workspaceRef, updatePrefs]);
 
   useEffect(() => { safely((companion) => companion.setTone(tone)); }, [tone, safely]);
-  useEffect(() => { safely((companion) => companion.setJob(hasJob)); }, [hasJob, safely]);
   useEffect(() => { safely((companion) => companion.setPrefs(prefs)); }, [prefs, safely]);
 
   const api = useMemo<CompanionApi>(() => ({
@@ -111,7 +108,7 @@ export function RoomCompanionSettings({ roomId }: { roomId: string }) {
       </label>
       <label className="cmpToggle">
         <b>His window</b>
-        <small>He sits beside your work in Coach and Practice. Off keeps him in his seat.</small>
+        <small>He sits in a corner of every page of this room. Off keeps him in his seat.</small>
         <input type="checkbox" checked={!prefs.seated} onChange={(event) => update({ seated: !event.target.checked })} />
       </label>
     </div>
