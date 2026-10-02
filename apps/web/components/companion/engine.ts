@@ -1,14 +1,16 @@
 import {
-  LINES, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, dirPose, dockFromDrop, idleStage, reactionFor, readingPose, roomFor, spot,
+  LINES, MAX_SCALE, MIN_SCALE, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
+  roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
 } from "@/lib/companion-logic";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
-   He is only ever in one of two places here: his window (waist-up, on the pages
-   where he has a job) or his seat (the header avatar). The engine owns a few
-   elements inside `host` and nothing else: the room around it is React's.
-   It reads the page to stay out of the way and never writes to practice state. */
+   He is only ever in one of two places here: his window (waist-up, in a corner
+   of every page of the room) or his seat (the header avatar, when the learner
+   sends him there). The engine owns a few elements inside `host` and nothing
+   else: the room around it is React's. It reads the page to stay out of the
+   way and never writes to practice state. */
 
 export const SPRITES = "/mascot/companion";
 
@@ -18,8 +20,6 @@ export type CompanionHandle = {
   /** True while Studigo is working on a reply. */
   thinking(on: boolean): void;
   setTone(tone: string): void;
-  /** Whether this page gives him a job. With one he comes out; without, he stays in his seat. */
-  setJob(hasJob: boolean): void;
   setPrefs(prefs: CompanionPrefs): void;
   destroy(): void;
 };
@@ -34,8 +34,9 @@ type Options = {
 
 type Press = { sx: number; sy: number; ox: number; oy: number; mode: "press" | "pet" | "drag" | "long"; lastHeart: number };
 
-const W = WINDOW.w, H = WINDOW.h;
 const POP: Partial<Record<WindowPose, true>> = { celebrate: true, lean: true, poke: true };
+/** Clicking the size handle without dragging steps through these. */
+const SIZE_STEPS = [1, 1.5, 2];
 const SHAPES = {
   heart: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 14.2 2.6 8.9a3.5 3.5 0 0 1 5-4.9l.4.4.4-.4a3.5 3.5 0 0 1 5 4.9Z"/></svg>',
   spark: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0c.6 4.2 3.8 7.4 8 8-4.2.6-7.4 3.8-8 8-.6-4.2-3.8-7.4-8-8 4.2-.6 7.4-3.8 8-8Z"/></svg>',
@@ -51,6 +52,8 @@ const now = () => performance.now();
 const clamp = (value: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, value));
 const pick = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.length)];
 const shown = (node: Element | null): node is HTMLElement => Boolean(node && node.getClientRects().length);
+/** Keeps a drag attached to its handle. A pointer that is already gone is not worth failing over. */
+const capture = (node: Element, pointerId: number) => { try { node.setPointerCapture(pointerId); } catch { /* the pointer was released first */ } };
 
 export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Options): CompanionHandle {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -67,22 +70,27 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const cancel = (id: number) => { window.clearTimeout(id); timers.delete(id); };
 
   const rt = {
-    mode: "seat" as "seat" | "window", hasJob: false, dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
+    mode: "seat" as "seat" | "window", dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
     reactUntil: 0, reacting: false, gazeUntil: 0, gazing: false, typingUntil: 0, thinking: false, asleep: false, leaned: false,
     lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, pokeAt: 0, pokeCombo: 0,
-    press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false
+    press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false, pinchEndedAt: 0
   };
+  /** His current size: k is the scale, W and H the window in CSS pixels. */
+  let k = 1, W: number = WINDOW.w, H: number = WINDOW.h;
 
   /* ---------- his elements ---------- */
   host.innerHTML = `
-    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r">
+    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br">
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
       <div class="cmpWin">
-        <div class="cmpScreen"></div>
-        <div class="cmpStage"><div class="cmpBody">${WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
-        <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet. His card has his settings."></div>
-        <button class="cmpSill" type="button" aria-label="Open Studigo's card"><span class="led"></span><span class="sillBrand">studigo</span></button>
-        <button class="cmpCorner cmpGrip" type="button" tabindex="-1" aria-label="Drag to move Studigo"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><g fill="currentColor"><circle cx="3" cy="3" r="1.3"/><circle cx="9" cy="3" r="1.3"/><circle cx="3" cy="9" r="1.3"/><circle cx="9" cy="9" r="1.3"/><circle cx="6" cy="6" r="1.3"/></g></svg></button>
+        <div class="cmpScale">
+          <div class="cmpScreen"></div>
+          <div class="cmpStage"><div class="cmpBody">${WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
+          <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet. His name opens his menu."></div>
+          <button class="cmpSill" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Studigo's menu"><span class="led"></span><span class="sillBrand">studigo</span><svg class="sillMore" width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5 5 3.5l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <button class="cmpCorner cmpGrip" type="button" tabindex="-1" aria-label="Drag to move Studigo"><svg width="16" height="6" viewBox="0 0 16 6" aria-hidden="true"><g fill="currentColor"><circle cx="3" cy="3" r="1.4"/><circle cx="8" cy="3" r="1.4"/><circle cx="13" cy="3" r="1.4"/></g></svg></button>
+        <button class="cmpCorner cmpSize" type="button" aria-label="Resize Studigo. Drag, or press to step through sizes."><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5v-4h4M9.5 5.5v4h-4M2.8 2.8l6.4 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="cmpCorner cmpMin" type="button" aria-label="Send Studigo back to his seat"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
       <div class="cmpFx"></div>
@@ -94,6 +102,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const tab = host.querySelector<HTMLButtonElement>(".cmpTab")!;
   const hit = host.querySelector<HTMLElement>(".cmpHit")!;
   const grip = host.querySelector<HTMLElement>(".cmpGrip")!;
+  const sizer = host.querySelector<HTMLButtonElement>(".cmpSize")!;
   const sill = host.querySelector<HTMLButtonElement>(".cmpSill")!;
   const poseEls = new Map<string, HTMLImageElement>();
   host.querySelectorAll<HTMLImageElement>(".cmpPose").forEach((img) => poseEls.set(img.dataset.pose ?? "", img));
@@ -161,7 +170,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   function place() {
     if (dead) return;
     const a = area();
-    const waiting = rt.hasJob && prefs.seated && a !== null;
+    const waiting = prefs.seated && a !== null;
     tab.hidden = !waiting;
     if (waiting) {
       const page = surface()!.getBoundingClientRect(), right = rt.dock[1] === "r";
@@ -175,15 +184,34 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       makeRoom(0, 0, 0, 0);
       return;
     }
-    const dock = rt.drag ? rt.dock : chooseDock(rt.dock, a, controls(a), canScrollClear());
-    if (!rt.drag) { const at = spot(dock, a); setXY(at.x, at.y); }
+    const size = { w: W, h: H };
+    const dock = rt.drag ? rt.dock : chooseDock(rt.dock, a, controls(a), canScrollClear(), size);
+    if (!rt.drag) { const at = spot(dock, a, size); setXY(at.x, at.y); }
     el.dataset.side = dock[1];
+    el.dataset.dock = dock;
     // The page makes room for him instead of being covered by him.
-    const room = roomFor(dock, a, rowHeight());
+    const room = roomFor(dock, a, rowHeight(), size);
     makeRoom(room.right, room.left, room.thread, room.page);
   }
   let placeFrame = 0;
   const schedulePlace = () => { if (!placeFrame) placeFrame = window.requestAnimationFrame(() => { placeFrame = 0; place(); }); };
+
+  /* ---------- his size ---------- */
+  /** The largest he can be and still fit the screen he is on. */
+  function fit(scale: number) {
+    const a = area();
+    const roomy = a ? Math.max(MIN_SCALE, (a.bottom - a.top) / WINDOW.h) : MAX_SCALE;
+    return clampScale(Math.min(scale, roomy, (window.innerWidth - 24) / WINDOW.w));
+  }
+  function applyScale(scale: number, save: boolean) {
+    k = fit(scale);
+    ({ w: W, h: H } = sizeAt(k));
+    el.style.setProperty("--k", String(k));
+    place();
+    if (save && prefs.scale !== k) changePrefs({ scale: k });
+  }
+  /** While the learner is resizing, the window follows the hand with no easing. */
+  const sizing = (on: boolean) => { el.classList.toggle("sizing", on); if (on) bubble.hidden = true; };
 
   /* ---------- poses ---------- */
   function setPose(name: WindowPose) {
@@ -204,9 +232,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls);
     later(() => node.classList.remove(cls), ms);
   }
+  const eyesX = () => rt.x + W / 2, eyesY = () => rt.y + 46 * k;
   function lookAt(px: number, py: number, hold: number) {
     if (rt.mode !== "window" || rt.drag || rt.press || rt.asleep || rt.thinking || now() < rt.reactUntil) return;
-    setPose(dirPose(px - (rt.x + W / 2), py - (rt.y + 46)));
+    setPose(dirPose(px - eyesX(), py - eyesY(), 54 * k));
     rt.gazing = true; rt.gazeUntil = now() + hold;
   }
 
@@ -224,8 +253,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     for (let i = 0; i < count; i += 1) {
       const node = document.createElement("span");
       node.className = "fx";
-      const dx = (Math.random() - 0.5) * (kind === "spark" ? 150 : 70), dy = kind === "spark" ? -30 - Math.random() * 90 : -50 - Math.random() * 40;
-      node.style.cssText = `--fx:${30 + Math.random() * 40}%;--fy:${kind === "zzz" ? 22 : 18 + Math.random() * 30}%;--dx:${kind === "zzz" ? 26 : dx}px;--dy:${dy}px;--s:${0.7 + Math.random() * 0.7};--r:${(Math.random() - 0.5) * 120}deg;--t:${kind === "zzz" ? 1.9 : 0.8 + Math.random() * 0.5}s;--c:${pick(FX_COLORS[kind])};animation-delay:${i * (kind === "spark" ? 30 : 110)}ms`;
+      const dx = (Math.random() - 0.5) * (kind === "spark" ? 150 : 70) * k, dy = (kind === "spark" ? -30 - Math.random() * 90 : -50 - Math.random() * 40) * k;
+      node.style.cssText = `--fx:${30 + Math.random() * 40}%;--fy:${kind === "zzz" ? 22 : 18 + Math.random() * 30}%;--dx:${kind === "zzz" ? 26 * k : dx}px;--dy:${dy}px;--s:${(0.7 + Math.random() * 0.7) * Math.max(1, k * 0.8)};--r:${(Math.random() - 0.5) * 120}deg;--t:${kind === "zzz" ? 1.9 : 0.8 + Math.random() * 0.5}s;--c:${pick(FX_COLORS[kind])};animation-delay:${i * (kind === "spark" ? 30 : 110)}ms`;
       node.innerHTML = kind === "zzz" ? "z" : kind === "spark" ? (i % 3 ? SHAPES.spark : SHAPES.dot) : SHAPES.heart;
       node.addEventListener("animationend", () => node.remove());
       fx.appendChild(node);
@@ -258,7 +287,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     }
   }
 
-  /* ---------- touch: tap to poke, stroke to pet, pull to pick up ---------- */
+  /* ---------- touch: tap to poke, stroke to pet, pull to pick up, pinch to resize ---------- */
   function poke() {
     const t = now();
     rt.pokeCombo = t - rt.pokeAt < 1300 ? rt.pokeCombo + 1 : 1; rt.pokeAt = t;
@@ -284,14 +313,15 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let longTimer = 0;
   hit.addEventListener("pointerdown", (event) => {
     event.preventDefault(); activity();
+    if (pinch) return;
     rt.press = { sx: event.clientX, sy: event.clientY, ox: event.clientX - rt.x, oy: event.clientY - rt.y, mode: "press", lastHeart: 0 };
-    hit.setPointerCapture(event.pointerId);
+    capture(hit, event.pointerId);
     cancel(longTimer);
     longTimer = later(() => { if (rt.press?.mode === "press") { rt.press.mode = "long"; openCard(); } }, 620);
   }, { signal });
   hit.addEventListener("pointermove", (event) => {
     const press = rt.press;
-    if (!press) return;
+    if (!press || pinch) return;
     const x = event.clientX, y = event.clientY;
     if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); }
     if (press.mode === "pet") {
@@ -312,20 +342,85 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   hit.addEventListener("pointerup", release, { signal });
   hit.addEventListener("pointercancel", release, { signal });
   hit.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activity(); poke(); } }, { signal });
-  grip.addEventListener("pointerdown", (event) => { event.preventDefault(); activity(); grip.setPointerCapture(event.pointerId); startDrag(event.clientX, event.clientY); }, { signal });
+  grip.addEventListener("pointerdown", (event) => { event.preventDefault(); activity(); capture(grip, event.pointerId); startDrag(event.clientX, event.clientY); }, { signal });
   grip.addEventListener("pointermove", (event) => dragTo(event.clientX, event.clientY), { signal });
   const drop = () => { if (rt.drag) endDrag(); };
   grip.addEventListener("pointerup", drop, { signal });
   grip.addEventListener("pointercancel", drop, { signal });
 
-  /* ---------- his seat: the header avatar he comes out of and goes back to ---------- */
+  /* Resize by the handle (desktop): the corner he is docked in stays put and the
+     opposite corner follows the pointer. A press without a drag steps through sizes. */
+  let resize: { ax: number; ay: number; moved: boolean } | null = null;
+  sizer.addEventListener("pointerdown", (event) => {
+    event.preventDefault(); activity();
+    capture(sizer, event.pointerId);
+    const dock = (el.dataset.dock ?? rt.dock) as Dock;
+    resize = { ax: dock[1] === "r" ? rt.x + W : rt.x, ay: dock[0] === "b" ? rt.y + H : rt.y, moved: false };
+  }, { signal });
+  sizer.addEventListener("pointermove", (event) => {
+    if (!resize) return;
+    if (!resize.moved) { resize.moved = true; sizing(true); }
+    applyScale(scaleFromDrag(resize.ax, resize.ay, event.clientX, event.clientY), false);
+  }, { signal });
+  const endResize = () => {
+    if (!resize) return;
+    const dragged = resize.moved;
+    resize = null;
+    if (!dragged) return;
+    sizing(false); sizeClickUntil = now() + 350;
+    changePrefs({ scale: k });
+  };
+  let sizeClickUntil = 0;
+  sizer.addEventListener("pointerup", endResize, { signal });
+  sizer.addEventListener("pointercancel", endResize, { signal });
+  sizer.addEventListener("click", () => {
+    // The click that ends a drag is not a request to step the size.
+    if (now() < sizeClickUntil) return;
+    const next = SIZE_STEPS.find((step) => step > k + 0.05) ?? SIZE_STEPS[0];
+    applyScale(next, true); pulse("land", 460);
+  }, { signal });
+
+  /* Resize by pinching him (touch): two fingers on his window. */
+  const fingers = new Map<number, { x: number; y: number }>();
+  let pinch: { start: number; from: number } | null = null;
+  const spread = () => { const [a, b] = Array.from(fingers.values()); return Math.hypot(a.x - b.x, a.y - b.y); };
+  el.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "touch") return;
+    fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (fingers.size !== 2 || pinch) return;
+    // A second finger turns the gesture into a pinch: whatever the first finger began is dropped.
+    cancel(longTimer); rt.press = null;
+    if (rt.drag) { rt.drag = null; el.classList.remove("dragging"); }
+    rt.pose = ""; setPose("center");
+    pinch = { start: Math.max(spread(), 24), from: k };
+    sizing(true);
+  }, { signal, capture: true });
+  window.addEventListener("pointermove", (event) => {
+    if (!fingers.has(event.pointerId)) return;
+    fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch && fingers.size >= 2) applyScale(pinch.from * (spread() / pinch.start), false);
+  }, { signal, passive: true });
+  const liftFinger = (event: PointerEvent) => {
+    if (!fingers.delete(event.pointerId) || !pinch || fingers.size >= 2) return;
+    pinch = null; sizing(false);
+    rt.pinchEndedAt = now();
+    changePrefs({ scale: k });
+    pulse("land", 460);
+  };
+  window.addEventListener("pointerup", liftFinger, { signal });
+  window.addEventListener("pointercancel", liftFinger, { signal });
+  /** The tap a pinch leaves behind is not a tap. */
+  const afterPinch = () => now() - rt.pinchEndedAt < 400;
+
+  /* ---------- his seat: the header avatar he goes back to when dismissed ---------- */
   let seatTimer = 0;
   function changePrefs(patch: Partial<CompanionPrefs>) {
     prefs = { ...prefs, ...patch };
     options.onPrefs(patch);
   }
+  const wanted = () => (!prefs.seated && surface() ? "window" : "seat");
   function sync() {
-    const want = rt.hasJob && !prefs.seated && surface() ? "window" : "seat";
+    const want = wanted();
     if (want === rt.mode) { ws.dataset.seat = want === "window" ? "empty" : "occupied"; place(); return; }
     rt.mode = want; rt.asleep = false; rt.drag = null; bubble.hidden = true; closeCard();
     cancel(seatTimer);
@@ -352,11 +447,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => { changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true }); }, { signal });
   tab.addEventListener("click", () => { changePrefs({ seated: false }); sync(); }, { signal });
 
-  /* ---------- his card ---------- */
+  /* ---------- his menu ---------- */
   let card: HTMLElement | null = null;
   function closeCard() {
     if (!card) return;
     card.remove(); card = null;
+    sill.setAttribute("aria-expanded", "false");
     if (rt.mode === "window") sill.focus({ preventScroll: true });
   }
   function openCard() {
@@ -364,15 +460,16 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const wrap = document.createElement("div");
     wrap.className = "cmpCard";
     wrap.innerHTML = `
-      <button class="cmpBackdrop" type="button" aria-label="Close Studigo's card" data-card="close"></button>
+      <button class="cmpBackdrop" type="button" aria-label="Close Studigo's menu" data-card="close"></button>
       <section class="cmpSheet" role="dialog" aria-modal="true" aria-labelledby="cmpSheetTitle">
         <div class="cmpSheetHead"><div><span class="tinyLabel">STUDIGO</span><strong id="cmpSheetTitle">Your study companion</strong></div><button type="button" data-card="close">Done</button></div>
         <div class="cmpCardTop">
           <button class="cmpPlay" type="button" data-card="play" aria-label="Studigo. Tap to play."><img src="${SPRITES}/full/center.webp" alt=""></button>
-          <div class="cmpAbout"><strong>He studies with you.</strong><p>He looks where you tap, reads along while you type, and steps aside when you scroll. He never changes your mastery. Only your answers do.</p></div>
+          <div class="cmpAbout"><strong>He studies with you.</strong><p>He looks where you tap, reads along while you type, and turns see-through when you scroll. He never changes your mastery. Only your answers do.</p></div>
         </div>
+        <label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>
         <label class="cmpToggle"><b>Speech</b><small>A short line now and then. Off until you turn it on.</small><input type="checkbox" data-set="speech" ${prefs.speech ? "checked" : ""}></label>
-        <label class="cmpToggle"><b>Step aside while I scroll</b><small>He tucks to the edge so nothing is covered.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
+        <label class="cmpToggle"><b>Fade while I scroll</b><small>He turns see-through so nothing under him is hidden.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
         <div class="cmpCardActions">
           <button class="ghostButton" type="button" data-card="move">Move to the other side</button>
           <button class="ghostButton" type="button" data-card="seat">Send him back to his seat</button>
@@ -391,6 +488,13 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         later(() => { img.src = `${SPRITES}/full/center.webp`; }, 900);
       }
     });
+    const readout = wrap.querySelector("output")!;
+    wrap.addEventListener("input", (event) => {
+      const input = event.target as HTMLInputElement;
+      if (input.dataset.set !== "scale") return;
+      applyScale(Number(input.value) / 100, true);
+      readout.textContent = `${Math.round(k * 100)}%`;
+    });
     wrap.addEventListener("change", (event) => {
       const input = event.target as HTMLInputElement, key = input.dataset.set;
       if (key === "speech" || key === "tuck") changePrefs({ [key]: input.checked });
@@ -398,9 +502,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     wrap.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); closeCard(); } });
     host.appendChild(wrap);
     card = wrap;
+    sill.setAttribute("aria-expanded", "true");
     wrap.querySelector<HTMLButtonElement>(".cmpSheetHead [data-card]")?.focus({ preventScroll: true });
   }
-  sill.addEventListener("click", openCard, { signal });
+  sill.addEventListener("click", () => { if (afterPinch()) return; pulse("pressed", 260, sill); openCard(); }, { signal });
   bubble.addEventListener("click", () => { bubble.hidden = true; }, { signal });
 
   /* ---------- watching the room ---------- */
@@ -416,24 +521,41 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     activity();
     if (rt.mode !== "window" || now() < rt.reactUntil || rt.thinking) return;
     const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26);
-    setPose(readingPose(r.left + 16 + chars * 8.4 - (rt.x + W / 2), r.top + r.height / 2 - (rt.y + 46)));
+    setPose(readingPose(r.left + 16 + chars * 8.4 - eyesX(), r.top + r.height / 2 - eyesY()));
     rt.gazing = true; rt.typingUntil = now() + 1500;
     if (!reduced) pulse("bob", 170);
   }, { signal });
-  // Only a real scroll gesture counts: the app scrolling a new message into view does not.
-  let tuckTimer = 0;
-  const onScrollGesture = (event: Event) => {
-    if (inHost(event.target)) return;
+
+  /* While the page scrolls up or down he stays exactly where he is and turns
+     see-through, so nothing passing under him is hidden. Sideways scrolling (a
+     row of chips) passes behind him and changes nothing. Only a real gesture
+     counts: the app scrolling a new message into view does not. */
+  let fadeTimer = 0, touchFrom: { x: number; y: number } | null = null;
+  const sideways = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest(".chatChips, .coachTabs, .chatModes, .studyGroups"));
+  const fadeForScroll = () => {
     rt.lastInput = now();
-    if (!prefs.tuck || rt.mode !== "window" || rt.drag || now() < rt.steadyUntil) return;
-    el.classList.add("tucked"); bubble.hidden = true;
-    cancel(tuckTimer); tuckTimer = later(() => el.classList.remove("tucked"), 620);
+    if (!prefs.tuck || rt.mode !== "window" || rt.drag || pinch || resize || now() < rt.steadyUntil) return;
+    el.classList.add("ghost"); bubble.hidden = true;
+    cancel(fadeTimer); fadeTimer = later(() => el.classList.remove("ghost"), 520);
   };
-  ws.addEventListener("wheel", onScrollGesture, { signal, passive: true });
-  ws.addEventListener("touchmove", onScrollGesture, { signal, passive: true });
+  ws.addEventListener("wheel", (event) => {
+    if (inHost(event.target) || sideways(event.target) || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    fadeForScroll();
+  }, { signal, passive: true });
+  ws.addEventListener("touchstart", (event) => {
+    const touch = event.touches[0];
+    touchFrom = touch && !inHost(event.target) && !sideways(event.target) ? { x: touch.clientX, y: touch.clientY } : null;
+  }, { signal, passive: true });
+  ws.addEventListener("touchmove", (event) => {
+    const touch = event.touches[0];
+    if (!touchFrom || !touch) return;
+    const dx = Math.abs(touch.clientX - touchFrom.x), dy = Math.abs(touch.clientY - touchFrom.y);
+    if (dy > 8 && dy > dx) fadeForScroll();
+  }, { signal, passive: true });
 
   // He rides along whenever the page under him changes: a new page, the keyboard, a resize.
-  window.addEventListener("resize", schedulePlace, { signal });
+  const onViewport = () => { if (fit(prefs.scale) !== k) applyScale(prefs.scale, false); else schedulePlace(); };
+  window.addEventListener("resize", onViewport, { signal });
   window.addEventListener("scroll", schedulePlace, { signal, passive: true });
   window.visualViewport?.addEventListener("resize", schedulePlace, { signal });
   window.visualViewport?.addEventListener("scroll", schedulePlace, { signal });
@@ -442,15 +564,16 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   sizes.observe(ws);
   const changes = new MutationObserver((records) => {
     if (!records.some((record) => !host.contains(record.target))) return;
-    // The page changed under him: hold still for a moment instead of tucking, and catch up.
+    // The page changed under him: hold still for a moment, and catch up.
     rt.steadyUntil = now() + 700;
     schedulePlace();
-    if ((rt.hasJob && !prefs.seated && Boolean(surface()) ? "window" : "seat") !== rt.mode) sync();
+    if (wanted() !== rt.mode) sync();
   });
   changes.observe(ws, { childList: true, subtree: true });
 
   const heartbeat = window.setInterval(tick, 320);
-  place();
+  applyScale(prefs.scale, false);
+  if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
 
   return {
     event(name) {
@@ -477,18 +600,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       rt.pose = ""; setPose(on ? "up" : "center");
     },
     setTone(tone) { el.dataset.tone = tone; },
-    setJob(hasJob) {
-      if (dead) return;
-      const first = !rt.hasJob && hasJob;
-      rt.hasJob = hasJob;
-      if (first && options.arriving && !prefs.seated && surface()) { options.arriving = false; arrive(); }
-      else sync();
-    },
     setPrefs(next) {
       if (dead) return;
       prefs = next;
       if (!rt.drag) rt.dock = next.dock;
       if (!next.speech) bubble.hidden = true;
+      if (!pinch && !resize && fit(next.scale) !== k) applyScale(next.scale, false);
       sync();
     },
     destroy() {

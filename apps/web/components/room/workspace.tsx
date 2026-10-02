@@ -23,7 +23,6 @@ import { useCollapsingTabBar } from "./use-collapsing-tab-bar";
 import type { MascotState } from "@/components/studigo-mascot";
 import { useCoachPreferences } from "./use-coach-preferences";
 import { CompanionContext, useCompanionWindow } from "@/components/companion/companion";
-import { JOB_MODES } from "@/lib/companion-logic";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
 // Learn blueberry, Ask/Materials teal, Coach/Cram tangerine, Quiz dandelion,
@@ -145,10 +144,9 @@ export function RoomWorkspace({
   // every other page shares the workspace header. Both end in the same Studigo rail.
   const coachFramed = mode === "coach" && readyDocuments.length > 0;
   const [cramStarted, setCramStarted] = useState(initialMode === "cram");
-  // Studigo comes out to his window where he has a job (Coach chat, Practice); elsewhere he keeps his seat.
+  // Studigo sits in his window on every page of the room, unless the learner sends him to his seat.
   const workspaceRef = useRef<HTMLDivElement>(null);
-  const hasJob = JOB_MODES.includes(mode) && readyDocuments.length > 0 && !(mode === "coach" && coachView === "topics");
-  const companion = useCompanionWindow({ roomId: room.id, workspaceRef, tone: mode, hasJob });
+  const companion = useCompanionWindow({ roomId: room.id, workspaceRef, tone: mode });
   const { thinking: companionThinking } = companion.api;
   useEffect(() => { companionThinking(mascotState === "thinking"); }, [mascotState, companionThinking]);
   function navigate(target: NavTarget, topicId: string | null = null) {
