@@ -1,6 +1,6 @@
 "use client";
 
-import { COACH_MODE_OPTIONS, compileCoachPreferences, describeCoaching, sameCoachPreferences } from "@/lib/coach-preferences";
+import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPreferences } from "@/lib/coach-preferences";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -199,20 +199,21 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     const scopedTopics = topics.filter((topic) => scopedTopicIds.includes(topic.id));
     setMessages((current) => [...current, { id: interactionId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]);
     try {
-      // The learner's question stays clean for retrieval; pedagogy choices
-      // travel as separate directives so they only ever shape how the coach
-      // answers, never what gets searched for.
-      const { directives } = compileCoachPreferences(coaching.applied);
-      // Fixture and production hit the same request/response contract; only
-      // the endpoint (and how it sources chunks) differs. One brain, one
-      // client code path.
+      // The learner's question stays clean for retrieval; saved preferences
+      // shape presentation only and never what gets searched for.
       const isFixture = roomId === "fixture";
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
       const scopeInstruction = scopedTopics.length
         ? `The learner selected these study topics: ${scopedTopics.map((topic) => `"${topic.title}"`).join(", ")}. If the question is ambiguous, read it in that scope. Still answer only from the retrieved excerpts.`
         : "Use the active Study Room topics only. Still answer only from the retrieved excerpts.";
+      const fixtureDirectives = directivesForTurn(
+        replying,
+        coaching.applied,
+        [{ name: "Current topics", instruction: scopeInstruction }],
+        coaching.learnApplied
+      );
       const body = isFixture
-        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives })
+        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current, topicIds: scopedTopicIds })
           : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, topicIds: scopedTopicIds, directives: [{ name: "Current topics", instruction: scopeInstruction }] });
