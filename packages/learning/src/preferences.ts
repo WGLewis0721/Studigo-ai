@@ -1,6 +1,10 @@
 export const COACH_MODES = ['show', 'coach', 'challenge'] as const;
 export type CoachMode = typeof COACH_MODES[number];
-export type ExplainLevel = 'simpler' | 'standard' | 'deeper';
+export const EXPLAIN_LEVELS = ['simpler', 'standard', 'deeper'] as const;
+export type ExplainLevel = typeof EXPLAIN_LEVELS[number];
+export function isExplainLevel(value: unknown): value is ExplainLevel {
+  return typeof value === 'string' && (EXPLAIN_LEVELS as readonly string[]).includes(value);
+}
 export const COACH_MODE_LABELS: Record<CoachMode, string> = {
   show: 'Show me', coach: 'Coach me', challenge: 'Challenge me'
 };
