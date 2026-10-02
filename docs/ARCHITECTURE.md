@@ -482,47 +482,60 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 
 ### Applying delivery preferences
 
-**Shipping state before the V3 migration:** Coach setup edits style, learning
-tradition and practice recipe; Room Settings owns the room-wide explanation
-level. `study_rooms.explain_level` remains canonical for Coach and Learn.
+V3 exposes one persistent learner-facing Coach preference:
+`coach_mode = show | coach | challenge`. Room Settings separately owns the
+global `study_rooms.explain_level = simpler | standard | deeper`, which remains
+canonical for both Coach and Learn.
 
-**V3 target:** preserve `study_rooms.explain_level` exactly as the independent
-global room setting, but collapse learner-facing Coach customization to
-`show | coach | challenge`. Learning-tradition and practice-recipe research
-moves behind the UI as internal strategy/reference material. The migration must
-not conflate language level with reasoning demand.
+Coach setup edits a draft. **Apply** posts the selected Coach mode to
+`POST /api/coach/preferences`. The request validates the mode, canonicalizes
+the temporary legacy compatibility fields, and commits the owned Study Room row.
+No model call or separate job is needed to "recalibrate"; subsequent turns read
+the saved room preference.
 
-The current endpoint behavior is described below until that migration ships.
+The current database JSON constraint still requires `style`, `tradition` and
+`practice`. During the compatibility window, new V3 writes derive those hidden
+values from `coach_mode` rather than preserving old learner selections:
 
-Coach setup edits a draft. **Apply** sends the current delivery choices to
-`POST /api/coach/preferences`. The asynchronous request validates the IDs,
-rebuilds the delivery configuration deterministically and commits the choices
-to the owned `study_rooms` row. The UI reports recalibrating, success or a
-retryable error; it changes the active choices only after the saved row returns.
-No model call or separate job queue is needed to rebuild this configuration.
+- Show me -> direct / teacher-source fidelity / adaptive
+- Coach me -> default / teacher-source fidelity / adaptive
+- Challenge me -> default / teacher-source fidelity / transfer
 
-`study_rooms.coach_preferences` stores only the three option IDs;
-`explain_level` remains the shared explanation-level source. `/api/chat` reads
-and compiles the saved settings for every turn, rather than trusting draft
-directives or route IDs from the browser. Coach receives all four settings;
-Ask/Learn receives the explanation level. Existing topic explanations and
-Socratic checks already read the same level. Room Settings also uses Apply and
-checks that the update actually returned the learner's room.
+Those hidden fields are implementation compatibility, not learner settings.
+Legacy rooms without `coach_mode` are deterministically migrated at read time:
+Direct instruction or Concrete-to-abstract -> Show me; Deliberate practice ->
+Challenge me; all other old styles -> Coach me.
 
-For a pending Coach encounter, a newly applied route changes rendering only.
-Its original ChallengeSpec, expected concepts, source chunks, encounter ID,
-support history and grading remain intact. New replies use the applied delivery
-settings; existing messages are preserved. Draft changes never affect a reply.
+`/api/chat` reads saved preferences for every turn. Coach receives the saved
+Coach mode, the canonical internal strategy and the global explanation level.
+Ask/Learn receives **only** the global explanation level plus trusted topic
+context. Browser drafts cannot override saved pedagogy.
+
+For a pending Coach encounter, applying a different mode changes delivery only
+for subsequent rendering/turns. It does not rewrite the issued ChallengeSpec,
+expected concepts, source chunks, encounter ID, support history, grading or
+mastery evidence.
+
+The primary Coach surface has two independent UI dimensions:
+
+1. **Coach / Learn** — always-visible primary mode.
+2. **Chat / Topics** — secondary navigation.
+
+Opening Topics must never replace or hide Coach/Learn. This invariant applies to
+web/PWA and the native iOS/iPadOS client.
+
+The one-shot **Try a harder question** control is separate from persistent
+Challenge me mode. It sends `challengeRequest: "stretch"` for one issued task
+and does not save a mode or advance mastery without assessed evidence.
 
 The phone tab bar preserves the Safari-style collapse already shipped on
 October 1 (`use-collapsing-tab-bar.ts`). It shrinks 30% on downward scrolling
-and expands on upward scrolling; Coach chat remains stable so its composer
-does not jump. The preference fix does not add a second scroll controller.
+and expands on upward scrolling; Coach chat remains stable so its composer does
+not jump.
 
-`study_rooms.explain_level` (`simpler` / `standard` / `deeper`) changes how Learn
-mode and the Socratic check pitch an idea. It never changes which excerpts are
-retrieved, which facts are stated, or the citation rule — every level is bound to
-the same material, and the prompt says so explicitly.
+`study_rooms.explain_level` changes how Learn and Coach pitch an idea. It never
+changes which excerpts are retrieved, which facts are stated, the citation
+rules, the issued reasoning rung, or the grading standard.
 
 ## Socratic checks
 
