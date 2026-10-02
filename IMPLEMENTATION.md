@@ -3,7 +3,9 @@
 **Target:** deterministic adaptive game director underneath a grounded GenAI study partner  
 **Client:** universal iOS/iPadOS app using the repo's chosen Expo / React Native path  
 **Backend:** existing Studigo/Supabase system, with a server-side OpenAI integration and a Python AI/ML service permitted where it materially improves quality or maintainability  
-**Execution:** Phase 1 — Sonnet 6.1 Medium; Phase 2 — Sonnet 6.1 High; Phase 3 — Opus Medium
+**Execution:** Phase 1 — GPT 6.1 Sol / low; Phase 2 — GPT 6.1 Sol / medium; Phase 3 — GPT 6.1 Sol / xhigh
+
+The user approved the available effort labels `low -> medium -> xhigh` on October 2, 2026 UTC. The requested “Light” label is unavailable here and maps to `low` by that explicit approval; “Extra High” is `xhigh`. These are coding-agent assignments, separate from production provider models. Claude retains UI/UX ownership: complete backend/contracts/evaluation passes before returning the learner-facing Coach settings and native presentation handoff to Claude.
 
 This file is the implementation handoff. It does not replace the product, architecture, adaptive-learning, design-system, or App Store contracts. Read them first and preserve the working product.
 
@@ -495,11 +497,11 @@ The client may store user/session tokens using appropriate secure storage.
 
 It may **not** store the OpenAI service API key.
 
-## Phase 1 — Sonnet 6.1 Medium
+## Phase 1 — GPT 6.1 Sol / low
 
 **Goal:** establish the correct architecture and deterministic foundation without overbuilding.
 
-Sonnet should explore the repo first. Do not assume this document knows every current implementation detail.
+The coding agent should explore the repo first. Do not assume this document knows every current implementation detail.
 
 ### Work
 
@@ -549,7 +551,7 @@ Phase 2 is delivered in these five PRs; split an oversized workstream further wh
 
 Phase 3 audits the integrated system and uses separate repair PRs for structural defects before prompt tuning. Rerun replay/RAG suites, preference migrations, cross-surface/native scenarios and bundle secret scans; compare quality, latency and cost to Phase 1. Release requires documentation to match implementation and every blocker to be resolved or explicitly deferred outside release scope, with rationale and impact recorded.
 
-## Phase 2 — Sonnet 6.1 High
+## Phase 2 — GPT 6.1 Sol / medium
 
 **Goal:** complete production-grade integration of the deterministic director, grounded GenAI layer and first native client path.
 
@@ -605,11 +607,11 @@ Phase 3 audits the integrated system and uses separate repair PRs for structural
 - no production learned model controls mastery;
 - tests/evals/physical-device smoke pass.
 
-## Phase 3 — Opus Medium
+## Phase 3 — GPT 6.1 Sol / xhigh
 
 **Goal:** final architectural, learning-science, security and product-quality pass.
 
-Opus should assume the previous phases may have made locally reasonable decisions that do not form the cleanest whole. It is allowed to simplify.
+The review agent should assume the previous phases may have made locally reasonable decisions that do not form the cleanest whole. It is allowed to simplify.
 
 ### Review
 
@@ -639,7 +641,7 @@ Opus should assume the previous phases may have made locally reasonable decision
 
 ### Phase 3 exit
 
-Opus should be able to demonstrate this invariant:
+The review agent should be able to demonstrate this invariant:
 
 ```text
 Given the same room state and the same ordered learning events,

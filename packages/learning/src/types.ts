@@ -59,6 +59,8 @@ export type ConceptLearningState = ConceptKey & {
   correctStreak: number;
   partialStreak: number;
   incorrectStreak: number;
+  /** Unsuccessful assessed attempts since assessed success or explicit skip; support is neutral. */
+  failureStreak: number;
   independentSuccessCount: number;
   firstAttemptSuccessCount: number;
   independentRecallCount: number;

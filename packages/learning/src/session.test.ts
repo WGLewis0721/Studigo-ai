@@ -58,3 +58,81 @@ test('transfer failure reopens a demonstrated concept and schedules rematch', ()
   const p=projectConcept(key,[event(0,{challengeKind:'transfer',newContext:true}),event(1,{challengeKind:'transfer',newContext:true,result:'incorrect'})]);
   assert.equal(p.needsCheck,true); assert.equal(p.stage,'practicing'); assert.equal(p.state.rematch?.dueAt,at(2));
 });
+
+test('mixed partial and incorrect failures split and offer an optional topic change', () => {
+  for (const results of [['partial','incorrect'],['incorrect','partial']] as const) {
+    const struggling = concept('struggle', results.map((result,i)=>event(i,{result})));
+    assert.equal(struggling.projection.state.failureStreak,2);
+    assert.equal(struggling.projection.state.taskSize,'single_step');
+    assert.equal(struggling.projection.state.reasoningLevel,0);
+    const recommended=plan([struggling,concept('other')],{selectedTopicId:'struggle'});
+    assert.equal(recommended.offerTopicChange,true);
+    assert.equal(recommended.topicId,'struggle');
+    assert.equal(plan([struggling,concept('other')],{selectedTopicId:'other'}).topicId,'other');
+    const recovered=projectConcept(key,[event(0,{result:results[0]}),event(1,{result:results[1]}),event(2)]);
+    assert.equal(recovered.state.failureStreak,0);
+    assert.equal(recovered.state.taskSize,'whole');
+  }
+});
+
+test('assisted due recall leaves the earned interval due until independent retrieval', () => {
+  const base=[event(0),event(1)];
+  for (const result of ['help','revealed'] as const) {
+    const p=projectConcept(key,[...base,event(4,{id:'support',result}),event(4,{id:'answer'})]);
+    assert.deepEqual(p.review,{step:1,dueAt:at(4)});
+    assert.equal(p.state.independentRecallCount,2);
+    assert.equal(p.state.hintDependentSuccessCount,1);
+    assert.equal(plan([concept('due',[...base,event(4,{id:'support',result}),event(4,{id:'answer'})])]).reasons[0],'due_review_or_rematch');
+  }
+});
+
+test('transfer rematch requires delay, fresh context, independent transfer and preserves earliest due date', () => {
+  const base=[event(0,{challengeKind:'transfer',newContext:true}),event(1,{challengeKind:'transfer',newContext:true,result:'partial'})];
+  const failed=projectConcept(key,base);
+  assert.equal(failed.needsCheck,true);
+  for (const candidate of [event(1.5,{challengeKind:'transfer',newContext:true}),event(2,{challengeKind:'transfer',newContext:true,contextId:'c1'}),event(2,{challengeKind:'transfer',newContext:true,scaffoldUsed:2}),event(2,{newContext:true})]) {
+    assert.equal(projectConcept(key,[...base,candidate]).state.rematch?.dueAt,at(2));
+  }
+  const repeated=projectConcept(key,[...base,event(2,{challengeKind:'transfer',newContext:true,result:'incorrect'})]);
+  assert.equal(repeated.state.rematch?.dueAt,at(2));
+  const passed=projectConcept(key,[...base,event(2,{challengeKind:'transfer',newContext:true})]);
+  assert.equal(passed.state.rematch,null);
+  assert.equal(passed.stage,'transfer');
+  assert.equal(passed.needsCheck,false);
+});
+
+test('shuffled equal-time help and duplicate receipts preserve replay and due reviews', () => {
+  const events=[event(0),event(1,{id:'z-help',result:'help'}),event(1,{id:'a-answer'})];
+  const canonical=projectConcept(key,events);
+  assert.deepEqual(projectConcept(key,[events[2],events[0],events[1],events[2]]),canonical);
+  assert.equal(canonical.review.dueAt,at(1));
+  assert.equal(canonical.state.independentSuccessCount,1);
+  assert.throws(()=>projectConcept(key,[...events,{...events[2],result:'incorrect'}]),/Conflicting/);
+});
+
+
+test('support between unsuccessful assessed attempts preserves the topic-change offer', () => {
+  for (const support of ['help','revealed'] as const) {
+    const events=[event(0,{result:'partial'}),event(1,{result:support}),event(2,{result:'incorrect'})];
+    const struggling=concept('struggle',events);
+    assert.equal(struggling.projection.state.failureStreak,2);
+    assert.equal(struggling.projection.state.taskSize,'single_step');
+    assert.equal(plan([struggling],{selectedTopicId:'struggle'}).offerTopicChange,true);
+    assert.equal(projectConcept(key,[...events,event(3,{result:'skipped'})]).state.failureStreak,0);
+    assert.equal(projectConcept(key,[...events,event(3)]).state.failureStreak,0);
+  }
+});
+
+test('self-reported or legacy card failures cannot activate or reset assessed-attempt pacing', () => {
+  for (const evidence of ['self_reported','legacy'] as const) {
+    const cards=[event(1,{result:'incorrect',activity:'flashcard',evidence}),event(2,{result:'partial',activity:'flashcard',evidence})];
+    const unassessed=concept('cards',cards);
+    assert.equal(unassessed.projection.state.failureStreak,0);
+    assert.equal(unassessed.projection.state.taskSize,'whole');
+    assert.equal(plan([unassessed]).offerTopicChange,false);
+    const mixed=[event(0,{result:'partial'}),...cards,event(3,{activity:'flashcard',evidence}),event(4,{result:'incorrect'})];
+    const assessed=concept('mixed',mixed);
+    assert.equal(assessed.projection.state.failureStreak,2);
+    assert.equal(plan([assessed]).offerTopicChange,true);
+  }
+});

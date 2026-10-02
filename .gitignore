@@ -27,3 +27,4 @@ supabase/.temp/
 tools/
 **/backups/*.ldtk
 apps/web/eval-results/
+evals/rag/results/
