@@ -89,6 +89,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
+  const handledFocusTopicId = useRef<string | null>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -107,9 +108,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const activeScopeStatus = chatMode === "coach" ? coachScopeStatus : learnScopeStatus;
 
   useEffect(() => {
-    if (!focusTopicId) return;
+    if (!focusTopicId) {
+      handledFocusTopicId.current = null;
+      return;
+    }
+    if (handledFocusTopicId.current === focusTopicId) return;
     const focused = topics.find((topic) => topic.id === focusTopicId);
     if (!focused) return;
+    handledFocusTopicId.current = focusTopicId;
     if (chatMode === "coach") {
       setCoachTopicIds([focused.id]);
       conversationId.current = null;
