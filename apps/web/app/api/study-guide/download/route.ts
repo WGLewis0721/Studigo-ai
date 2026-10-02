@@ -1,6 +1,7 @@
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { buildStudyGuidePdf, type StudyGuideTopic } from "@/lib/study-guide-pdf";
+import { selectGuideSources } from "@/lib/study-guide-sources";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -27,30 +28,6 @@ type ChunkRow = {
   content: string;
 };
 
-function termsForTopic(topic: TopicRow): string[] {
-  return [
-    topic.title,
-    topic.objective ?? "",
-    ...(topic.key_terms ?? [])
-  ]
-    .join(" ")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((term) => term.length >= 4);
-}
-
-function chunkScore(topic: TopicRow, chunk: ChunkRow): number {
-  const content = chunk.content.toLowerCase();
-  const terms = termsForTopic(topic);
-  let score = 0;
-  for (const term of new Set(terms)) {
-    if (content.includes(term)) score += (topic.key_terms ?? []).some((key) => key.toLowerCase().includes(term)) ? 3 : 1;
-  }
-  if ((topic.source_document_ids ?? []).includes(chunk.document_id)) score += 3;
-  return score;
-}
-
 function filename(title: string): string {
   const slug = title
     .normalize("NFKD")
@@ -70,7 +47,7 @@ export async function GET(request: Request) {
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
 
-  const [roomResult, topicResult, documentResult, chunkResult] = await Promise.all([
+  const [roomResult, topicResult, documentResult] = await Promise.all([
     supabase
       .from("study_rooms")
       .select("title, subject, course_name, test_date")
@@ -86,25 +63,32 @@ export async function GET(request: Request) {
       .from("documents")
       .select("id, name, page_label")
       .eq("room_id", roomId)
-      .eq("status", "ready"),
-    supabase
-      .from("document_chunks")
-      .select("document_id, page_number, chunk_index, content")
-      .eq("room_id", roomId)
-      .order("chunk_index", { ascending: true })
-      .limit(1200)
+      .eq("status", "ready")
   ]);
 
   if (roomResult.error || !roomResult.data) {
     return Response.json({ error: "Could not load this Study Room." }, { status: 500 });
   }
-  if (topicResult.error || documentResult.error || chunkResult.error) {
+  if (topicResult.error || documentResult.error) {
     return Response.json({ error: "Could not assemble the study guide from this room." }, { status: 500 });
   }
 
   const topics = (topicResult.data ?? []) as TopicRow[];
   const documents = (documentResult.data ?? []) as DocumentRow[];
-  const chunks = (chunkResult.data ?? []) as ChunkRow[];
+  const readyIds = new Set(documents.map(d => d.id));
+  const chunks: ChunkRow[] = [];
+  // Bounded, paginated reads. Explicitly refuse an incomplete export.
+  if (documents.length) for (let offset = 0; offset <= 10000; offset += 500) {
+    const page = await supabase.from("document_chunks")
+      .select("document_id, page_number, chunk_index, content")
+      .eq("room_id", roomId).in("document_id", [...readyIds])
+      .order("document_id", { ascending: true }).order("chunk_index", { ascending: true }).order("id", { ascending: true })
+      .range(offset, offset + 499);
+    if (page.error) return Response.json({ error: "Could not read source material." }, { status: 503 });
+    chunks.push(...(page.data ?? []) as ChunkRow[]);
+    if (chunks.length > 10000) return Response.json({ error: "This room is too large for a complete PDF export. Narrow its source scope." }, { status: 413 });
+    if ((page.data?.length ?? 0) < 500) break;
+  }
 
   if (!topics.length) {
     return Response.json(
@@ -121,22 +105,13 @@ export async function GET(request: Request) {
 
   const documentMap = new Map(documents.map((document) => [document.id, document]));
   const pdfTopics: StudyGuideTopic[] = topics.map((topic) => {
-    const ranked = chunks
-      .filter((chunk) => {
-        const linked = topic.source_document_ids ?? [];
-        return linked.length === 0 || linked.includes(chunk.document_id);
-      })
-      .map((chunk) => ({ chunk, score: chunkScore(topic, chunk) }))
-      .sort((a, b) => b.score - a.score || a.chunk.chunk_index - b.chunk.chunk_index);
-
-    const useful = ranked.filter((item) => item.score > 0).slice(0, 2);
-    const fallback = useful.length ? useful : ranked.slice(0, 1);
+    const useful = selectGuideSources(topic, chunks, readyIds);
 
     return {
       title: topic.title,
       objective: topic.objective,
       keyTerms: topic.key_terms ?? [],
-      sourceNotes: fallback.map(({ chunk }) => {
+      sourceNotes: useful.map((chunk) => {
         const document = documentMap.get(chunk.document_id);
         return {
           text: chunk.content,

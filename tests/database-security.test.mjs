@@ -439,3 +439,48 @@ test('Clients cannot forge observations, call privileged writes, or access histo
     if(role==='anon') await assert.rejects(db.query(`select read_concept_learning_history($1,$2)`,[id(1),id(901)]),e=>e.code==='42501');
   });
 });
+
+test('adaptive Coach issuance and assessed turn commit atomically with revision and retry protection',async()=>{
+  const conversation=id(1001),first=id(1002),answer=id(1003),encounter='atomic-encounter-1';
+  await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,id(1),A]);
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','start'),($3,$2,'user','Sun')",[first,conversation,answer]);
+  await db.query('insert into topics(id,room_id,owner_id,title) values($1,$2,$3,$4)',[id(1004),id(1),A,'Atomic fixture']);
+  const pending={version:1,kind:'awaiting_answer',question:'Energy source?',topicId:id(1004),askedAt:'2026-10-01T12:00:00Z',expectedConcepts:[{id:'sun',description:'Sunlight',weight:1,critical:true}],sourceChunkIds:[id(21)],issuedChallenge:{encounterId:encounter,scaffoldUsed:0,contextId:null,spec:{concept:{userId:A,roomId:id(1),topicId:id(1004)},challengeKind:'recall'}}};
+  const commit=(interaction,revision,state,events=[])=>one('select commit_adaptive_coach_turn($1,$2,$3,$4,$5::jsonb,$6::jsonb) as result',[conversation,A,interaction,revision,JSON.stringify(state),JSON.stringify(events)]);
+  await as('service_role',null,async()=>{
+    const issued=await commit(first,0,pending);assert.equal(issued.result.revision,1);
+    assert.equal((await commit(first,0,pending)).result.duplicate,true);
+    const semantic={intent:'answer',concepts:[{id:'sun',status:'demonstrated'}]};
+    const accept=(evaluation,fingerprint={response:'Sun'})=>one('select accept_adaptive_semantic_evidence($1,$2,$3,$4::jsonb,$5::jsonb,$6) as evaluation',[answer,encounter,A,JSON.stringify(fingerprint),JSON.stringify(evaluation),'semantic-concepts-1']);
+    assert.deepEqual((await accept(semantic)).evaluation,semantic);
+    assert.deepEqual((await accept({intent:'answer',concepts:[]})).evaluation,semantic);
+    await assert.rejects(()=>accept(semantic,{response:'Moon'}),/Conflicting semantic retry/);
+    const event={id:'atomic-answer-1',owner_id:A,room_id:id(1),topic_id:id(1004),encounter_id:encounter,activity:'coach',challenge_kind:'recall',result:'correct',scaffold_used:0,evidence:'assessed',context_id:null,new_context:false,misconception_id:null,created_at:'2026-10-01T12:00:01Z'};
+    const done={version:1,kind:'awaiting_control',action:'more_practice',topicId:id(1004),sourceChunkIds:[id(21)],issuedChallenge:pending.issuedChallenge};
+    const result=await commit(answer,1,done,[event]);assert.equal(result.result.revision,2);
+    assert.equal((await commit(answer,1,done,[event])).result.duplicate,true);
+    assert.equal((await one('select count(*)::int as count from learning_events where id=$1',[event.id])).count,1);
+    await assert.rejects(()=>commit(answer,1,{version:1,kind:'idle'},[event]),/Conflicting turn retry/);
+  });
+  await as('authenticated',A,async()=>{
+    await assert.rejects(()=>db.query('select issued_state from adaptive_encounters'),/permission denied/);
+    await assert.rejects(()=>db.query('select committed_state from adaptive_turn_receipts'),/permission denied/);
+    const rows=await db.query('select evaluation from adaptive_semantic_evidence where interaction_id=$1',[answer]);assert.equal(rows.rows.length,1);
+    await assert.rejects(()=>commit(answer,1,pending),/permission denied/);
+  });
+  await as('authenticated',B,async()=>assert.equal((await db.query('select evaluation from adaptive_semantic_evidence where interaction_id=$1',[answer])).rows.length,0));
+});
+
+test('stale or out-of-scope Coach writes roll back all evidence and conversation state',async()=>{
+  const conversation=id(1011),first=id(1012),second=id(1013);
+  await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,id(1),A]);
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','first'),($3,$2,'user','second')",[first,conversation,second]);
+  await as('service_role',null,async()=>{
+    const commit=(interaction,revision,events=[])=>one('select commit_adaptive_coach_turn($1,$2,$3,$4,$5::jsonb,$6::jsonb) as result',[conversation,A,interaction,revision,JSON.stringify({version:1,kind:'idle'}),JSON.stringify(events)]);
+    await commit(first,0);
+    await assert.rejects(()=>commit(second,0),/Stale Coach revision/);
+    await assert.rejects(()=>commit(second,1,[{id:'forged-atomic-event',owner_id:B,room_id:id(2),topic_id:id(32),encounter_id:'foreign'}]),/Event encounter scope mismatch/);
+    assert.equal((await one('select learning_revision from conversations where id=$1',[conversation])).learning_revision,1);
+    assert.equal((await one("select count(*)::int as count from learning_events where id='forged-atomic-event'")).count,0);
+  });
+});

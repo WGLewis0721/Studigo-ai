@@ -168,6 +168,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
         }
       }
+      // Refresh authoritative evidence after a completed turn; presentation stays unchanged.
+      if (replying === "coach") onTopicsChanged();
     } catch (coachError) { setError(coachError instanceof Error ? coachError.message : "Something went wrong."); setMessages((current) => current.filter((message) => message.id !== assistantId)); }
     finally { setBusy(false); }
   }

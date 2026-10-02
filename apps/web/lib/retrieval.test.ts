@@ -90,14 +90,14 @@ test("fetchChunksByIds restores the persisted source order and joins document me
       data: [
         {
           id: "doc-1",
-          name: "Physical Science.pdf",
+          name: "Physical Science.pdf",status:'ready',
           source_type: "study_guide",
           page_label: "page",
           source_priority: 100
         },
         {
           id: "doc-2",
-          name: "Physical Science.pdf",
+          name: "Physical Science.pdf",status:'ready',
           source_type: "study_guide",
           page_label: "page",
           source_priority: 100
@@ -115,7 +115,7 @@ test("fetchChunksByIds restores the persisted source order and joins document me
   assert.equal(chunks[1].pageNumber, 7);
 });
 
-test("fetchChunksByIds returns fewer rows only when a requested chunk is genuinely missing", async () => {
+test("fetchChunksByIds returns fewer rows when a requested chunk is genuinely missing", async () => {
   const supabase = fakeSupabase({
     chunks: {
       data: [
@@ -133,7 +133,7 @@ test("fetchChunksByIds returns fewer rows only when a requested chunk is genuine
       data: [
         {
           id: "doc-1",
-          name: "Physical Science.pdf",
+          name: "Physical Science.pdf",status:'ready',
           source_type: "study_guide",
           page_label: "page",
           source_priority: 100

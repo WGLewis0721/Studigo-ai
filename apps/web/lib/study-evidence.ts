@@ -1,6 +1,9 @@
 import { createServerSupabaseClient } from './supabase/server';
 import type { PracticeEvidence, PlanEvent } from './study-planning';
+import { serverLocalSession } from './local-beta-context';
+import { integratedStudy } from './integrated-beta';
 export async function loadStudyEvidence(roomId: string) {
+  const local=await serverLocalSession();if(local)return integratedStudy(local.state,roomId);
   const supabase=await createServerSupabaseClient();
   const [attempts,events]=await Promise.all([
     supabase.from('quiz_attempts').select('topic_id,source,score,is_correct,created_at,confidence').eq('room_id',roomId).order('created_at',{ascending:false}).limit(1000),

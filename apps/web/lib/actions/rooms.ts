@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { serverLocalSession } from '../local-beta-context';
+import { createLocalRoom,updateLocalRoom,deleteLocalRoom } from '../local-beta-room-actions';
 
 export type RoomFormState = { error?: string; appliedAt?: number };
 
@@ -27,6 +29,8 @@ function optional(formData: FormData, key: string) {
 }
 
 async function insertRoom(formData: FormData): Promise<{ roomId: string } | { error: string }> {
+  const local=await serverLocalSession();
+  if(local){try{const roomId=createLocalRoom(local,readTitle(formData));revalidatePath('/app');return {roomId};}catch{return {error:'Could not create room. Use a short title.'};}}
   const user = await requireUser();
   const title = readTitle(formData);
   if (!title) return { error: "Give the room a name, like “Biology Midterm”." };
@@ -75,6 +79,8 @@ export async function renameRoomAction(
   _previous: RoomFormState,
   formData: FormData
 ): Promise<RoomFormState> {
+  const local=await serverLocalSession();
+  if(local){try{const id=String(formData.get('roomId')??'');updateLocalRoom(local,{id,title:readTitle(formData),subject:optional(formData,'subject'),courseName:optional(formData,'courseName'),testDate:parseTestDate(formData.get('testDate')),level:readExplainLevel(formData)});revalidatePath('/app');revalidatePath('/app/rooms/'+id);return {appliedAt:Date.now()};}catch{return {error:'Could not apply room settings.'};}}
   const user = await requireUser();
   const roomId = String(formData.get("roomId") || "");
   const title = readTitle(formData);
@@ -106,6 +112,8 @@ export async function renameRoomAction(
 }
 
 export async function deleteRoomAction(formData: FormData) {
+  const local=await serverLocalSession();
+  if(local){deleteLocalRoom(local,String(formData.get('roomId')??''));revalidatePath('/app');redirect('/app');}
   const user = await requireUser();
   const roomId = String(formData.get("roomId") || "");
   if (!roomId) return;
