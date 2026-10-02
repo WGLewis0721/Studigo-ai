@@ -35,32 +35,37 @@ test("his size is saved for the device, kept within bounds, and a bad value mean
   assert.equal(parsePrefs(null, "0.1").scale, MIN_SCALE);
   for (const bad of [null, undefined, "", "big", "NaN", "-2", "0"]) assert.equal(parsePrefs(null, bad).scale, 1, `default size for ${String(bad)}`);
   assert.equal(clampScale(1.2345), 1.23);
-  assert.deepEqual(sizeAt(2), { w: 200, h: 240 });
+  assert.deepEqual(sizeAt(2), { w: WINDOW.w * 2, h: WINDOW.h * 2 });
 });
 
 test("resizing keeps his docked corner still and puts the opposite corner under the pointer", () => {
   // Docked bottom right with that corner at (800, 600): the pointer is where the top-left corner should be.
-  assert.equal(scaleFromDrag(800, 600, 700, 480), 1);
-  assert.equal(scaleFromDrag(800, 600, 600, 360), 2);
-  assert.equal(scaleFromDrag(800, 600, 650, 500), 1.5);
+  assert.equal(scaleFromDrag(800, 600, 800 - WINDOW.w, 600 - WINDOW.h), 1);
+  assert.equal(scaleFromDrag(800, 600, 800 - WINDOW.w * 2, 600 - WINDOW.h * 2), 2);
+  assert.equal(scaleFromDrag(800, 600, 800 - WINDOW.w * 1.5, 600 - WINDOW.h * 1.5), 1.5);
   assert.equal(scaleFromDrag(800, 600, 100, 100), MAX_SCALE, "never larger than the limit");
   assert.equal(scaleFromDrag(800, 600, 795, 598), MIN_SCALE, "never smaller than the limit");
   // Docked bottom left: the same distances on the other side give the same size.
-  assert.equal(scaleFromDrag(200, 600, 400, 360), 2);
+  assert.equal(scaleFromDrag(200, 600, 200 + WINDOW.w * 2, 600 - WINDOW.h * 2), 2);
 });
 
 test("at a larger size he still avoids controls, and the page makes more room", () => {
   const big = sizeAt(2), a: Area = { left: 10, top: 100, right: 1000, bottom: 700, inRow: false };
   const at = spot("br", a, big);
-  assert.deepEqual(at, { x: a.right - 200, y: a.bottom - 240 });
-  const underBig = { left: at.x, top: at.y, right: at.x + 200, bottom: at.y + 240 };
+  assert.deepEqual(at, { x: a.right - big.w, y: a.bottom - big.h });
+  const underBig = { left: at.x, top: at.y, right: at.x + big.w, bottom: at.y + big.h };
   assert.equal(chooseDock("br", a, [underBig], false, big), "bl");
   // A control that is clear of him at the default size is under him at twice the size.
-  const nearby = { left: a.right - 190, top: a.bottom - 230, right: a.right - 110, bottom: a.bottom - 130 };
+  const nearby = {
+    left: a.right - big.w + 10,
+    top: a.bottom - big.h + 10,
+    right: a.right - WINDOW.w - 10,
+    bottom: a.bottom - WINDOW.h - 10
+  };
   assert.equal(chooseDock("br", a, [nearby], false), "br");
   assert.equal(chooseDock("br", a, [nearby], false, big), "bl");
-  assert.deepEqual(roomFor("br", area(true), 96, big), { right: 208, left: 0, thread: 152, page: 0 });
-  assert.deepEqual(roomFor("br", area(false), 0, big), { right: 0, left: 0, thread: 0, page: 224 });
+  assert.deepEqual(roomFor("br", area(true), 96, big), { right: big.w + 8, left: 0, thread: big.h - 96 + 8, page: 0 });
+  assert.deepEqual(roomFor("br", area(false), 0, big), { right: 0, left: 0, thread: 0, page: big.h - 16 });
 });
 
 test("he keeps the corner the learner chose when nothing is under it", () => {
@@ -104,9 +109,9 @@ test("dropping him picks the nearest corner", () => {
 });
 
 test("the page makes room on the side he is on, and only there", () => {
-  assert.deepEqual(roomFor("br", area(true), 96), { right: 108, left: 0, thread: 32, page: 0 });
-  assert.deepEqual(roomFor("bl", area(true), 96), { right: 0, left: 108, thread: 32, page: 0 });
-  assert.deepEqual(roomFor("br", area(false), 0), { right: 0, left: 0, thread: 0, page: 104 });
+  assert.deepEqual(roomFor("br", area(true), 96), { right: WINDOW.w + 8, left: 0, thread: WINDOW.h - 96 + 8, page: 0 });
+  assert.deepEqual(roomFor("bl", area(true), 96), { right: 0, left: WINDOW.w + 8, thread: WINDOW.h - 96 + 8, page: 0 });
+  assert.deepEqual(roomFor("br", area(false), 0), { right: 0, left: 0, thread: 0, page: WINDOW.h - 16 });
   assert.deepEqual(roomFor("tr", area(false), 0), { right: 0, left: 0, thread: 0, page: 0 });
   assert.deepEqual(roomFor("tr", area(true), 96), { right: 0, left: 0, thread: 0, page: 0 });
 });
@@ -146,6 +151,15 @@ test("idle: he leans after a long pause and dozes after a much longer one", () =
   assert.equal(idleStage(LEAN_AFTER_MS + 1), "lean");
   assert.equal(idleStage(SLEEP_AFTER_MS + 1), "sleep");
   assert.ok(LEAN_AFTER_MS >= 45_000, "a learner reading an answer is not nagged");
+});
+
+test("the companion window gives the face breathing room and allows intentional body overlap", () => {
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  assert.match(css, /width: calc\(116px \* var\(--k\)\)/);
+  assert.match(css, /height: calc\(138px \* var\(--k\)\)/);
+  assert.match(css, /\.cmpBody[\s\S]*?scale: \.75;/);
+  assert.match(css, /\.cmpStage[\s\S]*?clip-path: inset\(-16px -14px 0 -14px/);
+  assert.match(css, /\.cmpSill[\s\S]*?z-index: 6;/);
 });
 
 test("the tab that calls him back stays under the finger while it is pressed", () => {
