@@ -8,6 +8,25 @@ export const countWords = (text: string) => text.split(/\s+/).filter(Boolean).le
 /** Hard caps on what the references add to a prompt, so replies stay fast. */
 export const REFERENCE_WORD_BUDGET = { coach: 480, level: 110 };
 
+export type CoachPreferences = {
+  /** V3 learner-facing control. Legacy fields remain persisted for rollback/backward compatibility. */
+  coach_mode?: CoachMode;
+  style: string;
+  tradition: string;
+  practice: string;
+  explainLevel: "simpler" | "standard" | "deeper";
+};
+
+export const COACH_MODE_OPTIONS: ReadonlyArray<{ id: CoachMode; name: string; expect: string }> = [
+  { id: "show", name: COACH_MODE_LABELS.show, expect: "Explain it first, show me an example, then let me try." },
+  { id: "coach", name: COACH_MODE_LABELS.coach, expect: "Guide me with questions, hints, and feedback." },
+  { id: "challenge", name: COACH_MODE_LABELS.challenge, expect: "Start with less help and make me apply what I know." }
+];
+
+export const DEFAULT_COACH_PREFERENCES: CoachPreferences = {
+  coach_mode: "coach", style: "default", tradition: "tradition-default", practice: "adaptive", explainLevel: "standard"
+};
+
 /** The room's explanation level as rules plus the same idea written at that level. Coach and Learn. */
 export function levelReference(level: CoachPreferences["explainLevel"]): string {
   const ref = REFERENCES.levels[level];
@@ -16,10 +35,8 @@ export function levelReference(level: CoachPreferences["explainLevel"]): string 
 }
 
 /**
- * The teaching knowledge for one combination: the style's and the tradition's
- * own records (both, every turn), the practice recipe, and the reference reply
- * for this style at this level. Compiled from the bundled projection, so it
- * costs no model call and no lookup.
+ * The research library remains available internally even though V3 no longer
+ * exposes style/tradition/practice controls to learners.
  */
 export function teachingReference(preferences: CoachPreferences): string {
   const style = REFERENCES.styles[preferences.style];
@@ -34,80 +51,14 @@ export function teachingReference(preferences: CoachPreferences): string {
     practice && `Practice, ${practice.label}: ${practice.rules.slice(0, 2).join(" ")}`,
     model && `Model reply for this style at this level:\n"""\n${model.reply}\n"""\nWhy it works: ${model.why.join(" ")} Avoid: ${model.avoid.join(" ")}`,
     traditionModel && `How this tradition changes a reply:\n"""\n${traditionModel.reply}\n"""`,
-    "When style and tradition pull different ways, keep the style's shape for each turn and the tradition's order of ideas across turns. The level changes only the wording."
+    "The level changes wording only. Never change source truth, the issued task, reasoning demand, or grading."
   ].filter(Boolean) as string[];
   return lines.join("\n");
-}
-
-
-export type CoachPreferences = {
-  coach_mode?: CoachMode;
-  style: string;
-  tradition: string;
-  practice: string;
-  explainLevel: "simpler" | "standard" | "deeper";
-};
-
-export const DEFAULT_COACH_PREFERENCES: CoachPreferences = {
-  style: "default", tradition: "tradition-default", practice: "adaptive", explainLevel: "standard"
-};
-
-/** IDs are the persisted contract. Instructions always come from application code. */
-export function normalizeCoachPreferences(input: unknown, explainLevel: unknown = "standard"): CoachPreferences {
-  const raw = input && typeof input === "object" ? input as Partial<CoachPreferences> : {};
-  return {
-    ...(COACH_MODES.includes(raw.coach_mode as CoachMode) ? { coach_mode: raw.coach_mode } : {}),
-    style: STYLES.find(option => option.id === raw.style)?.id ?? "default",
-    tradition: TRADITIONS.find(option => option.id === raw.tradition)?.id ?? "tradition-default",
-    practice: PRACTICE_PROTOCOLS.find(option => option.id === raw.practice)?.id ?? "adaptive",
-    explainLevel: explainLevel === "simpler" || explainLevel === "deeper" ? explainLevel : "standard"
-  };
-}
-
-export function validCoachPreferences(input: unknown): input is CoachPreferences {
-  if (!input || typeof input !== "object") return false;
-  const raw = input as CoachPreferences;
-  if (raw.coach_mode !== undefined && !COACH_MODES.includes(raw.coach_mode)) return false;
-  const normalized = normalizeCoachPreferences(raw, raw.explainLevel);
-  return Object.keys(DEFAULT_COACH_PREFERENCES).every(key => raw[key as keyof CoachPreferences] === normalized[key as keyof CoachPreferences]);
-}
-
-export function sameCoachPreferences(a: CoachPreferences, b: CoachPreferences): boolean {
-  return a.style === b.style && a.tradition === b.tradition && a.practice === b.practice && a.explainLevel === b.explainLevel
-    && migrateCoachMode(a) === migrateCoachMode(b);
-}
-
-/** Recalibration is deterministic: no model call, grading or encounter reset. */
-export function compileCoachPreferences(preferences: CoachPreferences) {
-  const style = STYLES.find(option => option.id === preferences.style) ?? STYLES[0];
-  const tradition = TRADITIONS.find(option => option.id === preferences.tradition) ?? TRADITIONS[0];
-  const practice = PRACTICE_PROTOCOLS.find(option => option.id === preferences.practice) ?? PRACTICE_PROTOCOLS[0];
-  const levels = {
-    simpler: "Use plain everyday words, short sentences and familiar examples. Explain a technical term when it first appears.",
-    standard: "Explain at the level of the uploaded material, keeping sentences clear and concise.",
-    deeper: "Use precise subject vocabulary and explain connections in more depth. Keep the question itself concise."
-  };
-  return {
-    route: selectLearningRoute(style.id, tradition.id),
-    directives: [
-      { name: "Coaching style", instruction: style.instruction },
-      { name: "Learning tradition", instruction: tradition.instruction },
-      { name: "Practice protocol", instruction: practice.instruction },
-      { name: "Explanation level", instruction: `${levels[preferences.explainLevel]} Change delivery only; keep the same source facts, concepts, reasoning demand and grading standard. ${levelReference(preferences.explainLevel)}`.trim() },
-      { name: "How these combine", instruction: `The coaching style (${style.name}) sets the shape of each turn. The learning tradition (${tradition.name}) sets the order ideas are introduced in. The explanation level sets only the wording. Make the style visible in every reply: ${style.expect}` },
-      { name: "Teaching reference", instruction: teachingReference(preferences) },
-      ...(preferences.coach_mode ? [{ name: "Coach mode", instruction:
-        preferences.coach_mode === "show" ? "mode=show. Give a brief grounded explanation and one representative example before the learner attempts the issued task. Record delivered assistance. Preserve the task, rubric and reasoning demand."
-        : preferences.coach_mode === "challenge" ? "mode=challenge. Begin with less help, but preserve director-required scaffolds and task size. This mode never requests a harder rung or changes grading. Hints remain available."
-        : "mode=coach. Let the learner try the issued task, observe the response, and offer grounded help when needed. Preserve reasoning demand and grading." }] : [])
-    ]
-  };
 }
 
 export type CoachingStyle = {
   id: string;
   name: string;
-  /** What the learner will notice in replies, in plain words. Shown in the UI. */
   expect: string;
   description: string;
   instruction: string;
@@ -131,7 +82,6 @@ export const TRADITIONS: CoachingStyle[] = [
 ];
 
 type PracticeProtocol = { id: string; name: string; expect: string; instruction: string };
-
 export const PRACTICE_PROTOCOLS: PracticeProtocol[] = [
   { id: "adaptive", name: "Best next practice", expect: "The next task is chosen from your last answer.", instruction: "Choose the smallest next task that reveals understanding. Use retrieval, a worked example, or a transfer problem based on the learner's last response." },
   { id: "repetition", name: "Focused repetition", expect: "Similar items in a row until it is automatic.", instruction: "Use straightforward repetition when automaticity is the goal. Keep the target narrow, generate varied but equivalent items, give immediate feedback, and stop or reteach when the same error repeats." },
@@ -142,27 +92,103 @@ export const EXPLAIN_LEVEL_LABELS: Record<CoachPreferences["explainLevel"], stri
   simpler: "Simpler words", standard: "Standard words", deeper: "Deeper detail"
 };
 
-/**
- * One plain description of how replies will feel, so the learner can tell the
- * settings apart. Style decides the shape of a turn, tradition the order ideas
- * come in, and the room's explanation level only the wording.
- */
-export function describeCoaching(preferences: CoachPreferences) {
-  const style = STYLES.find(option => option.id === preferences.style) ?? STYLES[0];
-  const tradition = TRADITIONS.find(option => option.id === preferences.tradition) ?? TRADITIONS[0];
-  const practice = PRACTICE_PROTOCOLS.find(option => option.id === preferences.practice) ?? PRACTICE_PROTOCOLS[0];
+function validLegacy(raw: Partial<CoachPreferences>) {
   return {
-    label: `${style.name} · ${tradition.name}`,
-    level: EXPLAIN_LEVEL_LABELS[preferences.explainLevel],
-    style, tradition, practice
+    style: STYLES.find(option => option.id === raw.style)?.id ?? "default",
+    tradition: TRADITIONS.find(option => option.id === raw.tradition)?.id ?? "tradition-default",
+    practice: PRACTICE_PROTOCOLS.find(option => option.id === raw.practice)?.id ?? "adaptive"
+  };
+}
+
+/** Convert an old room or a new V3 choice into one explicit persistent mode. */
+export function normalizeCoachPreferences(input: unknown, explainLevel: unknown = "standard"): CoachPreferences {
+  const raw = input && typeof input === "object" ? input as Partial<CoachPreferences> : {};
+  const legacy = validLegacy(raw);
+  const coach_mode = COACH_MODES.includes(raw.coach_mode as CoachMode)
+    ? raw.coach_mode as CoachMode
+    : migrateCoachMode({ ...raw, ...legacy });
+  return {
+    coach_mode,
+    ...legacy,
+    explainLevel: explainLevel === "simpler" || explainLevel === "deeper" ? explainLevel : "standard"
+  };
+}
+
+/**
+ * Hidden legacy fields remain only because the current DB constraint requires
+ * them. New Apply writes canonical internal values so old learner choices no
+ * longer secretly steer V3.
+ */
+export function canonicalCoachPreferences(preferences: CoachPreferences): CoachPreferences {
+  const mode = migrateCoachMode(preferences);
+  const legacy = mode === "show"
+    ? { style: "direct", tradition: "tradition-default", practice: "adaptive" }
+    : mode === "challenge"
+      ? { style: "default", tradition: "tradition-default", practice: "transfer" }
+      : { style: "default", tradition: "tradition-default", practice: "adaptive" };
+  return { coach_mode: mode, ...legacy, explainLevel: preferences.explainLevel };
+}
+
+export function validCoachPreferences(input: unknown): input is CoachPreferences {
+  if (!input || typeof input !== "object") return false;
+  const raw = input as CoachPreferences;
+  if (raw.coach_mode !== undefined && !COACH_MODES.includes(raw.coach_mode)) return false;
+  const normalized = normalizeCoachPreferences(raw, raw.explainLevel);
+  return raw.style === normalized.style
+    && raw.tradition === normalized.tradition
+    && raw.practice === normalized.practice
+    && raw.explainLevel === normalized.explainLevel;
+}
+
+export function sameCoachPreferences(a: CoachPreferences, b: CoachPreferences): boolean {
+  return migrateCoachMode(a) === migrateCoachMode(b) && a.explainLevel === b.explainLevel;
+}
+
+/** Recalibration is deterministic: no model call, grading or encounter reset. */
+export function compileCoachPreferences(preferences: CoachPreferences) {
+  const effective = canonicalCoachPreferences(preferences);
+  const mode = effective.coach_mode ?? "coach";
+  const style = STYLES.find(option => option.id === effective.style) ?? STYLES[0];
+  const tradition = TRADITIONS.find(option => option.id === effective.tradition) ?? TRADITIONS[0];
+  const practice = PRACTICE_PROTOCOLS.find(option => option.id === effective.practice) ?? PRACTICE_PROTOCOLS[0];
+  const levels = {
+    simpler: "Use plain everyday words, short sentences and familiar examples. Explain a technical term when it first appears.",
+    standard: "Explain at the level of the uploaded material, keeping sentences clear and concise.",
+    deeper: "Use precise subject vocabulary and explain connections in more depth. Keep the question itself concise."
+  };
+  const modeInstruction = mode === "show"
+    ? "mode=show. Give a brief grounded explanation and one representative example before the learner attempts the issued task. Record delivered assistance. Preserve the task, rubric and reasoning demand."
+    : mode === "challenge"
+      ? "mode=challenge. Begin with less help, but preserve director-required scaffolds and task size. This mode never requests a harder rung or changes grading. Hints remain available."
+      : "mode=coach. Let the learner try the issued task, observe the response, and offer grounded help when needed. Preserve reasoning demand and grading.";
+  return {
+    mode,
+    route: selectLearningRoute(style.id, tradition.id),
+    directives: [
+      { name: "Coach mode", instruction: modeInstruction },
+      { name: "Internal coaching strategy", instruction: `${style.instruction} ${practice.instruction}` },
+      { name: "Source fidelity", instruction: tradition.instruction },
+      { name: "Explanation level", instruction: `${levels[effective.explainLevel]} Change delivery only; keep the same source facts, concepts, reasoning demand and grading standard. ${levelReference(effective.explainLevel)}`.trim() },
+      { name: "Teaching reference", instruction: teachingReference(effective) }
+    ]
+  };
+}
+
+export function describeCoaching(preferences: CoachPreferences) {
+  const mode = migrateCoachMode(preferences);
+  const option = COACH_MODE_OPTIONS.find(item => item.id === mode) ?? COACH_MODE_OPTIONS[1];
+  return {
+    mode,
+    label: option.name,
+    expect: option.expect,
+    level: EXPLAIN_LEVEL_LABELS[preferences.explainLevel]
   };
 }
 
 type Directive = { name: string; instruction: string };
 /**
- * Which saved settings reach a reply. Coach gets all of them; Learn (the Ask
- * path) gets only the room's explanation level plus the client's topic hint.
- * Draft pedagogy from the browser never gets through.
+ * Coach gets its saved mode plus internal strategy and the global room level.
+ * Learn gets only the global room level plus topic context.
  */
 export function directivesForTurn(mode: "coach" | "ask", preferences: CoachPreferences, clientDirectives: Directive[] = []) {
   const compiled = compileCoachPreferences(preferences);
