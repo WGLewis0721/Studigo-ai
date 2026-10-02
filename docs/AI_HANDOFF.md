@@ -56,6 +56,12 @@ global room explanation level preserved, learner-facing Coach modes simplified
 to Show me / Coach me / Challenge me, and one Expo / React Native Apple client
 over the existing backend.
 
+The learner-facing web/PWA finish contract is
+`docs/V3_LEARNER_UI_FINISH_PLAN.md`: persistent Coach/Learn across Chat/Topics,
+three Coach modes only, Try a harder question as the one-shot stretch control,
+and the enlarged safe-face companion window. Native work should copy that
+finished contract rather than the legacy Coach settings taxonomy.
+
 The OpenAI API key is a server-side secret. Never place it in an Expo config,
 mobile bundle, browser-visible environment variable or client storage. Python,
 LangChain and ML are allowed where Phase 1 measurements justify them; none gets

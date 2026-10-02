@@ -78,7 +78,7 @@
       reveal: "It is a **physical** change. Water is still water, just in a different state."
     }
   ];
-  const COMMANDS = ["Make it simpler", "Give me a hint", "Show me an example", "Challenge me"];
+  const COMMANDS = ["Make it simpler", "Give me a hint", "Show me an example", "Try a harder question"];
   const LEARN_STARTERS = [
     { id: "how", label: "How Learn works", text: "How does Learn work?" },
     { id: "explain", label: "Explain this topic", text: "Explain this topic simply." },
@@ -152,21 +152,19 @@
 
   /* ---------- header, chips, tab bar ---------- */
   const groupOf = (mode) => GROUPS.find((group) => group.modes.includes(mode));
-  const headTone = () => (S.mode === "coach" ? (S.chatMode === "learn" && S.coachView === "chat" ? "ask" : "coach") : S.mode);
+  const headTone = () => (S.mode === "coach" ? (S.chatMode === "learn" ? "ask" : "coach") : S.mode);
   function headHTML(group) {
     let middle;
-    if (S.mode === "coach" && S.coachView === "chat") {
+    if (S.mode === "coach") {
       middle = `<div class="chatModes" role="group" aria-label="How Studigo helps">
         <button type="button" data-tone="coach" aria-pressed="${S.chatMode === "coach"}" data-act="chatmode" data-v="coach"><strong>Coach</strong><small>Practice and apply</small></button>
         <button type="button" data-tone="ask" aria-pressed="${S.chatMode === "learn"}" data-act="chatmode" data-v="learn"><strong>Learn</strong><small>Facts, with sources</small></button></div>`;
-    } else if (S.mode === "coach") {
-      middle = '<div class="mhTitle"><h2>Topics</h2><p>Pick one to learn it or be coached on it.</p></div>';
     } else if (group.modes.length > 1) {
       middle = `<div class="chatModes" role="group" aria-label="${group.name} modes">${group.modes.map((id) => `<button type="button" data-tone="${id}" aria-pressed="${id === S.mode}" data-act="mode" data-v="${id}"><strong>${MODES[id].name}</strong><small>${MODES[id].sub}</small></button>`).join("")}</div>`;
     } else {
       middle = `<div class="mhTitle"><h2>${MODES[S.mode].name}</h2><p>${MODES[S.mode].copy}</p></div>`;
     }
-    const dot = S.mode === "coach" && S.coachView === "chat" && S.chatMode === "coach" ? '<span class="chatMascotDot" aria-hidden="true"></span>' : "";
+    const dot = S.mode === "coach" && S.chatMode === "coach" ? '<span class="chatMascotDot" aria-hidden="true"></span>' : "";
     const step = GROUPS.indexOf(group);
     const seat = `<button type="button" class="chatMascot seat" data-act="seat" aria-label="Studigo's seat. Tap to call him out or send him back."><span class="studigoMascot"><img src="assets/center.png" alt=""></span>${dot}</button>`;
     return `<header class="modeHead" data-tone="${headTone()}">${seat}${middle}</header>
@@ -193,7 +191,7 @@
   function coachChatHTML() {
     const learn = S.chatMode === "learn";
     return `<div class="coachMode"><section class="coachChat" data-chat-mode="${S.chatMode}" aria-label="Conversation with Studigo">
-      ${learn ? "" : '<button type="button" class="coachActiveStyle" data-act="noop"><span>Coaching</span><strong>Concrete to abstract · Teacher\'s method</strong><em>Simpler words</em></button>'}
+      ${learn ? "" : '<button type="button" class="coachActiveStyle" data-act="noop"><span>Coaching</span><strong>Coach me</strong><em>Simpler words</em></button>'}
       <div class="chatThread" id="thread" role="log" aria-live="polite" aria-label="Messages"></div>
       <div class="chatChips" id="chatChips"></div>
       <form class="chatComposer" id="composer" ${learn ? 'data-accent="learn"' : ""}><div class="chatRow">
@@ -206,7 +204,7 @@
     if (S.chatMode === "learn") return '<div class="coachEmpty"><strong>Understand it.</strong><p>Learn answers from your materials and shows the page it came from. Use it when an idea or term does not make sense yet. Then switch to Coach to practice it. Tap a starter below to see how it works.</p></div>';
     return `<div class="coachEmpty"><strong>Practice it.</strong>
       <p>Coach gives you problems, checks your work and tracks what you have mastered. Not sure what a term means? Switch to Learn first.</p>
-      <p class="coachEmptyStyle"><b>Concrete to abstract:</b> A picture, model or real example first, then the formal idea and terms.</p>
+      <p class="coachEmptyStyle"><b>Coach me:</b> Guide me with questions, hints, and feedback.</p>
       <div class="starterList"><button type="button" data-act="starter" data-v="coach">Coach me on ${esc(title)}</button><button type="button" data-act="starter" data-v="example">Show me an example</button></div></div>`;
   }
   function kicker(message) {

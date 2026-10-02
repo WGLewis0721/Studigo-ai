@@ -1,11 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { compileCoachPreferences, DEFAULT_COACH_PREFERENCES, normalizeCoachPreferences, STYLES, TRADITIONS, PRACTICE_PROTOCOLS, validCoachPreferences } from "./coach-preferences";
+import {
+  COACH_MODE_OPTIONS,
+  DEFAULT_COACH_PREFERENCES,
+  canonicalCoachPreferences,
+  compileCoachPreferences,
+  describeCoaching,
+  normalizeCoachPreferences,
+  validCoachPreferences
+} from "./coach-preferences";
 import { applyCoachPreferences, readCoachPreferences } from "./coach-preferences-store";
 
 function store() {
-  let row = { coach_preferences: { style: "default", tradition: "tradition-default", practice: "adaptive" }, explain_level: "standard" };
+  let row: { coach_preferences: Record<string, unknown>; explain_level: "simpler" | "standard" | "deeper" } = {
+    coach_preferences: { style: "default", tradition: "tradition-default", practice: "adaptive" },
+    explain_level: "standard"
+  };
   let error: unknown = null;
   let missing = false;
   const filters: Record<string, unknown> = {};
@@ -24,37 +35,71 @@ function store() {
     };
     return query;
   } } as unknown as SupabaseClient;
-  return { supabase, filters, writes: () => writes, fail: () => { error = { message: "offline" }; }, hide: () => { missing = true; } };
+  return { supabase, filters, row: () => row, writes: () => writes, fail: () => { error = { message: "offline" }; }, hide: () => { missing = true; } };
 }
 
-test("all UI settings compile into delivery instructions and reject unknown IDs", () => {
-  for (const style of STYLES) for (const tradition of TRADITIONS) for (const practice of PRACTICE_PROTOCOLS) {
-    const preferences = { style: style.id, tradition: tradition.id, practice: practice.id, explainLevel: "simpler" as const };
-    assert.ok(validCoachPreferences(preferences));
-    const compiled = compileCoachPreferences(preferences);
-    assert.ok(compiled.directives.some(item => item.instruction === style.instruction));
-    assert.ok(compiled.directives.some(item => item.instruction === tradition.instruction));
-    assert.ok(compiled.directives.some(item => item.instruction === practice.instruction));
-    assert.match(compiled.directives[3].instruction, /plain everyday words/);
-  }
-  for (const field of Object.keys(DEFAULT_COACH_PREFERENCES)) {
-    assert.equal(validCoachPreferences({ ...DEFAULT_COACH_PREFERENCES, [field]: "invalid" }), false);
-  }
-  assert.deepEqual(normalizeCoachPreferences(null), DEFAULT_COACH_PREFERENCES);
-  assert.match(compileCoachPreferences({ ...DEFAULT_COACH_PREFERENCES, explainLevel: "deeper" }).directives[3].instruction, /precise subject vocabulary/);
+test("legacy rooms migrate deterministically into the three V3 Coach modes", () => {
+  assert.equal(normalizeCoachPreferences({ style: "direct", tradition: "tradition-default", practice: "adaptive" }).coach_mode, "show");
+  assert.equal(normalizeCoachPreferences({ style: "visual", tradition: "tradition-default", practice: "adaptive" }).coach_mode, "show");
+  assert.equal(normalizeCoachPreferences({ style: "drill", tradition: "tradition-default", practice: "adaptive" }).coach_mode, "challenge");
+  assert.equal(normalizeCoachPreferences({ style: "socratic", tradition: "tradition-montessori", practice: "transfer" }).coach_mode, "coach");
+  assert.equal(normalizeCoachPreferences(null).coach_mode, "coach");
 });
 
-test("Apply persists the Coach choices, never the room's explanation level, scoped to owner and room", async () => {
+test("each learner-facing Coach mode compiles to one distinct delivery contract while the room level stays separate", () => {
+  for (const option of COACH_MODE_OPTIONS) {
+    const prefs = { ...DEFAULT_COACH_PREFERENCES, coach_mode: option.id, explainLevel: "simpler" as const };
+    assert.ok(validCoachPreferences(prefs));
+    const compiled = compileCoachPreferences(prefs);
+    assert.equal(compiled.mode, option.id);
+    const mode = compiled.directives.find(item => item.name === "Coach mode");
+    assert.ok(mode);
+    assert.match(mode!.instruction, new RegExp(`mode=${option.id}`));
+    const level = compiled.directives.find(item => item.name === "Explanation level");
+    assert.match(level!.instruction, /plain everyday words/);
+    assert.match(level!.instruction, /same source facts, concepts, reasoning demand and grading standard/);
+  }
+  assert.equal(new Set(COACH_MODE_OPTIONS.map(option => compileCoachPreferences({ ...DEFAULT_COACH_PREFERENCES, coach_mode: option.id }).directives.find(item => item.name === "Coach mode")!.instruction)).size, 3);
+});
+
+test("new Apply writes the V3 mode plus canonical hidden compatibility fields, never the room explanation level", async () => {
   const db = store();
-  const chosen = { style: "socratic", tradition: "tradition-montessori", practice: "transfer", explainLevel: "simpler" as const };
-  assert.deepEqual(await readCoachPreferences(db.supabase, "room-a"), DEFAULT_COACH_PREFERENCES);
+  const before = await readCoachPreferences(db.supabase, "room-a");
+  assert.equal(before.coach_mode, "coach");
   assert.equal(db.writes(), 0);
-  // The level is a Room Settings choice; a Coach Apply must leave it as it was.
-  const saved = { ...chosen, explainLevel: "standard" as const };
-  assert.deepEqual(await applyCoachPreferences(db.supabase, "room-a", "user-a", chosen), saved);
+
+  const chosen = { ...before, coach_mode: "challenge" as const, explainLevel: "simpler" as const };
+  const saved = await applyCoachPreferences(db.supabase, "room-a", "user-a", chosen);
+  assert.equal(saved.coach_mode, "challenge");
+  assert.equal(saved.explainLevel, "standard", "Coach Apply must preserve the room's existing global explanation level");
   assert.deepEqual(db.filters, { id: "room-a", owner_id: "user-a" });
-  assert.deepEqual(await readCoachPreferences(db.supabase, "room-a"), saved);
+  assert.deepEqual(db.row().coach_preferences, {
+    coach_mode: "challenge",
+    style: "default",
+    tradition: "tradition-default",
+    practice: "transfer"
+  });
   assert.equal(db.writes(), 1);
+});
+
+test("canonical hidden strategy values are derived from mode, not stale learner settings", () => {
+  const stale = {
+    coach_mode: "show" as const,
+    style: "socratic",
+    tradition: "tradition-montessori",
+    practice: "transfer",
+    explainLevel: "deeper" as const
+  };
+  assert.deepEqual(canonicalCoachPreferences(stale), {
+    coach_mode: "show",
+    style: "direct",
+    tradition: "tradition-default",
+    practice: "adaptive",
+    explainLevel: "deeper"
+  });
+  const description = describeCoaching(stale);
+  assert.equal(description.label, "Show me");
+  assert.match(description.expect, /show me an example/i);
 });
 
 test("Apply never reports success for a denied/missing row or database failure", async () => {
@@ -64,15 +109,4 @@ test("Apply never reports success for a denied/missing row or database failure",
     await assert.rejects(readCoachPreferences(db.supabase, "room-b"));
     assert.equal(db.writes(), 0);
   }
-});
-
-test("every style, tradition and practice says what the learner will notice, and replies are told to show it", async () => {
-  const { describeCoaching } = await import("./coach-preferences");
-  for (const option of [...STYLES, ...TRADITIONS, ...PRACTICE_PROTOCOLS]) assert.ok(option.expect.length > 20, option.id);
-  assert.equal(new Set(STYLES.map(o => o.expect)).size, STYLES.length);
-  const prefs = { style: "socratic", tradition: "tradition-singapore", practice: "transfer", explainLevel: "simpler" as const };
-  assert.equal(describeCoaching(prefs).label, "Socratic coach · Singapore Math-inspired");
-  const combine = compileCoachPreferences(prefs).directives.find(d => d.name === "How these combine");
-  assert.match(combine!.instruction, /Socratic coach/);
-  assert.match(combine!.instruction, /only the wording/);
 });

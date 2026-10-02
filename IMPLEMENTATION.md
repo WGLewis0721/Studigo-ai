@@ -457,6 +457,78 @@ Suggested compatibility mapping:
 
 Tradition/practice selections are not discarded from research. They become internal policy/strategy references and can remain in historical rows during migration if that is safer.
 
+### Coach / Learn navigation invariant
+
+The October 2 mobile screenshots exposed a regression: the primary **Coach / Learn**
+switch is visible in Chat, but disappears when the learner opens **Topics**.
+That is not the intended hierarchy.
+
+Treat these as two independent navigation levels:
+
+```text
+PRIMARY MODE
+Coach | Learn
+(always visible anywhere inside the Coach surface)
+
+SECONDARY VIEW
+Chat | Topics
+(always visible beneath/alongside the primary mode)
+```
+
+Requirements:
+
+- **Coach / Learn must remain visible in both Chat and Topics.**
+- Switching Chat <-> Topics must never hide, replace or repurpose the Coach / Learn control.
+- The Topics page may have its own heading/content, but not at the cost of the primary mode switcher.
+- The selected Coach/Learn state must survive switching between Chat and Topics.
+- On phone layouts, keep the same top-of-surface location and tap target seen in the working Chat screenshot; do not collapse it into a menu.
+- On iPad/wide layouts, preserve the same information hierarchy even if the controls reflow.
+- The Studigo companion, topic selector and orange mode strip must not cover or displace the switcher.
+- Add screenshot/UI regression coverage for:
+  - Coach + Chat
+  - Learn + Chat
+  - Coach + Topics
+  - Learn + Topics
+  at a phone viewport, plus at least one wide/iPad viewport.
+- Add an interaction test proving `chatMode` and `view` are independent state dimensions.
+
+The current cause is structural in `coach-panel.tsx`: the header renders the
+Coach/Learn segmented control only when `view === "chat"` and replaces it with
+a Topics title when `view === "topics"`. The V3 learner-facing pass should
+remove that conditional ownership of the primary switcher rather than patching
+the symptom with CSS.
+
+### Learner-facing V3 acceptance
+
+The Coach experience is not finished until all of the following are true:
+
+- the only learner-facing persistent Coach modes are **Show me / Coach me / Challenge me**;
+- Learning Tradition and Practice Recipe are removed from learner settings;
+- global room Explanation Level stays in Room Settings and still controls Coach + Learn;
+- **Coach / Learn remains permanently visible across Chat and Topics**;
+- **Chat / Topics remains the secondary navigation layer**;
+- the one-shot **Try a harder question** control is distinct from persistent Challenge me;
+- changing Coach mode does not rewrite a pending ChallengeSpec;
+- mode preference reloads correctly after navigation/relaunch;
+- the web/PWA and native iOS/iPadOS clients implement the same hierarchy and semantics.
+
+## Learner-facing V3 finish
+
+The remaining web/PWA product pass is specified in
+[`docs/V3_LEARNER_UI_FINISH_PLAN.md`](docs/V3_LEARNER_UI_FINISH_PLAN.md).
+
+It covers the complete handoff before native parity:
+
+1. expose only Show me / Coach me / Challenge me;
+2. preserve the global Study Room explanation level;
+3. keep Coach / Learn permanently visible across Chat and Topics;
+4. rename the one-shot stretch action to Try a harder question;
+5. enlarge Studigo's companion frame, render him about 25% smaller inside it,
+   and allow deliberate transparent body/limb overlap over the bezel;
+6. run preference, prompt, navigation, companion and visual regression checks.
+
+The native client must copy the finished contract, not the legacy web controls.
+
 ## iOS/iPadOS implementation requirements
 
 Build one universal Expo / React Native app.

@@ -14,7 +14,7 @@ export type Rect = { left: number; top: number; right: number; bottom: number };
 export type Area = Rect & { inRow: boolean };
 
 /** His window at its default size, in CSS pixels. */
-export const WINDOW = { w: 100, h: 120 } as const;
+export const WINDOW = { w: 116, h: 138 } as const;
 export type Size = { w: number; h: number };
 
 /** The learner can make his window smaller or larger: a drag handle on desktop, a pinch on a phone. */
