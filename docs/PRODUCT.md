@@ -262,29 +262,30 @@ testing.
 
 ## Teaching and coaching knowledge-base policy
 
-The Coach's coaching styles, learning traditions, and practice recipes are
-defined in the live UI today. Their research grounding lives in
-[`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md).
+V3 exposes only **Show me / Coach me / Challenge me** to the learner. The older
+coaching-style, learning-tradition and practice-recipe taxonomy is no longer a
+learner settings surface. Its research grounding remains in
+[`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md)
+as an internal strategy/reference library.
 
-The knowledge base is derived from the actual code taxonomy rather than from a
-separate list of fashionable study techniques. Each current UI option has one
-retrieval-friendly Markdown record containing its exact Studigo instruction,
-closest real-world paradigm, use cases, cautions, examples, and sources.
+Those records remain useful for deterministic route policy, rendering patterns,
+worked examples, scaffolding and evaluation. They must not become a second
+mastery system or silently recreate the removed UI choices.
 
-Not every current label is a canonical method. The knowledge base must preserve
-that distinction:
+Not every legacy label is a canonical method. Preserve that distinction:
 
 - named matches such as Explicit Instruction, Deliberate Practice, Socratic
   Questioning, CPA/CRA, and Montessori principles can be mapped directly;
-- Studigo composites such as "Studigo default" and "Skill progression" are
-  explicitly labeled composite;
-- "Teacher's method" is a product/source-fidelity rule, not a teaching
+- Studigo composites such as "Studigo default" and "Skill progression" remain
+  labeled composite;
+- "Teacher's method" remains a product/source-fidelity rule, not a teaching
   tradition;
-- country-labelled options are not allowed to become cultural stereotypes.
-  "Japanese-inspired" is compared against documented Japanese structured
-  problem solving, and "Swedish-inspired" is grounded in learner agency and
-  critical-inquiry values from Sweden's national curriculum.
+- country-labelled records are research references, not learner personality
+  labels or cultural stereotypes. "Japanese-inspired" is grounded in documented
+  Japanese structured problem solving; "Swedish-inspired" is grounded in
+  learner agency and critical-inquiry values from Sweden's national curriculum.
 
-Future Coach prompt generation should retrieve from this knowledge base by
-`ui_dimension + ui_id` instead of duplicating educational claims in unrelated
-prompt strings.
+Internal prompt/rendering code should consume this library by stable IDs or
+projected strategy records rather than duplicating educational claims in
+unrelated prompt strings. The learner-facing product should continue to present
+only the three V3 Coach modes.
