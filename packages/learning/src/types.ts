@@ -83,6 +83,8 @@ export type ConceptLearningState = ConceptKey & {
 
 export type ChallengeSpec = {
   policyVersion: 1;
+  /** Evidence snapshot used to issue this task; absent on historical specs. */
+  stateRevision?: number;
   concept: ConceptKey & { objective: string };
   activity: LearningActivity;
   route: LearningRoute;

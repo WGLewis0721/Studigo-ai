@@ -1,4 +1,4 @@
-import { POLICY, replayLearningEvents } from './reducer';
+import { POLICY, replayLearningEvents, orderLearningEvents } from './reducer';
 import type { ConceptLearningState, ConceptKey, LearningActivity, LearningEvent } from './types';
 
 const DAY = 86_400_000;
@@ -15,7 +15,7 @@ export type ConceptProjection = {
 /** Retention uses encounter-wide help and credits one independent recall per encounter. */
 export function projectConcept(key: ConceptKey, events: readonly LearningEvent[]): ConceptProjection {
   const state = replayLearningEvents(key, events);
-  const ordered = [...events].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.id.localeCompare(b.id));
+  const ordered = orderLearningEvents(events);
   const credited = new Set<string>();
   const seen = new Set<string>();
   let review: ReviewState = { step: 0, dueAt: null };

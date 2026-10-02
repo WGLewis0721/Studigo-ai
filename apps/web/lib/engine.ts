@@ -286,7 +286,7 @@ async function fetchActiveTopics(supabase: SupabaseClient, roomId: string): Prom
     .eq("active", true)
     .order("order_index", { ascending: true });
 
-  if (error) return [];
+  if (error) throw new Error('Could not load the current study scope. Please retry.');
   return (data ?? []) as Topic[];
 }
 

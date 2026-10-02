@@ -10,7 +10,8 @@ export function sessionOperation(value:unknown):SessionOperation {
     ||!['study','cram'].includes(String(v.mode))||![15,30,60,120].includes(Number(v.minutes))||typeof v.minutes!=='number'
     ||(v.selectedTopicId!=null&&(typeof v.selectedTopicId!=='string'||!uuid.test(v.selectedTopicId)))
     ||(!['start','select'].includes(String(v.action))&&v.selectedTopicId!=null))throw new Error('Invalid session request');
-  return {...v,selectedTopicId:v.selectedTopicId??null} as SessionOperation;
+  return {...v,roomId:(v.roomId as string).toLowerCase(),sessionId:(v.sessionId as string).toLowerCase(),requestId:(v.requestId as string).toLowerCase(),
+    selectedTopicId:typeof v.selectedTopicId==='string'?v.selectedTopicId.toLowerCase():null} as SessionOperation;
 }
 export function validSessionId(value:string|null):value is string {return value!==null&&uuid.test(value);}
 export async function readSessionBody(request:Request):Promise<unknown> {

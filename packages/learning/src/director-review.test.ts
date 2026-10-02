@@ -24,4 +24,3 @@ test('rematch, pending rematch, stretch and assessment precedence survive due re
  assert.equal(nextChallenge({...args,activity:'quiz'}).reasoningLevel,5);
  assert.equal(nextChallenge({...args,activity:'flashcard'}).reasoningLevel,1);
 });
-

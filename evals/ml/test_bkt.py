@@ -1,7 +1,7 @@
 import copy
 from datetime import datetime, timedelta, timezone
 import unittest
-from bkt import Parameters, predict, update, metrics, validate, evaluate, fold
+from bkt import Parameters, predict, update, metrics, validate, evaluate, fold, predictions
 
 
 def record(learner, attempt, correct=True):
@@ -50,6 +50,29 @@ class BktTests(unittest.TestCase):
         with self.assertRaises(ValueError): validate([row])
         del row['learnerName']; row['canonicalProbability'] = float('nan')
         with self.assertRaises(ValueError): validate([row])
+
+    def test_encounter_assistance_cannot_be_erased_by_later_zero_support(self):
+        help_row, answer = record('synthetic-1', 0), record('synthetic-1', 1)
+        help_row['scaffold'] = 2; answer['encounterId'] = help_row['encounterId']
+        self.assertEqual(validate([answer, help_row]), [])
+        answer['at'] = help_row['at']; answer['canonicalAt'] = help_row['canonicalAt']
+        self.assertEqual(validate([answer, help_row]), [])
+        help_row['scaffold'] = None
+        self.assertEqual(validate([answer, help_row]), [])
+
+    def test_later_feedback_does_not_remove_a_preceding_independent_target(self):
+        attempt, feedback = record('synthetic-1', 0, False), record('synthetic-1', 1)
+        feedback['encounterId'] = attempt['encounterId']; feedback['scaffold'] = 5
+        self.assertEqual(validate([feedback, attempt]), [attempt])
+        row = record('synthetic-1', 0); row['scaffold'] = False
+        with self.assertRaises(ValueError): validate([row])
+
+    def test_equal_time_outcomes_cannot_inform_each_others_predictions(self):
+        first, second = record('synthetic-1', 0), record('synthetic-1', 1, False)
+        second['at'] = first['at']; second['canonicalAt'] = first['canonicalAt']
+        result = predictions([first, second], Parameters())
+        self.assertEqual(result[0]['bkt'], result[1]['bkt'])
+        self.assertEqual(result[0]['recent'], result[1]['recent'])
 
 
 if __name__ == '__main__': unittest.main()

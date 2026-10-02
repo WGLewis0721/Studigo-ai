@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { nextChallenge, type ChallengeRequest, type ChallengeSpec, type LearningRoute } from "@/lib/learning";
-import { loadConceptLearningState } from "@/lib/learning/persistence";
+import { nextChallenge, replayLearningEvents, type ChallengeRequest, type ChallengeSpec, type LearningRoute, type LearningEvent } from "@/lib/learning";
+import { loadConceptLearningState,fromObservationRow,toObservationRow } from "@/lib/learning/persistence";
 import { projectConcept } from '@studigo/learning';
 import { loadSessionRecommendation } from './learning/session-service';
 import type { Topic } from "@/lib/rooms";
@@ -22,6 +22,8 @@ export type CoachDirector = {
     /** Forwarded verbatim. Only "Challenge me" asks for "stretch". */
     challengeRequest: ChallengeRequest;
     now?:string;
+    /** Trusted observations that will share this atomic issuance transaction. */
+    pendingEvents?:readonly LearningEvent[];
   }): Promise<ChallengeSpec>;
 };
 
@@ -32,9 +34,11 @@ export const learningControlPlaneDirector: CoachDirector = {
   async recommendTopic(args) {
     const plan=await loadSessionRecommendation(args);return plan.topicId;
   },
-  async challengeFor({ supabase, userId, roomId, topic, route, challengeRequest, now:serverTime }) {
+  async challengeFor({ supabase, userId, roomId, topic, route, challengeRequest, now:serverTime,pendingEvents=[] }) {
     const key = { userId, roomId, topicId: topic.id };
-    const { state, events } = await loadConceptLearningState(supabase, key);
+    const history = await loadConceptLearningState(supabase, key);
+    const events=[...history.events,...pendingEvents.filter(e=>e.topicId===topic.id).map(e=>fromObservationRow(toObservationRow(e)))];
+    const state=replayLearningEvents(key,events);
     const recentEvents = [...events]
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || a.id.localeCompare(b.id))
       .slice(0, 12);

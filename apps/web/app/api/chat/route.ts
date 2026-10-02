@@ -1,6 +1,6 @@
 import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences } from "@/lib/coach-preferences-store";
-import { InteractionConflictError, isInteractionId, persistUserInteraction } from "@/lib/coach-interaction";
+import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
@@ -42,8 +42,9 @@ export async function POST(request: Request) {
   if (!user) return unauthorized;
 
   const body = (await request.json().catch(() => null)) as ChatRequest | null;
-  const roomId = body?.roomId?.trim();
-  const question = body?.question?.trim();
+  const roomId = typeof body?.roomId==='string'?body.roomId.trim():'';
+  const question = typeof body?.question==='string'?body.question.trim():'';
+  const mode = body?.mode === "coach" ? "coach" : "ask";
 
   if (!roomId || !question) {
     return Response.json({ error: "roomId and question are required" }, { status: 400 });
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
   if (question.length > 4000) {
     return Response.json({ error: "That question is too long." }, { status: 400 });
   }
+  if(body?.conversationId!=null&&!isInteractionId(body.conversationId))return Response.json({error:'Invalid conversationId.'},{status:400});
+  if(mode==='coach'&&!isInteractionId(body?.interactionId))return Response.json({error:'A valid interactionId is required for Coach turns.'},{status:400});
 
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
@@ -68,6 +71,10 @@ export async function POST(request: Request) {
   }
 
   let conversationId = body?.conversationId ?? null;
+  if(mode==='coach'&&!conversationId) {
+    try {conversationId=await recoverCoachConversation({supabase,interactionId:body!.interactionId!,roomId,content:question});}
+    catch(error) {return Response.json({error:'Could not recover your Coach submission.'},{status:error instanceof InteractionConflictError?409:503});}
+  }
   if (conversationId) {
     const { data: existing } = await supabase
       .from("conversations")
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
       .eq("id", conversationId)
       .eq("room_id", roomId)
       .maybeSingle();
-    if (!existing) conversationId = null;
+    conversationId = existing?.id ?? null;
   }
 
   if (!conversationId) {
@@ -101,7 +108,6 @@ export async function POST(request: Request) {
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
-  const mode = body?.mode === "coach" ? "coach" : "ask";
   // Stored preferences are authoritative, including after a reload or tab change.
   // Ask accepts only topic context from the client; draft pedagogy cannot override Apply.
   const directives = directivesForTurn(mode, preferences, sanitizeDirectives(body?.directives) ?? []);
@@ -145,12 +151,15 @@ export async function POST(request: Request) {
             continue;
           }
 
-          await service.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: event.answer.text,
-            citations: event.answer.citations
-          });
+          if(!('responseStored' in event && event.responseStored===true)) {
+            const saved=await service.from("messages").insert({
+              conversation_id: conversationId,
+              role: "assistant",
+              content: event.answer.text,
+              citations: event.answer.citations
+            });
+            if(saved.error)throw new Error('Could not save the reply. Please retry.');
+          }
 
           send({
             type: "done",

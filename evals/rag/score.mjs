@@ -35,15 +35,17 @@ export function scoreRun(cases,run,reviews=[]) {
     latencies.push(r.latencyMs);costs.push(r.costUsd);
   }
   const reviewedCases=cases.filter(c=>c.review.status==='reviewed'&&typeof c.review.reviewer==='string'&&c.review.reviewer.trim()).length;
-  return {adapter:run.adapter,configHash:hash(run.config),cases:cases.length,reviewedCases,unreviewed,violations,
+  return {adapter:run.adapter,corpusHash:run.corpusHash,configHash:hash(run.config),cases:cases.length,reviewedCases,unreviewed,violations,
     citationSupport:claims?supported/claims:0,abstentionAccuracy:abstentions?correctAbstentions/abstentions:0,quality:useful/cases.length,
     p50Ms:percentile(latencies,.5),p95Ms:percentile(latencies,.95),costUsd:costs.reduce((a,b)=>a+b,0),bands};
 }
 export function selectArchitecture(a,b) {
-  if(a.adapter!=='typescript'||b.adapter!=='python-langchain'||a.configHash!==b.configHash||a.cases!==b.cases)throw new Error('Comparison settings differ');
+  if(a.adapter!=='typescript'||b.adapter!=='python-langchain'||!a.corpusHash||a.corpusHash!==b.corpusHash||a.configHash!==b.configHash||a.cases!==b.cases)throw new Error('Comparison settings differ');
   const safe=s=>s.cases>=120&&s.reviewedCases===s.cases&&s.unreviewed===0&&s.violations===0&&s.citationSupport>=.95&&s.abstentionAccuracy>=.95;
   if(!safe(a)||!safe(b))return {choice:'pending',reason:'Review, isolation or grounding gate incomplete'};
-  if(b.citationSupport<a.citationSupport-.020000001||b.abstentionAccuracy<a.abstentionAccuracy-.020000001||b.quality<a.quality-.020000001)return {choice:'typescript',reason:'Python quality regression exceeds two points'};
+  const regression=b.citationSupport<a.citationSupport-.020000001||b.abstentionAccuracy<a.abstentionAccuracy-.020000001||b.quality<a.quality-.020000001
+    ||Object.keys(a.bands).some(band=>!b.bands[band]||a.bands[band].cases!==b.bands[band].cases||b.bands[band].useful/b.bands[band].cases<a.bands[band].useful/a.bands[band].cases-.020000001);
+  if(regression)return {choice:'typescript',reason:'Python aggregate or grade-band regression exceeds two points'};
   const benefit=b.quality-a.quality>=.049999999||(a.p95Ms>0&&b.p95Ms<=a.p95Ms*.8)||(a.costUsd>0&&b.costUsd<=a.costUsd*.8);
   return {choice:benefit?'python-candidate':'typescript',reason:benefit?'Measured benefit; operational review still required':'Equivalent results retain TypeScript'};
 }

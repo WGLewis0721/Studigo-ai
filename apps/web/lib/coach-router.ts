@@ -34,7 +34,7 @@ import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-di
 import { parseIssuedSpec, renderChallengeGuidance, renderRouteGuidance } from "@/lib/coach-render";
 import type { ChallengeRequest, ChallengeSpec, LearningEvent, LearningRoute } from "@/lib/learning";
 import { learningEventStore, type CoachEvidenceStore } from "@/lib/coach-evidence-store";
-import { commitAdaptiveCoachTurn,readAcceptedEvaluation,acceptEvaluation } from './learning/atomic-coach';
+import { commitAdaptiveCoachTurn,readCommittedCoachAnswer,hasIssuedCoachEncounter,readAcceptedEvaluation,acceptEvaluation, type AdaptiveCoachCommit } from './learning/atomic-coach';
 import {
   buildCoachEvent,
   coachEventId,
@@ -232,7 +232,7 @@ function pickTopic(topics: Topic[], question: string): Topic | undefined {
  * ends by persisting the resulting `coach_state`, so the next turn is
  * routed against a durable record rather than re-inferred from prose.
  */
-export async function* runCoachTurn(args: {
+type CoachTurnArgs = {
   supabase: SupabaseClient;
   /** Trusted server-only writer. Production supplies the service-role client;
    * tests may omit it and keep using their fake user-scoped client. */
@@ -254,11 +254,48 @@ export async function* runCoachTurn(args: {
    *  Required for learning evidence; without it nothing is recorded. */
   interaction?: CoachInteraction;
   deps?: Partial<CoachRouterDeps>;
-}): AsyncGenerator<GroundedStreamEvent, CoachTurnLog> {
+};
+
+/** Atomic turns publish only their immutable committed reply. Old retries never
+ * enter the current encounter's evaluator, and assistant history shares the commit. */
+export async function* runCoachTurn(args:CoachTurnArgs):AsyncGenerator<GroundedStreamEvent & {responseStored?:true},CoachTurnLog> {
+  const atomic=process.env.STUDIGO_ATOMIC_COACH==='1'&&Boolean(args.userId&&args.interaction&&args.stateSupabase);
+  if(!atomic)return yield* runCoachTurnImpl(args);
+  const prior=await readCommittedCoachAnswer(args.stateSupabase!,args.userId!,args.conversationId,args.interaction!.id);
+  if(prior) {
+    yield {type:'delta',text:prior.text};
+    yield {type:'done',answer:prior,responseStored:true};
+    return {stateBefore:'idle',turnIntent:'retry',semanticScore:null,outcome:'control',stateAfter:'idle'};
+  }
+  let deferred:AdaptiveCoachCommit|null=null;
+  const common={reader:args.supabase,writer:args.stateSupabase!,conversationId:args.conversationId,userId:args.userId!,interactionId:args.interaction!.id};
+  const generator=runCoachTurnImpl(args,{
+    snapshot:({state,revision})=>{deferred={...common,expectedRevision:revision,state:{...state,lastInteractionId:args.interaction!.id},events:[]};},
+    commit:(state,events,revision)=>{deferred={...common,expectedRevision:revision,state,events};}
+  });
+  let next=await generator.next();
+  while(!next.done) {
+    if(next.value.type==='done') {
+      const pendingCommit=deferred as AdaptiveCoachCommit|null;
+      if(!pendingCommit)throw new Error('Coach reply has no trusted state snapshot');
+      const committed=await commitAdaptiveCoachTurn({...pendingCommit,answer:next.value.answer});
+      yield {type:'delta',text:committed.answer.text};
+      yield {type:'done',answer:committed.answer,responseStored:true};
+    }
+    next=await generator.next();
+  }
+  return next.value;
+}
+
+async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
+  snapshot:(snapshot:{state:CoachState;revision:number})=>void;
+  commit:(state:CoachState,events:LearningEvent[],revision:number)=>void;
+}):AsyncGenerator<GroundedStreamEvent,CoachTurnLog> {
   const { supabase, roomId, conversationId, question, topics, interaction } = args;
   const deps: CoachRouterDeps = { ...defaultDeps, ...args.deps };
   const pedagogyDirectives = formatPedagogyDirectives(args.directives);
   const snapshot = await loadCoachState(supabase, conversationId);
+  hooks?.snapshot(snapshot);
   const state=snapshot.state;
   const atomic=process.env.STUDIGO_ATOMIC_COACH==='1'&&Boolean(args.userId&&interaction&&args.stateSupabase);
   const bufferedEvents:LearningEvent[]=[];
@@ -287,7 +324,8 @@ export async function* runCoachTurn(args: {
   const commit = async (next: CoachState): Promise<void> => {
     const stamped: CoachState = interaction ? { ...next, lastInteractionId: interaction.id } : next;
     if(atomic) {
-      await commitAdaptiveCoachTurn({reader:supabase,writer:args.stateSupabase!,conversationId,userId:args.userId!,interactionId:interaction!.id,expectedRevision:snapshot.revision,state:stamped,events:bufferedEvents});
+      if(!hooks)throw new Error('Atomic Coach commit requires response buffering');
+      hooks.commit(stamped,bufferedEvents,snapshot.revision);
       return;
     }
     try {
@@ -319,7 +357,8 @@ export async function* runCoachTurn(args: {
   // A failed control-plane read cannot issue an untracked assessed task.
   const issueFor = async (topic: Topic, challengeRequest: ChallengeRequest): Promise<IssuedChallenge | undefined> => {
     if (!args.userId) return undefined;
-      const spec = await deps.director.challengeFor({ supabase, userId: args.userId, roomId, topic, route, challengeRequest,now:interaction?.createdAt });
+      const spec = await deps.director.challengeFor({ supabase, userId: args.userId, roomId, topic, route, challengeRequest,now:interaction?.createdAt,
+        ...(atomic?{pendingEvents:bufferedEvents}: {}) });
       return {
         spec: spec as unknown as Record<string, unknown>,
         encounterId: randomUUID(),
@@ -336,6 +375,20 @@ export async function* runCoachTurn(args: {
       await record([event(scope, "skip", "skipped", s.issuedChallenge?.scaffoldUsed ?? null, 0)]);
     }
   };
+
+  if(atomic&&state.kind==='awaiting_answer'&&!topics.some(t=>t.id===state.topicId)) {
+    await commit(IDLE_COACH_STATE);
+    const text="That topic is no longer in your study scope. Let's pick a fresh topic.";
+    yield {type:'delta',text};yield {type:'done',answer:{text,citations:[],grounded:false}};
+    return {stateBefore:state.kind,turnIntent:intent,semanticScore:null,outcome:'control',stateAfter:'idle'};
+  }
+  if(atomic&&state.kind==='awaiting_answer'
+    &&(!state.issuedChallenge||!state.issuedChallenge.sourceRevisions?.length||!await hasIssuedCoachEncounter(args.stateSupabase!,args.userId!,conversationId,state.issuedChallenge.encounterId))) {
+    await commit(IDLE_COACH_STATE);
+    const text="That earlier question has no verified encounter record. Let's start a fresh question from your materials.";
+    yield {type:'delta',text};yield {type:'done',answer:{text,citations:[],grounded:false}};
+    return {stateBefore:state.kind,turnIntent:intent,semanticScore:null,outcome:'control',stateAfter:'idle'};
+  }
 
   // 1. A pending control action ("Want another one?" -> "yes") is executed
   //    directly. It never goes through retrieval or grading — the learner's
@@ -566,9 +619,10 @@ export async function* runCoachTurn(args: {
     });
     if(atomic&&state.issuedChallenge) {
       const known=new Set(state.expectedConcepts.map(c=>c.id));
-      if(evaluation.concepts.some(c=>!known.has(c.id)||!['demonstrated','partial','absent','contradicted'].includes(c.status))
+      if(!['answer','conversation_control','clarification','irrelevant','help_request','show_answer'].includes(evaluation.intent)
+        ||evaluation.concepts.some(c=>!known.has(c.id)||!['demonstrated','partial','absent','contradicted'].includes(c.status))
         ||new Set(evaluation.concepts.map(c=>c.id)).size!==evaluation.concepts.length
-        ||evaluation.intent==='answer'&&evaluation.concepts.length!==known.size)throw new Error('The evaluator could not verify this answer. No learning credit was recorded. Please retry.');
+        ||['answer','conversation_control'].includes(evaluation.intent)&&evaluation.concepts.length!==known.size)throw new Error('The evaluator could not verify this answer. No learning credit was recorded. Please retry.');
       evaluation=await acceptEvaluation({writer:args.stateSupabase!,userId:args.userId!,interactionId:interaction!.id,encounterId:state.issuedChallenge.encounterId,
         fingerprint:{question:state.question,expectedConcepts:state.expectedConcepts,sourceRevisions:state.issuedChallenge.sourceRevisions??[],response:question},evaluation});
     }
@@ -778,8 +832,9 @@ async function* openCoachQuestion(args: {
     const knownSources=new Set(chunks.map(c=>c.id));
     if(!coachQuestion.question.trim()||!coachQuestion.expectedConcepts.length||!coachQuestion.sourceChunkIds.length
       ||coachQuestion.sourceChunkIds.some(id=>!knownSources.has(id))
+      ||new Set(coachQuestion.sourceChunkIds).size!==coachQuestion.sourceChunkIds.length
       ||new Set(coachQuestion.expectedConcepts.map(c=>c.id)).size!==coachQuestion.expectedConcepts.length
-      ||coachQuestion.expectedConcepts.some(c=>!c.description.trim()||!Number.isFinite(c.weight)||c.weight<=0))
+      ||coachQuestion.expectedConcepts.some(c=>!c.id.trim()||!c.description.trim()||!Number.isFinite(c.weight)||c.weight<=0||typeof c.critical!=='boolean'))
       throw new Error('The generator could not create a supported question and rubric. No encounter was issued. Please retry.');
   }
 

@@ -181,7 +181,25 @@ The web application should not spread direct OpenAI calls across pages/routes. K
 
 without rewriting the product layer.
 
-`OPENAI_CHAT_MODEL` has no source-code default on purpose. Model selection is a deployment decision.
+Set `OPENAI_CHAT_MODEL` explicitly for a deployment. The current provider adapter
+falls back to `gpt-4.1-mini` for direct/gateway calls and `llama3.1` for Ollama;
+these fallbacks are implementation defaults, not a measured model-selection decision.
+
+### Adaptive Coach transaction boundary
+
+The flagged Coach path uses service-only `commit_adaptive_coach_response` to
+persist the exact reply, assistant message, conversation state, observations and
+projections atomically. It locks and verifies original source snapshots at commit,
+keeps accepted semantic evaluations immutable, and checks conversation and concept
+revisions. Exact retries read their original reply before consulting current
+pending state. Historical receipts without replies cannot reconstruct one.
+
+Apply migrations `20261002020000` and `20261002030000` before deploying these
+flagged readers/writers: the shared source helper is also required by
+`STUDIGO_ADAPTIVE_SESSION`, independently of the durable-session route flag.
+`learning_sessions` stores durable plans, but session IDs are not yet atomically
+bound to Coach issuance, answer/skip or pending state. See
+[SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the remaining release gates.
 
 ## Retrieval
 

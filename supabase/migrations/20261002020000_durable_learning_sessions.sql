@@ -45,7 +45,7 @@ end $$;
 create function public.commit_learning_session(p_owner uuid,p_room uuid,p_id uuid,p_request uuid,p_expected bigint,
  p_action text,p_mode text,p_minutes integer,p_selected uuid,p_plan jsonb) returns jsonb
 language plpgsql security invoker set search_path=public as $$
-declare s learning_sessions%rowtype; receipt learning_session_receipts%rowtype; fp jsonb; result jsonb;
+declare s learning_sessions%rowtype; receipt learning_session_receipts%rowtype; fp jsonb; result jsonb; actual bigint;
 begin
  if not exists(select 1 from study_rooms where id=p_room and owner_id=p_owner) then raise exception 'Session ownership mismatch' using errcode='42501'; end if;
  if p_action is null or p_action not in ('start','recommend','select','end') or p_expected is null or p_expected<0
@@ -71,6 +71,8 @@ begin
    if s.id is null then raise exception 'Session not found' using errcode='P0002'; end if;
    if s.revision<>p_expected or s.ended or s.mode<>p_mode or s.minutes<>p_minutes then raise exception 'Stale session revision' using errcode='40001'; end if;
  end if;
+ -- Serialize with every canonical Coach/Quiz/card/test writer before checking the projection.
+ perform 1 from study_rooms where id=p_room and owner_id=p_owner for update;
  -- Hold source rows against concurrent deletion/status/content edits until commit.
  perform 1 from topics t join document_chunks c on c.room_id=t.room_id and c.owner_id=t.owner_id
  join documents d on d.id=c.document_id and d.room_id=t.room_id and d.owner_id=t.owner_id
@@ -80,6 +82,11 @@ begin
  for share of t,c,d;
  if p_selected is not null and not session_topic_eligible(p_owner,p_room,p_selected) then raise exception 'Selected topic unavailable' using errcode='22023'; end if;
  if p_plan->>'topicId' is not null and not session_topic_eligible(p_owner,p_room,(p_plan->>'topicId')::uuid) then raise exception 'Plan topic unavailable' using errcode='22023'; end if;
+ if p_plan->>'topicId' is not null then
+   select (select count(*) from learning_events where owner_id=p_owner and room_id=p_room and topic_id=(p_plan->>'topicId')::uuid)
+     +(select count(*) from quiz_attempts where owner_id=p_owner and room_id=p_room and topic_id=(p_plan->>'topicId')::uuid) into actual;
+   if p_plan->>'stateRevision' is null or actual<>(p_plan->>'stateRevision')::bigint then raise exception 'Stale session concept revision' using errcode='40001'; end if;
+ end if;
  if p_action='start' then
    insert into learning_sessions(id,owner_id,room_id,mode,minutes,selected_topic_id,plan)
    values(p_id,p_owner,p_room,p_mode,p_minutes,p_selected,p_plan) returning * into s;
@@ -105,5 +112,3 @@ language sql stable security invoker set search_path=public as $$
 $$;
 revoke all on function public.read_session_source_scope(uuid) from public,anon;
 grant execute on function public.read_session_source_scope(uuid) to authenticated;
-
-

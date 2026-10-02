@@ -136,3 +136,12 @@ test('self-reported or legacy card failures cannot activate or reset assessed-at
     assert.equal(plan([assessed]).offerTopicChange,true);
   }
 });
+
+test('retention shares canonical failure-before-success ordering across equal-time encounters',()=>{
+  const events=[event(0),event(1,{id:'a-success',encounterId:'success'}),event(1,{id:'z-failure',encounterId:'failure',result:'incorrect'})];
+  const projected=projectConcept(key,events);
+  // The failed retrieval restarts day one, then a same-tick independent success
+  // earns day one rather than a fictitious due-review advancement.
+  assert.deepEqual(projected.review,{step:0,dueAt:at(2)});
+  assert.deepEqual(projectConcept(key,[...events].reverse()),projected);
+});

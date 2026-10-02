@@ -166,10 +166,12 @@ const TIE_ORDER: Record<LearningEvent['result'], number> = {
 };
 
 /** Stable timestamp + outcome + ID order. Complete history, never a rolling reset. */
-export function replayLearningEvents(key: ConceptKey, events: readonly LearningEvent[]): ConceptLearningState {
+export function orderLearningEvents(events:readonly LearningEvent[]):LearningEvent[] {
   events.forEach(assertLearningEvent);
-  const ordered = [...events].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
+  return [...events].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
     || TIE_ORDER[a.result] - TIE_ORDER[b.result]
     || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  return ordered.reduce(reduceLearningEvent, initialLearningState(key));
+}
+export function replayLearningEvents(key: ConceptKey, events: readonly LearningEvent[]): ConceptLearningState {
+  return orderLearningEvents(events).reduce(reduceLearningEvent, initialLearningState(key));
 }

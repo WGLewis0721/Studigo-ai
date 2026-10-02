@@ -63,7 +63,7 @@ export function nextChallenge(args: {
   if (activity === 'practice_test') reasons.push('independent_assessment');
   if (stretchHonored) reasons.push('learner_requested_stretch');
   if (scheduledRecall) reasons.push('scheduled_independent_recall');
-  return { policyVersion: 1, concept: { ...concept }, activity, route,
+  return { policyVersion: 1, stateRevision:Object.keys(state.seen).length, concept: { ...concept }, activity, route,
     routeRecord: `knowledge/teaching-coaching/${ROUTE_RECORDS[route]}.md`,
     reasoningLevel, challengeKind: REASONING_LADDER[reasoningLevel],
     scaffoldLevel: activity === 'practice_test' ? 0 : state.scaffoldLevel,

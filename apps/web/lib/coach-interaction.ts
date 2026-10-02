@@ -10,6 +10,18 @@ export function isInteractionId(value: unknown): value is string {
 /** Reuse of an interaction ID for a different message. Always fails closed. */
 export class InteractionConflictError extends Error {}
 
+/** Recover a first submission when its conversation SSE never reached the client. */
+export async function recoverCoachConversation(args:{supabase:SupabaseClient;interactionId:string;roomId:string;content:string}):Promise<string|null> {
+  const existing=await args.supabase.from('messages').select('conversation_id,role,content').eq('id',args.interactionId).maybeSingle();
+  if(existing.error)throw new Error('Could not recover the submitted Coach message');
+  if(!existing.data)return null;
+  if(existing.data.role!=='user'||existing.data.content!==args.content)throw new InteractionConflictError('Conflicting Coach interaction');
+  const conversation=await args.supabase.from('conversations').select('id').eq('id',existing.data.conversation_id).eq('room_id',args.roomId).maybeSingle();
+  if(conversation.error)throw new Error('Could not recover the Coach conversation');
+  if(!conversation.data)throw new InteractionConflictError('Conflicting Coach room');
+  return conversation.data.id as string;
+}
+
 /**
  * Persists the learner's submission as the user message whose ID IS the
  * interaction ID (generated once by the client per submitted turn). An exact

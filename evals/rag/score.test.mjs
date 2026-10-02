@@ -29,3 +29,21 @@ test('duplicate/missing cases and unequal model or prompt settings cannot be com
   const {cases,run,reviews}=fixture();assert.throws(()=>scoreRun(cases,{...run,results:run.results.slice(1)},reviews));
   const a=scoreRun(cases,run,reviews);assert.throws(()=>selectArchitecture(a,{...a,adapter:'python-langchain',configHash:'different'}));
 });
+test('performance benefit obeys the two-point aggregate and grade-band regression boundary',()=>{
+  const {cases,run,reviews}=fixture(),a=scoreRun(cases,run,reviews);
+  for(const metric of ['citationSupport','abstentionAccuracy','quality']) {
+    for(const delta of [.01,.02,.021]) {
+      const b={...a,adapter:'python-langchain',p95Ms:50,[metric]:a[metric]-delta};
+      assert.equal(selectArchitecture(a,b).choice,delta>.02?'typescript':'python-candidate');
+    }
+  }
+  const bands=structuredClone(a.bands);bands['3-5'].useful-=2;
+  assert.equal(selectArchitecture(a,{...a,adapter:'python-langchain',p95Ms:50,bands}).choice,'typescript');
+  bands['3-5'].useful++;
+  assert.equal(selectArchitecture(a,{...a,adapter:'python-langchain',p95Ms:50,bands}).choice,'python-candidate');
+  assert.equal(selectArchitecture(a,{...a,adapter:'python-langchain',p95Ms:50}).choice,'python-candidate');
+});
+test('matching case counts cannot conceal a different permission corpus',()=>{
+  const {cases,run,reviews}=fixture(),a=scoreRun(cases,run,reviews);
+  assert.throws(()=>selectArchitecture(a,{...a,adapter:'python-langchain',corpusHash:'different'}),/settings differ/);
+});

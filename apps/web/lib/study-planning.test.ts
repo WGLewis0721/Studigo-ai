@@ -74,6 +74,13 @@ test('A mastered topic answered wrongly while confident is still surfaced',()=>{
   const topics=[topic('mastered',{mastery_score:90,status:'mastered',last_practiced_at:'2026-09-12T10:00:00Z'})];
   assert.equal(rankWeakAreas(topics,[attempt('mastered','quiz',0,3)],now).length,1);
 });
+test('skipped canonical work cannot reintroduce a topic whose source disappeared',()=>{
+  const canonical={schemaVersion:1 as const,revision:0,stage:'not_checked' as const,reviewDue:false,needsCheck:false,dueAt:null,reasoningLevel:0,scaffoldLevel:0,rematchAt:null,supported:true};
+  const topics=[topic('gone',{canonical:{...canonical,supported:false}}),topic('ready',{canonical})];
+  const plan=buildStudyPlan({topics,areas:rankWeakAreas(topics,[],now),testDate:null,cardsDue:0,now,
+    events:[{plan_day:'2026-09-12',action_key:'learn:gone',status:'skipped'}]});
+  assert.ok(plan.flatMap(day=>day.actions).every(action=>action.topicId!=='gone'));
+});
 
 test('Calibration stays silent until there is enough rated evidence',()=>{
   const summary=summarizeCalibration([attempt('a','quiz',100,3),attempt('a','quiz',100,3)]);

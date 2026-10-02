@@ -17,3 +17,8 @@ test('session body enforces byte limit on chunked requests including Unicode',as
  await assert.rejects(readSessionBody(request('invalid')),SyntaxError);
  await assert.rejects(readSessionBody(new Request('http://localhost',{method:'POST',body:'{}',headers:{'Content-Length':'4097'}})),RangeError);
 });
+test('UUID case normalizes to the database receipt fingerprint before replay comparison',()=>{
+ const mixed='ABCD0000-ABCD-4000-8000-ABCDEF000001';
+ const op=sessionOperation({...valid,roomId:mixed,sessionId:mixed,requestId:mixed,selectedTopicId:mixed});
+ assert.equal(op.roomId,mixed.toLowerCase());assert.equal(op.sessionId,op.roomId);assert.equal(op.requestId,op.roomId);assert.equal(op.selectedTopicId,op.roomId);
+});

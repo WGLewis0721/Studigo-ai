@@ -118,7 +118,7 @@ export function buildStudyPlan(args: { topics: Topic[]; areas: WeakArea[]; testD
     const destination=sourceDay>=0?result[sourceDay+1]:null;
     if(!destination) continue;
     const [mode,topicId]=event.action_key.split(':');
-    const topic=args.topics.find(t=>t.id===topicId);
+    const topic=ranked.find(t=>t.id===topicId);
     const alreadyHandled=args.events.some(e=>e.plan_day===destination.date&&e.action_key===event.action_key);
     if(topic && ['learn','quiz','cards'].includes(mode) && !alreadyHandled && !destination.actions.some(a=>a.key===event.action_key)) {
       destination.actions.unshift({key:event.action_key,mode:mode as 'learn'|'quiz'|'cards',title:topic.title,topicId:topic.id,minutes:8,reason:'Moved forward from a skipped session. Recheck this concept.'});

@@ -4,6 +4,11 @@
 
 Implementation branch: `codex/adaptive-local-beta`. Current main baseline: `2d63b0042f3577981bd41c7879a64661dfdfafd6`; PR #59 documentation baseline: `5375cc445670f27fee2a6199206efa53f01bf594`. PR #59 remains a prerequisite documentation change, not proof of completed implementation.
 
+The subsequent sequential Sol low/medium/xhigh passes are stacked on that beta.
+See [Phase 1 audit](SOL_PHASE1_AUDIT.md), [Phase 2 integration](SOL_PHASE2_INTEGRATION.md)
+and [Phase 3 review](SOL_PHASE3_REVIEW.md). Claude's latest main `c6ba6ad` was
+merged into `codex/sol-phase3-review` at `b1f220b`; its companion/UI changes are preserved.
+
 The existing main interface is preserved. The only component change refreshes authoritative study data after a Coach turn. Claude retains UI/UX ownership, including future evidence-stage presentation and Coach mode controls.
 
 ## Test the existing app locally
@@ -37,8 +42,31 @@ Run browser verification with `node scripts/verify-integrated-beta.mjs`; set `PL
 
 Enable `STUDIGO_ATOMIC_COACH=1` and `STUDIGO_ADAPTIVE_SESSION=1` on a preview deployment. Leave production flags unset until hosted authenticated acceptance passes. Rollback disables these flags and restores the prior app deployment; retain the additive tables and collected events. No destructive schema rollback is required.
 
+The coordinator applied reviewed additive migrations `20261002020000` (durable
+sessions/source scope) and `20261002030000` (atomic visible Coach replies/locked
+source validation) after the final 44-case Node 22 PostgreSQL security suite passed.
+The hosted grants were checked: authenticated clients cannot commit Coach responses,
+the backend service can, and caller-scoped source reads remain available.
+`STUDIGO_DURABLE_SESSIONS=1` enables the new session API on a preview; production
+deployment/feature flags remain unchanged. Disable all three flags and restore the
+previous app for rollback, preserving additive tables and history.
+
 ## Remaining release gates
 
-This is an integrated web beta, not the complete TestFlight delivery. Live authenticated generation, hosted downloads, source deletion and multi-tab concurrency need hosted acceptance. Local generation is authored and cannot establish citation quality or cost/latency targets. Production quiz/test issuance still needs complete trusted evidence provenance; historical unknown assistance remains conservative. Session plans need durable start/resume storage beyond the existing Coach encounter state. Existing UI percentages are compatibility projections pending Claude's presentation work.
+This is an integrated web beta, not the complete TestFlight delivery. The coordinator
+verified configured hosted ingestion of an authored synthetic lesson and an authenticated
+5,480-byte study-guide PDF on the earlier beta preview. This does not establish model
+quality, physical-device sharing or multi-tab concurrency. Local generation is authored
+and cannot establish citation quality or cost/latency targets. Production quiz/test
+issuance still needs complete trusted evidence provenance; historical unknown assistance
+remains conservative. Session plans now have durable start/resume/retry storage, but
+**durable sessions are not atomically linked to Coach encounter/pending state**.
+Existing UI percentages are compatibility projections pending Claude's presentation work.
 
-The 120 reviewed RAG cases and measured Python comparison, durable queue worker, native Expo app and device/OAuth/accessibility checks, guardian/learner principals, parental consent/privacy/vendor/ZDR verification, offline BKT harness and measured performance/cost gates remain outstanding. No child pilot approval or production architecture benchmark selection is implied. Keep Python advisory/offline until its required evaluation supports a production change.
+The 120 independently reviewed live RAG cases and measured Python comparison, durable
+queue worker, native Expo app and device/OAuth/accessibility checks, guardian/learner
+principals, parental consent/privacy/vendor/ZDR verification and measured provider
+performance/cost gates remain outstanding. An offline BKT harness exists and accepts
+synthetic fixtures only; real-data evaluation is not authorized by its unit tests.
+No child pilot approval or production architecture benchmark selection is implied.
+Keep Python advisory/offline until its required evaluation supports a production change.

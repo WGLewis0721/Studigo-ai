@@ -6,6 +6,12 @@ This file exists so a new AI coding agent can enter the project cold and continu
 
 Read [ADAPTIVE_BETA_EVIDENCE.md](ADAPTIVE_BETA_EVIDENCE.md) for the implemented web beta, validation, additive migration, preview flags, rollback and outstanding TestFlight gates. Claude owns UI/UX; preserve the current interface. The local synthetic adapter is development-only and must never authorize hosted requests.
 
+Read [SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the sequential Sol xhigh
+backend repairs and acceptance limits. Migration `20261002030000` adds exact
+transactional Coach replies and locked source checks; `20261002020000` remains
+required by the shared source-aware readers. Durable session/Coach lifecycle
+linkage, measured RAG, trusted Quiz/Test provenance and native acceptance remain open.
+
 ## Read first
 
 In order:

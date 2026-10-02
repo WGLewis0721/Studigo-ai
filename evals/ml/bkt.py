@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
-from itertools import product
+from itertools import product, groupby
 import math
 
 
@@ -41,8 +41,8 @@ FIELDS = {'id', 'learnerId', 'conceptId', 'encounterId', 'at', 'band', 'subject'
 
 def validate(records: list[dict]) -> list[dict]:
     seen = {}
-    encounters = set()
-    eligible = []
+    encounters, assistance = set(), set()
+    unique = []
     for record in records:
         if set(record) != FIELDS:
             raise ValueError('Unexpected or missing fields; do not include learner text or personal information')
@@ -50,7 +50,7 @@ def validate(records: list[dict]) -> list[dict]:
             raise ValueError('Invalid pseudonymous identifier')
         if record['band'] not in ('3-5', '6-8') or not isinstance(record['correct'], bool):
             raise ValueError('Invalid grade band or outcome')
-        if record['evidence'] not in ('assessed', 'legacy', 'self_reported') or record['scaffold'] not in (None, 0, 1, 2, 3, 4, 5):
+        if record['evidence'] not in ('assessed', 'legacy', 'self_reported') or (record['scaffold'] is not None and (type(record['scaffold']) is not int or record['scaffold'] not in range(6))):
             raise ValueError('Invalid evidence')
         if not isinstance(record['canonicalProbability'], (int, float)) or isinstance(record['canonicalProbability'], bool) or not math.isfinite(record['canonicalProbability']) or not 0 <= record['canonicalProbability'] <= 1:
             raise ValueError('Invalid pre-outcome canonical probability')
@@ -61,13 +61,18 @@ def validate(records: list[dict]) -> list[dict]:
                 raise ValueError('Conflicting retry')
             continue
         seen[record['id']] = record
-        if record['evidence'] != 'assessed' or record['scaffold'] != 0:
-            continue
-        eligible.append(record)
-    ordered = sorted(eligible, key=lambda r: (instant(r['at']), r['id']))
+        unique.append(record)
+    # Assistance must remain visible while choosing a target. Filtering it first
+    # could turn a coached re-answer into an independent assessed observation.
+    # Equal-time unknown/help precedes independent claims, as in canonical replay.
+    ordered = sorted(unique, key=lambda r: (instant(r['at']), r['scaffold'] == 0, r['id']))
     result = []
     for record in ordered:
         key = (record['learnerId'], record['conceptId'], record['encounterId'])
+        if record['scaffold'] != 0:
+            assistance.add(key)
+        if record['evidence'] != 'assessed' or record['scaffold'] != 0 or key in assistance:
+            continue
         # One independent target per issued encounter; re-answering cannot farm observations.
         if key not in encounters:
             encounters.add(key)
@@ -95,14 +100,18 @@ def metrics(pairs: list[tuple[float, bool]]) -> dict:
 def predictions(records: list[dict], params: Parameters) -> list[dict]:
     knowledge, recent = {}, {}
     result = []
-    for r in records:
-        key = (r['learnerId'], r['conceptId'])
-        known = knowledge.get(key, params.prior)
-        history = recent.get(key, [])[-5:]
-        result.append({**r, 'bkt': predict(known, params), 'recent': (sum(history) + 1) / (len(history) + 2), 'canonical': r['canonicalProbability']})
-        # Predict before update: future outcomes never influence earlier predictions.
-        knowledge[key] = update(known, r['correct'], params)
-        recent[key] = [*history, r['correct']]
+    for _, group in groupby(sorted(records, key=lambda r: (instant(r['at']), r['id'])), key=lambda r: instant(r['at'])):
+        batch = list(group)
+        for r in batch:
+            key = (r['learnerId'], r['conceptId'])
+            known = knowledge.get(key, params.prior)
+            history = recent.get(key, [])[-5:]
+            result.append({**r, 'bkt': predict(known, params), 'recent': (sum(history) + 1) / (len(history) + 2), 'canonical': r['canonicalProbability']})
+        # Equal-time outcomes are unavailable to each other's predictions.
+        for r in batch:
+            key = (r['learnerId'], r['conceptId'])
+            knowledge[key] = update(knowledge.get(key, params.prior), r['correct'], params)
+            recent[key] = [*recent.get(key, [])[-4:], r['correct']]
     return result
 
 
