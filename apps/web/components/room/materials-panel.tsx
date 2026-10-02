@@ -58,8 +58,44 @@ export function MaterialsPanel({
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshingGuide, setRefreshingGuide] = useState(false);
+  const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
+
+  const refreshStudyGuide = useCallback(async () => {
+    if (!latestStudyGuide || refreshingGuide) return;
+    if (latestStudyGuide.status === "processing") {
+      setError("That study guide is still being processed. Wait for it to finish first.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Refresh “${latestStudyGuide.name}”? Studigo will reread the stored file, rebuild its search index and topic map, and start fresh Coach/Learn context the next time you open them. Practice history is kept.`
+    );
+    if (!confirmed) return;
+
+    setRefreshingGuide(true);
+    setRefreshStatus(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/documents/reindex", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, documentId: latestStudyGuide.id })
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Could not refresh that study guide.");
+      setRefreshStatus(
+        `Refreshed ${latestStudyGuide.name}. Studigo rebuilt the source index and study topics from this file.`
+      );
+      startTransition(onChanged);
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "Could not refresh that study guide.");
+    } finally {
+      setRefreshingGuide(false);
+    }
+  }, [latestStudyGuide, onChanged, refreshingGuide, roomId, startTransition]);
 
   const process = useCallback(
     async (documentId: string) => {
@@ -168,6 +204,25 @@ export function MaterialsPanel({
       <div className="materialsIntake">
       <p className="setupLead">Set the file type above, then add your files.</p>
 
+      {latestStudyGuide && (
+        <div className="studyGuideRefresh">
+          <div>
+            <strong>Study guide index</strong>
+            <small>
+              If topics or answers look stale, reread the newest study guide and rebuild Studigo from the stored original.
+            </small>
+          </div>
+          <button
+            className="ghostButton"
+            type="button"
+            disabled={refreshingGuide || latestStudyGuide.status === "processing"}
+            onClick={() => void refreshStudyGuide()}
+          >
+            {refreshingGuide ? "Refreshing…" : "Refresh study guide"}
+          </button>
+        </div>
+      )}
+
       <div
         className={`dropzone ${dragging ? "dropzoneActive" : ""}`}
         onDragOver={(event) => {
@@ -202,6 +257,11 @@ export function MaterialsPanel({
       {error && (
         <p className="formError" role="alert">
           {error}
+        </p>
+      )}
+      {refreshStatus && (
+        <p className="coachPreferenceStatus" role="status">
+          {refreshStatus}
         </p>
       )}
 

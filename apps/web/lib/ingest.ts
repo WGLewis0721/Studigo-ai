@@ -39,18 +39,52 @@ export type IngestResult = {
 export async function processDocument(args: {
   documentId: string;
   userId: string;
+  /** Manual refresh path: reread a ready document and rebuild derived state. */
+  force?: boolean;
 }): Promise<IngestResult> {
   const supabase = createServiceSupabaseClient();
 
   const { data: document, error: loadError } = await supabase
     .from("documents")
-    .select("id, room_id, owner_id, name, mime_type, storage_path, source_type, status, attempts")
+    .select("id, room_id, owner_id, name, mime_type, storage_path, source_type, status, attempts, processing_started_at")
     .eq("id", args.documentId)
     .eq("owner_id", args.userId)
     .maybeSingle();
 
   if (loadError || !document) {
     return { documentId: args.documentId, status: "failed", error: "Document not found" };
+  }
+
+  if (args.force) {
+    if (document.status === "processing") {
+      const started = document.processing_started_at ? Date.parse(document.processing_started_at) : NaN;
+      const stillActive = Number.isFinite(started) && Date.now() - started < 10 * 60 * 1000;
+      if (stillActive) {
+        return {
+          documentId: document.id,
+          status: "failed",
+          error: "This study guide is still being processed. Wait for it to finish, then refresh again."
+        };
+      }
+    }
+
+    // Manual refresh deliberately bypasses the normal three-attempt retry cap.
+    // The original file stays in Storage; processing below replaces only the
+    // derived chunks/topic map after a fresh extraction + embedding pass.
+    const { error: resetError } = await supabase
+      .from("documents")
+      .update({
+        status: "queued",
+        attempts: 0,
+        processing_started_at: null,
+        processed_at: null,
+        error_message: null
+      })
+      .eq("id", document.id)
+      .eq("owner_id", args.userId);
+    if (resetError) {
+      return { documentId: document.id, status: "failed", error: resetError.message };
+    }
   }
 
   const { data: claimed, error: claimError } = await supabase.rpc("claim_document", {

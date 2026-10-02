@@ -247,6 +247,28 @@ Target pipeline:
 
 Parsers should be adapters, not embedded in route handlers.
 
+## Manual Study Guide refresh / reindex
+
+Materials exposes **Refresh study guide** as a recovery path when the visible
+topic map or answers look stale after source changes.
+
+The action:
+
+1. selects the newest Study Guide in the room;
+2. rereads the stored original file rather than reusing extracted text;
+3. resets manual retry bookkeeping and runs extraction/OCR again;
+4. replaces that document's pgvector chunks/embeddings rather than appending;
+5. rebuilds the topic map through `refresh_topic_map`, deactivating topics no
+   longer present in the current guide while preserving historical evidence on
+   retired topics;
+6. refreshes the room props. Reopening Coach/Learn after the Materials refresh
+   creates fresh client conversation context instead of carrying the old
+   in-memory conversation IDs forward.
+
+The refresh is intentionally not a learning-history reset. Quiz attempts,
+mastery evidence and historical records remain; only derived source/index/topic
+state is regenerated from the stored Study Guide.
+
 ## Source priority
 
 The database assigns source priority:
