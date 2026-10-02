@@ -484,3 +484,82 @@ test('stale or out-of-scope Coach writes roll back all evidence and conversation
     assert.equal((await one("select count(*)::int as count from learning_events where id='forged-atomic-event'")).count,0);
   });
 });
+
+// Durable sessions execute the real additive migration, not a mocked storage layer.
+async function sessionFixture(n) {
+ const room=id(n),doc=id(n+1),topic=id(n+2),chunk=id(n+3);
+ await db.query(`insert into study_rooms(id,owner_id,title) values($1,$2,'Durable room')`,[room,A]);
+ await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status) values($1,$2,$3,'source','text/plain',1,$4,'ready')`,[doc,room,A,`${A}/${room}/source`]);
+ await db.query(`insert into topics(id,room_id,owner_id,title,source_document_ids) values($1,$2,$3,'Durable topic',array[$4::uuid])`,[topic,room,A,doc]);
+ await db.query(`insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content) values($1,$2,$3,$4,0,'Usable evidence')`,[chunk,doc,room,A]);
+ const plan={schemaVersion:1,policyVersion:'session-1',mode:'study',budgetMinutes:30,status:'ready',topicId:topic,activity:'coach',stateRevision:0,reasons:['cover_teacher_scope'],offerTopicChange:false};
+ const call=(sid,rid,revision=0,action='start',extra={})=>one(`select commit_learning_session($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) as snapshot`,[extra.owner??A,room,sid,rid,revision,action,extra.mode??'study',30,extra.selected??null,JSON.stringify(extra.plan??plan)]).then(r=>r.snapshot);
+ return {room,doc,topic,chunk,plan,call};
+}
+test('durable start timestamps, exact retries, conflicting IDs and atomic optimistic revisions',async()=>{
+ const f=await sessionFixture(8000),sid=id(8010),rid=id(8011);
+ await as('service_role',A,async()=>{
+  const start=await f.call(sid,rid);assert.equal(start.revision,0);assert.equal(start.schema_version,1);
+  assert.ok(Number.isFinite(Date.parse(start.started_at)));assert.equal(start.started_at,start.updated_at);
+  // Regenerated plan is deliberately different: retry returns the original committed receipt.
+  assert.deepEqual(await f.call(sid,rid,0,'start',{plan:{...f.plan,reasons:['regenerated']}}),start);
+  await assert.rejects(f.call(sid,rid,0,'recommend'),e=>e.code==='40001');
+  await assert.rejects(f.call(sid,id(8012)),e=>e.code==='40001');
+  const competing=await Promise.allSettled([f.call(sid,id(8013),0,'recommend'),f.call(sid,id(8014),0,'recommend')]);
+  assert.equal(competing.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal(competing.find(r=>r.status==='rejected').reason.code,'40001');
+  assert.equal((await one('select revision from learning_sessions where id=$1',[sid])).revision,1);
+  assert.equal((await one('select count(*)::integer as n from learning_session_receipts where session_id=$1',[sid])).n,2);
+  const ended=await f.call(sid,id(8015),1,'end',{plan:{...f.plan,status:'complete',topicId:null}});assert.equal(ended.ended,true);
+  await assert.rejects(f.call(sid,id(8016),2,'recommend'),e=>e.code==='40001');
+ });
+});
+test('durable session RLS prevents browser writes, private receipts and cross-owner access',async()=>{
+ const f=await sessionFixture(8100),sid=id(8110),rid=id(8111);
+ await as('service_role',A,()=>f.call(sid,rid));
+ await as('authenticated',B,async()=>assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,0));
+ await as('authenticated',A,async()=>{
+  assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,1);
+  await assert.rejects(db.query('update learning_sessions set revision=99 where id=$1',[sid]),e=>e.code==='42501');
+  await assert.rejects(db.query('select * from learning_session_receipts'),e=>e.code==='42501');
+  await assert.rejects(f.call(sid,rid),e=>e.code==='42501');
+ });
+ await as('service_role',B,async()=>{
+  await assert.rejects(f.call(sid,id(8112),0,'recommend',{owner:B}),e=>e.code==='42501');
+  await assert.rejects(db.query(`insert into learning_sessions(id,room_id,owner_id,mode,minutes,plan) values($1,$2,$3,'study',30,'{}')`,[id(8113),f.room,B]),e=>e.code==='23503');
+ });
+});
+test('source scope requires owned ready nonblank chunks and failed commits leave no session or receipt',async()=>{
+ const f=await sessionFixture(8200),sid=id(8210),rid=id(8211);
+ const read=()=>one('select read_session_source_scope($1) as ids',[f.room]);
+ await as('authenticated',A,async()=>assert.deepEqual((await read()).ids,[f.doc]));
+ await as('authenticated',B,async()=>assert.deepEqual((await read()).ids,[]));
+ await db.query(`update document_chunks set content=E' \\n\\t ' where id=$1`,[f.chunk]);
+ await as('authenticated',A,async()=>assert.deepEqual((await read()).ids,[]));
+ await as('service_role',A,async()=>{
+  await assert.rejects(f.call(sid,rid),e=>e.code==='22023');
+  assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,0);
+  assert.equal((await db.query('select id from learning_session_receipts where id=$1',[rid])).rows.length,0);
+ });
+ await db.query(`update document_chunks set content='Usable again' where id=$1`,[f.chunk]);
+ await db.query(`update documents set status='failed' where id=$1`,[f.doc]);
+ await as('service_role',A,async()=>await assert.rejects(f.call(sid,rid),e=>e.code==='22023'));
+ await db.query(`update documents set status='ready' where id=$1`,[f.doc]);
+ await as('service_role',A,async()=>{
+  await f.call(sid,rid);
+  await db.query('delete from document_chunks where id=$1',[f.chunk]);
+  await assert.rejects(f.call(sid,id(8212),0,'recommend'),e=>e.code==='22023');
+  assert.equal((await one('select revision from learning_sessions where id=$1',[sid])).revision,0);
+  assert.equal((await db.query('select id from learning_session_receipts where id=$1',[id(8212)])).rows.length,0);
+  assert.equal((await f.call(sid,rid)).revision,0); // lost response remains recoverable after deletion
+ });
+});
+test('session choice retains explicit selection, supports clearing it, and rejects cross-room topics',async()=>{
+ const f=await sessionFixture(8300),sid=id(8310),rid=id(8311);
+ await as('service_role',A,async()=>{
+  const start=await f.call(sid,rid,0,'start',{selected:f.topic});assert.equal(start.selected_topic_id,f.topic);
+  const recommend=await f.call(sid,id(8312),0,'recommend');assert.equal(recommend.selected_topic_id,f.topic);
+  await assert.rejects(f.call(sid,id(8313),1,'select',{selected:id(32)}),e=>e.code==='22023');
+  const cleared=await f.call(sid,id(8314),1,'select');assert.equal(cleared.selected_topic_id,null);
+ });
+});

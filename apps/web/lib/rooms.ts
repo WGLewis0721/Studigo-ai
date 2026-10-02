@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CoachPreferences } from "./coach-preferences";
 import { serverLocalSession } from './local-beta-context';
 import { integratedRooms, integratedTopics, integratedDocuments, integratedReadiness } from './integrated-beta';
+import { loadCanonicalTopicViews, type CanonicalTopicEvidence } from './canonical-topic-view';
 
 export type StudyRoom = {
   id: string;
@@ -47,6 +48,7 @@ export type Topic = {
   status: "not_started" | "learning" | "mastered";
   last_practiced_at: string | null;
   learner_edited: boolean;
+  canonical?: CanonicalTopicEvidence;
 };
 
 export const DOCUMENT_COLUMNS =
@@ -139,7 +141,11 @@ export async function listTopics(roomId: string): Promise<Topic[]> {
     .order("order_index", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as Topic[];
+  const topics=(data ?? []) as Topic[];
+  if(process.env.STUDIGO_ADAPTIVE_SESSION!=='1')return topics;
+  const {data:auth,error:authError}=await supabase.auth.getUser();
+  if(authError||!auth.user)throw new Error('Could not verify canonical learner identity');
+  return loadCanonicalTopicViews({supabase,userId:auth.user.id,roomId,topics,now:new Date().toISOString()});
 }
 
 export type RoomReadiness = {
@@ -171,7 +177,8 @@ export async function getRoomReadiness(roomId: string): Promise<RoomReadiness> {
       .lte("due_at", new Date().toISOString())
   ]);
 
-  const topics = (topicsResult.data ?? []) as Array<{
+  if(topicsResult.error||attemptsResult.error||dueResult.error)throw new Error('Could not load study progress');
+  const topics = (process.env.STUDIGO_ADAPTIVE_SESSION==='1'?await listTopics(roomId):topicsResult.data ?? []) as Array<{
     mastery_score: number;
     status: string;
     last_practiced_at: string | null;

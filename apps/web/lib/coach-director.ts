@@ -39,19 +39,16 @@ export const learningControlPlaneDirector: CoachDirector = {
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || a.id.localeCompare(b.id))
       .slice(0, 12);
     const now=serverTime??new Date().toISOString();
-    const spec=nextChallenge({
+    const projection=projectConcept(key,events);
+    return nextChallenge({
       concept: { ...key, objective: topic.objective || topic.title },
       learnerState: state,
       recentEvents,
       activity: "coach",
       route,
       challengeRequest,
+      reviewDueAt: process.env.STUDIGO_ADAPTIVE_SESSION==='1' ? projection.review.dueAt : null,
       now
     });
-    const projection=projectConcept(key,events);
-    if(process.env.STUDIGO_ADAPTIVE_SESSION==='1'&&projection.review.dueAt&&Date.parse(projection.review.dueAt)<=Date.parse(now)&&!state.rematch&&challengeRequest==='normal') {
-      spec.reasoningLevel=1;spec.challengeKind='recall';spec.reasons.push('scheduled_independent_recall');
-    }
-    return spec;
   }
 };

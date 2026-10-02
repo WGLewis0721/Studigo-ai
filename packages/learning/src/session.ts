@@ -48,6 +48,21 @@ export type SessionPlan = {
   status: 'ready' | 'pending' | 'complete' | 'empty'; topicId: string | null;
   activity: LearningActivity; stateRevision: number; reasons: string[]; offerTopicChange: boolean;
 };
+/** Shared ordering for session and compatibility recommendation views. */
+export function orderSessionConcepts(concepts:readonly SessionConcept[],mode:SessionPlan['mode'],nowText:string):SessionConcept[] {
+  const now=Date.parse(nowText);
+  if(!Number.isFinite(now)||!['study','cram'].includes(mode))throw new Error('Invalid session ordering');
+  const scope=concepts[0]?.key;
+  if(scope&&concepts.some(c=>c.key.userId!==scope.userId||c.key.roomId!==scope.roomId))throw new Error('Session crosses ownership');
+  const due=(c:SessionConcept)=>Boolean((c.projection.state.rematch&&Date.parse(c.projection.state.rematch.dueAt)<=now)
+    ||(c.projection.review.dueAt&&Date.parse(c.projection.review.dueAt)<=now));
+  const group=(c:SessionConcept)=>mode==='cram'
+    ?!c.teacherScoped?4:c.projection.stage==='not_checked'?0:c.projection.needsCheck||c.projection.stage==='practicing'?1:due(c)?2:3
+    :due(c)?0:c.teacherScoped&&c.projection.stage==='not_checked'?1:c.projection.needsCheck||c.projection.stage==='practicing'?2:3;
+  return concepts.filter(c=>c.active&&c.supported).sort((a,b)=>group(a)-group(b)||b.priority-a.priority
+    ||Date.parse(a.projection.state.lastPracticedAt??'1970-01-01')-Date.parse(b.projection.state.lastPracticedAt??'1970-01-01')
+    ||a.order-b.order||a.key.topicId.localeCompare(b.key.topicId));
+}
 export function planSession(args: {
   concepts: readonly SessionConcept[]; mode: SessionPlan['mode']; budgetMinutes: SessionPlan['budgetMinutes'];
   elapsedSeconds: number; now: string; selectedTopicId?: string | null; pendingTopicId?: string | null;
@@ -69,13 +84,7 @@ export function planSession(args: {
   const eligible = args.concepts.filter(c => c.active && c.supported);
   const due = (c: SessionConcept) => Boolean((c.projection.state.rematch && Date.parse(c.projection.state.rematch.dueAt) <= now)
     || (c.projection.review.dueAt && Date.parse(c.projection.review.dueAt) <= now));
-  const group = (c: SessionConcept) => args.mode === 'cram'
-    ? !c.teacherScoped ? 4 : c.projection.stage === 'not_checked' ? 0 : c.projection.needsCheck || c.projection.stage === 'practicing' ? 1 : due(c) ? 2 : 3
-    : due(c) ? 0 : c.teacherScoped && c.projection.stage === 'not_checked' ? 1
-    : c.projection.needsCheck || c.projection.stage === 'practicing' ? 2 : 3;
-  const sorted = [...eligible].sort((a,b) => group(a)-group(b) || b.priority-a.priority
-    || Date.parse(a.projection.state.lastPracticedAt ?? '1970-01-01') - Date.parse(b.projection.state.lastPracticedAt ?? '1970-01-01')
-    || a.order-b.order || a.key.topicId.localeCompare(b.key.topicId));
+  const sorted = orderSessionConcepts(eligible,args.mode,args.now);
   const chosen = args.selectedTopicId ? eligible.find(c => c.key.topicId === args.selectedTopicId) : sorted[0];
   if (args.selectedTopicId && !chosen) throw new Error('Selected topic is not available');
   if (!chosen) return { ...base, reasons: ['no_supported_concepts'] };

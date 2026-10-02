@@ -28,3 +28,6 @@ tools/
 **/backups/*.ldtk
 apps/web/eval-results/
 evals/rag/results/
+evals/ml/results/
+__pycache__/
+*.pyc

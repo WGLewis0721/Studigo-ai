@@ -1,4 +1,5 @@
 import type { Topic } from './rooms';
+import { orderCanonicalTopics } from './canonical-recommendation';
 
 export type PracticeEvidence = { topic_id: string | null; source: 'quiz' | 'flashcard'; score: number; is_correct: boolean; created_at: string; confidence?: number | null };
 export type WeakArea = { topic: Topic; urgency: number; reasons: string[]; recommendation: 'learn' | 'quiz' | 'cards'; label: string; recentMisses: number; recentQuizCount: number; daysSincePractice: number | null; blindSpots: number };
@@ -9,6 +10,13 @@ const DAY = 86_400_000;
 
 /** Decision support, not a replacement for the existing earned mastery score. */
 export function rankWeakAreas(topics: Topic[], evidence: PracticeEvidence[], now = Date.now()): WeakArea[] {
+  if(topics.some(t=>t.canonical))return orderCanonicalTopics(topics,'study',now).map((topic,index):WeakArea=>{
+    const c=topic.canonical!,due=c.reviewDue||Boolean(c.rematchAt&&Date.parse(c.rematchAt)<=now);
+    const days=topic.last_practiced_at?Math.max(0,Math.floor((now-Date.parse(topic.last_practiced_at))/DAY)):null;
+    return {topic,urgency:topics.length-index,reasons:[c.needsCheck?'Needs another check.':due?'Review due.':c.stage==='not_checked'?'Not practiced yet. Understanding has not been measured.':c.stage==='practicing'?'Independent recall has not been demonstrated.':'Keep this topic fresh.'],
+      recommendation:c.stage==='not_checked'?'learn':'quiz',label:c.stage==='not_checked'?'Not practiced':due?'Recall check':'Needs work',
+      recentMisses:0,recentQuizCount:0,daysSincePractice:days,blindSpots:0};
+  }).filter(a=>a.topic.canonical!.stage!=='transfer'||a.topic.canonical!.needsCheck||a.topic.canonical!.reviewDue||Boolean(a.topic.canonical!.rematchAt&&Date.parse(a.topic.canonical!.rematchAt!)<=now));
   return topics.map((topic): WeakArea => {
     const recent = evidence.filter(a => a.topic_id === topic.id).sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,12);
     const quiz = recent.filter(a=>a.source === 'quiz').slice(0,3);
@@ -55,7 +63,7 @@ export function allocateTestQuestions(topics: Topic[], count: number) {
 
 export function buildCramPlan(areas: WeakArea[], topics: Topic[], minutes: number, testDate: string | null = null, now = Date.now()): StudyAction[] {
   const budget=[15,30,60,120].includes(minutes)?minutes:30;
-  const ranked=areas.length?areas.map(a=>a.topic):[...topics].sort((a,b)=>b.priority-a.priority);
+  const ranked=topics.some(t=>t.canonical)?orderCanonicalTopics(topics,'cram',now):areas.length?areas.map(a=>a.topic):[...topics].sort((a,b)=>b.priority-a.priority);
   if (!ranked.length) return [];
   const chosen=ranked.slice(0,Math.min(ranked.length,budget===15?2:budget===30?3:budget===60?5:8));
   const recallMinutes=budget===15?2:budget===30?3:5;
@@ -81,7 +89,7 @@ export function buildStudyPlan(args: { topics: Topic[]; areas: WeakArea[]; testD
   const daysUntil=args.testDate?Math.ceil((Date.parse(args.testDate)-todayMs)/DAY):null;
   if (daysUntil!==null && daysUntil<0) return [];
   const horizon=Math.min(7,daysUntil===null?3:daysUntil+1);
-  const ranked=args.areas.length?args.areas.map(a=>a.topic):args.topics;
+  const ranked=args.topics.some(t=>t.canonical)?orderCanonicalTopics(args.topics,'study',now):args.areas.length?args.areas.map(a=>a.topic):args.topics;
   if (!ranked.length) return [];
   const result: PlanDay[]=[];
   for(let day=0;day<horizon;day++) {
