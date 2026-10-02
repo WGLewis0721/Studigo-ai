@@ -185,9 +185,8 @@
 
 /* Sent to his seat: a small tab at the edge calls him back. */
 .cmpTab {
-  position: fixed; left: 0; top: 0; z-index: 58; width: 20px; height: 52px; padding: 0; border: 0; cursor: pointer;
-  display: grid; place-items: center; align-content: center; gap: 6px;
-  transform: translate(var(--tx, 0px), var(--ty, 0px));
+  position: fixed; left: var(--tx, 0px); top: var(--ty, 0px); z-index: 58; width: 20px; height: 73px; padding: 0; border: 0; cursor: pointer;
+  display: grid; place-items: center; align-content: center; gap: 8px;
   border-radius: 12px 0 0 12px; color: var(--ink); background-color: var(--tangerine); background-image: var(--gloss);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 6px 14px -6px color-mix(in oklab, var(--tangerine) 80%, transparent);
   animation: cmpTabIn .3s var(--ease-out) backwards;
