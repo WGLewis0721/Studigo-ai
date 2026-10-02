@@ -73,12 +73,12 @@ Mobile open/download and print-layout validation still belong in the real-user
 beta pass. See [`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md).
 
 The next product-validation cycle is defined in
-[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). The Coach's existing
-coaching styles, learning traditions, and practice recipes are mapped to real
-teaching/coaching paradigms in
+[`docs/USER_TEST_CASES.md`](docs/USER_TEST_CASES.md). Coach now exposes only
+**Show me / Coach me / Challenge me** while the room-wide explanation level
+remains **Simpler / Standard / Deeper** across Coach and Learn. The older
+coaching-style, learning-tradition and practice-recipe research remains an
+internal strategy/reference library in
 [`knowledge/teaching-coaching/README.md`](knowledge/teaching-coaching/README.md).
-Each UI option has its own retrieval-friendly Markdown record with stable YAML
-metadata, examples, use cases, cautions, and research sources.
 
 Known limits: ingestion runs inside the request (idempotent and retryable, but a
 very large scanned PDF can exceed the function timeout) rather than on a durable

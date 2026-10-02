@@ -1,5 +1,42 @@
 # V3 execution evidence
 
+## October 2 learner-facing finish execution
+
+PR #66 completed the remaining learner-facing V3 simplification over the
+existing adaptive-control-plane work.
+
+**Merged commit:** `0d4ed35edb4254ddd02f30b869ced54768fbd2ec`.
+
+**Validated PR head:** `558b8451b0806dd4acdda03736b2b87a8e108b40`.
+
+Evidence recorded before merge:
+
+- GitHub CI succeeded: typecheck, repository tests, offline advisory ML
+  evaluation, Moon Road/game tests, and production web build.
+- Vercel deployment check succeeded for the validated head; the merge commit
+  also received a successful Vercel deployment status.
+- Hosted Supabase migration `v3_coach_mode` applied successfully and appears in
+  migration history as version `20261002204845`.
+- The hosted `study_rooms_coach_preferences_valid` constraint was queried and
+  confirmed to accept only optional `coach_mode` values
+  `show|coach|challenge` while preserving legacy compatibility keys.
+
+Implemented contract:
+
+- Show me / Coach me / Challenge me are the only persistent learner-facing Coach
+  modes.
+- `study_rooms.explain_level` stays independent and global to Coach + Learn.
+- Coach/Learn stays visible across Chat and Topics.
+- Try a harder question remains a one-shot stretch request.
+- companion default geometry is 116×138 with ~75% character scale and
+  intentional transparent bezel overlap.
+- demo/marketing companion stays in parity with the app implementation.
+
+**Not claimed by this evidence:** physical-device visual acceptance, native
+iOS/iPadOS client completion, or closure of the separate downloadable-study-guide
+P0 gate.
+
+
 ## Current status
 
 Reviewed PR #59 at commit `c30094a3a2597c65a513b4b3ff6d258a2afedf43`. The handoff now distinguishes persistent Challenge me from one-shot Try a harder question, specifies uploaded prompt-injection regression coverage, and sequences V3 after study-guide P0 validation.
