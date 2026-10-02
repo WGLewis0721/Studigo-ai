@@ -234,8 +234,13 @@ He is one character with three places, and he is only ever in one of them:
 
 - **His seat**: the round header avatar (`StudigoMascot` in its `mark` crop),
   28–40px. Every page has it.
-- **His window**: waist-up, 100×120px by default, in a corner of every page of
-  the room unless the learner sends him to his seat. It stands beside the work:
+- **His window**: waist-up, 116×138px by default, in a corner of every page of
+  the room unless the learner sends him to his seat. The window rig renders the
+  character at about 75% of the previous in-frame scale so his whole face has a
+  safe margin. His nose, eyes, cheeks/snout and head features must never be
+  accidentally cropped in the default resting pose. Transparent arms, frills,
+  shoulders or other body parts may deliberately break the top/side bezel while
+  the foreground sill and controls remain above them. It stands beside the work:
   the message field moves aside for him, a row of chips scrolls behind him, he
   takes another corner rather than sit on a control, and he disappears while a
   sheet or menu is open. While the page scrolls he stays exactly where he is
