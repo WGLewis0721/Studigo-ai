@@ -9,6 +9,30 @@ value.
 
 Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
 
+## Shipped — October 2, 2026: V3 learner-facing simplification
+
+Merged in PR #66 and deployed from `main`.
+
+- [x] Coach setup now exposes only **Show me / Coach me / Challenge me**.
+- [x] Learning Tradition and Practice Recipe are removed from learner settings;
+      their research records remain internal strategy/reference material.
+- [x] Room-wide **Simpler / Standard / Deeper** explanation level remains
+      separate and applies across Coach + Learn.
+- [x] **Coach / Learn** remains the primary switch in both Chat and Topics;
+      **Chat / Topics** is secondary navigation.
+- [x] One-shot stretch is now **Try a harder question**, distinct from persistent
+      Challenge me mode.
+- [x] Legacy room preferences deterministically map into V3 mode and new writes
+      canonicalize hidden compatibility fields.
+- [x] Studigo's default companion window is 116×138 and the character renders at
+      roughly 75% of the previous in-frame size, with deliberate transparent
+      body/limb bezel overlap and foreground sill/controls.
+- [x] Homepage demo mirrors the same navigation and companion geometry.
+- [x] PR CI passed typecheck, tests, advisory ML eval tests, game tests and build.
+- [x] Hosted Supabase `v3_coach_mode` migration applied and constraint verified.
+- [ ] Physical iPhone/iPad visual acceptance: verify no facial feature is cropped
+      and the intentional bezel overlap reads cleanly on the real device.
+
 ## After the study-guide P0 gate — V3 deterministic adaptive game director + iOS/iPadOS
 
 The next major implementation pass converges the existing control plane, grounded
@@ -51,23 +75,6 @@ Learner-facing finish plan:
 [`V3_LEARNER_UI_FINISH_PLAN.md`](V3_LEARNER_UI_FINISH_PLAN.md), including
 the persistent Coach/Learn regression fix and final companion frame/safe-face
 polish before native parity.
-
-### V3 learner-facing UI regression to fix
-
-Observed on the current mobile build:
-
-- Chat correctly shows the large **Coach / Learn** switcher.
-- Opening Topics removes that switcher and replaces the header with a Topics title.
-
-Target hierarchy:
-
-1. **Coach / Learn** — primary mode selector, always visible.
-2. **Chat / Topics** — secondary selector, always available.
-3. Topic picker/content — contextual to the selected view.
-
-Acceptance requires phone and wide/iPad screenshot coverage for all four
-mode/view combinations and an interaction test proving the two state dimensions
-do not hide or reset one another.
 
 ## Shipped - October 1, 2026: The companion in the app
 
