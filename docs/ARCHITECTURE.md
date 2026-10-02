@@ -263,7 +263,7 @@ Tauri or any future native shell should resolve authentication to the same Supab
 
 ### Mobile route: Expo / React Native
 
-As of October 1, 2026, the App Store route is **Expo / React Native**. Do not start a parallel Capacitor or platform-native implementation unless this decision is explicitly revisited.
+As of October 1, 2026, the App Store route is a universal **Expo / React Native iOS/iPadOS** client. Do not start a parallel Capacitor or platform-native implementation unless this decision is explicitly revisited.
 
 The native application is a client of the existing hosted Studigo system:
 
@@ -276,6 +276,37 @@ The native application is a client of the existing hosted Studigo system:
 For paid access, web purchases flow through Stripe and iOS digital purchases flow through StoreKit/RevenueCat; both reconcile into APEX as the canonical entitlement layer.
 
 See [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md) for the release sequence and acceptance criteria.
+
+
+### V3 learning/AI service boundary
+
+The V3 execution target is a **deterministic adaptive game director underneath a
+grounded GenAI study partner**.
+
+The control plane remains replayable application logic. It owns progression,
+reasoning demand, scaffolding, rematches and mastery evidence. Model-facing code
+may render a decided challenge, retrieve/source evidence, semantically interpret
+free text and produce grounded feedback, but it may not silently rewrite the
+ChallengeSpec or mastery policy.
+
+A Python service (for example `services/learning-ai/`, FastAPI + LangChain) is
+allowed where Phase 1 measurements show a clear benefit for RAG composition,
+evaluation tooling or ML experiments. It is not automatically required for every
+model call. The current TypeScript path and a Python/LangChain path must be
+compared on citation quality, permission safety, latency, cost, observability and
+operational complexity before the service boundary is finalized.
+
+Supabase/Postgres remains the canonical learner-state and authorization boundary.
+The default retrieval store remains the existing room-scoped pgvector data unless
+an evaluated alternative preserves RLS, source priority, learner edits and
+page/slide citations at least as well.
+
+The OpenAI API key is a **server-side service secret only**. The Expo/iOS bundle
+calls Studigo's authenticated backend and must never contain, fetch, cache or
+persist the OpenAI service key.
+
+See the root `IMPLEMENTATION.md` and
+[`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
 
 ## Security rules
 
@@ -433,8 +464,19 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 
 ### Applying delivery preferences
 
-Coach setup edits a draft. **Apply** sends the four choices (coaching style,
-learning tradition, practice recipe, explanation level) to
+**Shipping state before the V3 migration:** Coach setup edits style, learning
+tradition and practice recipe; Room Settings owns the room-wide explanation
+level. `study_rooms.explain_level` remains canonical for Coach and Learn.
+
+**V3 target:** preserve `study_rooms.explain_level` exactly as the independent
+global room setting, but collapse learner-facing Coach customization to
+`show | coach | challenge`. Learning-tradition and practice-recipe research
+moves behind the UI as internal strategy/reference material. The migration must
+not conflate language level with reasoning demand.
+
+The current endpoint behavior is described below until that migration ships.
+
+Coach setup edits a draft. **Apply** sends the current delivery choices to
 `POST /api/coach/preferences`. The asynchronous request validates the IDs,
 rebuilds the delivery configuration deterministically and commits the choices
 to the owned `study_rooms` row. The UI reports recalibrating, success or a
@@ -526,6 +568,10 @@ words that differ by one letter (isotonic and isotopic, sulfate and sulfite).
 Short terms are protected by the length rule; long ones are a tracked roadmap item.
 
 ## Coach generative layer
+
+The architectural invariant for V3 is: **the director decides; GenAI renders and
+interprets**. The room explanation level changes language, not the issued
+reasoning target. Coach mode biases delivery/support, not mastery thresholds.
 
 The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`, see `docs/ADAPTIVE_LEARNING_CORE.md`) and ends at a learner-facing turn:
 `ChallengeSpec → grounded excerpts → route policy → language floor → LLM`.
