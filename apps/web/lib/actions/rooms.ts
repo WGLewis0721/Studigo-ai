@@ -99,7 +99,11 @@ export async function renameRoomAction(
       subject: optional(formData, "subject"),
       course_name: optional(formData, "courseName"),
       test_date: testDate,
-      explain_level: readExplainLevel(formData)
+      // Room Settings is the explicit "apply to both" control. Surface-level
+      // sheets can diverge afterward without changing the room-wide default.
+      explain_level: readExplainLevel(formData),
+      coach_explain_level: readExplainLevel(formData),
+      learn_explain_level: readExplainLevel(formData)
     })
     .eq("id", roomId).eq("owner_id", user.id).select("id").maybeSingle();
 
