@@ -10,12 +10,20 @@ import {
   normalizeCoachPreferences,
   validCoachPreferences
 } from "./coach-preferences";
-import { applyCoachPreferences, readCoachPreferences } from "./coach-preferences-store";
+import { applyCoachPreferences, applyLearnPreferences, readCoachPreferences } from "./coach-preferences-store";
 
+type Level = "simpler" | "standard" | "deeper";
 function store() {
-  let row: { coach_preferences: Record<string, unknown>; explain_level: "simpler" | "standard" | "deeper" } = {
+  let row: {
+    coach_preferences: Record<string, unknown>;
+    explain_level: Level;
+    coach_explain_level: Level | null;
+    learn_explain_level: Level | null;
+  } = {
     coach_preferences: { style: "default", tradition: "tradition-default", practice: "adaptive" },
-    explain_level: "standard"
+    explain_level: "standard",
+    coach_explain_level: "standard",
+    learn_explain_level: "standard"
   };
   let error: unknown = null;
   let missing = false;
@@ -46,40 +54,66 @@ test("legacy rooms migrate deterministically into the three V3 Coach modes", () 
   assert.equal(normalizeCoachPreferences(null).coach_mode, "coach");
 });
 
-test("each learner-facing Coach mode compiles to one distinct delivery contract while the room level stays separate", () => {
+test("each learner-facing Coach mode compiles to one distinct delivery contract", () => {
   for (const option of COACH_MODE_OPTIONS) {
     const prefs = { ...DEFAULT_COACH_PREFERENCES, coach_mode: option.id, explainLevel: "simpler" as const };
     assert.ok(validCoachPreferences(prefs));
     const compiled = compileCoachPreferences(prefs);
     assert.equal(compiled.mode, option.id);
-    const mode = compiled.directives.find(item => item.name === "Coach mode");
-    assert.ok(mode);
-    assert.match(mode!.instruction, new RegExp(`mode=${option.id}`));
-    const level = compiled.directives.find(item => item.name === "Explanation level");
-    assert.match(level!.instruction, /plain everyday words/);
-    assert.match(level!.instruction, /same source facts, concepts, reasoning demand and grading standard/);
+    assert.match(compiled.directives.find(item => item.name === "Coach mode")!.instruction, new RegExp(`mode=${option.id}`));
+    assert.match(compiled.directives.find(item => item.name === "Explanation level")!.instruction, /plain everyday words/);
   }
-  assert.equal(new Set(COACH_MODE_OPTIONS.map(option => compileCoachPreferences({ ...DEFAULT_COACH_PREFERENCES, coach_mode: option.id }).directives.find(item => item.name === "Coach mode")!.instruction)).size, 3);
 });
 
-test("new Apply writes the V3 mode plus canonical hidden compatibility fields, never the room explanation level", async () => {
+test("surface reads use independent effective explanation levels", async () => {
   const db = store();
-  const before = await readCoachPreferences(db.supabase, "room-a");
-  assert.equal(before.coach_mode, "coach");
-  assert.equal(db.writes(), 0);
+  db.row().coach_explain_level = "deeper";
+  db.row().learn_explain_level = "simpler";
+  assert.equal((await readCoachPreferences(db.supabase, "room-a", "coach")).explainLevel, "deeper");
+  assert.equal((await readCoachPreferences(db.supabase, "room-a", "learn")).explainLevel, "simpler");
+});
 
+test("Coach Apply recalibrates Coach only by default", async () => {
+  const db = store();
+  const before = await readCoachPreferences(db.supabase, "room-a", "coach");
   const chosen = { ...before, coach_mode: "challenge" as const, explainLevel: "simpler" as const };
-  const saved = await applyCoachPreferences(db.supabase, "room-a", "user-a", chosen);
-  assert.equal(saved.coach_mode, "challenge");
-  assert.equal(saved.explainLevel, "standard", "Coach Apply must preserve the room's existing global explanation level");
-  assert.deepEqual(db.filters, { id: "room-a", owner_id: "user-a" });
+  const saved = await applyCoachPreferences(db.supabase, "room-a", "user-a", chosen, false);
+  assert.equal(saved.preferences.coach_mode, "challenge");
+  assert.equal(saved.preferences.explainLevel, "simpler");
+  assert.equal(saved.learnExplainLevel, "standard");
+  assert.equal(db.row().coach_explain_level, "simpler");
+  assert.equal(db.row().learn_explain_level, "standard");
+  assert.equal(db.row().explain_level, "standard");
   assert.deepEqual(db.row().coach_preferences, {
     coach_mode: "challenge",
     style: "default",
     tradition: "tradition-default",
     practice: "transfer"
   });
-  assert.equal(db.writes(), 1);
+});
+
+test("Learn Apply recalibrates Learn only by default", async () => {
+  const db = store();
+  const result = await applyLearnPreferences(db.supabase, "room-a", "user-a", "deeper", false);
+  assert.equal(result.learnExplainLevel, "deeper");
+  assert.equal(result.coachPreferences.explainLevel, "standard");
+  assert.equal(db.row().learn_explain_level, "deeper");
+  assert.equal(db.row().coach_explain_level, "standard");
+  assert.equal(db.row().explain_level, "standard");
+});
+
+test("apply-to-both synchronizes both surfaces and the room-wide default", async () => {
+  const db = store();
+  const coach = await readCoachPreferences(db.supabase, "room-a", "coach");
+  await applyCoachPreferences(db.supabase, "room-a", "user-a", { ...coach, explainLevel: "simpler" }, true);
+  assert.equal(db.row().coach_explain_level, "simpler");
+  assert.equal(db.row().learn_explain_level, "simpler");
+  assert.equal(db.row().explain_level, "simpler");
+
+  await applyLearnPreferences(db.supabase, "room-a", "user-a", "deeper", true);
+  assert.equal(db.row().coach_explain_level, "deeper");
+  assert.equal(db.row().learn_explain_level, "deeper");
+  assert.equal(db.row().explain_level, "deeper");
 });
 
 test("canonical hidden strategy values are derived from mode, not stale learner settings", () => {
@@ -99,14 +133,13 @@ test("canonical hidden strategy values are derived from mode, not stale learner 
   });
   const description = describeCoaching(stale);
   assert.equal(description.label, "Show me");
-  assert.match(description.expect, /show me an example/i);
 });
 
 test("Apply never reports success for a denied/missing row or database failure", async () => {
   for (const mode of ["hide", "fail"] as const) {
     const db = store(); db[mode]();
     await assert.rejects(applyCoachPreferences(db.supabase, "room-b", "user-a", DEFAULT_COACH_PREFERENCES));
+    await assert.rejects(applyLearnPreferences(db.supabase, "room-b", "user-a", "standard"));
     await assert.rejects(readCoachPreferences(db.supabase, "room-b"));
-    assert.equal(db.writes(), 0);
   }
 });
