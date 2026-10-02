@@ -9,6 +9,8 @@ This file is the implementation handoff. It does not replace the product, archit
 
 ## Execution order and prerequisite gate
 
+Track verified results, source-audit findings and outstanding prerequisite checks in [`docs/V3_EXECUTION_EVIDENCE.md`](docs/V3_EXECUTION_EVIDENCE.md). An unchecked acceptance case remains open even when CI passes.
+
 Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
 
 The shared ChatGPT conversation has not been independently verified and is not acceptance evidence. Model names and effort levels below are requested execution assignments; unavailable models must be reported rather than silently relabeled.
