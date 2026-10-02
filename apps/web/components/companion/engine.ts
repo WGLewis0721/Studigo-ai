@@ -188,7 +188,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       const page = surface()!.getBoundingClientRect(), right = rt.dock[1] === "r";
       tab.dataset.side = right ? "r" : "l";
       tab.style.setProperty("--tx", `${right ? Math.min(page.right, window.innerWidth) - 20 : Math.max(page.left, 0)}px`);
-      tab.style.setProperty("--ty", `${a.bottom - (a.inRow ? rowHeight() + 62 : 58)}px`);
+      tab.style.setProperty("--ty", `${a.bottom - (a.inRow ? rowHeight() + 83 : 79)}px`);
     }
     if (rt.mode !== "window" || !a) {
       const seat = seatSpot();
