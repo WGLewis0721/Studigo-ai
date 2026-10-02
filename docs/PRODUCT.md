@@ -195,12 +195,24 @@ The learner-facing Coach customization is intentionally reduced to three modes:
 These modes are delivery/support biases, not separate mastery systems. They do
 not change source truth, grading truth or the mastery target.
 
-Coach settings and Learn settings apply independently. **Apply Coach** saves the
-Coach mode plus Coach explanation level and starts a fresh Coach response
-context. **Apply Learn** saves the Learn explanation level and starts a fresh
-Learn response context. Either sheet may opt into **Apply this explanation level
-to both Coach and Learn**. Recalibration resets response context only; it never
-deletes prior mastery evidence, attempts or source material.
+Coach and Learn preferences apply independently, but **Explanation level is not
+one of those surface preferences**. It exists only in Study Room Settings and is
+global to Coach + Learn.
+
+**Apply Coach** saves only the Coach mode and starts a fresh Coach response
+context. **Apply Learn** saves only the Learn presentation mode and starts a
+fresh Learn response context. Neither Apply changes mastery evidence, attempts,
+topic scope on the other surface, or the global explanation level.
+
+Learn has three presentation preferences:
+- **Big picture** — main idea first, then the key facts.
+- **Step by step** — build the idea in small connected pieces.
+- **Examples first** — begin with a concrete example from the learner's material,
+  then explain the concept.
+
+These Learn preferences change presentation order only. They never change source
+scope, factual truth, reasoning demand, grading, mastery, challenge progression
+or the deterministic adaptive game director.
 
 The existing learning-tradition and practice-recipe research remains valuable,
 but it moves behind the interface as an internal strategy/reference library.

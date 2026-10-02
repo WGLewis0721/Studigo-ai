@@ -39,10 +39,12 @@ Physical iPhone acceptance exposed three learner-facing issues after PR #66:
 
 - [x] Add independent **Apply Coach** and **Apply Learn** paths. Applying one
       surface starts a fresh response context for that surface only.
-- [x] Add an explicit **apply explanation level to both Coach and Learn** toggle;
-      Room Settings remains the shared/global apply-to-both control.
-- [x] Persist separate effective Coach/Learn explanation levels while keeping
-      `study_rooms.explain_level` as the room-wide default.
+- [x] Physical-device follow-up clarified the contract: **Explanation level is
+      global only** in Study Room Settings. Coach/Learn surface-specific
+      explanation controls are removed and the temporary columns are deprecated.
+- [x] Add learner-facing Learn presentation modes: **Big picture / Step by step /
+      Examples first**. They change presentation order only and have no authority
+      over grading, mastery, reasoning level, or adaptive progression.
 - [x] Make topic scope checkbox-based multi-select with **Select all** and **Clear**.
 - [x] Coach and Learn now keep independent topic selections. Example: Coach can
       use 1/2/3 while Learn uses 4/5; **Apply to Coach** never overwrites Learn,
