@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       .from("messages")
       .insert({ conversation_id: conversationId, role: "user", content: question });
   }
-  const route = teaching.route;
+  const route = mode === "coach" ? teaching.route : undefined;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
