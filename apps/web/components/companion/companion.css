@@ -11,7 +11,7 @@
    its own size while the window inside is scaled as one piece. */
 .cmp {
   --ring: var(--tangerine); --k: 1;
-  position: fixed; left: 0; top: 0; z-index: 58; width: calc(100px * var(--k)); height: calc(120px * var(--k));
+  position: fixed; left: 0; top: 0; z-index: 58; width: calc(116px * var(--k)); height: calc(138px * var(--k));
   transform: translate(var(--x, 0px), var(--y, 0px)) scale(var(--sc, 1));
   transition: transform .46s var(--ease-spring), opacity .22s ease, width .3s var(--ease-out), height .3s var(--ease-out);
   touch-action: none; user-select: none; -webkit-user-select: none;
@@ -35,7 +35,7 @@
 .cmp[data-empty] .cmpStage { opacity: 0; }
 
 .cmpWin {
-  position: absolute; inset: 0; border-radius: calc(26px * var(--k)); background: var(--white);
+  position: absolute; inset: 0; overflow: visible; border-radius: calc(28px * var(--k)); background: var(--white);
   box-shadow:
     0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white),
     0 16px 28px -12px color-mix(in oklab, var(--ring) 70%, transparent),
@@ -47,21 +47,27 @@
 .cmp[data-pose="celebrate"][data-side="r"] .cmpWin { transform: translateX(calc(-22px * var(--k))); }
 .cmp[data-pose="celebrate"][data-side="l"] .cmpWin { transform: translateX(calc(22px * var(--k))); }
 /* Everything drawn inside the window is laid out at the default size and scaled together. */
-.cmpScale { position: absolute; left: 0; top: 0; width: 100px; height: 120px; transform: scale(var(--k)); transform-origin: 0 0; transition: transform .3s var(--ease-out); }
+.cmpScale { position: absolute; left: 0; top: 0; width: 116px; height: 138px; transform: scale(var(--k)); transform-origin: 0 0; transition: transform .3s var(--ease-out); }
 .cmp.thinking .cmpWin { animation: cmpThink 1.6s var(--ease-out) infinite; }
 @keyframes cmpThink {
   50% { box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ring) 62%, white), 0 0 0 6px color-mix(in oklab, var(--ring) 28%, transparent), 0 3px 8px rgba(20, 27, 45, .14); }
 }
 .cmpScreen {
-  position: absolute; left: 4px; right: 4px; top: 4px; height: 92px; border-radius: 22px 22px 5px 5px;
+  position: absolute; left: 5px; right: 5px; top: 5px; height: 107px; border-radius: 24px 24px 6px 6px; z-index: 0;
   background: radial-gradient(120% 90% at 50% 0%, #fffaf1, #f4dfbd);
   box-shadow: inset 0 0 0 1px rgba(20, 27, 45, .05), inset 0 3px 8px rgba(20, 27, 45, .08);
 }
-/* He is clipped to the screen, except for the poses that burst out of it. */
-.cmpStage { position: absolute; left: 4px; right: 4px; top: 4px; height: 92px; clip-path: inset(0 round 22px 22px 0 0); pointer-events: none; transition: opacity .12s linear; }
-.cmp[data-pop] .cmpStage { clip-path: inset(-80px -80px 0 -80px); }
+/* The face stays comfortably inside the screen, while transparent body parts can
+   break the bezel on purpose. The sill stays above the character so the overlap
+   reads like Studigo is leaning out of the device instead of a bad crop. */
+.cmpStage {
+  position: absolute; left: 5px; right: 5px; top: 5px; height: 107px; z-index: 2;
+  clip-path: inset(-16px -14px 0 -14px round 25px 25px 0 0);
+  pointer-events: none; transition: opacity .12s linear;
+}
+.cmp[data-pop] .cmpStage { clip-path: inset(-88px -88px 0 -88px); }
 .cmpBody {
-  position: absolute; left: 50%; top: 3px; width: 150px; height: 150px; margin-left: -75px; transform-origin: 50% 62%;
+  position: absolute; left: 50%; top: 8px; width: 150px; height: 150px; margin-left: -75px; transform-origin: 50% 62%; scale: .75;
   animation: cmpBreathe 3.8s ease-in-out infinite;
 }
 @keyframes cmpBreathe { 50% { transform: translateY(-1.4px) scale(1.014, 1.02); } }
@@ -105,12 +111,12 @@
 .cmp.blink .cmpLid { animation: cmpBlink .19s ease-in-out 1; }
 @keyframes cmpBlink { 45%, 60% { transform: scaleY(1); } }
 
-.cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 100px; border-radius: 26px 26px 0 0; cursor: pointer; }
+.cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 116px; border-radius: 28px 28px 0 0; cursor: pointer; z-index: 5; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 /* His name is a key: it opens his menu. The caret says so, it lifts under the
    pointer, presses in when clicked, and stays lit while the menu is open. */
 .cmpSill {
-  position: absolute; left: 4px; right: 4px; bottom: 4px; height: 20px; padding: 0; border: 0; border-radius: 5px 5px 22px 22px; cursor: pointer;
+  position: absolute; left: 5px; right: 5px; bottom: 5px; height: 22px; padding: 0; border: 0; border-radius: 6px 6px 24px 24px; cursor: pointer; z-index: 6;
   display: flex; align-items: center; justify-content: center; gap: 4px;
   background-color: var(--ring); background-image: var(--gloss); color: var(--ring-on, var(--ink));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(20, 27, 45, .2);
@@ -119,7 +125,7 @@
 .cmpSill::after { content: ""; position: absolute; inset: -4px -4px -12px; }
 .cmpSill .led, .cmpTab .led { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4); }
 .cmpSill .led { margin-right: 1px; }
-.sillBrand { font-family: var(--display); font-weight: 800; font-size: .6rem; letter-spacing: .01em; line-height: 1; }
+.sillBrand { font-family: var(--display); font-weight: 800; font-size: .68rem; letter-spacing: .01em; line-height: 1; }
 .sillMore { flex: none; opacity: .75; transition: transform .2s var(--ease-out), opacity .15s ease; }
 .cmpSill:hover { filter: brightness(1.07) saturate(1.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 0 rgba(20, 27, 45, .24), 0 0 0 2px color-mix(in oklab, var(--ring) 45%, white); }
 .cmpSill:hover .sillMore { opacity: 1; transform: translateY(-1px); }
@@ -131,7 +137,7 @@
 /* His handles sit on the frame at their own size, whatever size he is:
    a grip to move him, a handle to resize him, and a key that sends him to his seat. */
 .cmpCorner {
-  position: absolute; top: -9px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  position: absolute; top: -9px; z-index: 8; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
   display: grid; place-items: center; background: var(--white); color: var(--ink-2);
   box-shadow: 0 0 0 1px var(--hairline-strong), 0 2px 6px rgba(20, 27, 45, .16);
   transition: opacity .2s ease, background-color .15s ease, color .15s ease;
