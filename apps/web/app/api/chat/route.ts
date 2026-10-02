@@ -64,7 +64,7 @@ export async function POST(request: Request) {
   let teaching;
   let preferences;
   try {
-    preferences = await readCoachPreferences(supabase, roomId);
+    preferences = await readCoachPreferences(supabase, roomId, mode === "coach" ? "coach" : "learn");
     teaching = compileCoachPreferences(preferences);
   } catch {
     return Response.json({ error: "Could not load your coaching settings. Please retry." }, { status: 503 });
