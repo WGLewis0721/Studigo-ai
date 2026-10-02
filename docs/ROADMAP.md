@@ -43,8 +43,10 @@ Physical iPhone acceptance exposed three learner-facing issues after PR #66:
       Room Settings remains the shared/global apply-to-both control.
 - [x] Persist separate effective Coach/Learn explanation levels while keeping
       `study_rooms.explain_level` as the room-wide default.
-- [x] Make topic scope checkbox-based multi-select with **Select all**, **Clear**
-      and explicit **Apply topics**.
+- [x] Make topic scope checkbox-based multi-select with **Select all** and **Clear**.
+- [x] Coach and Learn now keep independent topic selections. Example: Coach can
+      use 1/2/3 while Learn uses 4/5; **Apply to Coach** never overwrites Learn,
+      and **Apply to Learn** never overwrites Coach.
 - [x] Remove the standalone highlighted topic dropdown; the **Topics** button
       beside Chat now opens the selector and shows selected/total count.
 - [x] Send selected topic IDs to the server and intersect them with active room
