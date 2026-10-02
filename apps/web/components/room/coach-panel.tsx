@@ -61,8 +61,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [learnDraft, setLearnDraft] = useState<ExplainLevel>(coaching.learnLevel);
   const [coachApplyBoth, setCoachApplyBoth] = useState(false);
   const [learnApplyBoth, setLearnApplyBoth] = useState(false);
-  const coachDirty = !sameCoachPreferences(draft, coaching.applied);
-  const learnDirty = learnDraft !== coaching.learnLevel;
+  const coachDirty = !sameCoachPreferences(draft, coaching.applied)
+    || (coachApplyBoth && coaching.learnLevel !== draft.explainLevel);
+  const learnDirty = learnDraft !== coaching.learnLevel
+    || (learnApplyBoth && coaching.applied.explainLevel !== learnDraft);
   const active = describeCoaching(coaching.applied);
   const draftMode = describeCoaching(draft);
   useEffect(() => { setDraft(coaching.applied); }, [coaching.applied]);
