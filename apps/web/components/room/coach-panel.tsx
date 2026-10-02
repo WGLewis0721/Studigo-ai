@@ -367,7 +367,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       <section
         id="coach-personalization"
         className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"}
-        aria-label="Personalize coaching"
+        aria-label={chatMode === "coach" ? "Personalize coaching" : "Personalize learning"}
         role={personalizeOpen ? "dialog" : undefined}
         aria-modal={personalizeOpen ? true : undefined}
       >
@@ -437,6 +437,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             <div className="coachEmpty">
               <strong>Understand it.</strong>
               <p>Learn answers from your materials and shows the page it came from. Use it when an idea or term does not make sense yet. Then switch to Coach to practice it. Tap a starter below to see how it works.</p>
+              <p className="coachEmptyStyle"><b>{learnActive.label}:</b> {learnActive.expect}</p>
             </div>
           )
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
