@@ -102,6 +102,17 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     if (first) setSelectedTopic(first);
   }, [selectedTopicIds, topics]);
 
+  useEffect(() => {
+    if (!focusTopicId) return;
+    const focused = topics.find((topic) => topic.id === focusTopicId);
+    if (!focused) return;
+    setSelectedTopic(focused);
+    setSelectedTopicIds([focused.id]);
+    setTopicDraftIds([focused.id]);
+    conversationId.current = null;
+    askConversationId.current = null;
+  }, [focusTopicId, topics]);
+
   const openSetup = () => {
     (document.activeElement as HTMLElement | null)?.blur();
     setSkillPickerOpen(false);
