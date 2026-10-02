@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const topicIds = Array.isArray(body?.topicIds)
     ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
     : [];
-  if (topicIds.length > 20 || topicIds.some((value) => !isInteractionId(value))) {
+  if (topicIds.length > 80 || topicIds.some((value) => !isInteractionId(value))) {
     return Response.json({ error: "Choose valid Study Room topics." }, { status: 400 });
   }
 
