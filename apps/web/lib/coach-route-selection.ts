@@ -29,7 +29,7 @@ export const COACH_CONTROL_COMMANDS = [
   { label: "Make it simpler", text: "Make it simpler" },
   { label: "Give me a hint", text: "Give me a hint" },
   { label: "Show me an example", text: "Show me an example" },
-  { label: "Challenge me", text: "Challenge me" }
+  { label: "Try a harder question", text: "Try a harder question" }
 ] as const;
 
 /**
