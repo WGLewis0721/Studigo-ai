@@ -10,7 +10,7 @@
 (function () {
   "use strict";
 
-  const W = 100, H = 120;
+  const W = 116, H = 138;
   const LEAN_AT = 12000, SLEEP_AT = 26000;
   const KEY = "studigo.companion.demo.v2";
   const POSES = ["center", "left", "right", "up", "down", "up-right", "up-left", "down-right", "down-left", "celebrate", "support", "pet", "poke", "lean", "sleep"];
