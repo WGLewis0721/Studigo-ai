@@ -148,6 +148,17 @@ test("idle: he leans after a long pause and dozes after a much longer one", () =
   assert.ok(LEAN_AFTER_MS >= 45_000, "a learner reading an answer is not nagged");
 });
 
+test("the tab that calls him back stays under the finger while it is pressed", () => {
+  // On a phone the room gives every pressed button its own transform (scale), which
+  // replaces any transform the button already has. A tab placed with a transform
+  // jumps to the screen's corner mid-press and the tap misses it.
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  const rule = /\.cmpTab \{([^}]*)\}/.exec(css)?.[1] ?? "";
+  assert.match(rule, /left: var\(--tx/);
+  assert.match(rule, /top: var\(--ty/);
+  assert.ok(!/transform\s*:/.test(rule), "the tab must not be placed with a transform");
+});
+
 test("he never changes mastery: nothing in the companion talks to the network or to practice state", () => {
   const files = ["companion-logic.ts", "companion-prefs.ts", "../components/companion/engine.ts", "../components/companion/stage.tsx", "../components/companion/companion.tsx", "../components/companion/figure.tsx"];
   for (const file of files) {
