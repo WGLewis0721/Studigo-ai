@@ -2,6 +2,10 @@
 
 This file exists so a new AI coding agent can enter the project cold and continue without re-litigating the product architecture.
 
+## Integrated adaptive beta status
+
+Read [ADAPTIVE_BETA_EVIDENCE.md](ADAPTIVE_BETA_EVIDENCE.md) for the implemented web beta, validation, additive migration, preview flags, rollback and outstanding TestFlight gates. Claude owns UI/UX; preserve the current interface. The local synthetic adapter is development-only and must never authorize hosted requests.
+
 ## Read first
 
 In order:

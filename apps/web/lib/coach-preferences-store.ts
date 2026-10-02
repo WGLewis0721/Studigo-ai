@@ -14,9 +14,9 @@ export async function applyCoachPreferences(supabase: SupabaseClient, roomId: st
   // zero-row update from being presented as a successful Apply.
   compileCoachPreferences(preferences);
   // Explanation level is a room setting (Room Settings); Coach setup never writes it.
-  const { style, tradition, practice } = preferences;
+  const { style, tradition, practice, coach_mode } = preferences;
   const { data, error } = await supabase.from("study_rooms")
-    .update({ coach_preferences: { style, tradition, practice } })
+    .update({ coach_preferences: { style, tradition, practice, ...(coach_mode ? { coach_mode } : {}) } })
     .eq("id", roomId).eq("owner_id", userId)
     .select("coach_preferences, explain_level").maybeSingle();
   if (error) throw new Error("Could not apply your coaching settings. Please retry.");

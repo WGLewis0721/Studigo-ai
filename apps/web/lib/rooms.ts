@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import type { SourceType } from "@studigo/documents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CoachPreferences } from "./coach-preferences";
+import { serverLocalSession } from './local-beta-context';
+import { integratedRooms, integratedTopics, integratedDocuments, integratedReadiness } from './integrated-beta';
 
 export type StudyRoom = {
   id: string;
@@ -54,6 +56,7 @@ export const TOPIC_COLUMNS =
   "id, room_id, title, objective, key_terms, priority, order_index, origin, mastery_score, status, last_practiced_at, learner_edited";
 
 export async function listRooms(): Promise<Array<StudyRoom & { document_count: number }>> {
+  const local=await serverLocalSession();if(local)return integratedRooms(local.state);
   // Guest/testing shell: with no Supabase session (or when browser-safe env is
   // absent, as in the sandbox preview) there are no rooms to show. Degrade to
   // an empty list instead of crashing the /app shell.
@@ -101,6 +104,7 @@ async function fetchRoom(roomId: string): Promise<StudyRoom | null> {
 }
 
 export async function getRoom(roomId: string): Promise<StudyRoom> {
+  const local=await serverLocalSession();if(local){const room=integratedRooms(local.state).find(r=>r.id===roomId);if(!room)notFound();return room;}
   const delaysMs = [0, 150, 350, 750];
   for (const delay of delaysMs) {
     if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
@@ -113,6 +117,7 @@ export async function getRoom(roomId: string): Promise<StudyRoom> {
 }
 
 export async function listDocuments(roomId: string): Promise<StudyDocument[]> {
+  const local=await serverLocalSession();if(local)return integratedDocuments(local.state,roomId);
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("documents")
@@ -125,6 +130,7 @@ export async function listDocuments(roomId: string): Promise<StudyDocument[]> {
 }
 
 export async function listTopics(roomId: string): Promise<Topic[]> {
+  const local=await serverLocalSession();if(local)return integratedTopics(local.state,roomId);
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("topics")
@@ -152,6 +158,7 @@ export type RoomReadiness = {
  * topics count as zero, because "ready" means ready for the whole test.
  */
 export async function getRoomReadiness(roomId: string): Promise<RoomReadiness> {
+  const local=await serverLocalSession();if(local)return integratedReadiness(local.state,roomId);
   const supabase = await createServerSupabaseClient();
 
   const [topicsResult, attemptsResult, dueResult] = await Promise.all([

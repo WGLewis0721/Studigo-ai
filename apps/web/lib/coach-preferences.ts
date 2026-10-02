@@ -1,6 +1,7 @@
 import { selectLearningRoute } from "./coach-route-selection";
 import referenceJson from "./generated/teaching-references.json";
 import type { TeachingReferences } from "./teaching-reference-projection";
+import { COACH_MODES, migrateCoachMode, COACH_MODE_LABELS, type CoachMode } from "@studigo/learning";
 
 const REFERENCES = referenceJson as TeachingReferences;
 export const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -40,6 +41,7 @@ export function teachingReference(preferences: CoachPreferences): string {
 
 
 export type CoachPreferences = {
+  coach_mode?: CoachMode;
   style: string;
   tradition: string;
   practice: string;
@@ -54,6 +56,7 @@ export const DEFAULT_COACH_PREFERENCES: CoachPreferences = {
 export function normalizeCoachPreferences(input: unknown, explainLevel: unknown = "standard"): CoachPreferences {
   const raw = input && typeof input === "object" ? input as Partial<CoachPreferences> : {};
   return {
+    ...(COACH_MODES.includes(raw.coach_mode as CoachMode) ? { coach_mode: raw.coach_mode } : {}),
     style: STYLES.find(option => option.id === raw.style)?.id ?? "default",
     tradition: TRADITIONS.find(option => option.id === raw.tradition)?.id ?? "tradition-default",
     practice: PRACTICE_PROTOCOLS.find(option => option.id === raw.practice)?.id ?? "adaptive",
@@ -64,12 +67,14 @@ export function normalizeCoachPreferences(input: unknown, explainLevel: unknown 
 export function validCoachPreferences(input: unknown): input is CoachPreferences {
   if (!input || typeof input !== "object") return false;
   const raw = input as CoachPreferences;
+  if (raw.coach_mode !== undefined && !COACH_MODES.includes(raw.coach_mode)) return false;
   const normalized = normalizeCoachPreferences(raw, raw.explainLevel);
   return Object.keys(DEFAULT_COACH_PREFERENCES).every(key => raw[key as keyof CoachPreferences] === normalized[key as keyof CoachPreferences]);
 }
 
 export function sameCoachPreferences(a: CoachPreferences, b: CoachPreferences): boolean {
-  return a.style === b.style && a.tradition === b.tradition && a.practice === b.practice && a.explainLevel === b.explainLevel;
+  return a.style === b.style && a.tradition === b.tradition && a.practice === b.practice && a.explainLevel === b.explainLevel
+    && migrateCoachMode(a) === migrateCoachMode(b);
 }
 
 /** Recalibration is deterministic: no model call, grading or encounter reset. */
@@ -90,7 +95,11 @@ export function compileCoachPreferences(preferences: CoachPreferences) {
       { name: "Practice protocol", instruction: practice.instruction },
       { name: "Explanation level", instruction: `${levels[preferences.explainLevel]} Change delivery only; keep the same source facts, concepts, reasoning demand and grading standard. ${levelReference(preferences.explainLevel)}`.trim() },
       { name: "How these combine", instruction: `The coaching style (${style.name}) sets the shape of each turn. The learning tradition (${tradition.name}) sets the order ideas are introduced in. The explanation level sets only the wording. Make the style visible in every reply: ${style.expect}` },
-      { name: "Teaching reference", instruction: teachingReference(preferences) }
+      { name: "Teaching reference", instruction: teachingReference(preferences) },
+      ...(preferences.coach_mode ? [{ name: "Coach mode", instruction:
+        preferences.coach_mode === "show" ? "mode=show. Give a brief grounded explanation and one representative example before the learner attempts the issued task. Record delivered assistance. Preserve the task, rubric and reasoning demand."
+        : preferences.coach_mode === "challenge" ? "mode=challenge. Begin with less help, but preserve director-required scaffolds and task size. This mode never requests a harder rung or changes grading. Hints remain available."
+        : "mode=coach. Let the learner try the issued task, observe the response, and offer grounded help when needed. Preserve reasoning demand and grading." }] : [])
     ]
   };
 }

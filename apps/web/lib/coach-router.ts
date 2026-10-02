@@ -29,11 +29,12 @@ import {
 import { findNamedTopic } from "@/lib/recommendation-engine";
 import { fetchChunksByIds, retrieveForRoom } from "@/lib/retrieval";
 import type { Topic } from "@/lib/rooms";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-director";
 import { parseIssuedSpec, renderChallengeGuidance, renderRouteGuidance } from "@/lib/coach-render";
 import type { ChallengeRequest, ChallengeSpec, LearningEvent, LearningRoute } from "@/lib/learning";
 import { learningEventStore, type CoachEvidenceStore } from "@/lib/coach-evidence-store";
+import { commitAdaptiveCoachTurn,readAcceptedEvaluation,acceptEvaluation } from './learning/atomic-coach';
 import {
   buildCoachEvent,
   coachEventId,
@@ -197,16 +198,16 @@ function withSupport<T extends CoachState>(state: T, level: number): T {
  * why. Throwing surfaces the failure as a controlled "error" SSE event
  * (via the try/catch in the chat route) instead of a silent state reset.
  */
-async function loadCoachState(supabase: SupabaseClient, conversationId: string): Promise<CoachState> {
+async function loadCoachState(supabase: SupabaseClient, conversationId: string): Promise<{state:CoachState;revision:number}> {
   const { data, error } = await supabase
     .from("conversations")
-    .select("coach_state")
+    .select(process.env.STUDIGO_ATOMIC_COACH==='1'?"coach_state, learning_revision":"coach_state")
     .eq("id", conversationId)
     .maybeSingle();
   if (error) {
     throw new Error(`Could not load Coach state for conversation ${conversationId}: ${error.message}`);
   }
-  return parseCoachState((data as { coach_state?: unknown } | null)?.coach_state);
+  return {state:parseCoachState((data as { coach_state?: unknown } | null)?.coach_state),revision:Number((data as {learning_revision?:number}|null)?.learning_revision??0)};
 }
 
 async function saveCoachState(supabase: SupabaseClient, conversationId: string, state: CoachState): Promise<void> {
@@ -257,9 +258,19 @@ export async function* runCoachTurn(args: {
   const { supabase, roomId, conversationId, question, topics, interaction } = args;
   const deps: CoachRouterDeps = { ...defaultDeps, ...args.deps };
   const pedagogyDirectives = formatPedagogyDirectives(args.directives);
-  const state = await loadCoachState(supabase, conversationId);
+  const snapshot = await loadCoachState(supabase, conversationId);
+  const state=snapshot.state;
+  const atomic=process.env.STUDIGO_ATOMIC_COACH==='1'&&Boolean(args.userId&&interaction&&args.stateSupabase);
+  const bufferedEvents:LearningEvent[]=[];
   const intent = detectTurnIntent(question, state);
   const route: LearningRoute = args.route ?? "studigo_default";
+  const selectTopic=async (question:string):Promise<Topic|undefined>=>{
+    const explicit=findNamedTopic(topics,question);
+    if(process.env.STUDIGO_ADAPTIVE_SESSION!=='1'||!args.userId||!deps.director.recommendTopic)return explicit??pickTopic(topics,question);
+    const selectedId=await deps.director.recommendTopic({supabase,userId:args.userId,roomId,topics,
+      now:interaction?.createdAt??new Date().toISOString(),selectedTopicId:explicit?.id});
+    return topics.find(t=>t.id===selectedId);
+  };
 
   // A transport retry of a submission that was already fully processed:
   // nothing is re-graded or re-recorded.
@@ -275,6 +286,10 @@ export async function* runCoachTurn(args: {
    *  the same interaction ID, so already-recorded evidence is idempotent. */
   const commit = async (next: CoachState): Promise<void> => {
     const stamped: CoachState = interaction ? { ...next, lastInteractionId: interaction.id } : next;
+    if(atomic) {
+      await commitAdaptiveCoachTurn({reader:supabase,writer:args.stateSupabase!,conversationId,userId:args.userId!,interactionId:interaction!.id,expectedRevision:snapshot.revision,state:stamped,events:bufferedEvents});
+      return;
+    }
     try {
       await saveCoachState(args.stateSupabase ?? supabase, conversationId, stamped);
     } catch {
@@ -290,6 +305,7 @@ export async function* runCoachTurn(args: {
     return coachEventScope({ issued: s.issuedChallenge, userId: args.userId, roomId, pendingTopicId: s.topicId });
   };
   const record = async (events: LearningEvent[]): Promise<void> => {
+    if(atomic){bufferedEvents.push(...events);return;}
     for (const event of events) await deps.evidence.record(event);
   };
   const event = (
@@ -300,23 +316,16 @@ export async function* runCoachTurn(args: {
     offsetMs: number
   ) => buildCoachEvent({ scope, interaction: interaction!, part, result, scaffoldUsed, offsetMs });
 
-  // Every new question asks the control plane for its ChallengeSpec. If that
-  // read fails, the question is rendered without a target and nothing about
-  // progression is claimed; the failure is never turned into an empty state.
+  // A failed control-plane read cannot issue an untracked assessed task.
   const issueFor = async (topic: Topic, challengeRequest: ChallengeRequest): Promise<IssuedChallenge | undefined> => {
     if (!args.userId) return undefined;
-    try {
-      const spec = await deps.director.challengeFor({ supabase, userId: args.userId, roomId, topic, route, challengeRequest });
+      const spec = await deps.director.challengeFor({ supabase, userId: args.userId, roomId, topic, route, challengeRequest,now:interaction?.createdAt });
       return {
         spec: spec as unknown as Record<string, unknown>,
         encounterId: randomUUID(),
         scaffoldUsed: spec.scaffoldLevel,
-        contextId: spec.constraints.requireNewContext ? `coach-context:${randomUUID()}` : null
+        contextId: null
       };
-    } catch (error) {
-      console.warn("[coach] ChallengeSpec unavailable; rendering without a control-plane target", error);
-      return undefined;
-    }
   };
 
   /** An issued question left unanswered is recorded as skipped, never as
@@ -345,7 +354,7 @@ export async function* runCoachTurn(args: {
       }
       // affirm/next: replay the pending action as the effective question.
       const effectiveQuestion = CONTROL_ACTION_PROMPTS[state.action];
-      const topic = topics.find((t) => t.id === state.topicId) ?? pickTopic(topics, effectiveQuestion);
+      const topic = (state.action === 'more_practice' ? topics.find((t) => t.id === state.topicId) : findNamedTopic(topics,effectiveQuestion)) ?? await selectTopic(effectiveQuestion);
       // "Another one" asks the control plane again, at normal demand. The
       // director reloads persisted evidence, so it sees the answer just recorded.
       const issued = topic ? await issueFor(topic, "normal") : undefined;
@@ -363,7 +372,7 @@ export async function* runCoachTurn(args: {
   // difficulty ladder of its own. An unanswered pending question is recorded
   // as skipped first.
   if (intent === "challenge") {
-    const topic = (state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined) ?? pickTopic(topics, question);
+    const topic = (state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined) ?? await selectTopic(question);
     await recordSkip(state);
     const issued = topic ? await issueFor(topic, "stretch") : undefined;
     const log = yield* openCoachQuestion({ supabase, roomId, commit, topics, topic, deps, pedagogyDirectives, issued });
@@ -399,7 +408,11 @@ export async function* runCoachTurn(args: {
     // material isn't fair to the learner, since the question may reference
     // a concept that lived in exactly the chunk that's now missing.
     const chunks = await deps.fetchChunksByIds(supabase, roomId, state.sourceChunkIds);
-    if (chunks.length < state.sourceChunkIds.length) {
+    const sourceChanged=state.issuedChallenge?.sourceRevisions?.some(source=>{
+      const chunk=chunks.find(c=>c.id===source.id);
+      return !chunk||createHash('sha256').update(JSON.stringify([chunk.documentId,chunk.content,chunk.pageNumber??null])).digest('hex')!==source.sha256;
+    });
+    if (chunks.length < state.sourceChunkIds.length || sourceChanged) {
       await commit(IDLE_COACH_STATE);
       const text =
         "The material behind that question isn't available anymore, so I can't grade it fairly. Let's pick a fresh topic.";
@@ -544,12 +557,21 @@ export async function* runCoachTurn(args: {
 
     if (intent === "help_request") return yield* supportLearner(intent);
 
-    const evaluation = await deps.evaluateCoachAnswer({
+    let evaluation = atomic?await readAcceptedEvaluation(supabase,interaction!.id):null;
+    evaluation ??= await deps.evaluateCoachAnswer({
       question: state.question,
       expectedConcepts: state.expectedConcepts,
       learnerResponse: question,
       chunks
     });
+    if(atomic&&state.issuedChallenge) {
+      const known=new Set(state.expectedConcepts.map(c=>c.id));
+      if(evaluation.concepts.some(c=>!known.has(c.id)||!['demonstrated','partial','absent','contradicted'].includes(c.status))
+        ||new Set(evaluation.concepts.map(c=>c.id)).size!==evaluation.concepts.length
+        ||evaluation.intent==='answer'&&evaluation.concepts.length!==known.size)throw new Error('The evaluator could not verify this answer. No learning credit was recorded. Please retry.');
+      evaluation=await acceptEvaluation({writer:args.stateSupabase!,userId:args.userId!,interactionId:interaction!.id,encounterId:state.issuedChallenge.encounterId,
+        fingerprint:{question:state.question,expectedConcepts:state.expectedConcepts,sourceRevisions:state.issuedChallenge.sourceRevisions??[],response:question},evaluation});
+    }
 
     // A transport retry of an assessed answer keeps the result committed the
     // first time; re-grading could otherwise produce a conflicting event.
@@ -700,7 +722,7 @@ export async function* runCoachTurn(args: {
 
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
-  const topic = pickTopic(topics, question);
+  const topic = await selectTopic(question);
   const issued = topic ? await issueFor(topic, "normal") : undefined;
   const log = yield* openCoachQuestion({ supabase, roomId, commit, topics, topic, deps, pedagogyDirectives, issued });
   return { ...log, stateBefore: state.kind, turnIntent: intent };
@@ -752,6 +774,14 @@ async function* openCoachQuestion(args: {
     pedagogyDirectives: args.pedagogyDirectives,
     challengeGuidance: spec ? renderChallengeGuidance(spec) : undefined
   });
+  if(args.issued&&process.env.STUDIGO_ATOMIC_COACH==='1') {
+    const knownSources=new Set(chunks.map(c=>c.id));
+    if(!coachQuestion.question.trim()||!coachQuestion.expectedConcepts.length||!coachQuestion.sourceChunkIds.length
+      ||coachQuestion.sourceChunkIds.some(id=>!knownSources.has(id))
+      ||new Set(coachQuestion.expectedConcepts.map(c=>c.id)).size!==coachQuestion.expectedConcepts.length
+      ||coachQuestion.expectedConcepts.some(c=>!c.description.trim()||!Number.isFinite(c.weight)||c.weight<=0))
+      throw new Error('The generator could not create a supported question and rubric. No encounter was issued. Please retry.');
+  }
 
   // Enforce the language floor: at most one constrained rewrite. Concepts,
   // sources and the issued spec come from the original generation and are
@@ -769,6 +799,15 @@ async function* openCoachQuestion(args: {
       })
   });
   const questionText = floor.question;
+  if(args.issued&&spec?.constraints.requireNewContext) {
+    // Content identity, rather than a fresh random label, prevents replaying a
+    // repeated question as evidence of transfer to a new context.
+    const contextId='coach-context:'+createHash('sha256').update(questionText.toLowerCase().replace(/\s+/g,' ').trim()).digest('hex');
+    if(process.env.STUDIGO_ADAPTIVE_SESSION==='1'&&args.deps.director.contextUnused
+      &&!await args.deps.director.contextUnused({supabase:args.supabase,userId:spec.concept.userId,roomId:args.roomId,topicId:args.topic.id,contextId}))
+      throw new Error('The generated question repeated an earlier context. No encounter was issued. Please try again.');
+    args.issued={...args.issued,contextId};
+  }
 
   const nextState: CoachState = {
     version: 1,
@@ -778,7 +817,8 @@ async function* openCoachQuestion(args: {
     expectedConcepts: coachQuestion.expectedConcepts,
     sourceChunkIds: coachQuestion.sourceChunkIds,
     askedAt: new Date().toISOString(),
-    ...(args.issued ? { issuedChallenge: args.issued } : {})
+    ...(args.issued ? { issuedChallenge: {...args.issued,schemaVersion:1,generatorVersion:'grounded-coach-1',evaluatorVersion:'semantic-concepts-1',
+      sourceRevisions:chunks.filter(c=>coachQuestion.sourceChunkIds.includes(c.id)).map(c=>({id:c.id,sha256:createHash('sha256').update(JSON.stringify([c.documentId,c.content,c.pageNumber??null])).digest('hex')}))} } : {})
   };
   await args.commit(nextState);
 
