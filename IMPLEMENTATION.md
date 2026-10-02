@@ -176,28 +176,16 @@ It must answer that without an LLM call.
 
 ### Inputs
 
-At minimum:
+Do not replace the current typed contracts with a parallel model. Start from
+`apps/web/lib/learning/types.ts` and extend only when a demonstrated requirement
+cannot fit the existing vocabulary.
 
-```ts
-type DirectorInput = {
-  userId: string;
-  roomId: string;
-  conceptIds: string[];
-  activity:
-    | "coach"
-    | "quiz"
-    | "flashcards"
-    | "practice_test"
-    | "weak_areas"
-    | "cram";
-  state: ConceptLearningState;
-  recentEvents: LearningEvent[];
-  coachMode: "show" | "coach" | "challenge";
-  now: string;
-};
-```
+Today the director already accepts the concept, learner state, recent events,
+activity, route and an optional one-shot `challengeRequest`. V3 should add the
+three-mode preference as a **delivery/support bias** at the orchestration boundary
+without making it a second progression ladder.
 
-Do not put prose prompts in this layer.
+Do not put prose prompts in the control-plane layer.
 
 ### State
 
@@ -221,33 +209,25 @@ Do **not** infer intelligence, motivation, ADHD, emotion, socioeconomic status o
 
 ### Output
 
-```ts
-type ChallengeSpec = {
-  specVersion: number;
-  conceptIds: string[];
-  challengeKind:
-    | "recognition"
-    | "recall"
-    | "explanation"
-    | "application"
-    | "transfer";
-  scaffoldLevel: 0 | 1 | 2 | 3 | 4 | 5;
-  taskSize: "micro" | "single" | "multi_step";
-  objective: string;
-  requireNewContext: boolean;
-  avoidPromptIds: string[];
-  routeRecord?: string;
-  rematchOf?: string;
-  evidenceGoal:
-    | "diagnose"
-    | "practice"
-    | "confirm"
-    | "transfer"
-    | "retention";
-};
-```
+Preserve the current `ChallengeSpec` as the canonical issued-task contract. It
+already carries:
 
-The room-wide explanation level is deliberately **not** a reasoning field. It is applied later by the renderer.
+- `policyVersion`;
+- concept/objective;
+- activity and route/routeRecord;
+- `reasoningLevel` and `challengeKind`;
+- `scaffoldLevel`;
+- task size;
+- action (`practice|retry|variation|rematch`);
+- reasons;
+- constraints including one-concept-at-a-time, plain language, new-context
+  requirements and encounter/context avoidance.
+
+If V3 needs new fields, version the policy/spec and add replay tests. Do not
+silently reinterpret an old persisted spec.
+
+The room-wide explanation level is deliberately **not** a reasoning field. It is
+applied later by the renderer.
 
 ## Initial policy
 
@@ -273,13 +253,22 @@ Keep them independent.
 
 ### Reasoning
 
-Suggested v1 ladder:
+Keep the existing 10-rung reasoning ladder in
+`apps/web/lib/learning/types.ts`:
 
-1. recognition
+1. recognize
 2. recall
-3. explanation
-4. application
-5. transfer
+3. explain
+4. compare
+5. predict
+6. apply
+7. transfer
+8. novel problem
+9. defend
+10. teach back
+
+Do not collapse it merely to make V3 documentation prettier. The learner-facing
+UI does not need to expose these rungs.
 
 ### Scaffold
 
