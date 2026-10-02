@@ -222,9 +222,13 @@ into each other:
 - **Chat** remains the conversation view.
 - **Topics** is the integrated study-scope control beside Chat. It opens the
   topic selector directly; there is no second standalone topic dropdown.
-- The topic selector supports checkboxes, multi-select, Select all, Clear and an
-  explicit **Apply topics** action. Applying topic scope starts fresh Coach and
-  Learn response contexts without changing mastery/evidence.
+- Coach and Learn own **separate topic scopes**. Example: Coach may use topics
+  1, 2 and 3 while Learn uses 4 and 5.
+- The topic selector supports checkboxes, multi-select, Select all, Clear and a
+  surface-specific **Apply to Coach** or **Apply to Learn** action.
+- Applying a topic scope changes only that surface and starts a fresh response
+  context for that surface. It must not copy, erase or reset the other
+  surface's topic selection, and it never changes mastery/evidence.
 
 The full topic-management page remains available from the selector's
 **Manage topics** action. This hierarchy is part of the product contract for

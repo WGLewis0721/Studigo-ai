@@ -521,10 +521,16 @@ Coach mode, canonical internal strategy and effective Coach explanation level.
 Ask/Learn receives **only** the effective Learn explanation level plus trusted
 topic scope. Browser drafts cannot override saved pedagogy.
 
-The client may send up to 80 selected topic IDs. The server intersects those IDs
-with the room's active topics before the Coach director sees them. A stale or
-cross-room-only selection fails closed. Multi-topic scope restricts the
-deterministic director; it never authorizes source access outside the room.
+The client may send up to 80 selected topic IDs. Coach and Learn keep
+independent client-side scope state and each request sends the scope for the
+surface that issued the turn. Applying Coach scope resets only the Coach
+conversation; applying Learn scope resets only the Learn/Ask conversation.
+Neither Apply operation writes into or clears the other surface's selection.
+
+The server intersects incoming topic IDs with the room's active topics before
+the Coach director sees them. A stale or cross-room-only selection fails closed.
+Multi-topic scope restricts the deterministic director; it never authorizes
+source access outside the room.
 
 For a pending Coach encounter, applying a different mode changes delivery only
 for subsequent rendering/turns. It does not rewrite the issued ChallengeSpec,
