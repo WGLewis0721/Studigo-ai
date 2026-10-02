@@ -49,7 +49,10 @@ Physical iPhone acceptance exposed three learner-facing issues after PR #66:
       beside Chat now opens the selector and shows selected/total count.
 - [x] Send selected topic IDs to the server and intersect them with active room
       topics before the adaptive director sees them.
-- [ ] CI/typecheck/build and hosted Supabase migration.
+- [x] PR #68 CI passed typecheck, full tests, offline advisory ML evaluation,
+      game prototype tests and web build; production Vercel deployment is READY.
+- [x] Hosted Supabase migration `surface_explanation_levels` applied and
+      recorded in migration history.
 - [ ] Re-test the exact physical-iPhone failure: select Matter/Phase Changes,
       apply, then ask about condensation/heat without the old Animal Responses
       context leaking into the answer.
