@@ -16,6 +16,29 @@ This knowledge base is derived from the **actual Coach controls in the codebase*
 
 It does not contain generic study tips. Each record starts from Studigo's current UI definition, then maps that definition to the closest documented real-world teaching/coaching paradigm.
 
+
+## V3 status of this taxonomy
+
+This directory remains the canonical research library, but the V3 product plan
+will no longer expose all three dimensions as learner settings.
+
+The learner-facing target is:
+
+- **Show me**
+- **Coach me** (default)
+- **Challenge me**
+
+The room-wide `simpler|standard|deeper` explanation level remains separate and
+applies across Coach and Learn.
+
+The current coaching styles, traditions and practice recipes should therefore be
+preserved as **internal strategy/reference records**. Their useful sequences can
+inform rendering/scaffolding after the deterministic Challenge Director has
+selected the learning task. They must not become competing mastery systems.
+
+Do not delete this research during the UI migration. Update `source_of_ui_taxonomy`
+metadata only when the production migration actually ships.
+
 ## Classification rules
 
 Each record has one `alignment_type`:
