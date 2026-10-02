@@ -33,6 +33,23 @@ Merged in PR #66 and deployed from `main`.
 - [ ] Physical iPhone/iPad visual acceptance: verify no facial feature is cropped
       and the intentional bezel overlap reads cleanly on the real device.
 
+## October 2 follow-up — stale Study Guide topic recovery
+
+Physical iPhone testing found a room whose uploaded Grade 4 Physical Science
+guide was used for grounded answers while the topic selector still showed stale
+animal/space topics from older derived state.
+
+- [x] Add **Refresh study guide** beside Materials upload.
+- [x] Refresh rereads the stored original even when the document is already
+      `ready`; it does not short-circuit as "already processed."
+- [x] Replace that document's chunks/embeddings and rebuild the topic map from
+      the current guide, deactivating topics no longer present.
+- [x] Start fresh Coach/Learn client context after returning from Materials;
+      learning evidence/history is preserved.
+- [x] Add regression coverage for the force-refresh contract.
+- [ ] Physical-iPhone acceptance: refresh the current Physical Science guide and
+      confirm animal, fossils and solar-system topics disappear from active scope.
+
 ## Active October 2 follow-up — recalibration + topic-scope cleanup
 
 Physical iPhone acceptance exposed three learner-facing issues after PR #66:
