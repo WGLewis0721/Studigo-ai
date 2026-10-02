@@ -1130,7 +1130,7 @@ Add:
 - `Make it simpler`;
 - `Give me a hint`;
 - `Show me an example`;
-- `Challenge me`.
+- `Try a harder question` (rename the existing one-shot `Challenge me`; preserve `challengeRequest: "stretch"`).
 
 ### Step 4 — Persistent encounter history
 

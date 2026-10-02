@@ -188,6 +188,8 @@ The learner-facing Coach customization is intentionally reduced to three modes:
 - **Challenge me** — less initial help, stronger retrieval/application pressure,
   delayed hints and earlier transfer.
 
+**Challenge me** owns the persistent `coach_mode = challenge` preference. It biases initial support and delivery, but does not raise persisted reasoning or independently request a harder rung. **Try a harder question** is a separate, ungraded one-shot control sending `challengeRequest: "stretch"`; it does not save a mode. The stretch follows existing director precedence and caps, leaves normal scaffold/task-size rules intact, and cannot change mastery without assessed evidence. Mode changes affect subsequent encounters; they do not rewrite a pending ChallengeSpec. The room explanation level remains independent of both controls. Existing code uses “Challenge me” for stretch; the migration must rename that control and deterministically route the two intents without ambiguous aliases.
+
 These modes are delivery/support biases, not separate mastery systems. They do
 not change source truth, grading truth or the mastery target.
 
@@ -215,8 +217,9 @@ never bent into a different answer. See `ARCHITECTURE.md` for the three levels.
 
 ## Downloadable study guide contract
 
-This is the highest-priority missing learner-facing capability after the working
-core loop.
+The PDF implementation exists. Completing or explicitly validating its first-release acceptance remains P0 before V3 implementation; see `USER_TEST_CASES.md`.
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
 
 ### First release
 

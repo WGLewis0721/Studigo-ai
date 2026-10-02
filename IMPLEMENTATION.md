@@ -7,6 +7,12 @@
 
 This file is the implementation handoff. It does not replace the product, architecture, adaptive-learning, design-system, or App Store contracts. Read them first and preserve the working product.
 
+## Execution order and prerequisite gate
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
+The shared ChatGPT conversation has not been independently verified and is not acceptance evidence. Model names and effort levels below are requested execution assignments; unavailable models must be reported rather than silently relabeled.
+
 ## Read first
 
 1. `docs/PRODUCT.md`
@@ -91,6 +97,8 @@ The six Coach styles collapse to three clear modes:
 - **Challenge me** — less initial help, stronger retrieval/application pressure, delayed hints and earlier transfer.
 
 These modes bias delivery and initial support. They never change the mastery target.
+
+**Challenge me** owns the persistent `coach_mode = challenge` preference. It biases initial support and delivery, but does not raise persisted reasoning or independently request a harder rung. **Try a harder question** is a separate, ungraded one-shot control sending `challengeRequest: "stretch"`; it does not save a mode. The stretch follows existing director precedence and caps, leaves normal scaffold/task-size rules intact, and cannot change mastery without assessed evidence. Mode changes affect subsequent encounters; they do not rewrite a pending ChallengeSpec. The room explanation level remains independent of both controls. Existing code uses “Challenge me” for stretch; the migration must rename that control and deterministically route the two intents without ambiguous aliases.
 
 ### 4. One learner state, many learning surfaces
 
@@ -497,7 +505,7 @@ Sonnet should explore the repo first. Do not assume this document knows every cu
 2. Trace the current control plane end to end:
    `ChallengeSpec -> render -> response -> evidence -> LearningEvent -> reducer -> nextChallenge`.
 3. Inventory duplicated difficulty/scaffolding logic outside `apps/web/lib/learning`.
-4. Inventory current RAG/provider paths, citation assembly, source-priority logic and ingestion.
+4. Inventory current RAG/provider paths, citation assembly, source-priority logic, ingestion and any native-client work before creating alternatives.
 5. Create an architecture spike comparing:
    - current TypeScript AI/RAG path;
    - Python/FastAPI + LangChain using the same Supabase/pgvector data.
@@ -520,6 +528,24 @@ Sonnet should explore the repo first. Do not assume this document knows every cu
 - AI architecture choice is justified by measurements, not fashion;
 - no OpenAI key is exposed client-side;
 - tests are green.
+
+## Reviewable implementation PRs
+
+Each PR includes scope, acceptance criteria, validation evidence, migration/rollback notes where applicable, and a short next-PR handoff. Keep each independently reviewable and preserve the working product. Do not merge a later gate by asserting unrun checks passed.
+
+Phase 1 is delivered as three sequential PRs: (1) baseline, complete learning-loop trace and competing-logic/RAG/native inventory; (2) shared permitted-source RAG fixtures, TypeScript versus Python/FastAPI + LangChain measurements and architecture decision; (3) versioned contracts, deterministic replay/duplicate/help/transfer/rematch/retention tests and feature-flagged, migration-safe Coach preferences. The benchmark decision records citation quality, permission safety, latency, cost, debuggability and maintenance.
+
+Phase 2 is delivered in these five PRs; split an oversized workstream further while preserving its acceptance gate:
+
+| PR | Scope and acceptance |
+| --- | --- |
+| Shared learning state | Applicable surfaces emit durable events; remove competing progression; persist rematches and retention; verify cross-surface replay. |
+| Grounded GenAI | Director-issued tasks, validated semantic evidence, source priority, citations, abstention and uploaded prompt-injection defenses. |
+| Coach experience | Three persistent modes, distinct one-shot stretch, room-wide explanation level across Coach/Learn; move research controls out of learner settings; verify preference migration and rollback. |
+| Evaluation and operations | Advisory offline BKT baseline, telemetry, rate/spend controls; authenticated Python service safeguards only if selected by the benchmark. |
+| Universal native client | Auth, rooms, materials, Coach/Learn, practice, progress, Plan/Cram, companion parity, PDF sharing and lifecycle/network recovery; verify iPhone/iPad simulator and physical-device flows. |
+
+Phase 3 audits the integrated system and uses separate repair PRs for structural defects before prompt tuning. Rerun replay/RAG suites, preference migrations, cross-surface/native scenarios and bundle secret scans; compare quality, latency and cost to Phase 1. Release requires documentation to match implementation and every blocker to be resolved or explicitly deferred outside release scope, with rationale and impact recorded.
 
 ## Phase 2 — Sonnet 6.1 High
 
@@ -572,7 +598,7 @@ Sonnet should explore the repo first. Do not assume this document knows every cu
 - RAG quality is no worse than baseline and has measured citation/source behavior;
 - iOS/iPadOS core loop works against the hosted backend;
 - existing room explanation level works globally;
-- Coach exposes only Show me / Coach me / Challenge me;
+- Coach mode selection exposes only Show me / Coach me / Challenge me, with a distinct Try a harder question action;
 - Python/LangChain/ML additions have clear measured purpose;
 - no production learned model controls mastery;
 - tests/evals/physical-device smoke pass.
@@ -687,7 +713,10 @@ For the same concept state:
 - API requires authenticated user;
 - RLS protects source data;
 - service-to-service credentials are server-only;
-- logs do not dump source documents or secrets.
+- logs do not dump source documents or secrets;
+- uploaded/retrieved instructions remain untrusted data: adversarial fixtures must attempt to override trusted policy, request another room’s sources, forge grading/mastery evidence, and change tool permissions;
+- run those fixtures through the actual renderer/evaluator boundaries, including instructions embedded in otherwise valid cited passages; assert permitted source IDs only, validated semantic evidence, unchanged director/spec authority, and no unauthorized tool invocation;
+- include benign controls and unsupported-answer cases so passing requires useful grounded behavior, not unconditional rejection. Phase 1 establishes these fixtures, Phase 2 enforces the boundary, and Phase 3 reruns the regressions.
 
 ## Performance budgets
 

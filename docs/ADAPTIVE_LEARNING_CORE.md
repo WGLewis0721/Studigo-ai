@@ -126,7 +126,9 @@ const spec = nextChallenge({
 
 ### One-shot stretch
 
-Pressing "Challenge me" means "give me a harder attempt." It does not mean the
+The existing implementation labels this control "Challenge me". V3 renames it
+**Try a harder question**, reserving **Challenge me** for the persistent delivery
+mode. Pressing the one-shot control means "give me a harder attempt." It does not mean the
 learner has demonstrated that level. Only a later assessed `LearningEvent` may
 move progression.
 

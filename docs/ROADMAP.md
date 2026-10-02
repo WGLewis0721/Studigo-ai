@@ -5,7 +5,11 @@ priority has changed from proving the architecture to proving repeatable learner
 value.
 
 
-## Planned next — V3 deterministic adaptive game director + iOS/iPadOS
+## Execution order
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
+## After the study-guide P0 gate — V3 deterministic adaptive game director + iOS/iPadOS
 
 The next major implementation pass converges the existing control plane, grounded
 GenAI, simplified coaching controls and native Apple client.
@@ -149,8 +153,10 @@ Still open from this pass:
 
 ## Current P0 — Downloadable study guide
 
-The #1 missing user-facing feature is a simple way to **download the study guide
-Studigo has built from the room**.
+The PDF download is implemented. P0 is now completing or explicitly validating
+its acceptance below, recording evidence and fixing outstanding defects before
+V3 implementation. Do not treat implementation or local-fixture success as full
+learner, hosted-data, mobile, or print validation.
 
 First-release acceptance:
 

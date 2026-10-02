@@ -38,6 +38,8 @@ The companion window is now implemented in the web Study Room with shared
 sprites, gaze/touch/idle behavior, dragging/resizing and real-state reactions.
 The native iOS/iPadOS app is still unstarted.
 
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
 The approved V3 direction is documented in the root `IMPLEMENTATION.md`:
 deterministic adaptive game director underneath a grounded GenAI study partner,
 global room explanation level preserved, learner-facing Coach modes simplified
@@ -59,8 +61,8 @@ automatic authority over mastery/progression.
   text".
 - Model output and app copy avoid em dashes (`PLAIN_PUNCTUATION_RULE`).
 - Not verified against the real model: the new Learn prompts, outline
-  compliance, off-topic redirects and typo grading. Treat that as the next AI
-  task, and add an eval before tuning prompts further.
+  compliance, off-topic redirects and typo grading. Track these in the ordered
+  validation plan above, and add an eval before tuning prompts further.
 - The game in `prototypes/moon-road/` is separate and frozen at its golden image
   (currently POC XI). Do not edit a golden build; start the next experiment in a
   new sibling route.
