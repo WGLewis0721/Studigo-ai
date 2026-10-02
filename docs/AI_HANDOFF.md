@@ -9,11 +9,17 @@ In order:
 1. `README.md`
 2. `docs/PRODUCT.md`
 3. `docs/ARCHITECTURE.md`
-4. `docs/AUTH.md`
-5. `docs/DESIGN_SYSTEM.md`
-6. `docs/ROADMAP.md`
-7. `AGENTS.md`
-8. `supabase/migrations/001_initial.sql`
+4. `docs/ADAPTIVE_LEARNING_CORE.md`
+5. `docs/ADAPTIVE_LEARNING_ENGINE.md`
+6. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
+7. `IMPLEMENTATION.md`
+8. `docs/APP_STORE_RELEASE_PLAN.md`
+9. `docs/AUTH.md`
+10. `docs/DESIGN_SYSTEM.md`
+11. `docs/COMPANION_PARITY_PLAN.md`
+12. `docs/ROADMAP.md`
+13. `AGENTS.md`
+14. `supabase/migrations/001_initial.sql`
 
 Then inspect the current code before proposing changes.
 
@@ -21,11 +27,27 @@ Then inspect the current code before proposing changes.
 
 The multiplication Metroidvania lives in `prototypes/moon-road/` and is unrelated to the Next.js app at runtime. Before touching it read `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` and `POC-XI.md`; the authoring pipeline is in `TOOLCHAIN.md`. The current golden route is `dist/poc-xi/` (tag `golden/poc-xi-moon-keep`); golden routes are frozen, so new experiments go in a new sibling route. Never link the game from `apps/web`.
 
-## Latest state (September 30, 2026)
+## Latest state (October 1, 2026)
 
 The core loop and the study modes are built and deployed from `main`. Read
 `docs/ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
 and what is still unverified.
+
+
+The companion window is now implemented in the web Study Room with shared
+sprites, gaze/touch/idle behavior, dragging/resizing and real-state reactions.
+The native iOS/iPadOS app is still unstarted.
+
+The approved V3 direction is documented in the root `IMPLEMENTATION.md`:
+deterministic adaptive game director underneath a grounded GenAI study partner,
+global room explanation level preserved, learner-facing Coach modes simplified
+to Show me / Coach me / Challenge me, and one Expo / React Native Apple client
+over the existing backend.
+
+The OpenAI API key is a server-side secret. Never place it in an Expo config,
+mobile bundle, browser-visible environment variable or client storage. Python,
+LangChain and ML are allowed where Phase 1 measurements justify them; none gets
+automatic authority over mastery/progression.
 
 - The Study Room is five pages: Coach (holding Ask and Learn), Practice, Progress,
   Plan, Materials.
