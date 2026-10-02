@@ -15,7 +15,8 @@ const pending: CoachState = {
 test("Coach control phrases route deterministically", () => {
   assert.equal(detectTurnIntent("Make it simpler", pending), "simplify");
   assert.equal(detectTurnIntent("Show me an example", pending), "example");
-  assert.equal(detectTurnIntent("Challenge me", pending), "challenge");
+  assert.equal(detectTurnIntent("Try a harder question", pending), "challenge");
+  assert.equal(detectTurnIntent("Challenge me", pending), "challenge", "legacy wording remains understood");
   assert.equal(detectTurnIntent("Give me a hint", pending), "help_request");
   assert.equal(detectTurnIntent("Too many words", pending), "simplify");
   assert.equal(detectTurnIntent("What are the answer choices", pending), "repeat_choices");
