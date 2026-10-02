@@ -21,6 +21,9 @@ Product decisions:
 - reduce learner-facing Coach customization to **Show me / Coach me / Challenge me**;
 - remove Learning Tradition and Practice Recipe from the learner-facing UI while
   retaining their researched techniques as internal strategy/reference material;
+- restore the **Coach / Learn** segmented switch as a persistent primary control
+  across both **Chat** and **Topics**; Chat/Topics is secondary navigation and
+  must never replace or hide the Coach/Learn switcher;
 - keep progression/mastery deterministic and replayable;
 - use GenAI for grounded retrieval-aware rendering, free-form semantic
   interpretation and feedback, never as the hidden progression authority;
@@ -43,6 +46,23 @@ Execution is staged in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md):
 
 Research/reference map:
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
+
+### V3 learner-facing UI regression to fix
+
+Observed on the current mobile build:
+
+- Chat correctly shows the large **Coach / Learn** switcher.
+- Opening Topics removes that switcher and replaces the header with a Topics title.
+
+Target hierarchy:
+
+1. **Coach / Learn** — primary mode selector, always visible.
+2. **Chat / Topics** — secondary selector, always available.
+3. Topic picker/content — contextual to the selected view.
+
+Acceptance requires phone and wide/iPad screenshot coverage for all four
+mode/view combinations and an interaction test proving the two state dimensions
+do not hide or reset one another.
 
 ## Shipped - October 1, 2026: The companion in the app
 
