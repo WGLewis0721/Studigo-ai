@@ -4,6 +4,46 @@ The order matters. The core product loop now works in production, so the
 priority has changed from proving the architecture to proving repeatable learner
 value.
 
+
+## Execution order
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
+## After the study-guide P0 gate — V3 deterministic adaptive game director + iOS/iPadOS
+
+The next major implementation pass converges the existing control plane, grounded
+GenAI, simplified coaching controls and native Apple client.
+
+Product decisions:
+
+- keep the learner's own uploaded material as the knowledge boundary;
+- keep the global Study Room explanation level (`simpler|standard|deeper`);
+- reduce learner-facing Coach customization to **Show me / Coach me / Challenge me**;
+- remove Learning Tradition and Practice Recipe from the learner-facing UI while
+  retaining their researched techniques as internal strategy/reference material;
+- keep progression/mastery deterministic and replayable;
+- use GenAI for grounded retrieval-aware rendering, free-form semantic
+  interpretation and feedback, never as the hidden progression authority;
+- ship one Expo / React Native iOS/iPadOS client over the existing hosted
+  backend;
+- keep `OPENAI_API_KEY` server-side only;
+- permit Python/FastAPI/LangChain/ML where measured quality/maintainability gains
+  justify the extra service boundary.
+
+Execution is staged in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md):
+
+1. **Phase 1 — GPT 6.1 Sol / low:** repo audit, architecture/RAG benchmark,
+   versioned deterministic contracts, replay tests, Coach-mode migration
+   foundation and optional Python service spike.
+2. **Phase 2 — GPT 6.1 Sol / medium:** production integration across learning
+   surfaces, grounded GenAI/RAG hardening, Python/ML evaluation harness,
+   simplified Coach UI and native iOS/iPadOS core loop.
+3. **Phase 3 — GPT 6.1 Sol / xhigh:** final architecture, learning-science, security,
+   cost/latency, native-device and documentation audit; simplify before release.
+
+Research/reference map:
+[`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
+
 ## Shipped - October 1, 2026: The companion in the app
 
 - [x] Studigo's window in the Study Room (Coach chat, Quiz, Flashcards,
@@ -113,8 +153,10 @@ Still open from this pass:
 
 ## Current P0 — Downloadable study guide
 
-The #1 missing user-facing feature is a simple way to **download the study guide
-Studigo has built from the room**.
+The PDF download is implemented. P0 is now completing or explicitly validating
+its acceptance below, recording evidence and fixing outstanding defects before
+V3 implementation. Do not treat implementation or local-fixture success as full
+learner, hosted-data, mobile, or print validation.
 
 First-release acceptance:
 
@@ -338,7 +380,8 @@ Core direction:
   history before considering learned recommendation models.
 - Let prior struggles create future rematches, while successful transfer becomes
   strong mastery evidence.
-- Keep learning traditions as coaching routes through the same mastery target.
+- Keep the teaching/coaching KB as internal strategy routes through the same
+  mastery target; V3 no longer requires learners to select a named tradition.
 - Keep generative AI as a core Coach capability for dialogue, semantic grading,
   grounded explanation, and feedback, while the learning control plane remains
   deterministic and owns progression, mastery, scaffolding, and encounter state.

@@ -20,6 +20,8 @@ jobs:
         run: pnpm typecheck
       - name: Test
         run: pnpm test
+      - name: Test offline advisory ML evaluation
+        run: pnpm test:ml
       - name: Game prototype tests
         run: node --test "prototypes/moon-road/test/**/*.test.mjs"
       - name: Build web app

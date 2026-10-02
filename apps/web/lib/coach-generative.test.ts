@@ -445,10 +445,10 @@ test("13. 'Challenge me' asks the control plane; the Coach has no difficulty lad
   assert.deepEqual(rendered.at(-1), renderChallengeGuidance(directorSpec));
 });
 
-test("a control-plane read failure renders without a target and claims no progression", async () => {
+test("a control-plane read failure cannot issue an untracked assessed question", async () => {
   const { supabase, saved } = recordingSupabase(null);
   let guidance: string[] | undefined = ["sentinel"];
-  const { log } = await drainBoth(runCoachTurn({
+  await assert.rejects(drainBoth(runCoachTurn({
     supabase, roomId: "room-1", conversationId: "c", question: "Coach me on magnetism", topics: [magnetTopic], userId: "user-1",
     deps: {
       director: { challengeFor: async () => { throw new Error("Could not load learning history"); } },
@@ -458,10 +458,9 @@ test("a control-plane read failure renders without a target and claims no progre
         return { question: "What happens when two magnets touch?", expectedConcepts: concepts, sourceChunkIds: [magnetChunk.id], sourceMarkers: [] };
       }
     }
-  }));
-  assert.equal(guidance, undefined);
-  assert.equal(log.stateAfter, "awaiting_answer");
-  assert.equal((saved.at(-1) as Extract<CoachState, { kind: "awaiting_answer" }>).issuedChallenge, undefined);
+  })), /Could not load learning history/);
+  assert.deepEqual(guidance, ["sentinel"]);
+  assert.equal(saved.length, 0);
 });
 
 test("rendering is a pure function of the spec: route only changes route lines", () => {

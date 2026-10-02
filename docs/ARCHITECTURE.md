@@ -181,7 +181,25 @@ The web application should not spread direct OpenAI calls across pages/routes. K
 
 without rewriting the product layer.
 
-`OPENAI_CHAT_MODEL` has no source-code default on purpose. Model selection is a deployment decision.
+Set `OPENAI_CHAT_MODEL` explicitly for a deployment. The current provider adapter
+falls back to `gpt-4.1-mini` for direct/gateway calls and `llama3.1` for Ollama;
+these fallbacks are implementation defaults, not a measured model-selection decision.
+
+### Adaptive Coach transaction boundary
+
+The flagged Coach path uses service-only `commit_adaptive_coach_response` to
+persist the exact reply, assistant message, conversation state, observations and
+projections atomically. It locks and verifies original source snapshots at commit,
+keeps accepted semantic evaluations immutable, and checks conversation and concept
+revisions. Exact retries read their original reply before consulting current
+pending state. Historical receipts without replies cannot reconstruct one.
+
+Apply migrations `20261002020000` and `20261002030000` before deploying these
+flagged readers/writers: the shared source helper is also required by
+`STUDIGO_ADAPTIVE_SESSION`, independently of the durable-session route flag.
+`learning_sessions` stores durable plans, but session IDs are not yet atomically
+bound to Coach issuance, answer/skip or pending state. See
+[SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the remaining release gates.
 
 ## Retrieval
 
@@ -263,7 +281,7 @@ Tauri or any future native shell should resolve authentication to the same Supab
 
 ### Mobile route: Expo / React Native
 
-As of October 1, 2026, the App Store route is **Expo / React Native**. Do not start a parallel Capacitor or platform-native implementation unless this decision is explicitly revisited.
+As of October 1, 2026, the App Store route is a universal **Expo / React Native iOS/iPadOS** client. Do not start a parallel Capacitor or platform-native implementation unless this decision is explicitly revisited.
 
 The native application is a client of the existing hosted Studigo system:
 
@@ -276,6 +294,37 @@ The native application is a client of the existing hosted Studigo system:
 For paid access, web purchases flow through Stripe and iOS digital purchases flow through StoreKit/RevenueCat; both reconcile into APEX as the canonical entitlement layer.
 
 See [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md) for the release sequence and acceptance criteria.
+
+
+### V3 learning/AI service boundary
+
+The V3 execution target is a **deterministic adaptive game director underneath a
+grounded GenAI study partner**.
+
+The control plane remains replayable application logic. It owns progression,
+reasoning demand, scaffolding, rematches and mastery evidence. Model-facing code
+may render a decided challenge, retrieve/source evidence, semantically interpret
+free text and produce grounded feedback, but it may not silently rewrite the
+ChallengeSpec or mastery policy.
+
+A Python service (for example `services/learning-ai/`, FastAPI + LangChain) is
+allowed where Phase 1 measurements show a clear benefit for RAG composition,
+evaluation tooling or ML experiments. It is not automatically required for every
+model call. The current TypeScript path and a Python/LangChain path must be
+compared on citation quality, permission safety, latency, cost, observability and
+operational complexity before the service boundary is finalized.
+
+Supabase/Postgres remains the canonical learner-state and authorization boundary.
+The default retrieval store remains the existing room-scoped pgvector data unless
+an evaluated alternative preserves RLS, source priority, learner edits and
+page/slide citations at least as well.
+
+The OpenAI API key is a **server-side service secret only**. The Expo/iOS bundle
+calls Studigo's authenticated backend and must never contain, fetch, cache or
+persist the OpenAI service key.
+
+See the root `IMPLEMENTATION.md` and
+[`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
 
 ## Security rules
 
@@ -433,8 +482,19 @@ Editing a flashcard deliberately does not touch `ease`, `interval_days`,
 
 ### Applying delivery preferences
 
-Coach setup edits a draft. **Apply** sends the four choices (coaching style,
-learning tradition, practice recipe, explanation level) to
+**Shipping state before the V3 migration:** Coach setup edits style, learning
+tradition and practice recipe; Room Settings owns the room-wide explanation
+level. `study_rooms.explain_level` remains canonical for Coach and Learn.
+
+**V3 target:** preserve `study_rooms.explain_level` exactly as the independent
+global room setting, but collapse learner-facing Coach customization to
+`show | coach | challenge`. Learning-tradition and practice-recipe research
+moves behind the UI as internal strategy/reference material. The migration must
+not conflate language level with reasoning demand.
+
+The current endpoint behavior is described below until that migration ships.
+
+Coach setup edits a draft. **Apply** sends the current delivery choices to
 `POST /api/coach/preferences`. The asynchronous request validates the IDs,
 rebuilds the delivery configuration deterministically and commits the choices
 to the owned `study_rooms` row. The UI reports recalibrating, success or a
@@ -527,10 +587,14 @@ Short terms are protected by the length rule; long ones are a tracked roadmap it
 
 ## Coach generative layer
 
+The architectural invariant for V3 is: **the director decides; GenAI renders and
+interprets**. The room explanation level changes language, not the issued
+reasoning target. Coach mode biases delivery/support, not mastery thresholds.
+
 The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`, see `docs/ADAPTIVE_LEARNING_CORE.md`) and ends at a learner-facing turn:
 `ChallengeSpec → grounded excerpts → route policy → language floor → LLM`.
 
-- `apps/web/lib/coach-director.ts`: the Coach's only doorway to the control plane. It calls `loadConceptLearningState` + `nextChallenge` with `activity: "coach"` for every new question, including "another one" and "Challenge me". The Coach never builds, edits or steps a spec; it has no difficulty ladder of its own.
+- `apps/web/lib/coach-director.ts`: the Coach's only doorway to the control plane. It calls `loadConceptLearningState` + `nextChallenge` with `activity: "coach"` for every new question, including "another one" and the existing one-shot "Challenge me" control (renamed "Try a harder question" in V3). The Coach never builds, edits or steps a spec; it has no difficulty ladder of its own.
 - `apps/web/lib/coach-render.ts`: renders a spec into phrasing instructions using Astra's types directly. It covers the reasoning task for `challengeKind`, the support for `scaffoldLevel`, `taskSize`, `requireNewContext`, and the route policy named by `spec.routeRecord`. `parseIssuedSpec` re-validates a stored spec against the control plane's constants.
 - Route policy has one source: the `knowledge/teaching-coaching/*.md` record that `spec.routeRecord` names. `lib/route-policy-projection.ts` extracts `ui_label`, "Core sequence" and "Recommended coaching rules" deterministically. `pnpm --filter @studigo/web generate:routes` writes that projection to `lib/generated/route-policies.json`, which is bundled, so there is no runtime KB read or RAG. A drift test fails if the JSON no longer matches the records.
 - `packages/ai/src/coach-language.ts`: the language-floor rules, a deterministic lint, and its enforcement. The lint checks for one main question, sentences of 20 words or fewer, no packed lists, no stacked task verbs, no formal connectors, and at most two 13+-letter words. Every generated or simplified question goes through `enforceLanguageFloor`:
@@ -548,7 +612,7 @@ The Coach starts at the control plane's `ChallengeSpec` (`apps/web/lib/learning`
 - Learner controls ("Make it simpler", "Give me a hint", "Show me an example", "Challenge me") are detected deterministically and are never graded. Simplify keeps the pending concepts, sources and spec.
 - If the control-plane read fails, the question is rendered without a target, nothing is stored as issued, and no progression is claimed.
 - **Coach ↔ control-plane loop:** ChallengeSpec → question → reply → semantic evidence → deterministic outcome → `LearningEvent` → replayed state → next ChallengeSpec.
-  - "Challenge me" is the only call that sends `challengeRequest: "stretch"`. Everything else sends "normal".
+  - The existing one-shot "Challenge me" command sends `challengeRequest: "stretch"`; V3 renames it "Try a harder question". Persistent "Challenge me" selects `coach_mode = challenge` as a delivery/support bias and does not itself send stretch. Everything else sends "normal".
   - Each Coach submission carries a client UUID that becomes the persisted user message's ID (`lib/coach-interaction.ts`). An exact retry reuses the row; conflicting reuse fails closed with a 409.
   - The message's server `created_at` is the event time. Support given in reply to an attempt is stamped at +1 ms.
   - Events are built only from the persisted issued spec, encounter, user and message (`lib/coach-learning-events.ts`), with deterministic IDs `coach:<interactionId>:attempt|support|skip`.

@@ -104,6 +104,7 @@ export function parseIssuedSpec(raw: unknown): ChallengeSpec | undefined {
   const concept = spec.concept as Partial<ChallengeSpec["concept"]> | undefined;
   const ok =
     spec.policyVersion === 1 &&
+    (spec.stateRevision===undefined||(Number.isSafeInteger(spec.stateRevision)&&spec.stateRevision>=0)) &&
     typeof concept?.topicId === "string" &&
     typeof concept.roomId === "string" &&
     typeof concept.userId === "string" &&

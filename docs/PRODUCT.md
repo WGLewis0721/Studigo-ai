@@ -111,7 +111,7 @@ Not MVP:
 
 ## Distribution and paid-access contract
 
-The web/PWA product remains supported. The chosen App Store client is a real **Expo / React Native** iOS application over the same Studigo account, data, and hosted learning system.
+The web/PWA product remains supported. The chosen App Store client is a universal **Expo / React Native** iOS/iPadOS application over the same Studigo account, data, and hosted learning system.
 
 - Supabase Auth remains the single user identity.
 - The mobile client must not duplicate mastery, progression, RAG, or source-of-truth learner state.
@@ -174,6 +174,36 @@ The natural order is Learn first when a term is unclear, then Coach to practice
 it. The four starter chips above the Learn input teach this, and "How Learn
 works" explains it in the chat itself.
 
+
+## V3 coaching and adaptation contract
+
+The Study Room keeps one global **Explanation level**: `simpler`, `standard`
+or `deeper`. It applies across Coach and Learn and changes delivery only. A
+hard transfer task may still be written in simple language.
+
+The learner-facing Coach customization is intentionally reduced to three modes:
+
+- **Show me** — brief explanation, one representative example, then an attempt.
+- **Coach me** — default; questions, diagnosis, hints/scaffolds and adaptive retry.
+- **Challenge me** — less initial help, stronger retrieval/application pressure,
+  delayed hints and earlier transfer.
+
+**Challenge me** owns the persistent `coach_mode = challenge` preference. It biases initial support and delivery, but does not raise persisted reasoning or independently request a harder rung. **Try a harder question** is a separate, ungraded one-shot control sending `challengeRequest: "stretch"`; it does not save a mode. The stretch follows existing director precedence and caps, leaves normal scaffold/task-size rules intact, and cannot change mastery without assessed evidence. Mode changes affect subsequent encounters; they do not rewrite a pending ChallengeSpec. The room explanation level remains independent of both controls. Existing code uses “Challenge me” for stretch; the migration must rename that control and deterministically route the two intents without ambiguous aliases.
+
+These modes are delivery/support biases, not separate mastery systems. They do
+not change source truth, grading truth or the mastery target.
+
+The existing learning-tradition and practice-recipe research remains valuable,
+but it moves behind the interface as an internal strategy/reference library.
+The learner should not have to choose the algorithm that decides whether the
+next useful encounter is a worked example, focused retrieval, concrete
+representation or transfer.
+
+Progression belongs to the deterministic adaptive game director. The GenAI
+study partner receives the director's task plus grounded room evidence and
+renders it naturally. See `ADAPTIVE_LEARNING_ENGINE.md`,
+`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md` and the root `IMPLEMENTATION.md`.
+
 ## Typed answers are read the way a person would read them
 
 A student should never fail because of how they typed. In Learn and Coach a reply
@@ -187,8 +217,9 @@ never bent into a different answer. See `ARCHITECTURE.md` for the three levels.
 
 ## Downloadable study guide contract
 
-This is the highest-priority missing learner-facing capability after the working
-core loop.
+The PDF implementation exists. Completing or explicitly validating its first-release acceptance remains P0 before V3 implementation; see `USER_TEST_CASES.md`.
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
 
 ### First release
 

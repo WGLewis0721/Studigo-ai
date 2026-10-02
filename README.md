@@ -214,12 +214,22 @@ Read these files in order before making major changes:
 
 1. `docs/PRODUCT.md`
 2. `docs/ARCHITECTURE.md`
-3. `docs/APP_STORE_RELEASE_PLAN.md`
-4. `docs/AUTH.md`
-5. `docs/DESIGN_SYSTEM.md`
-6. `knowledge/teaching-coaching/README.md`
-7. `docs/USER_TEST_CASES.md`
-8. `docs/ROADMAP.md`
-9. `docs/AI_HANDOFF.md`
+3. `docs/ADAPTIVE_LEARNING_CORE.md`
+4. `docs/ADAPTIVE_LEARNING_ENGINE.md`
+5. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
+6. `IMPLEMENTATION.md`
+7. `docs/APP_STORE_RELEASE_PLAN.md`
+8. `docs/AUTH.md`
+9. `docs/DESIGN_SYSTEM.md`
+10. `knowledge/teaching-coaching/README.md`
+11. `docs/USER_TEST_CASES.md`
+12. `docs/ROADMAP.md`
+13. `docs/AI_HANDOFF.md`
 
-The next engineer should treat the core loop as real and protect it while shipping the next learner-value loop: upload → understand/practice → **download a trustworthy study guide**.
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
+After that gate, the next major build is the staged V3 plan in `IMPLEMENTATION.md`: preserve the
+working upload → grounded study → mastery loop while making the deterministic
+adaptive game director the clear progression authority underneath the grounded
+GenAI study partner, then carry the same product into the universal iOS/iPadOS
+client.

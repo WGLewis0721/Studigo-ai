@@ -61,6 +61,10 @@ export type CoachState =
  * `scaffoldUsed` is the most support the learner actually received on it.
  */
 export type IssuedChallenge = {
+  schemaVersion?:1;
+  generatorVersion?:string;
+  evaluatorVersion?:string;
+  sourceRevisions?:Array<{id:string;sha256:string}>;
   spec: Record<string, unknown>;
   encounterId: string;
   scaffoldUsed: number | null;
@@ -140,7 +144,11 @@ function parseIssuedChallenge(raw: unknown): IssuedChallenge | undefined {
     spec: value.spec as Record<string, unknown>,
     encounterId: value.encounterId,
     scaffoldUsed: scaffold as number | null,
-    contextId: typeof value.contextId === "string" ? value.contextId : null
+    contextId: typeof value.contextId === "string" ? value.contextId : null,
+    ...(value.schemaVersion===1?{schemaVersion:1 as const}:{}),
+    ...(typeof value.generatorVersion==='string'?{generatorVersion:value.generatorVersion}:{}),
+    ...(typeof value.evaluatorVersion==='string'?{evaluatorVersion:value.evaluatorVersion}:{}),
+    ...(Array.isArray(value.sourceRevisions)&&value.sourceRevisions.every(s=>s&&typeof s==='object'&&typeof s.id==='string'&&typeof s.sha256==='string'&&/^[a-f0-9]{64}$/.test(s.sha256))?{sourceRevisions:value.sourceRevisions as Array<{id:string;sha256:string}>}:{})
   };
 }
 

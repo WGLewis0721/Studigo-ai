@@ -1,11 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { localBetaAllowed } from './lib/local-beta-access';
 
 const PROTECTED_PREFIXES = ["/app"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  // Only an explicitly opened, loopback-only synthetic session uses this adapter.
+  // Production and authenticated Supabase requests retain the existing auth/RLS path.
+  if (localBetaAllowed(request) && !request.headers.has('authorization')
+    && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(request.cookies.get('studigo_beta')?.value ?? '')) {
+    const path = request.nextUrl.pathname;
+    if (/^\/api\/(?:chat|quiz(?:\/attempt)?|flashcards(?:\/[^/]+)?|practice-tests(?:\/submit)?|learn(?:\/check)?|topics(?:\/[^/]+)?|study-plan|coach\/preferences|documents\/(?:upload|process|download|[^/]+)|study-guide\/download)$/.test(path)) {
+      const target = request.nextUrl.clone(); target.pathname = '/api/local-beta/compat';
+      target.searchParams.set('_path',path.slice(4));
+      return NextResponse.rewrite(target);
+    }
+    if (path.startsWith('/app')) return response;
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

@@ -14,6 +14,8 @@ target/
 apps/desktop/src-tauri/target/
 .vercel/
 *.tsbuildinfo
+.local-beta/
+.expo/
 
 supabase/.temp/
 
@@ -25,3 +27,7 @@ supabase/.temp/
 tools/
 **/backups/*.ldtk
 apps/web/eval-results/
+evals/rag/results/
+evals/ml/results/
+__pycache__/
+*.pyc

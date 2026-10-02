@@ -14,10 +14,14 @@
     "typecheck": "pnpm -r typecheck",
     "desktop:dev": "pnpm --filter @studigo/desktop tauri dev",
     "desktop:build": "pnpm --filter @studigo/desktop tauri build",
-    "test": "pnpm -r test && node --test tests/database-security.test.mjs",
-    "test:security": "node --test tests/database-security.test.mjs"
+    "test": "pnpm -r test && node --test tests/database-security.test.mjs && node --test evals/rag/*.test.mjs",
+    "test:rag": "node --test evals/rag/*.test.mjs",
+    "test:ml": "python -m unittest discover -s evals/ml -p test_*.py",
+    "test:security": "node --test tests/database-security.test.mjs",
+    "beta": "node scripts/local-beta.mjs"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.3.14"
+    "@electric-sql/pglite": "0.3.14",
+    "playwright": "1.62.1"
   }
 }

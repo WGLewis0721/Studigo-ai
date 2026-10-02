@@ -85,7 +85,7 @@ export async function fetchChunksByIds(
   if (documentIds.length) {
     const { data: documentData, error: documentError } = await supabase
       .from("documents")
-      .select("id, name, source_type, page_label, source_priority")
+      .select("id, name, source_type, page_label, source_priority, status")
       .in("id", documentIds)
       .eq("room_id", roomId);
 
@@ -94,12 +94,12 @@ export async function fetchChunksByIds(
     }
 
     for (const row of (documentData ?? []) as unknown as DocumentRow[]) {
-      documentsById.set(row.id, row);
+      if((row as DocumentRow & {status?:string}).status==='ready')documentsById.set(row.id, row);
     }
   }
 
   const byId = new Map<string, RetrievedChunk>(
-    chunkRows.map((row) => {
+    chunkRows.filter(row=>documentsById.has(row.document_id)).map((row) => {
       const document = documentsById.get(row.document_id);
       return [
         row.id,

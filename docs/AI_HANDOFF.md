@@ -2,6 +2,16 @@
 
 This file exists so a new AI coding agent can enter the project cold and continue without re-litigating the product architecture.
 
+## Integrated adaptive beta status
+
+Read [ADAPTIVE_BETA_EVIDENCE.md](ADAPTIVE_BETA_EVIDENCE.md) for the implemented web beta, validation, additive migration, preview flags, rollback and outstanding TestFlight gates. Claude owns UI/UX; preserve the current interface. The local synthetic adapter is development-only and must never authorize hosted requests.
+
+Read [SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the sequential Sol xhigh
+backend repairs and acceptance limits. Migration `20261002030000` adds exact
+transactional Coach replies and locked source checks; `20261002020000` remains
+required by the shared source-aware readers. Durable session/Coach lifecycle
+linkage, measured RAG, trusted Quiz/Test provenance and native acceptance remain open.
+
 ## Read first
 
 In order:
@@ -9,11 +19,17 @@ In order:
 1. `README.md`
 2. `docs/PRODUCT.md`
 3. `docs/ARCHITECTURE.md`
-4. `docs/AUTH.md`
-5. `docs/DESIGN_SYSTEM.md`
-6. `docs/ROADMAP.md`
-7. `AGENTS.md`
-8. `supabase/migrations/001_initial.sql`
+4. `docs/ADAPTIVE_LEARNING_CORE.md`
+5. `docs/ADAPTIVE_LEARNING_ENGINE.md`
+6. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
+7. `IMPLEMENTATION.md`
+8. `docs/APP_STORE_RELEASE_PLAN.md`
+9. `docs/AUTH.md`
+10. `docs/DESIGN_SYSTEM.md`
+11. `docs/COMPANION_PARITY_PLAN.md`
+12. `docs/ROADMAP.md`
+13. `AGENTS.md`
+14. `supabase/migrations/001_initial.sql`
 
 Then inspect the current code before proposing changes.
 
@@ -21,11 +37,29 @@ Then inspect the current code before proposing changes.
 
 The multiplication Metroidvania lives in `prototypes/moon-road/` and is unrelated to the Next.js app at runtime. Before touching it read `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` and `POC-XI.md`; the authoring pipeline is in `TOOLCHAIN.md`. The current golden route is `dist/poc-xi/` (tag `golden/poc-xi-moon-keep`); golden routes are frozen, so new experiments go in a new sibling route. Never link the game from `apps/web`.
 
-## Latest state (September 30, 2026)
+## Latest state (October 1, 2026)
 
 The core loop and the study modes are built and deployed from `main`. Read
 `docs/ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
 and what is still unverified.
+
+
+The companion window is now implemented in the web Study Room with shared
+sprites, gaze/touch/idle behavior, dragging/resizing and real-state reactions.
+The native iOS/iPadOS app is still unstarted.
+
+Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+
+The approved V3 direction is documented in the root `IMPLEMENTATION.md`:
+deterministic adaptive game director underneath a grounded GenAI study partner,
+global room explanation level preserved, learner-facing Coach modes simplified
+to Show me / Coach me / Challenge me, and one Expo / React Native Apple client
+over the existing backend.
+
+The OpenAI API key is a server-side secret. Never place it in an Expo config,
+mobile bundle, browser-visible environment variable or client storage. Python,
+LangChain and ML are allowed where Phase 1 measurements justify them; none gets
+automatic authority over mastery/progression.
 
 - The Study Room is five pages: Coach (holding Ask and Learn), Practice, Progress,
   Plan, Materials.
@@ -37,8 +71,8 @@ and what is still unverified.
   text".
 - Model output and app copy avoid em dashes (`PLAIN_PUNCTUATION_RULE`).
 - Not verified against the real model: the new Learn prompts, outline
-  compliance, off-topic redirects and typo grading. Treat that as the next AI
-  task, and add an eval before tuning prompts further.
+  compliance, off-topic redirects and typo grading. Track these in the ordered
+  validation plan above, and add an eval before tuning prompts further.
 - The game in `prototypes/moon-road/` is separate and frozen at its golden image
   (currently POC XI). Do not edit a golden build; start the next experiment in a
   new sibling route.

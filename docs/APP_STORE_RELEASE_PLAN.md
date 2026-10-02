@@ -2,26 +2,33 @@
 
 **Decision date:** October 1, 2026
 
-This document is the canonical iOS/App Store delivery plan for the Studigo learning app. It applies to the learning app, not the separate Moon Keep/Core Clash game.
+This document is the canonical iOS/iPadOS App Store delivery plan for the Studigo learning app. It applies to the learning app, not the separate Moon Keep/Core Clash game.
 
 ## Chosen architecture
 
-Studigo will ship a real iOS client using **Expo / React Native** while keeping the existing hosted Studigo backend, Supabase identity/data model, learning engine, and grounded AI architecture.
+Studigo will ship one universal iPhone/iPad client using **Expo / React Native**
+while keeping the hosted Studigo backend, Supabase identity/data model,
+deterministic adaptive game director, and grounded AI architecture.
 
 ```text
-Expo / React Native iOS app
+Expo / React Native iOS + iPadOS app
         |
         +--> Supabase Auth (same Studigo user)
         |
-        +--> hosted Studigo API
+        +--> authenticated hosted Studigo API
                  |
                  +--> Supabase Postgres + RLS
                  +--> Supabase private Storage
-                 +--> existing learning/adaptive engine
-                 +--> existing grounded AI layer
+                 +--> deterministic adaptive game director
+                 +--> grounded RAG / GenAI service
+                           |
+                           +--> OpenAI API (server-side key only)
+                           +--> optional Python/LangChain/ML service
+                                when evals justify it
 ```
 
-The iOS app is a client of the existing product, not a second implementation of Studigo.
+The Apple app is a client of the existing product, not a second implementation
+of Studigo. The OpenAI service key never belongs in the app binary.
 
 ### Non-negotiables
 
@@ -31,6 +38,9 @@ The iOS app is a client of the existing product, not a second implementation of 
 - Never embed OpenAI keys, Supabase service-role keys, Apple signing secrets, or other privileged credentials in the app.
 - Preserve Supabase RLS and private document storage.
 - Preserve the existing web/PWA product while the native client is built.
+- Keep `study_rooms.explain_level` as the global room-wide explanation setting.
+- Keep progression/mastery deterministic; GenAI renders and interprets but does not own the learning policy.
+- Benchmark Python/LangChain against the current TypeScript RAG path before adding operational complexity.
 
 ## Authentication
 
@@ -94,8 +104,10 @@ Rules:
 - [ ] Establish shared types/contracts without importing server-only implementation into the mobile bundle.
 - [ ] Configure bundle ID, app display name, version/build numbering, icons, splash/launch assets, safe areas, and release profiles.
 - [ ] Implement Supabase authentication using the existing Studigo identity model.
-- [ ] Implement the Study Room navigation model for iPhone first.
+- [ ] Implement the Study Room navigation model phone-first, with deliberate iPadOS layouts rather than a stretched phone UI.
 - [ ] Connect the app to the hosted Studigo API.
+- [ ] Prove the native client never receives the OpenAI API key or other privileged service credentials.
+- [ ] Reuse the server-owned adaptive state and V3 Coach mode/explanation-level contracts rather than reimplementing them in React Native.
 
 ### 2. Reach native feature parity for the core paid loop
 
@@ -127,7 +139,7 @@ The first App Store client does not need every future feature, but it must suppo
 - [ ] Age rating and education/minor-data review.
 - [ ] Account deletion available in-app.
 - [ ] Accessibility pass: VoiceOver, Dynamic Type/text scaling, contrast, touch targets, Reduce Motion, keyboard behavior.
-- [ ] Physical-device pass for supported iPhone sizes and any iPad sizes included at launch.
+- [ ] Physical-device pass for supported iPhone and iPad sizes included at launch.
 - [ ] Validate auth callbacks, file picker, upload, PDF open/share, keyboard, safe areas, interruptions, offline/poor network, and background/resume.
 
 ### 5. TestFlight and release
@@ -139,6 +151,22 @@ The first App Store client does not need every future feature, but it must suppo
 - [ ] Submit release candidate.
 - [ ] Resolve App Review findings.
 - [ ] Release only after the production backend and APEX entitlement path are already proven.
+
+## Adaptive/GenAI release gate
+
+Before App Store submission, the native client must demonstrate the same learning
+contract as the web product:
+
+- identical room/source authorization;
+- identical global explanation level;
+- identical Coach-mode semantics;
+- Challenge Director remains server-owned and deterministic;
+- citations open the learner's permitted source;
+- unsupported material abstains honestly;
+- native retry/resume cannot double-record learning evidence;
+- model/provider failure cannot silently advance mastery.
+
+The staged build/audit plan is in the root `IMPLEMENTATION.md`.
 
 ## 1.0 exit condition
 

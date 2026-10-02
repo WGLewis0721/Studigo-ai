@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
+import { createHash } from 'node:crypto';
 
 // Execute the actual migrations in embedded PostgreSQL, including pgvector,
 // grants, RLS and transactional functions. Supabase auth/storage catalogs are
@@ -438,4 +439,224 @@ test('Clients cannot forge observations, call privileged writes, or access histo
     ]) await assert.rejects(db.query(sql,[JSON.stringify(observation())]),e=>e.code==='42501');
     if(role==='anon') await assert.rejects(db.query(`select read_concept_learning_history($1,$2)`,[id(1),id(901)]),e=>e.code==='42501');
   });
+});
+
+test('adaptive Coach issuance and assessed turn commit atomically with revision and retry protection',async()=>{
+  const conversation=id(1001),first=id(1002),answer=id(1003),encounter='atomic-encounter-1';
+  await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,id(1),A]);
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','start'),($3,$2,'user','Sun')",[first,conversation,answer]);
+  await db.query('insert into topics(id,room_id,owner_id,title) values($1,$2,$3,$4)',[id(1004),id(1),A,'Atomic fixture']);
+  const pending={version:1,kind:'awaiting_answer',question:'Energy source?',topicId:id(1004),askedAt:'2026-10-01T12:00:00Z',expectedConcepts:[{id:'sun',description:'Sunlight',weight:1,critical:true}],sourceChunkIds:[id(21)],issuedChallenge:{encounterId:encounter,scaffoldUsed:0,contextId:null,spec:{concept:{userId:A,roomId:id(1),topicId:id(1004)},challengeKind:'recall'}}};
+  const commit=(interaction,revision,state,events=[])=>one('select commit_adaptive_coach_turn($1,$2,$3,$4,$5::jsonb,$6::jsonb) as result',[conversation,A,interaction,revision,JSON.stringify(state),JSON.stringify(events)]);
+  await as('service_role',null,async()=>{
+    const issued=await commit(first,0,pending);assert.equal(issued.result.revision,1);
+    assert.equal((await commit(first,0,pending)).result.duplicate,true);
+    const semantic={intent:'answer',concepts:[{id:'sun',status:'demonstrated'}]};
+    const accept=(evaluation,fingerprint={response:'Sun'})=>one('select accept_adaptive_semantic_evidence($1,$2,$3,$4::jsonb,$5::jsonb,$6) as evaluation',[answer,encounter,A,JSON.stringify(fingerprint),JSON.stringify(evaluation),'semantic-concepts-1']);
+    assert.deepEqual((await accept(semantic)).evaluation,semantic);
+    assert.deepEqual((await accept({intent:'answer',concepts:[]})).evaluation,semantic);
+    await assert.rejects(()=>accept(semantic,{response:'Moon'}),/Conflicting semantic retry/);
+    const event={id:'atomic-answer-1',owner_id:A,room_id:id(1),topic_id:id(1004),encounter_id:encounter,activity:'coach',challenge_kind:'recall',result:'correct',scaffold_used:0,evidence:'assessed',context_id:null,new_context:false,misconception_id:null,created_at:'2026-10-01T12:00:01Z'};
+    const done={version:1,kind:'awaiting_control',action:'more_practice',topicId:id(1004),sourceChunkIds:[id(21)],issuedChallenge:pending.issuedChallenge};
+    const result=await commit(answer,1,done,[event]);assert.equal(result.result.revision,2);
+    assert.equal((await commit(answer,1,done,[event])).result.duplicate,true);
+    assert.equal((await one('select count(*)::int as count from learning_events where id=$1',[event.id])).count,1);
+    await assert.rejects(()=>commit(answer,1,{version:1,kind:'idle'},[event]),/Conflicting turn retry/);
+  });
+  await as('authenticated',A,async()=>{
+    await assert.rejects(()=>db.query('select issued_state from adaptive_encounters'),/permission denied/);
+    await assert.rejects(()=>db.query('select committed_state from adaptive_turn_receipts'),/permission denied/);
+    const rows=await db.query('select evaluation from adaptive_semantic_evidence where interaction_id=$1',[answer]);assert.equal(rows.rows.length,1);
+    await assert.rejects(()=>commit(answer,1,pending),/permission denied/);
+  });
+  await as('authenticated',B,async()=>assert.equal((await db.query('select evaluation from adaptive_semantic_evidence where interaction_id=$1',[answer])).rows.length,0));
+});
+
+test('stale or out-of-scope Coach writes roll back all evidence and conversation state',async()=>{
+  const conversation=id(1011),first=id(1012),second=id(1013);
+  await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,id(1),A]);
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','first'),($3,$2,'user','second')",[first,conversation,second]);
+  await as('service_role',null,async()=>{
+    const commit=(interaction,revision,events=[])=>one('select commit_adaptive_coach_turn($1,$2,$3,$4,$5::jsonb,$6::jsonb) as result',[conversation,A,interaction,revision,JSON.stringify({version:1,kind:'idle'}),JSON.stringify(events)]);
+    await commit(first,0);
+    await assert.rejects(()=>commit(second,0),/Stale Coach revision/);
+    await assert.rejects(()=>commit(second,1,[{id:'forged-atomic-event',owner_id:B,room_id:id(2),topic_id:id(32),encounter_id:'foreign'}]),/Event encounter scope mismatch/);
+    assert.equal((await one('select learning_revision from conversations where id=$1',[conversation])).learning_revision,1);
+    assert.equal((await one("select count(*)::int as count from learning_events where id='forged-atomic-event'")).count,0);
+  });
+});
+
+// Durable sessions execute the real additive migration, not a mocked storage layer.
+async function sessionFixture(n) {
+ const room=id(n),doc=id(n+1),topic=id(n+2),chunk=id(n+3);
+ await db.query(`insert into study_rooms(id,owner_id,title) values($1,$2,'Durable room')`,[room,A]);
+ await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status) values($1,$2,$3,'source','text/plain',1,$4,'ready')`,[doc,room,A,`${A}/${room}/source`]);
+ await db.query(`insert into topics(id,room_id,owner_id,title,source_document_ids) values($1,$2,$3,'Durable topic',array[$4::uuid])`,[topic,room,A,doc]);
+ await db.query(`insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content) values($1,$2,$3,$4,0,'Usable evidence')`,[chunk,doc,room,A]);
+ const plan={schemaVersion:1,policyVersion:'session-1',mode:'study',budgetMinutes:30,status:'ready',topicId:topic,activity:'coach',stateRevision:0,reasons:['cover_teacher_scope'],offerTopicChange:false};
+ const call=(sid,rid,revision=0,action='start',extra={})=>one(`select commit_learning_session($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) as snapshot`,[extra.owner??A,room,sid,rid,revision,action,extra.mode??'study',30,extra.selected??null,JSON.stringify(extra.plan??plan)]).then(r=>r.snapshot);
+ return {room,doc,topic,chunk,plan,call};
+}
+test('durable start timestamps, exact retries, conflicting IDs and atomic optimistic revisions',async()=>{
+ const f=await sessionFixture(8000),sid=id(8010),rid=id(8011);
+ await as('service_role',A,async()=>{
+  const start=await f.call(sid,rid);assert.equal(start.revision,0);assert.equal(start.schema_version,1);
+  assert.ok(Number.isFinite(Date.parse(start.started_at)));assert.equal(start.started_at,start.updated_at);
+  // Regenerated plan is deliberately different: retry returns the original committed receipt.
+  assert.deepEqual(await f.call(sid,rid,0,'start',{plan:{...f.plan,reasons:['regenerated']}}),start);
+  await assert.rejects(f.call(sid,rid,0,'recommend'),e=>e.code==='40001');
+  await assert.rejects(f.call(sid,id(8012)),e=>e.code==='40001');
+  const competing=await Promise.allSettled([f.call(sid,id(8013),0,'recommend'),f.call(sid,id(8014),0,'recommend')]);
+  assert.equal(competing.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal(competing.find(r=>r.status==='rejected').reason.code,'40001');
+  assert.equal((await one('select revision from learning_sessions where id=$1',[sid])).revision,1);
+  assert.equal((await one('select count(*)::integer as n from learning_session_receipts where session_id=$1',[sid])).n,2);
+  const ended=await f.call(sid,id(8015),1,'end',{plan:{...f.plan,status:'complete',topicId:null}});assert.equal(ended.ended,true);
+  await assert.rejects(f.call(sid,id(8016),2,'recommend'),e=>e.code==='40001');
+ });
+});
+test('durable session RLS prevents browser writes, private receipts and cross-owner access',async()=>{
+ const f=await sessionFixture(8100),sid=id(8110),rid=id(8111);
+ await as('service_role',A,()=>f.call(sid,rid));
+ await as('authenticated',B,async()=>assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,0));
+ await as('authenticated',A,async()=>{
+  assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,1);
+  await assert.rejects(db.query('update learning_sessions set revision=99 where id=$1',[sid]),e=>e.code==='42501');
+  await assert.rejects(db.query('select * from learning_session_receipts'),e=>e.code==='42501');
+  await assert.rejects(f.call(sid,rid),e=>e.code==='42501');
+ });
+ await as('service_role',B,async()=>{
+  await assert.rejects(f.call(sid,id(8112),0,'recommend',{owner:B}),e=>e.code==='42501');
+  await assert.rejects(db.query(`insert into learning_sessions(id,room_id,owner_id,mode,minutes,plan) values($1,$2,$3,'study',30,'{}')`,[id(8113),f.room,B]),e=>e.code==='23503');
+ });
+});
+test('source scope requires owned ready nonblank chunks and failed commits leave no session or receipt',async()=>{
+ const f=await sessionFixture(8200),sid=id(8210),rid=id(8211);
+ const read=()=>one('select read_session_source_scope($1) as ids',[f.room]);
+ await as('authenticated',A,async()=>assert.deepEqual((await read()).ids,[f.doc]));
+ await as('authenticated',B,async()=>assert.deepEqual((await read()).ids,[]));
+ await db.query(`update document_chunks set content=E' \\n\\t ' where id=$1`,[f.chunk]);
+ await as('authenticated',A,async()=>assert.deepEqual((await read()).ids,[]));
+ await as('service_role',A,async()=>{
+  await assert.rejects(f.call(sid,rid),e=>e.code==='22023');
+  assert.equal((await db.query('select id from learning_sessions where id=$1',[sid])).rows.length,0);
+  assert.equal((await db.query('select id from learning_session_receipts where id=$1',[rid])).rows.length,0);
+ });
+ await db.query(`update document_chunks set content='Usable again' where id=$1`,[f.chunk]);
+ await db.query(`update documents set status='failed' where id=$1`,[f.doc]);
+ await as('service_role',A,async()=>await assert.rejects(f.call(sid,rid),e=>e.code==='22023'));
+ await db.query(`update documents set status='ready' where id=$1`,[f.doc]);
+ await as('service_role',A,async()=>{
+  await f.call(sid,rid);
+  await db.query('delete from document_chunks where id=$1',[f.chunk]);
+  await assert.rejects(f.call(sid,id(8212),0,'recommend'),e=>e.code==='22023');
+  assert.equal((await one('select revision from learning_sessions where id=$1',[sid])).revision,0);
+  assert.equal((await db.query('select id from learning_session_receipts where id=$1',[id(8212)])).rows.length,0);
+  assert.equal((await f.call(sid,rid)).revision,0); // lost response remains recoverable after deletion
+ });
+});
+test('session choice retains explicit selection, supports clearing it, and rejects cross-room topics',async()=>{
+ const f=await sessionFixture(8300),sid=id(8310),rid=id(8311);
+ await as('service_role',A,async()=>{
+  const start=await f.call(sid,rid,0,'start',{selected:f.topic});assert.equal(start.selected_topic_id,f.topic);
+  const recommend=await f.call(sid,id(8312),0,'recommend');assert.equal(recommend.selected_topic_id,f.topic);
+  await assert.rejects(f.call(sid,id(8313),1,'select',{selected:id(32)}),e=>e.code==='22023');
+  const cleared=await f.call(sid,id(8314),1,'select');assert.equal(cleared.selected_topic_id,null);
+ });
+});
+
+async function responseFixture(n) {
+ const f=await sessionFixture(n),conversation=id(n+4),interaction=id(n+5),encounter=`response-${n}`;
+ const content='Usable evidence with "quotes",\nnewlines and café.';
+ await db.query('update document_chunks set content=$1 where id=$2',[content,f.chunk]);
+ await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,f.room,A]);
+ await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','start')",[interaction,conversation]);
+ const pending={version:1,kind:'awaiting_answer',question:'Question?',topicId:f.topic,askedAt:'2026-10-02T00:00:00Z',expectedConcepts:[{id:'idea',description:'Grounded idea',weight:1,critical:true}],sourceChunkIds:[f.chunk],
+   issuedChallenge:{schemaVersion:1,encounterId:encounter,scaffoldUsed:0,contextId:null,sourceRevisions:[{id:f.chunk,sha256:createHash('sha256').update(JSON.stringify([f.doc,content,null])).digest('hex')}],
+   spec:{concept:{userId:A,roomId:f.room,topicId:f.topic},stateRevision:0,activity:'coach',challengeKind:'recall',constraints:{requireNewContext:false}}}};
+ const answer={text:'Original question and reply',citations:[],grounded:false};
+ const commit=(iid=interaction,revision=0,state=pending,events=[],reply=answer,projections=[])=>one('select commit_adaptive_coach_response($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7::jsonb,$8::jsonb) as result',[conversation,A,iid,revision,JSON.stringify(state),JSON.stringify(events),JSON.stringify(projections),JSON.stringify(reply)]).then(r=>r.result);
+ return {...f,conversation,interaction,encounter,content,pending,answer,commit};
+}
+test('atomic Coach replies persist once and old retries return the original result after newer turns',async()=>{
+ const f=await responseFixture(8400),next=id(8410);
+ await as('service_role',A,async()=>{
+  const saved=await f.commit();assert.deepEqual(saved.answer,f.answer);assert.equal(saved.revision,1);
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','stop')",[next,f.conversation]);
+  await f.commit(next,1,{version:1,kind:'idle'});
+  // Generated outputs, current revisions and source state cannot rewrite a committed reply.
+  await db.query('delete from document_chunks where id=$1',[f.chunk]);
+  const retry=await f.commit(f.interaction,999,{version:1,kind:'idle'},[],{...f.answer,text:'different'});
+  assert.deepEqual(retry.answer,f.answer);assert.equal(retry.duplicate,true);assert.equal(retry.revision,1);
+  assert.equal((await one("select count(*)::int as n from messages where conversation_id=$1 and role='assistant'",[f.conversation])).n,2);
+  assert.equal((await one('select learning_revision from conversations where id=$1',[f.conversation])).learning_revision,2);
+ });
+ await as('authenticated',A,async()=>{
+  await assert.rejects(db.query('select answer from adaptive_turn_receipts'),e=>e.code==='42501');
+  await assert.rejects(f.commit(),e=>e.code==='42501');
+ });
+});
+test('source mutation during grading rolls back reply, evidence and state but retains immutable accepted evaluation',async()=>{
+ const f=await responseFixture(8500),iid=id(8510);
+ await as('service_role',A,async()=>{
+  await f.commit();
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','idea')",[iid,f.conversation]);
+  const event={id:'source-race-attempt',owner_id:A,room_id:f.room,topic_id:f.topic,encounter_id:f.encounter,activity:'coach',challenge_kind:'recall',result:'correct',scaffold_used:0,evidence:'assessed',context_id:null,new_context:false,misconception_id:null,created_at:'2026-10-02T00:00:01Z'};
+  const next={version:1,kind:'awaiting_control',action:'more_practice',topicId:f.topic,sourceChunkIds:[f.chunk],issuedChallenge:f.pending.issuedChallenge};
+  await assert.rejects(f.commit(iid,1,next,[event]),/Accepted evaluation required/);
+  const semantic={intent:'answer',concepts:[{id:'idea',status:'demonstrated'}]};
+  await db.query('select accept_adaptive_semantic_evidence($1,$2,$3,$4::jsonb,$5::jsonb,$6)',[iid,f.encounter,A,JSON.stringify({response:'idea'}),JSON.stringify(semantic),'semantic-concepts-1']);
+  await db.query("update document_chunks set content='Changed after prefetch' where id=$1",[f.chunk]);
+  await assert.rejects(f.commit(iid,1,next,[event]),e=>e.code==='40001');
+  assert.equal((await one('select learning_revision from conversations where id=$1',[f.conversation])).learning_revision,1);
+  assert.equal((await db.query('select id from learning_events where id=$1',[event.id])).rows.length,0);
+  assert.equal((await db.query('select interaction_id from adaptive_turn_receipts where interaction_id=$1',[iid])).rows.length,0);
+  assert.equal((await one("select count(*)::int as n from messages where conversation_id=$1 and role='assistant'",[f.conversation])).n,1);
+  assert.deepEqual((await one('select evaluation from adaptive_semantic_evidence where interaction_id=$1',[iid])).evaluation,semantic);
+  await db.query('update document_chunks set content=$1 where id=$2',[f.content,f.chunk]);
+  await f.commit(iid,1,next,[event]);
+  assert.equal((await one('select learning_revision from conversations where id=$1',[f.conversation])).learning_revision,2);
+ });
+});
+test('pending Coach rubric is immutable and source status or active topic loss fails closed',async()=>{
+ const f=await responseFixture(8600),iid=id(8610);
+ await as('service_role',A,async()=>{
+  await f.commit();
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','help')",[iid,f.conversation]);
+  await assert.rejects(f.commit(iid,1,{...f.pending,expectedConcepts:[{id:'other',description:'Other idea',weight:1,critical:true}]}),/rubric/);
+  await db.query("update documents set status='processing' where id=$1",[f.doc]);
+  await assert.rejects(f.commit(iid,1,f.pending),e=>e.code==='40001');
+  await db.query("update documents set status='ready' where id=$1",[f.doc]);
+  await db.query('update topics set active=false where id=$1',[f.topic]);
+  await assert.rejects(f.commit(iid,1,f.pending),e=>e.code==='40001');
+  // Invalidating a stale pending task remains possible without manufacturing a skip/grade.
+  await f.commit(iid,1,{version:1,kind:'idle'});
+ });
+});
+test('Coach issuance and session recommendations reject stale canonical concept revisions',async()=>{
+ const f=await responseFixture(8700);
+ await as('service_role',A,async()=>{
+  await db.query('select record_learning_event($1::jsonb)',[JSON.stringify(observation({id:'competing-concept',room_id:f.room,topic_id:f.topic,encounter_id:'other-encounter',challenge_kind:'recall',context_id:null,new_context:false}))]);
+  await assert.rejects(f.commit(),e=>e.code==='40001');
+  await assert.rejects(f.call(id(8710),id(8711)),e=>e.code==='40001');
+  assert.equal((await one('select learning_revision from conversations where id=$1',[f.conversation])).learning_revision,0);
+  assert.equal((await db.query('select interaction_id from adaptive_turn_receipts where interaction_id=$1',[f.interaction])).rows.length,0);
+  const pending=structuredClone(f.pending);pending.issuedChallenge.spec.stateRevision=1;
+  await f.commit(f.interaction,0,pending);
+  assert.equal((await f.call(id(8710),id(8711),0,'start',{plan:{...f.plan,stateRevision:1}})).revision,0);
+ });
+});
+test('an atomic skip and its new task use one evidence revision and competing replies commit once',async()=>{
+ const f=await responseFixture(8800),iid=id(8810),competing=id(8811);
+ await as('service_role',A,async()=>{
+  await f.commit();
+  await db.query("insert into messages(id,conversation_id,role,content) values($1,$3,'user','harder'),($2,$3,'user','next')",[iid,competing,f.conversation]);
+  const next=structuredClone(f.pending);next.issuedChallenge.encounterId='after-skip';next.issuedChallenge.spec.stateRevision=1;
+  const skipped={id:'skip-before-issue',owner_id:A,room_id:f.room,topic_id:f.topic,encounter_id:f.encounter,activity:'coach',challenge_kind:'recall',result:'skipped',scaffold_used:0,evidence:'assessed',context_id:null,new_context:false,misconception_id:null,created_at:'2026-10-02T00:00:01Z'};
+  const results=await Promise.allSettled([f.commit(iid,1,next,[skipped]),f.commit(competing,1,{version:1,kind:'idle'})]);
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal(results.find(r=>r.status==='rejected').reason.code,'40001');
+  assert.equal((await one("select count(*)::int as n from messages where conversation_id=$1 and role='assistant'",[f.conversation])).n,2);
+  assert.equal((await one('select count(*)::int as n from learning_events where id=$1',[skipped.id])).n,1);
+ });
 });
