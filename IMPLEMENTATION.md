@@ -512,6 +512,23 @@ The Coach experience is not finished until all of the following are true:
 - mode preference reloads correctly after navigation/relaunch;
 - the web/PWA and native iOS/iPadOS clients implement the same hierarchy and semantics.
 
+## Learner-facing V3 finish
+
+The remaining web/PWA product pass is specified in
+[`docs/V3_LEARNER_UI_FINISH_PLAN.md`](docs/V3_LEARNER_UI_FINISH_PLAN.md).
+
+It covers the complete handoff before native parity:
+
+1. expose only Show me / Coach me / Challenge me;
+2. preserve the global Study Room explanation level;
+3. keep Coach / Learn permanently visible across Chat and Topics;
+4. rename the one-shot stretch action to Try a harder question;
+5. enlarge Studigo's companion frame, render him about 25% smaller inside it,
+   and allow deliberate transparent body/limb overlap over the bezel;
+6. run preference, prompt, navigation, companion and visual regression checks.
+
+The native client must copy the finished contract, not the legacy web controls.
+
 ## iOS/iPadOS implementation requirements
 
 Build one universal Expo / React Native app.
