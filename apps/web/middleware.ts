@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   if (localBetaAllowed(request) && !request.headers.has('authorization')
     && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(request.cookies.get('studigo_beta')?.value ?? '')) {
     const path = request.nextUrl.pathname;
-    if (/^\/api\/(?:chat|quiz(?:\/attempt)?|flashcards(?:\/[^/]+)?|practice-tests(?:\/submit)?|learn(?:\/check)?|topics(?:\/[^/]+)?|study-plan|coach\/preferences|documents\/(?:upload|process|download|[^/]+)|study-guide\/download)$/.test(path)) {
+    if (/^\/api\/(?:chat|quiz(?:\/attempt)?|flashcards(?:\/[^/]+)?|practice-tests(?:\/submit)?|learn(?:\/(?:check|preferences))?|topics(?:\/[^/]+)?|study-plan|coach\/preferences|documents\/(?:upload|process|download|[^/]+)|study-guide\/download)$/.test(path)) {
       const target = request.nextUrl.clone(); target.pathname = '/api/local-beta/compat';
       target.searchParams.set('_path',path.slice(4));
       return NextResponse.rewrite(target);

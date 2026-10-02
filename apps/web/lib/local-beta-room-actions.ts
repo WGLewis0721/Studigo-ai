@@ -23,10 +23,10 @@ export function deleteLocalRoom(local:Local,id:string) {
   local.store.transact(local.id,'delete-room:'+randomUUID(),{id},state=>{
     if(!state.rooms[id])throw new BetaError('Room not found',404);delete state.rooms[id];state.currentRoomId=Object.keys(state.rooms)[0]??'';
     const data=(state as typeof state&{integration?:{questions:Record<string,{encounter:{spec:{concept:{roomId:string}}}}>;
-      tests:Record<string,{roomId:string}>;cards:Record<string,{roomId:string}>;preferences:Record<string,unknown>;plan:Record<string,unknown>;activeBatch:string[]|null}}).integration;
+      tests:Record<string,{roomId:string}>;cards:Record<string,{roomId:string}>;preferences:Record<string,unknown>;learnPreferences?:Record<string,unknown>;plan:Record<string,unknown>;activeBatch:string[]|null}}).integration;
     if(data){for(const [key,q] of Object.entries(data.questions))if(q.encounter.spec.concept.roomId===id)delete data.questions[key];
       for(const [key,t] of Object.entries(data.tests))if(t.roomId===id)delete data.tests[key];for(const [key,c] of Object.entries(data.cards))if(c.roomId===id)delete data.cards[key];
-      delete data.preferences[id];delete data.plan[id];data.activeBatch=data.activeBatch?.filter(key=>Boolean(data.questions[key]))??null;}
+      delete data.preferences[id];if(data.learnPreferences)delete data.learnPreferences[id];delete data.plan[id];data.activeBatch=data.activeBatch?.filter(key=>Boolean(data.questions[key]))??null;}
     return {state,response:true};
   });
 }

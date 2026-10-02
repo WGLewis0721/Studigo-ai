@@ -9,6 +9,14 @@ See [Phase 1 audit](SOL_PHASE1_AUDIT.md), [Phase 2 integration](SOL_PHASE2_INTEG
 and [Phase 3 review](SOL_PHASE3_REVIEW.md). Claude's latest main `c6ba6ad` was
 merged into `codex/sol-phase3-review` at `b1f220b`; its companion/UI changes are preserved.
 
+PR #64 merged the engine passes into main at `aff4277`. Main then incorporated
+Claude's settings and independent topic-scope changes through `a8403b7`.
+The coordinator refreshed the worktree to that baseline and repaired only the
+synthetic backend adapter: `/api/learn/preferences`, independent persisted
+Coach/Learn modes and authored lesson rendering at the global room level.
+Coach/Learn preferences cannot create a separate explanation level. Room Settings
+remains authoritative. No UI components or styles were edited in this follow-up.
+
 The existing main interface is preserved. The only component change refreshes authoritative study data after a Coach turn. Claude retains UI/UX ownership, including future evidence-stage presentation and Coach mode controls.
 
 ## Test the existing app locally
@@ -36,6 +44,23 @@ Local SQLite state is account-session scoped in `apps/web/.local-beta/study.sqli
 
 Run browser verification with `node scripts/verify-integrated-beta.mjs`; set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` if Chromium is installed outside Playwright's default location. Machine-local evidence lives in `.local-beta/verification/results.json` and screenshots. These are synthetic web checks, not physical iOS or live-provider acceptance evidence.
 
+Latest combined-main validation: **450 JavaScript/TypeScript/database/RAG tests**,
+**eight Python tests**, workspace typecheck and nine desktop/phone browser flow
+groups passed on the final global-setting baseline. The updated harness exercises
+the current Learn/Coach modes without changing the global level. The final focused
+seven-case adapter suite covers reload, global wording, mode independence and
+pending-evidence preservation.
+The Node 22 pure-policy workload measured p95 **0.146 ms**; it excludes replay,
+database/network/provider time and is not the visible-response latency gate.
+
+Hosted synthetic acceptance on `studigo-tsxa50qqd-gray-matter5.vercel.app` verified
+session start/resume/exact/conflicting/stale retries, configured Coach generation
+and one accepted correct assessment, first-turn recovery, immutable old/new replies,
+two-user room/session/document/chunk isolation, forged-bearer rejection and PDF export.
+Deleting a source during a pending question invalidated it without new learning
+evidence, excluded it from recommendations, and cleaned private storage. A single
+assessed request took 3.4 seconds; no p95/provider-cost or 120-case quality claim is made.
+
 ## Migration, activation and rollback
 
 `20261002010000_adaptive_coach_transactions.sql` is additive. It preserves historical data and adds a conversation revision, private encounter/evaluation/receipt tables, read-only canonical projections, and service-only transactional RPCs. Applied to the configured Studigo Supabase project after local security tests.
@@ -50,6 +75,14 @@ the backend service can, and caller-scoped source reads remain available.
 `STUDIGO_DURABLE_SESSIONS=1` enables the new session API on a preview; production
 deployment/feature flags remain unchanged. Disable all three flags and restore the
 previous app for rollback, preserving additive tables and history.
+
+The user subsequently authorized merging and deployment to main after verification.
+The reviewed Coach/canonical paths can use `STUDIGO_ATOMIC_COACH=1` and
+`STUDIGO_ADAPTIVE_SESSION=1`. Keep the standalone durable-session API preview-only
+until its pending-encounter lifecycle linkage is complete. Deploy through the connected
+GitHub pipeline: a direct CLI attempt was blocked by Vercel team policy, while the
+connected preview succeeded. Private local probes, tokens and runtimes are excluded
+from both Git and Vercel uploads.
 
 ## Remaining release gates
 
