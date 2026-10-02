@@ -107,3 +107,15 @@ clients cannot commit Coach responses, the backend service can, and scoped
 source reads remain available. Production deployment and flags were not changed.
 Explicit Vercel exclusions keep private local acceptance tokens/results/runtimes
 out of uploaded deployment source.
+
+The existing browser harness passed all eight flow groups at desktop and phone
+viewport sizes with no page errors: Coach/help/grade, Quiz, shared progress/plan,
+upload/reload, PDF/citations, self-rated Flashcards, Practice Test drafts/results
+and two-session isolation. The first cold navigation timed out while the host
+was constrained; the unchanged harness passed on rerun using installed Chromium.
+GitHub CI also passed on Node 22, including the new offline ML checks and web build.
+
+Vercel marked a direct CLI preview `BLOCKED` under its team collaboration policy.
+The connected GitHub pipeline built the same commit successfully. The coordinator
+configured the three non-secret feature flags only for this review branch's
+preview and uses the connected pipeline for deployment. No key retrieval was needed.
