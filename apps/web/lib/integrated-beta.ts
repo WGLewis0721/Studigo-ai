@@ -1,7 +1,8 @@
 import { randomUUID,createHash } from 'node:crypto';
-import { projectConcept, migrateCoachMode, isExplainLevel } from '@studigo/learning';
+import { projectConcept, migrateCoachMode } from '@studigo/learning';
 import { applyBetaAction, BetaError, issue, record, gradeFixture, type LocalBetaState, type Encounter, type LocalBetaStore } from './local-beta';
-import { normalizeCoachPreferences, canonicalCoachPreferences, validCoachPreferences, type CoachPreferences } from './coach-preferences';
+import { canonicalCoachPreferences, validCoachPreferences, type CoachPreferences } from './coach-preferences';
+import { normalizeLearnPreferences, validLearnPreferences, type LearnPreferences } from './learn-preferences';
 import type { StudyRoom, Topic, StudyDocument, RoomReadiness } from './rooms';
 import type { PracticeEvidence, PlanEvent } from './study-planning';
 
@@ -11,10 +12,12 @@ type StoredTest = { id:string; roomId:string; status:'draft'|'submitted'; create
   questionIds:string[]; draft_answers:Record<string,Answer>; result:Record<string,unknown>|null };
 type StoredCard = { id:string; roomId:string; topicId:string; front:string; back:string; repetitions:number; dueAt:string; learner_edited:boolean };
 type Integration = { questions:Record<string,StoredQuestion>; tests:Record<string,StoredTest>;
-  cards:Record<string,StoredCard>; preferences:Record<string,CoachPreferences>; plan:Record<string,PlanEvent[]>; activeBatch:string[]|null };
+  cards:Record<string,StoredCard>; preferences:Record<string,CoachPreferences>; learnPreferences:Record<string,LearnPreferences>;
+  plan:Record<string,PlanEvent[]>; activeBatch:string[]|null };
 type State = LocalBetaState & { integration?: Integration };
 function extras(state:State):Integration {
-  return state.integration ??= {questions:{},tests:{},cards:{},preferences:{},plan:{},activeBatch:null};
+  const data=state.integration ??= {questions:{},tests:{},cards:{},preferences:{},learnPreferences:{},plan:{},activeBatch:null};
+  data.learnPreferences??={};return data;
 }
 function roomOf(state:LocalBetaState,id:string) {
   const room=state.rooms[id]; if(!room)throw new BetaError('Study Room not found',404); return room;
@@ -26,8 +29,8 @@ function citation(state:LocalBetaState,roomId:string,topicId:string) {
 }
 export function integratedRooms(state:State):Array<StudyRoom&{document_count:number}> {
   return Object.values(state.rooms).map(r=>({id:r.room.id,title:r.room.title,subject:r.room.subject,course_name:(r as typeof r&{courseName?:string}).courseName??'Synthetic local beta',test_date:(r as typeof r&{testDate?:string}).testDate??null,
-    explain_level:r.explainLevel,coach_explain_level:r.coachExplainLevel??null,learn_explain_level:r.learnExplainLevel??null,
-    coach_preferences:extras(state).preferences[r.room.id],created_at:'2026-10-01T00:00:00Z',updated_at:r.events.at(-1)?.createdAt??'2026-10-01T00:00:00Z',document_count:new Set(r.sources.map(s=>s.id.replace(/:\d+$/,''))).size}));
+    explain_level:r.explainLevel,coach_preferences:extras(state).preferences[r.room.id],learn_preferences:extras(state).learnPreferences[r.room.id],
+    created_at:'2026-10-01T00:00:00Z',updated_at:r.events.at(-1)?.createdAt??'2026-10-01T00:00:00Z',document_count:new Set(r.sources.map(s=>s.id.replace(/:\d+$/,''))).size}));
 }
 export function integratedTopics(state:State,roomId:string):Topic[] {
   const room=roomOf(state,roomId);
@@ -113,18 +116,13 @@ function operate(state:State,path:string,method:string,body:Record<string,unknow
   const room=roomOf(state,roomId);const data=extras(state);
   if(path==='/coach/preferences') {
     if(!validCoachPreferences(body.preferences))throw new BetaError('Invalid coaching preferences');
-    const p=canonicalCoachPreferences(body.preferences);
-    data.preferences[roomId]=p;room.coachMode=migrateCoachMode(p);room.coachExplainLevel=p.explainLevel;
-    if(body.applyToBoth===true){room.learnExplainLevel=p.explainLevel;room.explainLevel=p.explainLevel;}
-    return {preferences:p,learnExplainLevel:room.learnExplainLevel??room.explainLevel};
+    const p=canonicalCoachPreferences({...body.preferences,explainLevel:room.explainLevel});
+    data.preferences[roomId]=p;room.coachMode=migrateCoachMode(p);return {preferences:p};
   }
   if(path==='/learn/preferences') {
-    if(!isExplainLevel(body.explainLevel))throw new BetaError('Choose a valid Learn explanation level.');
-    room.learnExplainLevel=body.explainLevel;
-    if(body.applyToBoth===true){room.coachExplainLevel=body.explainLevel;room.explainLevel=body.explainLevel;}
-    const coachPreferences=normalizeCoachPreferences(data.preferences[roomId]??{coach_mode:room.coachMode},room.coachExplainLevel??room.explainLevel);
-    if(body.applyToBoth===true)data.preferences[roomId]=coachPreferences;
-    return {learnExplainLevel:body.explainLevel,coachPreferences,status:'ready'};
+    if(!validLearnPreferences(body.preferences))throw new BetaError('Choose valid Learn settings.');
+    const preferences=normalizeLearnPreferences(body.preferences);data.learnPreferences[roomId]=preferences;
+    return {preferences,status:'ready'};
   }
   if(path==='/quiz'&&method==='POST') {
     const ids=batch(state,roomId,boundedCount(body.count,20,5),'quiz',typeof body.topicId==='string'?body.topicId:undefined,now);
@@ -184,7 +182,7 @@ function operate(state:State,path:string,method:string,body:Record<string,unknow
   }
   if(path==='/learn'||path==='/learn/check') {
     const topic=room.room.topics.find(t=>t.id===body.topicId&&t.active);if(!topic)throw new BetaError('Topic not found',404);
-    if(path==='/learn')return {explanation:topic.explanations[room.learnExplainLevel??room.explainLevel],citations:citation(state,roomId,topic.id)};
+    if(path==='/learn')return {explanation:topic.explanations[room.explainLevel],citations:citation(state,roomId,topic.id)};
     const task=topic.tasks.recall?.[0];if(!task)throw new BetaError('Formative generation for this source needs a configured provider.');
     if(!body.answer)return {question:task.prompt};
     const understood=gradeFixture(task,String(body.answer))==='correct';return {understood,feedback:understood?'That matches the source. This formative check does not award mastery.':task.hint,followUp:understood?null:task.prompt};
@@ -229,7 +227,7 @@ function chat(state:State,roomId:string,body:Record<string,unknown>,now:string,i
   if(body.mode!=='coach') {
     apply('ask',{answer:text.slice(0,1000)});const source=room.sources.find(s=>s.id===state.answer?.sourceId);
     const topic=source?room.room.topics.find(t=>t.documentId===source.id||source.id===t.documentId+':'+t.page):null;
-    return {text:topic?.explanations[room.learnExplainLevel??room.explainLevel]??state.answer!.text,citations:topic?citation(state,roomId,topic.id):[],grounded:Boolean(source),conversationId:null};
+    return {text:topic?.explanations[room.explainLevel]??state.answer!.text,citations:topic?citation(state,roomId,topic.id):[],grounded:Boolean(source),conversationId:null};
   }
   if(extras(state).activeBatch?.some(id=>!extras(state).questions[id]?.graded))throw new BetaError('Finish the active quiz or practice test first.',409);
   let action:string;
@@ -245,7 +243,7 @@ function chat(state:State,roomId:string,body:Record<string,unknown>,now:string,i
   apply(action,{answer:text,activity:'coach'});
   const current=roomOf(state,roomId);const pending=current.pending;
   const feedback=state.feedback?.text??'';
-  const display=pending&&['start','stretch'].includes(action)?[pending.support>=3?current.room.topics.find(t=>t.id===pending.spec.concept.topicId)?.explanations[current.coachExplainLevel??current.explainLevel]:null,pending.task.prompt].filter(Boolean).join('\n\n')
+  const display=pending&&['start','stretch'].includes(action)?[pending.support>=3?current.room.topics.find(t=>t.id===pending.spec.concept.topicId)?.explanations[current.explainLevel]:null,pending.task.prompt].filter(Boolean).join('\n\n')
     :[feedback,pending&&action==='submit'?pending.task.prompt:null].filter(Boolean).join('\n\n');
   const topicId=pending?.spec.concept.topicId??current.events.at(-1)?.topicId;
   return {text:display,citations:topicId?citation(state,roomId,topicId):[],grounded:true,conversationId:null};

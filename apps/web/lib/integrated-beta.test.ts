@@ -58,34 +58,32 @@ test('deleted source and foreign session fail closed before evidence is written'
   }finally{store.close();}
 });
 
-test('surface recalibration survives reload without changing a pending rubric or learning evidence',()=>{
+test('independent modes preserve the global explanation level, pending rubric and learning evidence across reload',()=>{
   const {store,session,call}=setup();try {
     call('/chat',{roomId:'math',mode:'coach',question:'Coach me through: Equivalent fractions',interactionId:randomUUID()});
     const before=store.read(session).rooms.math;
     const pending=structuredClone(before.pending),events=structuredClone(before.events);
     const saved=call('/coach/preferences',{roomId:'math',preferences:{coach_mode:'challenge',style:'default',tradition:'tradition-default',practice:'transfer',explainLevel:'deeper'}});
-    assert.equal(saved.learnExplainLevel,'standard');
-    const learned=call('/learn/preferences',{roomId:'math',explainLevel:'simpler'});
-    assert.equal(learned.coachPreferences.explainLevel,'deeper');
-    assert.equal(learned.coachPreferences.coach_mode,'challenge');
+    assert.equal(saved.preferences.explainLevel,'standard');
+    const learned=call('/learn/preferences',{roomId:'math',preferences:{mode:'overview'}});
+    assert.equal(learned.preferences.mode,'overview');
     const room=integratedRooms(store.read(session)).find(r=>r.id==='math')!;
-    assert.equal(room.explain_level,'standard');assert.equal(room.coach_explain_level,'deeper');assert.equal(room.learn_explain_level,'simpler');
+    assert.equal(room.explain_level,'standard');assert.equal(room.coach_preferences?.coach_mode,'challenge');assert.equal(room.learn_preferences?.mode,'overview');
     assert.deepEqual(store.read(session).rooms.math.pending,pending);assert.deepEqual(store.read(session).rooms.math.events,events);
-    assert.equal(call('/learn',{roomId:'math',topicId:'fractions'}).explanation,before.room.topics[0].explanations.simpler);
-    assert.equal(call('/chat',{roomId:'math',mode:'ask',question:'Explain equivalent fractions',interactionId:randomUUID()}).text,before.room.topics[0].explanations.simpler);
+    assert.equal(call('/learn',{roomId:'math',topicId:'fractions'}).explanation,before.room.topics[0].explanations.standard);
+    assert.equal(call('/chat',{roomId:'math',mode:'ask',question:'Explain equivalent fractions',interactionId:randomUUID()}).text,before.room.topics[0].explanations.standard);
     assert.deepEqual(store.read(session).rooms.math.pending,pending);
-    assert.throws(()=>call('/learn/preferences',{roomId:'math',explainLevel:'invalid'}),BetaError);
+    assert.throws(()=>call('/learn/preferences',{roomId:'math',preferences:{mode:'invalid'}}),BetaError);
   }finally{store.close();}
 });
 
-test('apply-to-both and Room Settings reset both surface levels without changing Coach mode',()=>{
+test('Room Settings changes the shared level without changing either surface mode',()=>{
   const {store,session,call}=setup();try {
     call('/coach/preferences',{roomId:'science',preferences:{coach_mode:'show',style:'direct',tradition:'tradition-default',practice:'adaptive',explainLevel:'deeper'}});
-    const both=call('/learn/preferences',{roomId:'science',explainLevel:'simpler',applyToBoth:true});
-    assert.equal(both.coachPreferences.coach_mode,'show');assert.equal(both.coachPreferences.explainLevel,'simpler');
-    updateLocalRoom({store,id:session},{id:'science',title:'Science',subject:'Science',courseName:null,testDate:null,level:'standard'});
+    call('/learn/preferences',{roomId:'science',preferences:{mode:'examples_first'}});
+    updateLocalRoom({store,id:session},{id:'science',title:'Science',subject:'Science',courseName:null,testDate:null,level:'simpler'});
     const room=integratedRooms(store.read(session)).find(r=>r.id==='science')!;
-    assert.equal(room.explain_level,'standard');assert.equal(room.coach_explain_level,'standard');assert.equal(room.learn_explain_level,'standard');
+    assert.equal(room.explain_level,'simpler');assert.equal(room.learn_preferences?.mode,'examples_first');
     assert.equal(room.coach_preferences?.coach_mode,'show');assert.equal(store.read(session).rooms.science.events.length,0);
   }finally{store.close();}
 });

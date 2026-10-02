@@ -10,11 +10,12 @@ and [Phase 3 review](SOL_PHASE3_REVIEW.md). Claude's latest main `c6ba6ad` was
 merged into `codex/sol-phase3-review` at `b1f220b`; its companion/UI changes are preserved.
 
 PR #64 merged the engine passes into main at `aff4277`. Main then incorporated
-Claude's learner settings and independent topic-scope changes through `5102c13`.
-The coordinator refreshed the local worktree to that baseline and repaired only
-the synthetic backend adapter: `/api/learn/preferences`, separate persisted
-Coach/Learn explanation levels, Apply-to-both/Room Settings behavior and authored
-lesson rendering. No UI components or styles were edited in this follow-up.
+Claude's settings and independent topic-scope changes through `a8403b7`.
+The coordinator refreshed the worktree to that baseline and repaired only the
+synthetic backend adapter: `/api/learn/preferences`, independent persisted
+Coach/Learn modes and authored lesson rendering at the global room level.
+Coach/Learn preferences cannot create a separate explanation level. Room Settings
+remains authoritative. No UI components or styles were edited in this follow-up.
 
 The existing main interface is preserved. The only component change refreshes authoritative study data after a Coach turn. Claude retains UI/UX ownership, including future evidence-stage presentation and Coach mode controls.
 
@@ -43,11 +44,12 @@ Local SQLite state is account-session scoped in `apps/web/.local-beta/study.sqli
 
 Run browser verification with `node scripts/verify-integrated-beta.mjs`; set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` if Chromium is installed outside Playwright's default location. Machine-local evidence lives in `.local-beta/verification/results.json` and screenshots. These are synthetic web checks, not physical iOS or live-provider acceptance evidence.
 
-Latest combined-main validation: **449 JavaScript/TypeScript/database/RAG tests**,
+Latest combined-main validation: **450 JavaScript/TypeScript/database/RAG tests**,
 **eight Python tests**, workspace typecheck and nine desktop/phone browser flow
-groups passed. The added flow proves the current Learn/Coach settings endpoints
-persist independently through the local adapter. A final focused seven-case adapter
-rerun also covers authored Learn-chat wording without changing pending evidence.
+groups passed on the final global-setting baseline. The updated harness exercises
+the current Learn/Coach modes without changing the global level. The final focused
+seven-case adapter suite covers reload, global wording, mode independence and
+pending-evidence preservation.
 The Node 22 pure-policy workload measured p95 **0.146 ms**; it excludes replay,
 database/network/provider time and is not the visible-response latency gate.
 
