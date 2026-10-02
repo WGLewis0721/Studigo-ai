@@ -22,6 +22,30 @@ The game-design inspiration is deliberate:
 
 The engineering goal is not to recreate those games. It is to reuse the system-design principles that made adaptive experiences possible long before modern ML.
 
+The source/reference map for those game patterns, learning-science foundations,
+OpenAI/RAG infrastructure and iOS implementation is
+[`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
+The staged implementation handoff is the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md).
+
+### V3 execution direction
+
+The first production V3 target is a deterministic director plus a grounded GenAI
+renderer/evaluator:
+
+- keep the Challenge Director, reducer, mastery evidence and rematch policy
+  deterministic and replayable;
+- keep `study_rooms.explain_level` as the global room language/detail setting;
+- collapse learner-facing Coach choices to **Show me / Coach me / Challenge me**;
+- move learning-tradition and practice-recipe research behind the UI as internal
+  strategy/reference material;
+- build the universal iOS/iPadOS client with Expo / React Native over the same
+  hosted backend;
+- keep the OpenAI API key on trusted server infrastructure only;
+- allow Python + FastAPI + LangChain for RAG/evaluation/ML where measured results
+  justify the added service boundary;
+- treat BKT/other ML models as comparison/candidate signals first, never as an
+  unvalidated replacement for the deterministic progression authority.
+
 ---
 
 ## 1. Non-negotiable development principles
@@ -34,11 +58,13 @@ The learner should not have to decode academic prose before they can demonstrate
 
 The system may ask a high-level transfer question in plain language.
 
-### 2. Performance determines challenge; preference determines route
+### 2. Performance determines challenge; preference changes delivery
 
 Challenge progression should come from demonstrated learner performance.
 
-A learning tradition or preferred coaching route may change how support is delivered, but it must not arbitrarily lower or cap the mastery target.
+The learner-facing Coach mode (Show me / Coach me / Challenge me), the global
+room explanation level, and any internal teaching-route strategy may change how
+support is delivered. None may arbitrarily lower or cap the mastery target.
 
 ### 3. The game loop is the operating system
 
@@ -61,6 +87,10 @@ Flashcards, Quiz, Coach, Learn, Practice Test, Weak Areas, and Cram are mini-gam
 Use counters, state machines, thresholds, lookup tables, and deterministic transitions first.
 
 If a state transition can solve the problem, do not add an agent, recommendation service, model, or orchestration framework.
+
+Python/ML work belongs in an evaluation/sidecar role until it proves a measurable
+advantage. A Bayesian Knowledge Tracing baseline is reasonable; deep knowledge
+tracing or learned policy is not a prerequisite for V3.
 
 ### 5. Failure changes the next encounter
 
@@ -109,11 +139,11 @@ Deterministic Challenge Director
       +--------------------+
       |                    |
       v                    v
-Mini-game             Learning route
-Coach / Quiz          Japanese-inspired
-Cards / Learn         Montessori-inspired
-Practice Test         Swedish-inspired
-Cram / Weak Areas     Direct / Socratic / etc.
+Mini-game             Delivery / strategy layer
+Coach / Quiz          Show / Coach / Challenge bias
+Cards / Learn         room explanation level
+Practice Test         internal KB strategies
+Cram / Weak Areas     grounded renderer rules
       |                    |
       +---------+----------+
                 |
