@@ -1,5 +1,39 @@
 # V3 execution evidence
 
+## October 2 recalibration + topic-scope follow-up
+
+Physical iPhone testing exposed stale response-context behavior: the UI could
+show Matter/Phase Changes while a pending Coach conversation still belonged to
+Animal Responses. It also exposed duplicated topic controls.
+
+PR #68 shipped the follow-up:
+
+- independent **Apply Coach** and **Apply Learn** paths;
+- surface-specific effective explanation levels with an explicit apply-to-both
+  option and Room Settings as the shared/global control;
+- Apply starts a fresh response context for the affected surface but does not
+  alter mastery/evidence;
+- Topics now opens the integrated checkbox multi-select directly;
+- Select all, Clear and Apply topics are supported;
+- the standalone green topic dropdown was removed;
+- selected topic IDs are server-validated/intersected with active room topics
+  before the deterministic Coach director sees them.
+
+Evidence:
+
+- PR #68 merged to `main` at `3b876a3`.
+- CI run `37069098292` passed typecheck, tests, offline advisory ML evaluation,
+  game prototype tests and web build.
+- Vercel production deployment `dpl_FTCp6HJd5kXFw5ZzfvniXizAUohf` is READY
+  for merge commit `3b876a3`.
+- Hosted Supabase migration `surface_explanation_levels` applied successfully
+  and is recorded in migration history.
+
+Still requires physical-device acceptance: repeat the exact Matter/Phase Changes
+condensation/heat scenario and confirm no Animal Responses context leaks after
+Apply/topics changes.
+
+
 ## October 2 learner-facing finish execution
 
 PR #66 completed the remaining learner-facing V3 simplification over the
