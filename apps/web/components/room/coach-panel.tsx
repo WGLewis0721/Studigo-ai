@@ -17,14 +17,21 @@ import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
 import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
+import type { ExplainLevel } from "@studigo/learning";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
 
 type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
-type SkillTopic = { title: string; objective: string | null };
-const GENERAL_TOPIC: SkillTopic = { title: "This unit", objective: "Start with a quick diagnostic on the most important skill." };
+type SkillTopic = { id: string; title: string; objective: string | null };
+const GENERAL_TOPIC: SkillTopic = { id: "general", title: "This unit", objective: "Start with a quick diagnostic on the most important skill." };
+const EXPLAIN_OPTIONS: Array<{ id: ExplainLevel; label: string; copy: string }> = [
+  { id: "simpler", label: "Simpler", copy: "Plain words and familiar examples." },
+  { id: "standard", label: "Standard", copy: "Match the level of your materials." },
+  { id: "deeper", label: "Deeper", copy: "More precise vocabulary and connections." }
+];
+const LEVEL_LABEL: Record<ExplainLevel, string> = { simpler: "Simpler words", standard: "Standard words", deeper: "Deeper detail" };
 
 function answerLabel(message: Message): string {
   const state = coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming });
@@ -51,12 +58,19 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   onTopicsChanged: () => void;
 }) {
   const [draft, setDraft] = useState(coaching.applied);
-  const dirty = !sameCoachPreferences(draft, coaching.applied);
+  const [learnDraft, setLearnDraft] = useState<ExplainLevel>(coaching.learnLevel);
+  const [coachApplyBoth, setCoachApplyBoth] = useState(false);
+  const [learnApplyBoth, setLearnApplyBoth] = useState(false);
+  const coachDirty = !sameCoachPreferences(draft, coaching.applied);
+  const learnDirty = learnDraft !== coaching.learnLevel;
   const active = describeCoaching(coaching.applied);
   const draftMode = describeCoaching(draft);
   useEffect(() => { setDraft(coaching.applied); }, [coaching.applied]);
-  const openSetup = () => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setDraft(coaching.applied); setPersonalizeOpen(true); };
+  useEffect(() => { setLearnDraft(coaching.learnLevel); }, [coaching.learnLevel]);
   const [selectedTopic, setSelectedTopic] = useState<SkillTopic>(topics[0] ?? GENERAL_TOPIC);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(topics[0] ? [topics[0].id] : []);
+  const [topicDraftIds, setTopicDraftIds] = useState<string[]>(topics[0] ? [topics[0].id] : []);
+  const [scopeStatus, setScopeStatus] = useState<string | null>(null);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>("coach");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,6 +86,36 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
   const threadEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const valid = new Set(topics.map((topic) => topic.id));
+    setSelectedTopicIds((current) => {
+      const kept = current.filter((id) => valid.has(id));
+      return kept.length ? kept : topics[0] ? [topics[0].id] : [];
+    });
+  }, [topics]);
+
+  useEffect(() => {
+    const first = topics.find((topic) => selectedTopicIds.includes(topic.id));
+    if (first) setSelectedTopic(first);
+  }, [selectedTopicIds, topics]);
+
+  const openSetup = () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setSkillPickerOpen(false);
+    setDraft(coaching.applied);
+    setLearnDraft(coaching.learnLevel);
+    setPersonalizeOpen(true);
+  };
+
+  const openTopicPicker = () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    setPersonalizeOpen(false);
+    setTopicDraftIds(selectedTopicIds.length ? selectedTopicIds : topics[0] ? [topics[0].id] : []);
+    setSkillPickerOpen(true);
+  };
+
+  const selectedTopics = topics.filter((topic) => selectedTopicIds.includes(topic.id));
 
   useEffect(() => {
     if (!messages.length) return;
@@ -120,7 +164,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     };
   }, [modalOpen]);
 
-  async function coach(input: string, modeOverride?: ReplyMode) {
+  async function coach(input: string, modeOverride?: ReplyMode, topicIdsOverride?: string[]) {
     const replying: ReplyMode = modeOverride ?? (chatMode === "learn" ? "ask" : "coach");
     const messageMode: ChatMode = replying === "ask" ? "learn" : "coach";
     const text = input.trim();
@@ -135,6 +179,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
     const priorHistory = messages.filter((message) => !message.streaming && message.kind !== "guide").map((message) => ({ role: message.role, content: message.content }));
+    const scopedTopicIds = topicIdsOverride ?? selectedTopicIds;
+    const scopedTopics = topics.filter((topic) => scopedTopicIds.includes(topic.id));
     setMessages((current) => [...current, { id: interactionId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]);
     try {
       // The learner's question stays clean for retrieval; pedagogy choices
@@ -146,11 +192,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       // client code path.
       const isFixture = roomId === "fixture";
       const endpoint = isFixture ? "/api/dev/coach" : "/api/chat";
+      const scopeInstruction = scopedTopics.length
+        ? `The learner selected these study topics: ${scopedTopics.map((topic) => `"${topic.title}"`).join(", ")}. If the question is ambiguous, read it in that scope. Still answer only from the retrieved excerpts.`
+        : "Use the active Study Room topics only. Still answer only from the retrieved excerpts.";
       const body = isFixture
-        ? JSON.stringify({ question: text, topics, history: priorHistory, directives })
+        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current })
-          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, directives: [{ name: "Current topic", instruction: `The learner is currently studying "${selectedTopic.title}". If the question is ambiguous, read it in that context. Still answer only from the retrieved excerpts.` }] });
+          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current, topicIds: scopedTopicIds })
+          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, topicIds: scopedTopicIds, directives: [{ name: "Current topics", instruction: scopeInstruction }] });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -185,45 +234,67 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
 
   function coachTopic(topic: Topic) {
     setSelectedTopic(topic);
+    setSelectedTopicIds([topic.id]);
+    setTopicDraftIds([topic.id]);
+    conversationId.current = null;
     setChatMode("coach");
     onViewChange("chat");
-    void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach");
+    void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
+  }
+
+  async function applySurfaceSettings() {
+    if (busy) return;
+    if (chatMode === "coach") {
+      const ok = await coaching.apply(draft, coachApplyBoth);
+      if (ok) {
+        conversationId.current = null;
+        if (coachApplyBoth) askConversationId.current = null;
+      }
+      return;
+    }
+    const ok = await coaching.applyLearn(learnDraft, learnApplyBoth);
+    if (ok) {
+      askConversationId.current = null;
+      if (learnApplyBoth) conversationId.current = null;
+    }
+  }
+
+  function applyTopicScope() {
+    const ordered = topics.filter((topic) => topicDraftIds.includes(topic.id)).map((topic) => topic.id);
+    if (!ordered.length) return;
+    setSelectedTopicIds(ordered);
+    const first = topics.find((topic) => topic.id === ordered[0]);
+    if (first) setSelectedTopic(first);
+    conversationId.current = null;
+    askConversationId.current = null;
+    setScopeStatus(`Applied ${ordered.length === topics.length ? "all topics" : `${ordered.length} topic${ordered.length === 1 ? "" : "s"}`}. Coach and Learn will recalibrate on the next reply.`);
+    setSkillPickerOpen(false);
+    onViewChange("chat");
   }
 
   if (readyCount === 0) return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
 
-  // Chat/Topics and the topic chip. Wide screens show them at the right end of the header;
-  // phones show a second copy just under the Studigo rail (CSS shows one and hides the other).
+  // Chat stays the conversation view. Topics is now the topic-scope control itself,
+  // so there is no second green topic dropdown competing with it.
   const contextControls = (
-    <>
-      <div className="coachTabs" role="group" aria-label="Coach sections">
-        <button type="button" aria-pressed={view === "chat"} onClick={() => onViewChange("chat")}>Chat</button>
-        <button type="button" aria-pressed={view === "topics"} onClick={() => onViewChange("topics")}>Topics{topics.length > 0 && <span className="coachTabCount">{topics.length}</span>}</button>
-      </div>
-      {view === "chat" && (topics.length > 1 ? (
-        <button type="button" className="chatTopic" aria-label={`Topic: ${selectedTopic.title}. Change topic`} aria-expanded={skillPickerOpen} onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setPersonalizeOpen(false); setSkillPickerOpen(true); }}>
-          <span className="chatTopicName">{selectedTopic.title}</span><span aria-hidden="true">▾</span>
-        </button>
-      ) : (
-        <span className="chatTopic chatTopicStatic" aria-label={`Topic: ${selectedTopic.title}`}><span className="chatTopicName">{selectedTopic.title}</span></span>
-      ))}
-    </>
+    <div className="coachTabs" role="group" aria-label="Coach sections and topic scope">
+      <button type="button" aria-pressed={view === "chat" && !skillPickerOpen} onClick={() => onViewChange("chat")}>Chat</button>
+      <button type="button" aria-pressed={skillPickerOpen || view === "topics"} aria-haspopup="dialog" aria-expanded={skillPickerOpen} onClick={openTopicPicker}>
+        Topics{topics.length > 0 && <span className="coachTabCount">{selectedTopicIds.length}/{topics.length}</span>}
+      </button>
+    </div>
   );
 
   return (
     <>
     <ModeFrame tone="coach">
       <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
-        {chatMode === "coach" ? (
-          <button type="button" className="chatMascot" aria-label="Coaching mode" aria-expanded={personalizeOpen} aria-controls="coach-personalization" title="Coaching mode" onClick={() => { (document.activeElement as HTMLElement | null)?.blur(); setSkillPickerOpen(false); setDraft(coaching.applied); setPersonalizeOpen((open) => !open); }}>
-            <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
-            <span className="chatMascotDot" aria-hidden="true" />
-          </button>
-        ) : (
-          <span className="chatMascot chatMascotStatic"><StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark /></span>
-        )}
+        <button type="button" className="chatMascot" aria-label={chatMode === "coach" ? "Coach settings" : "Learn settings"} aria-expanded={personalizeOpen} aria-controls="coach-personalization" title={chatMode === "coach" ? "Coach settings" : "Learn settings"} onClick={() => { if (personalizeOpen) setPersonalizeOpen(false); else openSetup(); }}>
+          <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
+          <span className="chatMascotDot" aria-hidden="true" />
+        </button>
         <div className="chatModes" role="group" aria-label="How Studigo helps">
-          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => setChatMode("coach")}>
+          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => { setPersonalizeOpen(false); setChatMode("coach"); }}>
             <strong>Coach</strong><small>Practice and apply</small>
           </button>
           <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => { setPersonalizeOpen(false); setChatMode("learn"); }}>
@@ -249,22 +320,32 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       {skillPickerOpen && (
         <section className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
           <div className="coachSettingsSheetHead">
-            <div><span className="tinyLabel">TOPIC</span><strong id="coach-skill-sheet-title">Pick a topic</strong></div>
-            <button type="button" onClick={() => setSkillPickerOpen(false)}>Done</button>
+            <div><span className="tinyLabel">TOPIC SCOPE</span><strong id="coach-skill-sheet-title">Choose one or more topics</strong></div>
+            <button type="button" onClick={() => setSkillPickerOpen(false)}>Cancel</button>
           </div>
-          <div className="coachSkillList">
-            {topics.map((topic, index) => (
-              <button
-                key={topic.title}
-                type="button"
-                className={selectedTopic.title === topic.title ? "active" : ""}
-                onClick={() => { setSelectedTopic(topic); setSkillPickerOpen(false); }}
-              >
-                <span className="coachSkillIndex">{index + 1}</span>
-                <span><strong>{topic.title}</strong>{topic.objective && topic.objective !== topic.title && <small>{topic.objective}</small>}</span>
-                {selectedTopic.title === topic.title && <span className="coachSkillCheck" aria-hidden="true">✓</span>}
-              </button>
-            ))}
+          <div className="coachTopicBulkActions">
+            <button type="button" onClick={() => setTopicDraftIds(topics.map((topic) => topic.id))}>Select all</button>
+            <button type="button" onClick={() => setTopicDraftIds([])}>Clear</button>
+          </div>
+          <div className="coachSkillList coachSkillMulti">
+            {topics.map((topic, index) => {
+              const checked = topicDraftIds.includes(topic.id);
+              return (
+                <label key={topic.id} className={checked ? "active" : ""}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => setTopicDraftIds((current) => event.target.checked ? [...current, topic.id] : current.filter((id) => id !== topic.id))}
+                  />
+                  <span className="coachSkillIndex">{index + 1}</span>
+                  <span><strong>{topic.title}</strong>{topic.objective && topic.objective !== topic.title && <small>{topic.objective}</small>}</span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="coachTopicApply">
+            <button type="button" className="ghostButton" onClick={() => { setSkillPickerOpen(false); onViewChange("topics"); }}>Manage topics</button>
+            <button type="button" className="buttonPrimary" disabled={!topicDraftIds.length} onClick={applyTopicScope}>Apply topics</button>
           </div>
         </section>
       )}
@@ -277,32 +358,53 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         aria-modal={personalizeOpen ? true : undefined}
       >
         <div className="coachSettingsSheetHead">
-          <div><span className="tinyLabel">COACH SETUP</span><strong>Personalize this room</strong></div>
+          <div><span className="tinyLabel">{chatMode === "coach" ? "COACH SETUP" : "LEARN SETUP"}</span><strong>{chatMode === "coach" ? "How should Studigo coach you?" : "How should Studigo explain things?"}</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
-        <div className="coachExpect" aria-live="polite">
-          <span className="tinyLabel">{dirty ? "AFTER YOU APPLY" : "IN USE NOW"}</span>
-          <strong>{draftMode.label}</strong>
-          <p>{draftMode.expect}</p>
-        </div>
+        {chatMode === "coach" && (
+          <>
+            <div className="coachExpect" aria-live="polite">
+              <span className="tinyLabel">{coachDirty ? "AFTER YOU APPLY" : "IN USE NOW"}</span>
+              <strong>{draftMode.label}</strong>
+              <p>{draftMode.expect}</p>
+            </div>
+            <div>
+              <span className="tinyLabel">COACH MODE</span>
+              <div className="coachStyleGrid coachModeGrid" aria-label="Choose a coaching mode">
+                {COACH_MODE_OPTIONS.map((option) => <button key={option.id} type="button" aria-pressed={option.id === draftMode.mode} disabled={coaching.applying} className={option.id === draftMode.mode ? "coachStyle active" : "coachStyle"} onClick={() => setDraft(current => ({ ...current, coach_mode: option.id }))}><strong>{option.name}</strong><span>{option.expect}</span></button>)}
+              </div>
+            </div>
+          </>
+        )}
         <div>
-          <span className="tinyLabel">HOW SHOULD STUDIGO COACH YOU?</span>
-          <div className="coachStyleGrid coachModeGrid" aria-label="Choose a coaching mode">
-            {COACH_MODE_OPTIONS.map((option) => <button key={option.id} type="button" aria-pressed={option.id === draftMode.mode} disabled={coaching.applying} className={option.id === draftMode.mode ? "coachStyle active" : "coachStyle"} onClick={() => setDraft(current => ({ ...current, coach_mode: option.id }))}><strong>{option.name}</strong><span>{option.expect}</span></button>)}
+          <span className="tinyLabel">{chatMode === "coach" ? "COACH EXPLANATION LEVEL" : "LEARN EXPLANATION LEVEL"}</span>
+          <div className="coachStyleGrid explainLevelGrid" aria-label={chatMode === "coach" ? "Choose Coach explanation level" : "Choose Learn explanation level"}>
+            {EXPLAIN_OPTIONS.map((option) => {
+              const selected = chatMode === "coach" ? draft.explainLevel === option.id : learnDraft === option.id;
+              return <button key={option.id} type="button" aria-pressed={selected} disabled={coaching.applying || coaching.learnApplying} className={selected ? "coachStyle active" : "coachStyle"} onClick={() => chatMode === "coach" ? setDraft((current) => ({ ...current, explainLevel: option.id })) : setLearnDraft(option.id)}><strong>{option.label}</strong><span>{option.copy}</span></button>;
+            })}
           </div>
         </div>
-        <p className="coachLevelNote">Explanation level: <b>{active.level}</b>. It applies to Coach and Learn and is set in Room settings.</p>
+        <label className="coachApplyBoth">
+          <input type="checkbox" checked={chatMode === "coach" ? coachApplyBoth : learnApplyBoth} onChange={(event) => chatMode === "coach" ? setCoachApplyBoth(event.target.checked) : setLearnApplyBoth(event.target.checked)} />
+          <span>Apply this explanation level to both Coach and Learn</span>
+        </label>
         <div className="coachApplyActions">
-          <button className="buttonPrimary" type="button" disabled={!dirty || busy || coaching.applying} onClick={() => void coaching.apply(draft)}>{coaching.applying ? "Recalibrating…" : "Apply"}</button>
-          <small>{busy ? "Apply after Studigo finishes this reply." : dirty ? "Apply to save these choices for this room." : "Your settings are saved for this room."}</small>
+          <button className="buttonPrimary" type="button" disabled={busy || coaching.applying || coaching.learnApplying || (chatMode === "coach" ? !coachDirty : !learnDirty)} onClick={() => void applySurfaceSettings()}>
+            {(chatMode === "coach" ? coaching.applying : coaching.learnApplying) ? "Recalibrating…" : chatMode === "coach" ? "Apply Coach" : "Apply Learn"}
+          </button>
+          <small>{busy ? "Apply after Studigo finishes this reply." : "Apply saves the selection and starts a fresh response context for this surface."}</small>
         </div>
-        {coaching.error && <p className="formError" role="alert">{coaching.error}</p>}
-        {coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
+        {(chatMode === "coach" ? coaching.error : coaching.learnError) && <p className="formError" role="alert">{chatMode === "coach" ? coaching.error : coaching.learnError}</p>}
+        {(chatMode === "coach" ? coaching.status : coaching.learnStatus) && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? coaching.status : coaching.learnStatus}</p>}
       </section>
-        {!personalizeOpen && coaching.status && <p className="coachPreferenceStatus" role="status">{coaching.status}</p>}
-        {chatMode === "coach" && view === "chat" && !personalizeOpen && (
-          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={`Coaching: ${active.label}, ${active.level}. Change`}>
-            <span>Coaching</span><strong>{active.label}</strong><em>{active.level}</em>
+        {!personalizeOpen && (chatMode === "coach" ? coaching.status : coaching.learnStatus) && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? coaching.status : coaching.learnStatus}</p>}
+        {!personalizeOpen && scopeStatus && <p className="coachPreferenceStatus" role="status">{scopeStatus}</p>}
+        {view === "chat" && !personalizeOpen && (
+          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}, ${active.level}. Change` : `Learning: ${LEVEL_LABEL[coaching.learnLevel]}. Change`}>
+            <span>{chatMode === "coach" ? "Coaching" : "Learning"}</span>
+            <strong>{chatMode === "coach" ? active.label : LEVEL_LABEL[coaching.learnLevel]}</strong>
+            {chatMode === "coach" && <em>{active.level}</em>}
           </button>
         )}
         <div className="chatThread" role="log" aria-live="polite" aria-label="Messages">
@@ -313,7 +415,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               <p>Coach gives you problems, checks your work and tracks what you have mastered. Not sure what a term means? Switch to Learn first.</p>
               <p className="coachEmptyStyle"><b>{active.label}:</b> {active.expect}</p>
               <div className="starterList">
-                <button type="button" onClick={() => void coach(`Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>Coach me on {selectedTopic.title}</button>
+                <button type="button" onClick={() => void coach(selectedTopics.length > 1 ? `Coach me across these selected topics: ${selectedTopics.map((topic) => topic.title).join(", ")}.` : `Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>{selectedTopics.length > 1 ? `Coach me across ${selectedTopics.length} topics` : `Coach me on ${selectedTopic.title}`}</button>
                 <button type="button" onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button>
               </div>
             </div>
@@ -341,7 +443,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         />
       </section>
       </div>
-      <CoachAside topics={topics} areas={areas} selectedTitle={selectedTopic.title} onSelect={(topic) => setSelectedTopic(topic)} onAllTopics={() => onViewChange("topics")} />
+      <CoachAside topics={topics} areas={areas} selectedTitle={selectedTopic.title} onSelect={(topic) => { setSelectedTopic(topic); setSelectedTopicIds([topic.id]); conversationId.current = null; askConversationId.current = null; }} onAllTopics={openTopicPicker} />
       </div>
       )}
     </div>
