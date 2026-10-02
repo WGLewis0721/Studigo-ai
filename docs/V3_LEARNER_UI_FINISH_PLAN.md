@@ -4,6 +4,34 @@
 
 This is a product/UI integration pass over the adaptive learning work already in `main`. It does not redesign the learning engine.
 
+## Implementation status — October 2, 2026
+
+Implemented and merged in PR #66 (`0d4ed35`) and deployed through Vercel.
+
+Completed in code:
+
+- three learner-facing Coach modes only;
+- global Study Room explanation level preserved;
+- Coach/Learn remains visible across Chat and Topics;
+- one-shot stretch renamed **Try a harder question**;
+- legacy room preferences migrate/canonicalize safely;
+- companion default frame enlarged to 116×138;
+- mascot rendered at ~75% of the prior in-frame scale;
+- intentional transparent top/side body overlap supported;
+- homepage/demo companion and navigation kept in parity;
+- Supabase `v3_coach_mode` migration applied to the hosted Studigo project.
+
+Validation:
+
+- PR CI passed typecheck, full tests, offline advisory ML tests, game tests and web build;
+- Vercel deployment reported success;
+- hosted database constraint was verified after migration.
+
+Still requires human visual acceptance on a physical iPhone/iPad: confirm the
+actual sprite composition keeps every facial feature clear and that deliberate
+body overlap feels intentional at real-device scale. This is visual acceptance,
+not an unresolved architecture or persistence task.
+
 ## Outcome
 
 The learner should see a simpler product:
