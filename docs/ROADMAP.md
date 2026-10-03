@@ -355,8 +355,6 @@ Still open from the original Phase 1 list:
   work idempotently and retries by hand, which holds at current scale; a very
   large scanned PDF can still exceed the function timeout.
 - Retry is learner-initiated, not automatic with backoff.
-- RLS is enforced and exercised by the app, but there is no automated
-  integration test asserting cross-account isolation yet.
 
 ## Phase 2 — Turn RAG into a study product
 
@@ -583,34 +581,26 @@ Only after individual-student value is proven:
 
 ## Immediate next engineering tasks
 
-1. **Production-validate Study Guide PDF download** on desktop/mobile and print.
-2. Add remaining endpoint-level export tests for empty rooms, response headers,
-   filenames, and learner-edited/removal cases.
-3. Run the production user-test suite in
-   [`USER_TEST_CASES.md`](USER_TEST_CASES.md), starting with mobile room creation
-   and Study Guide download.
-4. Validate downloaded-guide trust: source traceability, usefulness, printability,
-   and whether a learner would use it instead of rebuilding a guide manually.
-5. Wire the Coach's style/tradition/practice directives to the canonical
-   [`../knowledge/teaching-coaching/README.md`](../knowledge/teaching-coaching/README.md)
-   records so the current UI taxonomy and its research grounding cannot drift.
-6. Add automated two-user RLS integration tests for rooms, documents, citations,
-   downloads, and mutations.
-7. Move ingestion off request-bound execution onto a durable retryable worker
-   before large-document volume makes timeouts a common user failure.
-8. Build the 25–50 item grounded RAG/citation eval set and run it before retrieval
-   or model changes.
-9. Finish deployed Coach "give me N questions" + tutor-scaffolding verification
-   against the real production model.
-10. Instrument production failure modes and user-critical funnel steps:
-    create room → upload ready → first useful study action → Study Guide download.
-
-11. Verify the September 30 Learn changes against the real model and add a small
-    Learn eval (outline format, off-topic redirect, typo-tolerant grading).
-
-Do not replace these with another foundation rewrite. The architecture has
-crossed the threshold where user-value, regression prevention, and reliability
-matter more than adding parallel infrastructure.
+1. Atomically bind durable learning sessions to Coach issued/pending encounters,
+   answers, skips and retry recovery before enabling `STUDIGO_DURABLE_SESSIONS`.
+2. Complete trusted Quiz and Practice-Test evidence provenance into the canonical
+   concept projection; historical unknown-assistance evidence stays conservative.
+3. Build and independently review the live RAG/citation evaluation set and record
+   provider quality, p95 latency and cost before changing the production RAG path.
+4. Move large-document ingestion off request-bound execution onto a durable
+   retryable worker with bounded automatic backoff.
+5. Finish physical-iPhone Study Guide recovery acceptance and mobile PDF
+   open/share/print testing from `USER_TEST_CASES.md`.
+6. Close the remaining Learn/Coach real-provider quality checks against the
+   current global explanation + independent surface-mode contract.
+7. Add production observability for the critical funnel and adaptive failures:
+   room → upload ready → useful study action → evidence commit → guide download.
+8. Finish customer-visible service limits, retention/deletion, support/refund
+   policy and minor/privacy/vendor requirements.
+9. Freeze paid tiers/limits in APEX and prove web purchase → entitlement →
+   revocation/refund before live charging.
+10. Start the universal Expo iOS/iPadOS client only against the current server
+    contracts; do not copy the learning engine into the native app.
 
 ---
 
@@ -622,11 +612,11 @@ This gate is now the release definition for both the Studigo learning app and th
 
 **Chosen iOS path (October 1, 2026):** Expo / React Native client over the existing hosted Studigo backend and Supabase identity/data model. Web purchases use Stripe; iOS digital purchases use StoreKit/RevenueCat; both reconcile into APEX. See [`APP_STORE_RELEASE_PLAN.md`](APP_STORE_RELEASE_PLAN.md).
 
-**Current assessment:** functional web product with substantial learning architecture; not yet a production-paid App Store product.
+**Current assessment:** deployed integrated adaptive web beta with production atomic Coach/adaptive-session paths; still not a production-paid App Store product.
 
 ### P0 — reliability and safety before billing
 - [ ] Complete the production user-validation cycle in Phase 3.5, including physical iPhone/Safari room creation, PDF download/open/print, and the deployed Coach practice-set flow.
-- [ ] Add automated two-user RLS isolation tests for rooms, documents, citations, downloads, and mutations.
+- [x] Add automated two-user/database isolation coverage; hosted synthetic acceptance also verified separate principals across room/session/document/chunk access. Continue route-specific regression coverage as surfaces evolve.
 - [ ] Move large-document ingestion to a durable retryable worker and add bounded automatic retry/backoff.
 - [ ] Complete the Phase 4 RAG/citation evaluation set, prompt-injection tests, parser/file validation, malware scanning, auth-abuse/rate-limit tests, and production observability.
 - [ ] Define customer-visible service limits: upload size/count, AI usage limits, retention/deletion, supported file types, and failure/refund/support policy.
