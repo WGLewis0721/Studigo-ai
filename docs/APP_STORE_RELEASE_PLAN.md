@@ -87,6 +87,20 @@ Rules:
 - Reconcile purchase, renewal, cancellation, billing retry, refund, and revocation events server-side.
 - Payment events must be idempotent and auditable.
 
+## Current web readiness snapshot — October 2, 2026
+
+The adaptive web beta is now deployed on `main`. Atomic Coach and adaptive-session
+paths are enabled in production and exact-main CI/production smoke passed.
+Two-user/source isolation and retry/idempotency behavior have automated and hosted
+synthetic coverage. Physical iPhone testing has also already found and driven one
+real recovery improvement: **Refresh study guide** for stale derived topic scope.
+
+This does **not** close the App Store gate. Still outstanding are the durable
+large-document worker, atomic durable-session/Coach lifecycle linkage, independently
+reviewed live RAG and provider performance/cost evidence, full mobile PDF
+open/share/print acceptance, privacy/minor-data/vendor work, commerce/APEX setup,
+and the Expo/TestFlight client itself.
+
 ## Release sequence
 
 ### 0. Web/backend readiness before charging
