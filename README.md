@@ -61,6 +61,17 @@ What works today:
   typos (credited at 85, exact at 100) through one shared typo module.
 - **Mastery.** Calculated from actual quiz and review performance — unpracticed
   topics count as zero, and a room with no practice shows no number at all.
+- **Adaptive learning control plane.** The shared deterministic director now owns
+  progression/scaffolding/recommendations underneath Coach. Production enables
+  the atomic Coach and adaptive-session paths; the standalone durable-session
+  route remains off until its lifecycle is atomically linked to Coach pending
+  encounters.
+- **Companion.** Studigo's interactive companion is integrated across the Study
+  Room and homepage with shared sprites and state-driven reactions. It is
+  presentation only and cannot award mastery or alter progression.
+- **Study Guide recovery.** Materials includes **Refresh study guide** to force a
+  clean reread/reindex and rebuild the topic map when derived scope becomes stale,
+  without deleting learning history.
 
 ### Downloadable study guide
 
@@ -80,10 +91,12 @@ coaching-style, learning-tradition and practice-recipe research remains an
 internal strategy/reference library in
 [`knowledge/teaching-coaching/README.md`](knowledge/teaching-coaching/README.md).
 
-Known limits: ingestion runs inside the request (idempotent and retryable, but a
-very large scanned PDF can exceed the function timeout) rather than on a durable
-queue. Native iOS packaging is not implemented yet; the selected release path is
-in [`docs/APP_STORE_RELEASE_PLAN.md`](docs/APP_STORE_RELEASE_PLAN.md).
+Known limits: ingestion still runs inside the request (idempotent and retryable,
+but a very large scanned PDF can exceed the function timeout) rather than on a
+durable worker. Durable learning sessions exist, but the standalone session route
+stays disabled until Coach/session pending-state linkage is atomic. Native iOS
+packaging is not implemented yet; the selected release path is in
+[`docs/APP_STORE_RELEASE_PLAN.md`](docs/APP_STORE_RELEASE_PLAN.md).
 
 ### Active investigation — Coach "give me N questions"
 
@@ -226,10 +239,14 @@ Read these files in order before making major changes:
 12. `docs/ROADMAP.md`
 13. `docs/AI_HANDOFF.md`
 
-Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+Current `main` is the integrated V3 web beta. The staged V3 engine/UI passes
+have already landed; do **not** restart Phase 1/2/3 from scratch. Read
+[`docs/ADAPTIVE_BETA_EVIDENCE.md`](docs/ADAPTIVE_BETA_EVIDENCE.md) for what is
+actually verified and what remains open.
 
-After that gate, the next major build is the staged V3 plan in `IMPLEMENTATION.md`: preserve the
-working upload → grounded study → mastery loop while making the deterministic
-adaptive game director the clear progression authority underneath the grounded
-GenAI study partner, then carry the same product into the universal iOS/iPadOS
-client.
+The next release gates are: atomically bind durable learning sessions to Coach
+pending encounters; finish trusted Quiz/Practice-Test evidence provenance;
+complete independently reviewed live RAG plus provider latency/cost measurements;
+move large-document ingestion to a durable worker; close physical-device
+Study-Guide/PDF acceptance; finish minor/privacy/vendor requirements; then build
+the universal Expo iOS/iPadOS client and TestFlight path.
