@@ -1,4 +1,4 @@
-.home .studigoWaitlist { padding: clamp(84px, 10vw, 150px) 0; background: #f4f9f8; }
+.home .studigoWaitlist { padding: clamp(84px, 10vw, 150px) 0; background: #f4f9f8; scroll-margin-top: 96px; }
 .home .studigoWaitlistGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: clamp(30px, 6vw, 90px); align-items: center; }
 .home .studigoWaitlistCopy h2 { max-width: 650px; margin: 18px 0 22px; font-family: var(--display); font-size: clamp(2.7rem, 5vw, 5.2rem); line-height: 1.02; letter-spacing: -.055em; }
 .home .studigoWaitlistCopy h2 em { color: var(--teal-ink); font-style: normal; }
