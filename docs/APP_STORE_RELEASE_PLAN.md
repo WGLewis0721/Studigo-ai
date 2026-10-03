@@ -106,7 +106,7 @@ and the Expo/TestFlight client itself.
 ### 0. Web/backend readiness before charging
 
 - [ ] Finish the physical iPhone/Safari production validation already listed in the roadmap.
-- [ ] Add two-user RLS isolation tests.
+- [x] Add two-user/database isolation tests and hosted synthetic principal-isolation checks.
 - [ ] Move large-document ingestion to a durable retryable worker.
 - [ ] Finish production RAG/citation, prompt-injection, parser/file, rate-limit, and observability work required by the commercialization gate.
 - [ ] Publish privacy policy, terms, support contact, retention policy, and account/data deletion behavior.
