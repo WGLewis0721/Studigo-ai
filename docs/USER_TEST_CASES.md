@@ -124,6 +124,23 @@ The purpose is not to prove every backend component independently. The purpose i
 
 **Pass:** Failure is visible and actionable. Retrying cannot create duplicate document state or duplicate chunks.
 
+## UT-13b — Recover stale Study Guide scope
+
+**Setup:** Use a room whose newest Study Guide differs from older derived topic
+state, or reproduce the stale-scope condition with test data.
+
+**Task:** In Materials, choose **Refresh study guide**, then reopen Topics and
+Coach/Learn.
+
+**Pass:** The newest stored Study Guide is reread and reindexed; active topics
+match the current guide; topics no longer present are removed from active scope;
+grounded answers/citations use the refreshed source; duplicate chunks are not
+created; quiz/mastery/history evidence is preserved.
+
+**Physical-iPhone regression:** with the Grade 4 Physical Science guide, confirm
+stale animal/fossil/solar-system topics disappear while matter, forces, energy,
+magnets, physical changes and circuits remain available.
+
 ## UT-14 — Returning session
 
 **Task:** Close the browser, return later, and reopen the room.

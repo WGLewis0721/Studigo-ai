@@ -259,9 +259,20 @@ never bent into a different answer. See `ARCHITECTURE.md` for the three levels.
 
 ## Downloadable study guide contract
 
-The PDF implementation exists. Completing or explicitly validating its first-release acceptance remains P0 before V3 implementation; see `USER_TEST_CASES.md`.
+The PDF implementation exists and V3 is already integrated. Downloaded-guide
+acceptance remains a **release gate**, not a prerequisite to begin V3. Physical
+iPhone testing exposed a separate stale-derived-scope failure: grounded answers
+could use the current Study Guide while the topic map still reflected older
+derived state.
 
-Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+Materials therefore exposes **Refresh study guide**. It rereads the newest stored
+Study Guide original, replaces that document's derived chunks/embeddings, rebuilds
+the topic map, and deactivates topics no longer present while preserving quiz,
+mastery and historical learning evidence. This is a recovery/reindex action, not
+a reset of learner history.
+
+Still close the mobile PDF open/share, print-layout and learner-trust cases in
+`USER_TEST_CASES.md` before calling the paid release ready.
 
 ### First release
 

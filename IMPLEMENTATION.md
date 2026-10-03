@@ -9,11 +9,39 @@ The user approved the available effort labels `low -> medium -> xhigh` on Octobe
 
 This file is the implementation handoff. It does not replace the product, architecture, adaptive-learning, design-system, or App Store contracts. Read them first and preserve the working product.
 
+## Current implementation status — October 2, 2026
+
+The web V3 program described below has been executed into `main`; this file is
+now both the historical phase contract and the source of remaining acceptance
+gates. Do **not** rerun Phase 1/2/3 as a greenfield build.
+
+- PR #64 merged the hardened deterministic/adaptive backend and atomic Coach
+  evidence/retry boundary.
+- PR #66 merged the learner-facing V3 Coach/companion finish.
+- PR #70 made explanation level global to the Study Room and gave Coach/Learn
+  independent safe presentation preferences.
+- PR #71 verified the integrated current-main beta and merged the local adapter
+  compatibility work.
+- PR #72 added forced Study Guide reread/reindex recovery after physical-iPhone
+  testing exposed stale derived topic scope.
+- Production enables `STUDIGO_ATOMIC_COACH=1` and
+  `STUDIGO_ADAPTIVE_SESSION=1`. Keep `STUDIGO_DURABLE_SESSIONS` off until
+  durable session lifecycle and Coach pending-encounter state are atomically
+  linked.
+
+Canonical verification and remaining limits live in
+[`docs/ADAPTIVE_BETA_EVIDENCE.md`](docs/ADAPTIVE_BETA_EVIDENCE.md).
+
 ## Execution order and prerequisite gate
 
 Track verified results, source-audit findings and outstanding prerequisite checks in [`docs/V3_EXECUTION_EVIDENCE.md`](docs/V3_EXECUTION_EVIDENCE.md). An unchecked acceptance case remains open even when CI passes.
 
-Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+The prerequisite handoff and V3 web implementation have already been resolved.
+Use `docs/V3_EXECUTION_EVIDENCE.md` and `docs/ADAPTIVE_BETA_EVIDENCE.md` as
+acceptance evidence. Remaining work is release hardening, not a restart:
+durable-session/Coach atomic linkage, trusted Quiz/Test provenance, reviewed live
+RAG and provider performance/cost measurements, durable ingestion, physical-device
+PDF/Study-Guide acceptance, privacy/minor-data gates, and native Expo delivery.
 
 The shared ChatGPT conversation has not been independently verified and is not acceptance evidence. Model names and effort levels below are requested execution assignments; unavailable models must be reported rather than silently relabeled.
 

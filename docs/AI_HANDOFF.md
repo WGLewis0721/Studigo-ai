@@ -37,7 +37,7 @@ Then inspect the current code before proposing changes.
 
 The multiplication Metroidvania lives in `prototypes/moon-road/` and is unrelated to the Next.js app at runtime. Before touching it read `prototypes/moon-road/CURRENT_GAME_HANDOFF.md` and `POC-XI.md`; the authoring pipeline is in `TOOLCHAIN.md`. The current golden route is `dist/poc-xi/` (tag `golden/poc-xi-moon-keep`); golden routes are frozen, so new experiments go in a new sibling route. Never link the game from `apps/web`.
 
-## Latest state (October 1, 2026)
+## Latest state (October 2, 2026)
 
 The core loop and the study modes are built and deployed from `main`. Read
 `docs/ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
@@ -48,13 +48,19 @@ The companion window is now implemented in the web Study Room with shared
 sprites, gaze/touch/idle behavior, dragging/resizing and real-state reactions.
 The native iOS/iPadOS app is still unstarted.
 
-Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+The V3 web implementation is now integrated into `main`. Do not restart the
+Phase 1/2/3 plan. Production enables the atomic Coach and adaptive-session paths;
+keep the standalone durable-session route disabled until its lifecycle is
+atomically linked to Coach pending encounters. Read
+`docs/ADAPTIVE_BETA_EVIDENCE.md` before changing those boundaries.
 
-The approved V3 direction is documented in the root `IMPLEMENTATION.md`:
+The shipped V3 contract is documented in the root `IMPLEMENTATION.md`:
 deterministic adaptive game director underneath a grounded GenAI study partner,
 global room explanation level preserved, learner-facing Coach modes simplified
-to Show me / Coach me / Challenge me, and one Expo / React Native Apple client
-over the existing backend.
+to Show me / Coach me / Challenge me, independent Learn presentation modes, and
+one Expo / React Native Apple client over the existing backend. Physical-iPhone
+testing also added Materials → **Refresh study guide** as the supported recovery
+for stale derived topic scope.
 
 The learner-facing web/PWA finish contract is
 `docs/V3_LEARNER_UI_FINISH_PLAN.md`: persistent Coach/Learn across Chat/Topics,
@@ -76,9 +82,9 @@ automatic authority over mastery/progression.
   writing another edit-distance check. See `docs/ARCHITECTURE.md`, "Reading typed
   text".
 - Model output and app copy avoid em dashes (`PLAIN_PUNCTUATION_RULE`).
-- Not verified against the real model: the new Learn prompts, outline
-  compliance, off-topic redirects and typo grading. Track these in the ordered
-  validation plan above, and add an eval before tuning prompts further.
+- Live/provider quality is still not closed by synthetic beta evidence. Use the
+  reviewed RAG/provider evaluation gates in `ADAPTIVE_BETA_EVIDENCE.md` before
+  claiming production quality or tuning prompts from anecdotes.
 - The game in `prototypes/moon-road/` is separate and frozen at its golden image
   (currently POC XI). Do not edit a golden build; start the next experiment in a
   new sibling route.

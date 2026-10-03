@@ -27,6 +27,17 @@ Validation:
 - Vercel deployment reported success;
 - hosted database constraint was verified after migration.
 
+Follow-up status on current `main`:
+
+- PR #70 completed the physical-device settings correction: Explanation Level is
+  Room Settings only; Coach and Learn have independent persisted surface modes,
+  and Learn exposes Big picture / Step by step / Examples first.
+- PR #71 verified the integrated current-main beta and aligned the development
+  adapter with the same global-explanation/independent-mode contract.
+- PR #72 added **Refresh study guide** after physical-iPhone testing exposed stale
+  derived topic scope. That recovery belongs in Materials, not in Coach/Learn
+  preference logic.
+
 Still requires human visual acceptance on a physical iPhone/iPad: confirm the
 actual sprite composition keeps every facial feature clear and that deliberate
 body overlap feels intentional at real-device scale. This is visual acceptance,
