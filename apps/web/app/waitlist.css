@@ -24,3 +24,9 @@
 .home .studigoWaitlistForm .studigoWaitlistName { display: block; width: 100%; box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 16px; background: white; color: var(--ink); padding: 14px 17px; font: inherit; }
 .home .studigoWaitlistForm .studigoWaitlistTrap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .home .studigoWaitlistName:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+
+/* Product-film posters and controls share the existing section's visual shell. */
+.product-film-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.product-film-poster[hidden] { display: none; }
+#waitlist .product-film-expand { left: 12px; right: auto; }
+#waitlist video:fullscreen { object-fit: contain; background: #101117; }

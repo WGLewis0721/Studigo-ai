@@ -1,35 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import { useProductFilm } from "./use-product-film";
 
 type State = "idle" | "sending" | "success" | "error";
 
 export function StudigoWaitlist() {
-  const video = useRef<HTMLVideoElement>(null);
-  const [motion, setMotion] = useState(false);
+  const { video, playing, ended, failed, posterVisible, toggle, expand } = useProductFilm();
   const [state, setState] = useState<State>("idle");
-
-  useEffect(() => {
-    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setMotion(!preference.matches);
-    sync();
-    preference.addEventListener("change", sync);
-    return () => preference.removeEventListener("change", sync);
-  }, []);
-
-  useEffect(() => {
-    const element = video.current;
-    if (!element || !motion) {
-      element?.pause();
-      return;
-    }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) void element.play().catch(() => setMotion(false));
-      else element.pause();
-    }, { threshold: 0.2 });
-    observer.observe(element);
-    return () => { observer.disconnect(); element.pause(); };
-  }, [motion]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,8 +61,10 @@ export function StudigoWaitlist() {
           </form>
         </div>
         <div className="studigoWaitlistVisual">
-          <video ref={video} loop muted playsInline preload="none" poster="/waitlist/studigo-poster.webp" aria-label="A study guide opens, revealing colored sections of the learner's material"><source src="/waitlist/studigo-loop.mp4" type="video/mp4" /></video>
-          <button type="button" className="studigoWaitlistMotion" aria-label={motion ? "Pause waitlist motion" : "Play waitlist motion"} aria-pressed={motion} onClick={() => setMotion(value => !value)}>{motion ? "Pause motion" : "Play motion"}</button>
+          <img className="product-film-poster" src="/waitlist/studigo-product-film-v2.webp" hidden={!posterVisible} alt="Final product walkthrough frame with illustrative data" />
+          <video style={{ visibility: posterVisible ? "hidden" : undefined }} ref={video} muted playsInline preload="none" poster="/waitlist/studigo-product-film-v2.webp" aria-label="Studigo product walkthrough with illustrative data"><source src="/waitlist/studigo-product-film-v2.mp4" type="video/mp4" /></video>
+          <button type="button" className="studigoWaitlistMotion" aria-label={ended ? "Replay product film" : playing ? "Pause product film" : "Play product film"} aria-pressed={playing} onClick={toggle}>{failed ? "Retry film" : ended ? "Replay film" : playing ? "Pause film" : "Play film"}</button>
+          <button type="button" className="product-film-expand" aria-label="Watch product film full screen" onClick={expand}>Expand film</button>
         </div>
       </div>
     </section>
