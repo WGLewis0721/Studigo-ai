@@ -245,7 +245,6 @@ export default function HomePage() {
               </ul>
               <p className="meetHint rv" style={delay(400)}>
                 <i aria-hidden="true" />
-                <span className="fineOnly">Move your cursor. He is following it.</span>
                 <span className="coarseOnly">Tap him on the right. He reacts.</span>
               </p>
             </div>
