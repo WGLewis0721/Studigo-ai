@@ -1,0 +1,26 @@
+.home .studigoWaitlist { padding: clamp(84px, 10vw, 150px) 0; background: #f4f9f8; scroll-margin-top: 96px; }
+.home .studigoWaitlistGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: clamp(30px, 6vw, 90px); align-items: center; }
+.home .studigoWaitlistCopy h2 { max-width: 650px; margin: 18px 0 22px; font-family: var(--display); font-size: clamp(2.7rem, 5vw, 5.2rem); line-height: 1.02; letter-spacing: -.055em; }
+.home .studigoWaitlistCopy h2 em { color: var(--teal-ink); font-style: normal; }
+.home .studigoWaitlistCopy > p { max-width: 53ch; color: var(--ink-2); font-size: 1.12rem; line-height: 1.6; }
+.home .studigoWaitlistForm { margin-top: 34px; max-width: 580px; }
+.home .studigoWaitlistForm > label:first-child { display: block; margin-bottom: 9px; font-weight: 750; }
+.home .studigoWaitlistFields { display: flex; gap: 8px; }
+.home .studigoWaitlistFields input { flex: 1; min-width: 0; border: 1px solid var(--hairline); border-radius: 16px; background: white; padding: 14px 17px; font: inherit; }
+.home .studigoWaitlistFields input:focus-visible, .home .studigoWaitlistConsent input:focus-visible, .home .studigoWaitlistMotion:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.home .studigoWaitlistFields button { white-space: nowrap; border: 0; cursor: pointer; }
+.home .studigoWaitlistFields button:disabled { opacity: .65; cursor: wait; }
+.home .studigoWaitlistConsent { display: flex; align-items: flex-start; gap: 10px; margin-top: 15px; color: var(--ink-2); font-size: .82rem; line-height: 1.45; }
+.home .studigoWaitlistConsent input { margin-top: 3px; flex: none; accent-color: var(--teal-ink); }
+.home .studigoWaitlistFeedback { min-height: 2.8em; margin: 13px 0 0; color: var(--ink-2); font-size: .82rem; line-height: 1.4; }
+.home .studigoWaitlistVisual { position: relative; overflow: hidden; border-radius: 30px; box-shadow: var(--lift-2); background: #f0e7d8; }
+.home .studigoWaitlistVisual video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.home .studigoWaitlistMotion { position: absolute; right: 12px; bottom: 12px; border: 1px solid #172f2d33; border-radius: 999px; padding: 7px 12px; background: #fffdf5e8; color: var(--ink); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
+@media (max-width: 900px) { .home .studigoWaitlistGrid { grid-template-columns: 1fr; } .home .studigoWaitlistVisual { max-width: 720px; } }
+@media (max-width: 560px) { .home .studigoWaitlistFields { flex-direction: column; } .home .studigoWaitlistFields button { min-height: 50px; } }
+
+.home .studigoWaitlistForm > label:not([class]) { display: block; margin: 0 0 9px; font-weight: 600; }
+.home .studigoWaitlistForm > label:not([class]):not(:first-child) { margin-top: 17px; }
+.home .studigoWaitlistForm .studigoWaitlistName { display: block; width: 100%; box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 16px; background: white; color: var(--ink); padding: 14px 17px; font: inherit; }
+.home .studigoWaitlistForm .studigoWaitlistTrap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.home .studigoWaitlistName:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
