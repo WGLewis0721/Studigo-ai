@@ -7,7 +7,41 @@ value.
 
 ## Execution order
 
-Resolve the PR #59 handoff first, then complete or explicitly validate the existing downloadable study-guide P0 using `docs/USER_TEST_CASES.md`. Record evidence and remaining defects before starting V3 implementation. A local fixture PDF alone does not close hosted authorization, mobile open/share, print-layout, or learner-validation checks. After this gate, execute Phase 1, Phase 2, then Phase 3 in `IMPLEMENTATION.md`.
+The V3 web implementation has landed. Current `main` is the integrated adaptive
+web beta; do not restart the staged Phase 1/2/3 build. Use
+[`ADAPTIVE_BETA_EVIDENCE.md`](ADAPTIVE_BETA_EVIDENCE.md) as the current evidence
+ledger.
+
+Next, in order:
+
+1. atomically link durable learning sessions to Coach issue/answer/skip/pending state;
+2. finish trusted Quiz and Practice-Test evidence provenance into the shared learner state;
+3. complete independently reviewed live RAG evaluation plus provider latency/cost gates;
+4. move large-document ingestion to a durable retryable worker;
+5. finish physical-device Study Guide/PDF acceptance and stale-scope refresh verification;
+6. finish privacy/minor-data/vendor requirements;
+7. build the universal Expo iOS/iPadOS client and TestFlight path.
+
+## Shipped — October 2, 2026: integrated adaptive web beta
+
+Merged through PRs #64, #70, #71 and #72 and deployed from `main`.
+
+- [x] Deterministic shared learning package/director is integrated under Coach.
+- [x] Atomic Coach retries preserve immutable replies and commit visible response,
+      history, state, evidence and projections together.
+- [x] Production enables `STUDIGO_ATOMIC_COACH` and
+      `STUDIGO_ADAPTIVE_SESSION`.
+- [x] Global Explanation Level remains the single room-wide value used by Coach
+      and Learn.
+- [x] Coach and Learn keep independent persisted presentation modes/topic scopes
+      without gaining authority over mastery/progression.
+- [x] Hosted synthetic acceptance covered authenticated isolation, forged-bearer
+      rejection, retry/idempotency behavior, accepted assessment and PDF export.
+- [x] Exact-main CI and production smoke passed for the integrated beta.
+- [ ] Keep `STUDIGO_DURABLE_SESSIONS` disabled until session lifecycle and Coach
+      pending encounters are atomically linked.
+- [ ] Independently reviewed live RAG quality, provider p95/cost, native
+      TestFlight and child/privacy acceptance remain release gates.
 
 ## Shipped — October 2, 2026: V3 learner-facing simplification
 
@@ -78,7 +112,7 @@ Physical iPhone acceptance exposed three learner-facing issues after PR #66:
       apply, then ask about condensation/heat without the old Animal Responses
       context leaking into the answer.
 
-## After the study-guide P0 gate — V3 deterministic adaptive game director + iOS/iPadOS
+## Current post-beta path — hardening + iOS/iPadOS
 
 The next major implementation pass converges the existing control plane, grounded
 GenAI, simplified coaching controls and native Apple client.
@@ -102,16 +136,11 @@ Product decisions:
 - permit Python/FastAPI/LangChain/ML where measured quality/maintainability gains
   justify the extra service boundary.
 
-Execution is staged in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md):
-
-1. **Phase 1 — GPT 6.1 Sol / low:** repo audit, architecture/RAG benchmark,
-   versioned deterministic contracts, replay tests, Coach-mode migration
-   foundation and optional Python service spike.
-2. **Phase 2 — GPT 6.1 Sol / medium:** production integration across learning
-   surfaces, grounded GenAI/RAG hardening, Python/ML evaluation harness,
-   simplified Coach UI and native iOS/iPadOS core loop.
-3. **Phase 3 — GPT 6.1 Sol / xhigh:** final architecture, learning-science, security,
-   cost/latency, native-device and documentation audit; simplify before release.
+The staged Phase 1/2/3 plan in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md)
+has been executed for the web beta. Preserve its contracts and use its remaining
+acceptance gates; do not treat it as unstarted work. Native Expo delivery,
+durable-session linkage, reviewed RAG/performance evidence and release compliance
+are the active continuation.
 
 Research/reference map:
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
