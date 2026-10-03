@@ -6,6 +6,8 @@ import "./home.css";
 import { ModeGlyph, type GlyphName } from "@/components/mode-glyph";
 import { HomeMotion } from "@/components/home/home-motion";
 import { MeetPortrait } from "@/components/home/meet-portrait";
+import { StudigoWaitlist } from "@/components/home/waitlist";
+import "./waitlist.css";
 
 export const metadata: Metadata = {
   title: "Studigo: the study companion built from your class",
@@ -412,6 +414,8 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        <StudigoWaitlist />
 
         <section className="colorField cta" id="start" data-tone="tangerine" data-guide="cta" aria-labelledby="cta-title">
           <div className="wrap ctaGrid">
