@@ -4,7 +4,7 @@ import { waitlistHandlerFromEnv } from "@/lib/waitlist";
 export const runtime = "nodejs";
 export const maxDuration = 15;
 
-const handler = waitlistHandlerFromEnv(process.env);
+const handler = waitlistHandlerFromEnv(process.env, { product: "Studigo", siteUrl: "https://studigo-ai.vercel.app/" });
 
 export const POST = (request: Request) => handler(request);
 export const OPTIONS = (request: Request) => handler(request);
