@@ -238,6 +238,7 @@ Read these files in order before making major changes:
 11. `docs/USER_TEST_CASES.md`
 12. `docs/ROADMAP.md`
 13. `docs/AI_HANDOFF.md`
+14. `docs/WAITLIST_API.md` — public beta waitlist (`/api/waitlist` → Google Sheets)
 
 Current `main` is the integrated V3 web beta. The staged V3 engine/UI passes
 have already landed; do **not** restart Phase 1/2/3 from scratch. Read

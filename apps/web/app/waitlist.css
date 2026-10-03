@@ -18,3 +18,9 @@
 .home .studigoWaitlistMotion { position: absolute; right: 12px; bottom: 12px; border: 1px solid #172f2d33; border-radius: 999px; padding: 7px 12px; background: #fffdf5e8; color: var(--ink); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
 @media (max-width: 900px) { .home .studigoWaitlistGrid { grid-template-columns: 1fr; } .home .studigoWaitlistVisual { max-width: 720px; } }
 @media (max-width: 560px) { .home .studigoWaitlistFields { flex-direction: column; } .home .studigoWaitlistFields button { min-height: 50px; } }
+
+.home .studigoWaitlistForm > label:not([class]) { display: block; margin: 0 0 9px; font-weight: 600; }
+.home .studigoWaitlistForm > label:not([class]):not(:first-child) { margin-top: 17px; }
+.home .studigoWaitlistForm .studigoWaitlistName { display: block; width: 100%; box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 16px; background: white; color: var(--ink); padding: 14px 17px; font: inherit; }
+.home .studigoWaitlistForm .studigoWaitlistTrap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.home .studigoWaitlistName:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
