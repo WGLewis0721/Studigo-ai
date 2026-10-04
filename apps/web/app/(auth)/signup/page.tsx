@@ -1,4 +1,5 @@
 import { GoogleSignIn } from "../google-sign-in";
+import { googleSignInEnabled } from "@/lib/auth-providers";
 import type { Metadata } from "next";
 import { AuthForm } from "../auth-form";
 import { signUpAction } from "@/lib/actions/auth";
@@ -11,6 +12,7 @@ export default async function SignUpPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const { next, error } = await searchParams;
+  const googleEnabled = await googleSignInEnabled();
 
   return (
     <>
@@ -19,7 +21,7 @@ export default async function SignUpPage({
         Upload the study guide and the material it points at. Studigo does the rest.
       </p>
       {error && <p className="formError" role="alert">Sign-in did not finish. Please try again.</p>}
-      <GoogleSignIn next={next ?? "/app"} />
+      {googleEnabled && <GoogleSignIn next={next ?? "/app"} />}
       <AuthForm mode="signup" action={signUpAction} next={next ?? "/app"} />
     </>
   );
