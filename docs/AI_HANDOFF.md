@@ -1,6 +1,9 @@
 # AI Companion Handoff
 
-This file exists so a new AI coding agent can enter the project cold and continue without re-litigating the product architecture.
+This file is the current coding handoff for the golden V3 web beta. Use
+[`README.md`](README.md) for the documentation map and
+[`ROADMAP.md`](ROADMAP.md) for current release status. Dated phase evidence
+does not supersede the product and architecture contracts.
 
 ## Integrated adaptive beta status
 
@@ -14,24 +17,11 @@ linkage, measured RAG, trusted Quiz/Test provenance and native acceptance remain
 
 ## Read first
 
-In order:
-
-1. `README.md`
-2. `docs/PRODUCT.md`
-3. `docs/ARCHITECTURE.md`
-4. `docs/ADAPTIVE_LEARNING_CORE.md`
-5. `docs/ADAPTIVE_LEARNING_ENGINE.md`
-6. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
-7. `IMPLEMENTATION.md`
-8. `docs/APP_STORE_RELEASE_PLAN.md`
-9. `docs/AUTH.md`
-10. `docs/DESIGN_SYSTEM.md`
-11. `docs/COMPANION_PARITY_PLAN.md`
-12. `docs/ROADMAP.md`
-13. `AGENTS.md`
-14. `supabase/migrations/001_initial.sql`
-
-Then inspect the current code before proposing changes.
+Follow [`AGENTS.md`](../AGENTS.md): read
+[`PRODUCT.md`](PRODUCT.md), [`ARCHITECTURE.md`](ARCHITECTURE.md),
+[`ROADMAP.md`](ROADMAP.md), and this handoff, then inspect the current code.
+The [documentation map](README.md) points to the adaptive, auth, design,
+release, and game contracts when relevant.
 
 ## Game prototype (Moon Keep / Core Clash)
 
@@ -88,46 +78,6 @@ automatic authority over mastery/progression.
 - The game in `prototypes/moon-road/` is separate and frozen at its golden image
   (currently POC XI). Do not edit a golden build; start the next experiment in a
   new sibling route.
-
-## Original state (kept for context)
-
-This repository began as a foundation scaffold moving into MVP implementation.
-The lists below predate most of the build, so check the code and the roadmap
-before trusting a "not yet" item.
-
-Already established:
-
-- Next.js/React primary client.
-- PWA installability scaffold.
-- Studigo "Personal Learning Device" visual system (V2; replaced WebForge V1).
-- Supabase Auth/Postgres/Storage architecture.
-- Social auth decision: Google, Apple, Microsoft first; email fallback; Facebook later.
-- Private `study-materials` storage design.
-- pgvector `document_chunks` schema.
-- RLS ownership policies.
-- Source-priority model.
-- Room-scoped retrieval RPC.
-- Server-side OpenAI package.
-- Upload endpoint.
-- Signed-download endpoint.
-- Grounded chat endpoint.
-- Tauri desktop shell placeholder.
-
-Not yet guaranteed complete until verified in current code:
-
-- Production-ready auth screens/session middleware.
-- Google/Apple/Microsoft provider configuration.
-- First-login onboarding flow.
-- Study Room CRUD UI.
-- Production ingestion worker.
-- File parsers/OCR.
-- Chunk generation.
-- Topic extraction.
-- Chat UI/streaming/history.
-- Quizzes/flashcards/practice tests.
-- Mastery algorithm.
-- PWA icons/polish.
-- Production desktop bundling.
 
 ## Do not break these decisions casually
 
@@ -193,23 +143,13 @@ Own architecture review, accessibility, OAuth threat modeling, auth edge cases, 
 
 Agents should work through PRs and preserve contracts instead of independently redesigning the stack.
 
-## First implementation target
+## Current acceptance target
 
-The first end-to-end acceptance test should be:
-
-1. Sign in with Google (then verify Apple/Microsoft separately).
-2. Land in minimal onboarding or the app with a persistent Supabase session.
-3. Create a Science Study Room.
-4. Upload a teacher study guide PDF and one textbook PDF.
-5. Wait for both to become `ready`.
-6. Ask a question listed on the study guide.
-7. Receive a correct answer supported by the files.
-8. See document/page citations.
-9. Download/open the original source.
-10. Ask an unsupported question and receive an explicit insufficient-source response.
-11. Sign out and verify private routes/data are no longer accessible.
-
-Do not call the core loop done until that works reliably.
+Preserve the implemented create → upload → grounded study loop while closing
+the open gates in [`ROADMAP.md`](ROADMAP.md) and
+[`ADAPTIVE_BETA_EVIDENCE.md`](ADAPTIVE_BETA_EVIDENCE.md). A production
+provider configuration or device-specific path still needs its own evidence;
+do not infer it from a local fixture.
 
 ## Definition of a useful AI change
 

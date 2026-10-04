@@ -41,18 +41,26 @@ Stage VIII starts fresh with unlimited ×1 and uses only limited-ammo ×2/×3, p
 
 ## Preserved POC VII golden handoff
 
-**Use this handoff and the files on `feature/moon-road-core-clash` as the source of truth for the current game.** The definitive playable build is POC VII, a small side-scrolling action level that leads directly into the existing Core Clash boss fight.
+**Historical POC VII control.** The following section records the earlier
+definitive build and its unchanged control routes. The current golden game is
+POC XI on `main` as described at the top of this file and in
+[`POC-XI.md`](POC-XI.md).
 
-## Play the definitive version
+## Play the historical POC VII control
 
 **Canonical play URL:** https://studigo-core-clash.william-glewis17.chatgpt.site/poc-vii/
 
-Use that URL whenever William asks to play or share the current game. The level ends at the vault. **ENTER CORE CLASH** opens the original Core Clash encounter and starts it immediately. **KEEP EXPLORING** returns to the level so the player can revisit a missed drop. The standalone boss remains available at the site root for comparison.
+Use that URL for POC VII regression or comparison. Share the POC XI golden
+route at the top of this file for the current game. The older level ends at
+the vault. **ENTER CORE CLASH** opens the original Core Clash encounter and
+starts it immediately. **KEEP EXPLORING** returns to the level so the player
+can revisit a missed drop. The standalone boss remains available at the
+site root for comparison.
 
 ## Repository and authoritative files
 
 Repository: https://github.com/WGLewis0721/Studigo-ai  
-Working branch: `feature/moon-road-core-clash`  
+Historical working branch: `feature/moon-road-core-clash`
 Game directory: `prototypes/moon-road/`  
 POC VII browser route: `prototypes/moon-road/dist/poc-vii/`
 

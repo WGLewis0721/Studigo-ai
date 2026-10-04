@@ -150,15 +150,8 @@ supabase/
 knowledge/
   teaching-coaching/   Coach-method KB derived from the live UI taxonomy
 docs/
-  PRODUCT.md           product behavior and UX principles
-  ARCHITECTURE.md      system boundaries and data flow
-  APP_STORE_RELEASE_PLAN.md chosen Expo/iOS, commerce, TestFlight and release path
-  AUTH.md              social OAuth, sessions, callback, auth UX/security
-  DESIGN_SYSTEM.md     "Personal Learning Device" visual system and UI guardrails
-  VERCEL_DEPLOYMENT.md exact Vercel monorepo deployment settings
-  ROADMAP.md           ordered engineering plan
-  USER_TEST_CASES.md   next production user-test and release cases
-  AI_HANDOFF.md        rules for Opus/SuperGrok/Astra/etc.
+  README.md            entrypoint for product, architecture, release and evidence
+  ...                  specialist contracts and dated verification
 ```
 
 ## GitHub Codespaces preview
@@ -223,22 +216,10 @@ Teacher-provided study guides and teacher materials should carry the highest ret
 
 ## Current handoff target
 
-Read these files in order before making major changes:
-
-1. `docs/PRODUCT.md`
-2. `docs/ARCHITECTURE.md`
-3. `docs/ADAPTIVE_LEARNING_CORE.md`
-4. `docs/ADAPTIVE_LEARNING_ENGINE.md`
-5. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
-6. `IMPLEMENTATION.md`
-7. `docs/APP_STORE_RELEASE_PLAN.md`
-8. `docs/AUTH.md`
-9. `docs/DESIGN_SYSTEM.md`
-10. `knowledge/teaching-coaching/README.md`
-11. `docs/USER_TEST_CASES.md`
-12. `docs/ROADMAP.md`
-13. `docs/AI_HANDOFF.md`
-14. `docs/WAITLIST_API.md` — public beta waitlist (`/api/waitlist` → Google Sheets)
+Start with [the documentation map](docs/README.md), then the product,
+architecture, roadmap and AI handoff files required by [AGENTS.md](AGENTS.md).
+Read the specialist contract for the area you are changing. The learning app
+and Moon Keep have separate release tracks and golden baselines.
 
 Current `main` is the integrated V3 web beta. The staged V3 engine/UI passes
 have already landed; do **not** restart Phase 1/2/3 from scratch. Read
