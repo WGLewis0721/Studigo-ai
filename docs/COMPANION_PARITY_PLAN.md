@@ -24,6 +24,8 @@ him in place instead of nudging him aside; and rows that scroll sideways pass
 behind him.
 
 The rest of this document is the plan as written, kept for the reasoning.
+Its older side-by-side comparison is a historical snapshot, not the present
+Study Room UI. Current release gates live in [ROADMAP.md](ROADMAP.md).
 
 ## The problem
 

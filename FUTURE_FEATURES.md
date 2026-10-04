@@ -8,7 +8,10 @@ Supporting mockups and design artifacts live under `docs/future-features/`.
 
 ## Studigo contextual companion
 
-**Status:** design exploration / future feature  
+**Status:** partially shipped companion; contextual radial actions and
+cross-app customization remain design exploration. Current shipped behavior:
+[`docs/ROADMAP.md`](docs/ROADMAP.md) and
+[`docs/COMPANION_PARITY_PLAN.md`](docs/COMPANION_PARITY_PLAN.md).
 **Captured:** 2026-09-30  
 **Reference baseline:** `golden/ui-v2-2026-09-26`
 

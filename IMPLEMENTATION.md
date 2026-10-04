@@ -8,6 +8,9 @@
 The user approved the available effort labels `low -> medium -> xhigh` on October 2, 2026 UTC. The requested “Light” label is unavailable here and maps to `low` by that explicit approval; “Extra High” is `xhigh`. These are coding-agent assignments, separate from production provider models. Claude retains UI/UX ownership: complete backend/contracts/evaluation passes before returning the learner-facing Coach settings and native presentation handoff to Claude.
 
 This file is the implementation handoff. It does not replace the product, architecture, adaptive-learning, design-system, or App Store contracts. Read them first and preserve the working product.
+The staged web V3 phases below are executed historical contracts, while
+[`docs/ROADMAP.md`](docs/ROADMAP.md) owns current release status and
+[`docs/README.md`](docs/README.md) is the navigation entrypoint.
 
 ## Current implementation status — October 2, 2026
 
@@ -47,16 +50,11 @@ The shared ChatGPT conversation has not been independently verified and is not a
 
 ## Read first
 
-1. `docs/PRODUCT.md`
-2. `docs/ARCHITECTURE.md`
-3. `docs/ADAPTIVE_LEARNING_CORE.md`
-4. `docs/ADAPTIVE_LEARNING_ENGINE.md`
-5. `docs/ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`
-6. `docs/DESIGN_SYSTEM.md`
-7. `docs/APP_STORE_RELEASE_PLAN.md`
-8. `docs/ROADMAP.md`
-9. `docs/COMPANION_PARITY_PLAN.md`
-10. `docs/AI_HANDOFF.md`
+Follow [`AGENTS.md`](AGENTS.md) and the
+[`docs/README.md`](docs/README.md) map. Read the adaptive engine and
+specialist design/release contracts only for the surface being changed.
+The phases below are historical implementation context, not a second
+current-state reading order.
 
 ## Product thesis
 

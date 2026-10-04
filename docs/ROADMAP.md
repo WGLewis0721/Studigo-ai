@@ -257,11 +257,11 @@ Still open from this pass:
 - [ ] Progress is the only dark page. It is a deliberate readout screen; revisit
       it if user tests find it jarring next to the others.
 
-## Current P0 — Downloadable study guide
+## Downloadable study guide — implemented; device/print acceptance open
 
 The PDF download is implemented. P0 is now completing or explicitly validating
 its acceptance below, recording evidence and fixing outstanding defects before
-V3 implementation. Do not treat implementation or local-fixture success as full
+native release. Do not treat implementation or local-fixture success as full
 learner, hosted-data, mobile, or print validation.
 
 First-release acceptance:
@@ -424,7 +424,7 @@ Exit: Studigo can teach and test against the same source-grounded topic map.
 
 Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 
-## Phase 3.5 — Export + real-user validation (current)
+## Phase 3.5 — Export implemented; real-user validation open
 
 ### Downloadable study guide
 - [x] One-click PDF export from a Study Room.
@@ -466,10 +466,15 @@ Exit: readiness is driven by demonstrated recall, not cosmetic activity metrics.
 Exit: a learner can complete create → upload → study → **download**, and the
 artifact is trusted enough to print/use without manual reconstruction.
 
-## Phase 3.6 — Adaptive learning game engine (planned)
+## Phase 3.6 — Adaptive control plane implemented; acceptance remains
 
 Connect the existing learning surfaces through one deterministic learner-state
 and challenge system rather than adding another AI orchestration layer.
+The integrated V3 web beta implements the shared director/Coach path. Durable
+session linkage, trusted Quiz/Test provenance, live RAG/provider measurement,
+and physical-device acceptance remain release gates; see
+[`ADAPTIVE_BETA_EVIDENCE.md`](ADAPTIVE_BETA_EVIDENCE.md). The list below
+records the design contract, not an unstarted greenfield build.
 
 Core direction:
 
