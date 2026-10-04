@@ -1,4 +1,5 @@
 import { GoogleSignIn } from "../google-sign-in";
+import { googleSignInEnabled } from "@/lib/auth-providers";
 import type { Metadata } from "next";
 import { AuthForm } from "../auth-form";
 import { signInAction } from "@/lib/actions/auth";
@@ -11,13 +12,14 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const { next, error } = await searchParams;
+  const googleEnabled = await googleSignInEnabled();
 
   return (
     <>
       <h1 className="authTitle">Welcome back.</h1>
       <p className="authLede">Pick up where your last study session left off.</p>
       {error && <p className="formError" role="alert">Sign-in did not finish. Please try again.</p>}
-      <GoogleSignIn next={next ?? "/app"} />
+      {googleEnabled && <GoogleSignIn next={next ?? "/app"} />}
       <AuthForm mode="signin" action={signInAction} next={next ?? "/app"} />
       <p className="authDemoLink">
         Just exploring? <a href="/dev/study">Preview the coach</a>
