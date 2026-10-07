@@ -16,7 +16,7 @@
     "openai": "7.15.0"
   },
   "devDependencies": {
-    "@types/node": "22.20.2",
+    "@types/node": "26.6.4",
     "typescript": "7.0.2",
     "tsx": "4.23.13"
   }
