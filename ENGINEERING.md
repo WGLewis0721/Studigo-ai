@@ -1,0 +1,266 @@
+# Studigo Engineering Guide
+
+> **Start here for technical work.** This file is the compact map of the live system for engineers, reviewers, and GenAI coding agents.
+>
+> Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
+
+## System in one sentence
+
+Studigo turns a learner's own course material into a source-grounded study companion where **probabilistic AI handles language and ambiguity while deterministic software owns authorization, source scope, progression, evidence, retries, and durable state**.
+
+## Engineering thesis
+
+Studigo is deliberately not a chatbot wrapper.
+
+The core boundary is:
+
+```text
+PROBABILISTIC AI
+- retrieve semantic relevance
+- explain
+- generate questions
+- interpret free-form answers
+- produce structured semantic evidence
+
+DETERMINISTIC SOFTWARE
+- authentication / authorization
+- source ownership and scope
+- challenge policy
+- scaffold policy
+- mastery/evidence transitions
+- idempotency and retries
+- transactions and replay
+- release/security gates
+```
+
+The rule is simple:
+
+> Use AI where ambiguity creates value. Keep deterministic authority where correctness must be reproducible.
+
+## End-to-end path
+
+```text
+Learner upload
+   ↓
+private object storage
+   ↓
+extract / OCR / normalize
+   ↓
+chunks + page/slide provenance
+   ↓
+embeddings + pgvector
+   ↓
+room-scoped retrieval under RLS
+   ↓
+grounded model call
+   ↓
+structured explanation / question / semantic evaluation
+   ↓
+deterministic adaptive-learning decision
+   ↓
+durable learning event + transactional state
+   ↓
+progress / next challenge / rematch
+```
+
+The planned hardening path adds a durable ingestion worker and a Canonical Studigo Document between extraction and downstream retrieval/topic generation.
+
+## Why these technologies
+
+| Technology | Why it is here | What it is *not* allowed to become |
+| --- | --- | --- |
+| **TypeScript** | Shared types/contracts across web, AI, documents, and learning logic; keeps product behavior close to compile-time schemas | A place for untyped model blobs |
+| **Next.js / React** | Current web/PWA product, server routes, streaming UI, fast iteration | The long-running background-job system |
+| **Supabase Auth** | One identity system for web and future native clients | Authorization by itself |
+| **Postgres + RLS** | Canonical application data and tenant boundary; authorization close to data | Something bypassed casually by service-role code |
+| **Supabase Storage** | Private original file storage with signed downloads | Public document hosting |
+| **pgvector** | Simple retrieval in the same permission/data plane as the app | A reason to add a second source of truth |
+| **OpenAI-compatible provider layer** | Grounded generation, OCR/vision, semantic grading, embeddings; centralized behind `packages/ai` | Progression, authorization, or mastery authority |
+| **Deterministic learning package** | Replayable challenge/scaffold/progression policy | Prompt-only adaptive behavior |
+| **Postgres events / transactional RPCs** | Idempotency, concurrency control, durable evidence, replay | Best-effort chat state |
+| **Expo / React Native (selected native route)** | Reuse product/backend contracts for iOS/iPadOS without forking the learning system | A second backend or mastery implementation |
+| **Python/FAISS retrieval prototype** | Comparative/local experimentation | Public production retrieval unless authenticated/authorized and benchmarked |
+
+### Why not add more frameworks by default?
+
+Studigo does not add LangChain, an agent framework, another vector database, or learned policy merely for résumé keywords. A new dependency or AI layer must demonstrate a measured quality, cost, latency, safety, or maintainability benefit over the current baseline.
+
+## Repository map
+
+| Concern | Start here | Purpose |
+| --- | --- | --- |
+| Product contract | `docs/PRODUCT.md` | What Studigo is allowed to be |
+| Deep architecture | `docs/ARCHITECTURE.md` | Runtime/data boundaries and implementation details |
+| Engineering plan | `implementation/ENGINEERING_SYSTEM_PLAN.md` | What must be built/hardened next and why |
+| Security readiness | `implementation/security-readiness/` | Reusable control matrix, audit, release gate |
+| Web/PWA | `apps/web/` | UI, API routes, server orchestration |
+| AI provider boundary | `packages/ai/src/client.ts` | Models, embeddings, provider transport, untrusted-input rules |
+| Grounding/RAG | `packages/ai/src/grounding.ts`, `apps/web/lib/retrieval.ts` | Source-bound answers, citations, abstention, room-scoped retrieval |
+| AI study generation/grading | `packages/ai/src/study.ts` | Structured questions, grading, Learn behavior |
+| Coach protocol | `packages/ai/src/coach.ts` | Stateful Coach interaction protocol |
+| Documents | `packages/documents/`, `apps/web/lib/ingest.ts` | Upload policy, parsing, OCR, chunking, ingestion |
+| Adaptive learning | `packages/learning/`, `apps/web/lib/learning/` | Deterministic challenge/scaffold/progression |
+| Database/security | `supabase/migrations/` | Schema, RLS, pgvector, RPCs, transaction boundaries |
+| RAG evaluation | `evals/rag/` | Grounding, abstention, isolation, prompt-injection, latency/cost benchmark |
+| ML experiments | `evals/ml/` | Advisory BKT/calibration work |
+| Security tests | `tests/database-security.test.mjs` | Database/tenant boundary regression |
+| Game prototype | `prototypes/moon-road/` | Separate game-first prototype |
+
+## Where to make common changes
+
+| Change | Primary code | Also verify |
+| --- | --- | --- |
+| Change model/provider | `packages/ai/src/client.ts` | AI evals, cost/latency, prompt/version trace |
+| Change grounded-answer behavior | `packages/ai/src/grounding.ts` | `evals/rag/` |
+| Change retrieval | `apps/web/lib/retrieval.ts`, SQL RPC | RLS, recall, citation support, latency |
+| Change question/grading logic | `packages/ai/src/study.ts` | grader/question tests + semantic eval |
+| Change Coach behavior | `packages/ai/src/coach.ts` | Coach state, interaction IDs, learning-event path |
+| Change progression/scaffolding | `packages/learning/` | replay/determinism tests |
+| Change file ingestion | `packages/documents/`, `apps/web/lib/ingest.ts` | upload security, provenance, stale-source tests |
+| Change auth | `apps/web/lib/auth.ts`, middleware, Supabase config | RLS, OAuth/session tests |
+| Change DB state | `supabase/migrations/` | migration rollback, RLS, concurrent/retry behavior |
+| Change learner UI | `apps/web/components/` | product/design contracts; do not duplicate learning policy in UI |
+
+## Core AI engineering principles
+
+1. **Uploaded material is the default knowledge boundary.**
+2. **RAG must preserve permissions, not just semantic relevance.**
+3. **A citation marker is not proof of semantic support.**
+4. **Unsupported questions should abstain instead of inventing course facts.**
+5. **Uploaded/retrieved content is untrusted data and possible prompt-injection input.**
+6. **Machine-affecting model output is structured and validated.**
+7. **Semantic grading is used only where deterministic grading is insufficient.**
+8. **The LLM does not own progression or mastery state.**
+9. **Reasoning difficulty, support/scaffolding, and explanation language are separate axes.**
+10. **AI changes must be evaluated for quality, safety, latency, cost, and rollback.**
+
+## Core software engineering principles
+
+1. **One canonical identity/data boundary.**
+2. **Authorization is enforced at the database layer with RLS.**
+3. **Service-role operations must independently prove user/room/object scope.**
+4. **Retries must not create duplicate facts or learning evidence.**
+5. **State transitions that matter are durable, idempotent, and replayable.**
+6. **External providers are isolated behind internal contracts.**
+7. **Typed schemas are preferred over implicit object shapes.**
+8. **Database changes are migrations, not manual drift.**
+9. **Failure/recovery paths are first-class behavior.**
+10. **Architecture changes require a reason, evidence, and a rollback path.**
+
+## Current strongest engineering elements
+
+- room/user-scoped RAG with page/source provenance,
+- explicit abstention and source-priority rules,
+- prompt-injection/untrusted-source boundaries,
+- structured question and grading contracts,
+- deterministic adaptive-learning control plane,
+- separate reasoning/scaffold/language axes,
+- stable interaction/encounter IDs,
+- idempotent and transactional learning-state paths,
+- event/replay architecture,
+- adversarial RAG benchmark design,
+- advisory knowledge-tracing/calibration harness,
+- RLS and private-source storage.
+
+## Current important gaps
+
+Do not overclaim these as finished:
+
+- independently reviewed live RAG scorecard,
+- calibrated semantic-grader agreement with humans,
+- durable out-of-request ingestion worker,
+- Canonical Studigo Document layer,
+- full production AI cost/token/latency tracing,
+- centralized AI abuse/spend limits,
+- completed public-launch security gate,
+- complete student/minor privacy release requirements,
+- measured proof that more complex retrieval beats the current baseline.
+
+See `implementation/ENGINEERING_SYSTEM_PLAN.md` for the execution order.
+
+## Change methodology
+
+For any material AI or architecture change:
+
+```text
+failure / requirement
+       ↓
+current baseline
+       ↓
+hypothesis
+       ↓
+smallest candidate
+       ↓
+tests / offline eval
+       ↓
+quality + safety + latency + cost
+       ↓
+limited rollout
+       ↓
+production evidence
+       ↓
+keep or rollback
+```
+
+Do not call something better because a few prompts looked better.
+
+## How to explain Studigo
+
+### 30 seconds
+
+> Studigo is a grounded learning system built around a student's own course material. The AI handles retrieval, explanation, question generation, and semantic interpretation, but deterministic software owns permissions, progression, and learning evidence. That makes the important state reproducible and testable instead of putting the entire product inside a prompt.
+
+### 2 minutes
+
+Walk through:
+
+1. private learner upload,
+2. extraction/OCR + provenance,
+3. room-scoped pgvector retrieval,
+4. grounded generation + abstention,
+5. structured semantic evaluation,
+6. deterministic challenge/scaffold policy,
+7. durable/idempotent learning evidence,
+8. RAG/security/evaluation gates.
+
+### 10 minutes
+
+Open, in this order:
+
+1. `docs/PRODUCT.md`
+2. `packages/ai/src/client.ts`
+3. `packages/ai/src/grounding.ts`
+4. `packages/ai/src/study.ts`
+5. `packages/ai/src/coach.ts`
+6. `packages/learning/`
+7. relevant `supabase/migrations/`
+8. `evals/rag/`
+9. `implementation/security-readiness/`
+10. `implementation/ENGINEERING_SYSTEM_PLAN.md`
+
+## GenAI context-loading contract
+
+A coding agent should **not** read the entire repository before acting.
+
+Default sequence:
+
+1. Read this file.
+2. Read `docs/PRODUCT.md` only when product behavior/scope is relevant.
+3. Read `docs/ARCHITECTURE.md` only for deeper runtime/data questions.
+4. Read `implementation/ENGINEERING_SYSTEM_PLAN.md` only for planned hardening/roadmap work.
+5. Open only the code paths from the repository/change maps above that match the task.
+6. Read relevant tests/evals before changing behavior.
+7. Search outward only when the targeted files reveal a dependency.
+
+### Documentation authority
+
+When docs conflict, use this order:
+
+1. current code + executable tests for what is actually implemented,
+2. `docs/PRODUCT.md` for product invariants,
+3. `docs/ARCHITECTURE.md` for intended runtime architecture,
+4. this file for the compact engineering map,
+5. `implementation/ENGINEERING_SYSTEM_PLAN.md` for planned work,
+6. dated/audit/history documents for evidence and context.
+
+A material architecture change must update this file if it changes the system map, technology rationale, authority boundary, or code ownership.
