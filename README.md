@@ -21,7 +21,7 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 For engineers, reviewers, and coding agents, start with [`ENGINEERING.md`](ENGINEERING.md). It explains the AI/software authority boundary, why the main technologies were selected, the end-to-end data path, where each responsibility lives in the codebase, and which deeper contract to open next.
 
-The canonical execution plan is [`implementation/ENGINEERING_SYSTEM_PLAN.md`](implementation/ENGINEERING_SYSTEM_PLAN.md). Security readiness and public-launch blockers are maintained under [`implementation/security-readiness/`](implementation/security-readiness/).
+The canonical execution plan is [`implementation/ENGINEERING_PLAN.md`](implementation/ENGINEERING_PLAN.md). Security readiness and public-launch blockers are maintained under [`implementation/security-readiness/`](implementation/security-readiness/).
 
 ## Status
 
@@ -36,7 +36,7 @@ with Learn, Quiz, Flashcards, and mastery derived from real practice.
 - **RAG:** Supabase Postgres + pgvector with room-scoped similarity search.
 - **Documents:** private uploads, metadata, processing states, and signed downloads.
 - **Executable layer:** installable PWA now; Tauri desktop shell is reserved separately, and the chosen App Store route is an Expo/React Native iOS client over the existing hosted backend.
-- **Engineering handoff:** `ENGINEERING.md` is the compact start-here map; deeper product/architecture contracts live in `docs/`, and the canonical engineering execution plan lives in `implementation/ENGINEERING_SYSTEM_PLAN.md`.
+- **Engineering handoff:** `ENGINEERING.md` is the compact start-here map; deeper product/architecture contracts live in `docs/`, and the canonical engineering execution plan lives in `implementation/ENGINEERING_PLAN.md`.
 
 What works today:
 
