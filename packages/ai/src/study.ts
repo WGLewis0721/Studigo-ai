@@ -3,6 +3,7 @@ import {
   UNTRUSTED_MATERIAL_RULE,
   asUntrustedMaterial,
   chatModel,
+  responseOptions,
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
@@ -17,6 +18,7 @@ export async function structured<T>(args: {
 }): Promise<T> {
   const response = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: [
       { role: "system", content: `${args.system} ${PLAIN_PUNCTUATION_RULE}` },
       { role: "user", content: args.user }
@@ -529,6 +531,7 @@ export async function explainTopic(args: {
 
   const response = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: [
       {
         role: "system",

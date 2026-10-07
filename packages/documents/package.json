@@ -13,8 +13,8 @@
     "test": "node --import tsx --test src/*.test.ts"
   },
   "devDependencies": {
-    "typescript": "latest",
-    "tsx": "latest"
+    "typescript": "7.0.2",
+    "tsx": "4.23.13"
   },
   "dependencies": {
     "jszip": "^3.10.2",

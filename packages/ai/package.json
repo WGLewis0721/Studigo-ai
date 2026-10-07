@@ -13,11 +13,11 @@
     "test": "node --import tsx --test src/*.test.ts"
   },
   "dependencies": {
-    "openai": "latest"
+    "openai": "7.15.0"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "typescript": "latest",
-    "tsx": "latest"
+    "@types/node": "22.20.2",
+    "typescript": "7.0.2",
+    "tsx": "4.23.13"
   }
 }

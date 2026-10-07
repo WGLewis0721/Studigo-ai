@@ -9,6 +9,6 @@
     "typecheck": "echo 'desktop shell uses Rust/Tauri'"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "latest"
+    "@tauri-apps/cli": "2.11.4"
   }
 }

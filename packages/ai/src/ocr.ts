@@ -1,4 +1,4 @@
-import { UNTRUSTED_MATERIAL_RULE, chatModel, client } from "./client";
+import { UNTRUSTED_MATERIAL_RULE, chatModel, client, responseOptions } from "./client";
 
 const OCR_PROMPT = [
   "Transcribe all readable text from this scanned study material, in reading order.",
@@ -22,6 +22,7 @@ export async function ocrPagePdf(args: {
 }): Promise<string> {
   const response = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: [
       {
         role: "user",
@@ -46,6 +47,7 @@ export async function ocrImage(args: {
 }): Promise<string> {
   const response = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: [
       {
         role: "user",

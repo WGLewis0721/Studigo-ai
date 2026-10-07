@@ -42,7 +42,7 @@ export async function DELETE(
   // The delete trigger queues the original path in the same transaction.
   const { error } = await supabase.from("documents").delete().eq("id", documentId);
   if (error) {
-    return Response.json({ error: "Delete failed", detail: error.message }, { status: 500 });
+    return Response.json({ error: "Delete failed" }, { status: 500 });
   }
 
   const cleanup = await drainStorageCleanup(user.id).catch(() => ({ pending: 1 }));

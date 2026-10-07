@@ -5,7 +5,7 @@ import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { assertRoomAccess } from "@/lib/retrieval";
-import { runStudigoEngine, type EngineDirective } from "@/lib/engine";
+import { runStudigoEngine } from "@/lib/engine";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -14,8 +14,6 @@ type ChatRequest = {
   roomId?: string;
   question?: string;
   conversationId?: string | null;
-  /** Topic context for Ask. Teaching preferences are read from the room. */
-  directives?: EngineDirective[];
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
   mode?: "ask" | "coach";
@@ -25,15 +23,6 @@ type ChatRequest = {
   /** Optional learner-selected study scope. Server intersects with active room topics. */
   topicIds?: string[];
 };
-
-function sanitizeDirectives(input: unknown): EngineDirective[] | undefined {
-  if (!Array.isArray(input)) return undefined;
-  const cleaned = input
-    .filter((item): item is EngineDirective => Boolean(item) && typeof item === "object" && typeof (item as EngineDirective).name === "string" && typeof (item as EngineDirective).instruction === "string")
-    .map((item) => ({ name: item.name.slice(0, 60), instruction: item.instruction.slice(0, 600) }))
-    .slice(0, 8);
-  return cleaned.length ? cleaned : undefined;
-}
 
 /**
  * Ask Studigo: retrieve inside this room only, answer from what came back, and
@@ -102,7 +91,7 @@ export async function POST(request: Request) {
       .select("id")
       .single();
     if (error) {
-      return Response.json({ error: "Could not start a conversation", detail: error.message }, { status: 500 });
+      return Response.json({ error: "Could not start a conversation" }, { status: 500 });
     }
     conversationId = created.id as string;
   }
@@ -119,8 +108,9 @@ export async function POST(request: Request) {
     .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
   // Stored preferences are authoritative, including after a reload or tab change.
-  // Ask accepts only topic context from the client; draft pedagogy cannot override Apply.
-  const directives = directivesForTurn(mode, preferences, sanitizeDirectives(body?.directives) ?? [], learnPreferences);
+  // No browser-supplied directive text reaches the system prompt: the engine
+  // builds the Ask topic scope from the validated topicIds.
+  const directives = directivesForTurn(mode, preferences, [], learnPreferences);
 
   // Coach turns can produce learning evidence, so they require a stable
   // interaction ID: the persisted user message's own ID. Exact retries reuse

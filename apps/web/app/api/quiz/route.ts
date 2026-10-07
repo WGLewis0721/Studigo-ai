@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     .select("id, kind, prompt, choices, difficulty, topic_id");
 
   if (error) {
-    return Response.json({ error: "Saving the quiz failed", detail: error.message }, { status: 500 });
+    return Response.json({ error: "Saving the quiz failed" }, { status: 500 });
   }
 
   // The answer key stays server-side until the learner answers.

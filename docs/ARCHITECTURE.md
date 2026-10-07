@@ -120,6 +120,15 @@ Do not weaken ownership policies because requests pass through Next.js server ro
 
 Do not use editable Supabase `user_metadata` values for authorization decisions.
 
+Anonymous Supabase sessions are treated as signed out by middleware and the
+auth helpers, and restrictive RLS blocks their inserts, so a key-holder cannot
+mint accounts to spend AI or storage budget. Material-derived text (topic
+titles, earlier model-written practice questions) reaches a system prompt only
+inside the `untrusted_course_data` envelope, and `/api/chat` ignores
+browser-supplied directive text. Uploads are checked by content (magic bytes,
+ZIP part/expansion limits) in `packages/documents/src/file-safety.ts`, not by
+declared type. See `implementation/SECURITY_AUDIT_CHECKLIST.md`.
+
 See `docs/AUTH.md` for the canonical auth/provider/session/security design.
 
 `/` is the marketing surface. The product lives behind auth:

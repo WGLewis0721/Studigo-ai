@@ -83,3 +83,12 @@ test("an explicit OPENAI_CHAT_MODEL override is respected under every transport"
     assert.equal(mod.chatModel(), "llama3.2");
   });
 });
+
+test("direct OpenAI Responses calls opt out of response storage; other transports are unchanged", async () => {
+  await withEnv({ OPENAI_API_KEY: "sk-test" }, async () => {
+    assert.deepEqual((await freshClientModule()).responseOptions(), { store: false });
+  });
+  await withEnv({ AI_GATEWAY_API_KEY: "gw-test" }, async () => {
+    assert.deepEqual((await freshClientModule()).responseOptions(), {});
+  });
+});

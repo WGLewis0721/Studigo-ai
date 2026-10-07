@@ -3,6 +3,7 @@ import {
   UNTRUSTED_MATERIAL_RULE,
   asUntrustedMaterial,
   chatModel,
+  responseOptions,
   client
 } from "./client";
 
@@ -162,6 +163,7 @@ export async function answerFromRetrievedContext(args: {
   const available = toCitations(args.chunks);
   const response = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: buildInput(args)
   });
 
@@ -194,6 +196,7 @@ export async function* streamGroundedAnswer(args: {
   const available = toCitations(args.chunks);
   const stream = await client().responses.create({
     model: chatModel(),
+    ...responseOptions(),
     input: buildInput(args),
     stream: true
   });

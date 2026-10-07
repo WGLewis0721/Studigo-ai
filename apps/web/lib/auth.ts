@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { readBearer } from "./bearer-auth";
 import { serverLocalSession } from './local-beta-context';
+import { isSignedInAccount } from "./account-kind";
 
 export async function getUser(): Promise<User | null> {
   const local = await serverLocalSession();
@@ -12,14 +13,13 @@ export async function getUser(): Promise<User | null> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase.auth.getUser();
-  return data.user ?? null;
+  return isSignedInAccount(data.user) ? data.user : null;
 }
 
 /**
- * For pages and server actions. Middleware signs every visitor in — as a real
- * anonymous Supabase Auth user when they have no account — before a request
- * reaches here, so this should always resolve. The redirect is a fallback for
- * the rare request middleware didn't run in front of (e.g. local tooling).
+ * For pages and server actions. Middleware already redirects signed-out
+ * visitors (including Supabase anonymous sessions) to /login; this redirect is
+ * the fallback for a request middleware didn't run in front of.
  */
 export async function requireUser(): Promise<User> {
   const user = await getUser();
@@ -39,13 +39,14 @@ export async function requireApiUser() {
       global: { headers: bearer.kind === "bearer" ? { Authorization: "Bearer " + bearer.token } : {} }
     });
     // A malformed or forged bearer cannot fall back to a logged-in cookie.
-    const user = bearer.kind === "bearer" ? (await supabase.auth.getUser(bearer.token)).data.user : null;
+    const found = bearer.kind === "bearer" ? (await supabase.auth.getUser(bearer.token)).data.user : null;
+    const user = isSignedInAccount(found) ? found : null;
     return user ? { supabase, user, unauthorized: null } as const
       : { supabase, user: null, unauthorized: Response.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   }
   const supabase = await createServerSupabaseClient();
   const { data } = await supabase.auth.getUser();
-  if (!data.user) {
+  if (!data.user || !isSignedInAccount(data.user)) {
     return { supabase, user: null, unauthorized: Response.json({ error: "Unauthorized" }, { status: 401 }) } as const;
   }
   return { supabase, user: data.user, unauthorized: null } as const;

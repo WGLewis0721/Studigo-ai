@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     .select("id, front, back, citations, due_at, repetitions, topic_id, learner_edited");
 
   if (error) {
-    return Response.json({ error: "Saving the cards failed", detail: error.message }, { status: 500 });
+    return Response.json({ error: "Saving the cards failed" }, { status: 500 });
   }
 
   return Response.json({ cards: inserted ?? [] });

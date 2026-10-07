@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { localBetaAllowed } from './lib/local-beta-access';
+import { isSignedInAccount } from './lib/account-kind';
 
 const PROTECTED_PREFIXES = ["/app"];
 const AUTH_ROUTES = ["/login", "/signup"];
@@ -43,8 +44,10 @@ export async function middleware(request: NextRequest) {
   // Refreshes the session cookie on every navigation so a student stays signed
   // in across visits without a client-side round trip.
   const {
-    data: { user }
+    data: { user: sessionUser }
   } = await supabase.auth.getUser();
+  // An anonymous Supabase session is not a Studigo account.
+  const user = isSignedInAccount(sessionUser) ? sessionUser : null;
 
   const path = request.nextUrl.pathname;
 

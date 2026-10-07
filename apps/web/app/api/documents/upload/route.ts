@@ -1,5 +1,7 @@
 import {
   SOURCE_TYPES,
+  UnsafeFileError,
+  assertContentMatchesType,
   assertUploadAllowed,
   buildDocumentStoragePath,
   resolveMimeType,
@@ -51,6 +53,13 @@ export async function POST(request: Request) {
   }
 
   const buffer = await file.arrayBuffer();
+  // The declared MIME type and extension are browser-controlled; the bytes decide.
+  try {
+    assertContentMatchesType(mimeType, buffer);
+  } catch (error) {
+    if (error instanceof UnsafeFileError) return Response.json({ error: error.message }, { status: 400 });
+    throw error;
+  }
   const checksum = await sha256Hex(buffer);
 
   const { data: duplicate } = await supabase
@@ -103,10 +112,8 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError) {
-    return Response.json(
-      { error: "Saving the document record failed", detail: insertError.message },
-      { status: 500 }
-    );
+    console.error("Document record insert failed", { code: insertError.code });
+    return Response.json({ error: "Saving the document record failed" }, { status: 500 });
   }
 
   const { error: uploadError } = await supabase.storage
@@ -115,7 +122,8 @@ export async function POST(request: Request) {
 
   if (uploadError) {
     await service.from("documents").update({ status: "failed", error_message: "Upload did not complete. Delete this file and upload it again." }).eq("id", documentId);
-    return Response.json({ error: "Upload failed", detail: uploadError.message }, { status: 500 });
+    console.error("Document storage upload failed", { name: uploadError.name });
+    return Response.json({ error: "Upload failed" }, { status: 500 });
   }
 
   const { error: queuedError } = await service.from("documents").update({ status: "queued" }).eq("id", documentId);

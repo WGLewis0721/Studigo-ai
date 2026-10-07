@@ -24,7 +24,8 @@ before(async () => {
     create schema auth; create schema storage; create schema extensions;
     create table auth.users(id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-    create table storage.buckets(id text primary key, name text, public boolean);
+    create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
+    create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
     create table storage.objects(id uuid primary key default gen_random_uuid(), bucket_id text, name text);
     alter table storage.objects enable row level security;
     create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;
@@ -172,6 +173,27 @@ test('Stored-original policies prevent cross-owner listing, creation and deletio
     assert.equal((await db.query(`delete from storage.objects where name like $1 returning id`,[`${B}/%`])).rows.length,0);
     await assert.rejects(db.query(`insert into storage.objects(bucket_id,name) values('study-materials',$1)`,[`${B}/stolen.pdf`]),e=>e.code==='42501');
   });
+});
+test('Anonymous Auth sessions cannot create rooms, conversations, plan events or stored originals',async()=>{
+  await db.exec(`select set_config('request.jwt.claims','{"is_anonymous":true}',false)`);
+  try {
+    await as('authenticated',A,async()=>{
+      await assert.rejects(db.query(`insert into study_rooms(owner_id,title) values($1,'Anon room')`,[A]),e=>e.code==='42501');
+      await assert.rejects(db.query(`insert into conversations(room_id,owner_id,title) values($1,$2,'Anon chat')`,[id(1),A]),e=>e.code==='42501');
+      await assert.rejects(db.query(`insert into study_plan_events(room_id,owner_id,plan_day,action_key,status) values($1,$2,'2026-10-07','anon','completed')`,[id(1),A]),e=>e.code==='42501');
+      await assert.rejects(db.query(`insert into storage.objects(bucket_id,name) values('study-materials',$1)`,[`${A}/anon.pdf`]),e=>e.code==='42501');
+      // Existing owner-scoped reads are unchanged.
+      assert.equal((await db.query(`select id from study_rooms`)).rows.length,1);
+    });
+  } finally { await db.exec(`select set_config('request.jwt.claims','',false)`); }
+  await as('authenticated',A,async()=>{
+    const room=(await db.query(`insert into study_rooms(owner_id,title) values($1,'Real room') returning id`,[A])).rows[0].id;
+    await db.query(`delete from study_rooms where id=$1`,[room]);
+  });
+  const bucket=await one(`select file_size_limit, allowed_mime_types from storage.buckets where id='study-materials'`);
+  assert.equal(Number(bucket.file_size_limit),52428800);
+  assert.ok(bucket.allowed_mime_types.includes('application/pdf'));
+  assert.ok(!bucket.allowed_mime_types.includes('text/html'));
 });
 test('Atomic ingestion claim enforces 3 attempts and excludes simultaneous claims',async()=>{
   await db.query(`update documents set status='queued',attempts=0 where id=$1`,[id(11)]);

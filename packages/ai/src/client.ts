@@ -126,6 +126,17 @@ export function embeddingModel() {
   );
 }
 
+/**
+ * Fields every Responses API call carries. The Responses API stores responses
+ * by default; direct OpenAI calls opt out so learner material and answers are
+ * not retained as stored responses (SECURITY_AUDIT_CHECKLIST LLM02-02). Nothing
+ * in Studigo reads a stored response back. Gateway and Ollama transports are
+ * left unchanged until their handling of the field is verified.
+ */
+export function responseOptions(): { store?: false } {
+  return resolveTransport() === "direct" ? { store: false } : {};
+}
+
 /** Dimension of the pgvector column the schema declares. */
 export const EMBEDDING_DIMENSIONS = 1536;
 

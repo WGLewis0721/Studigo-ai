@@ -9,9 +9,11 @@ import {
   extractPlainText,
   extractPptx
 } from "./extract";
+import { assertSafeZip } from "./file-safety";
 
 export * from "./types";
 export * from "./chunk";
+export { assertContentMatchesType, assertSafeZip, UnsafeFileError, ZIP_LIMITS } from "./file-safety";
 export {
   extractDocx,
   extractPdf,
@@ -98,8 +100,10 @@ export async function extractDocument(args: {
     case "application/pdf":
       return extractPdf(args.buffer);
     case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      assertSafeZip(args.buffer);
       return extractDocx(args.buffer);
     case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      assertSafeZip(args.buffer);
       return extractPptx(args.buffer);
     case "text/plain":
     case "text/markdown":

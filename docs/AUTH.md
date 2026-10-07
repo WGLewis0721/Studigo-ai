@@ -211,6 +211,7 @@ Apple may later use a native Sign in with Apple flow when a true native Apple cl
 - Use HTTPS in production.
 - Keep RLS enabled on all user-owned data.
 - Do not authorize from editable user metadata.
+- Supabase anonymous sessions are not Studigo accounts. Keep anonymous sign-ins disabled in Supabase Auth; the app treats an anonymous session as signed out (`apps/web/lib/account-kind.ts`) and restrictive RLS blocks anonymous inserts (`20261007120000_block_anonymous_writes.sql`).
 - Test account linking/duplicate-email behavior before public beta.
 - Test sign-out and session expiration across browser tabs.
 - Test preview/production redirect allowlists independently.

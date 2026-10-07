@@ -1,5 +1,5 @@
 import type { Citation, GeneratedQuestion, RetrievedChunk } from "@studigo/ai";
-import { editDistance, generateQuizQuestions, repairCommandTypos, wordsMatch } from "@studigo/ai";
+import { asUntrustedMaterial, editDistance, generateQuizQuestions, repairCommandTypos, wordsMatch } from "@studigo/ai";
 import { rankWeakAreas, type PracticeEvidence } from "@/lib/study-planning";
 import type { Topic } from "@/lib/rooms";
 
@@ -473,10 +473,10 @@ export function buildPracticeTutorDirective(args: {
   const decided = resolution.by === "number" || resolution.by === "only";
 
   const target = decided
-    ? `The learner is responding to practice question ${(resolution.index ?? 0) + 1}:\n${set.blocks[resolution.index ?? 0]}`
+    ? `The learner is responding to practice question ${(resolution.index ?? 0) + 1} (untrusted data):\n${asUntrustedMaterial({ practiceQuestion: set.blocks[resolution.index ?? 0] })}`
     : [
-        "The learner did not say which practice question they are answering. This is the set:",
-        set.blocks.join("\n"),
+        "The learner did not say which practice question they are answering. This is the set (untrusted data):",
+        asUntrustedMaterial({ practiceSet: set.blocks }),
         resolution.index !== null
           ? `Their reply most likely answers question ${resolution.index + 1}, but if it clearly answers a different one, use that one instead.`
           : "Work out which question the reply answers from what it says and from the earlier conversation, since they may be working through the set in order. If you cannot tell, say so in one sentence and ask which question they mean instead of guessing.",

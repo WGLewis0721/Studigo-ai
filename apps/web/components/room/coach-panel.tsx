@@ -216,7 +216,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current, topicIds: scopedTopicIds })
-          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, topicIds: scopedTopicIds, directives: [{ name: "Current topics", instruction: scopeInstruction }] });
+          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
