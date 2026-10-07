@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-07T00:00:00.000Z",
+  "app_id": "studigo",
+  "app_name": "Studigo",
+  "catalog_version": "2026-10-07",
+  "total_controls": 41,
+  "applicable_controls": 40,
+  "needs_review": 0,
+  "status_counts": {
+    "fail": 10,
+    "not_applicable": 1,
+    "not_tested": 11,
+    "partial": 18,
+    "pass": 1
+  },
+  "severity_counts_open": {
+    "P0": 21,
+    "P1": 17,
+    "P2": 1,
+    "P3": 0
+  },
+  "release_blockers_open": 25,
+  "public_release_ready": false,
+  "highest_risk_open": [
+    {
+      "control_id": "GMS-API-002",
+      "title": "Rate, concurrency and cost limits",
+      "severity": "P0",
+      "risk_score": 25,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-ACCESS-003",
+      "title": "Auxiliary/internal services authenticated",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-FILE-002",
+      "title": "Content signature and parser validation",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-FILE-003",
+      "title": "Archive/decompression/image/OCR resource bounds",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "partial"
+    },
+    {
+      "control_id": "GMS-PRIV-002",
+      "title": "Minor/student-data release requirements resolved",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "not_tested"
+    },
+    {
+      "control_id": "GMS-AI-007",
+      "title": "AI latency/token/cost observability",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-CI-001",
+      "title": "Protected production branch and required checks",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-GOV-002",
+      "title": "Sensitive data classification and lifecycle",
+      "severity": "P0",
+      "risk_score": 15,
+      "status": "partial"
+    },
+    {
+      "control_id": "GMS-ACCESS-001",
+      "title": "Object-level authorization / tenant isolation",
+      "severity": "P0",
+      "risk_score": 15,
+      "status": "partial"
+    },
+    {
+      "control_id": "GMS-ACCESS-002",
+      "title": "Privileged/service-role operations scoped",
+      "severity": "P0",
+      "risk_score": 15,
+      "status": "partial"
+    }
+  ]
+}
