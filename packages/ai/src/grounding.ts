@@ -6,6 +6,7 @@ import {
   responseOptions,
   client
 } from "./client";
+import { groundingStatus, type GroundingStatus } from "./verify-claim";
 
 export type RetrievedChunk = {
   id: string;
@@ -32,7 +33,10 @@ export type Citation = {
 export type GroundedAnswer = {
   text: string;
   citations: Citation[];
+  /** True when the answer text contains a supplied `[n]` marker. Not semantic support. */
   grounded: boolean;
+  /** `verified` only when cited chunk text covers the claim words. Optional for older callers. */
+  support?: GroundingStatus;
 };
 
 export const INSUFFICIENT_EVIDENCE_TEXT =
@@ -169,7 +173,16 @@ export async function answerFromRetrievedContext(args: {
 
   const text = response.output_text?.trim() || INSUFFICIENT_EVIDENCE_TEXT;
   const used = citationsUsedIn(text, available);
-  return { text, citations: used, grounded: used.length > 0 };
+  return {
+    text,
+    citations: used,
+    grounded: used.length > 0,
+    support: groundingStatus({
+      citationCount: used.length,
+      claim: text,
+      chunkTexts: used.map((citation) => args.chunks.find((chunk) => chunk.id === citation.chunkId)?.content ?? "")
+    })
+  };
 }
 
 export type GroundedStreamEvent =

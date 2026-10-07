@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint || true",
+    "lint": "node ../../scripts/check-ai-boundary.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test lib/*.test.ts",
     "generate:routes": "tsx scripts/generate-route-policies.ts",

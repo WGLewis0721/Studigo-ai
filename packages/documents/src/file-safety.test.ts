@@ -35,6 +35,23 @@ test("a renamed file is rejected by its bytes, not trusted by its extension or d
   await assert.rejects(async () => assertContentMatchesType(DOCX, await zip({ "payload.exe": "MZ" })), UnsafeFileError);
 });
 
+test("a PDF that also contains a web page is rejected", () => {
+  assert.throws(
+    () => assertContentMatchesType("application/pdf", enc("%PDF-1.7\n<html><script>alert(1)</script>")),
+    UnsafeFileError
+  );
+});
+
+test("a PNG larger than the edge cap is rejected when its header is readable", () => {
+  const bytes = new Uint8Array(24);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  bytes.set([0x49, 0x48, 0x44, 0x52], 12);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, 9000);
+  view.setUint32(20, 10);
+  assert.throws(() => assertContentMatchesType("image/png", bytes), UnsafeFileError);
+});
+
 test("decompression bombs and oversized part counts are rejected before inflation", async () => {
   const bomb = await zip({ "word/document.xml": "a".repeat(5_000_000) });
   assert.ok(bomb.length < 50_000, "fixture is highly compressed");

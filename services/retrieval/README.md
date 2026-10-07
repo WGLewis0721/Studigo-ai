@@ -64,7 +64,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-uvicorn app.main:app --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 `RETRIEVAL_DATA_DIR` (default `./data`) controls where FAISS indexes and

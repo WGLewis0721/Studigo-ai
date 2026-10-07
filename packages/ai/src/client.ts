@@ -46,6 +46,15 @@ function resolveTransport(): Transport {
   return resolvedTransport;
 }
 
+/** Which transport a trace may record. Does not throw and does not cache a client. */
+export function currentTransport(): Transport | "unset" {
+  if (resolvedTransport) return resolvedTransport;
+  if (process.env.OPENAI_API_KEY) return "direct";
+  if (process.env.AI_GATEWAY_API_KEY) return "gateway";
+  if (process.env.OLLAMA_BASE_URL) return "ollama";
+  return "unset";
+}
+
 /** Chat resolves through whichever transport is configured; embeddings never use "ollama" (see module docs). */
 function resolveEmbeddingTransport(): Exclude<Transport, "ollama"> {
   const transport = resolveTransport();
@@ -133,8 +142,12 @@ export function embeddingModel() {
  * in Studigo reads a stored response back. Gateway and Ollama transports are
  * left unchanged until their handling of the field is verified.
  */
-export function responseOptions(): { store?: false } {
-  return resolveTransport() === "direct" ? { store: false } : {};
+export function responseOptions(): { store?: false; max_output_tokens?: number } {
+  const cap = Number(process.env.STUDIGO_MAX_OUTPUT_TOKENS || 1200);
+  const limited = Number.isFinite(cap) && cap > 0 ? { max_output_tokens: Math.floor(cap) } : {};
+  const transport = resolveTransport();
+  if (transport === "ollama") return {};
+  return transport === "direct" ? { store: false, ...limited } : limited;
 }
 
 /** Dimension of the pgvector column the schema declares. */

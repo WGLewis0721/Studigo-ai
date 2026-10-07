@@ -147,7 +147,9 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
   const chunks = await retrieveForRoom({
     supabase: args.supabase,
     roomId: args.roomId,
-    query: args.question
+    query: args.question,
+    ownerId: args.userId,
+    traceRoute: `engine:${args.mode ?? "ask"}`
   });
 
   yield* streamGroundedAnswer({
@@ -198,7 +200,9 @@ async function* runPracticeQuestionFlow(
     supabase: args.supabase,
     roomId: args.roomId,
     query,
-    matchCount: Math.min(24, Math.max(12, args.count * 2))
+    matchCount: Math.min(24, Math.max(12, args.count * 2)),
+    ownerId: args.userId,
+    traceRoute: `engine:${args.mode ?? "ask"}`
   });
 
   if (!chunks.length) {
@@ -260,7 +264,9 @@ async function* runPracticeFollowup(
     supabase: args.supabase,
     roomId: args.roomId,
     query,
-    matchCount: decided ? 10 : 12
+    matchCount: decided ? 10 : 12,
+    ownerId: args.userId,
+    traceRoute: `engine:${args.mode ?? "ask"}`
   });
 
   if (!chunks.length) {

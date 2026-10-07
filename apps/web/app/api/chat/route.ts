@@ -3,9 +3,12 @@ import { readCoachPreferences, readLearnPreferences } from "@/lib/coach-preferen
 import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
-import { assertRoomAccess } from "@/lib/retrieval";
+import { assertRoomAccess, MIN_SIMILARITY } from "@/lib/retrieval";
 import { runStudigoEngine } from "@/lib/engine";
+import { isUuid } from "@/lib/ids";
+import { writeStudyTrace } from "@/lib/study-trace";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -29,6 +32,7 @@ type ChatRequest = {
  * stream the answer followed by the citations the answer actually used.
  */
 export async function POST(request: Request) {
+  const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Choose valid Study Room topics." }, { status: 400 });
   }
 
-  if (!roomId || !question) {
+  if (!isUuid(roomId) || !question) {
     return Response.json({ error: "roomId and question are required" }, { status: 400 });
   }
   if (question.length > 4000) {
@@ -51,6 +55,9 @@ export async function POST(request: Request) {
   }
   if(body?.conversationId!=null&&!isInteractionId(body.conversationId))return Response.json({error:'Invalid conversationId.'},{status:400});
   if(mode==='coach'&&!isInteractionId(body?.interactionId))return Response.json({error:'A valid interactionId is required for Coach turns.'},{status:400});
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
@@ -174,6 +181,14 @@ export async function POST(request: Request) {
           error: error instanceof Error ? error.message : "Studigo could not finish that answer."
         });
       } finally {
+        writeStudyTrace({
+          route: "api/chat",
+          ownerId: user.id,
+          chunkIds: [],
+          cutoff: MIN_SIMILARITY,
+          tokenEstimate: 0,
+          latencyMs: Date.now() - started
+        });
         controller.close();
       }
     }

@@ -59,7 +59,7 @@ export async function signUpAction(
     }
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: "Could not create that account. If you already have one, sign in." };
 
   // With email confirmation switched on, there is no session yet.
   if (!data.session) {

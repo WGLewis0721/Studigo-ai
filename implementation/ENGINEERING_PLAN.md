@@ -242,22 +242,28 @@ Public launch gate: the generated decision is `ready`, or each open blocker is `
 
 Update this table in the PR that changes the status. Do not edit it to match a plan that has not landed.
 
-| Element | Status on `c4259fdb` | Closes |
+| Element | Status | Closes |
 | --- | --- | --- |
-| Room-scoped pgvector retrieval | Built. Unmeasured live | E1–E3 |
-| `grounded` means a citation marker is present | Built. Not semantic support | E7 |
-| Abstain when nothing passes the cutoff | Built. Threshold untuned | E6 |
-| Untrusted-content envelope | Built. Live injection run pending | S5 |
-| Ingestion inside the request | Built. Worker not built | P1 |
-| Structured generation and local typo grading | Built | — |
-| Director owns progression | Built. Synthetic p95 only | P3 |
-| BKT / Elo / scheduler | Built as pure functions. Advisory, synthetic eval | E9 does not promote them |
-| Atomic Coach evidence write | Built | — |
-| RAG harness, cases unreviewed | Harness built | E1 |
-| Security gate | Not ready. 29 blockers | S1–S8 |
-| Lint | Does not fail CI | H2 |
-| Frozen lockfile and `pnpm audit` | In CI | done |
-| Package READMEs | Absent | L3 |
+| Room-scoped pgvector retrieval | Built. Still no human-reviewed live run | E1–E3 blocked on a human reviewer. The model must not set `review.status` |
+| Hybrid retrieval and overlap rerank | Code present, flags default off. No measured gain | E4, E5. Do not turn on |
+| `teacher_source_boost` | Replaces the inline `/ 1000` expression. Same magnitude. Cutoff still `0.35` | E6 numeric retune waits on E1 |
+| Claim verifier | Lexical check in `packages/ai/src/verify-claim.ts`. Not human precision/recall | E7 partial |
+| Grader scorer | Fixture only. Reviewer is `fixture-not-a-human` | E9 not started as a human set |
+| Retrieval decision | Dense path stays. See `docs/RETRIEVAL_BENCHMARK.md` | E8 blocked on live runs |
+| Untrusted-content envelope | Built. Live injection run still pending | S5 |
+| Ingestion | Still inside the request. Cooldown on forced reindex. Deferred 2026-10-07: moving the job off the request without a poll loop breaks Materials upload | P1 |
+| Canonical document | `documents.id` plus `storage_path` is the source row. Delete cascades chunks; `tests/database-security.test.mjs` asserts `match_study_chunks` cannot return them. A versioned normalized intermediate, and topics that only store `source_document_ids`, are still deferred 2026-10-07 because they need the P1 worker | P2 partial |
+| Learner-state words | `packages/learning/src/semantics.ts` and `docs/ADAPTIVE_LEARNING_CORE.md`. Director behavior unchanged. `session.ts` `EvidenceStage` stays the projection label | P3 |
+| Study trace | `apps/web/lib/study-trace.ts` redacts prompt, content, filename, and the raw owner id. Retrieval and `api/chat` log it. Token figure is a character estimate, not provider usage, and there is no hosted trace product | H1 partial |
+| Id check | `apps/web/lib/ids.ts` `isUuid` is the check for room, document, and interaction ids on chat and reindex. `server-only` is not a dependency. Sign-up errors were already neutral | S6 partial |
+| Daily AI budget and output cap | `consume_ai_budget`, `max_output_tokens` 1200 | S3 code. Vercel WAF is still a dashboard step |
+| Upload polyglot and PNG edge | Rejected in `file-safety.ts`. Malware scanning still open | S4 partial |
+| Python retrieval | Loopback middleware. Remote bind still needs the env override | S6 partial |
+| Dependabot | `.github/dependabot.yml` | S1 code. Secret scanning is an org setting |
+| Package READMEs and path check | In CI via `pnpm lint` | L3, L5 |
+| Lint | `next lint \|\| true` is gone. CI runs the boundary and path checks | H2 partial. No eslint config in the repo |
+| Security gate | Not ready. S7 and S8 are not code | Owner and counsel |
+| Case study | Not written | W2 waits on E3 and E8 |
 
 ## Sequence
 
@@ -303,10 +309,10 @@ Use `ENGINEERING.md` for the 30-second and 2-minute versions. For ten minutes, o
 Short answers that are already safe:
 
 - **Why not a system prompt around a chatbot?** Permissions, mutable private sources, citations, abstention, retries, and progression are enforced in code, not in a prompt.
-- **Where does course knowledge come from?** Uploaded chunks, retrieved per room. There is no fine-tuning job in the repo. Deleting a source is supposed to reach derived rows. P2 is the unfinished proof of that.
+- **Where does course knowledge come from?** Uploaded chunks, retrieved per room. There is no fine-tuning job in the repo. Deleting a document cascades its chunks, and a database test shows those chunks cannot be retrieved. Topics that only remember `source_document_ids` are not cascade-deleted. That remainder of P2 is deferred until a worker can canonicalize.
 - **Why is the model not the director?** `packages/learning/src/director.ts` takes state and returns the next challenge with no model call. That is the production path.
-- **What retrieves?** `match_study_chunks` on pgvector, owner- and room-scoped, cutoff default `0.35`, plus `source_priority / 1000`. The Python FAISS service is a separate prototype.
-- **What is the largest gap?** No human-reviewed live RAG scorecard, no calibrated grader, ingestion still on the request, no spend limits, public-launch gate not ready, child-privacy decision unmade.
+- **What retrieves?** `match_study_chunks` on pgvector, owner- and room-scoped, cutoff default `0.35`, plus `teacher_source_boost` (`source_priority / 1000`). Hybrid and overlap rerank stay off. The Python FAISS service is a separate prototype.
+- **What is the largest gap?** No human-reviewed live RAG scorecard, no calibrated grader, ingestion still on the request, the app budget is not the Vercel WAF, public-launch gate not ready, child-privacy decision unmade.
 
 ## Documentation ownership
 

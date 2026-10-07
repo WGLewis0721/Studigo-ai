@@ -702,3 +702,50 @@ test('an atomic skip and its new task use one evidence revision and competing re
   assert.equal((await one('select count(*)::int as n from learning_events where id=$1',[skipped.id])).n,1);
  });
 });
+
+test('teacher source boost keeps the historical priority/1000 magnitude', async () => {
+  assert.equal(Number((await one('select public.teacher_source_boost(1000) as boost')).boost), 1);
+  assert.equal(Number((await one('select public.teacher_source_boost(null) as boost')).boost), 0);
+  const body = (await one("select pg_get_functiondef('public.match_study_chunks(uuid,extensions.vector,integer,double precision,uuid)'::regprocedure) as def")).def;
+  assert.match(body, /teacher_source_boost/);
+  assert.doesNotMatch(body, /\/ 1000\.0/);
+});
+
+test('daily AI budget allows one call and denies the call past the cap', async () => {
+  await as('authenticated', A, async () => {
+    assert.equal((await one('select public.consume_ai_budget($1,1,10,1,100) as ok', [A])).ok, true);
+    assert.equal((await one('select public.consume_ai_budget($1,1,10,1,100) as ok', [A])).ok, false);
+    assert.equal((await one('select public.consume_ai_budget($1,1,10,5,100) as ok', [B])).ok, false);
+  });
+});
+
+test('deleting a document removes its chunks so match_study_chunks cannot return them', async () => {
+  const doc = id(9100);
+  const chunk = id(9101);
+  const embedding = `[1,${Array(1535).fill(0).join(',')}]`;
+  await db.query(
+    `insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status)
+     values($1,$2,$3,'cascade.pdf','application/pdf',10,$4,'ready')`,
+    [doc, id(1), A, `${A}/${id(1)}/cascade.pdf`]
+  );
+  await db.query(
+    `insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content,embedding)
+     values($1,$2,$3,$4,0,'Cascade proof sentence about leaves.', $5::extensions.vector)`,
+    [chunk, doc, id(1), A, embedding]
+  );
+  await as('authenticated', A, async () => {
+    const before = await db.query(
+      'select chunk_id from public.match_study_chunks($1, $2::extensions.vector, 8, 0.35, $3)',
+      [id(1), embedding, A]
+    );
+    assert.ok(before.rows.some((row) => row.chunk_id === chunk));
+    assert.equal((await db.query('delete from documents where id=$1 returning id', [doc])).rows.length, 1);
+    assert.equal((await db.query('select id from document_chunks where document_id=$1', [doc])).rows.length, 0);
+    const after = await db.query(
+      'select chunk_id from public.match_study_chunks($1, $2::extensions.vector, 8, 0.35, $3)',
+      [id(1), embedding, A]
+    );
+    assert.equal(after.rows.some((row) => row.chunk_id === chunk), false);
+  });
+});
+

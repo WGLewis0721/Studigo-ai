@@ -1,10 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/ids";
 
 export function isInteractionId(value: unknown): value is string {
-  return typeof value === "string" && UUID.test(value);
+  return isUuid(value);
 }
 
 /** Reuse of an interaction ID for a different message. Always fails closed. */

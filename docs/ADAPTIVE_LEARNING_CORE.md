@@ -199,3 +199,15 @@ Apply `20260924131330_adaptive_learning_core.sql` to the target test environment
 before exercising the endpoint. This branch does not apply production migrations
 or merge either PR. Hosted Auth/Data API verification and Coach/UI integration
 remain rollout work; embedded PostgreSQL tests do not claim to cover those.
+
+## Words that are not synonyms
+
+`packages/learning/src/semantics.ts` names three different things. Do not swap them.
+
+| Term | Meaning |
+| --- | --- |
+| Evidence stage | What the learner was observed doing. `EVIDENCE_STAGES` is unseen, introduced, assisted, independent, transfer, retained. |
+| Readiness index | The product's deterministic priority. Not a probability. |
+| Mastery probability | A statistical estimate. It counts only after calibration. `packages/mastery` does not write production progression. |
+
+`session.ts` still exports `EvidenceStage` as the projection label `not_checked | practicing | independent | transfer`. That label is not `CanonicalEvidenceName`. The director does not read either name to change a decision.

@@ -1,9 +1,17 @@
-import { embedText, type RetrievedChunk } from "@studigo/ai";
+import { embedText, rerankByOverlap, type RetrievedChunk } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toRetrievedChunks } from "@/lib/ingest";
+import { writeStudyTrace } from "@/lib/study-trace";
 
 export const MAX_RETRIEVAL_CHUNKS = Number(process.env.STUDIGO_MAX_RETRIEVAL_CHUNKS || 8);
 export const MIN_SIMILARITY = Number(process.env.STUDIGO_MIN_SIMILARITY || 0.35);
+
+/** Same magnitude as the old inline `source_priority / 1000` term. SQL calls `teacher_source_boost`. */
+export const SOURCE_PRIORITY_BOOST_DIVISOR = 1000;
+
+function hybridEnabled() {
+  return process.env.STUDIGO_HYBRID_RETRIEVAL === "1";
+}
 
 /**
  * Retrieval is always scoped to one Study Room and one owner: a question about
@@ -15,19 +23,50 @@ export async function retrieveForRoom(args: {
   query: string;
   matchCount?: number;
   minSimilarity?: number;
+  ownerId?: string;
+  traceRoute?: string;
 }): Promise<RetrievedChunk[]> {
+  const started = Date.now();
   const embedding = await embedText(args.query);
-
-  const { data, error } = await args.supabase.rpc("match_study_chunks", {
-    p_room_id: args.roomId,
-    p_query_embedding: embedding as unknown as string,
-    p_match_count: args.matchCount ?? MAX_RETRIEVAL_CHUNKS,
-    p_min_similarity: args.minSimilarity ?? MIN_SIMILARITY,
-    p_owner_id: null
-  });
+  const matchCount = args.matchCount ?? MAX_RETRIEVAL_CHUNKS;
+  const minSimilarity = args.minSimilarity ?? MIN_SIMILARITY;
+  const { data, error } = hybridEnabled()
+    ? await args.supabase.rpc("match_study_chunks_hybrid", {
+        p_room_id: args.roomId,
+        p_query_embedding: embedding as unknown as string,
+        p_query: args.query,
+        p_match_count: matchCount,
+        p_min_similarity: minSimilarity,
+        p_owner_id: null
+      })
+    : await args.supabase.rpc("match_study_chunks", {
+        p_room_id: args.roomId,
+        p_query_embedding: embedding as unknown as string,
+        p_match_count: matchCount,
+        p_min_similarity: minSimilarity,
+        p_owner_id: null
+      });
 
   if (error) throw new Error(`Retrieval failed: ${error.message}`);
-  return toRetrievedChunks((data ?? []) as Array<Record<string, unknown>>);
+  const chunks = toRetrievedChunks((data ?? []) as Array<Record<string, unknown>>);
+  const ranked = process.env.STUDIGO_RERANK === "1"
+    ? rerankChunks(args.query, chunks)
+    : chunks;
+  writeStudyTrace({
+    route: args.traceRoute ?? "retrieval",
+    ownerId: args.ownerId ?? "",
+    chunkIds: ranked.map((chunk) => chunk.id),
+    cutoff: minSimilarity,
+    tokenEstimate: Math.ceil(ranked.reduce((sum, chunk) => sum + chunk.content.length, 0) / 4),
+    latencyMs: Date.now() - started
+  });
+  return ranked;
+}
+
+function rerankChunks(query: string, chunks: RetrievedChunk[]) {
+  const order = rerankByOverlap(query, chunks.map((chunk) => ({ id: chunk.id, content: chunk.content })));
+  const byId = new Map(chunks.map((chunk) => [chunk.id, chunk]));
+  return order.map((item) => byId.get(item.id)).filter((chunk): chunk is RetrievedChunk => Boolean(chunk));
 }
 
 /**

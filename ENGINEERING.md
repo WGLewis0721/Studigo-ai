@@ -175,9 +175,9 @@ Do not overclaim these as finished:
 - independently reviewed live RAG scorecard,
 - calibrated semantic-grader agreement with humans,
 - durable out-of-request ingestion worker,
-- Canonical Studigo Document layer,
-- full production AI cost/token/latency tracing,
-- centralized AI abuse/spend limits,
+- Canonical Studigo Document layer (deleting a document cascades chunks; topics that only store source ids do not),
+- hosted cost tracing (`apps/web/lib/study-trace.ts` redacts; provider token usage is not stored),
+- edge and dashboard abuse controls (`apps/web/lib/ai-budget.ts` is a daily app budget; Vercel WAF is not in this repo),
 - completed public-launch security gate,
 - complete student/minor privacy release requirements,
 - measured proof that more complex retrieval beats the current baseline.
@@ -185,6 +185,19 @@ Do not overclaim these as finished:
 `packages/mastery` (BKT, Elo, scheduler) is advisory. Production progression is `packages/learning`. A mastery probability is not an evidence stage.
 
 See `implementation/ENGINEERING_PLAN.md` for the execution order.
+
+## Lookup facts
+
+- Citation check: `packages/ai/src/grounding.ts`. A `[n]` marker is not semantic support. `packages/ai/src/verify-claim.ts` is the lexical support check.
+- Retrieval cutoff default: `0.35` (`STUDIGO_MIN_SIMILARITY`) in `apps/web/lib/retrieval.ts`. Ranking adds `teacher_source_boost` (`priority / 1000`) in `supabase/migrations/`.
+- Another user's chunks: Postgres RLS, and `match_study_chunks` filters owner and room.
+- Progression: `packages/learning`. Not the model. Not `packages/mastery`.
+- Python retrieval: `services/retrieval/` is an unauthenticated local FAISS prototype. Not production. See `docs/adr/001-adaptive-rag-benchmark.md`.
+- `grounded`: a supplied citation marker appears in the answer. It does not mean the claim was verified.
+- Uploads are parsed in `packages/documents/` and orchestrated by `apps/web/lib/ingest.ts`.
+- Public launch: `implementation/security-readiness/` is the gate, and it is not ready.
+- Mastery math: `packages/mastery`. Advisory. `evals/ml/` is synthetic.
+- A retry must not create a second learning event or a second ingest. Learning events live under `apps/web/lib/learning/`. Ingest claims through `claim_document`.
 
 ## Change methodology
 

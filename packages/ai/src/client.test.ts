@@ -84,11 +84,14 @@ test("an explicit OPENAI_CHAT_MODEL override is respected under every transport"
   });
 });
 
-test("direct OpenAI Responses calls opt out of response storage; other transports are unchanged", async () => {
+test("direct OpenAI Responses calls opt out of response storage and cap output tokens", async () => {
   await withEnv({ OPENAI_API_KEY: "sk-test" }, async () => {
-    assert.deepEqual((await freshClientModule()).responseOptions(), { store: false });
+    assert.deepEqual((await freshClientModule()).responseOptions(), { store: false, max_output_tokens: 1200 });
   });
   await withEnv({ AI_GATEWAY_API_KEY: "gw-test" }, async () => {
+    assert.deepEqual((await freshClientModule()).responseOptions(), { max_output_tokens: 1200 });
+  });
+  await withEnv({ OLLAMA_BASE_URL: "http://127.0.0.1:11434" }, async () => {
     assert.deepEqual((await freshClientModule()).responseOptions(), {});
   });
 });
