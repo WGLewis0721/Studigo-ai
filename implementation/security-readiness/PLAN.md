@@ -1,122 +1,53 @@
-# Security Readiness Implementation Plan
+# Security Readiness: Operating Plan
 
 ## Goal
 
-Turn security review from a one-off document into a reusable engineering system that can start from either:
+Run the same security assessment for any app, from a rough idea to production, and get output that people can act on directly: a ranked backlog, a release decision, and tables for spreadsheets, dashboards and trackers.
 
-- a rough app idea,
-- a client brief,
-- an existing repository,
-- or a production application.
+## The loop for one app
 
-## Phase 1 — Standardize intake
+| Step | Who | Input | Command / artifact | Exit criteria |
+|---|---|---|---|---|
+| 1. Create | Anyone | App name | `pnpm security init <app-id> --name … --stage …` | `apps/<app-id>/` exists with a first report. |
+| 2. Intake | Product owner (model-assisted) | Brief, architecture, repo | `generated/intake-questions.md`, `templates/APP_IDEA_INTAKE_PROMPT.md` → `app-profile.json` | Each capability is yes/no/unknown; unknowns appear as scope actions. |
+| 3. Audit | Security/engineering (model-assisted, human-reviewed) | Code, config, provider dashboards, tests | `templates/SECURITY_AUDITOR_PROMPT.md` → `audit-overrides.json` | Every applicable control has a status; fail/partial have findings; pass has evidence. |
+| 4. Verify | Engineering | High-risk findings | Executable tests referenced in `test_refs` | P0/P1 controls have executable verification or a stated reason it must be manual. |
+| 5. Report | CI or anyone | Steps 2-4 | `pnpm security:report` | Outputs regenerated; `pnpm security:check` passes. |
+| 6. Act | Owner roles | `actions.csv` / Actions sheet | Tracker import keyed by `action_id` | Each open action has an owner and target date. |
+| 7. Decide | Release owner | `public-launch-gate.md` | Gate decision | `ready`, or open blockers carry explicit `accepted_risk`. |
+| 8. Re-assess | Anyone | Material change | Repeat 2-7 | See triggers below. |
 
-Use `templates/app-profile.template.json`.
+At idea stage, steps 3-4 are mostly empty: applicable controls stay `not_tested` and appear as "Design in" actions. That backlog is the security requirements list for the build.
 
-The profile captures architecture-relevant facts as `yes`, `no`, or `unknown`. Unknown capability decisions remain visible rather than being silently assumed.
-
-**Exit:** a machine-readable app profile exists.
-
-## Phase 2 — Generate applicable controls
-
-The generator maps the profile to the reusable control catalog.
-
-- `yes` capability -> matching controls are applicable.
-- `unknown` capability -> matching controls require review.
-- `no` capability -> controls are not applicable unless another capability activates them.
-- `all` controls always apply.
-
-**Exit:** every catalog control has an explicit applicability decision.
-
-## Phase 3 — Evidence-driven audit
-
-Inspect:
-
-- source code,
-- infrastructure,
-- IAM/RLS/policies,
-- CI/CD,
-- provider configuration,
-- storage,
-- API boundaries,
-- AI/RAG pipelines,
-- logs/telemetry,
-- deletion/retention,
-- tests.
-
-Record findings in the audit override file.
-
-**Exit:** important findings have status, severity, remediation and evidence.
-
-## Phase 4 — Adversarial verification
-
-Turn high-risk findings into executable tests where practical.
-
-Examples:
-
-- cross-tenant UUID substitution,
-- prompt injection embedded in source material,
-- forged resource IDs,
-- replayed interaction IDs,
-- CSRF attempts,
-- malformed/polyglot upload,
-- decompression bomb,
-- excessive OCR/model calls,
-- XSS/model-output payload,
-- stale/deleted vector retrieval,
-- failed worker/retry recovery.
-
-**Exit:** P0/P1 controls have executable verification or a documented reason why testing must be external/manual.
-
-## Phase 5 — Release gate
+## Release gate rules
 
 A public release must not proceed while:
 
-- any P0 applicable control is `fail`, `partial`, or `not_tested`,
-- a P1 release-blocker is unresolved,
-- cross-tenant isolation is unverified,
-- privileged service paths have not been scoped,
-- sensitive data flows are undocumented,
-- AI/resource-abuse limits are absent where expensive AI operations are public.
+- any applicable release-blocker control is not `pass` or `accepted_risk`;
+- an `accepted_risk` lacks a named owner and written rationale (the validator rejects this);
+- a `pass` lacks evidence (the validator rejects this).
 
-Accepted risk requires an explicit owner and rationale.
+`scope_incomplete` is not a release state: answer the scope questions first.
 
-## Phase 6 — Operationalize
+## Re-assessment triggers
 
-Feed `security-control-matrix.csv` into:
+Re-answer the profile and update affected controls when any of these change: auth provider or sign-up policy, public API surface, file upload types, payments, AI model or provider, RAG/vector store, agent/tool execution, minors or student data, external integrations or webhooks, a new service or deployment surface, an admin/operator console. Also re-run before every public release and at least quarterly.
 
-- Excel,
-- Power BI,
-- Looker/Tableau,
-- Jira/Linear,
-- a custom security dashboard.
+## Operating it for clients
 
-Recommended dashboard cards:
+- One folder per app under `apps/`; set `client` in the profile for grouping.
+- `pnpm security:report` rebuilds every app and the `portfolio/` rollup; hand the client their app's `security-readiness.xlsx` and `public-launch-gate.md`.
+- Import `actions.csv` into the client's tracker using `action_id` as the external key so re-imports update rather than duplicate.
+- Keep the catalog version in the report; when the catalog changes, regenerate every app so all assessments use the same controls.
 
-- release blockers,
-- P0/P1 open findings,
-- status by domain,
-- controls without evidence,
-- overdue remediation,
-- controls by framework,
-- last-reviewed age,
-- risk-score trend,
-- app-to-app comparison for a consultancy/client portfolio.
+## Maintaining the framework
 
-## Phase 7 — Re-audit on change
+- Catalog changes go through review with a test (`scripts/security-readiness.test.mjs` checks catalog integrity and schema sync).
+- Add a capability flag only when it changes which controls apply; add a control only with acceptance criteria, verification steps, evidence expected and a default remediation.
+- Control IDs are permanent. Never renumber.
 
-Re-run applicability and affected controls when the application changes materially:
+## Backlog for the framework itself
 
-- new auth provider,
-- public API,
-- file upload,
-- payment processing,
-- AI model/provider,
-- RAG/vector store,
-- agent/tool execution,
-- minors/student data,
-- external integration,
-- new deployment surface,
-- admin/operator console.
-
-Security readiness is a maintained state, not a launch-time document.
+- Optional `--format jira|linear|github` exports that map `actions.csv` to each tracker's import columns.
+- Evidence freshness: flag `pass` controls whose evidence predates a material change.
+- Per-control history (status over time) for trend dashboards, from successive `reviewed_at` snapshots.

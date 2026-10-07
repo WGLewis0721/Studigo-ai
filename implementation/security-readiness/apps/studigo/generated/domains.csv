@@ -1,0 +1,18 @@
+app_id,domain,controls,applicable,pass,partial,fail,not_tested,accepted_risk,needs_review,not_applicable,open_blockers,p0_open,readiness_pct
+studigo,Governance,3,3,0,2,0,1,0,0,0,1,1,0
+studigo,Authentication,5,4,0,2,1,1,0,0,1,3,2,0
+studigo,Authorization,3,3,0,2,1,0,0,0,0,3,3,0
+studigo,API Security,5,3,0,2,0,1,0,0,2,1,0,0
+studigo,Resource Abuse,1,1,0,0,1,0,0,0,0,1,1,0
+studigo,Web Security,2,2,0,2,0,0,0,0,0,1,1,0
+studigo,File Security,5,5,0,4,1,0,0,0,0,4,4,0
+studigo,Payments,1,0,0,0,0,0,0,0,1,0,0,0
+studigo,AI Security,5,4,1,3,0,0,0,0,1,3,3,25
+studigo,AI Operations,2,2,0,1,1,0,0,0,0,0,0,0
+studigo,AI Safety,1,1,0,0,1,0,0,0,0,1,0,0
+studigo,RAG / Vector Security,3,3,0,2,0,1,0,0,0,3,2,0
+studigo,Privacy,4,4,0,2,1,1,0,0,0,4,2,0
+studigo,Logging / Detection,2,2,0,0,0,2,0,0,0,1,1,0
+studigo,Supply Chain,3,3,0,1,1,1,0,0,0,1,1,0
+studigo,Secure Delivery,1,1,0,0,1,0,0,0,0,1,0,0
+studigo,Operations,3,3,0,1,0,2,0,0,0,1,0,0

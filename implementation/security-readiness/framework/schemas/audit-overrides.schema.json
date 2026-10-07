@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit-overrides.schema.json",
+  "title": "Security readiness audit overrides",
+  "description": "Evidence-backed status per control for one app. Controls not listed default to not_tested (or not_applicable/needs_review from the profile).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "app_id",
+    "reviewed_at",
+    "overrides"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "app_id": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "reviewer": {
+      "type": "string"
+    },
+    "overrides": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "GMS-GOV-001",
+          "GMS-GOV-002",
+          "GMS-GOV-003",
+          "GMS-AUTH-001",
+          "GMS-AUTH-002",
+          "GMS-AUTH-003",
+          "GMS-AUTH-004",
+          "GMS-AUTH-005",
+          "GMS-ACCESS-001",
+          "GMS-ACCESS-002",
+          "GMS-ACCESS-003",
+          "GMS-API-001",
+          "GMS-API-002",
+          "GMS-API-003",
+          "GMS-API-004",
+          "GMS-API-005",
+          "GMS-API-006",
+          "GMS-WEB-001",
+          "GMS-WEB-002",
+          "GMS-FILE-001",
+          "GMS-FILE-002",
+          "GMS-FILE-003",
+          "GMS-FILE-004",
+          "GMS-FILE-005",
+          "GMS-PAY-001",
+          "GMS-AI-001",
+          "GMS-AI-002",
+          "GMS-AI-003",
+          "GMS-AI-004",
+          "GMS-AI-005",
+          "GMS-AI-006",
+          "GMS-AI-007",
+          "GMS-AI-008",
+          "GMS-RAG-001",
+          "GMS-RAG-002",
+          "GMS-RAG-003",
+          "GMS-PRIV-001",
+          "GMS-PRIV-002",
+          "GMS-PRIV-003",
+          "GMS-PRIV-004",
+          "GMS-LOG-001",
+          "GMS-LOG-002",
+          "GMS-SUPPLY-001",
+          "GMS-SUPPLY-002",
+          "GMS-SUPPLY-003",
+          "GMS-CI-001",
+          "GMS-OPS-001",
+          "GMS-OPS-002",
+          "GMS-OPS-003"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "pass",
+              "partial",
+              "fail",
+              "not_tested",
+              "accepted_risk"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "P0",
+              "P1",
+              "P2",
+              "P3"
+            ]
+          },
+          "likelihood": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "impact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "release_blocker": {
+            "type": "boolean"
+          },
+          "finding": {
+            "type": "string"
+          },
+          "remediation": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "target_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              {
+                "const": ""
+              }
+            ]
+          },
+          "ticket": {
+            "type": "string",
+            "description": "Ticket key or URL in the team's tracker."
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "test_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

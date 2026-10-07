@@ -4,6 +4,14 @@
   "name": "Studigo",
   "description": "AI-assisted study companion grounded in learner-uploaded course material, with adaptive coaching, practice, progress and document ingestion.",
   "owner": "Gray Matter Projects",
+  "client": "Gray Matter Projects",
+  "stage": "beta",
+  "platforms": [
+    "supabase",
+    "vercel",
+    "nextjs",
+    "openai"
+  ],
   "environments": [
     "development",
     "preview",
@@ -14,6 +22,7 @@
     "api": "yes",
     "authentication": "yes",
     "oauth": "yes",
+    "public_signup": "yes",
     "multi_tenant": "yes",
     "file_uploads": "yes",
     "cloud_storage": "yes",
@@ -23,10 +32,13 @@
     "vector_store": "yes",
     "ai_tools_or_agents": "no",
     "expensive_compute": "yes",
+    "outbound_fetch": "no",
+    "webhooks": "no",
+    "user_generated_content": "no",
     "sensitive_data": "yes",
     "minors": "yes",
     "payments": "no",
-    "admin_console": "unknown",
+    "admin_console": "no",
     "third_party_integrations": "yes",
     "auxiliary_services": "yes"
   },
@@ -41,10 +53,12 @@
     "Next.js/Vercel web app",
     "Supabase Auth/Postgres/Storage",
     "OpenAI-compatible model provider path",
-    "Optional Python/FAISS retrieval service exists and is not approved as a public authenticated data boundary"
+    "Optional Python/FAISS retrieval service exists and is not approved as a public authenticated data boundary",
+    "Inbound calls are limited to the Vercel cron (CRON_SECRET bearer) and Supabase OAuth callbacks; no third-party webhooks."
   ],
   "assumptions": [
     "Current audit is code/configuration review, not a penetration test.",
-    "Public child-facing use requires explicit privacy/consent review for target markets."
+    "Public child-facing use requires explicit privacy/consent review for target markets.",
+    "admin_console=no: no admin or operator routes exist in apps/web as of 2026-10-07."
   ]
 }

@@ -1,6 +1,157 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "catalog_version": "2026-10-07",
+  "statuses": {
+    "pass": "Implementation and evidence satisfy every acceptance criterion.",
+    "partial": "Some acceptance criteria are met or verified; the finding names the gap.",
+    "fail": "A known implementation gap violates the requirement.",
+    "not_tested": "Applicable, but no evidence has been collected yet.",
+    "accepted_risk": "Known gap explicitly accepted by a named owner with a rationale.",
+    "not_applicable": "The app profile makes the control irrelevant.",
+    "needs_review": "Applicability depends on an unknown capability in the app profile."
+  },
+  "severities": {
+    "P0": "Public-release blocker: cross-tenant exposure, auth bypass, code execution, major AI/cost abuse, sensitive or child-data compromise.",
+    "P1": "High-priority hardening required for public production.",
+    "P2": "Medium risk or defense in depth.",
+    "P3": "Low-risk improvement."
+  },
+  "owner_roles": {
+    "Engineering": "Application code, tests and migrations.",
+    "Platform/Ops": "Hosting, provider dashboards, CI and accounts.",
+    "Security": "Threat modeling, release gating and incident process.",
+    "Legal/Privacy": "Counsel decisions, notices, contracts and data-protection obligations.",
+    "Product": "Audience, policy and user-experience decisions."
+  },
+  "efforts": {
+    "S": "About a day or less.",
+    "M": "Two to five days.",
+    "L": "More than a week or cross-team."
+  },
+  "platforms": [
+    "supabase",
+    "vercel",
+    "nextjs",
+    "openai",
+    "stripe"
+  ],
+  "features": [
+    {
+      "key": "web",
+      "question": "Is any part of the product delivered in a browser (web app, PWA, marketing site with forms)?",
+      "meaning": "Browser-delivered application surface."
+    },
+    {
+      "key": "api",
+      "question": "Does the product expose network endpoints (REST/GraphQL/RPC, server routes, server actions)?",
+      "meaning": "Network API or server route surface."
+    },
+    {
+      "key": "authentication",
+      "question": "Do users or services sign in or present credentials?",
+      "meaning": "User or service identity is required."
+    },
+    {
+      "key": "oauth",
+      "question": "Can users sign in with Google, Apple, Microsoft or another OAuth/OIDC provider?",
+      "meaning": "Social or third-party OAuth/OIDC login."
+    },
+    {
+      "key": "public_signup",
+      "question": "Can anyone on the internet create an account (including guest or anonymous accounts) without an invitation?",
+      "meaning": "Self-service or anonymous account creation open to the public."
+    },
+    {
+      "key": "multi_tenant",
+      "question": "Does data belong to different users, teams, organizations or clients that must not see each other's data?",
+      "meaning": "Data partitioned by owner/tenant."
+    },
+    {
+      "key": "file_uploads",
+      "question": "Can users or external systems upload files?",
+      "meaning": "Inbound files of any type."
+    },
+    {
+      "key": "cloud_storage",
+      "question": "Is user or business data stored in managed databases or object storage?",
+      "meaning": "Managed/cloud persistence of user or business data."
+    },
+    {
+      "key": "ai",
+      "question": "Does the product call ML, LLM, vision, speech or generative models?",
+      "meaning": "Application invokes models."
+    },
+    {
+      "key": "external_ai_provider",
+      "question": "Does any AI request send data to a provider outside your own infrastructure (OpenAI, Anthropic, Google, a gateway)?",
+      "meaning": "AI request data leaves the application's trust boundary."
+    },
+    {
+      "key": "rag",
+      "question": "Does the product retrieve documents or records and place them into model context?",
+      "meaning": "Retrieval-augmented generation."
+    },
+    {
+      "key": "vector_store",
+      "question": "Are embeddings of user or business data stored in a vector index?",
+      "meaning": "Vector/embedding storage."
+    },
+    {
+      "key": "ai_tools_or_agents",
+      "question": "Can a model call tools, APIs, browsers or code, or change data, on its own?",
+      "meaning": "Model-initiated actions."
+    },
+    {
+      "key": "expensive_compute",
+      "question": "Can a single request cost real money or quota (model calls, OCR, transcoding, GPU, paid APIs)?",
+      "meaning": "Operations that materially consume money/compute/quota."
+    },
+    {
+      "key": "outbound_fetch",
+      "question": "Does the server fetch URLs or call hosts that a user, document or model can influence?",
+      "meaning": "Server-side requests to user-influenced destinations."
+    },
+    {
+      "key": "webhooks",
+      "question": "Does the product receive inbound webhooks or callbacks from other services?",
+      "meaning": "Inbound webhook/callback endpoints."
+    },
+    {
+      "key": "user_generated_content",
+      "question": "Can users publish content that other users see (posts, comments, shared pages, profiles)?",
+      "meaning": "Content authored by one user and shown to others."
+    },
+    {
+      "key": "sensitive_data",
+      "question": "Does the product handle personal, confidential, regulated, financial, health, student, client or proprietary data?",
+      "meaning": "Private or regulated data."
+    },
+    {
+      "key": "minors",
+      "question": "Could users or data subjects be under 18 (or under 13 for COPPA)?",
+      "meaning": "Minors as users or data subjects."
+    },
+    {
+      "key": "payments",
+      "question": "Does the product accept payments or handle payment data?",
+      "meaning": "Payment processing."
+    },
+    {
+      "key": "admin_console",
+      "question": "Is there a privileged operator, admin or support interface?",
+      "meaning": "Privileged operator surface."
+    },
+    {
+      "key": "third_party_integrations",
+      "question": "Does the product connect to external SaaS or provider APIs on a user's behalf?",
+      "meaning": "External integrations."
+    },
+    {
+      "key": "auxiliary_services",
+      "question": "Are there separate workers, microservices, local services, queue consumers or retrieval servers?",
+      "meaning": "Components outside the main app process."
+    }
+  ],
   "controls": [
     {
       "id": "GMS-GOV-001",
@@ -11,14 +162,32 @@
         "NIST SSDF",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "NIST SSDF PO.1",
+        "NIST AI RMF MAP 1",
+        "OWASP Top 10:2021 A04"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Security",
+      "effort": "M",
       "requirement": "Document trust boundaries, sensitive data flows, privileged components, external providers and production attack surfaces.",
+      "acceptance_criteria": [
+        "A current diagram/inventory lists every runtime component, data store, external provider and trust boundary.",
+        "Each sensitive data flow names its source, destination and protection.",
+        "The inventory was reviewed after the last material architecture change."
+      ],
       "test_method": "Review current architecture/data-flow documentation against deployed components.",
-      "evidence_expected": "Current data-flow/trust-boundary diagram and component inventory."
+      "verification_steps": [
+        "Compare the inventory with deployed services, environment variables and provider dashboards.",
+        "Trace one sensitive record from intake to deletion and confirm every hop is documented."
+      ],
+      "evidence_expected": "Current data-flow/trust-boundary diagram and component inventory.",
+      "remediation_guidance": "Write a one-page data-flow/trust-boundary map and add it to the release checklist so it changes with the architecture.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-GOV-002",
@@ -28,15 +197,33 @@
         "OWASP ASVS 5.0",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "NIST AI 600-1: Data Privacy",
+        "GDPR Art. 5(1)(c),(e)",
+        "COPPA 16 CFR 312.10"
+      ],
       "applies_when_any": [
         "sensitive_data",
         "minors"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Legal/Privacy",
+      "effort": "M",
       "requirement": "Classify sensitive data and define collection, access, provider sharing, retention, deletion, logging and export rules.",
+      "acceptance_criteria": [
+        "Every stored data category has a classification, purpose, retention period and deletion mechanism.",
+        "Data sent to each external provider is listed with its retention terms.",
+        "Retention periods are enforced by code or scheduled jobs, not policy text alone."
+      ],
       "test_method": "Trace representative records from collection through deletion and backups/providers.",
-      "evidence_expected": "Data inventory, retention/deletion tests, vendor flow documentation."
+      "verification_steps": [
+        "List tables, buckets, indexes, logs and provider copies; check each against the classification register.",
+        "Confirm a scheduled job or trigger enforces each retention period."
+      ],
+      "evidence_expected": "Data inventory, retention/deletion tests, vendor flow documentation.",
+      "remediation_guidance": "Create a data register (category, location, purpose, retention, deletion path, providers) and implement retention jobs for anything without one.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-GOV-003",
@@ -46,14 +233,29 @@
         "NIST SSDF",
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "NIST SSDF PO.4",
+        "NIST SSDF PW.8"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Security",
+      "effort": "S",
       "requirement": "Define security conditions that block public release and require explicit accepted-risk ownership.",
+      "acceptance_criteria": [
+        "A release cannot ship with an open P0 or an open release-blocker control without recorded accepted risk.",
+        "The gate report is regenerated from current evidence for each release."
+      ],
       "test_method": "Inspect release process and verify blockers cannot silently pass.",
-      "evidence_expected": "Release gate document and CI/release evidence."
+      "verification_steps": [
+        "Check the release process for a step that runs the readiness report and reads its decision."
+      ],
+      "evidence_expected": "Release gate document and CI/release evidence.",
+      "remediation_guidance": "Run `security-readiness validate` and `report` in CI and require the gate decision in release sign-off.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AUTH-001",
@@ -63,6 +265,11 @@
         "OWASP ASVS 5.0",
         "OWASP API Security"
       ],
+      "standard_refs": [
+        "OWASP API2:2023",
+        "OWASP Top 10:2021 A07",
+        "OWASP ASVS 5.0 (Authentication)"
+      ],
       "applies_when_any": [
         "authentication",
         "multi_tenant",
@@ -70,9 +277,25 @@
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Private resources and state-changing APIs require a valid authenticated principal.",
+      "acceptance_criteria": [
+        "Every private page, API route, server action and RPC rejects unauthenticated callers.",
+        "Guest/anonymous sessions cannot reach private or paid operations unless the product explicitly intends it.",
+        "Each private endpoint has an automated unauthenticated negative test."
+      ],
       "test_method": "Attempt unauthenticated access to every private route/API.",
-      "evidence_expected": "Route tests plus auth middleware/server checks."
+      "verification_steps": [
+        "Generate a route inventory and call each private route with no credentials, an expired token and a malformed token.",
+        "Call the data layer directly (e.g. PostgREST/Storage with the public key) without a session."
+      ],
+      "evidence_expected": "Route tests plus auth middleware/server checks.",
+      "remediation_guidance": "Centralize auth in one helper per surface (page, route, action), reject anonymous sessions there, and add an inventory-driven negative test.",
+      "platform_guidance": {
+        "supabase": "Use auth.getUser() (server-verified), not getSession(). Treat is_anonymous users as signed out unless guest mode is a product decision.",
+        "nextjs": "Route handlers and server actions are public endpoints; authorize inside each one, not only in middleware."
+      }
     },
     {
       "id": "GMS-AUTH-002",
@@ -81,14 +304,31 @@
       "frameworks": [
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "OWASP API2:2023",
+        "RFC 9700 (OAuth 2.0 Security BCP)"
+      ],
       "applies_when_any": [
         "oauth"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "OAuth uses state/PKCE protections and redirect destinations cannot become open redirects.",
+      "acceptance_criteria": [
+        "OAuth uses PKCE and state validation.",
+        "Post-login redirects accept only same-origin relative paths.",
+        "Redirect allowlists in the identity provider contain no broad wildcards."
+      ],
       "test_method": "Test forged callback, malformed state, external/encoded redirect targets and preview/prod allowlists.",
-      "evidence_expected": "Callback validation code and integration tests."
+      "verification_steps": [
+        "Attempt login with next=//evil.example, next=https://evil.example and encoded variants.",
+        "Review provider redirect URL allowlists for production and preview."
+      ],
+      "evidence_expected": "Callback validation code and integration tests.",
+      "remediation_guidance": "Use the provider SDK's PKCE flow, validate `next` with a same-origin path parser, and pin redirect URLs per environment.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AUTH-003",
@@ -97,14 +337,105 @@
       "frameworks": [
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "OWASP Top 10:2021 A07",
+        "OWASP ASVS 5.0 (Session Management)"
+      ],
       "applies_when_any": [
         "authentication"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Sessions expire, refresh and terminate predictably; logout invalidates usable sessions.",
+      "acceptance_criteria": [
+        "Logout invalidates the server-side session/refresh token.",
+        "Session cookies are HttpOnly, Secure and SameSite.",
+        "Expired sessions cannot call private APIs."
+      ],
       "test_method": "Test expiration, rotation/refresh, logout, multi-tab behavior and stolen/old session reuse.",
-      "evidence_expected": "Session configuration and browser/API tests."
+      "verification_steps": [
+        "Log out, replay the old cookie/refresh token against a private API.",
+        "Inspect Set-Cookie attributes in production."
+      ],
+      "evidence_expected": "Session configuration and browser/API tests.",
+      "remediation_guidance": "Use the identity provider's server-side sign-out and the framework's supported cookie session pattern.",
+      "platform_guidance": {}
+    },
+    {
+      "id": "GMS-AUTH-004",
+      "domain": "Authentication",
+      "title": "Account creation and credential abuse protections",
+      "frameworks": [
+        "OWASP API Security Top 10",
+        "OWASP Top 10",
+        "OWASP ASVS 5.0"
+      ],
+      "standard_refs": [
+        "OWASP API2:2023",
+        "OWASP API6:2023",
+        "OWASP Top 10:2021 A07"
+      ],
+      "applies_when_any": [
+        "public_signup"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "owner_role": "Platform/Ops",
+      "effort": "S",
+      "requirement": "Public sign-up, guest and anonymous accounts cannot be created or used at a scale that multiplies cost or abuse; credentials resist stuffing and breached passwords.",
+      "acceptance_criteria": [
+        "Anonymous/guest sign-in is disabled, or guest accounts are limited by policy, quota and cleanup.",
+        "CAPTCHA or equivalent bot protection guards sign-up and sign-in.",
+        "Breached-password checks and a minimum length are enforced by the identity provider, not only the UI.",
+        "Auth endpoints are rate-limited."
+      ],
+      "test_method": "Review identity-provider settings and attempt scripted account creation and credential stuffing.",
+      "verification_steps": [
+        "Script 50 sign-ups from one IP and from rotating IPs.",
+        "Call the identity provider's sign-up API directly with a weak/breached password.",
+        "Count anonymous accounts in production."
+      ],
+      "evidence_expected": "Provider settings export/screenshots and scripted-abuse test results.",
+      "remediation_guidance": "Disable anonymous sign-in (or bound it), enable CAPTCHA, breached-password protection and auth rate limits, and treat guest sessions as signed out for paid operations.",
+      "platform_guidance": {
+        "supabase": "Auth → disable Anonymous sign-ins unless intended (no automatic cleanup; default 30/hour/IP); enable CAPTCHA, leaked-password protection, minimum length; check is_anonymous in RLS for writes."
+      }
+    },
+    {
+      "id": "GMS-AUTH-005",
+      "domain": "Authentication",
+      "title": "Privileged and admin access protected",
+      "frameworks": [
+        "OWASP API Security Top 10",
+        "OWASP Top 10"
+      ],
+      "standard_refs": [
+        "OWASP API5:2023",
+        "OWASP Top 10:2021 A01"
+      ],
+      "applies_when_any": [
+        "admin_console"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
+      "requirement": "Admin/operator capabilities require a separate role checked server-side, MFA, and produce an audit trail.",
+      "acceptance_criteria": [
+        "Every admin function checks an admin role on the server.",
+        "Admin accounts require MFA.",
+        "Admin actions are logged immutably with actor and target."
+      ],
+      "test_method": "Attempt admin functions as a normal user; review MFA enforcement and audit logs.",
+      "verification_steps": [
+        "Call each admin endpoint as a normal user.",
+        "Sign in as an admin without MFA."
+      ],
+      "evidence_expected": "Role checks in code, MFA policy, audit log samples.",
+      "remediation_guidance": "Add a server-side role check helper, enforce MFA for admin roles and write admin actions to an append-only log.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-ACCESS-001",
@@ -114,15 +445,35 @@
         "OWASP ASVS 5.0",
         "OWASP API Security"
       ],
+      "standard_refs": [
+        "OWASP API1:2023",
+        "OWASP API5:2023",
+        "OWASP Top 10:2021 A01"
+      ],
       "applies_when_any": [
         "multi_tenant",
         "api"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "A principal cannot read, mutate, delete, infer or retrieve another tenant/user's objects by substituting IDs.",
+      "acceptance_criteria": [
+        "Every object ID accepted from a client (path, query, body) is authorized against the caller, not just validated.",
+        "Tenant isolation is enforced in the data layer (e.g. RLS) and tested with two real users.",
+        "Substituting another tenant's ID returns not-found or forbidden on every route."
+      ],
       "test_method": "Systematically substitute foreign IDs across every object API and retrieval path.",
-      "evidence_expected": "RLS/IAM policies and negative authorization tests."
+      "verification_steps": [
+        "For each route taking an ID, call it as user B with user A's ID.",
+        "Run database-level tests that execute policies as two different users."
+      ],
+      "evidence_expected": "RLS/IAM policies and negative authorization tests.",
+      "remediation_guidance": "Enforce ownership in the database (RLS or equivalent) and check it in the route before any privileged write.",
+      "platform_guidance": {
+        "supabase": "Enable RLS on every table; scope policies `to authenticated` with owner checks; test policies with set role/claims."
+      }
     },
     {
       "id": "GMS-ACCESS-002",
@@ -132,15 +483,35 @@
         "OWASP ASVS 5.0",
         "Supabase RLS guidance"
       ],
+      "standard_refs": [
+        "OWASP API5:2023",
+        "OWASP Top 10:2021 A01"
+      ],
       "applies_when_any": [
         "multi_tenant",
         "cloud_storage"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Every privileged operation that bypasses row-level controls independently proves user, tenant and object scope.",
+      "acceptance_criteria": [
+        "Every use of a privileged (RLS-bypassing/service) credential is listed.",
+        "Each privileged call is preceded by an ownership check under the caller's identity and passes the owner explicitly.",
+        "Privileged credentials never reach client bundles."
+      ],
       "test_method": "Inventory privileged clients/RPCs; verify precondition and owner filters; run forged-ID tests.",
-      "evidence_expected": "Privileged-call inventory plus owner-scope tests."
+      "verification_steps": [
+        "Search the codebase for the privileged client constructor and review every call site.",
+        "Search built client bundles for the privileged key name/value."
+      ],
+      "evidence_expected": "Privileged-call inventory plus owner-scope tests.",
+      "remediation_guidance": "Wrap the privileged client in a server-only module and make owner/tenant a required argument of every privileged function.",
+      "platform_guidance": {
+        "supabase": "Import the service-role client only from server-only modules; prefer security-invoker functions granted to service_role with explicit owner parameters.",
+        "nextjs": "Add `import \"server-only\"` to modules that construct privileged clients."
+      }
     },
     {
       "id": "GMS-ACCESS-003",
@@ -150,14 +521,30 @@
         "OWASP API Security",
         "NIST SSDF"
       ],
+      "standard_refs": [
+        "OWASP API2:2023",
+        "OWASP API9:2023"
+      ],
       "applies_when_any": [
         "auxiliary_services"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Internal/auxiliary services are either network-isolated or authenticate callers and authorize object scope.",
+      "acceptance_criteria": [
+        "Every auxiliary service either listens only on a private/loopback network or authenticates callers.",
+        "Auxiliary services authorize the tenant/owner of every request, not just the caller service."
+      ],
       "test_method": "Attempt direct requests without service identity and with foreign resource identifiers.",
-      "evidence_expected": "Network/IAM configuration and service auth tests."
+      "verification_steps": [
+        "List every deployed service, port and ingress rule.",
+        "Call each auxiliary service without credentials and with another tenant's identifiers."
+      ],
+      "evidence_expected": "Network/IAM configuration and service auth tests.",
+      "remediation_guidance": "Put auxiliary services on a private network and require a signed service token that carries the end-user/tenant identity.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-API-001",
@@ -167,14 +554,32 @@
         "OWASP ASVS 5.0",
         "OWASP API Security"
       ],
+      "standard_refs": [
+        "OWASP API3:2023",
+        "OWASP API8:2023",
+        "OWASP Top 10:2021 A03"
+      ],
       "applies_when_any": [
         "api"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "API inputs are type/length/range/enum validated server-side before privileged work.",
+      "acceptance_criteria": [
+        "Every route validates type, format (e.g. UUID), length and enum of each input before use.",
+        "Invalid input returns 4xx, never 500.",
+        "Mass assignment is impossible: writes use explicit field lists."
+      ],
       "test_method": "Fuzz malformed, oversized, duplicate, null and boundary values.",
-      "evidence_expected": "Validation code and API tests."
+      "verification_steps": [
+        "Fuzz each route with wrong types, oversized strings and unknown fields.",
+        "Review writes for spread/passthrough of client objects."
+      ],
+      "evidence_expected": "Validation code and API tests.",
+      "remediation_guidance": "Add a shared request schema validator and use it at the top of every route.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-API-002",
@@ -184,16 +589,41 @@
         "OWASP API Security",
         "OWASP GenAI / LLM Top 10"
       ],
+      "standard_refs": [
+        "OWASP API4:2023",
+        "OWASP API6:2023",
+        "OWASP LLM10:2025"
+      ],
       "applies_when_any": [
         "api",
         "expensive_compute",
-        "ai"
+        "ai",
+        "public_signup"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "L",
       "requirement": "Public expensive operations have per-principal/IP rate limits, concurrency bounds, token/work limits and global spend/circuit breakers.",
+      "acceptance_criteria": [
+        "Expensive routes have per-user and per-IP rate limits enforced at the edge and in the app.",
+        "Model calls set output-token caps and timeouts; retries are bounded.",
+        "Per-user daily budgets and a global spend ceiling/circuit breaker exist.",
+        "Reprocessing/regeneration paths cannot loop without limit."
+      ],
       "test_method": "Burst and sustained abuse tests; verify limit behavior and no unbounded provider spend.",
-      "evidence_expected": "Limiter configuration, spend guardrails and load/abuse tests."
+      "verification_steps": [
+        "Burst each expensive route and confirm 429s before cost accrues.",
+        "Check every provider call for max output tokens and timeout.",
+        "Confirm provider-side budget alerts and hard limits."
+      ],
+      "evidence_expected": "Limiter configuration, spend guardrails and load/abuse tests.",
+      "remediation_guidance": "Add edge rate-limit rules (log mode first), a per-user usage table checked before provider calls, output-token caps, and provider budget alerts.",
+      "platform_guidance": {
+        "vercel": "Vercel WAF rate-limit rules are on all plans; counters are per region; start with the Log action.",
+        "openai": "Set project budget alerts/limits and max_output_tokens on every Responses call.",
+        "supabase": "Enable Auth rate limits and CAPTCHA so account creation cannot multiply per-user budgets."
+      }
     },
     {
       "id": "GMS-API-003",
@@ -202,6 +632,10 @@
       "frameworks": [
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "OWASP Top 10:2021 A01",
+        "OWASP ASVS 5.0 (Web Frontend Security)"
+      ],
       "applies_when_any": [
         "web",
         "authentication",
@@ -209,9 +643,20 @@
       ],
       "severity": "P1",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Cookie-authenticated state-changing requests validate same-origin/request provenance or an equivalent anti-CSRF mechanism.",
+      "acceptance_criteria": [
+        "State-changing requests with cookie auth are protected by SameSite cookies plus origin checks or CSRF tokens.",
+        "GET requests never change state."
+      ],
       "test_method": "Submit state-changing requests cross-site with a valid victim session.",
-      "evidence_expected": "Origin/CSRF middleware and negative browser tests."
+      "verification_steps": [
+        "Submit a cross-site form/fetch to each mutating route with a valid session cookie."
+      ],
+      "evidence_expected": "Origin/CSRF middleware and negative browser tests.",
+      "remediation_guidance": "Rely on framework CSRF protection (e.g. server actions' origin check) and add Origin validation to custom mutating routes.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-API-004",
@@ -221,14 +666,100 @@
         "OWASP ASVS 5.0",
         "OWASP REST Security"
       ],
+      "standard_refs": [
+        "OWASP API8:2023",
+        "OWASP Top 10:2021 A05"
+      ],
       "applies_when_any": [
         "api"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Client responses use generic errors/trace IDs while internal details stay in protected logs.",
+      "acceptance_criteria": [
+        "Clients receive fixed messages; database, provider and stack details stay in server logs.",
+        "Streamed/async error channels follow the same rule."
+      ],
       "test_method": "Force DB/provider/parser failures and inspect client responses.",
-      "evidence_expected": "Central error boundary and tests."
+      "verification_steps": [
+        "Trigger DB constraint, provider and unexpected errors on each route and inspect responses."
+      ],
+      "evidence_expected": "Central error boundary and tests.",
+      "remediation_guidance": "Add one error mapper that returns a fixed message plus a request ID and logs the detail server-side.",
+      "platform_guidance": {}
+    },
+    {
+      "id": "GMS-API-005",
+      "domain": "API Security",
+      "title": "Server-side request forgery (SSRF) protections",
+      "frameworks": [
+        "OWASP API Security Top 10",
+        "OWASP Top 10",
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "standard_refs": [
+        "OWASP API7:2023",
+        "OWASP Top 10:2021 A10",
+        "OWASP LLM06:2025"
+      ],
+      "applies_when_any": [
+        "outbound_fetch",
+        "ai_tools_or_agents"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
+      "requirement": "Requests to user-, document- or model-influenced destinations cannot reach internal networks, metadata endpoints or unintended hosts.",
+      "acceptance_criteria": [
+        "Destinations are allowlisted or resolved and checked against private/link-local ranges after DNS resolution.",
+        "Redirects are re-validated.",
+        "Responses are size- and time-bounded."
+      ],
+      "test_method": "Supply internal, metadata, redirecting and DNS-rebinding URLs to every fetching feature.",
+      "verification_steps": [
+        "Request http://169.254.169.254/, http://localhost, an internal hostname and a redirect to them."
+      ],
+      "evidence_expected": "Egress allowlist/validation code and SSRF test results.",
+      "remediation_guidance": "Route outbound fetches through one guarded client with an allowlist, post-resolution IP checks and redirect re-validation.",
+      "platform_guidance": {}
+    },
+    {
+      "id": "GMS-API-006",
+      "domain": "API Security",
+      "title": "Inbound webhook authenticity and replay protection",
+      "frameworks": [
+        "OWASP API Security Top 10"
+      ],
+      "standard_refs": [
+        "OWASP API10:2023",
+        "OWASP API8:2023"
+      ],
+      "applies_when_any": [
+        "webhooks",
+        "payments"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
+      "requirement": "Webhook endpoints verify the sender's signature, reject replays and are idempotent.",
+      "acceptance_criteria": [
+        "Every webhook verifies an HMAC/signature over the raw body with a constant-time compare.",
+        "Timestamps outside a tolerance window are rejected.",
+        "Processing is idempotent by event ID."
+      ],
+      "test_method": "Send unsigned, mis-signed, stale and duplicated webhook payloads.",
+      "verification_steps": [
+        "Replay a captured event; send a modified body with the original signature."
+      ],
+      "evidence_expected": "Signature verification code and negative tests.",
+      "remediation_guidance": "Use the provider's signature verification helper on the raw body and store processed event IDs.",
+      "platform_guidance": {
+        "stripe": "Use stripe.webhooks.constructEvent on the raw request body with the endpoint secret."
+      }
     },
     {
       "id": "GMS-WEB-001",
@@ -238,14 +769,32 @@
         "OWASP ASVS 5.0",
         "OWASP CSP guidance"
       ],
+      "standard_refs": [
+        "OWASP Top 10:2021 A05",
+        "OWASP CSP Cheat Sheet"
+      ],
       "applies_when_any": [
         "web"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Production sends an appropriate CSP and modern browser hardening headers.",
+      "acceptance_criteria": [
+        "Production responses send CSP (at least frame-ancestors, base-uri, object-src), X-Content-Type-Options, Referrer-Policy and HSTS.",
+        "A full CSP is enforced, or is in Report-Only with a dated plan to enforce."
+      ],
       "test_method": "Inspect deployed headers and test framing/script/connect behavior.",
-      "evidence_expected": "Header configuration and deployment test."
+      "verification_steps": [
+        "curl -I the production domain and key routes; compare headers to the policy.",
+        "Load the app with the Report-Only policy and review violations."
+      ],
+      "evidence_expected": "Header configuration and deployment test.",
+      "remediation_guidance": "Set headers centrally (framework config or edge), ship the full CSP as Report-Only, then enforce after a browser pass.",
+      "platform_guidance": {
+        "nextjs": "Use headers() in next.config for static policy or a nonce-based CSP in middleware/proxy."
+      }
     },
     {
       "id": "GMS-WEB-002",
@@ -255,15 +804,32 @@
         "OWASP ASVS 5.0",
         "OWASP GenAI / LLM Top 10"
       ],
+      "standard_refs": [
+        "OWASP LLM05:2025",
+        "OWASP Top 10:2021 A03"
+      ],
       "applies_when_any": [
         "web",
-        "ai"
+        "ai",
+        "user_generated_content"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Untrusted and model-generated content cannot become executable HTML/JS/URLs without validation/sanitization.",
+      "acceptance_criteria": [
+        "Model output and user content are rendered as text/structured nodes, never raw HTML.",
+        "Links and images in untrusted content are disabled or sanitized.",
+        "An XSS payload regression test exists."
+      ],
       "test_method": "Inject HTML, script, javascript URLs, image beacons and malicious Markdown through user/source/model paths.",
-      "evidence_expected": "Safe renderer implementation and XSS/output-handling tests."
+      "verification_steps": [
+        "Render <img onerror>, javascript: links and markdown-embedded HTML through every display path."
+      ],
+      "evidence_expected": "Safe renderer implementation and XSS/output-handling tests.",
+      "remediation_guidance": "Render through a parser that emits framework nodes only; add payload fixtures to tests.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-FILE-001",
@@ -273,14 +839,30 @@
         "OWASP ASVS 5.0",
         "OWASP File Upload guidance"
       ],
+      "standard_refs": [
+        "OWASP File Upload Cheat Sheet",
+        "OWASP API4:2023"
+      ],
       "applies_when_any": [
         "file_uploads"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Uploads use allowed types, bounded size, generated/scoped storage names and safe filenames.",
+      "acceptance_criteria": [
+        "Only allowlisted types and extensions are accepted.",
+        "Size limits are enforced server-side and at the storage layer.",
+        "Stored names are server-generated; original names are display-only."
+      ],
       "test_method": "Upload forbidden extensions/types, empty/oversized files and hostile filenames.",
-      "evidence_expected": "Upload policy and tests."
+      "verification_steps": [
+        "Upload a disallowed extension, an oversized file and a path-traversal filename."
+      ],
+      "evidence_expected": "Upload policy and tests.",
+      "remediation_guidance": "Enforce an allowlist and size in the route and in storage-bucket configuration; generate storage keys server-side.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-FILE-002",
@@ -290,14 +872,28 @@
         "OWASP ASVS 5.0",
         "OWASP File Upload guidance"
       ],
+      "standard_refs": [
+        "OWASP File Upload Cheat Sheet"
+      ],
       "applies_when_any": [
         "file_uploads"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Server validates actual file content/signature/parser compatibility rather than trusting extension or Content-Type.",
+      "acceptance_criteria": [
+        "The bytes of every upload are checked against the accepted type (magic bytes / structure).",
+        "A renamed or polyglot file is rejected before storage or parsing."
+      ],
       "test_method": "Rename executables/archives/polyglots as allowed formats; send mismatched MIME and corrupt files.",
-      "evidence_expected": "Magic-byte/parser validation plus adversarial fixtures."
+      "verification_steps": [
+        "Upload HTML renamed to .pdf, an executable renamed to .png and a PDF/HTML polyglot."
+      ],
+      "evidence_expected": "Magic-byte/parser validation plus adversarial fixtures.",
+      "remediation_guidance": "Check signatures for each allowed format before storage; serve originals with forced download and nosniff.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-FILE-003",
@@ -307,15 +903,31 @@
         "OWASP ASVS 5.0",
         "OWASP File Upload guidance"
       ],
+      "standard_refs": [
+        "OWASP File Upload Cheat Sheet",
+        "OWASP API4:2023"
+      ],
       "applies_when_any": [
         "file_uploads",
         "expensive_compute"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Compressed/container formats and images are bounded by expanded size, entry count, dimensions/pages and downstream work.",
+      "acceptance_criteria": [
+        "Archive-based formats are bounded by entry count, expanded size and ratio before inflation.",
+        "Image dimensions, page counts and OCR pages are capped.",
+        "Parsers run with time and memory budgets."
+      ],
       "test_method": "Zip/OOXML bombs, huge dimensions, excessive pages and pathological parser inputs.",
-      "evidence_expected": "Pre-extraction limits and resource-abuse tests."
+      "verification_steps": [
+        "Upload a zip bomb disguised as DOCX, a 30k×30k PNG and a 5,000-page PDF."
+      ],
+      "evidence_expected": "Pre-extraction limits and resource-abuse tests.",
+      "remediation_guidance": "Inspect archive directories before parsing, cap pixels/pages, and run parsing in a worker with resource limits.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-FILE-004",
@@ -324,14 +936,28 @@
       "frameworks": [
         "OWASP File Upload guidance"
       ],
+      "standard_refs": [
+        "OWASP File Upload Cheat Sheet"
+      ],
       "applies_when_any": [
         "file_uploads"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Platform/Ops",
+      "effort": "M",
       "requirement": "Untrusted files are quarantined/scanned or otherwise prevented from being redistributed/processed beyond the accepted risk model.",
+      "acceptance_criteria": [
+        "Uploads are scanned or disarmed before they are processed or served to anyone.",
+        "Unscanned or flagged files stay quarantined."
+      ],
       "test_method": "Use safe anti-malware test fixture and verify quarantine/rejection path.",
-      "evidence_expected": "Scanner/quarantine integration and tests."
+      "verification_steps": [
+        "Upload the EICAR test file and confirm it is quarantined."
+      ],
+      "evidence_expected": "Scanner/quarantine integration and tests.",
+      "remediation_guidance": "Add scanning (e.g. ClamAV in the ingestion worker or a scanning service) and a quarantined status.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-FILE-005",
@@ -340,15 +966,68 @@
       "frameworks": [
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "OWASP API1:2023",
+        "OWASP File Upload Cheat Sheet"
+      ],
       "applies_when_any": [
         "file_uploads",
         "cloud_storage"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Original files are private; download links are authorization-gated and short-lived.",
+      "acceptance_criteria": [
+        "Buckets holding user files are private.",
+        "Downloads use short-lived signed URLs issued after an ownership check.",
+        "Storage policies prevent listing or writing another owner's path."
+      ],
       "test_method": "Attempt foreign-file download and expired/replayed signed URLs.",
-      "evidence_expected": "Storage policy, signed URL implementation and tests."
+      "verification_steps": [
+        "Request another user's object path directly and via the download route.",
+        "Check bucket public flags in the provider dashboard."
+      ],
+      "evidence_expected": "Storage policy, signed URL implementation and tests.",
+      "remediation_guidance": "Keep buckets private, scope storage policies by owner prefix, and issue signed URLs of 5 minutes or less.",
+      "platform_guidance": {
+        "supabase": "Set bucket public=false, file_size_limit and allowed_mime_types; key storage policies on foldername(name)[1] = auth.uid()."
+      }
+    },
+    {
+      "id": "GMS-PAY-001",
+      "domain": "Payments",
+      "title": "Payment processing delegated and verified server-side",
+      "frameworks": [
+        "PCI DSS v4.0",
+        "OWASP API Security Top 10"
+      ],
+      "standard_refs": [
+        "PCI DSS v4.0 (SAQ A scope)",
+        "OWASP API6:2023"
+      ],
+      "applies_when_any": [
+        "payments"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
+      "requirement": "Card data is handled only by a PCI-compliant provider's hosted fields/checkout; prices and entitlements are computed and granted server-side from verified provider events.",
+      "acceptance_criteria": [
+        "No card numbers touch application servers or logs.",
+        "Prices come from server-side configuration, not the client.",
+        "Entitlements are granted only from verified provider events."
+      ],
+      "test_method": "Tamper with client-side price/plan parameters and confirm fulfillment only follows verified events.",
+      "verification_steps": [
+        "Change the price/plan ID in the checkout request.",
+        "Grant an entitlement by calling the success URL without paying."
+      ],
+      "evidence_expected": "Hosted checkout integration, server-side price lookup, webhook-driven fulfillment.",
+      "remediation_guidance": "Use hosted checkout, look up prices server-side and fulfill only from signed webhooks.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-001",
@@ -358,15 +1037,32 @@
         "OWASP GenAI / LLM Top 10",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "OWASP LLM01:2025",
+        "OWASP LLM Prompt Injection Prevention Cheat Sheet"
+      ],
       "applies_when_any": [
         "ai",
         "rag"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "User/source content cannot redefine trusted system policy or tool authority.",
+      "acceptance_criteria": [
+        "Retrieved/uploaded content and anything derived from it (titles, metadata, earlier model output) reaches prompts only inside a delimited untrusted-data envelope.",
+        "No browser-supplied text is placed in system/developer instructions.",
+        "Prompts state that untrusted data cannot change instructions."
+      ],
       "test_method": "Embed policy-override instructions in text, document metadata, OCR images and retrieved passages.",
-      "evidence_expected": "Prompt/data boundary plus adversarial tests."
+      "verification_steps": [
+        "Trace every string that enters a system prompt back to its origin.",
+        "Inject instructions via document body, filename, metadata and OCR text and inspect the assembled prompt."
+      ],
+      "evidence_expected": "Prompt/data boundary plus adversarial tests.",
+      "remediation_guidance": "Serialize untrusted data (e.g. JSON envelope), keep it out of system text, and build scope/context directives server-side.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-002",
@@ -376,14 +1072,29 @@
         "OWASP GenAI / LLM Top 10",
         "NIST AI 600-1"
       ],
+      "standard_refs": [
+        "OWASP LLM01:2025",
+        "NIST AI 600-1: Information Security"
+      ],
       "applies_when_any": [
         "ai"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Direct/indirect prompt injection is tested through actual production model boundaries and cannot cause unauthorized data/tool/state changes.",
+      "acceptance_criteria": [
+        "A versioned corpus of direct and indirect injection cases runs against the production prompt path and model.",
+        "Results are reviewed and regressions block release."
+      ],
       "test_method": "Run maintained adversarial corpus through renderer/evaluator/tool boundaries.",
-      "evidence_expected": "Versioned adversarial eval results."
+      "verification_steps": [
+        "Run the corpus against the deployed configuration and record pass/fail per case."
+      ],
+      "evidence_expected": "Versioned adversarial eval results.",
+      "remediation_guidance": "Add injection fixtures to the evaluation suite and run them on every prompt/model change.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-003",
@@ -392,14 +1103,28 @@
       "frameworks": [
         "OWASP GenAI / LLM Top 10"
       ],
+      "standard_refs": [
+        "OWASP LLM05:2025"
+      ],
       "applies_when_any": [
         "ai"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Model output that affects software state is schema-validated and range/enum checked.",
+      "acceptance_criteria": [
+        "Model output that drives state (grades, IDs, actions) is parsed against a strict schema and normalized.",
+        "Invalid output fails closed."
+      ],
       "test_method": "Force malformed/extra/invalid model fields and verify fail-closed normalization.",
-      "evidence_expected": "Schemas/normalizers and tests."
+      "verification_steps": [
+        "Feed malformed/extra-field model output into each parser."
+      ],
+      "evidence_expected": "Schemas/normalizers and tests.",
+      "remediation_guidance": "Use strict structured outputs and validate again server-side before use.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-004",
@@ -409,14 +1134,29 @@
         "OWASP GenAI / LLM Top 10",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "OWASP LLM06:2025"
+      ],
       "applies_when_any": [
         "ai_tools_or_agents"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Models cannot invoke tools or mutate privileged state beyond explicitly authorized, scoped operations.",
+      "acceptance_criteria": [
+        "Each tool has the minimum scope and runs with the end user's permissions.",
+        "Destructive or external actions need human confirmation.",
+        "Tool calls are logged."
+      ],
       "test_method": "Prompt model to call unauthorized tools, expand scope or alter authority.",
-      "evidence_expected": "Tool allowlists, authorization checks and adversarial tests."
+      "verification_steps": [
+        "Prompt-inject a tool call that exceeds the user's permissions."
+      ],
+      "evidence_expected": "Tool allowlists, authorization checks and adversarial tests.",
+      "remediation_guidance": "Scope tools per user, require confirmation for side effects, and log every invocation.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-005",
@@ -426,15 +1166,30 @@
         "OWASP GenAI / LLM Top 10",
         "NIST AI 600-1"
       ],
+      "standard_refs": [
+        "OWASP LLM02:2025",
+        "NIST AI 600-1: Data Privacy"
+      ],
       "applies_when_any": [
         "ai",
         "sensitive_data"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Model/context paths cannot reveal secrets, system credentials, private prompts or another user's data.",
+      "acceptance_criteria": [
+        "Tests show the model cannot reveal another tenant's data, secrets or system prompt contents that matter.",
+        "Prompts contain no secrets."
+      ],
       "test_method": "Exfiltration prompts, cross-tenant prompts, system-prompt extraction and context-boundary tests.",
-      "evidence_expected": "Adversarial eval and isolation tests."
+      "verification_steps": [
+        "With two tenants' data present, ask for the other tenant's content via chat and retrieval."
+      ],
+      "evidence_expected": "Adversarial eval and isolation tests.",
+      "remediation_guidance": "Scope retrieval by tenant in the data layer and add cross-tenant decoys to evaluations.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-006",
@@ -444,14 +1199,28 @@
         "NIST AI RMF",
         "NIST AI 600-1"
       ],
+      "standard_refs": [
+        "NIST AI RMF MEASURE 2",
+        "NIST AI 600-1: Information Integrity"
+      ],
       "applies_when_any": [
         "ai"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "AI decisions can be tied to model, prompt, embedding/retrieval and evaluator versions.",
+      "acceptance_criteria": [
+        "Every stored AI output records model, prompt version and retrieval/evaluator version."
+      ],
       "test_method": "Inspect persisted traces/evidence for version identifiers and reproduce a sampled decision.",
-      "evidence_expected": "Versioned configs/traces and reproducibility test."
+      "verification_steps": [
+        "Pick a stored answer and identify the exact model and prompt that produced it."
+      ],
+      "evidence_expected": "Versioned configs/traces and reproducibility test.",
+      "remediation_guidance": "Version prompts in code and store model/prompt IDs with outputs.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-AI-007",
@@ -461,6 +1230,10 @@
         "NIST AI RMF",
         "OWASP GenAI / LLM Top 10"
       ],
+      "standard_refs": [
+        "OWASP LLM10:2025",
+        "NIST AI RMF MANAGE 4"
+      ],
       "applies_when_any": [
         "ai",
         "external_ai_provider",
@@ -468,9 +1241,55 @@
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Platform/Ops",
+      "effort": "M",
       "requirement": "AI operations expose bounded latency, token/work usage and cost metrics without logging raw sensitive content by default.",
+      "acceptance_criteria": [
+        "Tokens, latency, cost and errors are recorded per operation and user.",
+        "Alerts fire on spend or error anomalies."
+      ],
       "test_method": "Exercise each AI operation and verify traces, limits and dashboard metrics.",
-      "evidence_expected": "Telemetry schema/dashboard/query evidence."
+      "verification_steps": [
+        "Find yesterday's cost by operation and the top-spending user."
+      ],
+      "evidence_expected": "Telemetry schema/dashboard/query evidence.",
+      "remediation_guidance": "Log usage from provider responses to a metrics store and add spend/error alerts.",
+      "platform_guidance": {}
+    },
+    {
+      "id": "GMS-AI-008",
+      "domain": "AI Safety",
+      "title": "Content safety appropriate to the user population",
+      "frameworks": [
+        "NIST AI 600-1",
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "standard_refs": [
+        "NIST AI 600-1: Dangerous, Violent, or Hateful Content",
+        "NIST AI 600-1: Obscene, Degrading, and/or Abusive Content",
+        "OWASP LLM05:2025"
+      ],
+      "applies_when_any": [
+        "minors",
+        "user_generated_content"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "owner_role": "Product",
+      "effort": "M",
+      "requirement": "User input and generated or shared content are screened for harmful categories appropriate to the audience, with a safe response path for crisis content.",
+      "acceptance_criteria": [
+        "Learner/user input and model or user-generated output pass a moderation check before display.",
+        "Self-harm content routes to a safe-messaging response with resources.",
+        "Moderation decisions are logged without content."
+      ],
+      "test_method": "Run a harmful-content corpus (self-harm, sexual content, violence, harassment) through every input and output path.",
+      "verification_steps": [
+        "Submit each corpus category through chat, uploads and shared content."
+      ],
+      "evidence_expected": "Moderation calls in code, safe-messaging responses, test results.",
+      "remediation_guidance": "Add a moderation step on input and output with category thresholds set for the audience and a crisis-response template.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-RAG-001",
@@ -480,6 +1299,10 @@
         "OWASP GenAI / LLM Top 10",
         "OWASP API Security"
       ],
+      "standard_refs": [
+        "OWASP LLM08:2025",
+        "OWASP API1:2023"
+      ],
       "applies_when_any": [
         "rag",
         "vector_store",
@@ -487,9 +1310,20 @@
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Retrieval enforces tenant/user/source permissions before content enters model context.",
+      "acceptance_criteria": [
+        "Vector search filters by tenant inside the data layer under the caller's identity.",
+        "Callers cannot widen scope through parameters."
+      ],
       "test_method": "Use cross-tenant decoys and forged room/source IDs in retrieval.",
-      "evidence_expected": "RLS/IAM retrieval path and adversarial eval."
+      "verification_steps": [
+        "Query retrieval as user B with user A's room/tenant ID and with forged owner parameters."
+      ],
+      "evidence_expected": "RLS/IAM retrieval path and adversarial eval.",
+      "remediation_guidance": "Enforce tenant filters in the search function with security-invoker/RLS; ignore owner parameters from non-privileged callers.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-RAG-002",
@@ -499,14 +1333,29 @@
         "OWASP GenAI / LLM Top 10",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "OWASP LLM09:2025",
+        "NIST AI 600-1: Confabulation"
+      ],
       "applies_when_any": [
         "rag"
       ],
       "severity": "P1",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "L",
       "requirement": "Unsupported questions reliably abstain and cited claims are semantically supported, not merely syntactically cited.",
+      "acceptance_criteria": [
+        "A human-reviewed evaluation measures citation support and abstention on a frozen corpus.",
+        "Thresholds are defined and met for release."
+      ],
       "test_method": "Human-reviewed corpus with claim-level support and unsupported-answer cases.",
-      "evidence_expected": "Reviewed RAG scorecard and release thresholds."
+      "verification_steps": [
+        "Run the reviewed evaluation on the release candidate."
+      ],
+      "evidence_expected": "Reviewed RAG scorecard and release thresholds.",
+      "remediation_guidance": "Build a reviewed scorecard and gate prompt/retrieval changes on it.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-RAG-003",
@@ -516,15 +1365,29 @@
         "OWASP GenAI / LLM Top 10",
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "OWASP LLM08:2025",
+        "GDPR Art. 17"
+      ],
       "applies_when_any": [
         "rag",
         "vector_store"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "M",
       "requirement": "Deleted/replaced source content cannot remain retrievable through stale chunks, indexes or caches.",
+      "acceptance_criteria": [
+        "Deleting or revising a source removes or replaces its chunks, embeddings and every derived copy, including secondary indexes."
+      ],
       "test_method": "Replace/delete source and query for removed content across every retrieval system.",
-      "evidence_expected": "Deletion/revision implementation and stale-source regression tests."
+      "verification_steps": [
+        "Delete a source and query every index and cache for its content."
+      ],
+      "evidence_expected": "Deletion/revision implementation and stale-source regression tests.",
+      "remediation_guidance": "Cascade deletes to derived data and add a deletion test per index.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-PRIV-001",
@@ -534,15 +1397,32 @@
         "OWASP ASVS 5.0",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "GDPR Art. 17",
+        "GDPR Art. 20",
+        "COPPA 16 CFR 312.10"
+      ],
       "applies_when_any": [
         "sensitive_data",
         "cloud_storage"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "L",
       "requirement": "User data has explicit retention/deletion/export behavior across primary, derived, cache/index and provider copies.",
+      "acceptance_criteria": [
+        "Users can delete their account and all derived data, including storage and provider copies where possible.",
+        "Users can export their data.",
+        "Retention jobs run on schedule."
+      ],
       "test_method": "Create representative data then exercise deletion/export and verify downstream artifacts.",
-      "evidence_expected": "Policy plus end-to-end deletion/export tests."
+      "verification_steps": [
+        "Delete a test account and search every store for its identifiers."
+      ],
+      "evidence_expected": "Policy plus end-to-end deletion/export tests.",
+      "remediation_guidance": "Implement account deletion/export flows and retention jobs from the data register.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-PRIV-002",
@@ -552,14 +1432,32 @@
         "NIST AI RMF",
         "NIST AI 600-1"
       ],
+      "standard_refs": [
+        "COPPA 16 CFR Part 312",
+        "FERPA 34 CFR Part 99",
+        "NIST AI 600-1: Data Privacy"
+      ],
       "applies_when_any": [
         "minors"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Legal/Privacy",
+      "effort": "L",
       "requirement": "Before public child use, identity/guardian/consent/collection/retention/vendor handling requirements are explicitly resolved for target markets.",
+      "acceptance_criteria": [
+        "Counsel has decided the audience (13+ screen or full COPPA compliance) and the decision is implemented.",
+        "If under-13 users are allowed: verifiable parental consent, separate consent for third-party disclosure, a written security program and a retention limit exist.",
+        "If schools are customers: contracts meet FERPA school-official criteria."
+      ],
       "test_method": "Privacy/legal/product review against actual onboarding and data collection.",
-      "evidence_expected": "Approved data/consent model and implementation evidence."
+      "verification_steps": [
+        "Walk sign-up as an under-13 user.",
+        "Review consent records and the written security program."
+      ],
+      "evidence_expected": "Approved data/consent model and implementation evidence.",
+      "remediation_guidance": "Get a counsel decision on audience; implement an age screen or the COPPA consent flow; document the security program.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-PRIV-003",
@@ -569,6 +1467,11 @@
         "NIST AI RMF",
         "NIST AI 600-1"
       ],
+      "standard_refs": [
+        "OWASP LLM02:2025",
+        "NIST AI 600-1: Value Chain and Component Integration",
+        "GDPR Art. 28"
+      ],
       "applies_when_any": [
         "external_ai_provider",
         "third_party_integrations",
@@ -576,9 +1479,59 @@
       ],
       "severity": "P1",
       "release_blocker": true,
+      "owner_role": "Legal/Privacy",
+      "effort": "M",
       "requirement": "Document what data each provider receives, retention/training settings, region/subprocessors where relevant, and deletion/incident expectations.",
+      "acceptance_criteria": [
+        "Each provider receiving user data is listed with data types, retention, training use and a signed DPA.",
+        "Provider settings (e.g. response storage, retention) match the register."
+      ],
       "test_method": "Compare provider configuration/contracts against actual request payloads.",
-      "evidence_expected": "Vendor data-flow register and configuration evidence."
+      "verification_steps": [
+        "Compare the register with code call sites and provider dashboards."
+      ],
+      "evidence_expected": "Vendor data-flow register and configuration evidence.",
+      "remediation_guidance": "Create a vendor register, sign DPAs, and set provider retention/training controls (e.g. store:false).",
+      "platform_guidance": {
+        "openai": "The Responses API stores responses unless store:false; check org data controls and retention."
+      }
+    },
+    {
+      "id": "GMS-PRIV-004",
+      "domain": "Privacy",
+      "title": "Privacy notice, terms and data-subject requests",
+      "frameworks": [
+        "COPPA",
+        "GDPR",
+        "App store review guidelines"
+      ],
+      "standard_refs": [
+        "GDPR Art. 12-15",
+        "COPPA 16 CFR 312.4"
+      ],
+      "applies_when_any": [
+        "sensitive_data",
+        "minors",
+        "public_signup"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "owner_role": "Legal/Privacy",
+      "effort": "M",
+      "requirement": "A privacy notice, terms of service and a working channel for access/deletion requests are published and match actual data handling.",
+      "acceptance_criteria": [
+        "Privacy notice and terms are linked from sign-up and the app.",
+        "The notice lists every provider receiving user data.",
+        "Access and deletion requests can be submitted and are fulfilled within the stated period."
+      ],
+      "test_method": "Compare published notices with the data register and test the request channel.",
+      "verification_steps": [
+        "Read the notice against the vendor register.",
+        "Submit a test deletion request."
+      ],
+      "evidence_expected": "Published URLs, data register, request-handling log.",
+      "remediation_guidance": "Draft notice/terms with counsel from the data register and link them from sign-up; add a request form or address.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-LOG-001",
@@ -589,14 +1542,29 @@
         "OWASP Logging guidance",
         "NIST SSDF"
       ],
+      "standard_refs": [
+        "OWASP Top 10:2021 A09",
+        "OWASP Logging Cheat Sheet"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Platform/Ops",
+      "effort": "M",
       "requirement": "Detect auth failures, authorization denials, suspicious abuse, privileged failures, upload/malware failures and relevant AI-security events.",
+      "acceptance_criteria": [
+        "Auth failures, authorization denials, rate-limit hits and admin actions are logged with request IDs.",
+        "Alerts exist for spikes."
+      ],
       "test_method": "Trigger representative events and confirm protected, searchable records/alerts.",
-      "evidence_expected": "Security event schema, logs and alert tests."
+      "verification_steps": [
+        "Trigger each event and find it in the log/alert system."
+      ],
+      "evidence_expected": "Security event schema, logs and alert tests.",
+      "remediation_guidance": "Emit structured security events and route them to alerting.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-LOG-002",
@@ -606,15 +1574,29 @@
         "OWASP ASVS 5.0",
         "OWASP Logging guidance"
       ],
+      "standard_refs": [
+        "OWASP Logging Cheat Sheet",
+        "OWASP LLM02:2025"
+      ],
       "applies_when_any": [
         "sensitive_data",
         "ai"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Logs/telemetry do not routinely store secrets, session tokens, full private documents or raw learner content without explicit necessity/protection.",
+      "acceptance_criteria": [
+        "Logs and telemetry contain no document content, learner answers, tokens or secrets."
+      ],
       "test_method": "Inspect production logging/telemetry payloads during auth, upload, AI and error flows.",
-      "evidence_expected": "Logging policy and sampled traces."
+      "verification_steps": [
+        "Sample production logs and telemetry for content and credentials."
+      ],
+      "evidence_expected": "Logging policy and sampled traces.",
+      "remediation_guidance": "Log codes and IDs only; add a redaction layer for anything else.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-SUPPLY-001",
@@ -624,14 +1606,33 @@
         "NIST SSDF",
         "OWASP Software Supply Chain guidance"
       ],
+      "standard_refs": [
+        "OWASP LLM03:2025",
+        "OWASP Top 10:2021 A06",
+        "NIST SSDF PW.4",
+        "NIST SSDF RV.1"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "CI uses committed dependency locks and automated vulnerability/SCA checks.",
+      "acceptance_criteria": [
+        "No floating version specifiers (e.g. latest) in manifests.",
+        "CI installs from the lockfile only.",
+        "CI fails on high/critical advisories in production dependencies.",
+        "Automated dependency security updates are enabled."
+      ],
       "test_method": "Inspect CI install mode and intentionally verify vulnerable dependency reporting path.",
-      "evidence_expected": "Frozen-lock install and SCA workflow."
+      "verification_steps": [
+        "grep manifests for floating specifiers; read the CI install command; run the audit command."
+      ],
+      "evidence_expected": "Frozen-lock install and SCA workflow.",
+      "remediation_guidance": "Pin versions, use frozen-lockfile installs, add an audit gate and Dependabot/Renovate.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-SUPPLY-002",
@@ -641,14 +1642,29 @@
         "NIST SSDF",
         "OWASP Software Supply Chain guidance"
       ],
+      "standard_refs": [
+        "NIST SSDF PS.1",
+        "OWASP Top 10:2021 A05"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P0",
       "release_blocker": true,
+      "owner_role": "Platform/Ops",
+      "effort": "S",
       "requirement": "Repositories and CI detect committed credentials/secrets and define rotation response.",
+      "acceptance_criteria": [
+        "Secret scanning with push protection is enabled on the repository.",
+        "No live secrets exist in history."
+      ],
       "test_method": "Use safe fake-secret fixture or scanner test mode.",
-      "evidence_expected": "Secret scanning workflow and rotation runbook."
+      "verification_steps": [
+        "Check repository security settings; run a history scan."
+      ],
+      "evidence_expected": "Secret scanning workflow and rotation runbook.",
+      "remediation_guidance": "Enable GitHub secret scanning and push protection; rotate anything found.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-SUPPLY-003",
@@ -658,14 +1674,27 @@
         "NIST SSDF",
         "OWASP Software Supply Chain guidance"
       ],
+      "standard_refs": [
+        "NIST SSDF PS.3"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P2",
       "release_blocker": false,
+      "owner_role": "Engineering",
+      "effort": "S",
       "requirement": "Production releases have a machine-readable dependency inventory/SBOM or equivalent.",
+      "acceptance_criteria": [
+        "Each release produces an SBOM/dependency inventory artifact."
+      ],
       "test_method": "Generate release inventory and confirm direct/transitive dependencies are represented.",
-      "evidence_expected": "SBOM artifact or dependency inventory."
+      "verification_steps": [
+        "Find the SBOM for the current production release."
+      ],
+      "evidence_expected": "SBOM artifact or dependency inventory.",
+      "remediation_guidance": "Generate an SBOM in CI (e.g. CycloneDX) and attach it to releases.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-CI-001",
@@ -674,14 +1703,29 @@
       "frameworks": [
         "NIST SSDF"
       ],
+      "standard_refs": [
+        "NIST SSDF PS.1",
+        "NIST SSDF PO.3"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": true,
+      "owner_role": "Platform/Ops",
+      "effort": "S",
       "requirement": "Production branch changes require review/required checks and cannot silently bypass security validation.",
+      "acceptance_criteria": [
+        "The production branch is protected; direct pushes and force-pushes are blocked.",
+        "Required status checks include tests and the security gate."
+      ],
       "test_method": "Inspect branch rules and attempt prohibited direct/broken change in a safe test repo/branch.",
-      "evidence_expected": "Branch protection/ruleset and required-check configuration."
+      "verification_steps": [
+        "Read branch protection rules for the production branch."
+      ],
+      "evidence_expected": "Branch protection/ruleset and required-check configuration.",
+      "remediation_guidance": "Enable branch protection with required checks and at least one review.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-OPS-001",
@@ -691,14 +1735,29 @@
         "NIST SSDF",
         "NIST AI RMF"
       ],
+      "standard_refs": [
+        "NIST SSDF RV.2",
+        "NIST AI RMF MANAGE 4"
+      ],
       "applies_when_any": [
         "all"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Security",
+      "effort": "M",
       "requirement": "Document detection, containment, credential rotation, provider shutdown, user impact assessment and recovery.",
+      "acceptance_criteria": [
+        "A written runbook covers incident triage, user notification, and rotation of every credential.",
+        "Rotation of each secret has been rehearsed."
+      ],
       "test_method": "Tabletop one auth/data/AI-cost incident and record gaps.",
-      "evidence_expected": "Incident runbook and tabletop record."
+      "verification_steps": [
+        "Rotate one production secret using only the runbook."
+      ],
+      "evidence_expected": "Incident runbook and tabletop record.",
+      "remediation_guidance": "Write the runbook with a per-secret rotation table and rehearse it.",
+      "platform_guidance": {}
     },
     {
       "id": "GMS-OPS-002",
@@ -708,15 +1767,70 @@
         "NIST SSDF",
         "OWASP ASVS 5.0"
       ],
+      "standard_refs": [
+        "NIST SSDF PO.5"
+      ],
       "applies_when_any": [
         "cloud_storage",
         "sensitive_data"
       ],
       "severity": "P1",
       "release_blocker": false,
+      "owner_role": "Platform/Ops",
+      "effort": "M",
       "requirement": "Critical data has defined backup/recovery behavior and destructive operations are tested against it.",
+      "acceptance_criteria": [
+        "Backups exist at the required frequency and a restore has been tested.",
+        "Restores respect deletion/retention (deleted data is not resurrected silently)."
+      ],
       "test_method": "Restore representative state and verify deletion/retention semantics are not contradicted.",
-      "evidence_expected": "Recovery test evidence."
+      "verification_steps": [
+        "Restore to a scratch environment and verify integrity and deletions."
+      ],
+      "evidence_expected": "Recovery test evidence.",
+      "remediation_guidance": "Confirm the backup tier, schedule restore drills and document deletion handling after restore.",
+      "platform_guidance": {}
+    },
+    {
+      "id": "GMS-OPS-003",
+      "domain": "Operations",
+      "title": "Hosting and managed-platform security configuration",
+      "frameworks": [
+        "OWASP Top 10",
+        "NIST SSDF",
+        "Supabase production checklist",
+        "Vercel security docs"
+      ],
+      "standard_refs": [
+        "OWASP Top 10:2021 A05",
+        "OWASP API8:2023",
+        "NIST SSDF PO.5"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "owner_role": "Platform/Ops",
+      "effort": "S",
+      "requirement": "Owner accounts, managed backends and hosting are configured for production: MFA, least-privilege team access, secret scoping, preview protection, TLS, platform security advisors clean.",
+      "acceptance_criteria": [
+        "All owner/admin accounts on hosting, database, AI and source platforms use MFA.",
+        "Platform security advisors report no unresolved warnings.",
+        "Secrets are marked sensitive and scoped to the environments that need them; preview deployments are protected and do not use production data unintentionally.",
+        "Database SSL enforcement, network restrictions, custom SMTP and backups are configured where offered."
+      ],
+      "test_method": "Review each platform's security settings and advisors against its production checklist.",
+      "verification_steps": [
+        "Walk each platform's production checklist and record each item.",
+        "Run the platform security advisor."
+      ],
+      "evidence_expected": "Settings exports/screenshots, advisor output, environment variable scoping.",
+      "remediation_guidance": "Complete each platform's production checklist and re-run its advisor after changes.",
+      "platform_guidance": {
+        "supabase": "Production checklist: RLS everywhere, SSL enforcement, network restrictions, MFA on the org, custom SMTP, short OTP expiry, auth rate limits, CAPTCHA, Security Advisor clean.",
+        "vercel": "Enable Deployment Protection for previews, mark secrets Sensitive, scope env vars per environment, review team roles."
+      }
     }
   ]
 }

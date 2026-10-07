@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "control-catalog.schema.json",
+  "title": "Security readiness control catalog",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "catalog_version",
+    "features",
+    "controls"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "catalog_version": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "statuses": {
+      "type": "object"
+    },
+    "severities": {
+      "type": "object"
+    },
+    "owner_roles": {
+      "type": "object"
+    },
+    "efforts": {
+      "type": "object"
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "question",
+          "meaning"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "meaning": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "domain",
+          "title",
+          "applies_when_any",
+          "severity",
+          "release_blocker",
+          "owner_role",
+          "effort",
+          "requirement",
+          "acceptance_criteria",
+          "test_method",
+          "verification_steps",
+          "evidence_expected",
+          "remediation_guidance"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]+-[A-Z]+-\\d{3}$"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "frameworks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "standard_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "applies_when_any": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "all",
+                "web",
+                "api",
+                "authentication",
+                "oauth",
+                "public_signup",
+                "multi_tenant",
+                "file_uploads",
+                "cloud_storage",
+                "ai",
+                "external_ai_provider",
+                "rag",
+                "vector_store",
+                "ai_tools_or_agents",
+                "expensive_compute",
+                "outbound_fetch",
+                "webhooks",
+                "user_generated_content",
+                "sensitive_data",
+                "minors",
+                "payments",
+                "admin_console",
+                "third_party_integrations",
+                "auxiliary_services"
+              ]
+            },
+            "minItems": 1
+          },
+          "severity": {
+            "enum": [
+              "P0",
+              "P1",
+              "P2",
+              "P3"
+            ]
+          },
+          "release_blocker": {
+            "type": "boolean"
+          },
+          "owner_role": {
+            "enum": [
+              "Engineering",
+              "Platform/Ops",
+              "Security",
+              "Legal/Privacy",
+              "Product"
+            ]
+          },
+          "effort": {
+            "enum": [
+              "S",
+              "M",
+              "L"
+            ]
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "test_method": {
+            "type": "string"
+          },
+          "verification_steps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "evidence_expected": {
+            "type": "string"
+          },
+          "remediation_guidance": {
+            "type": "string"
+          },
+          "platform_guidance": {
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "supabase",
+                "vercel",
+                "nextjs",
+                "openai",
+                "stripe"
+              ]
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

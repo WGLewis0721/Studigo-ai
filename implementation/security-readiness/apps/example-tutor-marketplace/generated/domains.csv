@@ -1,0 +1,18 @@
+app_id,domain,controls,applicable,pass,partial,fail,not_tested,accepted_risk,needs_review,not_applicable,open_blockers,p0_open,readiness_pct
+example-tutor-marketplace,Governance,3,3,0,0,0,3,0,0,0,1,1,0
+example-tutor-marketplace,Authentication,5,3,0,0,0,3,0,2,0,2,1,0
+example-tutor-marketplace,Authorization,3,2,0,0,0,2,0,1,0,2,2,0
+example-tutor-marketplace,API Security,5,4,0,0,0,4,0,1,0,2,1,0
+example-tutor-marketplace,Resource Abuse,1,1,0,0,0,1,0,0,0,1,1,0
+example-tutor-marketplace,Web Security,2,2,0,0,0,2,0,0,0,1,1,0
+example-tutor-marketplace,File Security,5,5,0,0,0,5,0,0,0,4,4,0
+example-tutor-marketplace,Payments,1,1,0,0,0,1,0,0,0,1,1,0
+example-tutor-marketplace,AI Security,5,4,0,0,0,4,0,1,0,3,3,0
+example-tutor-marketplace,AI Operations,2,2,0,0,0,2,0,0,0,0,0,0
+example-tutor-marketplace,AI Safety,1,1,0,0,0,1,0,0,0,1,0,0
+example-tutor-marketplace,RAG / Vector Security,3,1,0,0,0,1,0,0,2,1,1,0
+example-tutor-marketplace,Privacy,4,4,0,0,0,4,0,0,0,4,2,0
+example-tutor-marketplace,Logging / Detection,2,2,0,0,0,2,0,0,0,1,1,0
+example-tutor-marketplace,Supply Chain,3,3,0,0,0,3,0,0,0,1,1,0
+example-tutor-marketplace,Secure Delivery,1,1,0,0,0,1,0,0,0,1,0,0
+example-tutor-marketplace,Operations,3,3,0,0,0,3,0,0,0,1,0,0

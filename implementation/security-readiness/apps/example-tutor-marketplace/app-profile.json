@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "app_id": "example-tutor-marketplace",
+  "name": "Example: Tutor Marketplace",
+  "description": "Illustrative idea-stage profile. Parents find and book vetted tutors for their children, pay per session, and tutors upload certifications. An AI assistant drafts session summaries from tutor notes.",
+  "client": "Example client",
+  "owner": "",
+  "stage": "idea",
+  "platforms": [
+    "supabase",
+    "stripe"
+  ],
+  "environments": [
+    "development",
+    "production"
+  ],
+  "features": {
+    "web": "yes",
+    "api": "yes",
+    "authentication": "yes",
+    "oauth": "unknown",
+    "public_signup": "yes",
+    "multi_tenant": "yes",
+    "file_uploads": "yes",
+    "cloud_storage": "yes",
+    "ai": "yes",
+    "external_ai_provider": "yes",
+    "rag": "no",
+    "vector_store": "no",
+    "ai_tools_or_agents": "unknown",
+    "expensive_compute": "yes",
+    "outbound_fetch": "unknown",
+    "webhooks": "yes",
+    "user_generated_content": "unknown",
+    "sensitive_data": "yes",
+    "minors": "yes",
+    "payments": "yes",
+    "admin_console": "unknown",
+    "third_party_integrations": "unknown",
+    "auxiliary_services": "unknown"
+  },
+  "data_notes": [
+    "Parent and tutor identity and contact details",
+    "Children's names, ages and learning needs",
+    "Tutor certifications and background-check documents",
+    "Session notes and AI-drafted summaries",
+    "Payment records (card data held by the payment provider)"
+  ],
+  "deployment_notes": [
+    "Platforms named in the brief: Supabase and Stripe; hosting not chosen yet."
+  ],
+  "assumptions": [
+    "Built from a two-sentence brief; every capability the brief does not mention is left unknown.",
+    "Children are data subjects even though parents hold the accounts."
+  ]
+}

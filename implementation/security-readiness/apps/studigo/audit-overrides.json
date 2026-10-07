@@ -682,6 +682,77 @@
       "evidence_refs": [],
       "test_refs": [],
       "notes": ""
+    },
+    "GMS-AUTH-004": {
+      "status": "fail",
+      "severity": "P1",
+      "likelihood": 4,
+      "impact": 4,
+      "release_blocker": true,
+      "finding": "Live 2026-10-07: Supabase anonymous sign-ins enabled (52 of 54 users anonymous, no cleanup), leaked-password protection disabled (Security Advisor), no CAPTCHA, 8-character minimum enforced only in the server action. App now treats anonymous sessions as signed out and RLS blocks anonymous inserts.",
+      "remediation": "In Supabase Auth: disable anonymous sign-ins, enable CAPTCHA and leaked-password protection, set minimum password length and auth rate limits; decide whether to purge existing anonymous users.",
+      "owner": "",
+      "target_date": "",
+      "evidence_refs": [
+        "apps/web/lib/account-kind.ts",
+        "supabase/migrations/20261007120000_block_anonymous_writes.sql",
+        "apps/web/lib/actions/auth.ts"
+      ],
+      "test_refs": [
+        "apps/web/lib/account-kind.test.ts",
+        "tests/database-security.test.mjs"
+      ],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
+    },
+    "GMS-AI-008": {
+      "status": "fail",
+      "severity": "P1",
+      "likelihood": 3,
+      "impact": 5,
+      "release_blocker": true,
+      "finding": "No moderation of learner input or model output; PRODUCT.md says minors may use Studigo and the dev fixture is fifth-grade science.",
+      "remediation": "Add input/output moderation with thresholds for minors and a safe-messaging response for self-harm content.",
+      "owner": "",
+      "target_date": "",
+      "evidence_refs": [
+        "packages/ai/src/grounding.ts",
+        "docs/PRODUCT.md"
+      ],
+      "test_refs": [],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
+    },
+    "GMS-PRIV-004": {
+      "status": "fail",
+      "severity": "P1",
+      "likelihood": 4,
+      "impact": 4,
+      "release_blocker": true,
+      "finding": "No privacy notice or terms page in apps/web/app and no data-request channel; tracked as unchecked in APP_STORE_RELEASE_PLAN.md.",
+      "remediation": "Publish counsel-reviewed privacy notice and terms built from the data register, link them from sign-up, and add a deletion/access request channel.",
+      "owner": "",
+      "target_date": "",
+      "evidence_refs": [
+        "apps/web/app",
+        "docs/APP_STORE_RELEASE_PLAN.md"
+      ],
+      "test_refs": [],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
+    },
+    "GMS-OPS-003": {
+      "status": "partial",
+      "severity": "P1",
+      "likelihood": 3,
+      "impact": 4,
+      "release_blocker": true,
+      "finding": "Supabase Security Advisor run 2026-10-07: anonymous-access and leaked-password warnings, mutable search_path (fixed by migration 20261007120000), unrelated mf_agreements/mf_bookings tables in the Studigo database. Vercel firewall config absent. Account MFA, preview Deployment Protection, env-var scoping, SSL enforcement, network restrictions, custom SMTP and backups not verified.",
+      "remediation": "Walk the Supabase production checklist and Vercel security settings, record each item, clear Advisor warnings and remove the mf_* tables through a migration.",
+      "owner": "",
+      "target_date": "",
+      "evidence_refs": [
+        "supabase/migrations/20261007120000_block_anonymous_writes.sql"
+      ],
+      "test_refs": [],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     }
   }
 }

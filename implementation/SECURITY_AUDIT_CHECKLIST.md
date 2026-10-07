@@ -8,11 +8,11 @@ This audit checks Studigo against six published control sets. Each control maps 
 
 ## Relationship to the security-readiness gate
 
-The canonical release gate is the generated report in `implementation/security-readiness/studigo/generated/public-launch-gate.md`, built from `audit-overrides.json` (`pnpm security:report`). This file is the detailed audit against six named standards. Its evidence feeds that gate: each change below is recorded on the matching `GMS-*` control, and the regenerated gate is committed with it. When the two disagree, update the overrides and regenerate rather than editing a status here only.
+The canonical release gate is the generated report in `implementation/security-readiness/apps/studigo/generated/public-launch-gate.md`, built from `apps/studigo/audit-overrides.json` (`pnpm security:report`). This file is the detailed audit against six named standards. Its evidence feeds that gate: each change below is recorded on the matching `GMS-*` control, and the regenerated gate is committed with it. When the two disagree, update the overrides and regenerate rather than editing a status here only.
 
 | This checklist | Gate control |
 |---|---|
-| LLM10-01, API2-03, SB-02 (anonymous accounts) | GMS-AUTH-001, GMS-API-002 |
+| LLM10-01, API2-03, SB-02 (anonymous accounts) | GMS-AUTH-004, GMS-AUTH-001, GMS-API-002 |
 | LLM10-02..06, API4, NX-06, VC-01 (rate/cost limits) | GMS-API-002, GMS-AI-007 |
 | LLM01-02/03/04 (prompt injection) | GMS-AI-001, GMS-AI-002 |
 | LLM02-02 (provider retention) | GMS-PRIV-003 |
@@ -24,7 +24,10 @@ The canonical release gate is the generated report in `implementation/security-r
 | LLM03-01..04 (supply chain) | GMS-SUPPLY-001, GMS-SUPPLY-002 |
 | AUX-01 (Python retrieval service) | GMS-ACCESS-003 |
 | CI-01 (branch protection) | GMS-CI-001 |
-| PR-01..05 (minors and privacy) | GMS-PRIV-001, GMS-PRIV-002, GMS-GOV-002 |
+| PR-01..04 (minors and retention) | GMS-PRIV-001, GMS-PRIV-002, GMS-GOV-002 |
+| PR-05 (privacy notice, terms, data requests) | GMS-PRIV-004 |
+| PR-09 (harmful content for minors) | GMS-AI-008 |
+| API2-04, API6-01, SB-03..09, VC-02, VC-04, API8-03 (platform settings) | GMS-AUTH-004, GMS-OPS-003 |
 
 ## Status key
 
@@ -218,7 +221,7 @@ Work these top-down. "Code" items can land through PRs. "OPS" items need an acco
 | Security headers and Report-Only CSP | `apps/web/next.config.ts` | Verified with `next start` + `curl -I` |
 | Dependency pins, Next 16.3.8, sharp/source-map-js overrides, frozen-lockfile CI, audit gate | `package.json` files, `pnpm-lock.yaml`, `.github/workflows/ci.yml` | `pnpm audit --prod --audit-level high` exits 0 |
 
-The regenerated gate still shows **25 open release blockers**. These changes narrow several P0 controls (GMS-FILE-002, GMS-FILE-003, GMS-AI-001, GMS-AUTH-001) but close none of them, so every one stays `partial`.
+These changes narrow several P0 controls (GMS-FILE-002, GMS-FILE-003, GMS-AI-001, GMS-AUTH-001) but close none of them, so every one stays `partial`. The gate showed 25 open blockers after this audit; catalog 2026-10-07 added four blocker controls this audit surfaced (GMS-AUTH-004, GMS-AI-008, GMS-PRIV-004, GMS-OPS-003), so the current gate shows 29.
 
 ### Deploy note
 

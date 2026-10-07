@@ -1,0 +1,773 @@
+rank,action_id,app_id,app_name,client,action_type,control_id,feature,severity,release_blocker,status,owner_role,owner,effort,risk_score,target_date,ticket,title,description,labels
+1,example-tutor-marketplace:scope-oauth,example-tutor-marketplace,Example: Tutor Marketplace,Example client,decide_scope,,oauth,P0,false,needs_review,Product,,S,0,,,"Answer scope question: Can users sign in with Google, Apple, Microsoft or another OAuth/OIDC provider?","**Question:** Can users sign in with Google, Apple, Microsoft or another OAuth/OIDC provider?
+
+**Meaning:** Social or third-party OAuth/OIDC login.
+
+**Why it matters:** answering ""yes"" makes 1 control(s) applicable: GMS-AUTH-002.
+
+**Done when:** features.oauth in app-profile.json is ""yes"" or ""no"" and the report is regenerated.",security-readiness|scope
+2,example-tutor-marketplace:scope-ai_tools_or_agents,example-tutor-marketplace,Example: Tutor Marketplace,Example client,decide_scope,,ai_tools_or_agents,P0,false,needs_review,Product,,S,0,,,"Answer scope question: Can a model call tools, APIs, browsers or code, or change data, on its own?","**Question:** Can a model call tools, APIs, browsers or code, or change data, on its own?
+
+**Meaning:** Model-initiated actions.
+
+**Why it matters:** answering ""yes"" makes 2 control(s) applicable: GMS-API-005, GMS-AI-004.
+
+**Done when:** features.ai_tools_or_agents in app-profile.json is ""yes"" or ""no"" and the report is regenerated.",security-readiness|scope
+3,example-tutor-marketplace:scope-outbound_fetch,example-tutor-marketplace,Example: Tutor Marketplace,Example client,decide_scope,,outbound_fetch,P0,false,needs_review,Product,,S,0,,,"Answer scope question: Does the server fetch URLs or call hosts that a user, document or model can influence?","**Question:** Does the server fetch URLs or call hosts that a user, document or model can influence?
+
+**Meaning:** Server-side requests to user-influenced destinations.
+
+**Why it matters:** answering ""yes"" makes 1 control(s) applicable: GMS-API-005.
+
+**Done when:** features.outbound_fetch in app-profile.json is ""yes"" or ""no"" and the report is regenerated.",security-readiness|scope
+4,example-tutor-marketplace:scope-admin_console,example-tutor-marketplace,Example: Tutor Marketplace,Example client,decide_scope,,admin_console,P0,false,needs_review,Product,,S,0,,,"Answer scope question: Is there a privileged operator, admin or support interface?","**Question:** Is there a privileged operator, admin or support interface?
+
+**Meaning:** Privileged operator surface.
+
+**Why it matters:** answering ""yes"" makes 1 control(s) applicable: GMS-AUTH-005.
+
+**Done when:** features.admin_console in app-profile.json is ""yes"" or ""no"" and the report is regenerated.",security-readiness|scope
+5,example-tutor-marketplace:scope-auxiliary_services,example-tutor-marketplace,Example: Tutor Marketplace,Example client,decide_scope,,auxiliary_services,P0,false,needs_review,Product,,S,0,,,"Answer scope question: Are there separate workers, microservices, local services, queue consumers or retrieval servers?","**Question:** Are there separate workers, microservices, local services, queue consumers or retrieval servers?
+
+**Meaning:** Components outside the main app process.
+
+**Why it matters:** answering ""yes"" makes 1 control(s) applicable: GMS-ACCESS-003.
+
+**Done when:** features.auxiliary_services in app-profile.json is ""yes"" or ""no"" and the report is regenerated.",security-readiness|scope
+6,example-tutor-marketplace:GMS-GOV-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-GOV-002,,P0,true,not_tested,Legal/Privacy,,M,0,,,[P0][Blocker] Design in: Sensitive data classification and lifecycle,"**Control:** GMS-GOV-002 (Governance). Status: not_tested.
+
+**Requirement:** Classify sensitive data and define collection, access, provider sharing, retention, deletion, logging and export rules.
+
+**Done when:**
+- [ ] Every stored data category has a classification, purpose, retention period and deletion mechanism.
+- [ ] Data sent to each external provider is listed with its retention terms.
+- [ ] Retention periods are enforced by code or scheduled jobs, not policy text alone.
+
+**How to verify:**
+1. List tables, buckets, indexes, logs and provider copies; check each against the classification register.
+2. Confirm a scheduled job or trigger enforces each retention period.
+
+**Suggested fix:** Create a data register (category, location, purpose, retention, deletion path, providers) and implement retention jobs for anything without one.
+
+**Evidence required to close:** Data inventory, retention/deletion tests, vendor flow documentation.
+
+**Standards:** NIST AI 600-1: Data Privacy, GDPR Art. 5(1)(c),(e), COPPA 16 CFR 312.10",security-readiness|governance|P0
+7,example-tutor-marketplace:GMS-AUTH-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AUTH-001,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Authentication required for private resources,"**Control:** GMS-AUTH-001 (Authentication). Status: not_tested.
+
+**Requirement:** Private resources and state-changing APIs require a valid authenticated principal.
+
+**Done when:**
+- [ ] Every private page, API route, server action and RPC rejects unauthenticated callers.
+- [ ] Guest/anonymous sessions cannot reach private or paid operations unless the product explicitly intends it.
+- [ ] Each private endpoint has an automated unauthenticated negative test.
+
+**How to verify:**
+1. Generate a route inventory and call each private route with no credentials, an expired token and a malformed token.
+2. Call the data layer directly (e.g. PostgREST/Storage with the public key) without a session.
+
+**Suggested fix:** Centralize auth in one helper per surface (page, route, action), reject anonymous sessions there, and add an inventory-driven negative test.
+
+**Platform notes:**
+- supabase: Use auth.getUser() (server-verified), not getSession(). Treat is_anonymous users as signed out unless guest mode is a product decision.
+
+**Evidence required to close:** Route tests plus auth middleware/server checks.
+
+**Standards:** OWASP API2:2023, OWASP Top 10:2021 A07, OWASP ASVS 5.0 (Authentication)",security-readiness|authentication|P0
+8,example-tutor-marketplace:GMS-ACCESS-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-ACCESS-001,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Object-level authorization / tenant isolation,"**Control:** GMS-ACCESS-001 (Authorization). Status: not_tested.
+
+**Requirement:** A principal cannot read, mutate, delete, infer or retrieve another tenant/user's objects by substituting IDs.
+
+**Done when:**
+- [ ] Every object ID accepted from a client (path, query, body) is authorized against the caller, not just validated.
+- [ ] Tenant isolation is enforced in the data layer (e.g. RLS) and tested with two real users.
+- [ ] Substituting another tenant's ID returns not-found or forbidden on every route.
+
+**How to verify:**
+1. For each route taking an ID, call it as user B with user A's ID.
+2. Run database-level tests that execute policies as two different users.
+
+**Suggested fix:** Enforce ownership in the database (RLS or equivalent) and check it in the route before any privileged write.
+
+**Platform notes:**
+- supabase: Enable RLS on every table; scope policies `to authenticated` with owner checks; test policies with set role/claims.
+
+**Evidence required to close:** RLS/IAM policies and negative authorization tests.
+
+**Standards:** OWASP API1:2023, OWASP API5:2023, OWASP Top 10:2021 A01",security-readiness|authorization|P0
+9,example-tutor-marketplace:GMS-ACCESS-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-ACCESS-002,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Privileged/service-role operations scoped,"**Control:** GMS-ACCESS-002 (Authorization). Status: not_tested.
+
+**Requirement:** Every privileged operation that bypasses row-level controls independently proves user, tenant and object scope.
+
+**Done when:**
+- [ ] Every use of a privileged (RLS-bypassing/service) credential is listed.
+- [ ] Each privileged call is preceded by an ownership check under the caller's identity and passes the owner explicitly.
+- [ ] Privileged credentials never reach client bundles.
+
+**How to verify:**
+1. Search the codebase for the privileged client constructor and review every call site.
+2. Search built client bundles for the privileged key name/value.
+
+**Suggested fix:** Wrap the privileged client in a server-only module and make owner/tenant a required argument of every privileged function.
+
+**Platform notes:**
+- supabase: Import the service-role client only from server-only modules; prefer security-invoker functions granted to service_role with explicit owner parameters.
+
+**Evidence required to close:** Privileged-call inventory plus owner-scope tests.
+
+**Standards:** OWASP API5:2023, OWASP Top 10:2021 A01",security-readiness|authorization|P0
+10,example-tutor-marketplace:GMS-API-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-API-002,,P0,true,not_tested,Engineering,,L,0,,,"[P0][Blocker] Design in: Rate, concurrency and cost limits","**Control:** GMS-API-002 (Resource Abuse). Status: not_tested.
+
+**Requirement:** Public expensive operations have per-principal/IP rate limits, concurrency bounds, token/work limits and global spend/circuit breakers.
+
+**Done when:**
+- [ ] Expensive routes have per-user and per-IP rate limits enforced at the edge and in the app.
+- [ ] Model calls set output-token caps and timeouts; retries are bounded.
+- [ ] Per-user daily budgets and a global spend ceiling/circuit breaker exist.
+- [ ] Reprocessing/regeneration paths cannot loop without limit.
+
+**How to verify:**
+1. Burst each expensive route and confirm 429s before cost accrues.
+2. Check every provider call for max output tokens and timeout.
+3. Confirm provider-side budget alerts and hard limits.
+
+**Suggested fix:** Add edge rate-limit rules (log mode first), a per-user usage table checked before provider calls, output-token caps, and provider budget alerts.
+
+**Platform notes:**
+- supabase: Enable Auth rate limits and CAPTCHA so account creation cannot multiply per-user budgets.
+
+**Evidence required to close:** Limiter configuration, spend guardrails and load/abuse tests.
+
+**Standards:** OWASP API4:2023, OWASP API6:2023, OWASP LLM10:2025",security-readiness|resource-abuse|P0
+11,example-tutor-marketplace:GMS-API-006,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-API-006,,P0,true,not_tested,Engineering,,S,0,,,[P0][Blocker] Design in: Inbound webhook authenticity and replay protection,"**Control:** GMS-API-006 (API Security). Status: not_tested.
+
+**Requirement:** Webhook endpoints verify the sender's signature, reject replays and are idempotent.
+
+**Done when:**
+- [ ] Every webhook verifies an HMAC/signature over the raw body with a constant-time compare.
+- [ ] Timestamps outside a tolerance window are rejected.
+- [ ] Processing is idempotent by event ID.
+
+**How to verify:**
+1. Replay a captured event; send a modified body with the original signature.
+
+**Suggested fix:** Use the provider's signature verification helper on the raw body and store processed event IDs.
+
+**Platform notes:**
+- stripe: Use stripe.webhooks.constructEvent on the raw request body with the endpoint secret.
+
+**Evidence required to close:** Signature verification code and negative tests.
+
+**Standards:** OWASP API10:2023, OWASP API8:2023",security-readiness|api-security|P0
+12,example-tutor-marketplace:GMS-WEB-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-WEB-002,,P0,true,not_tested,Engineering,,S,0,,,[P0][Blocker] Design in: Untrusted/model output rendered safely,"**Control:** GMS-WEB-002 (Web Security). Status: not_tested.
+
+**Requirement:** Untrusted and model-generated content cannot become executable HTML/JS/URLs without validation/sanitization.
+
+**Done when:**
+- [ ] Model output and user content are rendered as text/structured nodes, never raw HTML.
+- [ ] Links and images in untrusted content are disabled or sanitized.
+- [ ] An XSS payload regression test exists.
+
+**How to verify:**
+1. Render <img onerror>, javascript: links and markdown-embedded HTML through every display path.
+
+**Suggested fix:** Render through a parser that emits framework nodes only; add payload fixtures to tests.
+
+**Evidence required to close:** Safe renderer implementation and XSS/output-handling tests.
+
+**Standards:** OWASP LLM05:2025, OWASP Top 10:2021 A03",security-readiness|web-security|P0
+13,example-tutor-marketplace:GMS-FILE-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-FILE-002,,P0,true,not_tested,Engineering,,S,0,,,[P0][Blocker] Design in: Content signature and parser validation,"**Control:** GMS-FILE-002 (File Security). Status: not_tested.
+
+**Requirement:** Server validates actual file content/signature/parser compatibility rather than trusting extension or Content-Type.
+
+**Done when:**
+- [ ] The bytes of every upload are checked against the accepted type (magic bytes / structure).
+- [ ] A renamed or polyglot file is rejected before storage or parsing.
+
+**How to verify:**
+1. Upload HTML renamed to .pdf, an executable renamed to .png and a PDF/HTML polyglot.
+
+**Suggested fix:** Check signatures for each allowed format before storage; serve originals with forced download and nosniff.
+
+**Evidence required to close:** Magic-byte/parser validation plus adversarial fixtures.
+
+**Standards:** OWASP File Upload Cheat Sheet",security-readiness|file-security|P0
+14,example-tutor-marketplace:GMS-FILE-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-FILE-003,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Archive/decompression/image/OCR resource bounds,"**Control:** GMS-FILE-003 (File Security). Status: not_tested.
+
+**Requirement:** Compressed/container formats and images are bounded by expanded size, entry count, dimensions/pages and downstream work.
+
+**Done when:**
+- [ ] Archive-based formats are bounded by entry count, expanded size and ratio before inflation.
+- [ ] Image dimensions, page counts and OCR pages are capped.
+- [ ] Parsers run with time and memory budgets.
+
+**How to verify:**
+1. Upload a zip bomb disguised as DOCX, a 30k×30k PNG and a 5,000-page PDF.
+
+**Suggested fix:** Inspect archive directories before parsing, cap pixels/pages, and run parsing in a worker with resource limits.
+
+**Evidence required to close:** Pre-extraction limits and resource-abuse tests.
+
+**Standards:** OWASP File Upload Cheat Sheet, OWASP API4:2023",security-readiness|file-security|P0
+15,example-tutor-marketplace:GMS-FILE-004,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-FILE-004,,P0,true,not_tested,Platform/Ops,,M,0,,,[P0][Blocker] Design in: Malware/quarantine controls,"**Control:** GMS-FILE-004 (File Security). Status: not_tested.
+
+**Requirement:** Untrusted files are quarantined/scanned or otherwise prevented from being redistributed/processed beyond the accepted risk model.
+
+**Done when:**
+- [ ] Uploads are scanned or disarmed before they are processed or served to anyone.
+- [ ] Unscanned or flagged files stay quarantined.
+
+**How to verify:**
+1. Upload the EICAR test file and confirm it is quarantined.
+
+**Suggested fix:** Add scanning (e.g. ClamAV in the ingestion worker or a scanning service) and a quarantined status.
+
+**Evidence required to close:** Scanner/quarantine integration and tests.
+
+**Standards:** OWASP File Upload Cheat Sheet",security-readiness|file-security|P0
+16,example-tutor-marketplace:GMS-FILE-005,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-FILE-005,,P0,true,not_tested,Engineering,,S,0,,,[P0][Blocker] Design in: Private storage and scoped download,"**Control:** GMS-FILE-005 (File Security). Status: not_tested.
+
+**Requirement:** Original files are private; download links are authorization-gated and short-lived.
+
+**Done when:**
+- [ ] Buckets holding user files are private.
+- [ ] Downloads use short-lived signed URLs issued after an ownership check.
+- [ ] Storage policies prevent listing or writing another owner's path.
+
+**How to verify:**
+1. Request another user's object path directly and via the download route.
+2. Check bucket public flags in the provider dashboard.
+
+**Suggested fix:** Keep buckets private, scope storage policies by owner prefix, and issue signed URLs of 5 minutes or less.
+
+**Platform notes:**
+- supabase: Set bucket public=false, file_size_limit and allowed_mime_types; key storage policies on foldername(name)[1] = auth.uid().
+
+**Evidence required to close:** Storage policy, signed URL implementation and tests.
+
+**Standards:** OWASP API1:2023, OWASP File Upload Cheat Sheet",security-readiness|file-security|P0
+17,example-tutor-marketplace:GMS-PAY-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-PAY-001,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Payment processing delegated and verified server-side,"**Control:** GMS-PAY-001 (Payments). Status: not_tested.
+
+**Requirement:** Card data is handled only by a PCI-compliant provider's hosted fields/checkout; prices and entitlements are computed and granted server-side from verified provider events.
+
+**Done when:**
+- [ ] No card numbers touch application servers or logs.
+- [ ] Prices come from server-side configuration, not the client.
+- [ ] Entitlements are granted only from verified provider events.
+
+**How to verify:**
+1. Change the price/plan ID in the checkout request.
+2. Grant an entitlement by calling the success URL without paying.
+
+**Suggested fix:** Use hosted checkout, look up prices server-side and fulfill only from signed webhooks.
+
+**Evidence required to close:** Hosted checkout integration, server-side price lookup, webhook-driven fulfillment.
+
+**Standards:** PCI DSS v4.0 (SAQ A scope), OWASP API6:2023",security-readiness|payments|P0
+18,example-tutor-marketplace:GMS-AI-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-001,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Uploaded/retrieved content treated as untrusted,"**Control:** GMS-AI-001 (AI Security). Status: not_tested.
+
+**Requirement:** User/source content cannot redefine trusted system policy or tool authority.
+
+**Done when:**
+- [ ] Retrieved/uploaded content and anything derived from it (titles, metadata, earlier model output) reaches prompts only inside a delimited untrusted-data envelope.
+- [ ] No browser-supplied text is placed in system/developer instructions.
+- [ ] Prompts state that untrusted data cannot change instructions.
+
+**How to verify:**
+1. Trace every string that enters a system prompt back to its origin.
+2. Inject instructions via document body, filename, metadata and OCR text and inspect the assembled prompt.
+
+**Suggested fix:** Serialize untrusted data (e.g. JSON envelope), keep it out of system text, and build scope/context directives server-side.
+
+**Evidence required to close:** Prompt/data boundary plus adversarial tests.
+
+**Standards:** OWASP LLM01:2025, OWASP LLM Prompt Injection Prevention Cheat Sheet",security-readiness|ai-security|P0
+19,example-tutor-marketplace:GMS-AI-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-002,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Prompt-injection regression suite,"**Control:** GMS-AI-002 (AI Security). Status: not_tested.
+
+**Requirement:** Direct/indirect prompt injection is tested through actual production model boundaries and cannot cause unauthorized data/tool/state changes.
+
+**Done when:**
+- [ ] A versioned corpus of direct and indirect injection cases runs against the production prompt path and model.
+- [ ] Results are reviewed and regressions block release.
+
+**How to verify:**
+1. Run the corpus against the deployed configuration and record pass/fail per case.
+
+**Suggested fix:** Add injection fixtures to the evaluation suite and run them on every prompt/model change.
+
+**Evidence required to close:** Versioned adversarial eval results.
+
+**Standards:** OWASP LLM01:2025, NIST AI 600-1: Information Security",security-readiness|ai-security|P0
+20,example-tutor-marketplace:GMS-AI-005,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-005,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Sensitive-data disclosure testing,"**Control:** GMS-AI-005 (AI Security). Status: not_tested.
+
+**Requirement:** Model/context paths cannot reveal secrets, system credentials, private prompts or another user's data.
+
+**Done when:**
+- [ ] Tests show the model cannot reveal another tenant's data, secrets or system prompt contents that matter.
+- [ ] Prompts contain no secrets.
+
+**How to verify:**
+1. With two tenants' data present, ask for the other tenant's content via chat and retrieval.
+
+**Suggested fix:** Scope retrieval by tenant in the data layer and add cross-tenant decoys to evaluations.
+
+**Evidence required to close:** Adversarial eval and isolation tests.
+
+**Standards:** OWASP LLM02:2025, NIST AI 600-1: Data Privacy",security-readiness|ai-security|P0
+21,example-tutor-marketplace:GMS-RAG-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-RAG-001,,P0,true,not_tested,Engineering,,M,0,,,[P0][Blocker] Design in: Permission-preserving retrieval,"**Control:** GMS-RAG-001 (RAG / Vector Security). Status: not_tested.
+
+**Requirement:** Retrieval enforces tenant/user/source permissions before content enters model context.
+
+**Done when:**
+- [ ] Vector search filters by tenant inside the data layer under the caller's identity.
+- [ ] Callers cannot widen scope through parameters.
+
+**How to verify:**
+1. Query retrieval as user B with user A's room/tenant ID and with forged owner parameters.
+
+**Suggested fix:** Enforce tenant filters in the search function with security-invoker/RLS; ignore owner parameters from non-privileged callers.
+
+**Evidence required to close:** RLS/IAM retrieval path and adversarial eval.
+
+**Standards:** OWASP LLM08:2025, OWASP API1:2023",security-readiness|rag-vector-security|P0
+22,example-tutor-marketplace:GMS-PRIV-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-PRIV-001,,P0,true,not_tested,Engineering,,L,0,,,"[P0][Blocker] Design in: Retention, deletion and export are implemented","**Control:** GMS-PRIV-001 (Privacy). Status: not_tested.
+
+**Requirement:** User data has explicit retention/deletion/export behavior across primary, derived, cache/index and provider copies.
+
+**Done when:**
+- [ ] Users can delete their account and all derived data, including storage and provider copies where possible.
+- [ ] Users can export their data.
+- [ ] Retention jobs run on schedule.
+
+**How to verify:**
+1. Delete a test account and search every store for its identifiers.
+
+**Suggested fix:** Implement account deletion/export flows and retention jobs from the data register.
+
+**Evidence required to close:** Policy plus end-to-end deletion/export tests.
+
+**Standards:** GDPR Art. 17, GDPR Art. 20, COPPA 16 CFR 312.10",security-readiness|privacy|P0
+23,example-tutor-marketplace:GMS-PRIV-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-PRIV-002,,P0,true,not_tested,Legal/Privacy,,L,0,,,[P0][Blocker] Design in: Minor/student-data release requirements resolved,"**Control:** GMS-PRIV-002 (Privacy). Status: not_tested.
+
+**Requirement:** Before public child use, identity/guardian/consent/collection/retention/vendor handling requirements are explicitly resolved for target markets.
+
+**Done when:**
+- [ ] Counsel has decided the audience (13+ screen or full COPPA compliance) and the decision is implemented.
+- [ ] If under-13 users are allowed: verifiable parental consent, separate consent for third-party disclosure, a written security program and a retention limit exist.
+- [ ] If schools are customers: contracts meet FERPA school-official criteria.
+
+**How to verify:**
+1. Walk sign-up as an under-13 user.
+2. Review consent records and the written security program.
+
+**Suggested fix:** Get a counsel decision on audience; implement an age screen or the COPPA consent flow; document the security program.
+
+**Evidence required to close:** Approved data/consent model and implementation evidence.
+
+**Standards:** COPPA 16 CFR Part 312, FERPA 34 CFR Part 99, NIST AI 600-1: Data Privacy",security-readiness|privacy|P0
+24,example-tutor-marketplace:GMS-LOG-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-LOG-002,,P0,true,not_tested,Engineering,,S,0,,,[P0][Blocker] Design in: Logs avoid sensitive-content leakage,"**Control:** GMS-LOG-002 (Logging / Detection). Status: not_tested.
+
+**Requirement:** Logs/telemetry do not routinely store secrets, session tokens, full private documents or raw learner content without explicit necessity/protection.
+
+**Done when:**
+- [ ] Logs and telemetry contain no document content, learner answers, tokens or secrets.
+
+**How to verify:**
+1. Sample production logs and telemetry for content and credentials.
+
+**Suggested fix:** Log codes and IDs only; add a redaction layer for anything else.
+
+**Evidence required to close:** Logging policy and sampled traces.
+
+**Standards:** OWASP Logging Cheat Sheet, OWASP LLM02:2025",security-readiness|logging-detection|P0
+25,example-tutor-marketplace:GMS-SUPPLY-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-SUPPLY-002,,P0,true,not_tested,Platform/Ops,,S,0,,,[P0][Blocker] Design in: Secret scanning,"**Control:** GMS-SUPPLY-002 (Supply Chain). Status: not_tested.
+
+**Requirement:** Repositories and CI detect committed credentials/secrets and define rotation response.
+
+**Done when:**
+- [ ] Secret scanning with push protection is enabled on the repository.
+- [ ] No live secrets exist in history.
+
+**How to verify:**
+1. Check repository security settings; run a history scan.
+
+**Suggested fix:** Enable GitHub secret scanning and push protection; rotate anything found.
+
+**Evidence required to close:** Secret scanning workflow and rotation runbook.
+
+**Standards:** NIST SSDF PS.1, OWASP Top 10:2021 A05",security-readiness|supply-chain|P0
+26,example-tutor-marketplace:GMS-AUTH-004,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AUTH-004,,P1,true,not_tested,Platform/Ops,,S,0,,,[P1][Blocker] Design in: Account creation and credential abuse protections,"**Control:** GMS-AUTH-004 (Authentication). Status: not_tested.
+
+**Requirement:** Public sign-up, guest and anonymous accounts cannot be created or used at a scale that multiplies cost or abuse; credentials resist stuffing and breached passwords.
+
+**Done when:**
+- [ ] Anonymous/guest sign-in is disabled, or guest accounts are limited by policy, quota and cleanup.
+- [ ] CAPTCHA or equivalent bot protection guards sign-up and sign-in.
+- [ ] Breached-password checks and a minimum length are enforced by the identity provider, not only the UI.
+- [ ] Auth endpoints are rate-limited.
+
+**How to verify:**
+1. Script 50 sign-ups from one IP and from rotating IPs.
+2. Call the identity provider's sign-up API directly with a weak/breached password.
+3. Count anonymous accounts in production.
+
+**Suggested fix:** Disable anonymous sign-in (or bound it), enable CAPTCHA, breached-password protection and auth rate limits, and treat guest sessions as signed out for paid operations.
+
+**Platform notes:**
+- supabase: Auth → disable Anonymous sign-ins unless intended (no automatic cleanup; default 30/hour/IP); enable CAPTCHA, leaked-password protection, minimum length; check is_anonymous in RLS for writes.
+
+**Evidence required to close:** Provider settings export/screenshots and scripted-abuse test results.
+
+**Standards:** OWASP API2:2023, OWASP API6:2023, OWASP Top 10:2021 A07",security-readiness|authentication|P1
+27,example-tutor-marketplace:GMS-API-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-API-003,,P1,true,not_tested,Engineering,,S,0,,,[P1][Blocker] Design in: CSRF / request provenance protection,"**Control:** GMS-API-003 (API Security). Status: not_tested.
+
+**Requirement:** Cookie-authenticated state-changing requests validate same-origin/request provenance or an equivalent anti-CSRF mechanism.
+
+**Done when:**
+- [ ] State-changing requests with cookie auth are protected by SameSite cookies plus origin checks or CSRF tokens.
+- [ ] GET requests never change state.
+
+**How to verify:**
+1. Submit a cross-site form/fetch to each mutating route with a valid session cookie.
+
+**Suggested fix:** Rely on framework CSRF protection (e.g. server actions' origin check) and add Origin validation to custom mutating routes.
+
+**Evidence required to close:** Origin/CSRF middleware and negative browser tests.
+
+**Standards:** OWASP Top 10:2021 A01, OWASP ASVS 5.0 (Web Frontend Security)",security-readiness|api-security|P1
+28,example-tutor-marketplace:GMS-AI-008,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-008,,P1,true,not_tested,Product,,M,0,,,[P1][Blocker] Design in: Content safety appropriate to the user population,"**Control:** GMS-AI-008 (AI Safety). Status: not_tested.
+
+**Requirement:** User input and generated or shared content are screened for harmful categories appropriate to the audience, with a safe response path for crisis content.
+
+**Done when:**
+- [ ] Learner/user input and model or user-generated output pass a moderation check before display.
+- [ ] Self-harm content routes to a safe-messaging response with resources.
+- [ ] Moderation decisions are logged without content.
+
+**How to verify:**
+1. Submit each corpus category through chat, uploads and shared content.
+
+**Suggested fix:** Add a moderation step on input and output with category thresholds set for the audience and a crisis-response template.
+
+**Evidence required to close:** Moderation calls in code, safe-messaging responses, test results.
+
+**Standards:** NIST AI 600-1: Dangerous, Violent, or Hateful Content, NIST AI 600-1: Obscene, Degrading, and/or Abusive Content, OWASP LLM05:2025",security-readiness|ai-safety|P1
+29,example-tutor-marketplace:GMS-PRIV-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-PRIV-003,,P1,true,not_tested,Legal/Privacy,,M,0,,,[P1][Blocker] Design in: External provider data flows documented and configured,"**Control:** GMS-PRIV-003 (Privacy). Status: not_tested.
+
+**Requirement:** Document what data each provider receives, retention/training settings, region/subprocessors where relevant, and deletion/incident expectations.
+
+**Done when:**
+- [ ] Each provider receiving user data is listed with data types, retention, training use and a signed DPA.
+- [ ] Provider settings (e.g. response storage, retention) match the register.
+
+**How to verify:**
+1. Compare the register with code call sites and provider dashboards.
+
+**Suggested fix:** Create a vendor register, sign DPAs, and set provider retention/training controls (e.g. store:false).
+
+**Evidence required to close:** Vendor data-flow register and configuration evidence.
+
+**Standards:** OWASP LLM02:2025, NIST AI 600-1: Value Chain and Component Integration, GDPR Art. 28",security-readiness|privacy|P1
+30,example-tutor-marketplace:GMS-PRIV-004,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-PRIV-004,,P1,true,not_tested,Legal/Privacy,,M,0,,,"[P1][Blocker] Design in: Privacy notice, terms and data-subject requests","**Control:** GMS-PRIV-004 (Privacy). Status: not_tested.
+
+**Requirement:** A privacy notice, terms of service and a working channel for access/deletion requests are published and match actual data handling.
+
+**Done when:**
+- [ ] Privacy notice and terms are linked from sign-up and the app.
+- [ ] The notice lists every provider receiving user data.
+- [ ] Access and deletion requests can be submitted and are fulfilled within the stated period.
+
+**How to verify:**
+1. Read the notice against the vendor register.
+2. Submit a test deletion request.
+
+**Suggested fix:** Draft notice/terms with counsel from the data register and link them from sign-up; add a request form or address.
+
+**Evidence required to close:** Published URLs, data register, request-handling log.
+
+**Standards:** GDPR Art. 12-15, COPPA 16 CFR 312.4",security-readiness|privacy|P1
+31,example-tutor-marketplace:GMS-CI-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-CI-001,,P1,true,not_tested,Platform/Ops,,S,0,,,[P1][Blocker] Design in: Protected production branch and required checks,"**Control:** GMS-CI-001 (Secure Delivery). Status: not_tested.
+
+**Requirement:** Production branch changes require review/required checks and cannot silently bypass security validation.
+
+**Done when:**
+- [ ] The production branch is protected; direct pushes and force-pushes are blocked.
+- [ ] Required status checks include tests and the security gate.
+
+**How to verify:**
+1. Read branch protection rules for the production branch.
+
+**Suggested fix:** Enable branch protection with required checks and at least one review.
+
+**Evidence required to close:** Branch protection/ruleset and required-check configuration.
+
+**Standards:** NIST SSDF PS.1, NIST SSDF PO.3",security-readiness|secure-delivery|P1
+32,example-tutor-marketplace:GMS-OPS-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-OPS-003,,P1,true,not_tested,Platform/Ops,,S,0,,,[P1][Blocker] Design in: Hosting and managed-platform security configuration,"**Control:** GMS-OPS-003 (Operations). Status: not_tested.
+
+**Requirement:** Owner accounts, managed backends and hosting are configured for production: MFA, least-privilege team access, secret scoping, preview protection, TLS, platform security advisors clean.
+
+**Done when:**
+- [ ] All owner/admin accounts on hosting, database, AI and source platforms use MFA.
+- [ ] Platform security advisors report no unresolved warnings.
+- [ ] Secrets are marked sensitive and scoped to the environments that need them; preview deployments are protected and do not use production data unintentionally.
+- [ ] Database SSL enforcement, network restrictions, custom SMTP and backups are configured where offered.
+
+**How to verify:**
+1. Walk each platform's production checklist and record each item.
+2. Run the platform security advisor.
+
+**Suggested fix:** Complete each platform's production checklist and re-run its advisor after changes.
+
+**Platform notes:**
+- supabase: Production checklist: RLS everywhere, SSL enforcement, network restrictions, MFA on the org, custom SMTP, short OTP expiry, auth rate limits, CAPTCHA, Security Advisor clean.
+
+**Evidence required to close:** Settings exports/screenshots, advisor output, environment variable scoping.
+
+**Standards:** OWASP Top 10:2021 A05, OWASP API8:2023, NIST SSDF PO.5",security-readiness|operations|P1
+33,example-tutor-marketplace:GMS-GOV-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-GOV-001,,P1,false,not_tested,Security,,M,0,,,[P1] Design in: Architecture and trust boundaries documented,"**Control:** GMS-GOV-001 (Governance). Status: not_tested.
+
+**Requirement:** Document trust boundaries, sensitive data flows, privileged components, external providers and production attack surfaces.
+
+**Done when:**
+- [ ] A current diagram/inventory lists every runtime component, data store, external provider and trust boundary.
+- [ ] Each sensitive data flow names its source, destination and protection.
+- [ ] The inventory was reviewed after the last material architecture change.
+
+**How to verify:**
+1. Compare the inventory with deployed services, environment variables and provider dashboards.
+2. Trace one sensitive record from intake to deletion and confirm every hop is documented.
+
+**Suggested fix:** Write a one-page data-flow/trust-boundary map and add it to the release checklist so it changes with the architecture.
+
+**Evidence required to close:** Current data-flow/trust-boundary diagram and component inventory.
+
+**Standards:** NIST SSDF PO.1, NIST AI RMF MAP 1, OWASP Top 10:2021 A04",security-readiness|governance|P1
+34,example-tutor-marketplace:GMS-GOV-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-GOV-003,,P1,false,not_tested,Security,,S,0,,,[P1] Design in: Security release gate,"**Control:** GMS-GOV-003 (Governance). Status: not_tested.
+
+**Requirement:** Define security conditions that block public release and require explicit accepted-risk ownership.
+
+**Done when:**
+- [ ] A release cannot ship with an open P0 or an open release-blocker control without recorded accepted risk.
+- [ ] The gate report is regenerated from current evidence for each release.
+
+**How to verify:**
+1. Check the release process for a step that runs the readiness report and reads its decision.
+
+**Suggested fix:** Run `security-readiness validate` and `report` in CI and require the gate decision in release sign-off.
+
+**Evidence required to close:** Release gate document and CI/release evidence.
+
+**Standards:** NIST SSDF PO.4, NIST SSDF PW.8",security-readiness|governance|P1
+35,example-tutor-marketplace:GMS-AUTH-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AUTH-003,,P1,false,not_tested,Engineering,,S,0,,,[P1] Design in: Session lifecycle and logout,"**Control:** GMS-AUTH-003 (Authentication). Status: not_tested.
+
+**Requirement:** Sessions expire, refresh and terminate predictably; logout invalidates usable sessions.
+
+**Done when:**
+- [ ] Logout invalidates the server-side session/refresh token.
+- [ ] Session cookies are HttpOnly, Secure and SameSite.
+- [ ] Expired sessions cannot call private APIs.
+
+**How to verify:**
+1. Log out, replay the old cookie/refresh token against a private API.
+2. Inspect Set-Cookie attributes in production.
+
+**Suggested fix:** Use the identity provider's server-side sign-out and the framework's supported cookie session pattern.
+
+**Evidence required to close:** Session configuration and browser/API tests.
+
+**Standards:** OWASP Top 10:2021 A07, OWASP ASVS 5.0 (Session Management)",security-readiness|authentication|P1
+36,example-tutor-marketplace:GMS-API-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-API-001,,P1,false,not_tested,Engineering,,M,0,,,[P1] Design in: Server-side input validation and bounds,"**Control:** GMS-API-001 (API Security). Status: not_tested.
+
+**Requirement:** API inputs are type/length/range/enum validated server-side before privileged work.
+
+**Done when:**
+- [ ] Every route validates type, format (e.g. UUID), length and enum of each input before use.
+- [ ] Invalid input returns 4xx, never 500.
+- [ ] Mass assignment is impossible: writes use explicit field lists.
+
+**How to verify:**
+1. Fuzz each route with wrong types, oversized strings and unknown fields.
+2. Review writes for spread/passthrough of client objects.
+
+**Suggested fix:** Add a shared request schema validator and use it at the top of every route.
+
+**Evidence required to close:** Validation code and API tests.
+
+**Standards:** OWASP API3:2023, OWASP API8:2023, OWASP Top 10:2021 A03",security-readiness|api-security|P1
+37,example-tutor-marketplace:GMS-API-004,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-API-004,,P1,false,not_tested,Engineering,,S,0,,,[P1] Design in: Production errors do not disclose internals,"**Control:** GMS-API-004 (API Security). Status: not_tested.
+
+**Requirement:** Client responses use generic errors/trace IDs while internal details stay in protected logs.
+
+**Done when:**
+- [ ] Clients receive fixed messages; database, provider and stack details stay in server logs.
+- [ ] Streamed/async error channels follow the same rule.
+
+**How to verify:**
+1. Trigger DB constraint, provider and unexpected errors on each route and inspect responses.
+
+**Suggested fix:** Add one error mapper that returns a fixed message plus a request ID and logs the detail server-side.
+
+**Evidence required to close:** Central error boundary and tests.
+
+**Standards:** OWASP API8:2023, OWASP Top 10:2021 A05",security-readiness|api-security|P1
+38,example-tutor-marketplace:GMS-WEB-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-WEB-001,,P1,false,not_tested,Engineering,,M,0,,,[P1] Design in: Browser security headers / CSP,"**Control:** GMS-WEB-001 (Web Security). Status: not_tested.
+
+**Requirement:** Production sends an appropriate CSP and modern browser hardening headers.
+
+**Done when:**
+- [ ] Production responses send CSP (at least frame-ancestors, base-uri, object-src), X-Content-Type-Options, Referrer-Policy and HSTS.
+- [ ] A full CSP is enforced, or is in Report-Only with a dated plan to enforce.
+
+**How to verify:**
+1. curl -I the production domain and key routes; compare headers to the policy.
+2. Load the app with the Report-Only policy and review violations.
+
+**Suggested fix:** Set headers centrally (framework config or edge), ship the full CSP as Report-Only, then enforce after a browser pass.
+
+**Evidence required to close:** Header configuration and deployment test.
+
+**Standards:** OWASP Top 10:2021 A05, OWASP CSP Cheat Sheet",security-readiness|web-security|P1
+39,example-tutor-marketplace:GMS-FILE-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-FILE-001,,P1,false,not_tested,Engineering,,S,0,,,"[P1] Design in: Upload allowlist, size and filename controls","**Control:** GMS-FILE-001 (File Security). Status: not_tested.
+
+**Requirement:** Uploads use allowed types, bounded size, generated/scoped storage names and safe filenames.
+
+**Done when:**
+- [ ] Only allowlisted types and extensions are accepted.
+- [ ] Size limits are enforced server-side and at the storage layer.
+- [ ] Stored names are server-generated; original names are display-only.
+
+**How to verify:**
+1. Upload a disallowed extension, an oversized file and a path-traversal filename.
+
+**Suggested fix:** Enforce an allowlist and size in the route and in storage-bucket configuration; generate storage keys server-side.
+
+**Evidence required to close:** Upload policy and tests.
+
+**Standards:** OWASP File Upload Cheat Sheet, OWASP API4:2023",security-readiness|file-security|P1
+40,example-tutor-marketplace:GMS-AI-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-003,,P1,false,not_tested,Engineering,,S,0,,,[P1] Design in: Structured validation for machine-affecting model output,"**Control:** GMS-AI-003 (AI Security). Status: not_tested.
+
+**Requirement:** Model output that affects software state is schema-validated and range/enum checked.
+
+**Done when:**
+- [ ] Model output that drives state (grades, IDs, actions) is parsed against a strict schema and normalized.
+- [ ] Invalid output fails closed.
+
+**How to verify:**
+1. Feed malformed/extra-field model output into each parser.
+
+**Suggested fix:** Use strict structured outputs and validate again server-side before use.
+
+**Evidence required to close:** Schemas/normalizers and tests.
+
+**Standards:** OWASP LLM05:2025",security-readiness|ai-security|P1
+41,example-tutor-marketplace:GMS-AI-006,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-006,,P1,false,not_tested,Engineering,,M,0,,,"[P1] Design in: Model, prompt and evaluator version traceability","**Control:** GMS-AI-006 (AI Operations). Status: not_tested.
+
+**Requirement:** AI decisions can be tied to model, prompt, embedding/retrieval and evaluator versions.
+
+**Done when:**
+- [ ] Every stored AI output records model, prompt version and retrieval/evaluator version.
+
+**How to verify:**
+1. Pick a stored answer and identify the exact model and prompt that produced it.
+
+**Suggested fix:** Version prompts in code and store model/prompt IDs with outputs.
+
+**Evidence required to close:** Versioned configs/traces and reproducibility test.
+
+**Standards:** NIST AI RMF MEASURE 2, NIST AI 600-1: Information Integrity",security-readiness|ai-operations|P1
+42,example-tutor-marketplace:GMS-AI-007,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-AI-007,,P1,false,not_tested,Platform/Ops,,M,0,,,[P1] Design in: AI latency/token/cost observability,"**Control:** GMS-AI-007 (AI Operations). Status: not_tested.
+
+**Requirement:** AI operations expose bounded latency, token/work usage and cost metrics without logging raw sensitive content by default.
+
+**Done when:**
+- [ ] Tokens, latency, cost and errors are recorded per operation and user.
+- [ ] Alerts fire on spend or error anomalies.
+
+**How to verify:**
+1. Find yesterday's cost by operation and the top-spending user.
+
+**Suggested fix:** Log usage from provider responses to a metrics store and add spend/error alerts.
+
+**Evidence required to close:** Telemetry schema/dashboard/query evidence.
+
+**Standards:** OWASP LLM10:2025, NIST AI RMF MANAGE 4",security-readiness|ai-operations|P1
+43,example-tutor-marketplace:GMS-LOG-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-LOG-001,,P1,false,not_tested,Platform/Ops,,M,0,,,[P1] Design in: Security-relevant events are observable,"**Control:** GMS-LOG-001 (Logging / Detection). Status: not_tested.
+
+**Requirement:** Detect auth failures, authorization denials, suspicious abuse, privileged failures, upload/malware failures and relevant AI-security events.
+
+**Done when:**
+- [ ] Auth failures, authorization denials, rate-limit hits and admin actions are logged with request IDs.
+- [ ] Alerts exist for spikes.
+
+**How to verify:**
+1. Trigger each event and find it in the log/alert system.
+
+**Suggested fix:** Emit structured security events and route them to alerting.
+
+**Evidence required to close:** Security event schema, logs and alert tests.
+
+**Standards:** OWASP Top 10:2021 A09, OWASP Logging Cheat Sheet",security-readiness|logging-detection|P1
+44,example-tutor-marketplace:GMS-SUPPLY-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-SUPPLY-001,,P1,false,not_tested,Engineering,,S,0,,,[P1] Design in: Reproducible dependency install and vulnerability scanning,"**Control:** GMS-SUPPLY-001 (Supply Chain). Status: not_tested.
+
+**Requirement:** CI uses committed dependency locks and automated vulnerability/SCA checks.
+
+**Done when:**
+- [ ] No floating version specifiers (e.g. latest) in manifests.
+- [ ] CI installs from the lockfile only.
+- [ ] CI fails on high/critical advisories in production dependencies.
+- [ ] Automated dependency security updates are enabled.
+
+**How to verify:**
+1. grep manifests for floating specifiers; read the CI install command; run the audit command.
+
+**Suggested fix:** Pin versions, use frozen-lockfile installs, add an audit gate and Dependabot/Renovate.
+
+**Evidence required to close:** Frozen-lock install and SCA workflow.
+
+**Standards:** OWASP LLM03:2025, OWASP Top 10:2021 A06, NIST SSDF PW.4, NIST SSDF RV.1",security-readiness|supply-chain|P1
+45,example-tutor-marketplace:GMS-OPS-001,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-OPS-001,,P1,false,not_tested,Security,,M,0,,,[P1] Design in: Security incident response and credential rotation,"**Control:** GMS-OPS-001 (Operations). Status: not_tested.
+
+**Requirement:** Document detection, containment, credential rotation, provider shutdown, user impact assessment and recovery.
+
+**Done when:**
+- [ ] A written runbook covers incident triage, user notification, and rotation of every credential.
+- [ ] Rotation of each secret has been rehearsed.
+
+**How to verify:**
+1. Rotate one production secret using only the runbook.
+
+**Suggested fix:** Write the runbook with a per-secret rotation table and rehearse it.
+
+**Evidence required to close:** Incident runbook and tabletop record.
+
+**Standards:** NIST SSDF RV.2, NIST AI RMF MANAGE 4",security-readiness|operations|P1
+46,example-tutor-marketplace:GMS-OPS-002,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-OPS-002,,P1,false,not_tested,Platform/Ops,,M,0,,,[P1] Design in: Backup/recovery and destructive-change validation,"**Control:** GMS-OPS-002 (Operations). Status: not_tested.
+
+**Requirement:** Critical data has defined backup/recovery behavior and destructive operations are tested against it.
+
+**Done when:**
+- [ ] Backups exist at the required frequency and a restore has been tested.
+- [ ] Restores respect deletion/retention (deleted data is not resurrected silently).
+
+**How to verify:**
+1. Restore to a scratch environment and verify integrity and deletions.
+
+**Suggested fix:** Confirm the backup tier, schedule restore drills and document deletion handling after restore.
+
+**Evidence required to close:** Recovery test evidence.
+
+**Standards:** NIST SSDF PO.5",security-readiness|operations|P1
+47,example-tutor-marketplace:GMS-SUPPLY-003,example-tutor-marketplace,Example: Tutor Marketplace,Example client,design_in,GMS-SUPPLY-003,,P2,false,not_tested,Engineering,,S,0,,,[P2] Design in: SBOM / dependency inventory,"**Control:** GMS-SUPPLY-003 (Supply Chain). Status: not_tested.
+
+**Requirement:** Production releases have a machine-readable dependency inventory/SBOM or equivalent.
+
+**Done when:**
+- [ ] Each release produces an SBOM/dependency inventory artifact.
+
+**How to verify:**
+1. Find the SBOM for the current production release.
+
+**Suggested fix:** Generate an SBOM in CI (e.g. CycloneDX) and attach it to releases.
+
+**Evidence required to close:** SBOM artifact or dependency inventory.
+
+**Standards:** NIST SSDF PS.3",security-readiness|supply-chain|P2

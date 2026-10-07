@@ -1,0 +1,24 @@
+app_id,feature,answer,question,controls_activated
+example-tutor-marketplace,web,yes,"Is any part of the product delivered in a browser (web app, PWA, marketing site with forms)?",GMS-API-003|GMS-WEB-001|GMS-WEB-002
+example-tutor-marketplace,api,yes,"Does the product expose network endpoints (REST/GraphQL/RPC, server routes, server actions)?",GMS-ACCESS-001|GMS-API-001|GMS-API-002|GMS-API-003|GMS-API-004
+example-tutor-marketplace,authentication,yes,Do users or services sign in or present credentials?,GMS-AUTH-001|GMS-AUTH-003|GMS-API-003
+example-tutor-marketplace,oauth,unknown,"Can users sign in with Google, Apple, Microsoft or another OAuth/OIDC provider?",GMS-AUTH-002
+example-tutor-marketplace,public_signup,yes,Can anyone on the internet create an account (including guest or anonymous accounts) without an invitation?,GMS-AUTH-004|GMS-API-002|GMS-PRIV-004
+example-tutor-marketplace,multi_tenant,yes,"Does data belong to different users, teams, organizations or clients that must not see each other's data?",GMS-AUTH-001|GMS-ACCESS-001|GMS-ACCESS-002|GMS-RAG-001
+example-tutor-marketplace,file_uploads,yes,Can users or external systems upload files?,GMS-FILE-001|GMS-FILE-002|GMS-FILE-003|GMS-FILE-004|GMS-FILE-005
+example-tutor-marketplace,cloud_storage,yes,Is user or business data stored in managed databases or object storage?,GMS-ACCESS-002|GMS-FILE-005|GMS-PRIV-001|GMS-OPS-002
+example-tutor-marketplace,ai,yes,"Does the product call ML, LLM, vision, speech or generative models?",GMS-API-002|GMS-WEB-002|GMS-AI-001|GMS-AI-002|GMS-AI-003|GMS-AI-005|GMS-AI-006|GMS-AI-007|GMS-LOG-002
+example-tutor-marketplace,external_ai_provider,yes,"Does any AI request send data to a provider outside your own infrastructure (OpenAI, Anthropic, Google, a gateway)?",GMS-AI-007|GMS-PRIV-003
+example-tutor-marketplace,rag,no,Does the product retrieve documents or records and place them into model context?,GMS-AI-001|GMS-RAG-001|GMS-RAG-002|GMS-RAG-003
+example-tutor-marketplace,vector_store,no,Are embeddings of user or business data stored in a vector index?,GMS-RAG-001|GMS-RAG-003
+example-tutor-marketplace,ai_tools_or_agents,unknown,"Can a model call tools, APIs, browsers or code, or change data, on its own?",GMS-API-005|GMS-AI-004
+example-tutor-marketplace,expensive_compute,yes,"Can a single request cost real money or quota (model calls, OCR, transcoding, GPU, paid APIs)?",GMS-API-002|GMS-FILE-003|GMS-AI-007
+example-tutor-marketplace,outbound_fetch,unknown,"Does the server fetch URLs or call hosts that a user, document or model can influence?",GMS-API-005
+example-tutor-marketplace,webhooks,yes,Does the product receive inbound webhooks or callbacks from other services?,GMS-API-006
+example-tutor-marketplace,user_generated_content,unknown,"Can users publish content that other users see (posts, comments, shared pages, profiles)?",GMS-WEB-002|GMS-AI-008
+example-tutor-marketplace,sensitive_data,yes,"Does the product handle personal, confidential, regulated, financial, health, student, client or proprietary data?",GMS-GOV-002|GMS-AUTH-001|GMS-AI-005|GMS-PRIV-001|GMS-PRIV-003|GMS-PRIV-004|GMS-LOG-002|GMS-OPS-002
+example-tutor-marketplace,minors,yes,Could users or data subjects be under 18 (or under 13 for COPPA)?,GMS-GOV-002|GMS-AI-008|GMS-PRIV-002|GMS-PRIV-004
+example-tutor-marketplace,payments,yes,Does the product accept payments or handle payment data?,GMS-API-006|GMS-PAY-001
+example-tutor-marketplace,admin_console,unknown,"Is there a privileged operator, admin or support interface?",GMS-AUTH-005
+example-tutor-marketplace,third_party_integrations,unknown,Does the product connect to external SaaS or provider APIs on a user's behalf?,GMS-PRIV-003
+example-tutor-marketplace,auxiliary_services,unknown,"Are there separate workers, microservices, local services, queue consumers or retrieval servers?",GMS-ACCESS-003

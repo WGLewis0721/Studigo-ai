@@ -1,0 +1,324 @@
+{
+  "schema_version": 2,
+  "app_id": "example-tutor-marketplace",
+  "app_name": "Example: Tutor Marketplace",
+  "client": "Example client",
+  "stage": "idea",
+  "catalog_version": "2026-10-07",
+  "reviewed_at": "2026-10-07",
+  "as_of": "2026-10-07",
+  "decision": "not_ready",
+  "public_release_ready": false,
+  "scope_complete": false,
+  "total_controls": 49,
+  "applicable_controls": 42,
+  "needs_review": 5,
+  "not_applicable": 2,
+  "readiness_pct": 0,
+  "release_blockers_open": 27,
+  "status_counts": {
+    "pass": 0,
+    "partial": 0,
+    "fail": 0,
+    "not_tested": 42,
+    "accepted_risk": 0,
+    "needs_review": 5,
+    "not_applicable": 2
+  },
+  "open_by_severity": {
+    "P0": 20,
+    "P1": 21,
+    "P2": 1,
+    "P3": 0
+  },
+  "open_by_owner_role": {
+    "Engineering": 26,
+    "Platform/Ops": 8,
+    "Security": 3,
+    "Legal/Privacy": 4,
+    "Product": 1
+  },
+  "open_by_domain": {
+    "Governance": 3,
+    "Authentication": 3,
+    "Authorization": 2,
+    "API Security": 4,
+    "Resource Abuse": 1,
+    "Web Security": 2,
+    "File Security": 5,
+    "Payments": 1,
+    "AI Security": 4,
+    "AI Operations": 2,
+    "AI Safety": 1,
+    "RAG / Vector Security": 1,
+    "Privacy": 4,
+    "Logging / Detection": 2,
+    "Supply Chain": 3,
+    "Secure Delivery": 1,
+    "Operations": 3
+  },
+  "overdue": 0,
+  "pass_without_test": 0,
+  "open_without_owner": 42,
+  "scope_questions": [
+    "oauth",
+    "ai_tools_or_agents",
+    "outbound_fetch",
+    "admin_console",
+    "auxiliary_services"
+  ],
+  "blockers": [
+    {
+      "control_id": "GMS-GOV-002",
+      "title": "Sensitive data classification and lifecycle",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-AUTH-001",
+      "title": "Authentication required for private resources",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AUTH-004",
+      "title": "Account creation and credential abuse protections",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-ACCESS-001",
+      "title": "Object-level authorization / tenant isolation",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-ACCESS-002",
+      "title": "Privileged/service-role operations scoped",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-API-002",
+      "title": "Rate, concurrency and cost limits",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-API-003",
+      "title": "CSRF / request provenance protection",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-API-006",
+      "title": "Inbound webhook authenticity and replay protection",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-WEB-002",
+      "title": "Untrusted/model output rendered safely",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-002",
+      "title": "Content signature and parser validation",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-003",
+      "title": "Archive/decompression/image/OCR resource bounds",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-004",
+      "title": "Malware/quarantine controls",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-FILE-005",
+      "title": "Private storage and scoped download",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-PAY-001",
+      "title": "Payment processing delegated and verified server-side",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-001",
+      "title": "Uploaded/retrieved content treated as untrusted",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-002",
+      "title": "Prompt-injection regression suite",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-005",
+      "title": "Sensitive-data disclosure testing",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-008",
+      "title": "Content safety appropriate to the user population",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Product"
+    },
+    {
+      "control_id": "GMS-RAG-001",
+      "title": "Permission-preserving retrieval",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-PRIV-001",
+      "title": "Retention, deletion and export are implemented",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-PRIV-002",
+      "title": "Minor/student-data release requirements resolved",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-PRIV-003",
+      "title": "External provider data flows documented and configured",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-PRIV-004",
+      "title": "Privacy notice, terms and data-subject requests",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-LOG-002",
+      "title": "Logs avoid sensitive-content leakage",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-SUPPLY-002",
+      "title": "Secret scanning",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-CI-001",
+      "title": "Protected production branch and required checks",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-OPS-003",
+      "title": "Hosting and managed-platform security configuration",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Platform/Ops"
+    }
+  ],
+  "highest_risk_open": [],
+  "next_actions": [
+    {
+      "rank": 1,
+      "action_id": "example-tutor-marketplace:scope-oauth",
+      "title": "Answer scope question: Can users sign in with Google, Apple, Microsoft or another OAuth/OIDC provider?",
+      "owner_role": "Product"
+    },
+    {
+      "rank": 2,
+      "action_id": "example-tutor-marketplace:scope-ai_tools_or_agents",
+      "title": "Answer scope question: Can a model call tools, APIs, browsers or code, or change data, on its own?",
+      "owner_role": "Product"
+    },
+    {
+      "rank": 3,
+      "action_id": "example-tutor-marketplace:scope-outbound_fetch",
+      "title": "Answer scope question: Does the server fetch URLs or call hosts that a user, document or model can influence?",
+      "owner_role": "Product"
+    },
+    {
+      "rank": 4,
+      "action_id": "example-tutor-marketplace:scope-admin_console",
+      "title": "Answer scope question: Is there a privileged operator, admin or support interface?",
+      "owner_role": "Product"
+    },
+    {
+      "rank": 5,
+      "action_id": "example-tutor-marketplace:scope-auxiliary_services",
+      "title": "Answer scope question: Are there separate workers, microservices, local services, queue consumers or retrieval servers?",
+      "owner_role": "Product"
+    },
+    {
+      "rank": 6,
+      "action_id": "example-tutor-marketplace:GMS-GOV-002",
+      "title": "[P0][Blocker] Design in: Sensitive data classification and lifecycle",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "rank": 7,
+      "action_id": "example-tutor-marketplace:GMS-AUTH-001",
+      "title": "[P0][Blocker] Design in: Authentication required for private resources",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 8,
+      "action_id": "example-tutor-marketplace:GMS-ACCESS-001",
+      "title": "[P0][Blocker] Design in: Object-level authorization / tenant isolation",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 9,
+      "action_id": "example-tutor-marketplace:GMS-ACCESS-002",
+      "title": "[P0][Blocker] Design in: Privileged/service-role operations scoped",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 10,
+      "action_id": "example-tutor-marketplace:GMS-API-002",
+      "title": "[P0][Blocker] Design in: Rate, concurrency and cost limits",
+      "owner_role": "Engineering"
+    }
+  ]
+}

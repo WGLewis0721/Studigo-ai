@@ -1,170 +1,110 @@
-# Reusable Security Readiness Framework
+# Security Readiness Framework
 
-This folder turns a product idea or an existing application into a **repeatable, evidence-backed security audit**.
+Turns any app idea, client brief, repository or production app into the same **evidence-backed security assessment**: a ranked, ticket-ready backlog, a release decision, and flat tables for Excel, BI dashboards and trackers.
 
-It is intentionally not Studigo-specific. Studigo is the first implementation of the framework.
+It is not Studigo-specific. Studigo (`apps/studigo/`) is the first real assessment, and `apps/example-tutor-marketplace/` shows the same process starting from a two-sentence idea.
 
-## Objective
+The framework does not claim certification and does not replace a penetration test. It records what must be true, what is known, what is not yet tested, and what evidence closes each item.
 
-Given an application profile, produce outputs that are:
+## Quickstart
 
-- actionable by an engineer,
-- traceable to documented security standards,
-- explicit about what is known versus not tested,
-- suitable for code review and release gating,
-- machine-readable,
-- easy to import into Excel, Power BI, Looker, Tableau, a ticketing system, or a custom dashboard.
-
-The framework does **not** claim ASVS certification or replace a penetration test. It creates a consistent engineering control plane for deciding what must be tested, what failed, what blocks release, and what evidence closes each item.
-
-## Inputs
-
-1. **Application profile**
-   - product purpose,
-   - architecture/surfaces,
-   - authentication,
-   - tenancy,
-   - uploads,
-   - AI/RAG,
-   - sensitive data,
-   - minors,
-   - external providers,
-   - deployment model.
-
-2. **Control catalog**
-   - reusable controls derived from recognized security guidance.
-
-3. **Audit overrides**
-   - evidence-backed status for the current app,
-   - findings,
-   - remediation,
-   - owner,
-   - target date,
-   - evidence and test references.
-
-## Outputs
-
-Running the generator produces:
-
-```text
-generated/
-├── security-control-matrix.csv
-├── security-summary.json
-└── public-launch-gate.md
-```
-
-The CSV is the canonical dashboard/Excel handoff. The JSON is optimized for programmatic dashboards. The Markdown gate is optimized for humans making a release decision.
-
-## Workflow for any app
-
-For AI-assisted intake, start with:
-
-- `templates/APP_IDEA_INTAKE_PROMPT.md` — converts an app idea, client brief, architecture, or repo into the standard app profile.
-- `templates/SECURITY_AUDITOR_PROMPT.md` — converts code/config/test evidence into the standard audit override format.
-
-
-```text
-app idea / client brief
-        ↓
-copy app-profile.template.json
-        ↓
-mark capabilities yes / no / unknown
-        ↓
-generate baseline control matrix
-        ↓
-inspect architecture + code + infrastructure
-        ↓
-record evidence-backed audit overrides
-        ↓
-run security tests
-        ↓
-regenerate
-        ↓
-dashboard / Excel / tickets / release gate
-        ↓
-repeat on every material architecture change
-```
-
-Unknown is a first-class state. Early-stage ideas should not be forced into false precision.
-
-## Status vocabulary
-
-- `pass` — implementation and evidence satisfy the control.
-- `partial` — some controls exist but the requirement is not fully satisfied or verified.
-- `fail` — a known implementation gap violates the control.
-- `not_tested` — applicable, but evidence has not been collected.
-- `accepted_risk` — known gap explicitly accepted by the accountable owner.
-- `not_applicable` — the application profile makes the control irrelevant.
-- `needs_review` — applicability cannot be resolved because the product profile is still uncertain.
-
-A control is never considered passed simply because documentation says it should exist.
-
-## Severity vocabulary
-
-- `P0` — public-release blocker; credible path to cross-tenant exposure, auth bypass, code execution, major AI abuse/cost exposure, sensitive-data compromise, or unsafe child-data handling.
-- `P1` — high-priority hardening required for public production.
-- `P2` — medium risk / defense-in-depth / operational maturity.
-- `P3` — low-risk improvement.
-
-## Evidence rule
-
-Each `pass` should have at least one evidence reference and preferably one executable test reference.
-
-Examples:
-
-```text
-evidence_refs:
-- apps/web/lib/validation.ts
-- supabase/migrations/2026...sql
-
-test_refs:
-- tests/database-security.test.mjs
-- evals/rag/results/2026-10-reviewed.json
-```
-
-## Standards used
-
-See `framework/STANDARDS.md`.
-
-The baseline catalog draws from:
-
-- OWASP ASVS 5.0
-- OWASP API Security Top 10
-- OWASP Top 10
-- OWASP GenAI / LLM Top 10
-- NIST AI RMF and NIST AI 600-1
-- NIST SSDF SP 800-218
-- OWASP File Upload, Logging, CSP and related cheat sheets
-- platform-specific authorization guidance where applicable, such as Supabase RLS
-
-## Commands
-
-For Studigo:
+Requires Node 20+. No dependencies. From the repository root:
 
 ```bash
-pnpm security:report
+pnpm security init acme-portal --name "Acme Portal" --client "Acme" --stage idea --platforms supabase,vercel
+# 1. Answer apps/acme-portal/generated/intake-questions.md in apps/acme-portal/app-profile.json
+# 2. Record findings in apps/acme-portal/audit-overrides.json
+pnpm security:report        # regenerate every app + the portfolio
+pnpm security:check         # CI: inputs valid and generated files current
 ```
 
-For another application profile:
+Outside this repository, copy the `implementation/security-readiness/` folder and run `node scripts/security-readiness.mjs <command>`.
 
-```bash
-node implementation/security-readiness/scripts/generate-report.mjs \
-  path/to/app-profile.json \
-  path/to/audit-overrides.json \
-  path/to/output-directory
+| Command | What it does |
+|---|---|
+| `init <app-id> --name "App" [--client C] [--stage idea\|prototype\|beta\|production] [--platforms a,b]` | Creates `apps/<app-id>/` with an all-unknown profile, an empty audit and a first report. Never overwrites. |
+| `validate [<app-dir>... \| --all]` | Checks both input files against the catalog and the evidence rules. Exit code 1 on errors. |
+| `report [<app-dir>... \| --all] [--out <dir>]` | Validates, assesses and writes `generated/` for each app. |
+| `portfolio [--as-of YYYY-MM-DD] [--out <dir>]` | Rolls every app in `apps/` into `portfolio/`. |
+| `check` | `validate --all`, then fails if any generated file is stale. Runs in `pnpm test`. |
+
+## How it works
+
+```text
+idea / brief / repo / production app
+        │
+        ▼
+app-profile.json ── 23 capability flags: yes / no / unknown ──► which controls apply
+        │                                                       (unknown → needs_review → scope question)
+        ▼
+audit-overrides.json ── per control: status, finding, evidence, tests, owner, dates
+        │
+        ▼
+security-readiness report  (control-catalog.json: 49 controls)
+        │
+        ├── public-launch-gate.md     decision: not_ready | scope_incomplete | ready
+        ├── actions.csv               ranked backlog, ticket-ready
+        ├── security-control-matrix.csv, domains.csv, scope.csv, evidence.csv
+        ├── security-summary.json
+        ├── security-readiness.xlsx   all of the above as sheets
+        └── intake-questions.md
 ```
 
-The generator uses only Node built-ins so it can be copied into another repository with minimal friction.
+1. **Intake.** Answer each capability question with `yes`, `no` or `unknown`. Unknown is allowed and visible: it keeps the affected controls in `needs_review` and puts a scope question at the top of the backlog. Use `templates/APP_IDEA_INTAKE_PROMPT.md` to have a model draft the profile from a brief or repository.
+2. **Applicability.** A control applies when any capability in its `applies_when_any` is `yes`, or when it applies to `all`.
+3. **Audit.** For each applicable control, record a status with evidence in `audit-overrides.json`. Use `templates/SECURITY_AUDITOR_PROMPT.md` to have a model draft overrides from code and configuration; a human reviews them. Controls you have not recorded are `not_tested`.
+4. **Report.** The generator ranks work, decides the release state and writes the outputs. At `stage: idea`, untested controls become "Design in" actions: requirements to build in, not failures.
+5. **Repeat** on every material change (new auth provider, upload type, AI provider, payments, admin surface, minors, new service). Re-answer the profile, update overrides, regenerate.
 
-## Reuse outside Studigo
+## Release decision
 
-The reusable pieces are:
+| Decision | Meaning |
+|---|---|
+| `not_ready` | At least one applicable release-blocker control is not `pass` or `accepted_risk`. |
+| `scope_incomplete` | No open blockers, but unknown capabilities leave controls in `needs_review`. |
+| `ready` | Every applicable blocker is closed and the scope is fully answered. |
+
+A blocker closes only with `pass` (with at least one evidence reference) or `accepted_risk` (with a named owner and a rationale). The validator enforces both.
+
+## Status, severity, owner roles, effort
+
+Definitions live in `framework/control-catalog.json` (`statuses`, `severities`, `owner_roles`, `efforts`) so every tool reads the same vocabulary.
+
+- **Status:** `pass`, `partial`, `fail`, `not_tested`, `accepted_risk` (recorded), plus `needs_review` and `not_applicable` (derived from the profile).
+- **Severity:** `P0` public-release blocker, `P1` high-priority hardening, `P2` defense in depth, `P3` low.
+- **Owner role:** Engineering, Platform/Ops, Security, Legal/Privacy, Product. Each control has a default role so work can be routed before people are assigned.
+- **Effort:** S (about a day), M (two to five days), L (more than a week or cross-team).
+
+## Validation rules
+
+Errors (exit 1): malformed profile/overrides, unknown control IDs, invalid status/severity/dates, likelihood or impact outside 1-5, `pass` without evidence, `accepted_risk` without an owner and rationale, `app_id` mismatch.
+
+Warnings: missing capability flags (treated as unknown), `pass` without a test reference, `fail`/`partial` without a finding, severity lowered below the catalog, a catalog blocker turned off, overrides on controls that do not apply.
+
+## Files
 
 ```text
 framework/
-templates/
+  control-catalog.json         features (intake questions) + controls (the source of truth)
+  schemas/*.schema.json        JSON Schemas for the profile, overrides and catalog
+  STANDARDS.md                 standards crosswalk
 scripts/
-DASHBOARD_DATA_DICTIONARY.md
+  security-readiness.mjs       CLI
+  lib/model.mjs                validation, applicability, assessment, ranking
+  lib/outputs.mjs              tables, CSV, Markdown
+  lib/xlsx.mjs                 dependency-free XLSX writer/reader
+  generate-report.mjs          v1 entry point (profile, overrides, out dir)
+  security-readiness.test.mjs  tests, including "committed reports are current"
+templates/                     profile/overrides templates and the two AI prompts
+apps/<app-id>/                 one folder per assessed app
+  app-profile.json, audit-overrides.json, generated/
+portfolio/                     cross-app rollup (generated)
+DASHBOARD_DATA_DICTIONARY.md   every output table and column
+PLAN.md                        how the framework is operated and extended
 ```
 
-The `studigo/` directory is only an example implementation. For a client or new product, create a sibling directory with that app's profile, audit overrides, and generated outputs.
+## Extending the catalog
+
+Add or change controls in `framework/control-catalog.json`, then update `framework/schemas/` (the tests check that the override schema's control list and the profile schema's feature list match the catalog) and run `pnpm security:report`. Control IDs are stable: never renumber or reuse one. Retire a control by narrowing its `applies_when_any` rather than deleting it while assessments still reference it.
+
+Platform-specific advice goes in a control's `platform_guidance` and appears in actions only for apps whose profile lists that platform.

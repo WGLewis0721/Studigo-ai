@@ -3,7 +3,10 @@
   "app_id": "replace-me",
   "name": "App Name",
   "description": "One-paragraph product description",
+  "client": "",
   "owner": "",
+  "stage": "idea",
+  "platforms": [],
   "environments": [
     "development",
     "production"
@@ -13,6 +16,7 @@
     "api": "unknown",
     "authentication": "unknown",
     "oauth": "unknown",
+    "public_signup": "unknown",
     "multi_tenant": "unknown",
     "file_uploads": "unknown",
     "cloud_storage": "unknown",
@@ -22,6 +26,9 @@
     "vector_store": "unknown",
     "ai_tools_or_agents": "unknown",
     "expensive_compute": "unknown",
+    "outbound_fetch": "unknown",
+    "webhooks": "unknown",
+    "user_generated_content": "unknown",
     "sensitive_data": "unknown",
     "minors": "unknown",
     "payments": "unknown",

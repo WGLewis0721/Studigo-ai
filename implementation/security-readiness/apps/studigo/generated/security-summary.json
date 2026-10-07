@@ -1,0 +1,402 @@
+{
+  "schema_version": 2,
+  "app_id": "studigo",
+  "app_name": "Studigo",
+  "client": "Gray Matter Projects",
+  "stage": "beta",
+  "catalog_version": "2026-10-07",
+  "reviewed_at": "2026-10-07",
+  "as_of": "2026-10-07",
+  "decision": "not_ready",
+  "public_release_ready": false,
+  "scope_complete": true,
+  "total_controls": 49,
+  "applicable_controls": 44,
+  "needs_review": 0,
+  "not_applicable": 5,
+  "readiness_pct": 2,
+  "release_blockers_open": 29,
+  "status_counts": {
+    "pass": 1,
+    "partial": 24,
+    "fail": 9,
+    "not_tested": 10,
+    "accepted_risk": 0,
+    "needs_review": 0,
+    "not_applicable": 5
+  },
+  "open_by_severity": {
+    "P0": 21,
+    "P1": 21,
+    "P2": 1,
+    "P3": 0
+  },
+  "open_by_owner_role": {
+    "Engineering": 27,
+    "Platform/Ops": 8,
+    "Security": 3,
+    "Legal/Privacy": 4,
+    "Product": 1
+  },
+  "open_by_domain": {
+    "Governance": 3,
+    "Authentication": 4,
+    "Authorization": 3,
+    "API Security": 3,
+    "Resource Abuse": 1,
+    "Web Security": 2,
+    "File Security": 5,
+    "AI Security": 3,
+    "AI Operations": 2,
+    "AI Safety": 1,
+    "RAG / Vector Security": 3,
+    "Privacy": 4,
+    "Logging / Detection": 2,
+    "Supply Chain": 3,
+    "Secure Delivery": 1,
+    "Operations": 3
+  },
+  "overdue": 0,
+  "pass_without_test": 0,
+  "open_without_owner": 43,
+  "scope_questions": [],
+  "blockers": [
+    {
+      "control_id": "GMS-GOV-002",
+      "title": "Sensitive data classification and lifecycle",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-AUTH-001",
+      "title": "Authentication required for private resources",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AUTH-002",
+      "title": "OAuth state, PKCE and redirect safety",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AUTH-004",
+      "title": "Account creation and credential abuse protections",
+      "severity": "P1",
+      "status": "fail",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-ACCESS-001",
+      "title": "Object-level authorization / tenant isolation",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-ACCESS-002",
+      "title": "Privileged/service-role operations scoped",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-ACCESS-003",
+      "title": "Auxiliary/internal services authenticated",
+      "severity": "P0",
+      "status": "fail",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-API-002",
+      "title": "Rate, concurrency and cost limits",
+      "severity": "P0",
+      "status": "fail",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-API-003",
+      "title": "CSRF / request provenance protection",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-WEB-002",
+      "title": "Untrusted/model output rendered safely",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-002",
+      "title": "Content signature and parser validation",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-003",
+      "title": "Archive/decompression/image/OCR resource bounds",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-FILE-004",
+      "title": "Malware/quarantine controls",
+      "severity": "P0",
+      "status": "fail",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-FILE-005",
+      "title": "Private storage and scoped download",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-001",
+      "title": "Uploaded/retrieved content treated as untrusted",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-002",
+      "title": "Prompt-injection regression suite",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-005",
+      "title": "Sensitive-data disclosure testing",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-AI-008",
+      "title": "Content safety appropriate to the user population",
+      "severity": "P1",
+      "status": "fail",
+      "owner_role": "Product"
+    },
+    {
+      "control_id": "GMS-RAG-001",
+      "title": "Permission-preserving retrieval",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-RAG-002",
+      "title": "Grounding, citation support and abstention verified",
+      "severity": "P1",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-RAG-003",
+      "title": "Deletion and revision propagate to derived/vector data",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-PRIV-001",
+      "title": "Retention, deletion and export are implemented",
+      "severity": "P0",
+      "status": "partial",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-PRIV-002",
+      "title": "Minor/student-data release requirements resolved",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-PRIV-003",
+      "title": "External provider data flows documented and configured",
+      "severity": "P1",
+      "status": "partial",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-PRIV-004",
+      "title": "Privacy notice, terms and data-subject requests",
+      "severity": "P1",
+      "status": "fail",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "control_id": "GMS-LOG-002",
+      "title": "Logs avoid sensitive-content leakage",
+      "severity": "P0",
+      "status": "not_tested",
+      "owner_role": "Engineering"
+    },
+    {
+      "control_id": "GMS-SUPPLY-002",
+      "title": "Secret scanning",
+      "severity": "P0",
+      "status": "fail",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-CI-001",
+      "title": "Protected production branch and required checks",
+      "severity": "P1",
+      "status": "fail",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "control_id": "GMS-OPS-003",
+      "title": "Hosting and managed-platform security configuration",
+      "severity": "P1",
+      "status": "partial",
+      "owner_role": "Platform/Ops"
+    }
+  ],
+  "highest_risk_open": [
+    {
+      "control_id": "GMS-API-002",
+      "title": "Rate, concurrency and cost limits",
+      "severity": "P0",
+      "risk_score": 25,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-ACCESS-003",
+      "title": "Auxiliary/internal services authenticated",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-FILE-002",
+      "title": "Content signature and parser validation",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "partial"
+    },
+    {
+      "control_id": "GMS-FILE-003",
+      "title": "Archive/decompression/image/OCR resource bounds",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "partial"
+    },
+    {
+      "control_id": "GMS-PRIV-002",
+      "title": "Minor/student-data release requirements resolved",
+      "severity": "P0",
+      "risk_score": 20,
+      "status": "not_tested"
+    },
+    {
+      "control_id": "GMS-AUTH-004",
+      "title": "Account creation and credential abuse protections",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-AI-007",
+      "title": "AI latency/token/cost observability",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-PRIV-004",
+      "title": "Privacy notice, terms and data-subject requests",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-CI-001",
+      "title": "Protected production branch and required checks",
+      "severity": "P1",
+      "risk_score": 16,
+      "status": "fail"
+    },
+    {
+      "control_id": "GMS-GOV-002",
+      "title": "Sensitive data classification and lifecycle",
+      "severity": "P0",
+      "risk_score": 15,
+      "status": "partial"
+    }
+  ],
+  "next_actions": [
+    {
+      "rank": 1,
+      "action_id": "studigo:GMS-API-002",
+      "title": "[P0][Blocker] Fix: Rate, concurrency and cost limits",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 2,
+      "action_id": "studigo:GMS-ACCESS-003",
+      "title": "[P0][Blocker] Fix: Auxiliary/internal services authenticated",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 3,
+      "action_id": "studigo:GMS-FILE-004",
+      "title": "[P0][Blocker] Fix: Malware/quarantine controls",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "rank": 4,
+      "action_id": "studigo:GMS-SUPPLY-002",
+      "title": "[P0][Blocker] Fix: Secret scanning",
+      "owner_role": "Platform/Ops"
+    },
+    {
+      "rank": 5,
+      "action_id": "studigo:GMS-FILE-002",
+      "title": "[P0][Blocker] Finish: Content signature and parser validation",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 6,
+      "action_id": "studigo:GMS-FILE-003",
+      "title": "[P0][Blocker] Finish: Archive/decompression/image/OCR resource bounds",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 7,
+      "action_id": "studigo:GMS-GOV-002",
+      "title": "[P0][Blocker] Finish: Sensitive data classification and lifecycle",
+      "owner_role": "Legal/Privacy"
+    },
+    {
+      "rank": 8,
+      "action_id": "studigo:GMS-ACCESS-001",
+      "title": "[P0][Blocker] Finish: Object-level authorization / tenant isolation",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 9,
+      "action_id": "studigo:GMS-ACCESS-002",
+      "title": "[P0][Blocker] Finish: Privileged/service-role operations scoped",
+      "owner_role": "Engineering"
+    },
+    {
+      "rank": 10,
+      "action_id": "studigo:GMS-AI-001",
+      "title": "[P0][Blocker] Finish: Uploaded/retrieved content treated as untrusted",
+      "owner_role": "Engineering"
+    }
+  ]
+}

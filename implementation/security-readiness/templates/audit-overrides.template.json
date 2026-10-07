@@ -4,18 +4,23 @@
   "reviewed_at": "YYYY-MM-DD",
   "reviewer": "",
   "overrides": {
-    "GMS-EXAMPLE-001": {
-      "status": "not_tested",
+    "GMS-GOV-001": {
+      "status": "partial",
       "severity": "P1",
-      "likelihood": 3,
-      "impact": 4,
+      "likelihood": 2,
+      "impact": 3,
       "release_blocker": false,
-      "finding": "",
-      "remediation": "",
+      "finding": "What you observed, concretely.",
+      "remediation": "The single next action that closes the gap.",
       "owner": "",
       "target_date": "",
-      "evidence_refs": [],
-      "test_refs": [],
+      "ticket": "",
+      "evidence_refs": [
+        "path/to/code-or-config"
+      ],
+      "test_refs": [
+        "path/to/test"
+      ],
       "notes": ""
     }
   }
