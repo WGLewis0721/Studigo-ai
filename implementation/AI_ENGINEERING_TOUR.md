@@ -101,3 +101,4 @@ The AI parts sit inside a codebase with explicit rules. The rules are written do
 - Ingestion runs inside the request, so very large scans can time out.
 - No tracing, cost logging, or rate limiting on the chat route yet.
 - Knowledge tracing is validated on synthetic data only.
+- Not ready for open public use, mainly because of child-privacy, abuse, and cost controls. See the [security audit checklist](SECURITY_AUDIT_CHECKLIST.md).
