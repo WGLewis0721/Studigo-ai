@@ -1,6 +1,6 @@
 # Studigo: AI and software engineering tour
 
-A guided map for someone who has ten minutes and wants to see the AI engineering and the software engineering methodology in this repo. Each claim points at the file that backs it, and each element says whether it is built, measured, or planned. Results are filled in as [the measured-evidence plan](MEASURED_EVIDENCE_PLAN.md) lands.
+A guided map for someone who has ten minutes and wants to see the AI engineering and the software engineering methodology in this repo. Each claim points at the file that backs it, and each element says whether it is built, measured, or planned. Results are filled in as [the plan](PLAN.md) lands.
 
 ## The 30-second version
 
@@ -30,10 +30,10 @@ flowchart LR
 | Element | What it is | Where | Status |
 | --- | --- | --- | --- |
 | Permission-preserving RAG | Dense retrieval over pgvector (HNSW). The match function is `security invoker` and filters by owner and room, so one learner's chunks can never surface in another's answer. | `apps/web/lib/retrieval.ts`, `supabase/migrations/002_core_loop.sql` | Built, unmeasured |
-| Grounded generation | The model answers only from numbered excerpts, cites inline, and returns an explicit "not in your materials" reply when evidence is missing. Teacher study guides outrank textbook text. | `packages/ai/src/grounding.ts` | Built. Citation check is marker-based; claim verifier planned (plan step 7) |
+| Grounded generation | The model answers only from numbered excerpts, cites inline, and returns an explicit "not in your materials" reply when evidence is missing. Teacher study guides outrank textbook text. | `packages/ai/src/grounding.ts` | Built. Citation check is marker-based; claim verifier planned (plan E7) |
 | Retrieval query hygiene | Only the learner's raw question is embedded. Teaching style and other directives go to the system prompt, so they cannot dilute the search. | `apps/web/lib/engine.ts` | Built |
 | Prompt-injection handling | Uploaded content is wrapped as untrusted data, and every prompt carries a rule to treat it as content, not instructions. The code comments say this is serialization, not a guarantee. | `packages/ai/src/client.ts` (`asUntrustedMaterial`, `UNTRUSTED_MATERIAL_RULE`) | Built. Injection eval scenario exists, results pending |
-| Ingestion pipeline | Text extraction with page and slide numbers, OCR for scans and photos, page-accurate chunking, batched embeddings, and a topic map extracted from the teacher study guide. | `packages/documents/`, `apps/web/lib/ingest.ts`, `extractTopicMap` in `packages/ai/src/study.ts` | Built. Runs inside the request; durable worker planned (plan step 10) |
+| Ingestion pipeline | Text extraction with page and slide numbers, OCR for scans and photos, page-accurate chunking, batched embeddings, and a topic map extracted from the teacher study guide. | `packages/documents/`, `apps/web/lib/ingest.ts`, `extractTopicMap` in `packages/ai/src/study.ts` | Built. Runs inside the request; durable worker planned (plan S4) |
 | Structured outputs | Quiz questions, flashcards, topic maps, and grades come back as JSON-schema output, then get normalized and validated before use. | `structured()` and `normalizeGeneratedQuestion` in `packages/ai/src/study.ts` | Built |
 | Coach: model judges, code decides | The model generates a question and scores the learner's answer per concept. `scoreConcepts` and `decideOutcome` turn that into an outcome with plain logic. | `packages/ai/src/coach.ts`, `apps/web/lib/coach-router.ts` | Built, unmeasured |
 | Deterministic adaptive director | Chooses the next challenge and session plan from learner state and recent events. No model call, with a synthetic p95 latency gate of 50 ms. | `packages/learning/src/director.ts`, `apps/web/scripts/measure-director.ts` | Built. Synthetic measurement only |
@@ -42,7 +42,7 @@ flowchart LR
 | Atomic evidence writes | Coach turns commit learning evidence through a transactional boundary designed so that a retried turn does not write evidence twice. | `apps/web/lib/learning/atomic-coach.ts`, `supabase/migrations/20261002010000_adaptive_coach_transactions.sql` | Built |
 | Grading | Typo-tolerant fill-in grading is local and free; short answers use a model judge with defined score bands. | `apps/web/lib/grading.ts`, `packages/ai/src/typos.ts`, `gradeShortAnswer` | Built. Judge not yet calibrated against human labels |
 | Provider isolation | One client with three transports (OpenAI direct, Vercel AI Gateway, local Ollama for chat). Embeddings never use Ollama because the vector column is 1536-dimensional. | `packages/ai/src/client.ts` | Built |
-| RAG evaluation gate | 120 authored cases across scenarios including conflicting sources, edited and deleted revisions, cross-user and cross-room decoys, and injection. Scorer enforces zero unauthorized retrieval and 95% claim support and abstention. | `evals/rag/`, `docs/adr/001-adaptive-rag-benchmark.md` | Harness built. Cases pending review, no live results yet (plan steps 1 to 3) |
+| RAG evaluation gate | 120 authored cases across scenarios including conflicting sources, edited and deleted revisions, cross-user and cross-room decoys, and injection. Scorer enforces zero unauthorized retrieval and 95% claim support and abstention. | `evals/rag/`, `docs/adr/001-adaptive-rag-benchmark.md` | Harness built. Cases pending review, no live results yet (plan E1 to E3) |
 
 ## Software engineering methodology
 
@@ -59,17 +59,17 @@ The AI parts sit inside a codebase with explicit rules. The rules are written do
 
 | Practice | What it looks like here | Where | Status |
 | --- | --- | --- | --- |
-| Package boundaries | `apps/web` for UI and routes, with `packages/ai` (provider and prompts), `documents` (extraction and chunking), `learning` (deterministic director), and `mastery` (BKT, Elo, scheduler) as separate typed packages. | `packages/`, `apps/web/` | Built. Boundary rule is a convention; no lint rule enforces it yet (plan step 11) |
+| Package boundaries | `apps/web` for UI and routes, with `packages/ai` (provider and prompts), `documents` (extraction and chunking), `learning` (deterministic director), and `mastery` (BKT, Elo, scheduler) as separate typed packages. | `packages/`, `apps/web/` | Built. Boundary rule is a convention; no lint rule enforces it yet (plan H2) |
 | Security tested against real migrations | A test runs the actual migrations in embedded Postgres with pgvector, switches roles, and checks that RLS, grants, and transactional functions behave. | `tests/database-security.test.mjs` | Built. Hosted Auth and Storage still need live verification |
 | Trust boundaries in code | A user-scoped client proves ownership of a room. A separate server-only service client performs trusted writes, so browsers never hold privileges on trusted state. | `apps/web/app/api/chat/route.ts`, `apps/web/lib/supabase/` | Built |
 | Idempotent, retry-safe work | Ingestion claims a document with a conditional update, so a double-click or racing retry cannot ingest it twice. Coach turns carry a client-generated interaction id. | `apps/web/lib/ingest.ts`, `apps/web/app/api/chat/route.ts` | Built |
 | Feature flags and staged rollout | Risky paths ship behind flags, such as atomic Coach and the durable-session route, which stays off until its lifecycle is linked atomically. | `STUDIGO_ATOMIC_COACH`, `STUDIGO_ADAPTIVE_SESSION`, `STUDIGO_DURABLE_SESSIONS` | Built |
 | Generated artifacts from one source of truth | Route policies are generated from the teaching knowledge base, not hand-copied into code. | `apps/web/scripts/generate-route-policies.ts`, `knowledge/teaching-coaching/` | Built |
 | Decisions recorded | An ADR states what was chosen, what is provisional, and the numeric gates that would change the decision. | `docs/adr/001-adaptive-rag-benchmark.md` | Built |
-| Docs with owners | A navigation index says which document owns product rules, architecture, status, release path, and evidence. | `docs/README.md` | Built. Volume is high; archiving planned (plan step 12) |
+| Docs with owners | A navigation index says which document owns product rules, architecture, status, release path, and evidence. | `docs/README.md` | Built. Volume is high; archiving and a read-first list planned (plan L4) |
 | Evidence kept separate from claims | Beta evidence, execution evidence, and user test cases are their own documents, and the README lists known limits. | `docs/ADAPTIVE_BETA_EVIDENCE.md`, `docs/V3_EXECUTION_EVIDENCE.md`, `docs/USER_TEST_CASES.md` | Built |
 | Branch and PR discipline | Substantial work goes through feature branches and PRs, with golden baselines treated as fixed reference points. | `AGENTS.md`, `docs/README.md` | Built |
-| CI | Typecheck, unit tests, database security tests, RAG scorer tests, offline ML tests, and a production build run on every PR. | `.github/workflows/ci.yml` | Built. Lint is currently a no-op (plan step 11) |
+| CI | Typecheck, unit tests, database security tests, RAG scorer tests, offline ML tests, and a production build run on every PR. | `.github/workflows/ci.yml` | Built. Lint is currently a no-op (plan H2) |
 
 **Not yet where it should be:** lint failures are swallowed, the lockfile is not frozen in CI, the Playwright beta verification script is not run in CI, there is no coverage report, and the chat route has no rate limiting or tracing.
 

@@ -1,6 +1,6 @@
 # Security audit checklist
 
-Status: first pass, 2026-10-07. Static review of the code this branch is based on (`main` at `aa5898b`), plus `pnpm audit --prod`. Nothing was run against the live site, and Supabase and Vercel dashboard settings were not visible.
+Status: first pass, 2026-10-07. Part of [the plan](PLAN.md), which turns these rows into steps S1 to S8. Static review of the code this branch is based on (`main` at `aa5898b`), plus `pnpm audit --prod`. Nothing was run against the live site, and Supabase and Vercel dashboard settings were not visible.
 
 ## How to read this
 
@@ -36,7 +36,7 @@ Rows are numbered so they can be tracked in issues. "Fail" means "not found in t
 | LLM-06 | Excessive agency | Pass | No model tool, function-calling, or file-search usage found in `packages/ai` or `apps/web`. | Re-check if tools are ever added |
 | LLM-07 | System prompt leakage | Not verified | System prompt is in `packages/ai/src/grounding.ts`. It holds no secrets, but there is no leakage test. | Add an eval case that asks for the system prompt |
 | LLM-08 | Vector and embedding weaknesses | Pass | `match_study_chunks` is `security invoker` and filters by owner and room; chunks have a select-own RLS policy. The `p_owner_id` argument relies on RLS to stay safe. | Add a test for a caller passing another user's `p_owner_id` |
-| LLM-09 | Misinformation | Partial | Grounded prompt, citations, abstention when no chunk passes the cutoff. Citation check is marker-based, not claim-level. | See `MEASURED_EVIDENCE_PLAN.md` step 7 |
+| LLM-09 | Misinformation | Partial | Grounded prompt, citations, abstention when no chunk passes the cutoff. Citation check is marker-based, not claim-level. | See `PLAN.md` E7 |
 | LLM-10 | Unbounded consumption | Fail | No quota or rate limit on `/api/chat`. A turn can run 120 s with 2 SDK retries. | See ABUSE rows |
 
 ## 2. OWASP API Security Top 10 2023
@@ -93,7 +93,7 @@ Rows are numbered so they can be tracked in issues. "Fail" means "not found in t
 | FILE-05 | Size and decompression limits | Partial | 50 MB cap; the whole file is read into memory in the request. PPTX and DOCX are zip files opened with JSZip and mammoth with no uncompressed-size limit seen. | Cap entry count and uncompressed size; stream where possible |
 | FILE-06 | Malware scan or content disarm | Fail | None found. | Scan, or isolate parsing in a sandboxed worker |
 | FILE-07 | Private storage, authenticated access | Pass | Private bucket, owner folder policy, `requireApiUser` on upload. | None |
-| FILE-08 | Heavy parsing outside the request | Fail | `AGENTS.md` requires it; ingestion runs inside the request (README admits this). | `MEASURED_EVIDENCE_PLAN.md` step 10 |
+| FILE-08 | Heavy parsing outside the request | Fail | `AGENTS.md` requires it; ingestion runs inside the request (README admits this). | `PLAN.md` S4 |
 
 ## 6. Children, student privacy, and AI risk
 
@@ -108,7 +108,7 @@ Rows are numbered so they can be tracked in issues. "Fail" means "not found in t
 | KIDS-07 | Output moderation for minors | Fail | No moderation call found. | Add a moderation layer and safety evals |
 | KIDS-08 | FERPA school-official terms (if sold to schools) | Not verified | A process and contract question, not a code one. | Prepare vendor terms before school pilots |
 | KIDS-09 | Vendor review of model and storage providers | Partial | Provider calls are isolated in `packages/ai`; roadmap lists vendor requirements unchecked. | Complete the vendor review |
-| KIDS-10 | Confabulation controls (NIST AI 600-1) | Partial | Grounding and abstention exist; no measured results yet. | `MEASURED_EVIDENCE_PLAN.md` steps 1 to 3, 7 |
+| KIDS-10 | Confabulation controls (NIST AI 600-1) | Partial | Grounding and abstention exist; no measured results yet. | `PLAN.md` E1 to E3 and E7 |
 
 ## 7. Cross-cutting findings
 
@@ -123,7 +123,7 @@ Rows are numbered so they can be tracked in issues. "Fail" means "not found in t
 | ERR-01 | Raw error text returned to clients | Fail | 22 handlers return `error.message`; some include `detail: error.message` (for example `api/chat`, `api/quiz`). | Map to stable error codes; log details server-side |
 | CLIENT-01 | Client-influenced system prompt text | Partial | In Ask mode only directives named "Current topic" or "Current topics" are kept (`directivesForTurn`), but their instruction text, up to 600 characters, comes from the client and reaches the system prompt. | Build that text server-side from topic ids |
 | SECRET-01 | Cron secret compared with `!==` | Partial | `apps/web/app/api/internal/storage-cleanup/route.ts`. | Use a timing-safe compare |
-| LOG-01 | No audit trail or telemetry | Fail | Only 2 `console` calls; no tracing. | `MEASURED_EVIDENCE_PLAN.md` step 9 |
+| LOG-01 | No audit trail or telemetry | Fail | Only 2 `console` calls; no tracing. | `PLAN.md` H1 |
 | DOC-01 | Stale comment about anonymous sign-in | Partial | `apps/web/lib/auth.ts`. | Correct the comment |
 
 ## 8. Strengths worth keeping
