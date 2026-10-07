@@ -91,7 +91,7 @@ Studigo does not add LangChain, an agent framework, another vector database, or 
 | --- | --- | --- |
 | Product contract | `docs/PRODUCT.md` | What Studigo is allowed to be |
 | Deep architecture | `docs/ARCHITECTURE.md` | Runtime/data boundaries and implementation details |
-| Engineering plan | `implementation/ENGINEERING_SYSTEM_PLAN.md` | What must be built/hardened next and why |
+| Engineering plan | `implementation/ENGINEERING_PLAN.md` | What must be built/hardened next and why |
 | Security readiness | `implementation/security-readiness/` | Reusable control matrix, audit, release gate |
 | Web/PWA | `apps/web/` | UI, API routes, server orchestration |
 | AI provider boundary | `packages/ai/src/client.ts` | Models, embeddings, provider transport, untrusted-input rules |
@@ -176,7 +176,7 @@ Do not overclaim these as finished:
 - complete student/minor privacy release requirements,
 - measured proof that more complex retrieval beats the current baseline.
 
-See `implementation/ENGINEERING_SYSTEM_PLAN.md` for the execution order.
+See `implementation/ENGINEERING_PLAN.md` for the execution order.
 
 ## Change methodology
 
@@ -236,7 +236,7 @@ Open, in this order:
 7. relevant `supabase/migrations/`
 8. `evals/rag/`
 9. `implementation/security-readiness/`
-10. `implementation/ENGINEERING_SYSTEM_PLAN.md`
+10. `implementation/ENGINEERING_PLAN.md`
 
 ## GenAI context-loading contract
 
@@ -247,7 +247,7 @@ Default sequence:
 1. Read this file.
 2. Read `docs/PRODUCT.md` only when product behavior/scope is relevant.
 3. Read `docs/ARCHITECTURE.md` only for deeper runtime/data questions.
-4. Read `implementation/ENGINEERING_SYSTEM_PLAN.md` only for planned hardening/roadmap work.
+4. Read `implementation/ENGINEERING_PLAN.md` only for planned hardening/roadmap work.
 5. Open only the code paths from the repository/change maps above that match the task.
 6. Read relevant tests/evals before changing behavior.
 7. Search outward only when the targeted files reveal a dependency.
@@ -260,7 +260,7 @@ When docs conflict, use this order:
 2. `docs/PRODUCT.md` for product invariants,
 3. `docs/ARCHITECTURE.md` for intended runtime architecture,
 4. this file for the compact engineering map,
-5. `implementation/ENGINEERING_SYSTEM_PLAN.md` for planned work,
+5. `implementation/ENGINEERING_PLAN.md` for planned work,
 6. dated/audit/history documents for evidence and context.
 
 A material architecture change must update this file if it changes the system map, technology rationale, authority boundary, or code ownership.
