@@ -240,6 +240,17 @@ Open, in this order:
 
 ## GenAI context-loading contract
 
+### Context-efficiency rules
+
+- Keep this file focused on **current architecture and navigation**, not chronological history.
+- Prefer a path/link over copying large implementation details.
+- Keep each subsystem summary short enough to decide what file to open next.
+- Put evidence in tests/evals/audits and link to it.
+- Put planned work in `implementation/ENGINEERING_PLAN.md`, not here.
+- Put historical rationale in ADRs only when the decision history matters.
+- When this file grows, remove duplication before adding another overview document.
+
+
 A coding agent should **not** read the entire repository before acting.
 
 Default sequence:
