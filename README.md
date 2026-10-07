@@ -155,9 +155,12 @@ supabase/
   functions/           reserved for future out-of-request workers
 knowledge/
   teaching-coaching/   Coach-method KB derived from the live UI taxonomy
+implementation/
+  ENGINEERING_PLAN.md  canonical AI/software engineering map, rationale, plan and code-tour guide
+  security-readiness/  reusable evidence-backed security control framework
 docs/
-  README.md            entrypoint for product, architecture, release and evidence
-  ...                  specialist contracts and dated verification
+  README.md            specialist documentation map
+  ...                  product, architecture, release and verification contracts
 ```
 
 ## GitHub Codespaces preview
@@ -222,10 +225,14 @@ Teacher-provided study guides and teacher materials should carry the highest ret
 
 ## Current handoff target
 
-Start with [the documentation map](docs/README.md), then the product,
-architecture, roadmap and AI handoff files required by [AGENTS.md](AGENTS.md).
-Read the specialist contract for the area you are changing. The learning app
-and Moon Keep have separate release tracks and golden baselines.
+Start with the canonical [Engineering Plan & System Guide](implementation/ENGINEERING_PLAN.md).
+It explains the AI/software engineering principles, technology choices, repository ownership,
+current-vs-planned boundary, and a task-routing table so a developer or GenAI coding agent
+does not need to scan the whole repository.
+
+Then open only the specialist contract required for the task, using
+[AGENTS.md](AGENTS.md) and [the documentation map](docs/README.md).
+The learning app and Moon Keep have separate release tracks and golden baselines.
 
 Current `main` is the integrated V3 web beta. The staged V3 engine/UI passes
 have already landed; do **not** restart Phase 1/2/3 from scratch. Read
