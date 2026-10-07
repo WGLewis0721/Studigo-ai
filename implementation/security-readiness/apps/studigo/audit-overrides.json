@@ -16,7 +16,7 @@
       "target_date": "",
       "evidence_refs": [
         "docs/ARCHITECTURE.md",
-        "implementation/AI_SOFTWARE_ENGINEERING_WALKTHROUGH.md"
+        "ENGINEERING.md"
       ],
       "test_refs": [],
       "notes": ""
@@ -423,7 +423,7 @@
       "target_date": "",
       "evidence_refs": [
         "packages/ai/src/coach.ts",
-        "implementation/AI_ENGINEERING_HARDENING_PLAN.md"
+        "implementation/ENGINEERING_SYSTEM_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
@@ -440,7 +440,7 @@
       "target_date": "",
       "evidence_refs": [
         "evals/rag/README.md",
-        "implementation/AI_ENGINEERING_HARDENING_PLAN.md"
+        "implementation/ENGINEERING_SYSTEM_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
@@ -580,7 +580,7 @@
       "owner": "",
       "target_date": "",
       "evidence_refs": [
-        "implementation/AI_ENGINEERING_HARDENING_PLAN.md"
+        "implementation/ENGINEERING_SYSTEM_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
