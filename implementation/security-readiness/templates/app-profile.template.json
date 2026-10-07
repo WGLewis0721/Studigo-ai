@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "app_id": "replace-me",
+  "name": "App Name",
+  "description": "One-paragraph product description",
+  "owner": "",
+  "environments": [
+    "development",
+    "production"
+  ],
+  "features": {
+    "web": "unknown",
+    "api": "unknown",
+    "authentication": "unknown",
+    "oauth": "unknown",
+    "multi_tenant": "unknown",
+    "file_uploads": "unknown",
+    "cloud_storage": "unknown",
+    "ai": "unknown",
+    "external_ai_provider": "unknown",
+    "rag": "unknown",
+    "vector_store": "unknown",
+    "ai_tools_or_agents": "unknown",
+    "expensive_compute": "unknown",
+    "sensitive_data": "unknown",
+    "minors": "unknown",
+    "payments": "unknown",
+    "admin_console": "unknown",
+    "third_party_integrations": "unknown",
+    "auxiliary_services": "unknown"
+  },
+  "data_notes": [],
+  "deployment_notes": [],
+  "assumptions": []
+}
