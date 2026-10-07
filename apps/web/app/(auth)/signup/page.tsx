@@ -19,6 +19,7 @@ export default async function SignUpPage({
       <h1 className="authTitle">Start your first Study Room.</h1>
       <p className="authLede">
         Upload the study guide and the material it points at. Studigo does the rest.
+        This beta account lasts 5 days. Then the account, its rooms, and its uploads are deleted.
       </p>
       {error && <p className="formError" role="alert">Sign-in did not finish. Please try again.</p>}
       {googleEnabled && <GoogleSignIn next={next ?? "/app"} />}

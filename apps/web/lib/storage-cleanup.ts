@@ -20,3 +20,15 @@ export async function drainStorageCleanup(ownerId?: string) {
   }
   return { pending };
 }
+
+/** Missing RPC means the retention migration is not on this database yet. */
+export async function purgeExpiredAccounts() {
+  const service = createServiceSupabaseClient();
+  const { data, error } = await service.rpc("purge_expired_accounts");
+  if (error) {
+    const missing = error.code === "PGRST202" || /purge_expired_accounts|schema cache/i.test(error.message);
+    if (missing) return { purged: 0 };
+    throw new Error(error.message);
+  }
+  return { purged: typeof data === "number" ? data : 0 };
+}
