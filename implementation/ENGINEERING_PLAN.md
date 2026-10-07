@@ -1,10 +1,10 @@
-# Studigo Engineering Plan & System Guide
+# Studigo AI + Software Engineering Plan
 
-> **Canonical engineering entry point for the Studigo learning app.**
+> **Canonical implementation plan for the Studigo learning app.**
 >
-> This file combines the AI-engineering hardening plan, software-engineering methodology, repository map, technology rationale, implementation priorities, and technical walkthrough.
+> This is the single engineering plan for AI engineering, software engineering, hardening, evaluation, security, operational maturity, and repository legibility.
 >
-> Use it first. Do not scan the entire repository to understand Studigo.
+> For normal coding work, start with the compact root `ENGINEERING.md`; use this plan when the task changes architecture, engineering methodology, hardening priorities, or release evidence.
 >
 > Current baseline when consolidated: `main`, 2026-10-07.
 
@@ -96,11 +96,12 @@ Studigo is therefore not a generic chatbot wrapper. It is a source-grounded AI s
 
 For most learning-app tasks:
 
-1. Read **this file**.
-2. Read only the task-specific files listed in the routing table below.
-3. Inspect the implementation you are changing.
-4. Read specialist documents only when the task touches their contract.
-5. Do not scan the whole repository unless a cross-cutting audit explicitly requires it.
+1. Read root **`ENGINEERING.md`** first.
+2. Read this plan only when the task touches planned hardening, architecture changes, evaluation, security, or engineering methodology.
+3. Read only the task-specific files listed in the routing table below.
+4. Inspect the implementation you are changing.
+5. Read specialist documents only when the task touches their contract.
+6. Do not scan the whole repository unless a cross-cutting audit explicitly requires it.
 
 For game work, use `prototypes/moon-road/` instead. The game is a separate release track.
 
@@ -823,7 +824,7 @@ Explain:
 ## Stop 9 — Security
 
 Open:
-- `implementation/security-readiness/studigo/generated/public-launch-gate.md`
+- `implementation/security-readiness/apps/studigo/generated/public-launch-gate.md`
 
 Explain:
 - security is tracked as a reusable evidence-backed control matrix,
