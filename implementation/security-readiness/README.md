@@ -57,6 +57,12 @@ The CSV is the canonical dashboard/Excel handoff. The JSON is optimized for prog
 
 ## Workflow for any app
 
+For AI-assisted intake, start with:
+
+- `templates/APP_IDEA_INTAKE_PROMPT.md` — converts an app idea, client brief, architecture, or repo into the standard app profile.
+- `templates/SECURITY_AUDITOR_PROMPT.md` — converts code/config/test evidence into the standard audit override format.
+
+
 ```text
 app idea / client brief
         ↓
@@ -149,3 +155,16 @@ node implementation/security-readiness/scripts/generate-report.mjs \
 ```
 
 The generator uses only Node built-ins so it can be copied into another repository with minimal friction.
+
+## Reuse outside Studigo
+
+The reusable pieces are:
+
+```text
+framework/
+templates/
+scripts/
+DASHBOARD_DATA_DICTIONARY.md
+```
+
+The `studigo/` directory is only an example implementation. For a client or new product, create a sibling directory with that app's profile, audit overrides, and generated outputs.
