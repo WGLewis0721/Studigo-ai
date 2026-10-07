@@ -18,7 +18,8 @@
     "test:rag": "node --test evals/rag/*.test.mjs",
     "test:ml": "python -m unittest discover -s evals/ml -p test_*.py",
     "test:security": "node --test tests/database-security.test.mjs",
-    "beta": "node scripts/local-beta.mjs"
+    "beta": "node scripts/local-beta.mjs",
+    "security:report": "node implementation/security-readiness/scripts/generate-report.mjs implementation/security-readiness/studigo/app-profile.json implementation/security-readiness/studigo/audit-overrides.json implementation/security-readiness/studigo/generated"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
