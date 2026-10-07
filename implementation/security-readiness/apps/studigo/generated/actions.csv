@@ -455,7 +455,7 @@ rank,action_id,app_id,app_name,client,action_type,control_id,feature,severity,re
 
 **Suggested fix:** Audit logs/telemetry payloads and enforce redaction/minimization.
 
-**Evidence so far:** implementation/AI_ENGINEERING_HARDENING_PLAN.md
+**Evidence so far:** implementation/ENGINEERING_PLAN.md
 
 **Evidence required to close:** Logging policy and sampled traces.
 
@@ -655,7 +655,7 @@ rank,action_id,app_id,app_name,client,action_type,control_id,feature,severity,re
 
 **Suggested fix:** Add privacy-conscious AI tracing and operation/user/global budgets.
 
-**Evidence so far:** evals/rag/README.md, implementation/AI_ENGINEERING_HARDENING_PLAN.md
+**Evidence so far:** evals/rag/README.md, implementation/ENGINEERING_PLAN.md
 
 **Evidence required to close:** Telemetry schema/dashboard/query evidence.
 
@@ -783,7 +783,7 @@ rank,action_id,app_id,app_name,client,action_type,control_id,feature,severity,re
 
 **Suggested fix:** Adopt one AI trace/version envelope across all provider calls.
 
-**Evidence so far:** packages/ai/src/coach.ts, implementation/AI_ENGINEERING_HARDENING_PLAN.md
+**Evidence so far:** packages/ai/src/coach.ts, implementation/ENGINEERING_PLAN.md
 
 **Evidence required to close:** Versioned configs/traces and reproducibility test.
 
@@ -805,7 +805,7 @@ rank,action_id,app_id,app_name,client,action_type,control_id,feature,severity,re
 
 **Suggested fix:** Create security threat model/data-flow map and keep it synchronized with production components.
 
-**Evidence so far:** docs/ARCHITECTURE.md, implementation/AI_SOFTWARE_ENGINEERING_WALKTHROUGH.md
+**Evidence so far:** docs/ARCHITECTURE.md, ENGINEERING.md
 
 **Evidence required to close:** Current data-flow/trust-boundary diagram and component inventory.
 
