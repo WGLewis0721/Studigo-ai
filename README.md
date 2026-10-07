@@ -6,6 +6,8 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 > Give Studigo what you are supposed to learn and the resources you are supposed to learn it from. Studigo turns them into a study companion.
 
+**Reviewing the AI engineering?** Start with the [AI engineering tour](implementation/AI_ENGINEERING_TOUR.md): where retrieval, grounding, evaluation and adaptive logic live, and what is built, measured, or still planned.
+
 ## Play the math game (beta)
 
 **▶ [Play Moon Keep](https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-xi/)**. It's a multiplication Metroidvania prototype and the current golden build.
