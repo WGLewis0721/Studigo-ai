@@ -4,7 +4,7 @@
 >
 > It merges two 2026-10-07 drafts that had each declared themselves canonical:
 >
-> - the architecture plan already on `main` (technology register, canonical document, grader benchmark, learner-state split), and
+> - the architecture plan already on `main` (technology catalog, canonical document, grader benchmark, learner-state split), and
 > - the workstreams on [PR #81](https://github.com/WGLewis0721/Studigo-ai/pull/81) (`L` legibility, `E` evidence, `S` security, `H` operations, `W` walkthrough).
 >
 > PR #81 is not squash-merged. GitHub reports it `CONFLICTING`. Its recorded head is `e589f3a` and its base is `aa5898b` (2026-10-04), which is before the security audit and the engineering-guide consolidation on `main`. The branch tip `4756724` is the same stale base plus a docs commit. Landing it would recreate a second plan (`implementation/PLAN.md`), a second tour, and a second security authority. The propositions are here instead. Do not revive those files.
@@ -14,7 +14,7 @@
 ## Outcome
 
 1. **A session can orient without a repo scan.** `AGENTS.md` plus `ENGINEERING.md` are enough to say what owns RAG, grading, ingestion, learning state, auth, and security, and what not to touch.
-2. **The owner can explain any part.** How it works, why that technology, which files. Reasons in the technology register are marked `confirmed` or `inferred`. Inferred rows are not ADRs.
+2. **The owner can explain any part.** How it works, which technology is on that path, which files. The catalog records what the tree contains. It does not ask you to ratify a reason.
 3. **Claims match evidence.** Quality claims cite a committed eval. Security claims cite a row in [`SECURITY_AUDIT_CHECKLIST.md`](SECURITY_AUDIT_CHECKLIST.md) and the generated gate. Planned work is not described as shipped.
 
 `AGENTS.md` still governs the work: grounded by default, RLS preserved, provider calls inside `packages/ai`, heavy ingestion out of synchronous requests, uploaded content treated as untrusted, tests or evals around behavior changes.
@@ -51,7 +51,7 @@ Checked against `main` @ `c4259fdb`, not against the 4 Oct tree.
 
 | Area | Finding | Where |
 | --- | --- | --- |
-| Legibility | Cold start is short. What remains: no package README, technology rows mostly unconfirmed, `ENGINEERING.md` and this file can drift, finished-phase notes still sit next to live docs | `packages/*`, `docs/` |
+| Legibility | Cold start is short. What remains: no package README, the catalog must stay aligned with the tree, finished-phase notes still sit next to live docs | `packages/*`, `docs/`, `ENGINEERING.md` |
 | Evidence | `evals/rag` has 120 synthetic cases. ADR 001 says all are pending independent review. No committed live run. No live adapter | `evals/rag/`, `docs/adr/001-adaptive-rag-benchmark.md` |
 | Retrieval | Dense top-k. Default cutoff `0.35` (`STUDIGO_MIN_SIMILARITY`, `match_study_chunks`). Score adds `source_priority / 1000`. No hybrid search, no reranker | `apps/web/lib/retrieval.ts`, `supabase/migrations/002_core_loop.sql` |
 | Citations | `grounded` is `citationsUsedIn(...).length > 0`. A `[n]` marker is not semantic support. Abstention runs when no chunk passes the cutoff | `packages/ai/src/grounding.ts` |
@@ -62,21 +62,16 @@ Checked against `main` @ `c4259fdb`, not against the 4 Oct tree.
 | CI hygiene | Typecheck, unit tests, database security tests, RAG scorer tests, ML tests, and the web build run on PRs. Lint does not: `apps/web` is `next lint \|\| true`; packages echo a stub. Playwright is not in CI. No rule keeps the model SDK inside `packages/ai` | `package.json`, `.github/workflows/ci.yml` |
 | Focus | Moon Keep and `services/retrieval/` are separate from the learning app. The Python service is unauthenticated and must stay off the public path | `prototypes/moon-road/`, `services/retrieval/` |
 
-## Technology register
+## Technology catalog
 
-`confirmed` means the reason is already in the repo (an ADR or a constraint the code enforces). `inferred` means a model wrote a plausible reason and **you have not confirmed it**. Do not promote an inferred row to an ADR. If a row is wrong, correct it in the same PR that relies on it.
+The live catalog is the table in `ENGINEERING.md`. It lists what is on the production path, what is a prototype, and what is only a document. Repeat it here only as the rule for keeping it:
 
-| Decision | Why it is in the tree | Not the default alternative | Revisit when | Status |
-| --- | --- | --- | --- | --- |
-| TypeScript retrieval, not the Python/FAISS service | ADR 001: the Python path uses different embeddings, FAISS, and unauthenticated room-ID endpoints, so a comparison would be confounded. Gates: 0 unauthorized retrievals, ≥95% claim support, ≥95% abstention, no regression over 2 points. Python must win by ≥5 points or ≥20% latency/cost | A second retrieval stack | A matched benchmark passes those gates | **confirmed** (ADR 001, provisional) |
-| Postgres + pgvector | Vectors sit in the same database as RLS and deletions | A separate vector database and a sync/deletion problem | A matched benchmark shows a material quality or scale gain | inferred |
-| RAG for course knowledge, not fine-tuning | Per-room material is private, mutable, and deletable | Fine-tuning as the source of truth | A style/behavior problem, not a knowledge problem, needs tuning | inferred |
-| Deterministic director, not an agentic policy | Progression has to be replayable. `packages/learning` does not call a model | Letting the model decide mastery | A learned policy beats the director on a reviewed set without taking write authority | inferred |
-| Supabase Auth + Postgres + Storage | One identity and one data plane for web now and a native client later | A second auth or storage ACL | A requirement the current products cannot meet | inferred |
-| OpenAI-compatible calls only inside `packages/ai` | One server-side provider boundary. Embeddings stay 1536-d, so chat-only Ollama must not write vectors | Model SDKs in routes | A measured quality/cost/reliability win, still behind this package | inferred |
-| Expo / React Native for the App Store | `docs/APP_STORE_RELEASE_PLAN.md` and the README name this as the native route. Tauri stays a desktop placeholder | A SwiftUI client that reimplements mastery | A native-only capability becomes the product | inferred |
-| Postgres-backed ingestion worker | Reuse leases, retries, and idempotency already in Postgres | A new queue product before there is throughput evidence | Measured volume shows Postgres jobs are not enough | inferred |
-| BKT / Elo / scheduler stay advisory | `evals/ml` is synthetic. ADR-style caution in `ENGINEERING.md`: a probability is not an evidence stage | Shipping BKT as mastery | Privacy-approved real data shows calibration | **confirmed** as not production authority |
+- Describe the component, the path, and the role the code has now.
+- Do not add a "why we chose this" column, and do not mark rows confirmed or inferred.
+- A written reason belongs in the repo only when a change is under test. ADR 001 is that kind of note: it keeps TypeScript retrieval until a matched benchmark beats it. It is not a template for the rest of the stack.
+- When a dependency, transport, or authority boundary changes, update the `ENGINEERING.md` table in the same PR.
+
+There is no L-step that asks you to confirm those rows.
 
 ## Workstreams
 
@@ -90,9 +85,9 @@ Make orientation cheap. Do not add a second map until the current one fails a te
   - Done when: the note exists and states the score. If all ten are right, skip L4's code map. If any miss, fix `ENGINEERING.md` first and rerun. Add `docs/CODEMAP.md` only if a second run still misses.
   - Verify: the eval note cites the file that answers each question.
 
-- **L2. Confirm technology reasons.** You fill or strike the `inferred` rows above. A model may draft, not adopt.
-  - Done when: every row is `confirmed` or deleted. No new ADR file unless you confirmed the reason and the decision is hard to reverse.
-  - Verify: this table has no `inferred` left, or the remaining ones are explicitly deferred with your name.
+- **L2. Keep the catalog current.** The technology table lives in `ENGINEERING.md`. A PR that adds, removes, or changes the role of a component updates that table in the same change. No separate confirmation pass.
+  - Done when: the table matches the tree on this baseline (Next.js in `apps/web`, pgvector in the retrieval migration, Ollama excluded from embeddings, LangChain only under `services/retrieval/`, Expo named only in `docs/APP_STORE_RELEASE_PLAN.md`, no fine-tune job).
+  - Verify: a reader can point from each row to a file. L5 fails if a named path disappears.
 
 - **L3. Package READMEs.** `packages/ai`, `packages/documents`, `packages/learning`, and `packages/mastery` have no README. Add a short one to each: purpose, public exports, invariants, how to test, what does not belong. State in `packages/mastery` that it is not the production progression authority.
   - Done when: each README exists and names the test command already in that package.
@@ -106,7 +101,7 @@ Make orientation cheap. Do not add a second map until the current one fails a te
   - Done when: `.github/workflows/ci.yml` runs it, and a deliberately bad path fails locally.
   - Verify: `pnpm` script exits 0 on `main` and non-zero on a missing path.
 
-- **L6. Rerun L1** after L2–L5. Update `docs/ORIENTATION_EVAL.md`. This is the legibility exit.
+- **L6. Rerun L1** after L3–L5. Update `docs/ORIENTATION_EVAL.md`. This is the legibility exit.
 
 ### E — Measured evidence
 
@@ -164,7 +159,7 @@ These are the hardening steps PR #81 did not schedule. They sit under the golden
         → canonicalize → chunk → embed → derive → ready
   ```
 
-  Postgres/Supabase-backed worker is the default (see the register). Require a safe claim, lease recovery, bounded retries, idempotent stages, sanitized failures, an immutable original, and a derived revision.
+  Postgres/Supabase-backed worker is the implementation for this step. There is no queue product in the repo. Require a safe claim, lease recovery, bounded retries, idempotent stages, sanitized failures, an immutable original, and a derived revision.
   - Files: `apps/web/lib/ingest.ts`, `supabase/migrations/`, `supabase/functions/` or a worker entry the app already reserved.
   - Done when: a forced retry does not create a second chunk set, and a request no longer waits on OCR for the large-scan case.
   - Verify: ingest tests plus a database test for two concurrent claims.
@@ -268,7 +263,7 @@ Update this table in the PR that changes the status. Do not edit it to match a p
 
 | Order | Work | Stop if |
 | --- | --- | --- |
-| 1 | L1, then L2–L6 | Orientation eval is the check that the map is enough |
+| 1 | L1, then L3–L6. L2 is a rule, not a task | Orientation eval is the check that the map is enough |
 | 2 | E1–E3 | No retrieval change before a reviewed baseline |
 | 3 | S3, S7 item 1 (anonymous toggle), S1 leftovers | Spend and anonymous accounts are the launch risks that do not need the eval |
 | 4 | E4–E8, E9 | Keep dense retrieval if the ablation does not win |
@@ -289,13 +284,12 @@ Do L1, L3, L6, E1–E3, E7, E9's first 50 labels, S3, and the anonymous-signin t
 - Fixture cases do not measure OCR. Scans stay a separate gate.
 - The judge will drift. Humans label. The model does not fill review fields.
 - A map goes stale. L5 checks paths, not sentences. L6 checks sentences.
-- Inferred technology reasons will be quoted back at you. L2 exists so that does not happen.
-- Merging PR #81 on top of this file will delete the merge. Close that PR. Do not rebase it onto this plan.
+- Merging PR #81 on top of this file will delete the merge. That PR is closed. Do not rebase it onto this plan.
 
 ## Definition of done
 
 - L6: ten orientation questions answered from `AGENTS.md` and `ENGINEERING.md`, with tokens recorded.
-- Technology register has no unmarked `inferred` row.
+- The technology catalog in `ENGINEERING.md` still matches the tree.
 - Reviewed eval slice, named reviewers, committed baseline JSON, ablation decision, grader report started.
 - Zero unauthorized retrievals on every committed run. CI fails on a regression of that gate.
 - Generated public-launch gate is `ready`, or each remaining blocker is `accepted_risk` with owner and rationale.
@@ -308,10 +302,10 @@ Use `ENGINEERING.md` for the 30-second and 2-minute versions. For ten minutes, o
 
 Short answers that are already safe:
 
-- **Why not a system prompt around a chatbot?** Permissions, mutable private sources, citations, abstention, retries, and progression are application invariants.
-- **Why RAG instead of fine-tuning?** Course text is per-room, mutable, and deletable. That reason is inferred until you confirm it in L2. The code fact is not inferred: retrieval is room-scoped and deletions are supposed to reach derived rows (P2 is the proof).
+- **Why not a system prompt around a chatbot?** Permissions, mutable private sources, citations, abstention, retries, and progression are enforced in code, not in a prompt.
+- **Where does course knowledge come from?** Uploaded chunks, retrieved per room. There is no fine-tuning job in the repo. Deleting a source is supposed to reach derived rows. P2 is the unfinished proof of that.
 - **Why is the model not the director?** `packages/learning/src/director.ts` takes state and returns the next challenge with no model call. That is the production path.
-- **Why pgvector?** Inferred until L2. Do not cite it as your decision before then.
+- **What retrieves?** `match_study_chunks` on pgvector, owner- and room-scoped, cutoff default `0.35`, plus `source_priority / 1000`. The Python FAISS service is a separate prototype.
 - **What is the largest gap?** No human-reviewed live RAG scorecard, no calibrated grader, ingestion still on the request, no spend limits, public-launch gate not ready, child-privacy decision unmade.
 
 ## Documentation ownership

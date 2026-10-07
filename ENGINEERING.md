@@ -67,25 +67,29 @@ progress / next challenge / rematch
 
 The planned hardening path adds a durable ingestion worker and a Canonical Studigo Document between extraction and downstream retrieval/topic generation.
 
-## Why these technologies
+## Technology catalog
 
-| Technology | Why it is here | What it is *not* allowed to become |
-| --- | --- | --- |
-| **TypeScript** | Shared types/contracts across web, AI, documents, and learning logic; keeps product behavior close to compile-time schemas | A place for untyped model blobs |
-| **Next.js / React** | Current web/PWA product, server routes, streaming UI, fast iteration | The long-running background-job system |
-| **Supabase Auth** | One identity system for web and future native clients | Authorization by itself |
-| **Postgres + RLS** | Canonical application data and tenant boundary; authorization close to data | Something bypassed casually by service-role code |
-| **Supabase Storage** | Private original file storage with signed downloads | Public document hosting |
-| **pgvector** | Simple retrieval in the same permission/data plane as the app | A reason to add a second source of truth |
-| **OpenAI-compatible provider layer** | Grounded generation, OCR/vision, semantic grading, embeddings; centralized behind `packages/ai` | Progression, authorization, or mastery authority |
-| **Deterministic learning package** | Replayable challenge/scaffold/progression policy | Prompt-only adaptive behavior |
-| **Postgres events / transactional RPCs** | Idempotency, concurrency control, durable evidence, replay | Best-effort chat state |
-| **Expo / React Native (selected native route)** | Reuse product/backend contracts for iOS/iPadOS without forking the learning system | A second backend or mastery implementation |
-| **Python/FAISS retrieval prototype** | Comparative/local experimentation | Public production retrieval unless authenticated/authorized and benchmarked |
+What is in the system today. This is a map of the tree, not a decision log.
 
-### Why not add more frameworks by default?
+| Piece | Where | Role now | Not this |
+| --- | --- | --- | --- |
+| **TypeScript, pnpm workspace** | repo root, `packages/*`, `apps/web` | Shared contracts for web, documents, AI, and learning | Untyped model payloads crossing those boundaries |
+| **Next.js 16 / React** | `apps/web` | The web/PWA: UI, route handlers, streaming | The long-running job runner. Ingestion still runs inside the request |
+| **Supabase Auth** | `apps/web/lib/auth.ts`, middleware | The session principal | The authorization check. RLS and scoped RPCs do that |
+| **Postgres + RLS** | `supabase/migrations/` | Application data and the tenant boundary | A store service-role code may skip without its own scope check |
+| **Supabase Storage** | document upload/download routes | Private originals, signed downloads | Public document hosting |
+| **pgvector** | `match_study_chunks` in `supabase/migrations/002_core_loop.sql` | Room- and owner-scoped dense retrieval beside the rows RLS already protects | A second vector database. There is not one on the production path |
+| **OpenAI-compatible client** | `packages/ai/src/client.ts` | Chat, OCR, structured generation, semantic grading, embeddings. Transports: direct, Vercel AI Gateway, Ollama for chat only. Embeddings stay 1536-d on direct or gateway | Progression, authorization, or mastery writes |
+| **Deterministic director** | `packages/learning` | Challenge, scaffold, and progression from learner state. No model call | Prompt-owned progression |
+| **Mastery math** | `packages/mastery` | BKT, Elo, and a scheduler as pure functions. Eval harness is `evals/ml`, synthetic data | The production mastery write. That stays with the director and learning events |
+| **Postgres functions / learning events** | `supabase/migrations/`, `apps/web/lib/learning/` | Idempotent, transactional evidence | Best-effort chat state |
+| **Python retrieval service** | `services/retrieval/` | Local FAISS prototype. Uses LangChain splitters, Hugging Face embeddings, and unauthenticated room-ID endpoints | Production retrieval. ADR 001 keeps the TypeScript path until a matched benchmark says otherwise |
+| **Tauri shell** | `apps/desktop` | Scaffold. Bundling is disabled | A shipped desktop app |
+| **Expo / React Native** | `docs/APP_STORE_RELEASE_PLAN.md` only | The documented App Store route. No Expo app is in the monorepo yet | A second backend |
 
-Studigo does not add LangChain, an agent framework, another vector database, or learned policy merely for résumé keywords. A new dependency or AI layer must demonstrate a measured quality, cost, latency, safety, or maintainability benefit over the current baseline.
+Course knowledge in production is retrieved from uploaded chunks. There is no fine-tuning job in the repo.
+
+A new dependency or AI layer still has to beat the current path on a measured quality, cost, latency, safety, or maintainability gap. That rule is in `AGENTS.md`. It is not a request to write a rationale for the rows above.
 
 ## Repository map
 
