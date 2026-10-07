@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "app_id": "replace-me",
+  "reviewed_at": "YYYY-MM-DD",
+  "reviewer": "",
+  "overrides": {
+    "GMS-EXAMPLE-001": {
+      "status": "not_tested",
+      "severity": "P1",
+      "likelihood": 3,
+      "impact": 4,
+      "release_blocker": false,
+      "finding": "",
+      "remediation": "",
+      "owner": "",
+      "target_date": "",
+      "evidence_refs": [],
+      "test_refs": [],
+      "notes": ""
+    }
+  }
+}
