@@ -10,6 +10,14 @@
 
 Make Studigo prove that it can **design, evaluate, operate, and improve a production AI system**, not merely integrate an LLM.
 
+The second goal is **legibility**: a technical reviewer should be able to open the repository, identify the AI engineering elements quickly, understand why each exists, and follow the evidence behind the design decisions. The project owner should be able to explain the same system coherently at three levels:
+
+- **30 seconds:** what Studigo does and why its AI architecture is different from a chatbot wrapper;
+- **2 minutes:** the end-to-end AI lifecycle and the important authority/safety boundaries;
+- **10 minutes:** a guided repository walkthrough covering ingestion, RAG, adaptive control, semantic evaluation, durable evidence, evals, security, observability, and measured tradeoffs.
+
+This means implementation work must produce both **working engineering** and **clear artifacts that expose that engineering**. Important AI behavior should not be buried in scattered code or only understandable from historical implementation notes.
+
 The target engineering lifecycle is:
 
 ```text
@@ -654,13 +662,18 @@ No prompt/model/retrieval change should be described as an improvement merely be
 
 # Phase 10 — Package the engineering evidence as a hiring artifact
 
-**Decision:** ADD only after the underlying measurements exist.
+**Decision:** ADD the navigation/walkthrough now; fill measured claims only after the underlying evidence exists.
 
-Create:
+Maintain two complementary artifacts:
 
 ```text
+implementation/AI_ENGINEERING_WALKTHROUGH.md
 AI_ENGINEERING_CASE_STUDY.md
 ```
+
+The walkthrough is the concise map through the live repository: what to say, where to click, which code proves each claim, and which claims are still pending measurement.
+
+The case study is the polished evidence report produced once the measurements exist.
 
 Recommended structure:
 
@@ -687,6 +700,14 @@ Include three concise diagrams:
 - evaluation/release-gate lifecycle.
 
 Include actual measurements, not aspirational placeholders.
+
+The final presentation layer must support three guided depths:
+
+1. **30-second explanation** — problem, architecture distinction, outcome.
+2. **2-minute architecture explanation** — source grounding, deterministic adaptive control, model role, durable evidence, evaluation.
+3. **10-minute code walkthrough** — exact repository paths and evidence artifacts for ingestion, retrieval, model contracts, adaptive policy, persistence, evals, security, observability, and current limitations.
+
+A reviewer should not need to infer where the AI engineering lives. Every major claim in the walkthrough/case study should point to implementation code, tests/evals, or measured evidence.
 
 Useful engineering narratives should include failures. Example:
 
@@ -762,3 +783,5 @@ Studigo should be able to answer, with repository evidence:
 - What known limitations remain?
 
 When those answers are measurable and reproducible, Studigo becomes strong evidence of production AI engineering rather than only an AI-powered product.
+
+A second success criterion is communication: an unfamiliar AI engineer or hiring manager should be able to follow `implementation/AI_ENGINEERING_WALKTHROUGH.md` and understand the system without reading the entire repository.
