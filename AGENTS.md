@@ -14,7 +14,7 @@ Then open only what the task requires:
 
 - product behavior → `docs/PRODUCT.md`
 - deep runtime/data architecture → `docs/ARCHITECTURE.md`
-- hardening / planned engineering work → `implementation/ENGINEERING_PLAN.md`
+- hardening / planned engineering work → `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, S, H, W; the only execution plan)
 - security/public release → `implementation/security-readiness/`
 - release sequence → `docs/ROADMAP.md`
 

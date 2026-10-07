@@ -3,6 +3,8 @@
 > **Start here for technical work.** This file is the compact map of the live system for engineers, reviewers, and GenAI coding agents.
 >
 > Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
+>
+> What to build next is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, S, H, W). That file is the single execution plan. Do not add another plan, tour, or security checklist.
 
 ## System in one sentence
 
@@ -175,6 +177,8 @@ Do not overclaim these as finished:
 - completed public-launch security gate,
 - complete student/minor privacy release requirements,
 - measured proof that more complex retrieval beats the current baseline.
+
+`packages/mastery` (BKT, Elo, scheduler) is advisory. Production progression is `packages/learning`. A mastery probability is not an evidence stage.
 
 See `implementation/ENGINEERING_PLAN.md` for the execution order.
 

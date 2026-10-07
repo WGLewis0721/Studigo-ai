@@ -1,953 +1,329 @@
-# Studigo AI + Software Engineering Plan
+# Studigo engineering implementation plan
 
-> **Canonical implementation plan for the Studigo learning app.**
+> **The only execution plan.** Cold start stays [`ENGINEERING.md`](../ENGINEERING.md). This file says what to build next, in what order, and how to know a step is done.
 >
-> This is the single engineering plan for AI engineering, software engineering, hardening, evaluation, security, operational maturity, and repository legibility.
+> It merges two 2026-10-07 drafts that had each declared themselves canonical:
 >
-> For normal coding work, start with the compact root `ENGINEERING.md`; use this plan when the task changes architecture, engineering methodology, hardening priorities, or release evidence.
+> - the architecture plan already on `main` (technology register, canonical document, grader benchmark, learner-state split), and
+> - the workstreams on [PR #81](https://github.com/WGLewis0721/Studigo-ai/pull/81) (`L` legibility, `E` evidence, `S` security, `H` operations, `W` walkthrough).
 >
-> Current baseline when consolidated: `main`, 2026-10-07.
+> PR #81 is not squash-merged. GitHub reports it `CONFLICTING`. Its recorded head is `e589f3a` and its base is `aa5898b` (2026-10-04), which is before the security audit and the engineering-guide consolidation on `main`. The branch tip `4756724` is the same stale base plus a docs commit. Landing it would recreate a second plan (`implementation/PLAN.md`), a second tour, and a second security authority. The propositions are here instead. Do not revive those files.
+>
+> Baseline this plan was written against: `main` @ `c4259fdb`, 2026-10-07. Nothing here changes production behavior until the PR for that step is accepted.
 
-## Why this file exists
+## Outcome
 
-Studigo needs to be understandable at two levels:
+1. **A session can orient without a repo scan.** `AGENTS.md` plus `ENGINEERING.md` are enough to say what owns RAG, grading, ingestion, learning state, auth, and security, and what not to touch.
+2. **The owner can explain any part.** How it works, why that technology, which files. Reasons in the technology register are marked `confirmed` or `inferred`. Inferred rows are not ADRs.
+3. **Claims match evidence.** Quality claims cite a committed eval. Security claims cite a row in [`SECURITY_AUDIT_CHECKLIST.md`](SECURITY_AUDIT_CHECKLIST.md) and the generated gate. Planned work is not described as shipped.
 
-1. **As a production system** — an engineer or GenAI coding agent should know the boundaries, invariants, code ownership, current state, and next work without reading every file.
-2. **As an engineering case study** — a technical interviewer, hiring manager, client, or collaborator should be able to see the AI-engineering and software-engineering principles, why technologies were chosen, what the code does, and what is still unproven.
+`AGENTS.md` still governs the work: grounded by default, RLS preserved, provider calls inside `packages/ai`, heavy ingestion out of synchronous requests, uploaded content treated as untrusted, tests or evals around behavior changes.
 
-The target outcome is a repository where:
+When documents disagree, use this order:
 
-- the architecture is legible,
-- technology choices have explicit reasons,
-- AI behavior is separated from deterministic software authority,
-- important claims have evidence,
-- current implementation is distinguished from planned work,
-- task-specific code can be located quickly,
-- security and evaluation are release gates rather than afterthoughts,
-- documentation does not duplicate or contradict itself.
+1. current code and executable tests,
+2. `docs/PRODUCT.md`,
+3. `docs/ARCHITECTURE.md`,
+4. `ENGINEERING.md` for the live map,
+5. this file for planned work,
+6. [`implementation/security-readiness/`](security-readiness/) for the public-launch decision,
+7. dated notes (`SOL_PHASE*`, `ATTEMPTED_FIXES.md`, this checklist's history) for evidence, not for the live contract.
 
----
+## Already done — do not redo
 
-# 1. The core story
+These were open in the PR #81 draft and are already on `main`. A later session that re-opens that draft will "fix" them again. Don't.
 
-## 30-second explanation
+| Item | Evidence on `main` |
+| --- | --- |
+| Short agent cold start | `AGENTS.md` points at `ENGINEERING.md`, then one specialist doc |
+| Dependency pins and Next advisory | `apps/web` depends on `next` `16.3.8`. Root `pnpm.overrides` force `sharp` ≥ 0.35.5 and `source-map-js` ≥ 1.2.2 |
+| Frozen install and audit in CI | `.github/workflows/ci.yml` runs `pnpm install --frozen-lockfile` and `pnpm audit --prod --audit-level high` |
+| Upload byte checks and ZIP bounds | `packages/documents/src/file-safety.ts`. Polyglot and malware scanning are still open |
+| Report-Only CSP and HSTS | `apps/web/next.config.ts`. Enforced CSP is still open |
+| Anonymous writes blocked in RLS | `supabase/migrations/20261007120000_block_anonymous_writes.sql`. The Supabase dashboard toggle is still an ops item |
+| Prompt-boundary fixes | Topic text and browser-supplied directives no longer enter the system prompt raw. Tests in `apps/web/lib/prompt-boundary.test.ts` |
+| OpenAI `store: false` on direct Responses calls | `packages/ai/src/client.ts` |
+| Security system of record | Generated gate: `implementation/security-readiness/apps/studigo/generated/public-launch-gate.md`. Decision on this baseline: **not ready**, 29 open blockers. The checklist feeds that gate; it does not replace it |
 
-Studigo turns a learner's own class material into a grounded study companion.
+## Where things stand
 
-The important engineering decision is that the LLM is **not the application state machine**. Uploaded material defines the knowledge boundary. Retrieval selects permitted evidence. Models handle explanation, generation, OCR, and semantic interpretation. Deterministic software retains authority over authorization, source scope, progression, scaffolding, retries, learning evidence, and durable state.
+Checked against `main` @ `c4259fdb`, not against the 4 Oct tree.
 
-> **Probabilistic intelligence is deliberately surrounded by deterministic software contracts.**
-
-That boundary is the central engineering idea of the project.
-
-## 2-minute explanation
-
-A learner creates a Study Room and uploads study guides, notes, worksheets, textbook pages, slides, or images.
-
-```text
-upload
-  ↓
-extract / OCR
-  ↓
-normalize + preserve provenance
-  ↓
-chunk + embed
-  ↓
-permission-scoped retrieval
-  ↓
-grounded generation / semantic evaluation
-  ↓
-deterministic adaptive director
-  ↓
-durable learning evidence
-  ↓
-replayable learner state
-```
-
-The model is useful where language and ambiguity matter:
-
-- explanations,
-- question generation,
-- OCR,
-- semantic grading,
-- Socratic feedback,
-- interpreting free-form answers.
-
-Software remains authoritative where correctness and reproducibility matter:
-
-- identity and authorization,
-- source scope,
-- progression,
-- mastery/evidence state,
-- challenge/scaffold policy,
-- transactions,
-- retries/idempotency,
-- event replay,
-- security gates,
-- release decisions.
-
-Studigo is therefore not a generic chatbot wrapper. It is a source-grounded AI subsystem embedded inside a deterministic learning application.
-
----
-
-# 2. How a GenAI coding agent should use this repository
-
-## Read order
-
-For most learning-app tasks:
-
-1. Read root **`ENGINEERING.md`** first.
-2. Read this plan only when the task touches planned hardening, architecture changes, evaluation, security, or engineering methodology.
-3. Read only the task-specific files listed in the routing table below.
-4. Inspect the implementation you are changing.
-5. Read specialist documents only when the task touches their contract.
-6. Do not scan the whole repository unless a cross-cutting audit explicitly requires it.
-
-For game work, use `prototypes/moon-road/` instead. The game is a separate release track.
-
-## Task routing
-
-| Task | Read first | Primary implementation |
+| Area | Finding | Where |
 | --- | --- | --- |
-| Product behavior / scope | `docs/PRODUCT.md` | UI + route being changed |
-| Overall architecture | `docs/ARCHITECTURE.md` | `apps/web/`, `packages/`, `supabase/` |
-| Current release status | `docs/ROADMAP.md`, `docs/ADAPTIVE_BETA_EVIDENCE.md` | affected feature |
-| AI provider/model behavior | this file | `packages/ai/src/client.ts` |
-| RAG / citations / abstention | this file, `evals/rag/README.md` | `packages/ai/src/grounding.ts`, `apps/web/lib/retrieval.ts`, retrieval migrations |
-| Question generation / semantic grading | this file | `packages/ai/src/study.ts`, `packages/ai/src/coach.ts` |
-| Coach protocol | this file | `packages/ai/src/coach.ts`, `apps/web/app/api/chat/route.ts` |
-| Adaptive learning | `docs/ADAPTIVE_LEARNING_CORE.md` | `packages/learning/`, `apps/web/lib/learning/` |
-| Learning evidence / retries / replay | this file, SOL review docs | learning-event code + adaptive migrations |
-| Documents / OCR / ingestion | this file | `packages/documents/`, `apps/web/lib/ingest.ts` |
-| Auth / identity | `docs/AUTH.md` | `apps/web/lib/auth.ts`, middleware, auth routes |
-| Database / RLS / migrations | `docs/ARCHITECTURE.md` | `supabase/migrations/`, DB security tests |
-| Security audit / public launch | `implementation/security-readiness/README.md` | generated control matrix + affected code |
-| AI evaluation | `evals/rag/README.md`, `evals/ml/README.md` | `evals/` |
-| Native iOS/iPadOS | `docs/APP_STORE_RELEASE_PLAN.md` | future Expo client |
-| Visual system | `docs/DESIGN_SYSTEM.md` | web components/styles |
-
-## GenAI change rule
-
-Before proposing a new framework, service, database, model, agent loop, or architectural layer, answer:
-
-1. What current failure does it solve?
-2. Which existing component owns that responsibility today?
-3. What benchmark or test reproduces the failure?
-4. What measurable improvement would justify the added complexity?
-5. What is the rollback path?
-
-Do not add infrastructure merely because it is fashionable.
-
----
-
-# 3. System architecture
-
-## Current production path
-
-```text
-Learner
-  ↓
-Next.js / React Study Room
-  ↓
-Supabase Auth session
-  ↓
-Next.js route handlers
-  ├───────────────┐
-  ↓               ↓
-Postgres / RLS    packages/ai
-Storage           ├ model client
-pgvector          ├ grounding
-                  ├ structured generation
-                  ├ semantic evaluation
-                  └ OCR
-  ↓
-retrieved permitted source chunks
-  ↓
-LLM response / semantic evidence
-  ↓
-deterministic learning-control plane
-  ↓
-transactional learning events / state
-```
-
-## Target hardened path
-
-```text
-User material
-     ↓
-Durable ingestion worker
-     ↓
-Canonical Studigo Document
-     ↓
-Measured retrieval system
-     ↓
-Grounded generation
-     ↓
-Deterministic adaptive director
-     ↓
-Validated semantic evaluation
-     ↓
-Durable learning evidence
-     ↓
-Observable production system
-     ↓
-Reproducible evals + release gates
-```
-
----
-
-# 4. Engineering principles
-
-## AI engineering principles
-
-### 4.1 User material is the knowledge boundary
-
-Studigo is centered on learner-uploaded course material, not unrestricted model knowledge.
-
-Consequences:
-
-- retrieval is room-scoped,
-- teacher material can receive explicit priority,
-- citations point back to owned sources,
-- unsupported questions should abstain,
-- deletion/revision must propagate to derived knowledge.
+| Legibility | Cold start is short. What remains: no package README, technology rows mostly unconfirmed, `ENGINEERING.md` and this file can drift, finished-phase notes still sit next to live docs | `packages/*`, `docs/` |
+| Evidence | `evals/rag` has 120 synthetic cases. ADR 001 says all are pending independent review. No committed live run. No live adapter | `evals/rag/`, `docs/adr/001-adaptive-rag-benchmark.md` |
+| Retrieval | Dense top-k. Default cutoff `0.35` (`STUDIGO_MIN_SIMILARITY`, `match_study_chunks`). Score adds `source_priority / 1000`. No hybrid search, no reranker | `apps/web/lib/retrieval.ts`, `supabase/migrations/002_core_loop.sql` |
+| Citations | `grounded` is `citationsUsedIn(...).length > 0`. A `[n]` marker is not semantic support. Abstention runs when no chunk passes the cutoff | `packages/ai/src/grounding.ts` |
+| Grading | Short answers use a model judge with fixed bands. No human-labelled calibration set | `packages/ai/src/study.ts` |
+| Learning state | Production progression is the deterministic director in `packages/learning`. `packages/mastery` (BKT, Elo, scheduler) is pure functions plus an advisory harness on synthetic data. Do not draw BKT as the production mastery write | `packages/learning/src/director.ts`, `packages/mastery/src/`, `evals/ml/` |
+| Ingestion | Idempotent, but still inside the request. A large scan can hit the function timeout | `apps/web/lib/ingest.ts` |
+| Security | Gate is not ready. Highest open code/ops items are in the checklist's launch-blocker order: anonymous sign-in toggle, rate and spend limits, child-privacy decision, auth CAPTCHA, live injection eval, malware scanning | checklist § Launch-blocker order |
+| CI hygiene | Typecheck, unit tests, database security tests, RAG scorer tests, ML tests, and the web build run on PRs. Lint does not: `apps/web` is `next lint \|\| true`; packages echo a stub. Playwright is not in CI. No rule keeps the model SDK inside `packages/ai` | `package.json`, `.github/workflows/ci.yml` |
+| Focus | Moon Keep and `services/retrieval/` are separate from the learning app. The Python service is unauthenticated and must stay off the public path | `prototypes/moon-road/`, `services/retrieval/` |
 
-### 4.2 Uploaded content is untrusted data
+## Technology register
 
-Course material may contain direct or indirect prompt injection.
+`confirmed` means the reason is already in the repo (an ADR or a constraint the code enforces). `inferred` means a model wrote a plausible reason and **you have not confirmed it**. Do not promote an inferred row to an ADR. If a row is wrong, correct it in the same PR that relies on it.
 
-The system serializes and labels uploaded/retrieved content as untrusted. Source text is evidence, never system authority.
+| Decision | Why it is in the tree | Not the default alternative | Revisit when | Status |
+| --- | --- | --- | --- | --- |
+| TypeScript retrieval, not the Python/FAISS service | ADR 001: the Python path uses different embeddings, FAISS, and unauthenticated room-ID endpoints, so a comparison would be confounded. Gates: 0 unauthorized retrievals, ≥95% claim support, ≥95% abstention, no regression over 2 points. Python must win by ≥5 points or ≥20% latency/cost | A second retrieval stack | A matched benchmark passes those gates | **confirmed** (ADR 001, provisional) |
+| Postgres + pgvector | Vectors sit in the same database as RLS and deletions | A separate vector database and a sync/deletion problem | A matched benchmark shows a material quality or scale gain | inferred |
+| RAG for course knowledge, not fine-tuning | Per-room material is private, mutable, and deletable | Fine-tuning as the source of truth | A style/behavior problem, not a knowledge problem, needs tuning | inferred |
+| Deterministic director, not an agentic policy | Progression has to be replayable. `packages/learning` does not call a model | Letting the model decide mastery | A learned policy beats the director on a reviewed set without taking write authority | inferred |
+| Supabase Auth + Postgres + Storage | One identity and one data plane for web now and a native client later | A second auth or storage ACL | A requirement the current products cannot meet | inferred |
+| OpenAI-compatible calls only inside `packages/ai` | One server-side provider boundary. Embeddings stay 1536-d, so chat-only Ollama must not write vectors | Model SDKs in routes | A measured quality/cost/reliability win, still behind this package | inferred |
+| Expo / React Native for the App Store | `docs/APP_STORE_RELEASE_PLAN.md` and the README name this as the native route. Tauri stays a desktop placeholder | A SwiftUI client that reimplements mastery | A native-only capability becomes the product | inferred |
+| Postgres-backed ingestion worker | Reuse leases, retries, and idempotency already in Postgres | A new queue product before there is throughput evidence | Measured volume shows Postgres jobs are not enough | inferred |
+| BKT / Elo / scheduler stay advisory | `evals/ml` is synthetic. ADR-style caution in `ENGINEERING.md`: a probability is not an evidence stage | Shipping BKT as mastery | Privacy-approved real data shows calibration | **confirmed** as not production authority |
 
-Canonical code:
-- `packages/ai/src/client.ts`
-- `packages/ai/src/grounding.ts`
-- `packages/ai/src/ocr.ts`
+## Workstreams
 
-### 4.3 Use the LLM where semantic ambiguity creates value
+Each step lists the files to touch, when it is done, and what to run. Do the steps in the order under [Sequence](#sequence). Do not start a later step by widening scope.
 
-Use models for:
+### L — Legibility
 
-- explanation,
-- generation,
-- OCR,
-- semantic interpretation,
-- free-form feedback.
+Make orientation cheap. Do not add a second map until the current one fails a test.
+
+- **L1. Orientation eval, before new docs.** Write ten fixed questions (citation check, retrieval cutoff, RLS on chunks, who owns progression, why Python retrieval is not production, what `grounded` means, where uploads are parsed, what the public-launch decision is, where mastery math lives, what a retry must not do). Run a fresh session with only `AGENTS.md` and `ENGINEERING.md`. Score answers against the files. Record accuracy and tokens in `docs/ORIENTATION_EVAL.md`.
+  - Done when: the note exists and states the score. If all ten are right, skip L4's code map. If any miss, fix `ENGINEERING.md` first and rerun. Add `docs/CODEMAP.md` only if a second run still misses.
+  - Verify: the eval note cites the file that answers each question.
 
-Do not use models for deterministic concerns that code can own safely.
+- **L2. Confirm technology reasons.** You fill or strike the `inferred` rows above. A model may draft, not adopt.
+  - Done when: every row is `confirmed` or deleted. No new ADR file unless you confirmed the reason and the decision is hard to reverse.
+  - Verify: this table has no `inferred` left, or the remaining ones are explicitly deferred with your name.
 
-### 4.4 Structured outputs for machine-affecting behavior
+- **L3. Package READMEs.** `packages/ai`, `packages/documents`, `packages/learning`, and `packages/mastery` have no README. Add a short one to each: purpose, public exports, invariants, how to test, what does not belong. State in `packages/mastery` that it is not the production progression authority.
+  - Done when: each README exists and names the test command already in that package.
+  - Verify: `pnpm --filter @studigo/ai test` (and the sibling filters) still pass. No behavior change.
 
-When a model result affects software state, use explicit schemas, validation, bounded enums/ranges, and normalization.
+- **L4. Docs triage.** In `docs/README.md`, a read-first list with approximate size and "read only if". Move nothing that is still a live contract. Point `SOL_PHASE*`, `ATTEMPTED_FIXES.md`, and `PROBLEM_STATEMENT.md` at as history, from the index, without using them as the idempotency tutorial. One paragraph each in `docs/README.md` for Moon Keep and `services/retrieval/` stating they are not the learning app.
+  - Done when: a new reader can see which docs are live.
+  - Verify: links resolve. `pnpm test` if the security-readiness check hashes docs (it should not). No deletions of product contracts.
 
-Canonical code:
-- `packages/ai/src/study.ts`
-- `packages/ai/src/coach.ts`
+- **L5. Keep the map true.** CI script: every repo-relative path named in `ENGINEERING.md` exists. Fail the job on a miss.
+  - Done when: `.github/workflows/ci.yml` runs it, and a deliberately bad path fails locally.
+  - Verify: `pnpm` script exits 0 on `main` and non-zero on a missing path.
 
-### 4.5 Retrieval quality must be measured
+- **L6. Rerun L1** after L2–L5. Update `docs/ORIENTATION_EVAL.md`. This is the legibility exit.
 
-Embeddings are not the engineering accomplishment by themselves.
+### E — Measured evidence
 
-The important contract is:
+ADR 001 gates: zero unauthorized retrieval, ≥95% claim support, ≥95% correct abstention, no regression over two points. Human review is the source of truth. The model must not write `review.status`.
 
-- permission-preserving retrieval,
-- source provenance,
-- revision correctness,
-- abstention,
-- semantic citation support,
-- latency,
-- cost.
+- **E1. Review a first slice.** Hand-review about 50 of the 120 cases, balanced across `plain`, `table`, `unsupported`, `conflict`, `injection`, and `foreign-user`. Record the reviewer. Flip `review.status` only for cases actually reviewed.
+  - Files: `evals/rag/` case files, `evals/rag/README.md`.
+  - Done when: about 50 cases name a human reviewer.
+  - Verify: a count of reviewed vs pending is in the README and matches the files.
 
-Canonical evidence:
-- `evals/rag/`
+- **E2. Live adapter.** TypeScript adapter for `evals/rag/run.mjs` that calls the real `match_study_chunks` path. Log retrieved ids and revisions, claims and sources, latency, and cost. Pin model, embedding model, prompt hash, and temperature.
+  - Files: `evals/rag/`, `apps/web/lib/retrieval.ts`, `packages/ai`.
+  - Done when: one local run completes against the reviewed slice.
+  - Verify: `node evals/rag/run.mjs` (or the script's real entry) writes a JSON result and does not send service-role scope across users.
 
-### 4.6 A citation is not the same as semantic grounding
+- **E3. Baseline.** Commit the run JSON under `evals/rag/results/`. README table: Recall@k, claim-level support, correct abstention, unauthorized retrievals (must be 0), p95 latency, dollars per answer. Publish misses. Do not hide a number under 95%.
+  - Done when: the table matches the JSON byte for byte in the reported fields.
+  - Verify: re-run on the same pins reproduces the file, or the README says why it cannot (provider nondeterminism) and stores the seed config anyway.
 
-The current runtime historically used a `grounded` boolean based on citation use. A citation marker proves source membership, not semantic entailment.
+- **E4. Hybrid retrieval.** Migration: `tsvector` column and index. Merge with vector rank by reciprocal rank fusion, behind a flag. Owner and room predicates stay identical to `match_study_chunks`.
+  - Done when: flag off matches E3. Flag on is a separate result file.
+  - Verify: `tests/database-security.test.mjs` still shows user A cannot read user B.
 
-Target terminology:
+- **E5. Rerank.** Rerank the top 20, behind a flag. Provider call stays in `packages/ai`.
+  - Done when: an ablation file exists. No default-on change without E8.
+  - Verify: unit test that the rerank call is not imported from `apps/web` except through `@studigo/ai`.
 
-```ts
-type GroundingStatus =
-  | "no_evidence"
-  | "citation_present"
-  | "verified";
-```
+- **E6. Cutoff and source boost.** Choose the similarity threshold from the reviewed set. Replace `source_priority / 1000` with an explicit, documented boost that keeps teacher study-guide priority.
+  - Files: `supabase/migrations/`, `apps/web/lib/retrieval.ts`, `docs` or the retrieval README section.
+  - Done when: the boost is named and tested, and the old `/1000` term is gone.
+  - Verify: migration test or database-security test plus a retrieval unit test for teacher-guide priority.
 
-Only independently verified semantic support should justify `verified`.
+- **E7. Claim verifier.** After generation, check each cited claim against its cited chunk. Unsupported claims are flagged or removed. Measure verifier precision and recall against the E1 labels. `grounded: used.length > 0` may remain as a syntactic signal, but it must not be reported as semantic support. Target names from the earlier draft, only if you want them in code: `no_evidence`, `citation_present`, `verified`.
+  - Files: `packages/ai/src/grounding.ts`, `evals/rag/`.
+  - Done when: precision and recall are in the results README.
+  - Verify: a fixture where a valid `[n]` cites a chunk that does not support the claim is not marked `verified`.
 
-### 4.7 AI changes must earn production authority
+- **E8. Ablation.** Same corpus hash: baseline, +hybrid, +rerank, +verifier. Each row has latency and cost. Keep the simplest arm that clears the ADR gates. Equivalent results keep today's dense retrieval.
+  - Done when: `docs/RETRIEVAL_BENCHMARK.md` states keep or change, with the JSON paths.
+  - Verify: the decision cites E3–E7 files. No production default flips in the same PR as the first measurement.
 
-The change loop is:
+- **E9. Semantic grader benchmark.** This was in the architecture draft and missing from PR #81. Build an independently labelled set, target 300–500 answers, covering correct, equivalent wording, partial, misconception, incorrect, off-topic, not-sure, typos, concise/verbose, and more than one subject. Report macro F1, per-class precision/recall, false-positive "correct", and false negatives. Do not keep a numeric correctness cutoff because it looks round.
+  - Files: `evals/grading/`, `docs/SEMANTIC_GRADER_EVAL.md`, `packages/ai/src/study.ts` only if the rubric changes.
+  - Done when: the doc shows the metric and the label source. The judge is not the labeler.
+  - Verify: `node --test` for the scorer. Labels live in repo files with a reviewer name.
 
-```text
-failure observed
-→ baseline
-→ hypothesis
-→ candidate
-→ offline eval
-→ quality / latency / cost comparison
-→ limited rollout
-→ production measurement
-→ keep or rollback
-```
+### P — Product architecture
 
-A prompt/model change is not an improvement merely because a few examples look better.
+These are the hardening steps PR #81 did not schedule. They sit under the golden learner UI. Do not add a new product mode inside them.
 
-### 4.8 ML remains advisory until calibrated
+- **P1. Durable ingestion.** Move extract / OCR / embed off the request path.
 
-The BKT/knowledge-tracing path is an experiment, not automatic production authority.
+  ```text
+  upload → document record → job → claim/lease → extract → OCR
+        → canonicalize → chunk → embed → derive → ready
+  ```
 
-A statistical mastery probability must not be conflated with:
+  Postgres/Supabase-backed worker is the default (see the register). Require a safe claim, lease recovery, bounded retries, idempotent stages, sanitized failures, an immutable original, and a derived revision.
+  - Files: `apps/web/lib/ingest.ts`, `supabase/migrations/`, `supabase/functions/` or a worker entry the app already reserved.
+  - Done when: a forced retry does not create a second chunk set, and a request no longer waits on OCR for the large-scan case.
+  - Verify: ingest tests plus a database test for two concurrent claims.
 
-- evidence stage,
-- readiness index,
-- learner-facing progress label.
+- **P2. Canonical Studigo Document.** One versioned intermediate: normalized text, structure, sections, concepts, provenance. RAG, topics, Learn, Coach, quiz, flashcards, and the downloadable study guide derive from it or from an explicit projection.
+  - Done when: replacing or deleting a source cannot leave a stale concept on another surface, and every derived fact maps to source, revision, and location.
+  - Verify: a fixture that deletes a source and asserts derived rows are gone or marked stale.
+
+- **P3. Learner-state semantics.** Split the words in code and docs:
+
+  ```text
+  evidence stage     = observed behavior
+  readiness index    = deterministic product priority
+  mastery probability = calibrated statistical estimate, only if calibrated
+  ```
+
+  Internal stages may be Unseen → Introduced → Assisted → Independent → Transfer → Retained. Learner-facing labels can stay simpler. `packages/mastery` does not gain write authority in this step.
+  - Files: `packages/learning/`, `docs/ADAPTIVE_LEARNING_CORE.md`, `ENGINEERING.md` if the map changes.
+  - Done when: the three terms are not used interchangeably in those files.
+  - Verify: existing director tests still pass. No BKT call on the Coach write path unless a flag defaulting off is measured under E9-style evidence. It should not be on.
 
----
+### S — Security
 
-## Software engineering principles
+The backlog is the checklist's launch-blocker table, not a new list of control IDs. Record every change on the matching `GMS-*` override and regenerate the gate in the same PR (`pnpm security:report`). When the checklist and the gate disagree, fix `audit-overrides.json` and regenerate. Do not hand-edit `public-launch-gate.md`.
 
-### 4.9 Separation of concerns
+Public launch gate: the generated decision is `ready`, or each open blocker is `accepted_risk` with a named owner and a written rationale. Until S8 is closed or waived, access stays invited adult beta.
 
-Primary boundaries:
+- **S1. Supply chain leftovers.** Pins, Next 16.3.8, frozen lockfile, and the audit gate are done. Left: GitHub secret scanning with push protection, and Dependabot or Renovate (checklist LLM03-04). Actions pinned to tags are low priority.
+  - Done when: the checklist row is PASS or the dashboard step is recorded as OPS with a date.
+  - Verify: a secret-looking push is blocked, or the checklist says the org setting is on.
 
-- `apps/web` — product UI + web/API orchestration,
-- `packages/ai` — provider/model/grounding/generation contracts,
-- `packages/documents` — file policy/extraction/chunking,
-- `packages/learning` — deterministic adaptive policy,
-- `supabase` — canonical persistence, authorization, retrieval, transactional functions.
+- **S2. Headers.** HSTS is present. CSP is Report-Only. Enforce CSP after a browser pass (checklist item 11, API8-01). Do not claim headers are missing.
+  - Done when: production `curl -I` shows the enforced policy you intended, and the app still loads.
+  - Verify: checklist row updated; a note of which directives broke and were fixed.
 
-### 4.10 Typed contracts over implicit shapes
+- **S3. Cost and abuse.** First engineering blocker on the gate (`GMS-API-002`).
+  - Edge: Vercel WAF rules from the checklist (VC-01), log-only for a day, then enforce.
+  - App: per-user daily budget checked before provider calls; output-token caps on `responses.create`; reindex cooldown so `force: true` cannot reset attempts forever (LLM10-02, LLM10-03, LLM10-05).
+  - Files: `apps/web/app/api/chat/route.ts`, `apps/web/app/api/documents/process/route.ts`, `apps/web/lib/ingest.ts`, `packages/ai/src/client.ts`.
+  - Done when: the gate finding's "done when" paragraph is true and the override says `pass` with evidence.
+  - Verify: a test that the budget denies a call over the cap, and a test that a second reindex inside the cooldown does not re-embed.
 
-State that crosses boundaries should have explicit types or schemas.
+- **S4. Uploads.** Byte signatures and ZIP limits landed. Still open: polyglot rejection or forced-download `nosniff` (GMS-FILE-002), image/PDF parser budgets (GMS-FILE-003), malware scanning before school distribution (UP-05). The durable worker is P1; do not build two queues.
+  - Done when: the partial gate rows move with new evidence, or stay partial with the remaining gap named.
+  - Verify: `packages/documents` file-safety tests, including a bomb fixture.
 
-This applies especially to:
+- **S5. Live injection eval.** Checklist LLM01-04. Run hostile uploads through the real model path. This is E1's `injection` slice plus a system-prompt-leak case, not a new harness.
+  - Done when: results are committed and the checklist row is no longer FAIL.
+  - Verify: the eval fails if the model follows an instruction planted in an upload.
 
-- model outputs,
-- Coach state,
-- challenge specifications,
-- learning evidence,
-- API payloads,
-- persisted snapshots.
+- **S6. Small code fixes still marked open.** `server-only` on server modules (NX-05), shared parameter validation (NX-01), neutral sign-up errors (API2-05). Also authenticate or keep loopback-only `services/retrieval` (AUX-01 / GMS-ACCESS-003). Branch protection on `main` (CI-01) is OPS: required checks, including this workflow.
+  - Done when: each row cites the PR.
+  - Verify: `pnpm test` and `pnpm typecheck`.
 
-### 4.11 State machines over prose inference
+- **S7. Dashboard walk.** Needs you, not a patch: disable anonymous sign-ins, leaked-password protection, CAPTCHA, auth rate limits, SMTP, then decide what to do with the 52 anonymous users and the stray `mf_agreements` / `mf_bookings` tables. Destructive deletes need an explicit yes. Code already treats anonymous sessions as signed out; the toggle is still required.
+  - Done when: the checklist's OPS rows name the date and the setting.
+  - Verify: Security Advisor re-run pasted into the checklist.
 
-Coach is a protocol, not free-form chat state reconstructed from assistant prose.
+- **S8. Child-privacy gate.** Counsel decides 13+ screen versus full COPPA. Then privacy policy, terms, retention, account deletion and export, written security program, separate consent if third parties see child data, vendor list (OpenAI, Supabase, Vercel, waitlist destinations), and moderation of learner text and model output (PR-09). FERPA school-official terms only if you sell to schools.
+  - Done when: the decision is written down and the product matches it, or you waive public launch in writing.
+  - Verify: gate rows GMS-PRIV-002, GMS-PRIV-004, GMS-AI-008 updated. No code-only "fixed" without the decision.
 
-Canonical code:
-- `packages/ai/src/coach.ts`
+### H — Operations and CI
 
-### 4.12 Retries must not create new facts
+- **H1. Observability.** Tracing (OpenTelemetry or a hosted product you actually operate), per-turn token and cost, prompt version id on every model call. Log ids, model, latency, and token counts. Do not log raw learner or source text by default.
+  - Files: `packages/ai/src/client.ts`, chat/learn/quiz routes.
+  - Done when: one real request produces a trace you can open, and the cost is computable from stored token counts.
+  - Verify: a unit test that the logger redacts content fields.
 
-Stable interaction/encounter IDs, receipts, revision checks, and transactional boundaries prevent network retries from creating duplicate learning evidence.
+- **H2. CI that can fail.** Remove `|| true` from `apps/web`'s lint. Replace package echo stubs with a real lint or stop calling them lint. Add a lint or grep check that the model SDK is not imported outside `packages/ai`. Add an eval smoke of about 10 reviewed cases that fails on an authorization miss or a large support drop. Put the Playwright beta script in CI only after it is deterministic without secrets, or mark it nightly.
+  - Done when: a lint error fails the workflow. A red smoke run fails the workflow.
+  - Verify: CI on this step's PR is green for the real reason, not because the script swallows the exit code.
 
-> A retry must never become a second learning event.
+### W — Walkthrough
 
-### 4.13 Durable state must be replayable
+- **W1. One status ledger.** The ledger below is the tour. Update the cell when the step lands. Do not add `AI_ENGINEERING_TOUR.md` or another walkthrough.
+- **W2. Case study, after evidence.** Write `docs/AI_ENGINEERING_CASE_STUDY.md` only after E3 and E8 exist. Problem, boundary, what was measured, what changed because of the measurement, what is still open. It must not duplicate this plan.
 
-Learning evidence should be sufficient to reconstruct deterministic learner state.
+## Status ledger
 
-Model responses are ephemeral. Learning state is not.
+Update this table in the PR that changes the status. Do not edit it to match a plan that has not landed.
 
-### 4.14 Authorization belongs at the data boundary
+| Element | Status on `c4259fdb` | Closes |
+| --- | --- | --- |
+| Room-scoped pgvector retrieval | Built. Unmeasured live | E1–E3 |
+| `grounded` means a citation marker is present | Built. Not semantic support | E7 |
+| Abstain when nothing passes the cutoff | Built. Threshold untuned | E6 |
+| Untrusted-content envelope | Built. Live injection run pending | S5 |
+| Ingestion inside the request | Built. Worker not built | P1 |
+| Structured generation and local typo grading | Built | — |
+| Director owns progression | Built. Synthetic p95 only | P3 |
+| BKT / Elo / scheduler | Built as pure functions. Advisory, synthetic eval | E9 does not promote them |
+| Atomic Coach evidence write | Built | — |
+| RAG harness, cases unreviewed | Harness built | E1 |
+| Security gate | Not ready. 29 blockers | S1–S8 |
+| Lint | Does not fail CI | H2 |
+| Frozen lockfile and `pnpm audit` | In CI | done |
+| Package READMEs | Absent | L3 |
 
-Authentication proves who the caller is. RLS / scoped RPCs prove what the caller may access.
+## Sequence
 
-Service-role clients are privileged bypasses and therefore require explicit user/room/object scope before every operation.
+| Order | Work | Stop if |
+| --- | --- | --- |
+| 1 | L1, then L2–L6 | Orientation eval is the check that the map is enough |
+| 2 | E1–E3 | No retrieval change before a reviewed baseline |
+| 3 | S3, S7 item 1 (anonymous toggle), S1 leftovers | Spend and anonymous accounts are the launch risks that do not need the eval |
+| 4 | E4–E8, E9 | Keep dense retrieval if the ablation does not win |
+| 5 | S2, S4, S5, S6 | S5 consumes the E1 injection slice |
+| 6 | P1, then P2, then P3 | P2 depends on a worker that can canonicalize |
+| 7 | H1, H2 | H2's smoke set must be reviewed cases from E1 |
+| 8 | S8 and W2 | S8 waits on you and counsel. W2 waits on E3 and E8 |
 
-### 4.15 Migrations over database drift
+S7 dashboard items can run beside step 2. They are not code.
 
-Schema, policies, indexes, RPCs, and transactional behavior belong in versioned migrations.
+### If time is short
 
-### 4.16 Measured simplicity over fashionable complexity
+Do L1, L3, L6, E1–E3, E7, E9's first 50 labels, S3, and the anonymous-signin toggle. Skip the reranker, skip a new vector database, skip the case-study doc, and do not publish a scorecard from unreviewed cases.
 
-Prefer the simplest architecture that passes the quality/security/operational gate.
+## Risks
 
-No new vector database, agent framework, queue, reranker, or ML policy without evidence that it improves the existing baseline.
+- A 50-case slice is small. Say so next to the numbers.
+- Fixture cases do not measure OCR. Scans stay a separate gate.
+- The judge will drift. Humans label. The model does not fill review fields.
+- A map goes stale. L5 checks paths, not sentences. L6 checks sentences.
+- Inferred technology reasons will be quoted back at you. L2 exists so that does not happen.
+- Merging PR #81 on top of this file will delete the merge. Close that PR. Do not rebase it onto this plan.
 
----
+## Definition of done
 
-# 5. Technology decision register
+- L6: ten orientation questions answered from `AGENTS.md` and `ENGINEERING.md`, with tokens recorded.
+- Technology register has no unmarked `inferred` row.
+- Reviewed eval slice, named reviewers, committed baseline JSON, ablation decision, grader report started.
+- Zero unauthorized retrievals on every committed run. CI fails on a regression of that gate.
+- Generated public-launch gate is `ready`, or each remaining blocker is `accepted_risk` with owner and rationale.
+- P1–P3 either landed or explicitly deferred in this file with a date.
+- You can explain the system in 30 seconds, 2 minutes, and 10 minutes from `ENGINEERING.md` without calling an unmeasured result finished.
 
-| Technology / decision | Why Studigo uses it | Why not the obvious alternative | Revisit when |
-| --- | --- | --- | --- |
-| **Next.js + React** | Existing web/PWA product, server routes and responsive UI in one TypeScript codebase | A rewrite would add risk without improving the current learning loop | Web architecture becomes an actual scaling/product constraint |
-| **Expo/React Native for future iOS/iPadOS** | Reuses JS/TS skills and hosted backend while supporting native distribution | SwiftUI would duplicate product logic and increase platform-specific work | Native-only capability becomes central |
-| **Supabase Auth** | One identity system for web and future native clients | Avoid Clerk/Auth0/Firebase identity fragmentation | A requirement exceeds Supabase Auth capabilities |
-| **Postgres as source of truth** | Transactions, RLS, relational evidence, migrations, analytics | Avoid multiple application truth stores | Measured scale/availability requirement justifies separation |
-| **Supabase Storage** | Private user files integrated with auth/data model | Avoid a second storage identity/ACL system | Scale/compliance requirement demands another provider |
-| **pgvector** | Keeps vector retrieval close to authorized relational data | Separate vector DB adds synchronization and deletion/isolation complexity | Benchmark shows material quality/scale advantage |
-| **OpenAI-compatible provider layer** | Centralizes model config and keeps provider calls server-side | Avoid direct model calls scattered through routes/UI | Another provider materially improves measured quality/cost/reliability |
-| **Responses API + structured schemas** | Supports generation plus constrained machine-readable output | Free-form parsing is brittle when state depends on output | Provider interface changes |
-| **Deterministic adaptive director** | Progression must be reproducible/testable | Fully agentic policy would make high-authority learning state nondeterministic | A learned policy demonstrates validated benefit and safe constraints |
-| **RAG instead of fine-tuning for course knowledge** | Source truth is per-room, mutable and deletable | Fine-tuning is poorly suited to private, frequently changing per-user material | A separate behavior/style adaptation problem justifies tuning |
-| **Postgres-backed durable ingestion target** | Reuses canonical infrastructure; supports leases/retries/idempotency | External queue adds another operational system too early | Throughput/latency proves Postgres job queue inadequate |
-| **Python/FAISS retrieval service** | Experimental comparison of local/open retrieval approaches | It is not the canonical authenticated production path | Only after matched eval + proper auth boundary proves value |
-| **BKT / knowledge tracing** | Provides a statistical baseline for learner-state experiments | Do not replace deterministic evidence with unvalidated probabilities | Privacy-approved real data shows calibrated predictive benefit |
+## How to explain it
 
----
+Use `ENGINEERING.md` for the 30-second and 2-minute versions. For ten minutes, open in this order: `docs/PRODUCT.md`, `packages/ai/src/client.ts`, `packages/ai/src/grounding.ts`, `apps/web/lib/retrieval.ts`, `packages/ai/src/study.ts`, `packages/learning/src/director.ts`, one adaptive migration, `evals/rag/`, the public-launch gate, then the status ledger above.
 
-# 6. Repository ownership map
+Short answers that are already safe:
 
-| Area | Primary paths | Responsibility | Key invariant |
-| --- | --- | --- | --- |
-| Product shell | `apps/web/` | UI, route handlers, Study Room experience | UI does not become source of security truth |
-| AI client | `packages/ai/src/client.ts` | Provider/configuration boundary | Secrets remain server-side |
-| Grounding | `packages/ai/src/grounding.ts` | Evidence-bound answers/citations/abstention | No unsupported source claims |
-| Coach AI protocol | `packages/ai/src/coach.ts` | Stateful model-mediated Coach interaction | Model does not own progression |
-| Study generation/grading | `packages/ai/src/study.ts` | Questions, flashcards, semantic grading | Machine-affecting output validated |
-| Documents | `packages/documents/` | File policy, extraction, chunking | Original provenance preserved |
-| Ingestion orchestration | `apps/web/lib/ingest.ts` | Extract/OCR/embed/index lifecycle | Owner/source revision retained |
-| Retrieval | `apps/web/lib/retrieval.ts` + Supabase RPCs | Room-scoped retrieval | Tenant isolation |
-| Adaptive policy | `packages/learning/` | Reasoning/scaffold/rematch policy | Deterministic and replayable |
-| Learning persistence | `apps/web/lib/learning/`, migrations | Events, receipts, projections | Idempotent/transactional |
-| Auth | `apps/web/lib/auth.ts`, middleware | Session principal | No editable metadata authorization |
-| Data security | `supabase/migrations/` | RLS, schema, RPCs | User ownership enforced at DB boundary |
-| RAG evals | `evals/rag/` | Grounding/isolation/latency/cost evaluation | Model cannot self-certify support |
-| ML evals | `evals/ml/` | BKT/calibration experiments | Advisory until validated |
-| Security readiness | `implementation/security-readiness/` | Reusable public-release control matrix | Evidence required for pass |
-| Game | `prototypes/moon-road/` | Separate game prototype | Separate release/golden baseline |
+- **Why not a system prompt around a chatbot?** Permissions, mutable private sources, citations, abstention, retries, and progression are application invariants.
+- **Why RAG instead of fine-tuning?** Course text is per-room, mutable, and deletable. That reason is inferred until you confirm it in L2. The code fact is not inferred: retrieval is room-scoped and deletions are supposed to reach derived rows (P2 is the proof).
+- **Why is the model not the director?** `packages/learning/src/director.ts` takes state and returns the next challenge with no model call. That is the production path.
+- **Why pgvector?** Inferred until L2. Do not cite it as your decision before then.
+- **What is the largest gap?** No human-reviewed live RAG scorecard, no calibrated grader, ingestion still on the request, no spend limits, public-launch gate not ready, child-privacy decision unmade.
 
----
+## Documentation ownership
 
-# 7. Current state: implemented vs. not yet proven
+| File | Owns |
+| --- | --- |
+| `ENGINEERING.md` | Live map, authority boundary, where to edit |
+| This file | Sequence, exit checks, status ledger |
+| `docs/PRODUCT.md` | Product invariants |
+| `docs/ARCHITECTURE.md` | Runtime and data boundaries |
+| `docs/adr/001-adaptive-rag-benchmark.md` | Provisional retrieval-stack gate |
+| `implementation/SECURITY_AUDIT_CHECKLIST.md` | Control-by-control audit evidence |
+| `implementation/security-readiness/` | Release decision |
 
-## Implemented / demonstrable
-
-- authenticated Study Rooms,
-- private uploads and signed downloads,
-- extraction and OCR with source locations,
-- embeddings and pgvector retrieval,
-- room/user isolation through RLS/scoped retrieval,
-- source-grounded answer generation,
-- citation mapping and explicit insufficient-evidence behavior,
-- prompt-injection defensive prompting,
-- structured generation,
-- semantic/free-text evaluation,
-- deterministic adaptive director,
-- separate reasoning/scaffold/explanation controls,
-- durable/idempotent learning-event architecture,
-- transactional Coach/session hardening,
-- adversarial RAG evaluation framework,
-- offline BKT evaluation harness,
-- automated tests and CI.
-
-## Implemented but requiring stronger evidence
-
-- real-world RAG semantic support,
-- live abstention accuracy,
-- full cross-tenant RAG proof,
-- semantic grader agreement with human teachers/reviewers,
-- production p95 AI latency,
-- production token/cost baselines,
-- end-to-end source-deletion propagation through every derived index,
-- complete service-role authorization audit,
-- child/student-data release controls.
-
-## Planned / hardening work
-
-- durable out-of-request ingestion worker,
-- Canonical Studigo Document,
-- hybrid/reranked retrieval only if benchmarked better,
-- human-labelled grading benchmark,
-- precise evidence/readiness/mastery semantics,
-- universal AI tracing/version/cost envelope,
-- centralized rate/concurrency/spend controls,
-- complete public security/privacy release gate,
-- polished evidence-backed engineering case study.
-
-Do not describe planned work as shipped.
-
----
-
-# 8. Execution plan
-
-The current learner experience is the golden baseline. Hardening work should improve engineering underneath it before adding major new product modes.
-
-## Phase 0 — Repository legibility and baseline
-
-**Goal:** protect the current product and make the architecture easy to navigate.
-
-Work:
-- maintain this file as the single AI/software engineering entry point,
-- remove duplicate engineering walkthrough/hardening documents,
-- keep specialist docs scoped to their domain,
-- record current model/embedding/prompt/retrieval/flag/migration/test baseline,
-- tighten over-strong terms such as runtime `grounded`.
-
-Acceptance:
-- a new engineer or GenAI agent can identify the relevant code for a task from this file,
-- no competing engineering-plan documents exist,
-- current configuration is reproducible.
-
-## Phase 1 — Publish the live human-reviewed RAG scorecard
-
-**Goal:** convert evaluation design into evidence.
-
-Use the existing 120-case corpus in `evals/rag/`.
-
-Measure:
-- retrieval Recall@k,
-- semantic citation support,
-- unsupported-answer abstention,
-- cross-user/room leakage,
-- prompt-injection violations,
-- deleted/stale source violations,
-- human usefulness,
-- p50/p95 latency,
-- tokens,
-- cost.
-
-Target release gates already defined by the benchmark include >=95% citation support, >=95% correct unsupported-answer abstention, and zero authorization violations.
-
-Deliver:
-- `docs/AI_EVAL_SCORECARD.md`,
-- reproducible result JSON.
-
-## Phase 2 — Benchmark retrieval architecture
-
-Compare with matched generation settings:
-
-```text
-A current pgvector semantic retrieval
-B pgvector + PostgreSQL full-text
-C hybrid + lightweight reranking
-D optional rewrite + hybrid + reranking
-```
-
-Select the simplest candidate that materially improves quality without unjustified latency/cost/operational burden.
-
-Deliver:
-- `docs/RETRIEVAL_BENCHMARK.md`,
-- benchmark evidence and explicit keep/change decision.
-
-## Phase 3 — Durable ingestion
-
-Replace long request-bound processing with:
-
-```text
-upload
-→ document record
-→ ingestion job
-→ claim / lease
-→ extract
-→ OCR
-→ canonicalize
-→ chunk
-→ embed
-→ derive
-→ ready
-```
-
-Requirements:
-- safe concurrent claim,
-- lease/abandoned-job recovery,
-- attempts,
-- bounded exponential retry,
-- idempotent stages,
-- sanitized failure state,
-- immutable original upload,
-- explicit derived revision.
-
-A Postgres/Supabase-backed worker is the default unless measured needs justify more infrastructure.
-
-## Phase 4 — Canonical Studigo Document
-
-Create one versioned intermediate representation:
-
-```text
-RAW SOURCE
-   ↓
-CANONICAL STUDIGO DOCUMENT
-├ normalized Markdown
-├ structured JSON
-├ sections
-├ concepts
-├ relationships
-├ objectives
-├ vocabulary
-├ examples
-├ figures/tables
-└ source provenance
-```
-
-RAG, Topics, Learn, Coach, Quiz, Flashcards, Study Guide, and future interactive experiences should derive from it or an explicit versioned projection.
-
-Acceptance:
-- replacement/deletion of source material cannot leave stale concepts in another surface,
-- every derived fact can map back to source/revision/location.
-
-## Phase 5 — Validate semantic grading
-
-Build an independently labelled 300–500 answer dataset covering:
-
-- correct,
-- equivalent wording,
-- partial,
-- misconception,
-- incorrect,
-- off-topic,
-- not-sure,
-- typos,
-- concise/verbose,
-- multiple subjects/grade bands.
-
-Measure:
-- macro F1,
-- per-class precision/recall,
-- false-positive correctness,
-- false negatives,
-- score deviation if numerical scoring remains,
-- grade/subject/noise breakdowns.
-
-Do not keep an `>=85` correctness threshold merely because it is intuitive. Validate or recalibrate it.
-
-Deliver:
-- `evals/grading/`,
-- `docs/SEMANTIC_GRADER_EVAL.md`.
-
-## Phase 6 — Make learner-state semantics precise
-
-Separate:
-
-```text
-Evidence stage = observed learner behavior
-Readiness index = deterministic product prioritization
-Mastery probability = calibrated statistical estimate, only if actually calibrated
-```
-
-Canonical evidence stages may include:
-
-```text
-Unseen → Introduced → Assisted → Independent → Transfer → Retained
-```
-
-Learner-facing labels may stay simple, but internal claims must be precise.
-
-## Phase 7 — Production AI observability and resource controls
-
-Every model-mediated operation should be attributable to:
-
-- trace ID,
-- operation,
-- model/version,
-- prompt version,
-- embedding/retrieval version,
-- evaluator/challenge version where relevant,
-- retrieved IDs/scores,
-- input/output tokens,
-- latency,
-- estimated cost,
-- abstention/error/retry state.
-
-Do not log raw learner/source content by default.
-
-Add:
-- per-user/IP rate limits,
-- concurrency limits,
-- token/work caps,
-- timeout budgets,
-- bounded retries,
-- daily/user/global spend guards,
-- circuit breaker/degradation behavior.
-
-## Phase 8 — Security and privacy release gate
-
-The operational security framework is:
-
-`implementation/security-readiness/`
-
-Treat its generated public-launch gate as authoritative for security readiness.
-
-Close at minimum:
-- object/tenant isolation,
-- service-role scope audit,
-- auxiliary-service auth,
-- file signature/parser validation,
-- archive/image/OCR resource bounds,
-- malware/quarantine strategy,
-- CSRF/provenance protections,
-- CSP/security headers,
-- output-handling tests,
-- prompt-injection regression,
-- secret/dependency scanning,
-- branch protection,
-- retention/deletion/export,
-- minor/guardian/privacy requirements,
-- external provider data flows.
-
-## Phase 9 — Secure development and AI release discipline
-
-For every material AI/architecture change document:
-
-1. failure being solved,
-2. reproducible case,
-3. baseline metric,
-4. success metric,
-5. unacceptable regressions,
-6. latency/cost impact,
-7. changed model/prompt/retrieval/data versions,
-8. rollout plan,
-9. rollback plan,
-10. acceptance evidence.
-
-## Phase 10 — Engineering case study
-
-Once measurements exist, create:
-
-`AI_ENGINEERING_CASE_STUDY.md`
-
-It should summarize, without duplicating this plan:
-
-- problem,
-- constraints,
-- architecture,
-- AI/software boundaries,
-- grounding,
-- adaptive control,
-- event/replay design,
-- security,
-- evaluation methodology,
-- measured results,
-- failures discovered,
-- changes made because of evidence,
-- remaining limitations.
-
----
-
-# 9. Ten-minute technical walkthrough
-
-Use this order when showing the project to another engineer.
-
-## Stop 1 — Product contract
-
-Open:
-- `README.md`
-- `docs/PRODUCT.md`
-
-Explain:
-
-> The learner's uploaded material is the knowledge boundary. That product decision drives retrieval, authorization, citations and abstention.
-
-## Stop 2 — Provider / untrusted-data boundary
-
-Open:
-- `packages/ai/src/client.ts`
-
-Explain:
-- provider abstraction,
-- chat/embedding configuration,
-- server-only credentials,
-- untrusted-course-data envelope.
-
-## Stop 3 — Grounded RAG
-
-Open:
-- `packages/ai/src/grounding.ts`
-- `apps/web/lib/retrieval.ts`
-- `evals/rag/`
-
-Explain:
-- permission scope,
-- source metadata,
-- citation mapping,
-- abstention,
-- why semantic support requires evaluation beyond citation syntax.
-
-## Stop 4 — Structured generation and grading
-
-Open:
-- `packages/ai/src/study.ts`
-
-Explain:
-- structured question generation,
-- validation,
-- deterministic grading where possible,
-- LLM semantic grading only where necessary.
-
-## Stop 5 — Coach protocol
-
-Open:
-- `packages/ai/src/coach.ts`
-
-Explain:
-- persisted state machine,
-- stable interaction identity,
-- challenge/source metadata,
-- distinction between model language and software authority.
-
-## Stop 6 — Adaptive learning
-
-Open:
-- `packages/learning/`
-- `docs/ADAPTIVE_LEARNING_CORE.md`
-
-Explain three separate axes:
-
-```text
-reasoning difficulty
-scaffold/support
-explanation language
-```
-
-## Stop 7 — Durable evidence / concurrency
-
-Open:
-- learning-event code,
-- adaptive migrations,
-- `docs/SOL_PHASE2_INTEGRATION.md`,
-- `docs/SOL_PHASE3_REVIEW.md`.
-
-Explain:
-- idempotency,
-- retries,
-- source revisions,
-- atomic commits,
-- event replay.
-
-## Stop 8 — Evaluation
-
-Open:
-- `evals/rag/README.md`
-- `evals/rag/score.mjs`
-- `evals/ml/README.md`
-
-Explain:
-- human review,
-- claim support,
-- abstention,
-- cross-tenant decoys,
-- prompt injection,
-- latency/cost,
-- BKT as advisory.
-
-## Stop 9 — Security
-
-Open:
-- `implementation/security-readiness/apps/studigo/generated/public-launch-gate.md`
-
-Explain:
-- security is tracked as a reusable evidence-backed control matrix,
-- failing controls block public release.
-
-## Stop 10 — What is next
-
-Return to the execution plan in this file.
-
-Be explicit about what is not finished. A strong engineering walkthrough includes limitations and the measurement that will close them.
-
----
-
-# 10. Interview-ready explanations
-
-## Why not just use ChatGPT with a system prompt?
-
-Because Studigo requires permissions, mutable user-owned source truth, citations, abstention, durable learner state, retries, replay and adaptive policy. Those are application responsibilities, not prompt responsibilities.
-
-## Why RAG instead of fine-tuning?
-
-Course knowledge is private, per-room, mutable and deletable. Retrieval preserves provenance and supports replacement/deletion. Fine-tuning is the wrong mechanism for per-user knowledge state.
-
-## Why deterministic progression?
-
-Progression changes learner state. It must be reproducible, auditable and testable. The LLM handles ambiguity; the director handles policy.
-
-## Why pgvector instead of a dedicated vector database?
-
-It keeps vectors close to authorized relational data and avoids a second synchronization/deletion/tenant-isolation system. A dedicated store must prove a measurable benefit before replacing it.
-
-## Why not make it fully agentic?
-
-Autonomous loops add nondeterminism where Studigo needs constrained, auditable state transitions. Models can propose/render/interpret; software authorizes and commits.
-
-## How do you reduce hallucinations?
-
-Permission-scoped retrieval, source priority, citations, explicit abstention, untrusted-source handling, revision/deletion checks and adversarial evaluation. The project reduces risk; it does not claim hallucinations are impossible.
-
-## How do you evaluate RAG?
-
-With a reviewed corpus measuring claim support, abstention, permission/revision violations, usefulness, latency and cost. The model cannot mark its own claims supported.
-
-## What is the biggest technical debt?
-
-The highest-value gaps are completing live evaluation evidence, durable ingestion, canonical document representation, semantic-grader calibration, AI observability/resource controls, and public security/privacy gates.
-
----
-
-# 11. Documentation governance
-
-This file owns:
-
-- the AI/software engineering story,
-- system map,
-- technology rationale,
-- repository navigation,
-- hardening/execution order,
-- technical walkthrough.
-
-Specialist documents own details:
-
-- `docs/PRODUCT.md` — product contract,
-- `docs/ARCHITECTURE.md` — system/privacy architecture,
-- `docs/ROADMAP.md` — current ordered release gates,
-- `docs/AUTH.md` — identity/auth,
-- `docs/ADAPTIVE_LEARNING_CORE.md` — adaptive technical contract,
-- `docs/DESIGN_SYSTEM.md` — visual system,
-- `docs/APP_STORE_RELEASE_PLAN.md` — native release,
-- `evals/` — evaluation methodology/results,
-- `implementation/security-readiness/` — security controls/gate.
-
-Do not create another AI engineering walkthrough, hardening plan, repository guide, or technology rationale that duplicates this file.
-
-If a specialist document changes a fact represented here, update this file in the same PR.
-
-Historical implementation/review documents may remain as evidence, but they do not override current canonical contracts.
-
----
-
-# 12. Definition of done
-
-The engineering-plan work is successful when:
-
-### Repository legibility
-- a new engineer can explain the architecture after reading this file and a small number of linked files,
-- a GenAI coding agent can locate the relevant implementation without whole-repo scanning,
-- every major subsystem has one obvious owner/path,
-- duplicate engineering overview documents are gone.
-
-### Technology rationale
-- major technology choices state why they were selected,
-- alternatives/rejected complexity are explicit,
-- criteria for revisiting decisions are explicit.
-
-### AI engineering evidence
-- RAG has a human-reviewed live scorecard,
-- semantic grading has an independent benchmark,
-- model/prompt/retrieval/evaluator versions are traceable,
-- latency/tokens/cost are observable,
-- probabilistic claims are not stronger than evidence supports.
-
-### Software engineering evidence
-- state transitions are typed and testable,
-- retries are idempotent,
-- learning state is replayable,
-- high-authority writes are transactional,
-- authorization is enforced at the data boundary,
-- migrations and CI make changes reproducible.
-
-### Security
-- the reusable security control matrix has no unresolved public-release blockers,
-- child/student-data requirements are explicitly resolved,
-- external provider data flows are documented,
-- expensive AI operations are bounded.
-
-### Explanation quality
-The project owner can explain Studigo coherently at:
-- 30 seconds,
-- 2 minutes,
-- 10 minutes,
-- and code-review depth,
-
-without overstating what has actually been measured.
-
-When those conditions hold, Studigo is not merely an AI-powered product. It is a repository that clearly demonstrates **AI engineering, software engineering, security engineering, evaluation discipline, and architectural decision-making**.
+Do not add `implementation/PLAN.md`, a second tour, or a second checklist.
