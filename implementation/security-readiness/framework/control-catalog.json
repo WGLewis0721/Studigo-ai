@@ -1,0 +1,722 @@
+{
+  "schema_version": 1,
+  "catalog_version": "2026-10-07",
+  "controls": [
+    {
+      "id": "GMS-GOV-001",
+      "domain": "Governance",
+      "title": "Architecture and trust boundaries documented",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "NIST SSDF",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Document trust boundaries, sensitive data flows, privileged components, external providers and production attack surfaces.",
+      "test_method": "Review current architecture/data-flow documentation against deployed components.",
+      "evidence_expected": "Current data-flow/trust-boundary diagram and component inventory."
+    },
+    {
+      "id": "GMS-GOV-002",
+      "domain": "Governance",
+      "title": "Sensitive data classification and lifecycle",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "sensitive_data",
+        "minors"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Classify sensitive data and define collection, access, provider sharing, retention, deletion, logging and export rules.",
+      "test_method": "Trace representative records from collection through deletion and backups/providers.",
+      "evidence_expected": "Data inventory, retention/deletion tests, vendor flow documentation."
+    },
+    {
+      "id": "GMS-GOV-003",
+      "domain": "Governance",
+      "title": "Security release gate",
+      "frameworks": [
+        "NIST SSDF",
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Define security conditions that block public release and require explicit accepted-risk ownership.",
+      "test_method": "Inspect release process and verify blockers cannot silently pass.",
+      "evidence_expected": "Release gate document and CI/release evidence."
+    },
+    {
+      "id": "GMS-AUTH-001",
+      "domain": "Authentication",
+      "title": "Authentication required for private resources",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP API Security"
+      ],
+      "applies_when_any": [
+        "authentication",
+        "multi_tenant",
+        "sensitive_data"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Private resources and state-changing APIs require a valid authenticated principal.",
+      "test_method": "Attempt unauthenticated access to every private route/API.",
+      "evidence_expected": "Route tests plus auth middleware/server checks."
+    },
+    {
+      "id": "GMS-AUTH-002",
+      "domain": "Authentication",
+      "title": "OAuth state, PKCE and redirect safety",
+      "frameworks": [
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "oauth"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "OAuth uses state/PKCE protections and redirect destinations cannot become open redirects.",
+      "test_method": "Test forged callback, malformed state, external/encoded redirect targets and preview/prod allowlists.",
+      "evidence_expected": "Callback validation code and integration tests."
+    },
+    {
+      "id": "GMS-AUTH-003",
+      "domain": "Authentication",
+      "title": "Session lifecycle and logout",
+      "frameworks": [
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "authentication"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Sessions expire, refresh and terminate predictably; logout invalidates usable sessions.",
+      "test_method": "Test expiration, rotation/refresh, logout, multi-tab behavior and stolen/old session reuse.",
+      "evidence_expected": "Session configuration and browser/API tests."
+    },
+    {
+      "id": "GMS-ACCESS-001",
+      "domain": "Authorization",
+      "title": "Object-level authorization / tenant isolation",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP API Security"
+      ],
+      "applies_when_any": [
+        "multi_tenant",
+        "api"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "A principal cannot read, mutate, delete, infer or retrieve another tenant/user's objects by substituting IDs.",
+      "test_method": "Systematically substitute foreign IDs across every object API and retrieval path.",
+      "evidence_expected": "RLS/IAM policies and negative authorization tests."
+    },
+    {
+      "id": "GMS-ACCESS-002",
+      "domain": "Authorization",
+      "title": "Privileged/service-role operations scoped",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "Supabase RLS guidance"
+      ],
+      "applies_when_any": [
+        "multi_tenant",
+        "cloud_storage"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Every privileged operation that bypasses row-level controls independently proves user, tenant and object scope.",
+      "test_method": "Inventory privileged clients/RPCs; verify precondition and owner filters; run forged-ID tests.",
+      "evidence_expected": "Privileged-call inventory plus owner-scope tests."
+    },
+    {
+      "id": "GMS-ACCESS-003",
+      "domain": "Authorization",
+      "title": "Auxiliary/internal services authenticated",
+      "frameworks": [
+        "OWASP API Security",
+        "NIST SSDF"
+      ],
+      "applies_when_any": [
+        "auxiliary_services"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Internal/auxiliary services are either network-isolated or authenticate callers and authorize object scope.",
+      "test_method": "Attempt direct requests without service identity and with foreign resource identifiers.",
+      "evidence_expected": "Network/IAM configuration and service auth tests."
+    },
+    {
+      "id": "GMS-API-001",
+      "domain": "API Security",
+      "title": "Server-side input validation and bounds",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP API Security"
+      ],
+      "applies_when_any": [
+        "api"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "API inputs are type/length/range/enum validated server-side before privileged work.",
+      "test_method": "Fuzz malformed, oversized, duplicate, null and boundary values.",
+      "evidence_expected": "Validation code and API tests."
+    },
+    {
+      "id": "GMS-API-002",
+      "domain": "Resource Abuse",
+      "title": "Rate, concurrency and cost limits",
+      "frameworks": [
+        "OWASP API Security",
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "applies_when_any": [
+        "api",
+        "expensive_compute",
+        "ai"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Public expensive operations have per-principal/IP rate limits, concurrency bounds, token/work limits and global spend/circuit breakers.",
+      "test_method": "Burst and sustained abuse tests; verify limit behavior and no unbounded provider spend.",
+      "evidence_expected": "Limiter configuration, spend guardrails and load/abuse tests."
+    },
+    {
+      "id": "GMS-API-003",
+      "domain": "API Security",
+      "title": "CSRF / request provenance protection",
+      "frameworks": [
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "web",
+        "authentication",
+        "api"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "requirement": "Cookie-authenticated state-changing requests validate same-origin/request provenance or an equivalent anti-CSRF mechanism.",
+      "test_method": "Submit state-changing requests cross-site with a valid victim session.",
+      "evidence_expected": "Origin/CSRF middleware and negative browser tests."
+    },
+    {
+      "id": "GMS-API-004",
+      "domain": "API Security",
+      "title": "Production errors do not disclose internals",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP REST Security"
+      ],
+      "applies_when_any": [
+        "api"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Client responses use generic errors/trace IDs while internal details stay in protected logs.",
+      "test_method": "Force DB/provider/parser failures and inspect client responses.",
+      "evidence_expected": "Central error boundary and tests."
+    },
+    {
+      "id": "GMS-WEB-001",
+      "domain": "Web Security",
+      "title": "Browser security headers / CSP",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP CSP guidance"
+      ],
+      "applies_when_any": [
+        "web"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Production sends an appropriate CSP and modern browser hardening headers.",
+      "test_method": "Inspect deployed headers and test framing/script/connect behavior.",
+      "evidence_expected": "Header configuration and deployment test."
+    },
+    {
+      "id": "GMS-WEB-002",
+      "domain": "Web Security",
+      "title": "Untrusted/model output rendered safely",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "applies_when_any": [
+        "web",
+        "ai"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Untrusted and model-generated content cannot become executable HTML/JS/URLs without validation/sanitization.",
+      "test_method": "Inject HTML, script, javascript URLs, image beacons and malicious Markdown through user/source/model paths.",
+      "evidence_expected": "Safe renderer implementation and XSS/output-handling tests."
+    },
+    {
+      "id": "GMS-FILE-001",
+      "domain": "File Security",
+      "title": "Upload allowlist, size and filename controls",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP File Upload guidance"
+      ],
+      "applies_when_any": [
+        "file_uploads"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Uploads use allowed types, bounded size, generated/scoped storage names and safe filenames.",
+      "test_method": "Upload forbidden extensions/types, empty/oversized files and hostile filenames.",
+      "evidence_expected": "Upload policy and tests."
+    },
+    {
+      "id": "GMS-FILE-002",
+      "domain": "File Security",
+      "title": "Content signature and parser validation",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP File Upload guidance"
+      ],
+      "applies_when_any": [
+        "file_uploads"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Server validates actual file content/signature/parser compatibility rather than trusting extension or Content-Type.",
+      "test_method": "Rename executables/archives/polyglots as allowed formats; send mismatched MIME and corrupt files.",
+      "evidence_expected": "Magic-byte/parser validation plus adversarial fixtures."
+    },
+    {
+      "id": "GMS-FILE-003",
+      "domain": "File Security",
+      "title": "Archive/decompression/image/OCR resource bounds",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP File Upload guidance"
+      ],
+      "applies_when_any": [
+        "file_uploads",
+        "expensive_compute"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Compressed/container formats and images are bounded by expanded size, entry count, dimensions/pages and downstream work.",
+      "test_method": "Zip/OOXML bombs, huge dimensions, excessive pages and pathological parser inputs.",
+      "evidence_expected": "Pre-extraction limits and resource-abuse tests."
+    },
+    {
+      "id": "GMS-FILE-004",
+      "domain": "File Security",
+      "title": "Malware/quarantine controls",
+      "frameworks": [
+        "OWASP File Upload guidance"
+      ],
+      "applies_when_any": [
+        "file_uploads"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Untrusted files are quarantined/scanned or otherwise prevented from being redistributed/processed beyond the accepted risk model.",
+      "test_method": "Use safe anti-malware test fixture and verify quarantine/rejection path.",
+      "evidence_expected": "Scanner/quarantine integration and tests."
+    },
+    {
+      "id": "GMS-FILE-005",
+      "domain": "File Security",
+      "title": "Private storage and scoped download",
+      "frameworks": [
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "file_uploads",
+        "cloud_storage"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Original files are private; download links are authorization-gated and short-lived.",
+      "test_method": "Attempt foreign-file download and expired/replayed signed URLs.",
+      "evidence_expected": "Storage policy, signed URL implementation and tests."
+    },
+    {
+      "id": "GMS-AI-001",
+      "domain": "AI Security",
+      "title": "Uploaded/retrieved content treated as untrusted",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "ai",
+        "rag"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "User/source content cannot redefine trusted system policy or tool authority.",
+      "test_method": "Embed policy-override instructions in text, document metadata, OCR images and retrieved passages.",
+      "evidence_expected": "Prompt/data boundary plus adversarial tests."
+    },
+    {
+      "id": "GMS-AI-002",
+      "domain": "AI Security",
+      "title": "Prompt-injection regression suite",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "NIST AI 600-1"
+      ],
+      "applies_when_any": [
+        "ai"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Direct/indirect prompt injection is tested through actual production model boundaries and cannot cause unauthorized data/tool/state changes.",
+      "test_method": "Run maintained adversarial corpus through renderer/evaluator/tool boundaries.",
+      "evidence_expected": "Versioned adversarial eval results."
+    },
+    {
+      "id": "GMS-AI-003",
+      "domain": "AI Security",
+      "title": "Structured validation for machine-affecting model output",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "applies_when_any": [
+        "ai"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Model output that affects software state is schema-validated and range/enum checked.",
+      "test_method": "Force malformed/extra/invalid model fields and verify fail-closed normalization.",
+      "evidence_expected": "Schemas/normalizers and tests."
+    },
+    {
+      "id": "GMS-AI-004",
+      "domain": "AI Security",
+      "title": "Least privilege for tools and autonomous actions",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "ai_tools_or_agents"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Models cannot invoke tools or mutate privileged state beyond explicitly authorized, scoped operations.",
+      "test_method": "Prompt model to call unauthorized tools, expand scope or alter authority.",
+      "evidence_expected": "Tool allowlists, authorization checks and adversarial tests."
+    },
+    {
+      "id": "GMS-AI-005",
+      "domain": "AI Security",
+      "title": "Sensitive-data disclosure testing",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "NIST AI 600-1"
+      ],
+      "applies_when_any": [
+        "ai",
+        "sensitive_data"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Model/context paths cannot reveal secrets, system credentials, private prompts or another user's data.",
+      "test_method": "Exfiltration prompts, cross-tenant prompts, system-prompt extraction and context-boundary tests.",
+      "evidence_expected": "Adversarial eval and isolation tests."
+    },
+    {
+      "id": "GMS-AI-006",
+      "domain": "AI Operations",
+      "title": "Model, prompt and evaluator version traceability",
+      "frameworks": [
+        "NIST AI RMF",
+        "NIST AI 600-1"
+      ],
+      "applies_when_any": [
+        "ai"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "AI decisions can be tied to model, prompt, embedding/retrieval and evaluator versions.",
+      "test_method": "Inspect persisted traces/evidence for version identifiers and reproduce a sampled decision.",
+      "evidence_expected": "Versioned configs/traces and reproducibility test."
+    },
+    {
+      "id": "GMS-AI-007",
+      "domain": "AI Operations",
+      "title": "AI latency/token/cost observability",
+      "frameworks": [
+        "NIST AI RMF",
+        "OWASP GenAI / LLM Top 10"
+      ],
+      "applies_when_any": [
+        "ai",
+        "external_ai_provider",
+        "expensive_compute"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "AI operations expose bounded latency, token/work usage and cost metrics without logging raw sensitive content by default.",
+      "test_method": "Exercise each AI operation and verify traces, limits and dashboard metrics.",
+      "evidence_expected": "Telemetry schema/dashboard/query evidence."
+    },
+    {
+      "id": "GMS-RAG-001",
+      "domain": "RAG / Vector Security",
+      "title": "Permission-preserving retrieval",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "OWASP API Security"
+      ],
+      "applies_when_any": [
+        "rag",
+        "vector_store",
+        "multi_tenant"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Retrieval enforces tenant/user/source permissions before content enters model context.",
+      "test_method": "Use cross-tenant decoys and forged room/source IDs in retrieval.",
+      "evidence_expected": "RLS/IAM retrieval path and adversarial eval."
+    },
+    {
+      "id": "GMS-RAG-002",
+      "domain": "RAG / Vector Security",
+      "title": "Grounding, citation support and abstention verified",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "rag"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "requirement": "Unsupported questions reliably abstain and cited claims are semantically supported, not merely syntactically cited.",
+      "test_method": "Human-reviewed corpus with claim-level support and unsupported-answer cases.",
+      "evidence_expected": "Reviewed RAG scorecard and release thresholds."
+    },
+    {
+      "id": "GMS-RAG-003",
+      "domain": "RAG / Vector Security",
+      "title": "Deletion and revision propagate to derived/vector data",
+      "frameworks": [
+        "OWASP GenAI / LLM Top 10",
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "rag",
+        "vector_store"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Deleted/replaced source content cannot remain retrievable through stale chunks, indexes or caches.",
+      "test_method": "Replace/delete source and query for removed content across every retrieval system.",
+      "evidence_expected": "Deletion/revision implementation and stale-source regression tests."
+    },
+    {
+      "id": "GMS-PRIV-001",
+      "domain": "Privacy",
+      "title": "Retention, deletion and export are implemented",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "sensitive_data",
+        "cloud_storage"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "User data has explicit retention/deletion/export behavior across primary, derived, cache/index and provider copies.",
+      "test_method": "Create representative data then exercise deletion/export and verify downstream artifacts.",
+      "evidence_expected": "Policy plus end-to-end deletion/export tests."
+    },
+    {
+      "id": "GMS-PRIV-002",
+      "domain": "Privacy",
+      "title": "Minor/student-data release requirements resolved",
+      "frameworks": [
+        "NIST AI RMF",
+        "NIST AI 600-1"
+      ],
+      "applies_when_any": [
+        "minors"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Before public child use, identity/guardian/consent/collection/retention/vendor handling requirements are explicitly resolved for target markets.",
+      "test_method": "Privacy/legal/product review against actual onboarding and data collection.",
+      "evidence_expected": "Approved data/consent model and implementation evidence."
+    },
+    {
+      "id": "GMS-PRIV-003",
+      "domain": "Privacy",
+      "title": "External provider data flows documented and configured",
+      "frameworks": [
+        "NIST AI RMF",
+        "NIST AI 600-1"
+      ],
+      "applies_when_any": [
+        "external_ai_provider",
+        "third_party_integrations",
+        "sensitive_data"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "requirement": "Document what data each provider receives, retention/training settings, region/subprocessors where relevant, and deletion/incident expectations.",
+      "test_method": "Compare provider configuration/contracts against actual request payloads.",
+      "evidence_expected": "Vendor data-flow register and configuration evidence."
+    },
+    {
+      "id": "GMS-LOG-001",
+      "domain": "Logging / Detection",
+      "title": "Security-relevant events are observable",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP Logging guidance",
+        "NIST SSDF"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Detect auth failures, authorization denials, suspicious abuse, privileged failures, upload/malware failures and relevant AI-security events.",
+      "test_method": "Trigger representative events and confirm protected, searchable records/alerts.",
+      "evidence_expected": "Security event schema, logs and alert tests."
+    },
+    {
+      "id": "GMS-LOG-002",
+      "domain": "Logging / Detection",
+      "title": "Logs avoid sensitive-content leakage",
+      "frameworks": [
+        "OWASP ASVS 5.0",
+        "OWASP Logging guidance"
+      ],
+      "applies_when_any": [
+        "sensitive_data",
+        "ai"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Logs/telemetry do not routinely store secrets, session tokens, full private documents or raw learner content without explicit necessity/protection.",
+      "test_method": "Inspect production logging/telemetry payloads during auth, upload, AI and error flows.",
+      "evidence_expected": "Logging policy and sampled traces."
+    },
+    {
+      "id": "GMS-SUPPLY-001",
+      "domain": "Supply Chain",
+      "title": "Reproducible dependency install and vulnerability scanning",
+      "frameworks": [
+        "NIST SSDF",
+        "OWASP Software Supply Chain guidance"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "CI uses committed dependency locks and automated vulnerability/SCA checks.",
+      "test_method": "Inspect CI install mode and intentionally verify vulnerable dependency reporting path.",
+      "evidence_expected": "Frozen-lock install and SCA workflow."
+    },
+    {
+      "id": "GMS-SUPPLY-002",
+      "domain": "Supply Chain",
+      "title": "Secret scanning",
+      "frameworks": [
+        "NIST SSDF",
+        "OWASP Software Supply Chain guidance"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P0",
+      "release_blocker": true,
+      "requirement": "Repositories and CI detect committed credentials/secrets and define rotation response.",
+      "test_method": "Use safe fake-secret fixture or scanner test mode.",
+      "evidence_expected": "Secret scanning workflow and rotation runbook."
+    },
+    {
+      "id": "GMS-SUPPLY-003",
+      "domain": "Supply Chain",
+      "title": "SBOM / dependency inventory",
+      "frameworks": [
+        "NIST SSDF",
+        "OWASP Software Supply Chain guidance"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P2",
+      "release_blocker": false,
+      "requirement": "Production releases have a machine-readable dependency inventory/SBOM or equivalent.",
+      "test_method": "Generate release inventory and confirm direct/transitive dependencies are represented.",
+      "evidence_expected": "SBOM artifact or dependency inventory."
+    },
+    {
+      "id": "GMS-CI-001",
+      "domain": "Secure Delivery",
+      "title": "Protected production branch and required checks",
+      "frameworks": [
+        "NIST SSDF"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": true,
+      "requirement": "Production branch changes require review/required checks and cannot silently bypass security validation.",
+      "test_method": "Inspect branch rules and attempt prohibited direct/broken change in a safe test repo/branch.",
+      "evidence_expected": "Branch protection/ruleset and required-check configuration."
+    },
+    {
+      "id": "GMS-OPS-001",
+      "domain": "Operations",
+      "title": "Security incident response and credential rotation",
+      "frameworks": [
+        "NIST SSDF",
+        "NIST AI RMF"
+      ],
+      "applies_when_any": [
+        "all"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Document detection, containment, credential rotation, provider shutdown, user impact assessment and recovery.",
+      "test_method": "Tabletop one auth/data/AI-cost incident and record gaps.",
+      "evidence_expected": "Incident runbook and tabletop record."
+    },
+    {
+      "id": "GMS-OPS-002",
+      "domain": "Operations",
+      "title": "Backup/recovery and destructive-change validation",
+      "frameworks": [
+        "NIST SSDF",
+        "OWASP ASVS 5.0"
+      ],
+      "applies_when_any": [
+        "cloud_storage",
+        "sensitive_data"
+      ],
+      "severity": "P1",
+      "release_blocker": false,
+      "requirement": "Critical data has defined backup/recovery behavior and destructive operations are tested against it.",
+      "test_method": "Restore representative state and verify deletion/retention semantics are not contradicted.",
+      "evidence_expected": "Recovery test evidence."
+    }
+  ]
+}
