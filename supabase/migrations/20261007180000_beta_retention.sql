@@ -54,13 +54,7 @@ begin
     limit 200
     for update skip locked
   loop
-    delete from storage.objects
-    where bucket_id = 'study-materials'
-      and split_part(name, '/', 1) = doomed::text;
-
     delete from auth.users where id = doomed;
-
-    delete from public.storage_cleanup_jobs where owner_id = doomed;
 
     removed := removed + 1;
   end loop;

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 let db;
 const A = '00000000-0000-4000-8000-000000000001';
 const B = '00000000-0000-4000-8000-000000000002';
+const PRE_MIGRATION = '00000000-0000-4000-8000-000000000004';
 const id = n => `10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function as(role, uid, fn) {
   await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false);`);
@@ -34,6 +35,9 @@ before(async () => {
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   `);
   for (const file of (await readdir(new URL('../supabase/migrations/',import.meta.url))).filter(f=>f.endsWith('.sql')).sort()) {
+    if (file === '20261007180000_beta_retention.sql') {
+      await db.query('insert into auth.users(id) values($1)', [PRE_MIGRATION]);
+    }
     const sql = await readFile(new URL(`../supabase/migrations/${file}`,import.meta.url),'utf8');
     // Core PG has gen_random_uuid; the pgcrypto extension is not packaged in PGlite.
     await db.exec(sql.replace('create extension if not exists pgcrypto;', ''));
@@ -753,6 +757,7 @@ test('a new account is wiped five days later and an older account is not', async
   const C = '00000000-0000-4000-8000-000000000003';
   const room = id(9300);
   const doc = id(9301);
+  assert.equal((await one('select count(*)::int as n from account_retention where user_id=$1', [PRE_MIGRATION])).n, 0);
   await db.query('insert into auth.users(id) values($1)', [C]);
   const enrolled = await one('select expires_at from account_retention where user_id=$1', [C]);
   assert.ok(enrolled.expires_at);
@@ -784,9 +789,8 @@ test('a new account is wiped five days later and an older account is not', async
   assert.equal((await one('select count(*)::int as n from study_rooms where owner_id=$1', [C])).n, 0);
   assert.equal((await one('select count(*)::int as n from documents where owner_id=$1', [C])).n, 0);
   assert.equal((await one('select count(*)::int as n from document_chunks where owner_id=$1', [C])).n, 0);
-  assert.equal((await one("select count(*)::int as n from storage.objects where name like $1", [`${C}/%`])).n, 0);
-  assert.equal((await one('select count(*)::int as n from storage_cleanup_jobs where owner_id=$1', [C])).n, 0);
+  assert.equal((await one("select count(*)::int as n from storage.objects where name like $1", [`${C}/%`])).n, 1);
+  assert.equal((await one('select count(*)::int as n from storage_cleanup_jobs where owner_id=$1 and storage_path=$2', [C, `${C}/${room}/notes.pdf`])).n, 1);
   assert.equal((await one('select count(*)::int as n from auth.users where id=$1', [A])).n, 1);
   assert.equal((await one('select count(*)::int as n from study_rooms where id=$1', [id(1)])).n, 1);
 });
-
