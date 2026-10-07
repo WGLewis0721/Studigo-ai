@@ -18,12 +18,12 @@ export const lift3 = "0 2px 6px rgba(20,27,45,.05), 0 40px 80px -30px rgba(20,27
 // Temporary VO (seconds). Scratch timing; final read replaces this.
 export const VO: { s: number; e: number; t: string }[] = [
   { s: 2.2, e: 3.6, t: "Oh. You’re here early." },
-  { s: 4.0, e: 5.8, t: "Got notes? Bring them in." },
-  { s: 6.5, e: 8.7, t: "Ask me about your stuff." },
-  { s: 9.3, e: 12.6, t: "I’ll show you where the answer comes from." },
-  { s: 13.4, e: 16.4, t: "Stuck? We’ll work through it." },
-  { s: 17.5, e: 18.9, t: "Then you try." },
-  { s: 21.5, e: 24.2, t: "See? That’s you getting it." },
-  { s: 25.5, e: 26.9, t: "I’m Studigo." },
-  { s: 28.3, e: 29.4, t: "Come on." },
+  { s: 4.0, e: 5.9, t: "Got a test? Hand over the study guide." },
+  { s: 6.6, e: 8.7, t: "Whatever your teacher handed out." },
+  { s: 9.4, e: 12.5, t: "Ask me something. I’ll show you the page." },
+  { s: 13.5, e: 16.2, t: "Stuck? Okay. One step at a time." },
+  { s: 17.6, e: 20.4, t: "Your turn. Tell me how sure you are." },
+  { s: 21.6, e: 24.2, t: "Nice. You knew that one." },
+  { s: 25.3, e: 27.2, t: "I’m Studigo. I’m coming with you." },
+  { s: 27.8, e: 28.8, t: "Come on." },
 ];

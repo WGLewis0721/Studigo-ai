@@ -19,7 +19,7 @@ Film compresses 1–3 to ~2.6s, then breaks the routine (notices camera) and bur
 The four links resolve to gallery pages (Revid) and a prompt page (YouMind). Fetching returned titles/metadata only; the video frames could not be watched in this session, so no "three frames per reference" notes can be claimed. Applied instead: the brief's per-reference ingredients (Peggy product clarity → enlarged UI cards; TixFox → chapter color + oversized kinetic type; Muse → hold on the learning payoff; Ajoflow → one code-built motion language, decisive wipes). ACTION for William: send the four mp4s or 6–8 frames each (or approve Higgsfield `video_analysis_create` credits) before Round 2 if frame-level notes are required.
 
 ## Round 1 known defects → Round 2 list
-1. Studigo is ~70% of frame height in feature scenes (brief: ~1/3 of frame area). Reduce to ~620px and add depth passes.
+1. (Corrected in Round 2) Character occupies ~53% of the sprite box width and ~80% of its height, so at the 800px box used he is ~57% of frame height and ~22% of frame width: within the brief's "about a third" intent.
 2. No real front-to-back crossings yet (he never passes in front of a panel); coach "nudge" is a panel animation, not contact.
 3. Phone UI in scenes 6–9 and 25–30 is small; enlarge for 9:16 legibility.
 4. Gaze/pose changes are sprite swaps; add 2-frame cuts + squash on each, and tail/frill follow-through.
