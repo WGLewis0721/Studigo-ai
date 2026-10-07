@@ -147,7 +147,7 @@ A blocker closes only with `pass` (with evidence) or `accepted_risk` (with a nam
 - Finding: A production telemetry/log sampling audit has not verified absence of raw private documents, learner answers, tokens or secrets.
 - Action: Audit logs/telemetry payloads and enforce redaction/minimization.
 - Done when: Logs and telemetry contain no document content, learner answers, tokens or secrets.
-- Evidence: implementation/AI_ENGINEERING_HARDENING_PLAN.md
+- Evidence: implementation/ENGINEERING_SYSTEM_PLAN.md
 
 ### GMS-SUPPLY-002: Secret scanning
 
