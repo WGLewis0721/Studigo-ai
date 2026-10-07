@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "app_id": "studigo",
+  "name": "Studigo",
+  "description": "AI-assisted study companion grounded in learner-uploaded course material, with adaptive coaching, practice, progress and document ingestion.",
+  "owner": "Gray Matter Projects",
+  "environments": [
+    "development",
+    "preview",
+    "production"
+  ],
+  "features": {
+    "web": "yes",
+    "api": "yes",
+    "authentication": "yes",
+    "oauth": "yes",
+    "multi_tenant": "yes",
+    "file_uploads": "yes",
+    "cloud_storage": "yes",
+    "ai": "yes",
+    "external_ai_provider": "yes",
+    "rag": "yes",
+    "vector_store": "yes",
+    "ai_tools_or_agents": "no",
+    "expensive_compute": "yes",
+    "sensitive_data": "yes",
+    "minors": "yes",
+    "payments": "no",
+    "admin_console": "unknown",
+    "third_party_integrations": "yes",
+    "auxiliary_services": "yes"
+  },
+  "data_notes": [
+    "Private study rooms and uploaded course materials",
+    "Extracted/OCR text and embeddings",
+    "Chat history and learner free-text answers",
+    "Learning evidence/progression state",
+    "Authentication/session data"
+  ],
+  "deployment_notes": [
+    "Next.js/Vercel web app",
+    "Supabase Auth/Postgres/Storage",
+    "OpenAI-compatible model provider path",
+    "Optional Python/FAISS retrieval service exists and is not approved as a public authenticated data boundary"
+  ],
+  "assumptions": [
+    "Current audit is code/configuration review, not a penetration test.",
+    "Public child-facing use requires explicit privacy/consent review for target markets."
+  ]
+}
