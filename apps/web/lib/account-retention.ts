@@ -17,7 +17,7 @@ export async function betaDeletionLabel(userId: string) {
       day: "numeric",
       timeZone: "UTC"
     }).format(new Date(data.expires_at));
-    return `This beta account and everything in it, including uploads, is deleted on ${when}.`;
+    return `This beta account and everything in it, including uploads, is scheduled for deletion after ${when}.`;
   } catch {
     return null;
   }
