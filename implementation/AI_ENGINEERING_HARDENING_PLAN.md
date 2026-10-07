@@ -10,6 +10,15 @@
 
 Make Studigo prove that it can **design, evaluate, operate, and improve a production AI system**, not merely integrate an LLM.
 
+A second goal is **technical legibility**: when an engineer, hiring manager, or interviewer opens the repository, they should be able to quickly see both the AI-engineering and software-engineering methodology, understand why the architecture is shaped the way it is, and follow a concise walkthrough without first reading the entire codebase.
+
+Studigo should make these two stories obvious:
+
+1. **AI engineering:** grounding, retrieval, structured model use, semantic evaluation, adaptive policy boundaries, AI evals, prompt-injection resistance, model/version control, latency/cost measurement, and safe use of probabilistic components.
+2. **Software engineering:** modular architecture, typed contracts, deterministic state machines, event sourcing/replay, authorization, migrations, concurrency/idempotency, CI/testing, observability, rollback, release gates, and evidence-based architectural decisions.
+
+The repository should support a short technical explanation as well as a deep code review.
+
 The second goal is **legibility**: a technical reviewer should be able to open the repository, identify the AI engineering elements quickly, understand why each exists, and follow the evidence behind the design decisions. The project owner should be able to explain the same system coherently at three levels:
 
 - **30 seconds:** what Studigo does and why its AI architecture is different from a chatbot wrapper;
@@ -724,6 +733,90 @@ Introduce one versioned Canonical Studigo Document and derive downstream represe
 Regression evidence:
 A replacement-source fixture proves removed concepts cannot remain active downstream.
 ```
+
+---
+
+
+## Technical walkthrough requirement
+
+Create and maintain:
+
+```text
+implementation/AI_SOFTWARE_ENGINEERING_WALKTHROUGH.md
+```
+
+It should let the project owner guide someone through Studigo at three depths:
+
+- **60 seconds:** what problem Studigo solves and what makes the architecture non-trivial.
+- **5 minutes:** the end-to-end request/data path and the major AI/software engineering decisions.
+- **20–30 minutes:** code-level tour with direct links to implementation, tests, migrations, evals, and evidence.
+
+Every major concept in the walkthrough must answer four questions:
+
+1. **Problem:** what engineering failure or constraint exists?
+2. **Decision:** what did Studigo implement?
+3. **Principle:** what AI/software-engineering idea does that demonstrate?
+4. **Evidence:** where can a reviewer verify it in code/tests/evals?
+
+The walkthrough should explicitly distinguish:
+
+```text
+Deterministic software authority
+vs.
+Probabilistic AI assistance
+```
+
+and show where the boundary exists in the architecture.
+
+### Required engineering principles to surface
+
+**AI engineering**
+- retrieval-augmented generation,
+- permission-preserving retrieval,
+- source prioritization,
+- citation/grounding contracts,
+- abstention,
+- structured outputs,
+- semantic grading,
+- prompt-injection resistance,
+- deterministic adaptive policy around probabilistic generation,
+- offline/online evaluation,
+- model/prompt/embedding versioning,
+- calibration and knowledge-tracing experiments,
+- latency/token/cost measurement,
+- model rollout and rollback.
+
+**Software engineering**
+- separation of concerns,
+- typed interfaces and schemas,
+- state machines,
+- deterministic event replay,
+- idempotency,
+- optimistic concurrency / transactional boundaries,
+- authorization with RLS,
+- immutable source provenance,
+- database migrations,
+- retry/recovery semantics,
+- CI and regression testing,
+- feature flags,
+- observability,
+- security/privacy boundaries,
+- release gates and rollback.
+
+### Code-tour principle
+
+Do not explain Studigo by listing technologies.
+
+Bad:
+
+> "Next.js, Supabase, OpenAI, pgvector, Python."
+
+Better:
+
+> "A learner upload is treated as untrusted source data. It is normalized and indexed behind an ownership boundary, retrieved with room-scoped permissions, passed to a grounded model call, interpreted into structured evidence, and then committed through a deterministic learning-state transition. The LLM can explain and evaluate language, but it cannot independently mutate mastery."
+
+The walkthrough should make that explanation easy to prove by moving through a small number of canonical files.
+
 
 ---
 
