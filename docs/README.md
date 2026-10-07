@@ -33,6 +33,7 @@ Moon Keep is a separate game prototype under `prototypes/moon-road/`. It is not 
 | Web beta evidence and open limitations | [ADAPTIVE_BETA_EVIDENCE.md](ADAPTIVE_BETA_EVIDENCE.md) |
 | Native iOS/iPadOS release path | [APP_STORE_RELEASE_PLAN.md](APP_STORE_RELEASE_PLAN.md) |
 | Visual behavior | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) |
+| SteadyGo animation, video, and reusable character-generation rules | [STEADYGO_ANIMATION_VIDEO_GUIDE.md](STEADYGO_ANIMATION_VIDEO_GUIDE.md) |
 | Coding handoff | Start with [ENGINEERING_PLAN.md](../implementation/ENGINEERING_PLAN.md), then use [AGENTS.md](../AGENTS.md) and task-specific specialist docs |
 | Deployment and user acceptance | [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md), [USER_TEST_CASES.md](USER_TEST_CASES.md) |
 
