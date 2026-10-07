@@ -1,6 +1,6 @@
-# Studigo: AI engineering tour
+# Studigo: AI and software engineering tour
 
-A guided map for someone who has ten minutes and wants to see the AI engineering in this repo. Each claim points at the file that backs it, and each element says whether it is built, measured, or planned. Results are filled in as [the measured-evidence plan](MEASURED_EVIDENCE_PLAN.md) lands.
+A guided map for someone who has ten minutes and wants to see the AI engineering and the software engineering methodology in this repo. Each claim points at the file that backs it, and each element says whether it is built, measured, or planned. Results are filled in as [the measured-evidence plan](MEASURED_EVIDENCE_PLAN.md) lands.
 
 ## The 30-second version
 
@@ -44,6 +44,35 @@ flowchart LR
 | Provider isolation | One client with three transports (OpenAI direct, Vercel AI Gateway, local Ollama for chat). Embeddings never use Ollama because the vector column is 1536-dimensional. | `packages/ai/src/client.ts` | Built |
 | RAG evaluation gate | 120 authored cases across scenarios including conflicting sources, edited and deleted revisions, cross-user and cross-room decoys, and injection. Scorer enforces zero unauthorized retrieval and 95% claim support and abstention. | `evals/rag/`, `docs/adr/001-adaptive-rag-benchmark.md` | Harness built. Cases pending review, no live results yet (plan steps 1 to 3) |
 
+## Software engineering methodology
+
+The AI parts sit inside a codebase with explicit rules. The rules are written down in [AGENTS.md](../AGENTS.md), and the table shows where each one shows up in practice.
+
+**Principles**
+
+- Grounded by default, and never fabricate citations or teacher requirements.
+- Privacy is a database property (RLS), not an application convention.
+- Provider calls live behind one package, so the rest of the code never touches a model SDK.
+- Uploaded content is untrusted input.
+- Prefer migrations over manual drift, typed interfaces over implicit shapes, and tests or evals around any behavior being changed.
+- Do not add infrastructure because it is fashionable.
+
+| Practice | What it looks like here | Where | Status |
+| --- | --- | --- | --- |
+| Package boundaries | `apps/web` for UI and routes, with `packages/ai` (provider and prompts), `documents` (extraction and chunking), `learning` (deterministic director), and `mastery` (BKT, Elo, scheduler) as separate typed packages. | `packages/`, `apps/web/` | Built. Boundary rule is a convention; no lint rule enforces it yet (plan step 11) |
+| Security tested against real migrations | A test runs the actual migrations in embedded Postgres with pgvector, switches roles, and checks that RLS, grants, and transactional functions behave. | `tests/database-security.test.mjs` | Built. Hosted Auth and Storage still need live verification |
+| Trust boundaries in code | A user-scoped client proves ownership of a room. A separate server-only service client performs trusted writes, so browsers never hold privileges on trusted state. | `apps/web/app/api/chat/route.ts`, `apps/web/lib/supabase/` | Built |
+| Idempotent, retry-safe work | Ingestion claims a document with a conditional update, so a double-click or racing retry cannot ingest it twice. Coach turns carry a client-generated interaction id. | `apps/web/lib/ingest.ts`, `apps/web/app/api/chat/route.ts` | Built |
+| Feature flags and staged rollout | Risky paths ship behind flags, such as atomic Coach and the durable-session route, which stays off until its lifecycle is linked atomically. | `STUDIGO_ATOMIC_COACH`, `STUDIGO_ADAPTIVE_SESSION`, `STUDIGO_DURABLE_SESSIONS` | Built |
+| Generated artifacts from one source of truth | Route policies are generated from the teaching knowledge base, not hand-copied into code. | `apps/web/scripts/generate-route-policies.ts`, `knowledge/teaching-coaching/` | Built |
+| Decisions recorded | An ADR states what was chosen, what is provisional, and the numeric gates that would change the decision. | `docs/adr/001-adaptive-rag-benchmark.md` | Built |
+| Docs with owners | A navigation index says which document owns product rules, architecture, status, release path, and evidence. | `docs/README.md` | Built. Volume is high; archiving planned (plan step 12) |
+| Evidence kept separate from claims | Beta evidence, execution evidence, and user test cases are their own documents, and the README lists known limits. | `docs/ADAPTIVE_BETA_EVIDENCE.md`, `docs/V3_EXECUTION_EVIDENCE.md`, `docs/USER_TEST_CASES.md` | Built |
+| Branch and PR discipline | Substantial work goes through feature branches and PRs, with golden baselines treated as fixed reference points. | `AGENTS.md`, `docs/README.md` | Built |
+| CI | Typecheck, unit tests, database security tests, RAG scorer tests, offline ML tests, and a production build run on every PR. | `.github/workflows/ci.yml` | Built. Lint is currently a no-op (plan step 11) |
+
+**Not yet where it should be:** lint failures are swallowed, the lockfile is not frozen in CI, the Playwright beta verification script is not run in CI, there is no coverage report, and the chat route has no rate limiting or tracing.
+
 ## Ten-minute demo path
 
 1. **Upload a teacher study guide.** Show the topic map that appears, with each topic linked to its supporting passages.
@@ -51,7 +80,8 @@ flowchart LR
 3. **Ask something the materials do not cover.** Show the abstention instead of a made-up answer.
 4. **Run a Coach turn with a partly right answer.** Show partial credit and a targeted nudge, then show mastery moving only because of real practice.
 5. **Open `evals/rag` and the results table.** This is where to spend the most time once results exist: baseline, then each retrieval change, with latency and cost beside it.
-6. **Close on limits.** Name what is unmeasured or planned. Saying it first is stronger than being asked.
+6. **Show the engineering behind it.** Open `tests/database-security.test.mjs` to show RLS proven against the real migrations, then `AGENTS.md` and the ADR to show the rules and the decision gates.
+7. **Close on limits.** Name what is unmeasured or planned. Saying it first is stronger than being asked.
 
 ## Questions to expect, and short answers
 
@@ -59,6 +89,8 @@ flowchart LR
 - **Why keep TypeScript instead of moving retrieval to Python/LangChain?** The Python prototype used different embeddings, an unauthenticated index, and no authorization boundary, so comparing outputs would confound several variables. ADR 001 keeps TypeScript until a matched benchmark says otherwise.
 - **How do you know answers are grounded?** Today: numbered excerpts, a strict prompt, and a marker check. Planned: a claim-level verifier scored against human labels, because a valid `[n]` does not prove support.
 - **How do you handle prompt injection in uploads?** A data envelope plus an explicit rule in every prompt, and an eval scenario that plants instructions in an upload. It reduces risk; it is not a proof, and the run results are still pending.
+- **How do you keep AI changes safe to ship?** Flags for risky paths, eval gates with numeric thresholds, and security tests that run the real migrations. A change that touches retrieval or grading is expected to come with an eval.
+- **How is the code organized?** A thin app layer over four typed packages. Model calls live only in `packages/ai`, and mastery and progression live in packages with no model dependency.
 - **What would you do next?** Hybrid retrieval and a reranker, shown by ablation on the reviewed corpus, then tracing and cost per turn.
 
 ## Known limits, stated plainly

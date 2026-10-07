@@ -6,7 +6,7 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 > Give Studigo what you are supposed to learn and the resources you are supposed to learn it from. Studigo turns them into a study companion.
 
-**Reviewing the AI engineering?** Start with the [AI engineering tour](implementation/AI_ENGINEERING_TOUR.md): where retrieval, grounding, evaluation and adaptive logic live, and what is built, measured, or still planned.
+**Reviewing the engineering?** Start with the [AI and software engineering tour](implementation/AI_ENGINEERING_TOUR.md): where retrieval, grounding, evaluation and adaptive logic live, the engineering rules that govern changes, and what is built, measured, or still planned.
 
 ## Play the math game (beta)
 

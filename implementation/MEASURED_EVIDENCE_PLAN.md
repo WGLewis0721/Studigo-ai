@@ -10,7 +10,7 @@ This plan closes that gap in about three weeks. It follows the non-negotiables i
 
 The goal is a repo where every quality claim has a number next to it, and where each improvement is shown by an ablation on the same reviewed corpus.
 
-A second goal is legibility. Someone who opens the repo, or hears it described in a conversation, should see the AI engineering within a couple of minutes and be able to follow a short, honest walkthrough: what the model does, what deterministic code does, how quality is measured, and what is still open. [AI_ENGINEERING_TOUR.md](AI_ENGINEERING_TOUR.md) is that walkthrough. It is written now against the current state, and its status column and limits section get updated as each step below lands, so it never claims more than the committed results support.
+A second goal is legibility. Someone who opens the repo, or hears it described in a conversation, should see both the AI engineering and the software engineering methodology within a couple of minutes, and be able to follow a short, honest walkthrough: what the model does, what deterministic code does, how quality is measured, which engineering rules govern changes, and what is still open. [AI_ENGINEERING_TOUR.md](AI_ENGINEERING_TOUR.md) is that walkthrough. It is written now against the current state, and its status column and limits section get updated as each step below lands, so it never claims more than the committed results support.
 
 ## Findings this plan responds to
 
@@ -48,7 +48,7 @@ Exit: at least one measured gain, with its cost stated.
 
 9. **Observability.** Add tracing (Langfuse or OpenTelemetry), per-turn token and cost logging, and a prompt version id recorded with every model call.
 10. **Rate limits and ingestion.** Rate-limit `/api/chat` and uploads. Move ingestion onto a durable worker or queue; if that does not fit the window, document the limit and its failure mode in the README.
-11. **CI.** Add a small eval smoke subset (about 10 cases) that fails on regression. Remove `|| true` from lint, give each package a real lint, and use a frozen lockfile.
+11. **CI and boundaries.** Add a small eval smoke subset (about 10 cases) that fails on regression. Remove `|| true` from lint, give each package a real lint, and use a frozen lockfile. Enforce the provider boundary with a lint rule that forbids importing the model SDK outside `packages/ai`. Run the Playwright beta verification in CI, and add a coverage report so the test suite's reach is visible.
 12. **Repo focus.** Relocate rather than delete, per AGENTS.md. Move Moon Keep and the Python retrieval service behind clear pointers in `docs/README.md`, and archive executed-phase files such as `SOL_PHASE*` and `ATTEMPTED_FIXES.md` under `docs/archive/` with redirects. Rewrite the README top as: problem, architecture diagram, results table, tradeoffs, known limits.
 13. **Walkthrough and write-up.** Update `AI_ENGINEERING_TOUR.md` so every status cell and the limits section match the committed results. Add a two-page summary of method, results, and tradeoffs, a three-minute demo, and an architecture diagram in the README that mirrors the tour. Check that someone unfamiliar can follow the ten-minute demo path without help.
 
