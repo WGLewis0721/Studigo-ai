@@ -45,7 +45,7 @@ For game work, use `prototypes/moon-road/`; the game is a separate release track
 - Add tests/evals around behavior being changed.
 - Document material architectural changes in the specialist contract. Update `ENGINEERING.md` when the live system map, technology rationale, authority boundary, or code ownership changes; update `implementation/ENGINEERING_PLAN.md` when priorities or planned engineering work change.
 - Use feature branches and PRs for substantial work.
-- Do not create another engineering overview/walkthrough/hardening document that duplicates `implementation/ENGINEERING_PLAN.md`.
+- Do not create another engineering overview/walkthrough/hardening document. `ENGINEERING.md` is the compact current map and `implementation/ENGINEERING_PLAN.md` is the single canonical engineering plan.
 - Do not delete product/architecture documentation just because implementation evolves; update it.
 
 ## UX discipline
