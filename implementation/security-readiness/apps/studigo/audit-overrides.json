@@ -423,7 +423,7 @@
       "target_date": "",
       "evidence_refs": [
         "packages/ai/src/coach.ts",
-        "implementation/ENGINEERING_SYSTEM_PLAN.md"
+        "implementation/ENGINEERING_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
@@ -440,7 +440,7 @@
       "target_date": "",
       "evidence_refs": [
         "evals/rag/README.md",
-        "implementation/ENGINEERING_SYSTEM_PLAN.md"
+        "implementation/ENGINEERING_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
@@ -580,7 +580,7 @@
       "owner": "",
       "target_date": "",
       "evidence_refs": [
-        "implementation/ENGINEERING_SYSTEM_PLAN.md"
+        "implementation/ENGINEERING_PLAN.md"
       ],
       "test_refs": [],
       "notes": ""
