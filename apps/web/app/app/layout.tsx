@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import { initialsFor, requireUser } from "@/lib/auth";
+import { betaDeletionLabel } from "@/lib/account-retention";
 import { listRooms } from "@/lib/rooms";
 import { signOutAction } from "@/lib/actions/auth";
 import { RAIL_COLLAPSED, RAIL_COOKIE } from "@/lib/rail";
@@ -10,6 +11,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
   const rooms = await listRooms();
   const collapsed = (await cookies()).get(RAIL_COOKIE)?.value === RAIL_COLLAPSED;
+  const retention = await betaDeletionLabel(user.id);
 
   return (
     <AppShell
@@ -26,6 +28,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         )
       }
     >
+      {retention ? <p className="betaRetention">{retention}</p> : null}
       {children}
     </AppShell>
   );
