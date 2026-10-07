@@ -6,13 +6,19 @@ Studigo is an AI study companion grounded in a learner's own class materials.
 
 ## Before coding
 
-**Start with `implementation/ENGINEERING_PLAN.md`.**
+**Start with root `ENGINEERING.md`.**
 
-That file is the canonical AI/software engineering map, technology rationale, repository guide, current-vs-planned boundary, and task-routing table.
+It is the compact cold-start map: system boundaries, technology rationale, repository ownership, AI/software authority, current gaps, and task routing.
 
-Use its routing table to open only the specialist files relevant to the task. **Do not scan the whole repository or read every document by default.**
+Then open only what the task requires:
 
-Then inspect the existing implementation before creating alternatives.
+- product behavior → `docs/PRODUCT.md`
+- deep runtime/data architecture → `docs/ARCHITECTURE.md`
+- hardening / planned engineering work → `implementation/ENGINEERING_PLAN.md`
+- security/public release → `implementation/security-readiness/`
+- release sequence → `docs/ROADMAP.md`
+
+Inspect the targeted implementation and its tests/evals before creating alternatives. **Do not scan the whole repository or read every document by default.**
 
 For game work, use `prototypes/moon-road/`; the game is a separate release track.
 
@@ -37,7 +43,7 @@ For game work, use `prototypes/moon-road/`; the game is a separate release track
 - Prefer migrations over manual database drift.
 - Prefer typed interfaces over implicit object shapes.
 - Add tests/evals around behavior being changed.
-- Document material architectural changes in the specialist contract and update `implementation/ENGINEERING_PLAN.md` when its system map or technology rationale changes.
+- Document material architectural changes in the specialist contract. Update `ENGINEERING.md` when the live system map, technology rationale, authority boundary, or code ownership changes; update `implementation/ENGINEERING_PLAN.md` when priorities or planned engineering work change.
 - Use feature branches and PRs for substantial work.
 - Do not create another engineering overview/walkthrough/hardening document that duplicates `implementation/ENGINEERING_PLAN.md`.
 - Do not delete product/architecture documentation just because implementation evolves; update it.
