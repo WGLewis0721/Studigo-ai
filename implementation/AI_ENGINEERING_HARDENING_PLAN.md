@@ -592,6 +592,8 @@ A production issue can be answered with evidence:
 
 # Phase 8 — Complete AI security and student-data privacy gates
 
+The reusable control framework and Studigo's current evidence-backed audit live under `implementation/security-readiness/`. Treat its generated public-launch gate as the operational security gate for this phase.
+
 **Decision:** COMPLETE the production boundary already established by RLS/private storage.
 
 ## Security
