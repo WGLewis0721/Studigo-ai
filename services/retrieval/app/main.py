@@ -8,6 +8,7 @@ free-form conversation still lives in packages/ai and still needs a model.
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 
 from . import flashcards, index_store
 from .chunking import Page, chunk_pages
@@ -23,6 +24,19 @@ from .schemas import (
 )
 
 app = FastAPI(title="Studigo Retrieval Service", version="0.1.0")
+
+
+@app.middleware("http")
+async def loopback_only(request, call_next):
+    """This service authorizes nothing. It accepts local peers only."""
+    import os
+
+    if os.environ.get("STUDIGO_RETRIEVAL_ALLOW_REMOTE") == "1":
+        return await call_next(request)
+    host = request.client.host if request.client else ""
+    if host not in {"127.0.0.1", "::1", "localhost", "testclient"}:
+        return JSONResponse({"detail": "loopback only"}, status_code=403)
+    return await call_next(request)
 
 
 @app.get("/health")

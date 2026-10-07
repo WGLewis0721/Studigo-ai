@@ -46,7 +46,7 @@ export async function processDocument(args: {
 
   const { data: document, error: loadError } = await supabase
     .from("documents")
-    .select("id, room_id, owner_id, name, mime_type, storage_path, source_type, status, attempts, processing_started_at")
+    .select("id, room_id, owner_id, name, mime_type, storage_path, source_type, status, attempts, processing_started_at, last_forced_reindex_at")
     .eq("id", args.documentId)
     .eq("owner_id", args.userId)
     .maybeSingle();
@@ -78,7 +78,8 @@ export async function processDocument(args: {
         attempts: 0,
         processing_started_at: null,
         processed_at: null,
-        error_message: null
+        error_message: null,
+        last_forced_reindex_at: new Date().toISOString()
       })
       .eq("id", document.id)
       .eq("owner_id", args.userId);

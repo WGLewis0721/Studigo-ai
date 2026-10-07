@@ -32,6 +32,21 @@ function ascii(bytes: Uint8Array, start: number, length: number) {
   return String.fromCharCode(...bytes.subarray(start, start + length));
 }
 
+export const MAX_IMAGE_EDGE = 8000;
+
+function assertImageEdge(edge: number | null) {
+  if (edge == null) return;
+  if (edge <= 0 || edge > MAX_IMAGE_EDGE) {
+    throw new UnsafeFileError("That image is too large. Export a smaller photo and re-upload.");
+  }
+}
+
+function pngEdge(bytes: Uint8Array) {
+  if (bytes.length < 24 || ascii(bytes, 12, 4) !== "IHDR") return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return Math.max(view.getUint32(16), view.getUint32(20));
+}
+
 /** Rejects files whose bytes do not match the type they were accepted as. */
 export function assertContentMatchesType(mimeType: string, input: ArrayBuffer | Uint8Array) {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -41,10 +56,15 @@ export function assertContentMatchesType(mimeType: string, input: ArrayBuffer | 
     case "application/pdf": {
       // The PDF spec tolerates leading bytes; readers accept the header within 1 KB.
       if (!ascii(bytes, 0, Math.min(bytes.length, 1024)).includes("%PDF-")) throw mismatch();
+      const head = ascii(bytes, 0, Math.min(bytes.length, 4096)).toLowerCase();
+      if (head.includes("<html") || head.includes("<!doctype html") || head.includes("<script")) {
+        throw new UnsafeFileError("That PDF also contains a web page. Export it as a plain PDF and re-upload.");
+      }
       return;
     }
     case "image/png":
       if (!startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) throw mismatch();
+      assertImageEdge(pngEdge(bytes));
       return;
     case "image/jpeg":
       if (!startsWith(bytes, [0xff, 0xd8, 0xff])) throw mismatch();

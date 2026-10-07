@@ -1,5 +1,7 @@
 import { requireApiUser } from "@/lib/auth";
+import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
 import { processDocument } from "@/lib/ingest";
+import { isUuid } from "@/lib/ids";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -22,13 +24,16 @@ export async function POST(request: Request) {
   const requestedDocumentId =
     typeof body?.documentId === "string" ? body.documentId.trim() : "";
 
-  if (!roomId) {
+  if (!isUuid(roomId)) {
     return Response.json({ error: "roomId is required" }, { status: 400 });
+  }
+  if (requestedDocumentId && !isUuid(requestedDocumentId)) {
+    return Response.json({ error: "Could not find that study guide." }, { status: 400 });
   }
 
   let query = supabase
     .from("documents")
-    .select("id, room_id, name, source_type, status, created_at")
+    .select("id, room_id, name, source_type, status, created_at, last_forced_reindex_at")
     .eq("room_id", roomId)
     .eq("source_type", "study_guide")
     .order("created_at", { ascending: false })
@@ -51,6 +56,14 @@ export async function POST(request: Request) {
     return Response.json(
       { error: "This study guide is still being processed. Wait for it to finish first." },
       { status: 409 }
+    );
+  }
+
+  const lastForced = data.last_forced_reindex_at ? Date.parse(data.last_forced_reindex_at as string) : null;
+  if (!reindexCooldownElapsed(lastForced, Date.now(), reindexCooldownMs())) {
+    return Response.json(
+      { error: "This study guide was just refreshed. Wait a few minutes before refreshing it again." },
+      { status: 429 }
     );
   }
 

@@ -18,6 +18,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
+      - name: Engineering map and provider boundary
+        run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
       - name: Test

@@ -1,0 +1,14 @@
+{
+  "reviewer": "fixture-not-a-human",
+  "note": "Scorer fixture only. Not the 300-500 human-labelled set. The model is not the labeler.",
+  "rows": [
+    { "id": "c1", "subject": "science", "label": "correct", "predicted": "correct", "answer": "Sunlight" },
+    { "id": "e1", "subject": "science", "label": "equivalent", "predicted": "equivalent", "answer": "Light from the sun" },
+    { "id": "p1", "subject": "science", "label": "partial", "predicted": "partial", "answer": "Light" },
+    { "id": "m1", "subject": "science", "label": "misconception", "predicted": "misconception", "answer": "The soil feeds the leaf" },
+    { "id": "i1", "subject": "history", "label": "incorrect", "predicted": "incorrect", "answer": "1775" },
+    { "id": "o1", "subject": "history", "label": "off_topic", "predicted": "off_topic", "answer": "My dog is hungry" },
+    { "id": "n1", "subject": "math", "label": "not_sure", "predicted": "not_sure", "answer": "I don't know" },
+    { "id": "t1", "subject": "math", "label": "correct", "predicted": "correct", "answer": "twelve" }
+  ]
+}

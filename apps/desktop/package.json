@@ -5,7 +5,7 @@
   "scripts": {
     "tauri": "tauri",
     "build": "echo 'Desktop shell is scaffold-only until the hosted API boundary is finalized'",
-    "lint": "echo 'no desktop lint configured yet'",
+    "lint": "node ../../scripts/check-ai-boundary.mjs",
     "typecheck": "echo 'desktop shell uses Rust/Tauri'"
   },
   "devDependencies": {

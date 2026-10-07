@@ -1,6 +1,6 @@
 app_id,control_id,status,kind,ref
 studigo,GMS-GOV-001,partial,evidence,docs/ARCHITECTURE.md
-studigo,GMS-GOV-001,partial,evidence,implementation/AI_SOFTWARE_ENGINEERING_WALKTHROUGH.md
+studigo,GMS-GOV-001,partial,evidence,ENGINEERING.md
 studigo,GMS-GOV-002,partial,evidence,docs/ARCHITECTURE.md
 studigo,GMS-GOV-002,partial,evidence,docs/AUTH.md
 studigo,GMS-AUTH-001,partial,evidence,apps/web/lib/auth.ts
@@ -72,9 +72,9 @@ studigo,GMS-AI-003,pass,test,packages/ai/src/questions.test.ts
 studigo,GMS-AI-005,partial,evidence,evals/rag/README.md
 studigo,GMS-AI-005,partial,test,evals/rag/
 studigo,GMS-AI-006,partial,evidence,packages/ai/src/coach.ts
-studigo,GMS-AI-006,partial,evidence,implementation/AI_ENGINEERING_HARDENING_PLAN.md
+studigo,GMS-AI-006,partial,evidence,implementation/ENGINEERING_PLAN.md
 studigo,GMS-AI-007,fail,evidence,evals/rag/README.md
-studigo,GMS-AI-007,fail,evidence,implementation/AI_ENGINEERING_HARDENING_PLAN.md
+studigo,GMS-AI-007,fail,evidence,implementation/ENGINEERING_PLAN.md
 studigo,GMS-AI-008,fail,evidence,packages/ai/src/grounding.ts
 studigo,GMS-AI-008,fail,evidence,docs/PRODUCT.md
 studigo,GMS-RAG-001,partial,evidence,apps/web/lib/retrieval.ts
@@ -95,7 +95,7 @@ studigo,GMS-PRIV-003,partial,evidence,packages/ai/src/client.ts
 studigo,GMS-PRIV-003,partial,test,packages/ai/src/client.test.ts
 studigo,GMS-PRIV-004,fail,evidence,apps/web/app
 studigo,GMS-PRIV-004,fail,evidence,docs/APP_STORE_RELEASE_PLAN.md
-studigo,GMS-LOG-002,not_tested,evidence,implementation/AI_ENGINEERING_HARDENING_PLAN.md
+studigo,GMS-LOG-002,not_tested,evidence,implementation/ENGINEERING_PLAN.md
 studigo,GMS-SUPPLY-001,partial,evidence,.github/workflows/ci.yml
 studigo,GMS-SUPPLY-001,partial,evidence,pnpm-lock.yaml
 studigo,GMS-SUPPLY-001,partial,evidence,package.json
