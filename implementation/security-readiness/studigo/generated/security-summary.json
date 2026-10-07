@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-07T00:00:00.000Z",
+  "generated_at": "2026-10-07T15:14:47.950Z",
   "app_id": "studigo",
   "app_name": "Studigo",
   "catalog_version": "2026-10-07",
@@ -8,10 +8,10 @@
   "applicable_controls": 40,
   "needs_review": 0,
   "status_counts": {
-    "fail": 10,
+    "fail": 6,
     "not_applicable": 1,
-    "not_tested": 11,
-    "partial": 18,
+    "not_tested": 10,
+    "partial": 23,
     "pass": 1
   },
   "severity_counts_open": {
@@ -42,7 +42,7 @@
       "title": "Content signature and parser validation",
       "severity": "P0",
       "risk_score": 20,
-      "status": "fail"
+      "status": "partial"
     },
     {
       "control_id": "GMS-FILE-003",

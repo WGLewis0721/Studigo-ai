@@ -30,19 +30,19 @@ A blocker is closed only by `pass` or explicit `accepted_risk` with accountable 
 
 ### GMS-FILE-002 — Content signature and parser validation
 - Severity: **P0**
-- Status: **fail**
+- Status: **partial**
 - Risk score: **20**
-- Finding: resolveMimeType accepts declared MIME or extension; no general magic-byte/content signature verification was found before storage/processing.
-- Required action: Validate actual content signatures and parser compatibility for every allowed format; reject mismatches/polyglots.
-- Evidence: packages/documents/src/index.ts
+- Finding: assertContentMatchesType checks bytes for every allowed format (PDF header, PNG/JPEG/WEBP signatures, OOXML ZIP with the expected main part, UTF-8 text without NUL) before storage. Polyglot detection (e.g. PDF+HTML) is not implemented.
+- Required action: Add polyglot rejection, or re-serve originals only with a forced download Content-Disposition and nosniff.
+- Evidence: packages/documents/src/index.ts|packages/documents/src/file-safety.ts|apps/web/app/api/documents/upload/route.ts
 
 ### GMS-FILE-003 — Archive/decompression/image/OCR resource bounds
 - Severity: **P0**
 - Status: **partial**
 - Risk score: **20**
-- Finding: OCR page and chunk limits exist, but OOXML/archive expanded-size/entry-count and image pixel/dimension controls were not found.
+- Finding: OCR page and chunk limits exist. assertSafeZip now rejects OOXML archives over 5000 parts, 300 MB declared expansion or 100x ratio, at upload and before extraction. Central-directory sizes can be understated by a crafted archive; image pixel/dimension limits, PDF object-stream bombs and parser time/memory budgets are still missing.
 - Required action: Add pre-extraction archive expansion/file-count limits, image dimension limits, parser time/work limits and bomb fixtures.
-- Evidence: apps/web/lib/validation.ts|packages/documents/src/extract.ts
+- Evidence: apps/web/lib/validation.ts|packages/documents/src/extract.ts|packages/documents/src/file-safety.ts
 
 ### GMS-PRIV-002 — Minor/student-data release requirements resolved
 - Severity: **P0**
@@ -88,9 +88,9 @@ A blocker is closed only by `pass` or explicit `accepted_risk` with accountable 
 - Severity: **P0**
 - Status: **partial**
 - Risk score: **15**
-- Finding: Uploaded source material is explicitly serialized as untrusted and prompts state that it cannot override trusted policy; full multimodal/indirect verification is still pending.
+- Finding: Uploaded source material is serialized as untrusted. Fixed 2026-10-07: model-extracted topic titles and earlier model-written practice questions entered system prompts as raw directive text, and /api/chat appended browser-supplied directive text to the system prompt; both now go through the untrusted-data envelope or are ignored. Full multimodal/indirect verification through production paths is still pending.
 - Required action: Run text/metadata/OCR-image indirect injection corpus through actual production paths.
-- Evidence: packages/ai/src/client.ts|packages/ai/src/grounding.ts|packages/ai/src/ocr.ts
+- Evidence: packages/ai/src/client.ts|packages/ai/src/grounding.ts|packages/ai/src/ocr.ts|apps/web/lib/directive-format.ts|apps/web/lib/engine.ts|apps/web/lib/recommendation-engine.ts|apps/web/app/api/chat/route.ts
 
 ### GMS-AI-002 — Prompt-injection regression suite
 - Severity: **P0**
@@ -144,9 +144,9 @@ A blocker is closed only by `pass` or explicit `accepted_risk` with accountable 
 - Severity: **P0**
 - Status: **partial**
 - Risk score: **10**
-- Finding: Auth helpers and protected app routes exist; complete route-by-route unauthenticated API verification remains required.
-- Required action: Generate endpoint inventory and add unauthenticated negative tests for every private API.
-- Evidence: apps/web/lib/auth.ts|apps/web/middleware.ts
+- Finding: Auth helpers and protected app routes exist. Live 2026-10-07: Supabase anonymous sign-ins are enabled (52 of 54 users anonymous); anonymous sessions carried the authenticated role. Now treated as signed out by middleware/getUser/requireUser/requireApiUser, and restrictive RLS blocks anonymous inserts. Route-by-route unauthenticated API verification still required.
+- Required action: Disable anonymous sign-ins in Supabase Auth; decide on purging existing anonymous users/data; generate endpoint inventory and add unauthenticated negative tests for every private API.
+- Evidence: apps/web/lib/auth.ts|apps/web/middleware.ts|apps/web/lib/account-kind.ts|supabase/migrations/20261007120000_block_anonymous_writes.sql
 
 ### GMS-AUTH-002 — OAuth state, PKCE and redirect safety
 - Severity: **P0**
@@ -190,9 +190,9 @@ A blocker is closed only by `pass` or explicit `accepted_risk` with accountable 
 
 ### GMS-PRIV-003 — External provider data flows documented and configured
 - Severity: **P1**
-- Status: **not_tested**
+- Status: **partial**
 - Risk score: **15**
-- Finding: External AI/provider data-flow, retention/training configuration and deletion expectations are not captured as a verified control artifact.
+- Finding: Direct OpenAI Responses calls now send store:false. Gateway/Ollama transports unchanged; no vendor data-flow register, DPA or org-level retention evidence yet.
 - Required action: Create vendor data-flow register and capture provider configuration evidence.
 - Evidence: packages/ai/src/client.ts
 

@@ -44,18 +44,21 @@
       "likelihood": 2,
       "impact": 5,
       "release_blocker": true,
-      "finding": "Auth helpers and protected app routes exist; complete route-by-route unauthenticated API verification remains required.",
-      "remediation": "Generate endpoint inventory and add unauthenticated negative tests for every private API.",
+      "finding": "Auth helpers and protected app routes exist. Live 2026-10-07: Supabase anonymous sign-ins are enabled (52 of 54 users anonymous); anonymous sessions carried the authenticated role. Now treated as signed out by middleware/getUser/requireUser/requireApiUser, and restrictive RLS blocks anonymous inserts. Route-by-route unauthenticated API verification still required.",
+      "remediation": "Disable anonymous sign-ins in Supabase Auth; decide on purging existing anonymous users/data; generate endpoint inventory and add unauthenticated negative tests for every private API.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         "apps/web/lib/auth.ts",
-        "apps/web/middleware.ts"
+        "apps/web/middleware.ts",
+        "apps/web/lib/account-kind.ts",
+        "supabase/migrations/20261007120000_block_anonymous_writes.sql"
       ],
       "test_refs": [
-        "tests/database-security.test.mjs"
+        "tests/database-security.test.mjs",
+        "apps/web/lib/account-kind.test.ts"
       ],
-      "notes": ""
+      "notes": "Anonymous-session boundary fixed in code on security/audit-checklist; dashboard toggle pending. See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-AUTH-002": {
       "status": "partial",
@@ -163,7 +166,7 @@
         "apps/web/app/api/documents/process/route.ts"
       ],
       "test_refs": [],
-      "notes": ""
+      "notes": "Account minting via anonymous sign-ins is closed in code (GMS-AUTH-001). Vercel firewall config for studigo-ai does not exist (API 404, 2026-10-07): no WAF rate-limit rules. No max_output_tokens on any Responses call; /api/documents/reindex resets attempts with no cooldown. See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-API-003": {
       "status": "not_tested",
@@ -182,13 +185,13 @@
       "notes": ""
     },
     "GMS-API-004": {
-      "status": "fail",
+      "status": "partial",
       "severity": "P1",
       "likelihood": 3,
       "impact": 3,
       "release_blocker": false,
-      "finding": "Several production APIs return raw database/provider error.message values in client-facing detail fields.",
-      "remediation": "Create central error mapper; return generic message + trace ID to clients and protected details to server logs only.",
+      "finding": "detail: error.message removed from upload, document delete, chat, quiz and flashcards routes. /api/chat still streams thrown error.message in SSE error events, and signUpAction returns Supabase error text.",
+      "remediation": "Map streamed and auth errors to fixed learner-facing strings; add a central error mapper with trace IDs.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
@@ -197,23 +200,25 @@
         "apps/web/app/api/documents/upload/route.ts"
       ],
       "test_refs": [],
-      "notes": ""
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-WEB-001": {
-      "status": "fail",
+      "status": "partial",
       "severity": "P1",
       "likelihood": 3,
       "impact": 4,
       "release_blocker": false,
-      "finding": "Current Next configuration does not define a central production CSP/security-header policy.",
-      "remediation": "Add CSP and browser hardening headers, then validate deployed response headers and app compatibility.",
+      "finding": "next.config.ts now sends an enforced CSP subset (frame-ancestors 'self'; base-uri 'self'; object-src 'none'), X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, and a full CSP as Report-Only. Verified on a local production build; production deploy not yet verified.",
+      "remediation": "Browser pass on the Report-Only policy, then enforce the full CSP (nonce-based if inline scripts must go); verify deployed headers.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         "apps/web/next.config.ts"
       ],
-      "test_refs": [],
-      "notes": ""
+      "test_refs": [
+        "next start + curl -I (local, 2026-10-07)"
+      ],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-WEB-002": {
       "status": "partial",
@@ -250,20 +255,24 @@
       "notes": ""
     },
     "GMS-FILE-002": {
-      "status": "fail",
+      "status": "partial",
       "severity": "P0",
       "likelihood": 4,
       "impact": 5,
       "release_blocker": true,
-      "finding": "resolveMimeType accepts declared MIME or extension; no general magic-byte/content signature verification was found before storage/processing.",
-      "remediation": "Validate actual content signatures and parser compatibility for every allowed format; reject mismatches/polyglots.",
+      "finding": "assertContentMatchesType checks bytes for every allowed format (PDF header, PNG/JPEG/WEBP signatures, OOXML ZIP with the expected main part, UTF-8 text without NUL) before storage. Polyglot detection (e.g. PDF+HTML) is not implemented.",
+      "remediation": "Add polyglot rejection, or re-serve originals only with a forced download Content-Disposition and nosniff.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
-        "packages/documents/src/index.ts"
+        "packages/documents/src/index.ts",
+        "packages/documents/src/file-safety.ts",
+        "apps/web/app/api/documents/upload/route.ts"
       ],
-      "test_refs": [],
-      "notes": ""
+      "test_refs": [
+        "packages/documents/src/file-safety.test.ts"
+      ],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-FILE-003": {
       "status": "partial",
@@ -271,16 +280,19 @@
       "likelihood": 4,
       "impact": 5,
       "release_blocker": true,
-      "finding": "OCR page and chunk limits exist, but OOXML/archive expanded-size/entry-count and image pixel/dimension controls were not found.",
+      "finding": "OCR page and chunk limits exist. assertSafeZip now rejects OOXML archives over 5000 parts, 300 MB declared expansion or 100x ratio, at upload and before extraction. Central-directory sizes can be understated by a crafted archive; image pixel/dimension limits, PDF object-stream bombs and parser time/memory budgets are still missing.",
       "remediation": "Add pre-extraction archive expansion/file-count limits, image dimension limits, parser time/work limits and bomb fixtures.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         "apps/web/lib/validation.ts",
-        "packages/documents/src/extract.ts"
+        "packages/documents/src/extract.ts",
+        "packages/documents/src/file-safety.ts"
       ],
-      "test_refs": [],
-      "notes": ""
+      "test_refs": [
+        "packages/documents/src/file-safety.test.ts"
+      ],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-FILE-004": {
       "status": "fail",
@@ -323,20 +335,25 @@
       "likelihood": 3,
       "impact": 5,
       "release_blocker": true,
-      "finding": "Uploaded source material is explicitly serialized as untrusted and prompts state that it cannot override trusted policy; full multimodal/indirect verification is still pending.",
+      "finding": "Uploaded source material is serialized as untrusted. Fixed 2026-10-07: model-extracted topic titles and earlier model-written practice questions entered system prompts as raw directive text, and /api/chat appended browser-supplied directive text to the system prompt; both now go through the untrusted-data envelope or are ignored. Full multimodal/indirect verification through production paths is still pending.",
       "remediation": "Run text/metadata/OCR-image indirect injection corpus through actual production paths.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         "packages/ai/src/client.ts",
         "packages/ai/src/grounding.ts",
-        "packages/ai/src/ocr.ts"
+        "packages/ai/src/ocr.ts",
+        "apps/web/lib/directive-format.ts",
+        "apps/web/lib/engine.ts",
+        "apps/web/lib/recommendation-engine.ts",
+        "apps/web/app/api/chat/route.ts"
       ],
       "test_refs": [
         "packages/ai/src/untrusted.test.ts",
-        "evals/rag/"
+        "evals/rag/",
+        "apps/web/lib/prompt-boundary.test.ts"
       ],
-      "notes": ""
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-AI-002": {
       "status": "partial",
@@ -521,20 +538,22 @@
       "notes": ""
     },
     "GMS-PRIV-003": {
-      "status": "not_tested",
+      "status": "partial",
       "severity": "P1",
       "likelihood": 3,
       "impact": 5,
       "release_blocker": true,
-      "finding": "External AI/provider data-flow, retention/training configuration and deletion expectations are not captured as a verified control artifact.",
+      "finding": "Direct OpenAI Responses calls now send store:false. Gateway/Ollama transports unchanged; no vendor data-flow register, DPA or org-level retention evidence yet.",
       "remediation": "Create vendor data-flow register and capture provider configuration evidence.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         "packages/ai/src/client.ts"
       ],
-      "test_refs": [],
-      "notes": ""
+      "test_refs": [
+        "packages/ai/src/client.test.ts"
+      ],
+      "notes": "See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-LOG-001": {
       "status": "not_tested",
@@ -567,21 +586,25 @@
       "notes": ""
     },
     "GMS-SUPPLY-001": {
-      "status": "fail",
+      "status": "partial",
       "severity": "P1",
       "likelihood": 3,
       "impact": 4,
       "release_blocker": false,
-      "finding": "CI installs dependencies with --no-frozen-lockfile and no SCA/vulnerability gate was found.",
-      "remediation": "Use frozen lockfile installs and add dependency/SCA scanning.",
+      "finding": "All \"latest\" specifiers pinned to lockfile versions; next 16.3.4 -> 16.3.8 (critical GHSA-vcvr-r3jv-pc5j); sharp/source-map-js overridden. CI changed to --frozen-lockfile with pnpm audit --prod --audit-level high (exits 0 locally). One moderate advisory remains (sprintf-js via mammoth CLI parser, no patch, not reachable).",
+      "remediation": "Confirm the CI audit step runs on main; add Dependabot/Renovate security updates.",
       "owner": "",
       "target_date": "",
       "evidence_refs": [
         ".github/workflows/ci.yml",
-        "pnpm-lock.yaml"
+        "pnpm-lock.yaml",
+        "package.json",
+        "apps/web/package.json"
       ],
-      "test_refs": [],
-      "notes": ""
+      "test_refs": [
+        "pnpm audit --prod --audit-level high"
+      ],
+      "notes": "Becomes pass once CI runs the frozen-lockfile install and audit gate on main. See implementation/SECURITY_AUDIT_CHECKLIST.md."
     },
     "GMS-SUPPLY-002": {
       "status": "fail",

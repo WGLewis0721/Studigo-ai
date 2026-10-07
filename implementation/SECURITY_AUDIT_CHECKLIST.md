@@ -6,6 +6,26 @@ This audit checks Studigo against six published control sets. Each control maps 
 
 > **Not legal advice.** The privacy section (§6) is a technical checklist. The COPPA details come from a law-firm summary, not the FTC rule text. Counsel must confirm them before launch.
 
+## Relationship to the security-readiness gate
+
+The canonical release gate is the generated report in `implementation/security-readiness/studigo/generated/public-launch-gate.md`, built from `audit-overrides.json` (`pnpm security:report`). This file is the detailed audit against six named standards. Its evidence feeds that gate: each change below is recorded on the matching `GMS-*` control, and the regenerated gate is committed with it. When the two disagree, update the overrides and regenerate rather than editing a status here only.
+
+| This checklist | Gate control |
+|---|---|
+| LLM10-01, API2-03, SB-02 (anonymous accounts) | GMS-AUTH-001, GMS-API-002 |
+| LLM10-02..06, API4, NX-06, VC-01 (rate/cost limits) | GMS-API-002, GMS-AI-007 |
+| LLM01-02/03/04 (prompt injection) | GMS-AI-001, GMS-AI-002 |
+| LLM02-02 (provider retention) | GMS-PRIV-003 |
+| LLM02-03, API2-05 (error leakage) | GMS-API-004 |
+| API8-01, NX-04 (headers/CSP) | GMS-WEB-001 |
+| UP-02 (content signatures) | GMS-FILE-002 |
+| UP-04 (archive bombs) | GMS-FILE-003 |
+| UP-05 (malware scanning) | GMS-FILE-004 |
+| LLM03-01..04 (supply chain) | GMS-SUPPLY-001, GMS-SUPPLY-002 |
+| AUX-01 (Python retrieval service) | GMS-ACCESS-003 |
+| CI-01 (branch protection) | GMS-CI-001 |
+| PR-01..05 (minors and privacy) | GMS-PRIV-001, GMS-PRIV-002, GMS-GOV-002 |
+
 ## Status key
 
 | Status | Meaning |
@@ -95,6 +115,8 @@ ASVS is not used as a control set here. At audit time the OWASP page still liste
 | API8-03 | Schema drift | FAIL / OPS | `public.mf_agreements` and `public.mf_bookings` exist in the live Studigo database. No Studigo migration creates them. Confirm the owner, then move or drop them through a migration. |
 | API9-01 | Dev and local-beta routes | PASS | `/dev/*` and `/api/dev/*` return 404 unless `NODE_ENV=development`. Local beta requires development, `STUDIGO_LOCAL_BETA=1`, a loopback host and a same-origin request (`apps/web/lib/local-beta-access.ts`). Production returns 404 (verified). |
 | API9-02 | Versioned and flagged routes | PASS | `/api/v1/learning/sessions` returns 404 unless `STUDIGO_DURABLE_SESSIONS=1`. `/api/v1/learning/progress` is owner-checked. |
+| AUX-01 | Auxiliary services authenticated | **FAIL — blocker if deployed** | Found by the readiness gate (GMS-ACCESS-003), not by this pass. The optional Python retrieval service (`services/retrieval/app/main.py`) accepts room IDs with no authenticated Studigo principal. Keep it loopback-only, or add service authentication and caller/room authorization before any non-local deployment. |
+| CI-01 | Protected `main` and required checks | **FAIL / OPS** | Found by the readiness gate (GMS-CI-001). `main` is unprotected, so CI (including the new audit step) is advisory. Enable branch protection with required status checks. |
 | API9-03 | API inventory | PARTIAL | No single route inventory with each route's auth, cost class and limit. `/game` ships in the web build (static; production currently returns 404). AI_HANDOFF says the game must not be linked from `apps/web`. Remove the route or document it. |
 
 ## 3. Next.js data security
@@ -178,6 +200,7 @@ Work these top-down. "Code" items can land through PRs. "OPS" items need an acco
 | 7 | Prompt-injection live eval suite (LLM01-04) | Code/eval | Open; boundary fixes landed |
 | 8 | Moderation for a minor audience (PR-09) | Code | Open |
 | 9 | Malware scanning and durable worker (UP-05, UP-07) | Code/infra | Open; byte and ZIP checks landed |
+| 9a | Lock down or authenticate the Python retrieval service (AUX-01); protect `main` (CI-01) | Code + OPS | Open |
 | 10 | Purge 52 anonymous users and their data; remove `mf_*` tables (API8-03) | OPS (destructive; needs explicit approval) | Open |
 | 11 | Enforce full CSP after a browser pass (API8-01) | Code | Report-Only shipped |
 | 12 | Secret scanning and Dependabot (LLM03-04); `server-only` marker (NX-05); shared param validator (NX-01); neutral sign-up errors (API2-05) | Code/OPS | Open |
@@ -194,6 +217,8 @@ Work these top-down. "Code" items can land through PRs. "OPS" items need an acco
 | DB error text no longer returned to clients | upload, document delete, chat, quiz and flashcards routes | — |
 | Security headers and Report-Only CSP | `apps/web/next.config.ts` | Verified with `next start` + `curl -I` |
 | Dependency pins, Next 16.3.8, sharp/source-map-js overrides, frozen-lockfile CI, audit gate | `package.json` files, `pnpm-lock.yaml`, `.github/workflows/ci.yml` | `pnpm audit --prod --audit-level high` exits 0 |
+
+The regenerated gate still shows **25 open release blockers**. These changes narrow several P0 controls (GMS-FILE-002, GMS-FILE-003, GMS-AI-001, GMS-AUTH-001) but close none of them, so every one stays `partial`.
 
 ### Deploy note
 
