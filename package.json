@@ -24,7 +24,7 @@
     "security:check": "node implementation/security-readiness/scripts/security-readiness.mjs check"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.3.14",
+    "@electric-sql/pglite": "0.5.8",
     "playwright": "1.62.1"
   },
   "pnpm": {
