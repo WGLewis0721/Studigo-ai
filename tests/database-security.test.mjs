@@ -794,3 +794,36 @@ test('a new account is wiped five days later and an older account is not', async
   assert.equal((await one('select count(*)::int as n from auth.users where id=$1', [A])).n, 1);
   assert.equal((await one('select count(*)::int as n from study_rooms where id=$1', [id(1)])).n, 1);
 });
+
+
+test('AI admission rejects all NULL privileged limit inputs instead of disabling checks', async () => {
+  const sql = 'select public.admit_studigo_ai_resource($1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,$7::integer,$8::integer,$9::integer,$10::integer,$11::integer,$12::integer,$13::bigint,$14::bigint) as d';
+  await as('service_role', null, async () => {
+    for (let index = 6; index <= 13; index++) {
+      const args = [id(99500+index), A, 'a'.repeat(64), 'chat', 'null-check-'+index, 100, 10, 10, 10, 2, 3, 5, 10_000, 100_000];
+      args[index] = null;
+      const response = (await one(sql, args)).d;
+      assert.equal(response.allowed, false, 'NULL parameter ' + index);
+      assert.equal(response.reason, 'invalid');
+    }
+  });
+});
+
+test('forced reindex row claim owns status and cooldown in one DB transition', async () => {
+  const doc = id(11);
+  const sql = 'select public.claim_forced_studigo_reindex($1::uuid,$2::uuid,$3::integer) as d';
+  await db.query("update documents set source_type='study_guide', status='ready', last_forced_reindex_at=null where id=$1", [doc]);
+  await as('service_role', null, async () => {
+    assert.equal((await one(sql, [doc, A, 900])).d.claimed, true);
+    const first = await one('select status, attempts, last_forced_reindex_at from documents where id=$1', [doc]);
+    assert.equal(first.status, 'processing');
+    assert.equal(first.attempts, 1);
+    assert.ok(first.last_forced_reindex_at);
+    assert.equal((await one(sql, [doc, A, 900])).d.reason, 'processing');
+    await db.query("update documents set status='ready' where id=$1", [doc]);
+    assert.equal((await one(sql, [doc, A, 900])).d.reason, 'cooldown');
+    assert.equal((await one(sql, [doc, B, 900])).d.reason, 'not_found');
+    assert.equal((await one(sql, [doc, A, null])).d.reason, 'invalid');
+  });
+  await assert.rejects(as('authenticated', A, () => db.query(sql, [doc, A, 900])), error => error.code === '42501');
+});
