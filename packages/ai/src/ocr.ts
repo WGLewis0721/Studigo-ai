@@ -1,4 +1,6 @@
 import { UNTRUSTED_MATERIAL_RULE, chatModel, client, responseOptions } from "./client";
+import { debitResponseWork, providerAbortSignal } from "./provider-budget";
+
 
 const OCR_PROMPT = [
   "Transcribe all readable text from this scanned study material, in reading order.",
@@ -20,6 +22,8 @@ export async function ocrPagePdf(args: {
   pdf: Uint8Array;
   filename: string;
 }): Promise<string> {
+  const fileData = `data:application/pdf;base64,${Buffer.from(args.pdf).toString("base64")}`;
+  debitResponseWork({ model: chatModel(), max_output_tokens: responseOptions().max_output_tokens, input: [OCR_PROMPT, fileData] });
   const response = await client().responses.create({
     model: chatModel(),
     ...responseOptions(),
@@ -31,12 +35,12 @@ export async function ocrPagePdf(args: {
           {
             type: "input_file",
             filename: args.filename.endsWith(".pdf") ? args.filename : `${args.filename}.pdf`,
-            file_data: `data:application/pdf;base64,${Buffer.from(args.pdf).toString("base64")}`
+            file_data: fileData
           }
         ]
       }
     ]
-  });
+  }, { signal: providerAbortSignal() });
 
   return cleanOcrText(response.output_text ?? "");
 }
@@ -45,6 +49,8 @@ export async function ocrImage(args: {
   bytes: Uint8Array;
   mimeType: string;
 }): Promise<string> {
+  const fileData = `data:${args.mimeType};base64,${Buffer.from(args.bytes).toString("base64")}`;
+  debitResponseWork({ model: chatModel(), max_output_tokens: responseOptions().max_output_tokens, input: [OCR_PROMPT, fileData] });
   const response = await client().responses.create({
     model: chatModel(),
     ...responseOptions(),
@@ -56,12 +62,12 @@ export async function ocrImage(args: {
           {
             type: "input_image",
             detail: "high",
-            image_url: `data:${args.mimeType};base64,${Buffer.from(args.bytes).toString("base64")}`
+            image_url: fileData
           }
         ]
       }
     ]
-  });
+  }, { signal: providerAbortSignal() });
 
   return cleanOcrText(response.output_text ?? "");
 }

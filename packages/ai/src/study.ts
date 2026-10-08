@@ -7,6 +7,7 @@ import {
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
+import { debitResponseWork, providerAbortSignal } from "./provider-budget";
 import { stripAnswerFiller, termMatch } from "./typos";
 
 /** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
@@ -16,6 +17,10 @@ export async function structured<T>(args: {
   schemaName: string;
   schema: Record<string, unknown>;
 }): Promise<T> {
+  debitResponseWork({
+    model: chatModel(), max_output_tokens: responseOptions().max_output_tokens,
+    input: [args.system, args.user, JSON.stringify(args.schema)]
+  });
   const response = await client().responses.create({
     model: chatModel(),
     ...responseOptions(),
@@ -31,7 +36,7 @@ export async function structured<T>(args: {
         schema: args.schema
       }
     }
-  });
+  }, { signal: providerAbortSignal() });
 
   const raw = response.output_text?.trim();
   if (!raw) throw new Error(`${args.schemaName}: model returned no output`);

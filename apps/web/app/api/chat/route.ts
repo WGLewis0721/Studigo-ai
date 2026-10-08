@@ -1,4 +1,5 @@
-import { guardAiRequest, trackAiStreamProducer } from "@/lib/ai-admission";
+import { guardAiRequest } from "@/lib/ai-admission";
+import { trackAiStreamProducer } from "@/lib/ai-stream-lease";
 import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences, readLearnPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";

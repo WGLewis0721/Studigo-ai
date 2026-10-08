@@ -70,7 +70,7 @@ function clientFor(transport: Transport): OpenAI {
   if (transport === "direct") {
     return new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      maxRetries: 2,
+      maxRetries: process.env.STUDIGO_AI_ADMISSION === "1" ? 0 : 2,
       timeout: 120_000,
     });
   }
@@ -78,7 +78,7 @@ function clientFor(transport: Transport): OpenAI {
     return new OpenAI({
       apiKey: process.env.AI_GATEWAY_API_KEY,
       baseURL: GATEWAY_BASE_URL,
-      maxRetries: 2,
+      maxRetries: process.env.STUDIGO_AI_ADMISSION === "1" ? 0 : 2,
       timeout: 120_000,
     });
   }
@@ -86,7 +86,7 @@ function clientFor(transport: Transport): OpenAI {
     // Ollama ignores the key but the SDK requires a non-empty string.
     apiKey: "ollama",
     baseURL: `${process.env.OLLAMA_BASE_URL!.replace(/\/+$/, "")}/v1`,
-    maxRetries: 2,
+    maxRetries: process.env.STUDIGO_AI_ADMISSION === "1" ? 0 : 2,
     timeout: 120_000,
   });
 }
@@ -144,6 +144,10 @@ export function embeddingModel() {
  */
 export function responseOptions(): { store?: false; max_output_tokens?: number } {
   const cap = Number(process.env.STUDIGO_MAX_OUTPUT_TOKENS || 1200);
+  if (process.env.STUDIGO_AI_ADMISSION === "1" &&
+      (!Number.isSafeInteger(cap) || cap < 1 || cap > 4096)) {
+    throw new Error("Invalid or unbounded model output token cap");
+  }
   const limited = Number.isFinite(cap) && cap > 0 ? { max_output_tokens: Math.floor(cap) } : {};
   const transport = resolveTransport();
   if (transport === "ollama") return {};

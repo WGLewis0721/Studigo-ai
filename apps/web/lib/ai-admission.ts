@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { protectAiStream } from "./ai-stream-lease";
+import { withProviderWorkBudget } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import {
@@ -31,56 +33,6 @@ async function complete(writer: AiWriter, id: string) {
     // The lease expires after six minutes. Do not expose provider or SQL details to learners.
     console.error("Studigo AI admission lease completion failed");
   }
-}
-
-/**
- * A ReadableStream may have an async producer in start() which is NOT stopped by
- * cancel() of its reader. Routes register the producer lifecycle explicitly:
- * transport cancellation may stop delivery, never release billable concurrency.
- */
-const streamProducerDone = new WeakMap<Response, Promise<unknown>>();
-export function trackAiStreamProducer(response: Response, producerDone: Promise<unknown>): Response {
-  streamProducerDone.set(response, producerDone);
-  return response;
-}
-
-/** Hold the lease until producer work terminates, including on disconnect. */
-function protectStream(response: Response, settle: () => Promise<void>): Response {
-  const reader = response.body?.getReader();
-  if (!reader) return response;
-  const producerDone = streamProducerDone.get(response);
-  let settled = false;
-  async function once() {
-    if (settled) return;
-    settled = true;
-    // Cancellation of the transport is not cancellation of the provider.
-    if (producerDone) {
-      try { await producerDone; } catch { /* still count until termination */ }
-    }
-    await settle();
-  }
-  const stream = new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const next = await reader.read();
-        if (next.done) {
-          await once();
-          controller.close();
-        } else controller.enqueue(next.value);
-      } catch (error) {
-        await once();
-        controller.error(error);
-      }
-    },
-    async cancel(reason) {
-      try { await reader.cancel(reason); } finally { await once(); }
-    }
-  });
-  return new Response(stream, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: response.headers
-  });
 }
 
 /**
@@ -134,15 +86,17 @@ export async function guardAiRequest(
   }
 
   const settle = () => complete(writer, leaseId);
-  try {
-    const response = await handle(request);
-    if (response.headers.get("content-type")?.includes("text/event-stream")) {
-      return protectStream(response, settle);
+  return withProviderWorkBudget(operation, request.signal, async () => {
+    try {
+      const response = await handle(request);
+      if (response.headers.get("content-type")?.includes("text/event-stream")) {
+        return protectAiStream(response, settle, request.signal);
+      }
+      await settle();
+      return response;
+    } catch (error) {
+      await settle();
+      throw error;
     }
-    await settle();
-    return response;
-  } catch (error) {
-    await settle();
-    throw error;
-  }
+  });
 }
