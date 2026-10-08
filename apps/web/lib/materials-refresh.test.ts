@@ -24,13 +24,13 @@ test("Study Guide refresh forces a fresh ingestion pass of the stored original",
 });
 
 test("forced ingestion uses one atomic SQL claim without resetting an active worker", () => {
-  assert.match(ingest, /if \\(args\\.force\\)/);
+  assert.match(ingest, /if \(args\.force\)/);
   assert.match(ingest, /claim_forced_studigo_reindex/);
   assert.doesNotMatch(ingest, /status: "queued"/);
   assert.doesNotMatch(ingest, /attempts: 0/);
   assert.match(admissionSql, /claim_forced_studigo_reindex/);
   assert.match(admissionSql, /for update/);
   assert.match(admissionSql, /last_forced_reindex_at = v_now/);
-  assert.match(ingest, /document_chunks"\\)\\.delete\\(\\)\\.eq\\("document_id", document\\.id\\)/);
-  assert.match(ingest, /buildTopicMap\\(\\{/);
+  assert.match(ingest, /document_chunks"\)\.delete\(\)\.eq\("document_id", document\.id\)/);
+  assert.match(ingest, /buildTopicMap\(\{/);
 });
