@@ -33,14 +33,30 @@ async function complete(writer: AiWriter, id: string) {
   }
 }
 
-/** A streaming chat must retain its concurrency lease until its body finishes or is cancelled. */
+/**
+ * A ReadableStream may have an async producer in start() which is NOT stopped by
+ * cancel() of its reader. Routes register the producer lifecycle explicitly:
+ * transport cancellation may stop delivery, never release billable concurrency.
+ */
+const streamProducerDone = new WeakMap<Response, Promise<unknown>>();
+export function trackAiStreamProducer(response: Response, producerDone: Promise<unknown>): Response {
+  streamProducerDone.set(response, producerDone);
+  return response;
+}
+
+/** Hold the lease until producer work terminates, including on disconnect. */
 function protectStream(response: Response, settle: () => Promise<void>): Response {
   const reader = response.body?.getReader();
   if (!reader) return response;
+  const producerDone = streamProducerDone.get(response);
   let settled = false;
   async function once() {
     if (settled) return;
     settled = true;
+    // Cancellation of the transport is not cancellation of the provider.
+    if (producerDone) {
+      try { await producerDone; } catch { /* still count until termination */ }
+    }
     await settle();
   }
   const stream = new ReadableStream<Uint8Array>({
@@ -70,7 +86,7 @@ function protectStream(response: Response, settle: () => Promise<void>): Respons
 /**
  * Disabled by default so an unapplied migration cannot disrupt the golden beta.
  * When enabled, absence of policy, IP provenance, or Postgres is fail-closed.
- * Admission reservations are conservative upper-bound estimates, not provider invoices.
+ * Admission reservations are estimates and do not establish provider spend ceilings.
  */
 export async function guardAiRequest(
   request: Request,
