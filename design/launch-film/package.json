@@ -1,0 +1,23 @@
+{
+  "name": "studigo-launch-film",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "studio": "remotion studio",
+    "still": "remotion still src/index.ts Proof5s --frame=60 --output=out/still.png",
+    "render:proof": "remotion render src/index.ts Proof5s out/proof-5s.mp4",
+    "render:animatic": "remotion render src/index.ts Master out/animatic-16x9.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "@remotion/motion-blur": "^4.0.534",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}
