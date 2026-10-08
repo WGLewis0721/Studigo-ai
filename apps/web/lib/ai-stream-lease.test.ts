@@ -41,3 +41,53 @@ test("real Request AbortSignal retains the lease until provider termination", as
   for (let i = 0; i < 20 && released === 0; i++) await new Promise<void>(resolve => setImmediate(resolve));
   assert.equal(released, 1, "provider has terminated after abort");
 });
+
+
+test("actual HTTP client disconnect cannot free an active provider's lease", async () => {
+  const { createServer } = await import("node:http");
+  let completeProvider!: () => void;
+  const producer = new Promise<void>(resolve => { completeProvider = resolve; });
+  let release!: () => void;
+  const leaseReleased = new Promise<void>(resolve => { release = resolve; });
+  let disconnected!: () => void;
+  const socketClosed = new Promise<void>(resolve => { disconnected = resolve; });
+  let releases = 0;
+  const server = createServer((req, res) => {
+    const stream = trackAiStreamProducer(new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new TextEncoder().encode("data: start\\n\\n")); }
+    })), producer);
+    const guarded = protectAiStream(stream, async () => { releases++; release(); });
+    const reader = guarded.body!.getReader();
+    res.setHeader("Content-Type", "text/event-stream");
+    res.on("close", () => { disconnected(); void reader.cancel().catch(() => {}); });
+    void (async () => {
+      try {
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          res.write(part.value);
+        }
+      } catch { /* genuine disconnect */ }
+      finally { if (!res.destroyed) res.end(); }
+    })();
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const addr = server.address();
+    assert.ok(addr && typeof addr !== "string");
+    const client = new AbortController();
+    const response = await fetch(`http://127.0.0.1:${addr.port}/api/chat`, { signal: client.signal });
+    assert.equal(response.status, 200);
+    const first = await response.body!.getReader().read();
+    assert.equal(first.done, false);
+    client.abort();
+    await socketClosed;
+    assert.equal(releases, 0, "socket closed but provider still running");
+    completeProvider();
+    await leaseReleased;
+    assert.equal(releases, 1);
+  } finally {
+    completeProvider();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+});
