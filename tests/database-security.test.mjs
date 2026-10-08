@@ -14,7 +14,7 @@ const B = '00000000-0000-4000-8000-000000000002';
 const PRE_MIGRATION = '00000000-0000-4000-8000-000000000004';
 const id = n => `10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function as(role, uid, fn) {
-  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false);`);
+  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false); select set_config('request.jwt.claim.role', '${role}', false);`);
   try { return await fn(); } finally { await db.exec('reset role'); }
 }
 const one = async (q, args=[]) => (await db.query(q,args)).rows[0];
@@ -24,7 +24,7 @@ before(async () => {
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage; create schema extensions;
     create table auth.users(id uuid primary key);
-    create function auth.role() returns text language sql stable as $ select current_user::text $;
+    create function auth."role"() returns text language sql stable as $$ select current_setting('request.jwt.claim.role', true) $$;
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
     create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
