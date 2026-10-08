@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { withProviderWorkBudget } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import {
@@ -134,15 +135,17 @@ export async function guardAiRequest(
   }
 
   const settle = () => complete(writer, leaseId);
-  try {
-    const response = await handle(request);
-    if (response.headers.get("content-type")?.includes("text/event-stream")) {
-      return protectStream(response, settle);
+  return withProviderWorkBudget(operation, request.signal, async () => {
+    try {
+      const response = await handle(request);
+      if (response.headers.get("content-type")?.includes("text/event-stream")) {
+        return protectStream(response, settle);
+      }
+      await settle();
+      return response;
+    } catch (error) {
+      await settle();
+      throw error;
     }
-    await settle();
-    return response;
-  } catch (error) {
-    await settle();
-    throw error;
-  }
+  });
 }
