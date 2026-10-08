@@ -32,6 +32,11 @@ create table if not exists public.studigo_ai_guard_leases (
 create index if not exists studigo_ai_guard_active_idx
   on public.studigo_ai_guard_leases (expires_at)
   where completed_at is null;
+create index if not exists studigo_ai_guard_window_retention_idx
+  on public.studigo_ai_guard_windows (window_start);
+create index if not exists studigo_ai_guard_finished_retention_idx
+  on public.studigo_ai_guard_leases (completed_at)
+  where completed_at is not null;
 
 alter table public.studigo_ai_guard_state enable row level security;
 alter table public.studigo_ai_guard_windows enable row level security;
@@ -87,6 +92,23 @@ begin
 
   -- Serialize decisions globally at beta scale; no check-then-insert race.
   perform pg_advisory_xact_lock(731101, 1);
+  -- Bounded incremental pruning under the existing serialization point.
+  -- Keep recent receipts/duplicate keys for 30 days and complete billing
+  -- windows through the current day. Active leases are NEVER pruned.
+  delete from public.studigo_ai_guard_windows
+  where ctid in (
+    select ctid from public.studigo_ai_guard_windows
+    where (scope like '%minute' and window_start < v_now - interval '2 hours')
+       or (scope like '%day' and window_start < v_now - interval '2 days')
+    limit 128
+  );
+  delete from public.studigo_ai_guard_leases
+  where id in (
+    select id from public.studigo_ai_guard_leases
+    where (completed_at is not null and completed_at < v_now - interval '30 days')
+       or (completed_at is null and expires_at < v_now - interval '30 days')
+    limit 128
+  );
   if (select paused from public.studigo_ai_guard_state where id = true) is distinct from false then
     return jsonb_build_object('allowed', false, 'reason', 'paused');
   end if;
