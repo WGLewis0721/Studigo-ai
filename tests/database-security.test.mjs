@@ -24,6 +24,7 @@ before(async () => {
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage; create schema extensions;
     create table auth.users(id uuid primary key);
+    create function auth.role() returns text language sql stable as $ select current_user::text $;
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
     create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
@@ -793,4 +794,73 @@ test('a new account is wiped five days later and an older account is not', async
   assert.equal((await one('select count(*)::int as n from storage_cleanup_jobs where owner_id=$1 and storage_path=$2', [C, `${C}/${room}/notes.pdf`])).n, 1);
   assert.equal((await one('select count(*)::int as n from auth.users where id=$1', [A])).n, 1);
   assert.equal((await one('select count(*)::int as n from study_rooms where id=$1', [id(1)])).n, 1);
+});
+
+
+// Sprint 1 admission controls use the actual additive SQL migration in this PGlite harness.
+const admissionSql = 'select public.admit_studigo_ai_resource($1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,$7::integer,$8::integer,$9::integer,$10::integer,$11::integer,$12::integer,$13::bigint,$14::bigint) as decision';
+const SAMPLE_IP = 'f'.repeat(64);
+const GUARD_LIMITS = { userMinute: 10, ipMinute: 10, globalMinute: 20,
+  userConcurrent: 1, ipConcurrent: 5, globalConcurrent: 10, userDaily: 1000, globalDaily: 5000 };
+async function aiAdmit(owner, lease, key, cost=100, limits=GUARD_LIMITS, ip=SAMPLE_IP) {
+  return (await one(admissionSql, [
+    lease, owner, ip, 'chat', key, cost,
+    limits.userMinute, limits.ipMinute, limits.globalMinute,
+    limits.userConcurrent, limits.ipConcurrent, limits.globalConcurrent,
+    limits.userDaily, limits.globalDaily
+  ])).decision;
+}
+async function resetAdmission() {
+  await db.exec("delete from public.studigo_ai_guard_leases; delete from public.studigo_ai_guard_windows; update public.studigo_ai_guard_state set paused = false where id=true;");
+}
+
+test('AI admission tables and RPC are not available to authenticated or anonymous browser roles', async () => {
+  await as('authenticated', A, async () => {
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_windows'), error => error.code === '42501');
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_leases'), error => error.code === '42501');
+    await assert.rejects(db.query(admissionSql, [
+      id(99001),A,SAMPLE_IP,'chat','browser',100,10,10,20,1,5,10,1000,5000
+    ]), error => error.code === '42501');
+  });
+  await as('anon', A, async () => {
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_windows'), error => error.code === '42501');
+  });
+});
+
+test('AI admission atomically gates active work, duplicate IDs and per-minute rates', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const limits = { ...GUARD_LIMITS, userMinute: 1 };
+    assert.equal((await aiAdmit(A, id(99002), 'first', 100, limits)).allowed, true);
+    assert.equal((await aiAdmit(A, id(99003), 'second', 100, limits)).reason, 'concurrent');
+    assert.equal((await one('select public.finish_studigo_ai_resource($1::uuid) as released', [id(99002)])).released, true);
+    assert.equal((await aiAdmit(A, id(99003), 'second', 100, limits)).reason, 'rate');
+    assert.equal((await aiAdmit(A, id(99002), 'first', 100, limits)).reason, 'duplicate');
+    assert.equal((await aiAdmit(B, id(99004), 'other-user', 100, limits)).allowed, true);
+  });
+});
+
+test('AI admission enforces shared IP and global daily reservation ceilings', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const limits = { ...GUARD_LIMITS, ipMinute: 1, globalDaily: 150 };
+    assert.equal((await aiAdmit(A, id(99005), 'first', 100, limits)).allowed, true);
+    const ipBlocked = await aiAdmit(B, id(99006), 'second', 100, limits);
+    assert.equal(ipBlocked.reason, 'rate');
+    const otherIp = 'e'.repeat(64);
+    const capped = await aiAdmit(B, id(99006), 'second', 100, limits, otherIp);
+    assert.equal(capped.reason, 'global_budget');
+  });
+});
+
+test('AI admission pause fails closed and expired concurrency lease can recover', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    assert.equal((await aiAdmit(A, id(99007), 'one')).allowed, true);
+    await db.query("update public.studigo_ai_guard_leases set expires_at=now()-interval '1 minute' where id=$1", [id(99007)]);
+    assert.equal((await aiAdmit(A, id(99008), 'two')).allowed, true);
+    await db.exec('update public.studigo_ai_guard_state set paused=true where id=true');
+    assert.equal((await aiAdmit(B, id(99009), 'three')).reason, 'paused');
+    await db.exec('update public.studigo_ai_guard_state set paused=false where id=true');
+  });
 });
