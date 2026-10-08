@@ -163,7 +163,7 @@ begin
 
   insert into public.studigo_ai_guard_leases
     (id,owner_id,ip_hash,operation,request_key,reserved_micro_usd,expires_at)
-  values (p_lease_id,p_owner_id,p_ip_hash,p_operation,p_request_key,p_reserved_micro_usd,v_now+interval '6 minutes');
+  values (p_lease_id,p_owner_id,p_ip_hash,p_operation,p_request_key,p_reserved_micro_usd,v_now+interval '10 minutes');
 
   return jsonb_build_object('allowed',true,'lease_id',p_lease_id);
 end;
