@@ -38,3 +38,5 @@ higgsfield generate create elevenlabs_v4 --stability 0.3   --dialogue '[{"text":
 Re-download any clip free with `higgsfield generate get <job id>`. Files here are the originals (mp3, about 44 kHz).
 Higgsfield says users own outputs and may use them commercially; the Terms (sections 4.3 to 4.4) were not read in full.
 The voice is a stock preset, so others can use the same voice.
+
+Note: `take-B/B_03.mp3` includes a second phrase, "Bring it on.", that is not in the script. The film cuts it off (after about 2.0 s).
