@@ -1,5 +1,5 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
-import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
 import { processDocument } from "@/lib/ingest";
 import { isUuid } from "@/lib/ids";
 
@@ -13,7 +13,7 @@ export const maxDuration = 300;
  * topic map from that study guide. The caller stays on Materials while this
  * runs, so Coach/Learn remount with fresh conversation context when reopened.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -52,27 +52,18 @@ export async function POST(request: Request) {
     );
   }
 
-  if (data.status === "processing") {
-    return Response.json(
-      { error: "This study guide is still being processed. Wait for it to finish first." },
-      { status: 409 }
-    );
-  }
-
-  const lastForced = data.last_forced_reindex_at ? Date.parse(data.last_forced_reindex_at as string) : null;
-  if (!reindexCooldownElapsed(lastForced, Date.now(), reindexCooldownMs())) {
-    return Response.json(
-      { error: "This study guide was just refreshed. Wait a few minutes before refreshing it again." },
-      { status: 429 }
-    );
-  }
-
   const result = await processDocument({
     documentId: data.id as string,
     userId: user.id,
     force: true
   });
 
+  if (result.error === "reindex_cooldown") {
+    return Response.json({ error: "This study guide was just refreshed. Wait before refreshing it again." }, { status: 429 });
+  }
+  if (result.error === "reindex_processing") {
+    return Response.json({ error: "This study guide is being processed. Wait for it to finish." }, { status: 409 });
+  }
   if (result.status !== "ready") {
     return Response.json(
       { error: result.error || "The study guide could not be refreshed.", ...result },
@@ -85,4 +76,8 @@ export async function POST(request: Request) {
     document: { id: data.id, name: data.name },
     ...result
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "document-reindex", guardedPost);
 }

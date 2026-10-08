@@ -18,6 +18,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
+import { reindexCooldownMs } from "@/lib/ai-budget";
 const MAX_ATTEMPTS = 3;
 
 export type IngestResult = {
@@ -55,45 +56,31 @@ export async function processDocument(args: {
     return { documentId: args.documentId, status: "failed", error: "Document not found" };
   }
 
+  // One PostgreSQL transition owns both the cooldown and processing claim.
+  // Never reset a queued/processing row ahead of claim_document.
+  let claimed: boolean;
   if (args.force) {
-    if (document.status === "processing") {
-      const started = document.processing_started_at ? Date.parse(document.processing_started_at) : NaN;
-      const stillActive = Number.isFinite(started) && Date.now() - started < 10 * 60 * 1000;
-      if (stillActive) {
-        return {
-          documentId: document.id,
-          status: "failed",
-          error: "This study guide is still being processed. Wait for it to finish, then refresh again."
-        };
-      }
-    }
-
-    // Manual refresh deliberately bypasses the normal three-attempt retry cap.
-    // The original file stays in Storage; processing below replaces only the
-    // derived chunks/topic map after a fresh extraction + embedding pass.
-    const { error: resetError } = await supabase
-      .from("documents")
-      .update({
-        status: "queued",
-        attempts: 0,
-        processing_started_at: null,
-        processed_at: null,
-        error_message: null,
-        last_forced_reindex_at: new Date().toISOString()
-      })
-      .eq("id", document.id)
-      .eq("owner_id", args.userId);
-    if (resetError) {
-      return { documentId: document.id, status: "failed", error: resetError.message };
-    }
+    const cooldownSeconds = Math.min(86400, Math.max(900, Math.ceil(reindexCooldownMs() / 1000)));
+    const { data, error } = await supabase.rpc("claim_forced_studigo_reindex", {
+      p_document_id: document.id, p_owner_id: args.userId,
+      p_cooldown_seconds: cooldownSeconds
+    });
+    if (error) return { documentId: document.id, status: "failed", error: "Reindex claim failed" };
+    const claim = data as { claimed?: boolean; reason?: string } | null;
+    if (!claim?.claimed) return {
+      documentId: document.id,
+      status: "skipped",
+      error: claim?.reason === "cooldown" ? "reindex_cooldown" :
+        claim?.reason === "processing" ? "reindex_processing" : "reindex_unavailable"
+    };
+    claimed = true;
+  } else {
+    const { data, error } = await supabase.rpc("claim_document", {
+      p_document_id: document.id, p_owner_id: args.userId
+    });
+    if (error) return { documentId: document.id, status: "failed", error: error.message };
+    claimed = Boolean(data);
   }
-
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_document", {
-    p_document_id: document.id, p_owner_id: args.userId
-  });
-  if (claimError) return { documentId: document.id, status: "failed", error: claimError.message };
-
-  // Another run already owns this document.
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
   try {

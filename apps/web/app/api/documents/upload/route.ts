@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import {
   SOURCE_TYPES,
   UnsafeFileError,
@@ -16,7 +17,7 @@ export const maxDuration = 60;
 
 const ALLOWED_SOURCE_TYPES = new Set<string>(SOURCE_TYPES);
 
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -129,4 +130,8 @@ export async function POST(request: Request) {
   const { error: queuedError } = await service.from("documents").update({ status: "queued" }).eq("id", documentId);
   if (queuedError) return Response.json({ error: "Upload saved, but processing could not start. Retry from Materials." }, { status: 500 });
   return Response.json({ document: { ...document, status: "queued" } }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "document-upload", guardedPost);
 }
