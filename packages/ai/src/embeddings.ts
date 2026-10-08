@@ -1,4 +1,5 @@
 import { EMBEDDING_DIMENSIONS, embeddingClient, embeddingModel } from "./client";
+import { debitEmbeddingWork, providerAbortSignal } from "./provider-budget";
 
 const MAX_BATCH_INPUTS = 96;
 /** Well under the 8k-token model limit once chunks are ~1.4k characters. */
@@ -20,7 +21,8 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
       .slice(start, start + MAX_BATCH_INPUTS)
       .map((input) => input.slice(0, MAX_INPUT_CHARS) || " ");
 
-    const response = await embeddingClient().embeddings.create({ model, input: batch });
+    debitEmbeddingWork(model, batch);
+    const response = await embeddingClient().embeddings.create({ model, input: batch }, { signal: providerAbortSignal() });
     const ordered = [...response.data].sort((a, b) => a.index - b.index);
 
     for (const item of ordered) {
