@@ -7,6 +7,7 @@ import {
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
+import { debitResponseWork, providerAbortSignal, trackProviderCall } from "./provider-budget";
 import { stripAnswerFiller, termMatch } from "./typos";
 
 /** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
@@ -16,7 +17,11 @@ export async function structured<T>(args: {
   schemaName: string;
   schema: Record<string, unknown>;
 }): Promise<T> {
-  const response = await client().responses.create({
+  debitResponseWork({
+    model: chatModel(), max_output_tokens: responseOptions().max_output_tokens,
+    input: [args.system, args.user, JSON.stringify(args.schema)]
+  });
+  const response = await trackProviderCall(() => client().responses.create({
     model: chatModel(),
     ...responseOptions(),
     input: [
@@ -31,7 +36,7 @@ export async function structured<T>(args: {
         schema: args.schema
       }
     }
-  });
+  }, { signal: providerAbortSignal() }));
 
   const raw = response.output_text?.trim();
   if (!raw) throw new Error(`${args.schemaName}: model returned no output`);
@@ -200,10 +205,10 @@ export async function generateQuizQuestions(args: {
   const system = [
     "You write practice questions for one specific course, using only the numbered excerpts supplied.",
     "Every question, every option, and every explanation must be answerable from those excerpts. Never test something they do not cover.",
-    "multiple_choice: exactly four options, one correct, with distractors that are plausible to someone who half-remembers the material — never joke options or 'all of the above'. Set correct_choice (0-based).",
+    "multiple_choice: exactly four options, one correct, with distractors that are plausible to someone who half-remembers the material - never joke options or 'all of the above'. Set correct_choice (0-based).",
     "short_answer: expects one or two sentences. Set expected_answer to the model answer.",
-    `true_false: choices are exactly ["True","False"] and correct_choice is 0 for True or 1 for False. The statement must be decidable from the excerpts alone. Make roughly half of them false, and build a false statement by changing a specific claim — a number, a direction, a cause, an order — never by inserting 'always' or 'never' as a giveaway.`,
-    `fill_blank: the prompt is one sentence from the material with exactly one blank written as ${BLANK_MARKER}. The blank must hide a term or value worth knowing, never an article or a preposition. Set expected_answer to the single best answer and accepted_answers to every spelling that should be marked correct — the exact term, common abbreviations, and singular/plural forms.`,
+    `true_false: choices are exactly ["True","False"] and correct_choice is 0 for True or 1 for False. The statement must be decidable from the excerpts alone. Make roughly half of them false, and build a false statement by changing a specific claim - a number, a direction, a cause, an order - never by inserting 'always' or 'never' as a giveaway.`,
+    `fill_blank: the prompt is one sentence from the material with exactly one blank written as ${BLANK_MARKER}. The blank must hide a term or value worth knowing, never an article or a preposition. Set expected_answer to the single best answer and accepted_answers to every spelling that should be marked correct - the exact term, common abbreviations, and singular/plural forms.`,
     "Set fields that do not apply to null or an empty array.",
     "Never leak the answer in the stem: the wording must not contain the answer, its definition, or a one-to-one paraphrase of it.",
     "The explanation says why the answer is right and points at what the material says.",
@@ -328,7 +333,7 @@ export function normalizeGeneratedQuestion(
 export function normalizeBlankAnswer(value: string) {
   return value
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[`-?]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\b(a|an|the)\b/g, " ")
@@ -529,12 +534,10 @@ export async function explainTopic(args: {
     return "There is nothing in this Study Room's materials covering that topic yet.";
   }
 
-  const response = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: [
+  const model = chatModel(), options = responseOptions();
+  const input = [
       {
-        role: "system",
+        role: "system" as const,
         content: [
           "You are Studigo, teaching one topic from one course's own materials.",
           "Use only the numbered excerpts supplied. Cite inline with [n] for every substantive claim.",
@@ -547,16 +550,19 @@ export async function explainTopic(args: {
         ].join(" ")
       },
       {
-        role: "user",
+        role: "user" as const,
         content: [
           asUntrustedMaterial({ topicTitle: args.topicTitle, objective: args.objective }),
           `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
-        ]
-          .filter(Boolean)
-          .join("\n\n")
+        ].filter(Boolean).join("\n\n")
       }
-    ]
-  });
+    ];
+  debitResponseWork({ model, max_output_tokens: options.max_output_tokens, input });
+  const response = await trackProviderCall(() => client().responses.create({
+    model,
+    ...options,
+    input
+  }, { signal: providerAbortSignal() }));
 
   return response.output_text?.trim() || "I couldn't build a grounded explanation for that topic.";
 }
@@ -655,7 +661,7 @@ export async function askSocraticQuestion(args: {
   const result = await structured<{ question: string }>({
     system: [
       "You are Studigo, checking whether a learner understands one topic from their own course materials.",
-      "Ask exactly one open question that makes them explain the idea in their own words — why, how, what would happen if.",
+      "Ask exactly one open question that makes them explain the idea in their own words - why, how, what would happen if.",
       "Never ask something answerable with yes, no, or a single term, and never ask for a definition they could copy straight from the page.",
       "The question must be answerable from the supplied excerpts alone.",
       LEVEL_RULES[args.level ?? "standard"],
@@ -708,3 +714,5 @@ export async function respondToSocraticAnswer(args: {
 
   return normalizeSocraticResponse(result, args.question);
 }
+
+

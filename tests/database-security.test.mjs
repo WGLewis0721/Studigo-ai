@@ -14,7 +14,7 @@ const B = '00000000-0000-4000-8000-000000000002';
 const PRE_MIGRATION = '00000000-0000-4000-8000-000000000004';
 const id = n => `10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function as(role, uid, fn) {
-  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false);`);
+  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false); select set_config('request.jwt.claim.role', '${role}', false);`);
   try { return await fn(); } finally { await db.exec('reset role'); }
 }
 const one = async (q, args=[]) => (await db.query(q,args)).rows[0];
@@ -24,7 +24,9 @@ before(async () => {
     create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage; create schema extensions;
     create table auth.users(id uuid primary key);
+    create function auth."role"() returns text language sql stable as $$ select current_setting('request.jwt.claim.role', true) $$;
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+
     create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb $$;
     create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
     create table storage.objects(id uuid primary key default gen_random_uuid(), bucket_id text, name text);
@@ -613,7 +615,7 @@ test('session choice retains explicit selection, supports clearing it, and rejec
 
 async function responseFixture(n) {
  const f=await sessionFixture(n),conversation=id(n+4),interaction=id(n+5),encounter=`response-${n}`;
- const content='Usable evidence with "quotes",\nnewlines and café.';
+ const content='Usable evidence with "quotes",\nnewlines and caf�.';
  await db.query('update document_chunks set content=$1 where id=$2',[content,f.chunk]);
  await db.query('insert into conversations(id,room_id,owner_id) values($1,$2,$3)',[conversation,f.room,A]);
  await db.query("insert into messages(id,conversation_id,role,content) values($1,$2,'user','start')",[interaction,conversation]);
@@ -794,3 +796,145 @@ test('a new account is wiped five days later and an older account is not', async
   assert.equal((await one('select count(*)::int as n from auth.users where id=$1', [A])).n, 1);
   assert.equal((await one('select count(*)::int as n from study_rooms where id=$1', [id(1)])).n, 1);
 });
+
+
+// Sprint 1 admission controls use the actual additive SQL migration in this PGlite harness.
+const admissionSql = 'select public.admit_studigo_ai_resource($1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,$7::integer,$8::integer,$9::integer,$10::integer,$11::integer,$12::integer,$13::bigint,$14::bigint) as decision';
+const SAMPLE_IP = 'f'.repeat(64);
+const GUARD_LIMITS = { userMinute: 10, ipMinute: 10, globalMinute: 20,
+  userConcurrent: 1, ipConcurrent: 5, globalConcurrent: 10, userDaily: 1000, globalDaily: 5000 };
+async function aiAdmit(owner, lease, key, cost=100, limits=GUARD_LIMITS, ip=SAMPLE_IP) {
+  return (await one(admissionSql, [
+    lease, owner, ip, 'chat', key, cost,
+    limits.userMinute, limits.ipMinute, limits.globalMinute,
+    limits.userConcurrent, limits.ipConcurrent, limits.globalConcurrent,
+    limits.userDaily, limits.globalDaily
+  ])).decision;
+}
+async function resetAdmission() {
+  await db.exec("delete from public.studigo_ai_guard_leases; delete from public.studigo_ai_guard_receipts; delete from public.studigo_ai_guard_windows; update public.studigo_ai_guard_state set paused = false where id=true;");
+}
+
+test('AI admission tables and RPC are not available to authenticated or anonymous browser roles', async () => {
+  await as('authenticated', A, async () => {
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_windows'), error => error.code === '42501');
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_leases'), error => error.code === '42501');
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_receipts'), error => error.code === '42501');
+    await assert.rejects(db.query(admissionSql, [
+      id(99001),A,SAMPLE_IP,'chat','browser',100,10,10,20,1,5,10,1000,5000
+    ]), error => error.code === '42501');
+  });
+  await as('anon', A, async () => {
+    await assert.rejects(db.query('select * from public.studigo_ai_guard_windows'), error => error.code === '42501');
+  });
+});
+
+test('AI retry receipts bind request payload and preserve running/completed state', async () => {
+  await resetAdmission();
+  const claim = 'select public.claim_studigo_ai_receipt($1::uuid,$2::text,$3::text,$4::text) as d';
+  await as('service_role', null, async () => {
+    assert.equal((await one(claim,[A,'learn','receipt-1','a'.repeat(64)])).d.claimed,true);
+    assert.equal((await one(claim,[A,'learn','receipt-1','b'.repeat(64)])).d.reason,'idempotency_conflict');
+    assert.equal((await one("select public.start_studigo_ai_receipt($1,'learn','receipt-1') as started",[A])).started,true);
+    assert.equal((await one(claim,[A,'learn','receipt-1','a'.repeat(64)])).d.reason,'running');
+    assert.equal((await one("select public.finish_studigo_ai_receipt($1,'learn','receipt-1',true) as finished",[A])).finished,true);
+    assert.equal((await one(claim,[A,'learn','receipt-1','a'.repeat(64)])).d.reason,'completed');
+  });
+});
+
+test('AI admission atomically gates active work, duplicate IDs and per-minute rates', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const limits = { ...GUARD_LIMITS, userMinute: 1 };
+    assert.equal((await aiAdmit(A, id(99002), 'first', 100, limits)).allowed, true);
+    assert.equal((await aiAdmit(A, id(99003), 'second', 100, limits)).reason, 'concurrent');
+    assert.equal((await one('select public.finish_studigo_ai_resource($1::uuid) as released', [id(99002)])).released, true);
+    assert.equal((await aiAdmit(A, id(99003), 'second', 100, limits)).reason, 'rate');
+    assert.equal((await aiAdmit(A, id(99002), 'first', 100, limits)).reason, 'duplicate');
+    assert.equal((await aiAdmit(B, id(99004), 'other-user', 100, limits)).allowed, true);
+  });
+});
+
+test('AI admission enforces shared IP and global daily reservation ceilings', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const limits = { ...GUARD_LIMITS, ipMinute: 1, globalDaily: 150 };
+    assert.equal((await aiAdmit(A, id(99005), 'first', 100, limits)).allowed, true);
+    const ipBlocked = await aiAdmit(B, id(99006), 'second', 100, limits);
+    assert.equal(ipBlocked.reason, 'rate');
+    const otherIp = 'e'.repeat(64);
+    const capped = await aiAdmit(B, id(99006), 'second', 100, limits, otherIp);
+    assert.equal(capped.reason, 'global_budget');
+  });
+});
+
+test('AI admission pause fails closed and expired concurrency lease can recover', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    assert.equal((await aiAdmit(A, id(99007), 'one')).allowed, true);
+    assert.equal((await one('select public.renew_studigo_ai_resource($1::uuid) as renewed',[id(99007)])).renewed,true);
+    await db.query("update public.studigo_ai_guard_leases set expires_at=now()-interval '1 minute' where id=$1", [id(99007)]);
+    assert.equal((await aiAdmit(A, id(99008), 'two')).allowed, true);
+    await db.exec('update public.studigo_ai_guard_state set paused=true where id=true');
+    assert.equal((await aiAdmit(B, id(99009), 'three')).reason, 'paused');
+    await db.exec('update public.studigo_ai_guard_state set paused=false where id=true');
+  });
+});
+test('AI admission rejects all NULL privileged limit inputs instead of disabling checks', async () => {
+  const sql = 'select public.admit_studigo_ai_resource($1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,$7::integer,$8::integer,$9::integer,$10::integer,$11::integer,$12::integer,$13::bigint,$14::bigint) as d';
+  await as('service_role', null, async () => {
+    for (let index = 6; index <= 13; index++) {
+      const args = [id(99500+index), A, 'a'.repeat(64), 'chat', 'null-check-'+index, 100, 10, 10, 10, 2, 3, 5, 10_000, 100_000];
+      args[index] = null;
+      const response = (await one(sql, args)).d;
+      assert.equal(response.allowed, false, 'NULL parameter ' + index);
+      assert.equal(response.reason, 'invalid');
+    }
+  });
+});
+
+test('forced reindex row claim owns status and cooldown in one DB transition', async () => {
+  const doc = id(11);
+  const sql = 'select public.claim_forced_studigo_reindex($1::uuid,$2::uuid,$3::integer) as d';
+  await db.query("update documents set source_type='study_guide', status='ready', last_forced_reindex_at=null where id=$1", [doc]);
+  await as('service_role', null, async () => {
+    assert.equal((await one(sql, [doc, A, 900])).d.claimed, true);
+    const first = await one('select status, attempts, last_forced_reindex_at from documents where id=$1', [doc]);
+    assert.equal(first.status, 'processing');
+    assert.equal(first.attempts, 1);
+    assert.ok(first.last_forced_reindex_at);
+    assert.equal((await one(sql, [doc, A, 900])).d.reason, 'processing');
+    await db.query("update documents set status='ready' where id=$1", [doc]);
+    assert.equal((await one(sql, [doc, A, 900])).d.reason, 'cooldown');
+    assert.equal((await one(sql, [doc, B, 900])).d.reason, 'not_found');
+    assert.equal((await one(sql, [doc, A, null])).d.reason, 'invalid');
+  });
+  await assert.rejects(as('authenticated', A, () => db.query(sql, [doc, A, 900])), error => error.code === '42501');
+});
+
+test('AI admission prunes old windows and completed leases without touching current work', async () => {
+  const oldLease = id(99731), newLease = id(99732);
+  await as('service_role', null, async () => {
+    await db.query(`insert into public.studigo_ai_guard_windows(scope,scope_key,window_start,requests)
+      values('global_minute','old-retention',now()-interval '3 hours',1),
+            ('global_day','old-retention',now()-interval '3 days',1)`);
+    await db.query(`insert into public.studigo_ai_guard_leases
+      (id,owner_id,ip_hash,operation,request_key,reserved_micro_usd,expires_at,completed_at)
+      values($1,$2,$3,'retention','old-retention',100,now()-interval '40 days',now()-interval '40 days')`,
+      [oldLease,A,'b'.repeat(64)]);
+    const args = [newLease,A,'a'.repeat(64),'retention','current-retention',100,
+      500,500,500,500,500,500,10_000_000,10_000_000];
+    const admitted = (await one(`select public.admit_studigo_ai_resource(
+      $1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,
+      $7::integer,$8::integer,$9::integer,$10::integer,$11::integer,
+      $12::integer,$13::bigint,$14::bigint) as decision`,args)).decision;
+    assert.equal(admitted.allowed, true);
+    assert.equal((await one("select count(*)::integer as n from public.studigo_ai_guard_windows where scope_key='old-retention'")).n, 0);
+    assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[oldLease])).n,0);
+    assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[newLease])).n,1);
+    const ttl = await one('select extract(epoch from (expires_at - started_at))::integer as seconds from public.studigo_ai_guard_leases where id=$1',[newLease]);
+    assert.equal(ttl.seconds, 600, 'lease must outlast five-minute Vercel execution');
+  });
+});
+
+
