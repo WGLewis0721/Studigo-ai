@@ -7,6 +7,7 @@ import {
   client
 } from "./client";
 import { groundingStatus, type GroundingStatus } from "./verify-claim";
+import { debitResponseWork, providerAbortSignal } from "./provider-budget";
 
 export type RetrievedChunk = {
   id: string;
@@ -165,11 +166,11 @@ export async function answerFromRetrievedContext(args: {
   }
 
   const available = toCitations(args.chunks);
+  const model = chatModel(), options = responseOptions(), input = buildInput(args);
+  debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
   const response = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: buildInput(args)
-  });
+    model, ...options, input
+  }, { signal: providerAbortSignal() });
 
   const text = response.output_text?.trim() || INSUFFICIENT_EVIDENCE_TEXT;
   const used = citationsUsedIn(text, available);
@@ -207,12 +208,12 @@ export async function* streamGroundedAnswer(args: {
   }
 
   const available = toCitations(args.chunks);
+  const model = chatModel(), options = responseOptions(), input = buildInput(args);
+  debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
   const stream = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: buildInput(args),
+    model, ...options, input,
     stream: true
-  });
+  }, { signal: providerAbortSignal() });
 
   let text = "";
   for await (const event of stream) {
