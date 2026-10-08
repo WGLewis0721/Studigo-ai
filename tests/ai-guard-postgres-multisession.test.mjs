@@ -53,11 +53,17 @@ test("two actual PostgreSQL sessions cannot force-claim the same document twice"
   assert.match(await sql(`begin; ${auth} ${claim}; commit;`), /"reason": "cooldown"/);
 });
 
-test("two actual PostgreSQL sessions cannot exceed one concurrent admission", { skip: !URL }, async () => {
+test("global admission contention fails closed quickly and still preserves the cap", { skip: !TEST_DATABASE_URL }, async () => {
   const first = sql(`begin; ${auth} ${admit(101)}; select pg_sleep(2); commit;`);
   await new Promise(resolve => setTimeout(resolve, 250));
+  const started = Date.now();
   const second = sql(`begin; ${auth} ${admit(102)}; commit;`);
-  const [a,b] = await Promise.all([first,second]);
+  const b = await second;
+  assert.match(b, /"reason": "busy"/);
+  assert.ok(Date.now() - started < 1000, "contended admission did not wait behind the global lock");
+  const a = await first;
   assert.match(a, /"allowed": true/);
-  assert.match(b, /"reason": "concurrent"/);
+  assert.match(await sql(`begin; ${auth} ${admit(103)}; commit;`), /"reason": "concurrent"/);
 });
+
+

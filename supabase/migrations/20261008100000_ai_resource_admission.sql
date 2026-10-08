@@ -43,6 +43,12 @@ create table if not exists public.studigo_ai_guard_receipts (
 create index if not exists studigo_ai_guard_active_idx
   on public.studigo_ai_guard_leases (expires_at)
   where completed_at is null;
+create index if not exists studigo_ai_guard_owner_active_idx
+  on public.studigo_ai_guard_leases (owner_id, expires_at)
+  where completed_at is null;
+create index if not exists studigo_ai_guard_ip_active_idx
+  on public.studigo_ai_guard_leases (ip_hash, expires_at)
+  where completed_at is null;
 create index if not exists studigo_ai_guard_window_retention_idx
   on public.studigo_ai_guard_windows (window_start);
 create index if not exists studigo_ai_guard_finished_retention_idx
@@ -169,8 +175,11 @@ begin
     return jsonb_build_object('allowed', false, 'reason', 'invalid');
   end if;
 
-  -- Serialize decisions globally at beta scale; no check-then-insert race.
-  perform pg_advisory_xact_lock(731101, 1);
+  -- Serialize decisions globally at beta scale without an unbounded queue.
+  -- Callers fail closed and retry instead of tying up database sessions.
+  if not pg_try_advisory_xact_lock(731101, 1) then
+    return jsonb_build_object('allowed',false,'reason','busy');
+  end if;
   -- Bounded incremental pruning under the existing serialization point.
   -- Keep recent receipts/duplicate keys for 30 days and complete billing
   -- windows through the current day. Active leases are NEVER pruned.
