@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 
-const URL = process.env.STUDIGO_TEST_POSTGRES_URL;
+const TEST_DATABASE_URL = process.env.STUDIGO_TEST_POSTGRES_URL;
 function sql(query) {
   return new Promise((resolve, reject) => {
-    const child = spawn("psql", ["-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", URL, "-c", query], {
+    const child = spawn("psql", ["-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", TEST_DATABASE_URL, "-c", query], {
       env: process.env, stdio: ["ignore", "pipe", "pipe"]
     });
     let out = "", err = "";
@@ -20,10 +20,10 @@ const owner = "00000000-0000-4000-8000-000000000001";
 const doc = "00000000-0000-4000-8000-000000000011";
 const uuid = n => "10000000-0000-4000-8000-" + String(n).padStart(12,"0");
 const claim = `select public.claim_forced_studigo_reindex('${doc}', '${owner}', 900)`;
-const admit = (n) => `select public.admit_studigo_ai_resource('${uuid(n)}','${owner}','${"f".repeat(64)}','chat','parallel-${n}',100,10,10,10,1,3,3,10000,20000)`;
+const admit = (n) => `select public.admit_studigo_ai_resource('${uuid(n)}'::uuid,'${owner}'::uuid,'${"f".repeat(64)}'::text,'chat'::text,'parallel-${n}'::text,100::bigint,10::integer,10::integer,10::integer,1::integer,3::integer,3::integer,10000::bigint,20000::bigint)`;
 const auth = "set local request.jwt.claim.role = 'service_role';";
 
-test("two actual PostgreSQL sessions cannot force-claim the same document twice", { skip: !URL }, async () => {
+test("two actual PostgreSQL sessions cannot force-claim the same document twice", { skip: !TEST_DATABASE_URL }, async () => {
   await sql(`
     create role service_role bypassrls;
     create role authenticated;

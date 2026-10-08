@@ -48,7 +48,7 @@ function active(): WorkState | undefined {
 
 /** Works even with a cancelled HTTP response because async-start inherits the scope. */
 export function providerAbortSignal(): AbortSignal | undefined {
-  return active()?.signal;
+  return store.getStore()?.signal;
 }
 
 const CHAT_MODELS = new Set(["gpt-4.1-mini", "openai/gpt-4.1-mini"]);
