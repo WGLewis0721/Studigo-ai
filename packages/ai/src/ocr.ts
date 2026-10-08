@@ -1,5 +1,5 @@
 import { UNTRUSTED_MATERIAL_RULE, chatModel, client, responseOptions } from "./client";
-import { debitResponseWork, providerAbortSignal } from "./provider-budget";
+import { debitResponseWork, providerAbortSignal, trackProviderCall } from "./provider-budget";
 
 
 const OCR_PROMPT = [
@@ -24,7 +24,7 @@ export async function ocrPagePdf(args: {
 }): Promise<string> {
   const fileData = `data:application/pdf;base64,${Buffer.from(args.pdf).toString("base64")}`;
   debitResponseWork({ model: chatModel(), max_output_tokens: responseOptions().max_output_tokens, input: [OCR_PROMPT, fileData] });
-  const response = await client().responses.create({
+  const response = await trackProviderCall(() => client().responses.create({
     model: chatModel(),
     ...responseOptions(),
     input: [
@@ -40,7 +40,7 @@ export async function ocrPagePdf(args: {
         ]
       }
     ]
-  }, { signal: providerAbortSignal() });
+  }, { signal: providerAbortSignal() }));
 
   return cleanOcrText(response.output_text ?? "");
 }
@@ -51,7 +51,7 @@ export async function ocrImage(args: {
 }): Promise<string> {
   const fileData = `data:${args.mimeType};base64,${Buffer.from(args.bytes).toString("base64")}`;
   debitResponseWork({ model: chatModel(), max_output_tokens: responseOptions().max_output_tokens, input: [OCR_PROMPT, fileData] });
-  const response = await client().responses.create({
+  const response = await trackProviderCall(() => client().responses.create({
     model: chatModel(),
     ...responseOptions(),
     input: [
@@ -67,7 +67,7 @@ export async function ocrImage(args: {
         ]
       }
     ]
-  }, { signal: providerAbortSignal() });
+  }, { signal: providerAbortSignal() }));
 
   return cleanOcrText(response.output_text ?? "");
 }
@@ -76,3 +76,5 @@ function cleanOcrText(text: string) {
   const trimmed = text.trim();
   return trimmed === OCR_EMPTY_MARKER ? "" : trimmed;
 }
+
+

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  withProviderWorkBudget, debitResponseWork, debitEmbeddingWork, providerAbortSignal
+  withProviderWorkBudget, debitResponseWork, debitEmbeddingWork, providerAbortSignal,
+  trackProviderCall, abortAndDrainProviderWork
 } from "./provider-budget";
 
 const chat = (input = "short") => ({
@@ -52,3 +53,50 @@ test("independent admitted requests never share a work counter", async () => {
     })
   ));
 });
+
+test("enabled admission fails closed before an unscoped provider request starts", async () => {
+  const previous = process.env.STUDIGO_AI_ADMISSION;
+  process.env.STUDIGO_AI_ADMISSION = "1";
+  let started = false;
+  try {
+    assert.throws(() => trackProviderCall(async () => { started = true; }), /outside an admission scope/);
+    assert.equal(started, false);
+  } finally {
+    if (previous === undefined) delete process.env.STUDIGO_AI_ADMISSION;
+    else process.env.STUDIGO_AI_ADMISSION = previous;
+  }
+});
+
+test("failed parallel work is aborted and drained before admission may release", async () => {
+  await withProviderWorkBudget("practice-test-grade", new AbortController().signal, async () => {
+    const signal = providerAbortSignal()!;
+    let siblingSettled = false;
+    const failed = trackProviderCall(async () => { throw new Error("first failed"); });
+    const sibling = trackProviderCall(() => new Promise<void>((resolve) => {
+      signal.addEventListener("abort", () => { siblingSettled = true; resolve(); }, { once: true });
+    }));
+    await assert.rejects(Promise.all([failed, sibling]), /first failed/);
+    assert.equal(siblingSettled, false);
+    await abortAndDrainProviderWork();
+    assert.equal(siblingSettled, true);
+  });
+});
+
+test("explicit stream cancellation cannot replace the admission deadline signal", async () => {
+  const request = new AbortController();
+  await withProviderWorkBudget("chat", request.signal, async () => {
+    const local = new AbortController();
+    const effective = providerAbortSignal(local.signal)!;
+    local.abort();
+    assert.equal(effective.aborted, true);
+  });
+  const outer = new AbortController();
+  await withProviderWorkBudget("chat", outer.signal, async () => {
+    const local = new AbortController();
+    const effective = providerAbortSignal(local.signal)!;
+    outer.abort();
+    assert.equal(effective.aborted, true);
+  });
+});
+
+
