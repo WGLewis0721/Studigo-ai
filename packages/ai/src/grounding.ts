@@ -191,6 +191,7 @@ export type GroundedStreamEvent =
 
 /** Streams the answer token by token, then emits the citations it actually used. */
 export async function* streamGroundedAnswer(args: {
+  signal?: AbortSignal;
   question: string;
   instructions?: string;
   format?: AnswerFormat;
@@ -212,7 +213,7 @@ export async function* streamGroundedAnswer(args: {
     ...responseOptions(),
     input: buildInput(args),
     stream: true
-  });
+  }, { signal: args.signal });
 
   let text = "";
   for await (const event of stream) {
