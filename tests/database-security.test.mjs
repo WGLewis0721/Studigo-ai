@@ -14,7 +14,7 @@ const B = '00000000-0000-4000-8000-000000000002';
 const PRE_MIGRATION = '00000000-0000-4000-8000-000000000004';
 const id = n => `10000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function as(role, uid, fn) {
-  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false);`);
+  await db.exec(`set role ${role}; select set_config('request.jwt.claim.sub', '${uid}', false); select set_config('request.jwt.claim.role','${role}', false);`);
   try { return await fn(); } finally { await db.exec('reset role'); }
 }
 const one = async (q, args=[]) => (await db.query(q,args)).rows[0];
