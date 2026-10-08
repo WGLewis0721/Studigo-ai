@@ -849,5 +849,7 @@ test('AI admission prunes old windows and completed leases without touching curr
     assert.equal((await one("select count(*)::integer as n from public.studigo_ai_guard_windows where scope_key='old-retention'")).n, 0);
     assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[oldLease])).n,0);
     assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[newLease])).n,1);
+    const ttl = await one('select extract(epoch from (expires_at - started_at))::integer as seconds from public.studigo_ai_guard_leases where id=$1',[newLease]);
+    assert.equal(ttl.seconds, 600, 'lease must outlast five-minute Vercel execution');
   });
 });
