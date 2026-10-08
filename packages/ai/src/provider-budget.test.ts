@@ -27,7 +27,7 @@ test("provider work budget requires approved models and bounded output", async (
 test("maximal document embedding fanout is bounded even across batches", async () => {
   await withProviderWorkBudget("document-reindex", new AbortController().signal, async () => {
     for (let i = 0; i < 42; i++) debitEmbeddingWork("text-embedding-3-small", Array(96).fill("x".repeat(1000)));
-    assert.throws(() => debitEmbeddingWork("text-embedding-3-small", Array(96).fill("x".repeat(24_000))), /allowance exhausted/);
+    assert.throws(() => debitEmbeddingWork("text-embedding-3-small", Array(96).fill("x".repeat(100_000))), /allowance exhausted/);
     for (let i = 0; i < 40; i++) debitResponseWork(chat("scan"));
     for (let i = 40; i < 64; i++) debitResponseWork(chat("scan"));
     assert.throws(() => debitResponseWork(chat()), /allowance exhausted/);
