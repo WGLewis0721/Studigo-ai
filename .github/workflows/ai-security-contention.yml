@@ -1,0 +1,32 @@
+name: AI security contention
+
+on:
+  pull_request:
+  push:
+    branches: [security/ai-admission-core-20261008, security/ai-admission-routes-20261008]
+
+jobs:
+  postgres-multisession:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: studigo_security
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      STUDIGO_TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/studigo_security
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Real multi-session contention regression
+        run: node --test tests/ai-guard-postgres-multisession.test.mjs
