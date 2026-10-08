@@ -828,3 +828,26 @@ test('forced reindex row claim owns status and cooldown in one DB transition', a
   });
   await assert.rejects(as('authenticated', A, () => db.query(sql, [doc, A, 900])), error => error.code === '42501');
 });
+
+test('AI admission prunes old windows and completed leases without touching current work', async () => {
+  const oldLease = id(99731), newLease = id(99732);
+  await as('service_role', null, async () => {
+    await db.query(`insert into public.studigo_ai_guard_windows(scope,scope_key,window_start,requests)
+      values('global_minute','old-retention',now()-interval '3 hours',1),
+            ('global_day','old-retention',now()-interval '3 days',1)`);
+    await db.query(`insert into public.studigo_ai_guard_leases
+      (id,owner_id,ip_hash,operation,request_key,reserved_micro_usd,expires_at,completed_at)
+      values($1,$2,$3,'retention','old-retention',100,now()-interval '40 days',now()-interval '40 days')`,
+      [oldLease,A,'b'.repeat(64)]);
+    const args = [newLease,A,'a'.repeat(64),'retention','current-retention',100,
+      500,500,500,500,500,500,10_000_000,10_000_000];
+    const admitted = (await one(`select public.admit_studigo_ai_resource(
+      $1::uuid,$2::uuid,$3::text,$4::text,$5::text,$6::bigint,
+      $7::integer,$8::integer,$9::integer,$10::integer,$11::integer,
+      $12::integer,$13::bigint,$14::bigint) as decision`,args)).decision;
+    assert.equal(admitted.allowed, true);
+    assert.equal((await one("select count(*)::integer as n from public.studigo_ai_guard_windows where scope_key='old-retention'")).n, 0);
+    assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[oldLease])).n,0);
+    assert.equal((await one('select count(*)::integer as n from public.studigo_ai_guard_leases where id=$1',[newLease])).n,1);
+  });
+});
