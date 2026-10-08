@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences, readLearnPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";
@@ -31,7 +32,7 @@ type ChatRequest = {
  * Ask Studigo: retrieve inside this room only, answer from what came back, and
  * stream the answer followed by the citations the answer actually used.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
@@ -201,4 +202,8 @@ export async function POST(request: Request) {
       Connection: "keep-alive"
     }
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "chat", guardedPost);
 }

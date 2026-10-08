@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { GradingError, gradeAnswer, readConfidence, readSelectedChoice } from "@/lib/grading";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
@@ -6,7 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Grades one answer, records it, and lets mastery move as a result. */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -61,4 +62,8 @@ export async function POST(request: Request) {
     citations: question.citations,
     topicId: question.topic_id
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "quiz-grade", guardedPost);
 }

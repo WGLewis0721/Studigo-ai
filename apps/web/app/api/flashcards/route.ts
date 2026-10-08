@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { generateFlashcards } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   return Response.json({ cards: data ?? [] });
 }
 
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -118,4 +119,8 @@ export async function POST(request: Request) {
   }
 
   return Response.json({ cards: inserted ?? [] });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "flashcards-generate", guardedPost);
 }

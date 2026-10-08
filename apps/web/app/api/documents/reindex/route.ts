@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
 import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
 import { processDocument } from "@/lib/ingest";
@@ -13,7 +14,7 @@ export const maxDuration = 300;
  * topic map from that study guide. The caller stays on Materials while this
  * runs, so Coach/Learn remount with fresh conversation context when reopened.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -85,4 +86,8 @@ export async function POST(request: Request) {
     document: { id: data.id, name: data.name },
     ...result
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "document-reindex", guardedPost);
 }

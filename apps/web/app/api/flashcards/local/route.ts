@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { generateLocalFlashcards, retrievalServiceConfigured } from "@/lib/retrieval-client";
@@ -14,7 +15,7 @@ export const maxDuration = 30;
  * provided a document has already been indexed into that room (ingestion
  * mirrors pages into it automatically — see lib/ingest.ts).
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -52,4 +53,8 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "Local flashcard generation failed.";
     return Response.json({ error: message }, { status: 502 });
   }
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "flashcards-local", guardedPost);
 }
