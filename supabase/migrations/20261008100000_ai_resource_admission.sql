@@ -76,9 +76,12 @@ begin
      length(coalesce(p_operation, '')) not between 1 and 64 or
      length(coalesce(p_request_key, '')) not between 1 and 80 or
      p_reserved_micro_usd is null or p_reserved_micro_usd <= 0 or
-     least(p_user_minute,p_ip_minute,p_global_minute,p_user_concurrent,
-           p_ip_concurrent,p_global_concurrent,p_user_daily_micro_usd,
-           p_global_daily_micro_usd) <= 0 then
+     (p_user_minute is null or p_ip_minute is null or p_global_minute is null or
+      p_user_concurrent is null or p_ip_concurrent is null or p_global_concurrent is null or
+      p_user_daily_micro_usd is null or p_global_daily_micro_usd is null or
+      least(p_user_minute,p_ip_minute,p_global_minute,p_user_concurrent,
+            p_ip_concurrent,p_global_concurrent,p_user_daily_micro_usd,
+            p_global_daily_micro_usd) <= 0) then
     return jsonb_build_object('allowed', false, 'reason', 'invalid');
   end if;
 
@@ -165,3 +168,43 @@ grant execute on function public.admit_studigo_ai_resource(
   uuid,uuid,text,text,text,bigint,integer,integer,integer,integer,integer,integer,bigint,bigint
 ) to service_role;
 grant execute on function public.finish_studigo_ai_resource(uuid) to service_role;
+
+-- Atomically establish processing ownership and the manual cooldown in the
+-- same row lock. A second connection cannot reset a worker's claim.
+create or replace function public.claim_forced_studigo_reindex(
+  p_document_id uuid, p_owner_id uuid, p_cooldown_seconds integer
+)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_document public.documents%rowtype;
+  v_now timestamptz := clock_timestamp();
+begin
+  if auth.role() is distinct from 'service_role' then
+    raise exception 'service role required' using errcode = '42501';
+  end if;
+  if p_document_id is null or p_owner_id is null or
+     p_cooldown_seconds is null or p_cooldown_seconds < 900 or p_cooldown_seconds > 86400 then
+    return jsonb_build_object('claimed',false,'reason','invalid');
+  end if;
+  select * into v_document from public.documents
+    where id = p_document_id and owner_id = p_owner_id and source_type = 'study_guide'
+    for update;
+  if not found then return jsonb_build_object('claimed',false,'reason','not_found'); end if;
+  if v_document.status = 'processing' then
+    return jsonb_build_object('claimed',false,'reason','processing');
+  end if;
+  if v_document.last_forced_reindex_at is not null and
+     v_document.last_forced_reindex_at > v_now - make_interval(secs => p_cooldown_seconds) then
+    return jsonb_build_object('claimed',false,'reason','cooldown');
+  end if;
+  update public.documents set
+    status = 'processing', attempts = 1,
+    processing_started_at = v_now, processed_at = null,
+    error_message = null, last_forced_reindex_at = v_now
+  where id = v_document.id;
+  return jsonb_build_object('claimed',true);
+end $$;
+revoke all on function public.claim_forced_studigo_reindex(uuid,uuid,integer)
+  from public, anon, authenticated;
+grant execute on function public.claim_forced_studigo_reindex(uuid,uuid,integer)
+  to service_role;
