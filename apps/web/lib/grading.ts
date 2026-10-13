@@ -1,4 +1,6 @@
 import { gradeBlankAnswer, gradeShortAnswer } from "@studigo/ai";
+import { checkMathAnswer, type MathProblem, type UnreadableReason } from "@/lib/learning";
+import { readMathKey } from "@/lib/math-practice";
 
 /** The answer-key shape both the quiz and the practice test grade against. */
 export type GradableQuestion = {
@@ -20,12 +22,40 @@ export type GradedAnswer = {
 export const UNANSWERED_FEEDBACK =
   "Unanswered. Review the explanation and try this concept again.";
 
+const UNREADABLE_MATH: Record<UnreadableReason, string> = {
+  not_a_number: "I couldn't read that as a number. Try an answer like 3/4.",
+  whole_number: "Type just the missing number.",
+  needs_fraction: "Write this one as a fraction, like 1/3. A decimal can't show it exactly."
+};
+
+/**
+ * Code-generated math is graded by exact value, with no model call. An answer
+ * that cannot be read is sent back to the learner instead of being marked wrong.
+ */
+function gradeMathAnswer(problem: MathProblem, response: string, allowUnanswered?: boolean): GradedAnswer {
+  const check = checkMathAnswer(problem, response);
+  if (check.status === "unreadable") {
+    // A whole practice test is graded in one pass and cannot hand one answer back.
+    if (allowUnanswered) return { score: 0, isCorrect: false, feedback: UNANSWERED_FEEDBACK };
+    throw new GradingError(UNREADABLE_MATH[check.reason]);
+  }
+  if (check.status === "incorrect") {
+    return { score: 0, isCorrect: false, feedback: `Not quite. The answer is ${check.answer}.` };
+  }
+  return {
+    score: 100,
+    isCorrect: true,
+    feedback: check.simplest ? "Correct." : `Correct. In simplest form that is ${check.answer}.`
+  };
+}
+
 /**
  * One grader for every question type, shared by single-question quizzes and
  * whole practice tests so the same answer is never scored two different ways.
  *
  * Only short answers cost a model call; the other three kinds are decided
- * locally, which keeps a 20-question test fast and cheap.
+ * locally, which keeps a 20-question test fast and cheap. A fill-in row that
+ * carries a math key is graded by exact arithmetic instead of by spelling.
  */
 export async function gradeAnswer(args: {
   question: GradableQuestion;
@@ -61,6 +91,11 @@ export async function gradeAnswer(args: {
         }
         throw new GradingError("Type an answer first.");
       }
+      const math = readMathKey(question.accepted_answers);
+      if (math === "invalid") {
+        throw new GradingError("Studigo can't check this question. Build a new quiz to keep practicing.");
+      }
+      if (math) return gradeMathAnswer(math, response, args.allowUnanswered);
       const accepted = question.accepted_answers?.length
         ? question.accepted_answers
         : [question.expected_answer ?? ""];

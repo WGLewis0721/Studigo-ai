@@ -1,6 +1,7 @@
 import { GradingError, gradeAnswer, readConfidence, readSelectedChoice } from "@/lib/grading";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import { mathSolution, readMathKey } from "@/lib/math-practice";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -53,8 +54,12 @@ export async function POST(request: Request) {
   });
   if (attemptError || !result) return Response.json({ error: "Saving your answer failed. Please retry." }, { status: 500 });
 
+  // Worked steps for a code-generated math question, sent only now that it is answered.
+  const math = readMathKey(question.accepted_answers);
+
   return Response.json({
     ...result,
+    ...(math && math !== "invalid" ? { math: { steps: mathSolution(math) } } : {}),
     correctChoice: question.correct_choice,
     expectedAnswer: question.expected_answer,
     explanation: question.explanation,

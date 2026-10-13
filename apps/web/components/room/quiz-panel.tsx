@@ -8,6 +8,7 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoFigure } from "@/components/companion/figure";
+import { MathFigure, MathSteps, MathText, type MathPresentation, type MathSolutionStep } from "./math-visual";
 
 const BLANK_MARKER = "____";
 
@@ -20,6 +21,8 @@ type Question = {
   choices: string[];
   difficulty: string;
   topic_id: string | null;
+  /** Present on a practice problem Studigo wrote and keyed in code. */
+  math?: MathPresentation;
 };
 
 type Result = {
@@ -31,6 +34,7 @@ type Result = {
   expectedAnswer: string | null;
   explanation: string;
   citations: Citation[];
+  math?: { steps: MathSolutionStep[] };
 };
 
 type Answered = { score: number; confidence: number | null; isCorrect: boolean };
@@ -247,15 +251,26 @@ export function QuizPanel({
     <div className="quizMode">
       <div className="quizProgress">
         <span className="tinyLabel">
-          QUESTION {index + 1} OF {questions.length} · {KIND_LABELS[current.kind]}
+          QUESTION {index + 1} OF {questions.length} · {current.math ? "Math practice" : KIND_LABELS[current.kind]}
         </span>
         <div className="quizBar">
           <i style={{ width: `${(index / questions.length) * 100}%` }} />
         </div>
       </div>
 
+      {current.math && (
+        <>
+          <MathFigure {...current.math} />
+          <p className="mathNote">
+            Studigo wrote this practice problem for your topic. It is not taken from your materials.
+          </p>
+        </>
+      )}
+
       <h2 className="quizPrompt">
-        {current.kind === "fill_blank" ? (
+        {current.math ? (
+          <MathText text={current.prompt} filled={written.trim()} />
+        ) : current.kind === "fill_blank" ? (
           <BlankPrompt prompt={current.prompt} filled={written.trim()} />
         ) : (
           current.prompt
@@ -316,9 +331,9 @@ export function QuizPanel({
           className="blankInput"
           value={written}
           onChange={(event) => setWritten(event.target.value)}
-          placeholder="The missing word or phrase…"
-          aria-label="Fill in the blank"
-          maxLength={120}
+          placeholder={current.math ? "A number, or a fraction like 3/4" : "The missing word or phrase…"}
+          aria-label={current.math ? "Your answer" : "Fill in the blank"}
+          maxLength={current.math ? 40 : 120}
           autoComplete="off"
           disabled={Boolean(result)}
         />
@@ -359,11 +374,16 @@ export function QuizPanel({
           <p>{result.feedback}</p>
           {result.expectedAnswer && !result.isCorrect && (
             <p className="expectedAnswer">
-              <strong>Model answer:</strong> {result.expectedAnswer}
+              <strong>{result.math ? "Answer:" : "Model answer:"}</strong>{" "}
+              {result.math ? <MathText text={result.expectedAnswer} /> : result.expectedAnswer}
             </p>
           )}
-          {result.explanation && result.explanation !== result.feedback && (
-            <p className="answerText">{result.explanation}</p>
+          {result.math ? (
+            <MathSteps key={current.id} steps={result.math.steps} />
+          ) : (
+            result.explanation && result.explanation !== result.feedback && (
+              <p className="answerText">{result.explanation}</p>
+            )
           )}
           <CitationChips citations={result.citations ?? []} />
         </div>

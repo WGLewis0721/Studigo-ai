@@ -1006,6 +1006,35 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .inlineBlankFilled { color: var(--ink); }
 .blankInput { max-width: 460px; font-size: 1.05rem; font-weight: 700; }
+
+/* Math practice: pictures drawn from the problem's own numbers. Shaded parts use a darker fill and a hatch, never colour alone. */
+.mathFigure { display: grid; gap: 10px; margin: 0; width: 100%; max-width: 380px; min-width: 0; }
+.mathBarRow { display: grid; grid-template-columns: 22px minmax(0, 1fr) 54px; align-items: center; gap: 8px; }
+.mathOperator { font-family: var(--display); font-size: 1.3rem; font-weight: 700; text-align: center; color: var(--ink); }
+.mathBar { display: block; width: 100%; height: auto; }
+.mathPart { fill: var(--white); stroke: var(--ink); stroke-width: 1; }
+.mathPartShaded { fill: var(--tone-ink); stroke: var(--ink); stroke-width: 1; }
+.mathOutline { fill: none; stroke: var(--ink); stroke-width: 2; }
+.mathBarLabel { font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
+.mathGrid { display: block; width: 100%; max-width: 344px; height: auto; }
+.mathCell { fill: var(--tone-soft); stroke: var(--tone-ink); stroke-width: 1; }
+.mathGridLabel { font-family: var(--sans); font-size: 12px; font-weight: 700; fill: var(--ink); }
+.mathTable { border-collapse: collapse; font-size: 1.05rem; font-weight: 700; }
+.mathTable th, .mathTable td { padding: 8px 18px; border: 1.5px solid var(--hairline-strong); text-align: center; }
+.mathTable th { background: var(--tone-soft); font-size: .85rem; }
+.mathFrac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .12em; font-size: .82em; line-height: 1.1; }
+.mathFracTop { padding: 0 .3em .08em; }
+.mathFracBottom { padding: .08em .3em 0; border-top: .1em solid currentColor; }
+.mathNote { margin: 0; font-size: .85rem; color: var(--muted); }
+.mathSteps { display: grid; gap: 12px; min-width: 0; }
+.mathSteps ol { display: grid; gap: 14px; margin: 0; padding-left: 1.3em; min-width: 0; }
+.mathSteps li { min-width: 0; }
+.mathSteps li p { margin: 0 0 8px; line-height: 1.6; }
+.mathNextStep {
+  justify-self: start; padding: 8px 14px; border: 0; border-radius: var(--r-sm); cursor: pointer;
+  background: var(--tone-soft); color: var(--tone-ink); font: inherit; font-weight: 700;
+}
+.mathNextStep:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
 .shortAnswer { resize: vertical; line-height: 1.55; min-height: 110px; }
 
 .quizActions { display: flex; gap: 12px; }

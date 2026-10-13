@@ -2,6 +2,7 @@ import { QUESTION_KINDS, generateQuizQuestions, type QuestionKind } from "@studi
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
+import { buildMathQuestions, isMathKey, mathFamilyForTopic, mathPracticeEnabled, mathPresentation } from "@/lib/math-practice";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -58,6 +59,28 @@ export async function POST(request: Request) {
     topic = (data as QuizTopic | null) ?? null;
   }
 
+  // A topic one of the math families practises gets problems written and keyed
+  // in code: no retrieval, no model call, and an answer that is known up front.
+  // An explicit request for other question kinds keeps the model-written path.
+  const mathFamily =
+    topic && mathPracticeEnabled() && (!requestedKinds?.length || requestedKinds.includes("fill_blank"))
+      ? mathFamilyForTopic(topic)
+      : null;
+  if (topic && mathFamily) {
+    const built = buildMathQuestions(mathFamily, count);
+    const { data: inserted, error } = await createServiceSupabaseClient()
+      .from("quiz_questions")
+      .insert(built.map(({ row }) => ({ room_id: roomId, owner_id: user.id, topic_id: topic.id, ...row })))
+      .select("id, kind, prompt, choices, difficulty, topic_id");
+    if (error) return Response.json({ error: "Saving the quiz failed" }, { status: 500 });
+
+    const pictures = new Map(built.map(({ row, problem }) => [row.id, mathPresentation(problem)]));
+    return Response.json({
+      topic: { id: topic.id, title: topic.title },
+      questions: (inserted ?? []).map((question) => ({ ...question, math: pictures.get(question.id as string) }))
+    });
+  }
+
   const query = topic
     ? [topic.title, topic.objective, topic.key_terms?.join(", ")].filter(Boolean).join(". ")
     : "the most important ideas, definitions, and processes in these materials";
@@ -103,7 +126,8 @@ export async function POST(request: Request) {
         choices: question.choices,
         correct_choice: question.correctChoice,
         expected_answer: question.expectedAnswer,
-        accepted_answers: question.acceptedAnswers,
+        // The math key prefix is reserved for rows this route writes itself.
+        accepted_answers: question.acceptedAnswers.filter((answer) => !isMathKey(answer)),
         explanation: question.explanation,
         difficulty: question.difficulty,
         citations: markersToCitations(question.sourceMarkers, chunks)
