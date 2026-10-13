@@ -28,7 +28,8 @@ import {
   type RetrievedChunk,
   type GroundedStreamEvent
 } from "@studigo/ai";
-import { findNamedTopic } from "@/lib/recommendation-engine";
+import { findNamedTopic, resolveNamedTopic, type TopicResolution } from "@/lib/recommendation-engine";
+import { buildCoachHandoff, handoffDue, renderCoachHandoff, renderTopicClarification } from "@/lib/coach-handoff";
 import { fetchChunksByIds, retrieveForRoom } from "@/lib/retrieval";
 import type { Topic } from "@/lib/rooms";
 import { randomUUID, createHash } from "node:crypto";
@@ -129,7 +130,7 @@ export type CoachTurnLog = {
   stateBefore: CoachState["kind"];
   turnIntent: string;
   semanticScore: number | null;
-  outcome: CoachOutcome | "new_question" | "clarification" | "show_answer" | "simplified" | "example";
+  outcome: CoachOutcome | "new_question" | "clarification" | "show_answer" | "simplified" | "example" | "which_topic";
   stateAfter: CoachState["kind"];
   /** Deterministic language-floor metrics for the question Coach asked this turn. */
   languageFloor?: LanguageFloorReport;
@@ -232,11 +233,8 @@ async function saveCoachState(supabase: SupabaseClient, conversationId: string, 
   }
 }
 
-function pickTopic(topics: Topic[], question: string): Topic | undefined {
-  return (
-    findNamedTopic(topics, question) ??
-    [...topics].sort((a, b) => b.priority - a.priority || a.order_index - b.order_index)[0]
-  );
+function highestPriorityTopic(topics: Topic[]): Topic | undefined {
+  return [...topics].sort((a, b) => b.priority - a.priority || a.order_index - b.order_index)[0];
 }
 
 /**
@@ -316,12 +314,20 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
   const bufferedEvents:LearningEvent[]=[];
   const intent = detectTurnIntent(question, state);
   const route: LearningRoute = args.route ?? "studigo_default";
-  const selectTopic=async (question:string):Promise<Topic|undefined>=>{
-    const explicit=findNamedTopic(topics,question);
-    if(process.env.STUDIGO_ADAPTIVE_SESSION!=='1'||!args.userId||!deps.director.recommendTopic)return explicit??pickTopic(topics,question);
+  const selectTopic=async (question:string,resolution:TopicResolution=resolveNamedTopic(topics,question)):Promise<Topic|undefined>=>{
+    const explicit=resolution.kind==='match'?resolution.topic:undefined;
+    if(process.env.STUDIGO_ADAPTIVE_SESSION!=='1'||!args.userId||!deps.director.recommendTopic)return explicit??highestPriorityTopic(topics);
     const selectedId=await deps.director.recommendTopic({supabase,userId:args.userId,roomId,topics,
       now:interaction?.createdAt??new Date().toISOString(),selectedTopicId:explicit?.id});
     return topics.find(t=>t.id===selectedId);
+  };
+  // The learner's words fit several topics: ask which. Nothing is recorded, issued or committed, so the
+  // state stays as it was and the next message naming one title is resolved like any other.
+  const askWhichTopic=async function*(candidates:Topic[]):AsyncGenerator<GroundedStreamEvent,CoachTurnLog>{
+    const text=renderTopicClarification(candidates);
+    yield {type:"delta",text};
+    yield {type:"done",answer:{text,citations:[],grounded:false}};
+    return {stateBefore:state.kind,turnIntent:intent,semanticScore:null,outcome:"which_topic",stateAfter:state.kind};
   };
 
   // A transport retry of a submission that was already fully processed:
@@ -440,7 +446,10 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
   // difficulty ladder of its own. An unanswered pending question is recorded
   // as skipped first.
   if (intent === "challenge") {
-    const topic = (state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined) ?? await selectTopic(question);
+    const pendingTopic = state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined;
+    const named = pendingTopic ? undefined : resolveNamedTopic(topics, question);
+    if (named?.kind === "ambiguous") return yield* askWhichTopic(named.candidates);
+    const topic = pendingTopic ?? await selectTopic(question, named);
     await recordSkip(state);
     const issued = topic ? await issueFor(topic, "stretch") : undefined;
     const log = yield* openCoachQuestion({ supabase, roomId, commit, topics, topic, deps, pedagogyDirectives, issued });
@@ -784,20 +793,37 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       await commit(nextState);
     }
 
+    // Stuck summary: appended to this reply's text only, after every write above. It reads the
+    // ledger already committed and changes no outcome, event, support level or pending question.
+    const handoff =
+      caseFacts && handoffDue(caseFacts, state.caseFacts?.attempts ?? 0)
+        ? `\n\n${renderCoachHandoff(
+            buildCoachHandoff({
+              topicTitle: topics.find((t) => t.id === state.topicId)?.title,
+              caseFacts,
+              expectedConcepts: state.expectedConcepts,
+              supportLevel: withSupport(nextState, support).issuedChallenge?.scaffoldUsed ?? null
+            })
+          )}`
+        : "";
+
     // Stay on the same pending question — the learner gets another try with
     // the hint/correction (or, for partial, the follow-up already embedded in
     // the feedback), instead of silently moving on.
     yield { type: "delta", text: feedback };
+    if (handoff) yield { type: "delta", text: handoff };
     yield {
       type: "done",
-      answer: { text: feedback, citations: feedbackCitations, grounded: feedbackCitations.length > 0 }
+      answer: { text: feedback + handoff, citations: feedbackCitations, grounded: feedbackCitations.length > 0 }
     };
     return { stateBefore: state.kind, turnIntent: effectiveIntent, semanticScore: score, outcome, stateAfter: "awaiting_answer" };
   }
 
   // 3. Idle: open a new question on the topic the learner named (or the
   //    highest-priority one).
-  const topic = await selectTopic(question);
+  const named = resolveNamedTopic(topics, question);
+  if (named.kind === "ambiguous") return yield* askWhichTopic(named.candidates);
+  const topic = await selectTopic(question, named);
   const issued = topic ? await issueFor(topic, "normal") : undefined;
   const log = yield* openCoachQuestion({ supabase, roomId, commit, topics, topic, deps, pedagogyDirectives, issued });
   return { ...log, stateBefore: state.kind, turnIntent: intent };

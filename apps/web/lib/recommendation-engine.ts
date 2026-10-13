@@ -114,35 +114,100 @@ function titleWords(title: string): string[] {
     .filter((word) => word.length >= 3 && !TITLE_FILLER.has(word));
 }
 
-/**
- * The topic a message names, if any. The exact title anywhere in the message wins. Otherwise a
- * topic counts as named when the message contains every meaningful word of its title (two thirds
- * of them for a long title), allowing for misspellings and word endings, so "questions on
- * photosythesis" or "unbalenced forces" still finds the topic. The topic with the most matching
- * words wins; a tie names no topic rather than guessing one.
- */
-export function findNamedTopic(topics: Topic[], message: string): Topic | undefined {
-  const text = message.toLowerCase();
-  const exact = topics.find((topic) => topic.title && text.includes(topic.title.toLowerCase()));
-  if (exact) return exact;
+export type TopicResolution =
+  | { kind: "match"; topic: Topic }
+  | { kind: "ambiguous"; candidates: Topic[] }
+  | { kind: "none" };
 
+function normalizedTitle(topic: Topic): string {
+  return (topic.title ?? "").trim().toLowerCase();
+}
+
+/** Topics that share a title cannot be told apart by the learner, so only the first of each is kept. */
+function distinctByTitle(topics: Topic[]): Topic[] {
+  const seen = new Set<string>();
+  return topics.filter((topic) => {
+    const title = normalizedTitle(topic);
+    if (seen.has(title)) return false;
+    seen.add(title);
+    return true;
+  });
+}
+
+/** Whole words only, so a short title such as "Ion" is not written out by the word "question". */
+function writtenOut(title: string, text: string): boolean {
+  for (let at = text.indexOf(title); at !== -1; at = text.indexOf(title, at + 1)) {
+    const before = text[at - 1] ?? " ";
+    const after = text[at + title.length] ?? " ";
+    if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) return true;
+  }
+  return false;
+}
+
+/** Titles written out in the message. A title inside a longer matching title gives way to the longer one. */
+function titlesWrittenIn(topics: Topic[], text: string): Topic[] {
+  const contained = distinctByTitle(
+    topics.filter((topic) => {
+      const title = normalizedTitle(topic);
+      return title !== "" && writtenOut(title, text);
+    })
+  );
+  return contained.filter(
+    (topic) => !contained.some((other) => other !== topic && normalizedTitle(other).includes(normalizedTitle(topic)))
+  );
+}
+
+/** Topics whose title words the message contains, misspellings allowed; only those with the most matching words. */
+function closestTopicsByWords(topics: Topic[], text: string): Topic[] {
   const messageWords = text.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((word) => word.length >= 3);
-  let best: { topic: Topic; matched: number } | null = null;
-  let tied = false;
+  let best = 0;
+  let closest: Topic[] = [];
   for (const topic of topics) {
     const words = titleWords(topic.title ?? "");
     if (!words.length) continue;
     const matched = words.filter((word) => messageWords.some((messageWord) => wordsMatch(messageWord, word))).length;
     const needed = words.length <= 3 ? words.length : Math.ceil((words.length * 2) / 3);
     if (matched < needed) continue;
-    if (!best || matched > best.matched) {
-      best = { topic, matched };
-      tied = false;
-    } else if (matched === best.matched) {
-      tied = true;
+    if (matched > best) {
+      best = matched;
+      closest = [topic];
+    } else if (matched === best) {
+      closest.push(topic);
     }
   }
-  return best && !tied ? best.topic : undefined;
+  return distinctByTitle(closest);
+}
+
+function namedTopicCandidates(topics: Topic[], message: string): { candidates: Topic[]; written: boolean } {
+  const text = message.toLowerCase();
+  const written = titlesWrittenIn(topics, text);
+  return written.length ? { candidates: written, written: true } : { candidates: closestTopicsByWords(topics, text), written: false };
+}
+
+/**
+ * The topic a message names, as one of three outcomes: a single match, several equally good
+ * candidates (ambiguous), or none. Titles written out in the message come first, and a longer title
+ * that contains a shorter matching one wins, so "photosynthesis light reactions" is not read as
+ * "photosynthesis". Two titles that are not nested in one another are ambiguous. With no title
+ * written out, a topic counts as named when the message contains every meaningful word of its
+ * title (two thirds of them for a long title), allowing for misspellings and word endings, so
+ * "questions on photosythesis" or "unbalenced forces" still finds the topic. The topics with the
+ * most matching words are the candidates; more than one of them is ambiguous.
+ */
+export function resolveNamedTopic(topics: Topic[], message: string): TopicResolution {
+  const { candidates } = namedTopicCandidates(topics, message);
+  if (candidates.length === 1) return { kind: "match", topic: candidates[0] };
+  return candidates.length ? { kind: "ambiguous", candidates } : { kind: "none" };
+}
+
+/**
+ * The single topic a message names, or undefined. For callers that have no way to ask the learner:
+ * the first of several written-out titles, nothing for a tie between near matches. The Coach uses
+ * resolveNamedTopic and asks instead.
+ */
+export function findNamedTopic(topics: Topic[], message: string): Topic | undefined {
+  const { candidates, written } = namedTopicCandidates(topics, message);
+  return written || candidates.length === 1 ? candidates[0] : undefined;
 }
 
 export function resolvePracticeTopic(args: {
