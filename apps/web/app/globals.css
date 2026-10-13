@@ -1035,6 +1035,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   background: var(--tone-soft); color: var(--tone-ink); font: inherit; font-weight: 700;
 }
 .mathNextStep:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
+.mathExample { display: grid; gap: 12px; justify-items: start; min-width: 0; margin: 0 0 6px; }
+.mathExampleCaption { margin: 0; font-family: var(--display); font-size: 1.25rem; font-weight: 700; line-height: 1.5; }
+.mathExampleSteps { justify-self: stretch; min-width: 0; }
+.mathExampleSteps summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 700; color: var(--tone-ink); }
+.mathExampleSteps summary::-webkit-details-marker { display: none; }
+.mathExampleSteps summary::before {
+  content: ""; flex: none; width: .5em; height: .5em; margin-right: .75em;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg);
+}
+.mathExampleSteps[open] summary::before { transform: rotate(45deg); }
+.mathExampleSteps summary:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; border-radius: var(--r-sm); }
+.mathExampleSteps[open] > summary { margin-bottom: 8px; }
 .shortAnswer { resize: vertical; line-height: 1.55; min-height: 110px; }
 
 .quizActions { display: flex; gap: 12px; }

@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
+import type { MathExample } from "@/lib/math-example";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { MathFigure, MathSteps, MathText } from "./math-visual";
 import { RichText } from "./rich-text";
 
 /** One formative back-and-forth about a topic. Never scored. */
@@ -12,6 +14,23 @@ type Check = {
   turns: Array<{ answer: string; feedback: string; understood: boolean }>;
   done: boolean;
 };
+
+/** Picture first, the problem as its caption, the worked steps one tap away. Seeing it records nothing. */
+export function WorkedExample({ example }: { example: MathExample }) {
+  return (
+    <section className="mathExample" aria-label="Worked example">
+      <MathFigure {...example.presentation} />
+      <p className="mathExampleCaption">
+        <MathText text={example.caption} />
+      </p>
+      <details className="mathExampleSteps">
+        <summary>Show the worked steps</summary>
+        <MathSteps steps={example.steps} />
+      </details>
+      <p className="mathNote">Studigo wrote this example for this topic. It is not from your materials.</p>
+    </section>
+  );
+}
 
 export function LearnPanel({
   roomId,
@@ -31,7 +50,7 @@ export function LearnPanel({
   onCoachTopic?: (topic: Topic) => void;
 }) {
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
-  const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[] }>>({});
+  const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[]; mathExample?: MathExample }>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +80,7 @@ export function LearnPanel({
       if (!response.ok) throw new Error(payload.error || "Could not build that lesson.");
       setLessons((current) => ({
         ...current,
-        [topic.id]: { text: payload.explanation, citations: payload.citations ?? [] }
+        [topic.id]: { text: payload.explanation, citations: payload.citations ?? [], mathExample: payload.mathExample }
       }));
     } catch (learnError) {
       setError(learnError instanceof Error ? learnError.message : "Something went wrong.");
@@ -391,6 +410,7 @@ export function LearnPanel({
 
                   {lesson && (
                     <>
+                      {lesson.mathExample && <WorkedExample example={lesson.mathExample} />}
                       <RichText className="lessonText" text={lesson.text} />
                       <CitationChips citations={lesson.citations} />
                       {onCoachTopic && (

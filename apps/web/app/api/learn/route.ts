@@ -2,6 +2,7 @@ import { explainTopic, toCitations, citationsUsedIn } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
 import { readExplainLevel } from "@/lib/explain-level";
+import { mathExampleForTopic } from "@/lib/math-example";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -47,10 +48,22 @@ export async function POST(request: Request) {
     level
   });
 
+  // Added only for a topic a math family covers. Code draws it, nothing is stored, and
+  // every other topic gets the same response as before.
+  const mathExample = mathExampleForTopic(
+    {
+      title: topic.title as string,
+      objective: topic.objective as string | null,
+      key_terms: topic.key_terms as string[] | null
+    },
+    room
+  );
+
   return Response.json({
     topicId,
     level,
     explanation,
-    citations: citationsUsedIn(explanation, toCitations(chunks))
+    citations: citationsUsedIn(explanation, toCitations(chunks)),
+    ...(mathExample ? { mathExample } : {})
   });
 }

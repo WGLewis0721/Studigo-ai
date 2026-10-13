@@ -3,6 +3,8 @@ import { MATH_FAMILIES, checkMathAnswer, generateMathProblems, mathAnswerText, s
 import { mathPrompt } from "@/lib/math-copy";
 import { mathPresentation, mathSolution } from "@/lib/math-practice";
 import { MathFigure, MathSteps, MathText } from "@/components/room/math-visual";
+import { WorkedExample } from "@/components/room/learn-panel";
+import { mathExampleFor } from "@/lib/math-example";
 
 // Synthetic fixture for code-generated math practice. Local development only; nothing is stored.
 // ?seed=7 draws a different problem for each family. ?family=rect_area shows one family.
@@ -25,6 +27,8 @@ export default async function MathFixture({ searchParams }: { searchParams: Prom
               <MathText text={mathPrompt(problem)} filled="" />
             </h2>
             <MathSteps steps={mathSolution(problem)} />
+            <span className="tinyLabel">As Learn shows it</span>
+            <WorkedExample example={mathExampleFor(problem)} />
             <ul style={{ minWidth: 0, overflowWrap: "anywhere" }}>
               {[answer, `${answer}0`, "abc", "0.33"].map((typed) => (
                 <li key={typed}>
