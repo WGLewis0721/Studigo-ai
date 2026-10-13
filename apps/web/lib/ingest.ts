@@ -16,6 +16,7 @@ import {
 } from "@studigo/documents";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
+import { nameRoomFromTopics } from "@/lib/room-defaults";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
 const MAX_ATTEMPTS = 3;
@@ -310,7 +311,11 @@ export async function buildTopicMap(args: {
     p_topics: topics.map((topic, index) => ({ ...topic, evidence: evidence[index] ?? [] }))
   });
   if (error) throw new Error(`Refreshing study topics failed: ${error.message}`);
-  return Number(data ?? 0);
+  const created = Number(data ?? 0);
+  // Zero means refresh_topic_map left the room's topics alone (a newer guide won, or nothing was new), so these topics are not the room's.
+  // Naming is a courtesy: it must never fail a document that is otherwise ready.
+  if (created > 0) await nameRoomFromTopics(supabase, { roomId: args.roomId, ownerId: args.ownerId, topics }).catch(() => undefined);
+  return created;
 }
 
 function normalizeTitle(title: string) {

@@ -32,23 +32,22 @@
 }
 .firstRoomStage { width: 100%; aspect-ratio: 1 / 1.05; }
 .firstRoomBody { display: grid; gap: 14px; align-content: start; }
-.firstRoomBody .pageTitle { margin: 0; font-size: clamp(2rem, 3.8vw, 3rem); outline: none; text-wrap: balance; }
+.firstRoomBody .pageTitle { margin: 0; font-size: clamp(2rem, 3.8vw, 3rem); text-wrap: balance; }
 .firstRoomBody .pageLede { margin: 0 0 6px; }
 .firstRoomBody .buttonPrimary { justify-self: start; margin-top: 6px; }
 .firstRoomBody .field small { font-weight: 500; color: var(--muted); }
-.firstRoomBar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 40px; margin-bottom: 6px; }
-.firstRoomBack { min-height: 40px; padding: 0 14px 0 10px; border: 0; border-radius: 999px; background: var(--white); cursor: pointer; font: inherit; font-size: .88rem; font-weight: 700; color: var(--ink-2); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline-strong); }
-.firstRoomDots { display: inline-flex; gap: 6px; }
-.firstRoomDots i { width: 8px; height: 8px; border-radius: 50%; background: var(--snow-3); transition: width .25s var(--ease-out), background-color .25s ease; }
-.firstRoomDots i[data-past] { background: color-mix(in oklab, var(--tone) 55%, white); }
-.firstRoomDots i[data-on] { width: 24px; border-radius: 999px; background: var(--tone-key); }
-.firstRoomPreview { min-height: 0; padding: 16px 18px 18px; max-width: 320px; }
-.firstRoomTry { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.firstRoomTry li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline); }
-.firstRoomTry li i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; font-style: normal; font-weight: 800; color: transparent; background: var(--snow-2); box-shadow: var(--recess); transition: background-color .2s ease, color .2s ease; }
-.firstRoomTry li[data-done] i { color: var(--kiwi-ink); background: var(--kiwi-soft); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--kiwi) 55%, white); }
-.firstRoomTry b { display: block; font-size: .98rem; }
-.firstRoomTry span { color: var(--muted); font-size: .86rem; }
+.optionalTag { margin-left: 4px; font-weight: 500; color: var(--muted); }
+.firstRoomMore { border-radius: var(--r-md); background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline); }
+.firstRoomMore summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 8px 16px; border-radius: inherit;
+  cursor: pointer; list-style: none; font-size: .92rem; font-weight: 700; color: var(--ink-2);
+}
+.firstRoomMore summary::-webkit-details-marker { display: none; }
+.firstRoomMore summary::after { content: "›"; flex: none; font-size: 1.25rem; line-height: 1; color: var(--muted); transition: transform .2s var(--ease-out); }
+.firstRoomMore[open] summary::after { transform: rotate(90deg); }
+.firstRoomMore summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.firstRoomMoreBody { display: grid; gap: 14px; padding: 4px 16px 18px; }
+@media (prefers-reduced-motion: reduce) { .firstRoomMore summary::after { transition: none; } }
 
 @media (max-width: 980px) {
   .homeHero { grid-template-columns: 190px minmax(0, 1fr); grid-template-areas: "stage say" "next next"; }
