@@ -31,3 +31,66 @@ export function groundingStatus(args: { citationCount: number; claim: string; ch
   const supported = args.chunkTexts.some((chunk) => claimSupportedByChunk(args.claim, chunk));
   return supported ? "verified" : "citation_present";
 }
+
+export type SplitClaim = { text: string; citations: number[] };
+export type VerifiedClaim = SplitClaim & { status: GroundingStatus };
+export type ClaimVerification = {
+  claims: VerifiedClaim[];
+  verified: number;
+  citationPresent: number;
+  noEvidence: number;
+};
+
+/**
+ * Splits an answer into sentence-sized claims (line breaks also end a claim, so
+ * outline bullets stay separate) and records the `[n]` / `[n, m]` markers each
+ * one carries. Text is kept as written; only surrounding whitespace is trimmed.
+ * A marker that trails the full stop ("... end. [2]") stays with the sentence before it.
+ */
+export function splitClaims(text: string): SplitClaim[] {
+  const pieces: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    for (const part of line.split(/(?<=[.!?])\s+(?!\[\d)/)) {
+      const trimmed = part.trim();
+      if (trimmed) pieces.push(trimmed);
+    }
+  }
+  return pieces
+    .map((piece) => {
+      const citations: number[] = [];
+      for (const match of piece.matchAll(/\[(\d{1,2}(?:\s*,\s*\d{1,2})*)\]/g)) {
+        for (const n of match[1]!.split(",")) {
+          const marker = Number(n.trim());
+          if (!citations.includes(marker)) citations.push(marker);
+        }
+      }
+      return { text: piece, citations };
+    })
+    .filter((claim) => claim.citations.length > 0 || words(claim.text).length > 0);
+}
+
+export function summarizeClaims(claims: VerifiedClaim[]): ClaimVerification {
+  const count = (status: GroundingStatus) => claims.filter((claim) => claim.status === status).length;
+  return { claims, verified: count("verified"), citationPresent: count("citation_present"), noEvidence: count("no_evidence") };
+}
+
+/**
+ * Per-claim check. A claim is compared only with the chunks it cites
+ * (`citations` are 1-based indexes into `chunkTexts`); a claim with no
+ * citation is `no_evidence`.
+ */
+export function verifyClaims(args: { text: string; chunkTexts: string[] }): ClaimVerification {
+  const claims = splitClaims(args.text).map((claim): VerifiedClaim => {
+    if (!claim.citations.length) return { ...claim, status: "no_evidence" };
+    const cited = claim.citations
+      .map((marker) => args.chunkTexts[marker - 1])
+      .filter((chunk): chunk is string => typeof chunk === "string");
+    return { ...claim, status: groundingStatus({ citationCount: cited.length, claim: claim.text, chunkTexts: cited }) };
+  });
+  return summarizeClaims(claims);
+}
+
+/** Opt-in model judge for claims that cite a source but fail the lexical check. Off by default. */
+export function claimJudgeEnabled() {
+  return process.env.STUDIGO_CLAIM_JUDGE === "1";
+}

@@ -2,7 +2,7 @@
 
 export const CLASSES = ["correct", "equivalent", "partial", "misconception", "incorrect", "off_topic", "not_sure"];
 
-export function scoreGrades(rows) {
+export function scoreRows(rows) {
   const labels = new Set(CLASSES);
   const byClass = Object.fromEntries(CLASSES.map((name) => [name, { tp: 0, fp: 0, fn: 0 }]));
   let used = 0;
@@ -37,3 +37,6 @@ export function scoreGrades(rows) {
     perClass
   };
 }
+
+/** Back-compat alias for the original export name. */
+export const scoreGrades = scoreRows;

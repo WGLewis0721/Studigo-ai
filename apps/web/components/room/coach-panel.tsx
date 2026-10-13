@@ -20,7 +20,15 @@ import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 
 type ChatMode = "coach" | "learn";
-type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
+type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; support?: ClaimSupport; streaming?: boolean };
+type ClaimSupport = { claims: Array<{ status: "no_evidence" | "citation_present" | "verified" }>; verified: number; citationPresent: number };
+
+/** Cited statements only: a statement with a marker that the source text does not back up is not "verified". */
+function verificationLine(support?: ClaimSupport) {
+  if (!support) return null;
+  const cited = support.verified + support.citationPresent;
+  return cited ? `${support.verified} of ${cited} cited statements verified against your materials` : null;
+}
 
 type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
@@ -225,10 +233,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? "";
         for (const frame of frames) {
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
-          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
+          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; support?: ClaimSupport; conversationId?: string; error?: string };
           if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
           if (event.type === "delta" && event.text) setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message));
-          if (event.type === "done") setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message));
+          if (event.type === "done") setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, support: event.support, streaming: false } : message));
           if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
         }
       }
@@ -440,7 +448,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               <p className="coachEmptyStyle"><b>{learnActive.label}:</b> {learnActive.expect}</p>
             </div>
           )
-        ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
+        ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}{!message.streaming && verificationLine(message.support) && <p className="coachEmptyStyle" title="Cited but not verified statements may not be backed by the source text.">{verificationLine(message.support)}</p>}</div>)}
         <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
         </div>
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}

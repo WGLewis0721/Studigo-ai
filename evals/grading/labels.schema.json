@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Studigo semantic grader human label row (one JSON object per line)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "subject", "question", "reference_answer", "learner_answer", "label", "reviewer"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "pattern": "^(?!TEMPLATE-).+", "description": "Unique. TEMPLATE-* ids are examples and are refused by the runner." },
+    "subject": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "reference_answer": { "type": "string", "minLength": 1 },
+    "learner_answer": { "type": "string", "minLength": 1 },
+    "label": { "enum": ["correct", "equivalent", "partial", "misconception", "incorrect", "off_topic", "not_sure"] },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the human who assigned the label. Never empty, never 'fixture-not-a-human', never a model name. The runner enforces this."
+    },
+    "notes": { "type": "string" }
+  }
+}
