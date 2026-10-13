@@ -211,6 +211,42 @@ test('Atomic ingestion claim enforces 3 attempts and excludes simultaneous claim
   });
   assert.equal((await one('select attempts from documents where id=$1',[id(11)])).attempts,3);
 });
+test('Worker claim leases one document per call, honors attempts and lease expiry, and is service_role only',async()=>{
+  const sql=await readFile(new URL('../supabase/migrations/20261013100000_ingest_worker_lease.sql',import.meta.url),'utf8');
+  assert.match(sql,/for update skip locked/i);
+  assert.match(sql,/d\.attempts < 3/);
+  const [d1,d2,d3]=[id(201),id(202),id(203)];
+  for(const [n,d] of [[1,d1],[2,d2],[3,d3]])
+    await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status,attempts) values($1,$2,$3,'w.pdf','application/pdf',10,$4,'queued',0)`,[d,id(1),A,`${A}/${id(1)}/worker-${n}.pdf`]);
+  await db.query(`update documents set status='ready' where room_id=$1 and id<>all($2::uuid[])`,[id(1),[d1,d2,d3]]);
+  await as('service_role',A,async()=>{
+    // Two simultaneous claims must never receive the same document.
+    const [a,b]=await Promise.all([db.query('select * from claim_next_document(600)'),db.query('select * from claim_next_document(600)')]);
+    assert.equal(a.rows.length,1);assert.equal(b.rows.length,1);
+    assert.notEqual(a.rows[0].id,b.rows[0].id);
+    assert.equal(a.rows[0].owner_id,A);
+    const third=await db.query('select * from claim_next_document(600)');
+    assert.equal(third.rows.length,1);
+    assert.equal((await db.query('select * from claim_next_document(600)')).rows.length,0,'fresh leases are not claimable');
+    const row=await one('select status,attempts,claimed_until from documents where id=$1',[a.rows[0].id]);
+    assert.equal(row.status,'processing');assert.equal(row.attempts,1);assert.ok(row.claimed_until);
+    // Expired lease makes it claimable again; extending a lease keeps it held.
+    assert.equal((await one('select extend_document_lease($1,600) as ok',[d1])).ok,true);
+    await db.query(`update documents set claimed_until=now()-interval '1 second' where id=$1`,[d1]);
+    const again=await db.query('select * from claim_next_document(600)');
+    assert.deepEqual(again.rows.map(r=>r.id),[d1]);
+    assert.equal((await one('select attempts from documents where id=$1',[d1])).attempts,2);
+    // Retry limit: attempts>=3 is never claimed.
+    await db.query(`update documents set status='failed',attempts=3,claimed_until=null where id=any($1::uuid[])`,[[d1,d2,d3]]);
+    assert.equal((await db.query('select * from claim_next_document(600)')).rows.length,0);
+    assert.equal((await one(`select extend_document_lease($1,60) as ok`,[d1])).ok,false);
+  });
+  for(const role of ['anon','authenticated']) await as(role,A,async()=>{
+    await assert.rejects(db.query('select * from claim_next_document(600)'),e=>e.code==='42501');
+    await assert.rejects(db.query('select extend_document_lease($1,60)',[d1]),e=>e.code==='42501');
+  });
+  await db.query('delete from documents where id=any($1::uuid[])',[[d1,d2,d3]]);
+});
 test('Review commits once and retry cannot inflate mastery',async()=>{
   const request=id(100);
   await as('service_role',A,async()=>{

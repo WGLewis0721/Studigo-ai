@@ -96,6 +96,36 @@ export async function processDocument(args: {
   // Another run already owns this document.
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
+  return runClaimedDocument(document, supabase);
+}
+
+type ClaimedDocument = {
+  id: string;
+  room_id: string;
+  owner_id: string;
+  name: string;
+  mime_type: string;
+  storage_path: string;
+  source_type: string;
+};
+
+const CLAIMED_COLUMNS = "id, room_id, owner_id, name, mime_type, storage_path, source_type";
+const LEASE_EXTENSION_SECONDS = 600;
+
+/** Rollback flag: when set, routes process inline instead of queueing for the worker. */
+export function syncIngestEnabled(): boolean {
+  return process.env.STUDIGO_SYNC_INGEST === "1";
+}
+
+/**
+ * Pipeline body for a document this caller already holds a claim on (via
+ * claim_document or claim_next_document). Replaces document_chunks wholesale,
+ * so a retry never leaves a second chunk set.
+ */
+async function runClaimedDocument(
+  document: ClaimedDocument,
+  supabase: ReturnType<typeof createServiceSupabaseClient>
+): Promise<IngestResult> {
   try {
     const { data: file, error: downloadError } = await supabase.storage
       .from("study-materials")
@@ -112,6 +142,11 @@ export async function processDocument(args: {
       buffer,
       mimeType: document.mime_type,
       filename: document.name
+    });
+
+    // Keep the lease alive past the slow OCR step before embedding/storing.
+    await supabase.rpc("extend_document_lease", {
+      p_document_id: document.id, p_seconds: LEASE_EXTENSION_SECONDS
     });
 
     const chunks = chunkPages(withOcr.pages, {
@@ -189,9 +224,11 @@ export async function processDocument(args: {
         ocr_page_count: withOcr.ocrPageCount,
         chunk_count: chunks.length,
         processed_at: new Date().toISOString(),
-        error_message: null
+        error_message: null,
+        claimed_until: null
       })
-      .eq("id", document.id);
+      .eq("id", document.id)
+      .eq("owner_id", document.owner_id);
 
     if (readyError) throw new Error(readyError.message);
 
@@ -206,11 +243,64 @@ export async function processDocument(args: {
     const message = error instanceof Error ? error.message : "Processing failed";
     await supabase
       .from("documents")
-      .update({ status: "failed", error_message: message.slice(0, 500) })
-      .eq("id", document.id);
+      .update({ status: "failed", error_message: message.slice(0, 500), claimed_until: null })
+      .eq("id", document.id)
+      .eq("owner_id", document.owner_id);
 
     return { documentId: document.id, status: "failed", error: message };
   }
+}
+
+/**
+ * Background worker: leases queued documents one at a time and runs the
+ * pipeline until the deadline or document cap. Safe to run concurrently; the
+ * claim uses FOR UPDATE SKIP LOCKED and every later read/write is scoped to the
+ * claimed row's owner.
+ */
+export async function runIngestWorker(opts: { maxDocuments?: number; deadlineMs?: number } = {}): Promise<{
+  processed: number;
+  failed: number;
+  skipped: number;
+  claimed: string[];
+}> {
+  const maxDocuments = opts.maxDocuments ?? 5;
+  const deadlineMs = opts.deadlineMs ?? 240_000;
+  const startedAt = Date.now();
+  const supabase = createServiceSupabaseClient();
+  const summary = { processed: 0, failed: 0, skipped: 0, claimed: [] as string[] };
+
+  while (summary.claimed.length < maxDocuments && Date.now() - startedAt < deadlineMs) {
+    const { data: claimedRows, error: claimError } = await supabase.rpc("claim_next_document", {
+      p_lease_seconds: LEASE_EXTENSION_SECONDS
+    });
+    if (claimError) throw new Error(`Claiming next document failed: ${claimError.message}`);
+    const next = ((claimedRows ?? []) as Array<{ id: string; owner_id: string }>)[0];
+    if (!next) break;
+    summary.claimed.push(next.id);
+
+    const { data: document, error: loadError } = await supabase
+      .from("documents")
+      .select(CLAIMED_COLUMNS)
+      .eq("id", next.id)
+      .eq("owner_id", next.owner_id)
+      .maybeSingle();
+    if (loadError || !document) {
+      await supabase
+        .from("documents")
+        .update({ status: "failed", error_message: "Document could not be loaded for processing", claimed_until: null })
+        .eq("id", next.id)
+        .eq("owner_id", next.owner_id);
+      summary.failed += 1;
+      continue;
+    }
+
+    const result = await runClaimedDocument(document as ClaimedDocument, supabase);
+    if (result.status === "ready") summary.processed += 1;
+    else if (result.status === "skipped") summary.skipped += 1;
+    else summary.failed += 1;
+  }
+
+  return summary;
 }
 
 export function canRetry(document: { status: string; attempts?: number | null }) {
