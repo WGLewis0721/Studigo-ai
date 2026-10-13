@@ -478,7 +478,7 @@ Update this table in the PR that changes the status. Do not edit it to match a p
 | Learner-state words | `packages/learning/src/semantics.ts` and `docs/ADAPTIVE_LEARNING_CORE.md`. Director behavior unchanged. `session.ts` `EvidenceStage` stays the projection label | P3 |
 | Study trace | `apps/web/lib/study-trace.ts` redacts prompt, content, filename, and the raw owner id. Retrieval and `api/chat` log it. Token figure is a character estimate, not provider usage, and there is no hosted trace product | H1 partial |
 | Id check | `apps/web/lib/ids.ts` `isUuid` is the check for room, document, and interaction ids on chat and reindex. `server-only` is not a dependency. Sign-up errors were already neutral | S6 partial |
-| Daily AI budget and output cap | `consume_ai_budget`, `max_output_tokens` 1200 | S3 code. Vercel WAF is still a dashboard step |
+| Daily AI budget and output cap | `consume_ai_budget` is reserved before every model, retrieval, or ingest call in chat, learn, learn/check, quiz, quiz/attempt (model-graded kinds only), practice-tests, flashcards, documents/process, and documents/reindex. `max_output_tokens` 1200 on the Responses API (not on the Ollama transport). The reindex cooldown is enforced inside `processDocument`, not only the route. Not yet covered: `flashcards/local`, `dev/coach`. Budget reservation is a flat 2,000 tokens per call and is not reconciled with actual usage | S3 code. Vercel WAF is still a dashboard step |
 | Upload polyglot and PNG edge | Rejected in `file-safety.ts`. Malware scanning still open | S4 partial |
 | Python retrieval | Loopback middleware. Remote bind still needs the env override | S6 partial |
 | Dependabot | `.github/dependabot.yml` | S1 code. Secret scanning is an org setting |

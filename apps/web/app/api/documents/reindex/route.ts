@@ -1,5 +1,5 @@
 import { requireApiUser } from "@/lib/auth";
-import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
+import { reindexCooldownElapsed, reindexCooldownMs, reserveAiBudget } from "@/lib/ai-budget";
 import { processDocument } from "@/lib/ingest";
 import { isUuid } from "@/lib/ids";
 
@@ -67,12 +67,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
+
   const result = await processDocument({
     documentId: data.id as string,
     userId: user.id,
     force: true
   });
 
+  if (result.code === "reindex_cooldown") {
+    return Response.json({ error: result.error }, { status: 429 });
+  }
   if (result.status !== "ready") {
     return Response.json(
       { error: result.error || "The study guide could not be refreshed.", ...result },

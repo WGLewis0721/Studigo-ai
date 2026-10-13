@@ -1,4 +1,5 @@
 import { GradingError, gradeAnswer, readConfidence, readSelectedChoice } from "@/lib/grading";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
@@ -35,6 +36,18 @@ export async function POST(request: Request) {
 
   const selectedChoice = readSelectedChoice(body?.selectedChoice, question);
   const response = typeof body?.response === "string" ? body.response : "";
+
+  // Only short-answer grading calls the model; deterministic kinds and blank
+  // answers (rejected before any model call) must not consume budget.
+  const usesModel =
+    question.kind !== "multiple_choice" &&
+    question.kind !== "true_false" &&
+    question.kind !== "fill_blank" &&
+    response.trim().length > 0;
+  if (usesModel) {
+    const budget = await reserveAiBudget(supabase, user.id);
+    if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
+  }
 
   let graded;
   try {
