@@ -102,6 +102,16 @@ test("an answer that cannot be read is never graded", () => {
   }
 });
 
+test("a very long answer is refused at once instead of being scanned", () => {
+  const problem: MathProblem = { v: 1, family: "fraction_name", a: 1, d: 4 };
+  const started = Date.now();
+  for (const filler of [" ", "/", "1", " / "]) {
+    assert.equal(checkMathAnswer(problem, `1${filler.repeat(400_000)}4`).status, "unreadable");
+  }
+  assert.ok(Date.now() - started < 1000, "input is bounded before any pattern runs over it");
+  assert.equal(checkMathAnswer(problem, `${" ".repeat(60)}1/4${" ".repeat(60)}`).status, "correct");
+});
+
 test("a decimal is only graded when it can state the answer exactly", () => {
   const third: MathProblem = { v: 1, family: "fraction_name", a: 1, d: 3 };
   for (const form of ["0.33", "0.3333", "0.9", ".3"]) {

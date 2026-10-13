@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useId, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { FractionBar, MathVisual } from "@studigo/learning";
 
 const BLANK_MARKER = "____";
@@ -147,11 +147,17 @@ export function MathFigure({ visual, description }: MathPresentation) {
 /** The worked solution, one step at a time. Each press reveals the next step; nothing animates. */
 export function MathSteps({ steps }: { steps: MathSolutionStep[] }) {
   const [shown, setShown] = useState(1);
+  const lastStep = useRef<HTMLLIElement>(null);
+  const done = shown >= steps.length;
+  // The button unmounts with the last reveal; without this a keyboard user's focus falls back to the page.
+  useEffect(() => {
+    if (done && shown > 1) lastStep.current?.focus();
+  }, [done, shown]);
   return (
     <div className="mathSteps">
       <ol aria-live="polite">
         {steps.slice(0, shown).map((step, index) => (
-          <li key={index}>
+          <li key={index} ref={index === steps.length - 1 ? lastStep : undefined} tabIndex={index === steps.length - 1 ? -1 : undefined}>
             <p>
               <MathText text={step.text} />
             </p>
@@ -159,7 +165,7 @@ export function MathSteps({ steps }: { steps: MathSolutionStep[] }) {
           </li>
         ))}
       </ol>
-      {shown < steps.length && (
+      {!done && (
         <button type="button" className="mathNextStep" onClick={() => setShown(shown + 1)}>
           Show the next step ({shown} of {steps.length})
         </button>

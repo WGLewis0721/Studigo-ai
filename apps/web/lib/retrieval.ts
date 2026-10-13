@@ -170,12 +170,12 @@ export async function fetchChunksByIds(
 export async function assertRoomAccess(supabase: SupabaseClient, roomId: string) {
   const { data, error } = await supabase
     .from("study_rooms")
-    .select("id, title")
+    .select("id, title, subject")
     .eq("id", roomId)
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as { id: string; title: string };
+  return data as { id: string; title: string; subject: string | null };
 }
 
 export function markersToCitations(

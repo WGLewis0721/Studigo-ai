@@ -19,6 +19,8 @@ export type MathCheck =
   | { status: "unreadable"; reason: UnreadableReason };
 
 const MAX_INPUT_CHARS = 40;
+/** Checked before normalising: the whitespace rules below are quadratic on a very long run. */
+const MAX_RAW_CHARS = 200;
 
 const VULGAR: Record<string, string> = {
   "½": "1/2", "⅓": "1/3", "⅔": "2/3", "¼": "1/4", "¾": "3/4",
@@ -91,6 +93,7 @@ export function checkMathAnswer(problem: MathProblem, input: string): MathCheck 
   const whole = expectsWholeNumber(problem);
   const unreadable = (reason: UnreadableReason): MathCheck => ({ status: "unreadable", reason });
 
+  if (input.length > MAX_RAW_CHARS) return unreadable(whole ? "whole_number" : "not_a_number");
   const text = normalize(input);
   if (!text || text.length > MAX_INPUT_CHARS) return unreadable(whole ? "whole_number" : "not_a_number");
   const numberText = problem.family === "rect_area" ? withoutAreaUnit(text, problem.unit) : text;

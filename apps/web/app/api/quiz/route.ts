@@ -27,7 +27,8 @@ export async function POST(request: Request) {
   const room = await assertRoomAccess(supabase, roomId);
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
 
-  const count = Math.min(MAX_QUESTIONS, Math.max(1, Math.round(body?.count ?? 5)));
+  const requestedCount = Number(body?.count ?? 5);
+  const count = Math.min(MAX_QUESTIONS, Math.max(1, Math.round(Number.isFinite(requestedCount) ? requestedCount : 5)));
 
   // An unset or unrecognized list means a mixed set, which is the default.
   const requestedKinds = Array.isArray(body?.kinds)
@@ -64,10 +65,10 @@ export async function POST(request: Request) {
   // An explicit request for other question kinds keeps the model-written path.
   const mathFamily =
     topic && mathPracticeEnabled() && (!requestedKinds?.length || requestedKinds.includes("fill_blank"))
-      ? mathFamilyForTopic(topic)
+      ? mathFamilyForTopic(topic, room)
       : null;
-  if (topic && mathFamily) {
-    const built = buildMathQuestions(mathFamily, count);
+  const built = mathFamily ? buildMathQuestions(mathFamily, count) : [];
+  if (topic && built.length) {
     const { data: inserted, error } = await createServiceSupabaseClient()
       .from("quiz_questions")
       .insert(built.map(({ row }) => ({ room_id: roomId, owner_id: user.id, topic_id: topic.id, ...row })))
