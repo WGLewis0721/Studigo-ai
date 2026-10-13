@@ -6,7 +6,14 @@ import {
   responseOptions,
   client
 } from "./client";
-import { groundingStatus, type GroundingStatus } from "./verify-claim";
+import {
+  claimJudgeEnabled,
+  groundingStatus,
+  summarizeClaims,
+  verifyClaims,
+  type ClaimVerification,
+  type GroundingStatus
+} from "./verify-claim";
 
 export type RetrievedChunk = {
   id: string;
@@ -35,9 +42,82 @@ export type GroundedAnswer = {
   citations: Citation[];
   /** True when the answer text contains a supplied `[n]` marker. Not semantic support. */
   grounded: boolean;
-  /** `verified` only when cited chunk text covers the claim words. Optional for older callers. */
-  support?: GroundingStatus;
+  /** Per-claim support. `verified` only when a claim's own cited chunks support it. Optional for older callers. */
+  support?: AnswerSupport;
 };
+
+export type AnswerSupport = ClaimVerification & {
+  /** Whole-answer status, kept for callers that typed the old single status. */
+  overall: GroundingStatus;
+};
+
+const CLAIM_JUDGE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["supported"],
+  properties: { supported: { type: "boolean" } }
+};
+const MAX_JUDGED_CLAIMS = 12;
+
+/**
+ * Optional model judge (STUDIGO_CLAIM_JUDGE=1). It can only upgrade a
+ * `citation_present` claim to `verified`, and only on a structured
+ * `supported: true`. Any error leaves the lexical result untouched.
+ */
+async function judgeClaims(verification: ClaimVerification, chunkTexts: string[]): Promise<ClaimVerification> {
+  const pending = verification.claims.filter((claim) => claim.status === "citation_present").slice(0, MAX_JUDGED_CLAIMS);
+  if (!pending.length) return verification;
+  const upgraded = new Set<string>();
+  try {
+    // Dynamic import: study.ts imports this module, so a static import would be circular.
+    const { structured } = await import("./study");
+    await Promise.all(
+      pending.map(async (claim) => {
+        try {
+          const excerpts = claim.citations
+            .map((marker) => chunkTexts[marker - 1])
+            .filter((chunk): chunk is string => Boolean(chunk));
+          if (!excerpts.length) return;
+          const result = await structured<{ supported: boolean }>({
+            system: [
+              "You check whether cited source excerpts support one statement.",
+              "Answer supported=true only if the excerpts directly state or clearly entail the statement. If unsure, answer false.",
+              UNTRUSTED_MATERIAL_RULE
+            ].join(" "),
+            user: `Statement: ${claim.text}\n\nCited excerpts:\n${asUntrustedMaterial(JSON.stringify(excerpts))}`,
+            schemaName: "claim_support",
+            schema: CLAIM_JUDGE_SCHEMA
+          });
+          if (result?.supported === true) upgraded.add(claim.text);
+        } catch {
+          // Judge failure keeps the lexical status.
+        }
+      })
+    );
+  } catch {
+    return verification;
+  }
+  if (!upgraded.size) return verification;
+  return summarizeClaims(
+    verification.claims.map((claim) =>
+      claim.status === "citation_present" && upgraded.has(claim.text) ? { ...claim, status: "verified" as const } : claim
+    )
+  );
+}
+
+async function buildSupport(text: string, used: Citation[], chunks: RetrievedChunk[]): Promise<AnswerSupport> {
+  const chunkTexts = chunks.map((chunk) => chunk.content);
+  let verification = verifyClaims({ text, chunkTexts });
+  if (claimJudgeEnabled()) verification = await judgeClaims(verification, chunkTexts);
+  return {
+    ...verification,
+    overall: groundingStatus({
+      citationCount: used.length,
+      claim: text,
+      chunkTexts: used.map((citation) => chunks.find((chunk) => chunk.id === citation.chunkId)?.content ?? "")
+    })
+  };
+}
 
 export const INSUFFICIENT_EVIDENCE_TEXT =
   "I can't answer that from the materials in this Study Room yet. Add the study guide, notes, or textbook pages that cover it and ask me again.";
@@ -177,11 +257,7 @@ export async function answerFromRetrievedContext(args: {
     text,
     citations: used,
     grounded: used.length > 0,
-    support: groundingStatus({
-      citationCount: used.length,
-      claim: text,
-      chunkTexts: used.map((citation) => args.chunks.find((chunk) => chunk.id === citation.chunkId)?.content ?? "")
-    })
+    support: await buildSupport(text, used, args.chunks)
   };
 }
 
@@ -226,6 +302,11 @@ export async function* streamGroundedAnswer(args: {
   const used = citationsUsedIn(finalText, available);
   yield {
     type: "done",
-    answer: { text: finalText, citations: used, grounded: used.length > 0 }
+    answer: {
+      text: finalText,
+      citations: used,
+      grounded: used.length > 0,
+      support: await buildSupport(finalText, used, args.chunks)
+    }
   };
 }

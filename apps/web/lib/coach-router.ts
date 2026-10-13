@@ -491,7 +491,7 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       yield { type: "delta", text: grounded.text };
       yield {
         type: "done",
-        answer: { text: grounded.text, citations: grounded.citations, grounded: grounded.grounded }
+        answer: { text: grounded.text, citations: grounded.citations, grounded: grounded.grounded, support: grounded.support }
       };
       return { stateBefore: state.kind, turnIntent: resolvedIntent, semanticScore: null, outcome: "show_answer", stateAfter: "awaiting_answer" };
     };

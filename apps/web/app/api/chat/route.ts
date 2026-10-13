@@ -172,7 +172,9 @@ export async function POST(request: Request) {
             type: "done",
             text: event.answer.text,
             citations: event.answer.citations,
-            grounded: event.answer.grounded
+            grounded: event.answer.grounded,
+            // Per-claim support for the client only. Never passed to writeStudyTrace.
+            support: event.answer.support
           });
         }
       } catch (error) {
