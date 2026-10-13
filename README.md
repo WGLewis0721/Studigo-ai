@@ -156,7 +156,7 @@ supabase/
 knowledge/
   teaching-coaching/   Coach-method KB derived from the live UI taxonomy
 implementation/
-  ENGINEERING_PLAN.md  single execution plan (workstreams L, E, P, S, H, W)
+  ENGINEERING_PLAN.md  single execution plan (workstreams L, E, P, M, G, O, S, H, W)
   security-readiness/  reusable evidence-backed security control framework
 docs/
   README.md            specialist documentation map
@@ -227,7 +227,7 @@ Teacher-provided study guides and teacher materials should carry the highest ret
 
 Start with [`ENGINEERING.md`](ENGINEERING.md). It is the compact map: authority boundary, technology choices, and which file owns a change.
 
-Execute from [`implementation/ENGINEERING_PLAN.md`](implementation/ENGINEERING_PLAN.md). That is the single plan (workstreams L, E, P, S, H, W). It replaces the separate draft on PR #81. Do not scan the whole repository to find the next task.
+Execute from [`implementation/ENGINEERING_PLAN.md`](implementation/ENGINEERING_PLAN.md). That is the single plan (workstreams L, E, P, M, G, O, S, H, W). It replaces the separate draft on PR #81. Do not scan the whole repository to find the next task.
 
 Then open only the specialist contract required for the task, using
 [AGENTS.md](AGENTS.md) and [the documentation map](docs/README.md).

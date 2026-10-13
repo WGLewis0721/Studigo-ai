@@ -59,8 +59,12 @@ Checked against `main` @ `c4259fdb`, not against the 4 Oct tree.
 | Learning state | Production progression is the deterministic director in `packages/learning`. `packages/mastery` (BKT, Elo, scheduler) is pure functions plus an advisory harness on synthetic data. Do not draw BKT as the production mastery write | `packages/learning/src/director.ts`, `packages/mastery/src/`, `evals/ml/` |
 | Ingestion | Idempotent, but still inside the request. A large scan can hit the function timeout | `apps/web/lib/ingest.ts` |
 | Security | Gate is not ready. Highest open code/ops items are in the checklist's launch-blocker order: anonymous sign-in toggle, rate and spend limits, child-privacy decision, auth CAPTCHA, live injection eval, malware scanning | checklist § Launch-blocker order |
-| CI hygiene | Typecheck, unit tests, database security tests, RAG scorer tests, ML tests, and the web build run on PRs. Lint does not: `apps/web` is `next lint \|\| true`; packages echo a stub. Playwright is not in CI. No rule keeps the model SDK inside `packages/ai` | `package.json`, `.github/workflows/ci.yml` |
+| CI hygiene | CI runs audit, `pnpm lint` (SDK boundary check and engineering-path check), typecheck, tests, ML tests, game tests, and the web build. `apps/web` lint is the boundary check only. No eslint config. Playwright and an eval smoke are not in CI | `.github/workflows/ci.yml`, `package.json`, `scripts/` |
 | Focus | Moon Keep and `services/retrieval/` are separate from the learning app. The Python service is unauthenticated and must stay off the public path | `prototypes/moon-road/`, `services/retrieval/` |
+| First run | New rooms start from `components/create-room-form.tsx`: title is required, subject, test date, and course are optional. No onboarding module exists | `apps/web/components/create-room-form.tsx`, `apps/web/app/app/page.tsx` |
+| Exports | A study-guide PDF exists (`buildStudyGuidePdf`, `/api/study-guide/download`). No learner-data export was found | `apps/web/lib/study-guide-pdf.ts`, `apps/web/app/api/study-guide/download/route.ts` |
+| Exam dates and practice tests | A room test date, a study-plan route, a cram panel, and practice tests exist | `apps/web/app/api/study-plan/`, `apps/web/components/room/cram-panel.tsx`, `apps/web/app/api/practice-tests/` |
+| Payments | No payment code exists in the app. The roadmap mentions a $3.99 paid-app model for the game | `docs/ROADMAP.md` |
 
 ## Technology catalog
 
@@ -76,6 +80,8 @@ There is no L-step that asks you to confirm those rows.
 ## Workstreams
 
 Each step lists the files to touch, when it is done, and what to run. Do the steps in the order under [Sequence](#sequence). Do not start a later step by widening scope.
+
+Two tracks. The engineering track is L, E, P, M, S, H, W. The product track is G and O. Product-track steps run on provisional defaults for the decisions in the Sequence's Deferred table (S8's age and privacy decision, G1, O1), recorded in the PR that uses them. Nothing that depends on those decisions goes to a wider audience before they are made.
 
 ### L — Legibility
 
@@ -148,6 +154,11 @@ ADR 001 gates: zero unauthorized retrieval, ≥95% claim support, ≥95% correct
   - Done when: the doc shows the metric and the label source. The judge is not the labeler.
   - Verify: `node --test` for the scorer. Labels live in repo files with a reviewer name.
 
+- **E10. Slice the evidence.** Report grading and retrieval error rates per slice (question type, course, subject, difficulty), not only in aggregate, because an average can hide a failing slice. Draw a stratified random sample of high-confidence gradings for ongoing audit, so novel errors are found. Add a `detected_pattern` field to graded results so disputed or flagged grades can be analyzed by what triggered them. Model-reported confidence is used only to route what a human reviews, never for escalation or progression.
+  - Files: `evals/grading/`, `evals/rag/`, `packages/ai/src/study.ts` for the field.
+  - Done when: the results README has per-slice tables and states the sampling procedure.
+  - Verify: scorer tests for the slice report. Labels come from E9, and the judge is not the labeler.
+
 ### P — Product architecture
 
 These are the hardening steps PR #81 did not schedule. They sit under the golden learner UI. Do not add a new product mode inside them.
@@ -180,6 +191,11 @@ These are the hardening steps PR #81 did not schedule. They sit under the golden
   - Files: `packages/learning/`, `docs/ADAPTIVE_LEARNING_CORE.md`, `ENGINEERING.md` if the map changes.
   - Done when: the three terms are not used interchangeably in those files.
   - Verify: existing director tests still pass. No BKT call on the Coach write path unless a flag defaulting off is measured under E9-style evidence. It should not be on.
+
+- **P4. Bounded agent, only if justified (decision first).** The core loop stays a workflow: deterministic code decides, the model reports evidence. One candidate remains: a bounded ingestion agent for "look again" cases (re-read an unreadable page, re-chunk a table).
+  - If built: it runs in the background worker only, after P1. Its tools are read-only and scoped to one document, with distinct names and descriptions that state inputs and edge cases, and arguments validated in code. The loop ends on the model's stop signal, with a step cap only as a backstop. Failures return typed errors with what was attempted. A forced first tool and an allowed-tools list keep behavior predictable and the prompt cache stable. It ships behind a flag and is measured against the current workflow.
+  - Done when: the decision is recorded in an ADR (W3). No agent code is written before P1 lands and ingestion failures justify it.
+  - Verify: an eval comparing the agent with the current workflow on the same failing documents.
 
 ### S — Security
 
@@ -222,6 +238,19 @@ Public launch gate: the generated decision is `ready`, or each open blocker is `
   - Done when: the decision is written down and the product matches it, or you waive public launch in writing.
   - Verify: gate rows GMS-PRIV-002, GMS-PRIV-004, GMS-AI-008 updated. No code-only "fixed" without the decision.
 
+- **S9. Layered guardrails.** Build defense in depth, not one filter: a relevance check (off-topic input), a safety check for injection and jailbreak attempts on uploads and learner text, rules-based limits (length, patterns), output validation, and a low/medium/high risk rating for any action the model can trigger, with human oversight above low. Escalate to a human when a failure threshold is exceeded.
+  - Files: `packages/ai/`, the chat, learn, and upload routes.
+  - Done when: each layer is present, or deferred in this file with a reason.
+  - Verify: S5's hostile-upload eval exercises each layer.
+
+- **S10. LLM-specific risks beyond S5.** Improper output handling: model output never changes state or renders unescaped without validation. Vector and embedding weaknesses and poisoning: tests that crafted uploads and cross-room queries cannot surface another learner's chunks. System-prompt leakage: no secret or security rule exists only in a prompt. Misinformation: a measured grounded-answer rate with abstention. Excessive agency: no tool or permission beyond need.
+  - Done when: each item has a checklist row with evidence or a named gap.
+  - Verify: `tests/database-security.test.mjs` includes a cross-room retrieval case, and S5's eval includes a prompt-leak case.
+
+- **S11. Risk mapping.** Map each generative-AI risk category from NIST AI 600-1 (for example confabulation, privacy, information security) to a control and a test in the existing `SECURITY_AUDIT_CHECKLIST.md`. Do not add a second checklist.
+  - Done when: each category names a checklist row and a test, or a documented gap.
+  - Verify: the generated public-launch gate still builds (`pnpm security:report`).
+
 ### H — Operations and CI
 
 - **H1. Observability.** Tracing (OpenTelemetry or a hosted product you actually operate), per-turn token and cost, prompt version id on every model call. Log ids, model, latency, and token counts. Do not log raw learner or source text by default.
@@ -233,10 +262,203 @@ Public launch gate: the generated decision is `ready`, or each open blocker is `
   - Done when: a lint error fails the workflow. A red smoke run fails the workflow.
   - Verify: CI on this step's PR is green for the real reason, not because the script swallows the exit code.
 
+- **H3. Resilience.** Per-call timeouts, bounded retries with backoff (never on 400, 401, or 403), a circuit breaker, a degraded mode that falls back to cached or deterministic behavior, and failover across the existing transports where they are equivalent.
+  - Files: `packages/ai/src/client.ts`.
+  - Done when: a simulated provider outage leaves the app usable and shows a clear message.
+  - Verify: tests with a stubbed client for timeout, retry, open circuit, and recovery.
+
+- **H4. SLOs and telemetry.** Extend H1. Write service-level objectives (latency, grounded-answer rate, structured-output failure rate). Record per call: schema, model, latency, tokens, cached tokens, refusal and validation-failure counts. No learner content in logs.
+  - Done when: the objectives are written and the numbers are measured from real requests.
+  - Verify: the redaction test from H1 covers the new fields.
+
+- **H5. Model and prompt pinning.** Pin the model id and a prompt version per call type, and record a prompt hash. Any change to the model, provider, or prompt requires the eval smoke (H2) to pass in the same PR.
+  - Done when: changing `OPENAI_CHAT_MODEL` without a smoke result fails review or CI.
+  - Verify: a documented failing example.
+
+- **H6. Claude Code configuration and review.** Use path-scoped rules in `.claude/rules/` (for example `packages/ai/**`, `supabase/migrations/**`, `evals/**`) instead of one long file. Run review on large changes with an independent pass (a fresh session or subagent without the author's context), with a per-file pass plus a cross-file pass. Consolidating the duplicated personal instruction files is an owner task outside the repo.
+  - Done when: the rules exist and load only for matching paths.
+  - Verify: open a matching file and a non-matching file and check which rules load.
+
+- **H7. Plan consistency check and assignment template.** Extend the path check (`scripts/check-engineering-paths.mjs` or a sibling) to fail when the workstream list differs across `AGENTS.md`, `ENGINEERING.md`, `README.md`, and this plan, or when a step ID here has no ledger row. Assign a step with: "Do step X. Read only its listed files. Done when its Done-when and Verify lines pass. Update its ledger row and, if the code map or workstream list changed, `ENGINEERING.md` and `README.md`."
+  - Done when: CI fails on a deliberate mismatch and passes on the real tree.
+  - Verify: `pnpm lint` fails with a planted mismatch and exits 0 without it.
+
+### M — Model-call reliability
+
+Every structured model call goes through `structured()` in `packages/ai/src/study.ts`. These steps make it fail in ways a caller can handle. No model call is added outside `packages/ai`. Principles: validate output in code, retry only what a retry can fix, and never ask the model to fill a value the source does not contain.
+
+- **M1. Classify and retry failures.** Refusal, truncated (`status: incomplete`), empty, unparsable, and invalid are separate `StructuredOutputError` kinds. Truncation retries once with a larger output budget (default cap is 1200 tokens). Empty, unparsable, and invalid retry once with the problem stated. A refusal is never retried.
+  - Files: `packages/ai/src/structured-output.ts`, `packages/ai/src/structured-output.test.ts`, `packages/ai/src/study.ts`.
+  - Done when: merged, and the failure kinds are visible in M6's log.
+  - Verify: `pnpm --filter @studigo/ai test` and `pnpm typecheck`. Not yet run against a live model.
+
+- **M2. Validate at the call site.** Use the optional `validate` hook. First callers: quiz generation (answer key present and in range), topic extraction (non-empty titles), short-answer grading (score within bounds).
+  - Done when: a quiz item with a bad key triggers a retry, not a silent drop. Check how `normalizeGeneratedQuestion` discards items today before changing it.
+  - Verify: unit tests with a stubbed client.
+
+- **M3. Schema pass.** Fields the source may lack become nullable. Ambiguous categories get `unclear`, and open categories get `other` plus a detail field. Derived values carry `stated` and `calculated` so software can flag a mismatch. Do not retry when the information is absent from the source: abstain.
+  - Done when: each schema in `study.ts` and `coach.ts` has been reviewed against these rules, and the review is in the PR.
+  - Verify: tests that a source missing a field yields null, not an invented value.
+
+- **M4. Prompt criteria and examples.** In `evaluateCoachAnswer` and the grading prompts, add explicit criteria and 2–4 short examples of ambiguous cases (partial answer, example instead of a definition, a question back).
+  - Done when: the E9 set, or a small reviewed fixture, shows no regression.
+  - Verify: Coach tests plus the E9 scorer.
+
+- **M5. Stable prompt prefix.** Static instructions and schema first, per-request content last. Keep the schema, tools, and model fixed per call type. Record cached-token counts from provider usage.
+  - Done when: usage shows cache hits on repeated calls of the same type.
+  - Verify: H1's trace shows cached tokens.
+
+- **M6. Typed errors to the learner.** Routes map failure kinds to different messages (refusal, try again, too long), not a generic failure. Log kind and schema name only, never content, through `apps/web/lib/study-trace.ts`.
+  - Files: chat, learn, quiz, and flashcards routes.
+  - Done when: each kind shows a distinct message and one log line.
+  - Verify: route tests and a redaction test (see H1).
+
+- **M7. Routing and evaluator pass (optional, measured).** Use a smaller model for classification such as intent, and a stronger one for grading and explanation. Have an independent evaluator, with no access to the generator's reasoning, check generated questions. Adopt either only if the E9 set or a reviewed fixture shows no quality loss and cost or latency improves.
+  - Done when: an ablation note states keep or drop.
+  - Verify: the same fixtures run with each arm.
+
+- **M8. Context handling in the Coach.** First check how history and chunks are passed today. Then keep a persistent "case facts" block (attempts, concepts demonstrated, the pending question) outside summarized history, trim retrieved chunks to the relevant spans, and put a short findings summary first with detail under headers, so middle content is not lost.
+  - Files: `packages/ai/src/coach.ts`, `apps/web/lib/coach-*`.
+  - Done when: a long-session test keeps the stated facts across turns.
+  - Verify: Coach tests with a session longer than the trimmed history.
+
+- **M9. Provenance and coverage.** Carry source metadata (document, page or slide, revision) as structured fields through every step, separate from the text. Guard in code that cited indices and returned ids belong to the set sent. Extracted topics carry an evidence field (a quote or chunk id). Report topics with no source support instead of silently dropping them.
+  - Done when: a fixture citing a marker that does not exist is rejected, and an unsupported topic is reported.
+  - Verify: grounding and topic-extraction tests.
+
+- **M10. Batch for non-interactive work.** Use the provider's batch interface only for ingest-time generation (embeddings, topic maps, flashcards). Correlate requests with ids, resubmit only failures, and test the prompt on a sample first. Never for live tutoring. Confirm the chosen provider's batch terms.
+  - Done when: one job runs on a sample and the cost difference is recorded.
+  - Verify: the recorded run.
+
+### G — Learner experience
+
+Principles: the core loop is the product. Difficulty adapts like a game assist mode and never changes what must be learned. Correctness is computed in code wherever it can be. Claims about learning wait for a measurement. There is no teacher-facing view. Child privacy (S8) gates G4 and G5.
+
+- **G1. Core loop and success measures (decision, no code).** One sentence for the loop. Name the measures (for example time to first correct answer, session completion, return rate, flag rate) and a maximum explanation length.
+  - Files: `docs/PRODUCT.md`.
+  - Done when: written, and every other G step names the measure it should move.
+
+- **G2. Deterministic math.** Generate problems in code with known answers. Check answers with a math library, with no model call. The model only explains and encourages. Render math properly.
+  - Done when: a math answer is graded without a model call, and fixtures show zero wrong grades.
+  - Verify: property tests over the generators.
+
+- **G3. Show, don't tell (visual explanations).** Today ingestion is text in, text out: pages become text, and a diagram on a scanned page is reduced to one bracketed line in `packages/ai/src/ocr.ts`. No page images or figures are stored and there are no explanation visuals, so the output can only be a word wall. Math is worst, because fractions, equations, and graphs flatten into text. G3 gives every explanation a picture to carry the idea. Frame it as visuals for everyone, with words on tap. Do not label a learner a "visual learner".
+  - **G3a. Figures from the learner's own material.** Render the page or crop the figure, store it privately with RLS, and show it with its citation. Nothing is invented. Page rendering runs in the P1 worker, so this sub-step waits for P1.
+  - **G3b. Math visuals drawn by code.** Number lines, fraction bars, area models, bar models, place-value blocks, graphs, tables, and timelines, rendered as SVG from verified data. G2's generator knows the quantities, so the picture is correct by construction. Math steps reveal one at a time.
+  - **G3c. Structured diagram specs.** The model returns a schema-validated spec (nodes and links, a sequence, a table), never an image and never freeform SVG. Trusted components render it. Every label must trace to the source excerpts, or the spec is rejected. No AI-generated educational images.
+  - **G3d. Representation fading.** The director chooses the representation: more pictorial at Introduced, fading toward symbols at Independent (concrete, pictorial, abstract). This shares signals with G4.
+  - **G3e. Words under control.** Visual first with one short caption, detail on tap. Language level is a parameter passed into prompts, separate from explanation depth, and G4 later estimates it. Output length and sentence length are checked in code through M2's `validate` hook. Read-aloud uses the browser's speech support.
+  - **G3f. Accessibility.** A text equivalent for every visual, color-blind-safe palettes, read-aloud descriptions, and reduced-motion support.
+  - Files: `packages/documents/` and the P1 worker for G3a, a new visual-rendering component set in `apps/web/components/`, `packages/ai/src/study.ts` and `coach.ts` for the specs and the language parameter.
+  - Done when: an explanation of an uploaded math topic leads with a correct visual and a caption, a session can be completed without any text block over the length chosen in G1, and no visual contains a label that is absent from the source.
+  - Verify: schema tests that a spec with an unsourced label is rejected, snapshot tests of the code-drawn visuals against fixtures, a prompt test that the language parameter reaches every learner-facing generation, and a pilot comparison (G12) of text-only against visual-first on the same topic.
+
+- **G4. Auto level (shadow level).** Add `auto` to `explain_level` and make it the default for new rooms. The manual simpler/standard/deeper values stay as an override. The director in `packages/learning` owns the hidden estimate and passes the result to the model as a parameter. Two axes: scaffolding (hints, pacing, explanation depth) per learner per topic, and language level per learner. It changes pitch only, never which facts are cited. No grade label is shown to the child.
+  - Design checks: ceiling and floor with an occasional upward probe, several signals before a change, rushed or gamed answers excluded, cold start at standard, inferred data treated as personal data.
+  - Files: `apps/web/lib/explain-level.ts`, `apps/web/lib/coach-preferences.ts`, `packages/learning/`, `apps/web/components/room/room-settings.tsx`, a migration for the new value.
+  - Done when: behind a flag, with unit tests for hysteresis, bounds, and cold start. Director tests unchanged. `packages/mastery` gains no write authority.
+  - Verify: tests above. The flag stays off by default until a measure from G1 shows no harm.
+
+- **G5. Rush and gaming detection.** Very fast answers and patterned errors change the task and do not count as evidence. No accusation shown to the child.
+  - Done when: a rushed answer does not move the evidence stage.
+  - Verify: session tests.
+
+- **G6. Review scheduling.** A room test date, a study-plan route, and a cram panel already exist. This step compares the scheduler in `packages/mastery` with FSRS offline in `evals/ml`. The harness uses synthetic data, so the result is exploratory until real review logs exist. Adopt only if a G1 measure improves, then connect the winner to the existing test-date planning.
+  - Done when: a comparison note exists that says whether the data was synthetic or real.
+
+- **G7. Citations, flags, upload report.** Page or slide on every citation. A flag-this-answer control stores the flag with schema name and prompt version, readable by the evals. An upload-quality report shows which pages could not be read. A learner can save a question for later, stored with RLS; this is the only source for G11's saved questions.
+  - Files: a migration with RLS, answer and citation components.
+  - Done when: a flag lands in a table the evals can query, and a saved question can be read back by its owner only.
+  - Verify: `tests/database-security.test.mjs` shows one learner cannot read another's flags.
+
+- **G8. Study guide export quality.** A PDF export already exists (`apps/web/lib/study-guide-pdf.ts`, `/api/study-guide/download`). Review it against the product rules: teacher-priority order, a page or slide on each citation, and rendered math (needed once G2 lands). The raw plain-text export you described was not found in the app routes, so first confirm which export is raw, then fix that one.
+  - Done when: the raw-text export is identified and replaced, and a fixture room's PDF matches a snapshot.
+
+- **G9. Learning as the mechanic.** Stays on the Moon Keep track (`prototypes/moon-road/`). No work in this plan until G1 to G5 have measures.
+
+- **G10. Companion as the reason to return (decision first).** The objective: the avatar is a character the learner knows and cares about, and that relationship is the vehicle for continued play. This reverses the current written rules ("no reward economy, no streaks, no currency", `docs/COMPANION_PARITY_PLAN.md`, `docs/DESIGN_SYSTEM.md`, and the non-goals in `IMPLEMENTATION.md`), so the owner approves the change and those three files are updated in the same PR as the first G10 code.
+  - Rules that stay:
+    - The companion never changes mastery, difficulty, or grading. Cosmetic and expressive items only (emotes, outfits, names, room items).
+    - Rewards are earned from what Studigo measures (demonstrated recall, completed reviews, improving a weak topic), never from uploaded grades. A grades-based bonus, if ever built, is optional, parent-controlled, verified, and reviewed by counsel (S8).
+    - The currency is never sold. It is not purchasable with money.
+    - Bond grows with use and never decays. No guilt messages, no punishment for absence, no streak loss.
+    - Anything the companion says about progress is real data.
+    - Companion rendering stays free of network calls. Bond and inventory live in app-owned state read by the component.
+  - Personification levers: the learner names the companion; it remembers what the learner studied and says so ("last time you got fractions"); its expressions react to real events (`celebrate`, `thinking`); it shows what it has learned about how the learner studies (O7).
+  - Files: `apps/web/` companion components, a migration with RLS for bond, inventory, and earned items, `packages/learning/` for the earning rule (deterministic, same authority boundary as the director).
+  - Done when: the decision is written, an earned item can be equipped, mastery and difficulty are unchanged with items on or off (tested), and no earned item or message depends on absence.
+  - Verify: director tests unchanged, a test that equipping items does not alter evidence stage or level, and a database test that one learner cannot read another's inventory.
+
+- **G11. Pull mechanics.** The learner returns because there is something worth returning to. Onboarding and rewards build that pull. They never make staying away feel bad.
+  - Mechanics:
+    - **Something waiting.** The companion has something real for the learner: a review that is actually due, questions saved from their own notes, a test date they set. The software decides what is due (the scheduler, G6) and the companion presents it. Nothing is invented to create a reason.
+    - **Investment worth returning to.** The name they chose, the items they earned, the room they arranged (O3, O7, G10). Leaving costs nothing and returning adds more.
+    - **A warm return.** On coming back, the learner picks up where they left off in one tap. The welcome says nothing about absence.
+    - **A fast first minute.** The first thing on screen is a pre-filled, worthwhile question (O2), so Studigo is the quickest route to something fun.
+    - **Outcomes the learner values.** The companion works on their own class material, so the pull is also "this helps with my real homework".
+  - Rules:
+    - No guilt, sadness, or neglect states for absence. No streak loss.
+    - Rewards are fixed and predictable. No random or variable-reward mechanics.
+    - Any message about what is waiting comes from real data (same rule as G10).
+    - No pressure surfaces on a child's screen (O1).
+  - Done when: a returning learner sees something real waiting, one tap resumes, and no copy or state references time away.
+  - Verify: a copy review against these rules, a test that "waiting" items come only from due reviews or saved questions, and the G1 return-rate measure.
+
+- **G12. Learning-outcome pilot.** G1's measures are engagement. This step tests whether learners learn. A small pilot with a written method, a comparison (for example pre and post on the same topic, or practice-test results), and parental consent for any child's data. Counsel reviews the consent text (S8).
+  - Done when: the method is committed before the pilot starts, and the result is reported with its limits whatever it shows.
+  - Verify: no outcome claim appears on the site or in the pitch without a pointer to this result.
+
+- **G13. Clarify and hand off.** When a lookup matches several records (for example two similar room or document names), ask the learner instead of guessing. When the Coach cannot make progress after a set number of attempts, compile a structured summary (topic, attempts, evidence so far, suggested next step) a human can act on. This is not a teacher-facing view.
+  - Done when: an ambiguous reference triggers a question, and the failure threshold produces the summary.
+  - Verify: session tests for both paths.
+
+### O — Onboarding and conversion
+
+Principles: no blank states (infer, pre-fill, recommend, then let the learner adjust what does not fit). Give real value before asking for money. Every contribution a learner makes improves their experience immediately. What a learner built is theirs. The common thread: never ask a user to configure software for Studigo's benefit.
+
+Limits that apply to every O step. The audience may include children, and Prodigy's critics allege exactly this kind of pressure. No sales prompts, countdowns, or loss messaging on a child's screen. Purchase surfaces are for the paying adult. No threats about data. No invented prices, discounts, or scarcity. Counsel reviews O4 to O6 with S8 before launch.
+
+- **O1. Guardrails and payment path (decision, no code).** Write the limits above into `docs/PRODUCT.md`, plus who pays, who sees the purchase screen, and how a child's account is separated from billing. Choose the payment path: no payment code exists in the app, the roadmap mentions a $3.99 paid-app model for the game, and this plan assumes $19.99 one-time for the study app. Confirm the price, the processor, and whether app-store purchase rules apply on iOS.
+  - Done when: written, the payment path is chosen, and S8's counsel review covers it.
+
+- **O2. No blank states.** After sign-in, the learner never faces an empty screen or a required form. Infer subject, topics, and a starting goal from the first upload (`extractTopicMap`), or from a sample course when there is no upload yet. Pre-select the defaults, including `standard` level until G4 is proven, then `auto`. The learner adjusts what does not fit. Today the first-run form is `components/create-room-form.tsx` with a required title. That form is the blank form to replace.
+  - Done when: a new account reaches a first interaction with zero required fields.
+  - Verify: a Playwright run of the new-account path.
+
+- **O3. Onboarding is first use.** Each onboarding step produces something the learner can use at once (a goal, a first study guide, a first question). The first real study interaction happens inside onboarding, as in Duolingo's pattern. The learner shapes the experience: goal, subject, preferences, and a name for any companion character, if one exists.
+  - Done when: time to first correct answer is measured (G1) and no onboarding step is pure registration.
+
+- **O4. Free value first.** Needs O1's payment path. A free allowance of 5 coaching sessions and 5 study guides before the $19.99 one-time purchase. These numbers are your product decision, not verified here. Entitlements are counted in code on the server, next to the spend budget (S3), never in the prompt. A session in progress always finishes. Define "coaching session" before counting. The remaining allowance is shown as value ("3 of 5 left"), and the limit is stated before it is reached.
+  - Files: a migration for an entitlements ledger with RLS, the budget code from S3, the purchase route.
+  - Done when: the allowance is enforced server-side, and a denial never cuts a session in progress.
+  - Verify: tests for the allowance cap, for idempotent counting, and for no mid-session cutoff.
+
+- **O5. Honest loss framing.** Show the learner what they have built (guides, progress, learned preferences) and what continuing preserves. State plainly what happens to their data if they do not purchase: a retention window, export before deletion (G8), and a deletion path (S8). The export is the learner's own data, not only the G8 study guide PDF. Do not threaten to wipe data or use urgency.
+  - Done when: the retention policy is written, the product matches it, and export works.
+  - Verify: gate rows for privacy, deletion, and export (S8).
+
+- **O6. Honest anchoring.** What a learner sees first sets the reference point, so order matters. Show the finished study guide before the price. Show the price once and plainly as one-time. If tiers ever exist, order them deliberately. No struck-through "original" prices that were never charged.
+  - Done when: the purchase screen is reviewed against these rules.
+
+- **O7. Endowment.** Rooms, guides, and preferences the learner names, organizes, or edits persist and can be exported. Learned preferences are visible and editable by the learner.
+  - Files: `apps/web/lib/actions/rooms.ts`, room settings.
+  - Done when: a learner can rename and reorganize what they made and see what Studigo has learned about how they study.
+
+- **O8. Measure the funnel without pressure.** Onboarding completion, time to first correct answer, allowance use, conversion. Aggregate counts only, no child content. Any experiment runs on adult purchase surfaces only, never on a child's screen.
+  - Done when: the metrics exist in H1's telemetry.
+
 ### W — Walkthrough
 
 - **W1. One status ledger.** The ledger below is the tour. Update the cell when the step lands. Do not add `AI_ENGINEERING_TOUR.md` or another walkthrough.
 - **W2. Case study, after evidence.** Write `docs/AI_ENGINEERING_CASE_STUDY.md` only after E3 and E8 exist. Problem, boundary, what was measured, what changed because of the measurement, what is still open. It must not duplicate this plan.
+
+- **W3. Decision records.** One ADR in `docs/adr/` for each boundary worth defending: workflow rather than agent in the core loop (the simplest workflow that works), AI reports evidence and software decides, untrusted-input handling, and the structured-output contract. Add a short "Design decisions" list to `ENGINEERING.md` that links them. No new overview document.
+  - Done when: each ADR names context, decision, alternatives, consequences, and the file or test that proves it.
+  - Verify: L5's path check passes.
+
+- **W4. Interview packaging.** Commit before-and-after numbers for M1 to M4 (failure rate, retries, grading agreement) with the eval results. Put the positioning statement in `docs/PRODUCT.md`, with a "true today" and an "aspirational" list. Map the seven talking points (evidence versus judgment boundary, untrusted input, grounding and abstention, structured output contract, evals, idempotent learning state, workflow versus agent) to evidence in the W3 list. No new overview document.
+  - Done when: each talking point links to a file, test, or eval.
+  - Verify: L5's path check passes.
 
 ## Status ledger
 
@@ -263,26 +485,101 @@ Update this table in the PR that changes the status. Do not edit it to match a p
 | Package READMEs and path check | In CI via `pnpm lint` | L3, L5 |
 | Lint | `next lint \|\| true` is gone. CI runs the boundary and path checks | H2 partial. No eslint config in the repo |
 | Security gate | Not ready. S7 and S8 are not code | Owner and counsel |
+| Structured-output failures | `structured-output.ts` written and tested, wired into `structured()`. Uncommitted. Not run against a live model | M1 in progress |
+| Validate hook, schemas, prompts, cache order, typed route errors | Not started | M2 to M6 |
+| Learner experience (core loop, math, visual explanations, auto level, rush detection, scheduling, flags, export quality) | Not started, except existing pieces: a PDF study guide, a room test date, a study-plan route, and practice tests. Decision G1 and child privacy S8 come first | G1 to G8 |
+| Onboarding and conversion (no blank states, free allowance, honest loss framing, anchoring, endowment) | Not started. O1 guardrails and S8 come first | O1 to O8 |
+| Companion bond and cosmetic rewards | Not started. Currently forbidden by `COMPANION_PARITY_PLAN.md`, `DESIGN_SYSTEM.md`, and `IMPLEMENTATION.md`. Needs owner approval | G10 |
+| Pull mechanics (something waiting, warm return, fast first minute) | Not started. Needs G6 scheduling and G10 | G11 |
+| Learning-outcome pilot | Not started | G12 |
+| Resilience, telemetry, pinning, config, consistency check (H3 to H7) | Not started | H3 to H7 |
+| Routing, Coach context, provenance, batch (M7 to M10) | Not started | M7 to M10 |
+| Evidence slicing, bounded-agent decision, guardrails, OWASP and NIST gaps, handoff, interview packaging | Not started | E10, P4, S9 to S11, G13, W4 |
+| Decision records | Not written | W3 |
 | Case study | Not written | W2 waits on E3 and E8 |
 
 ## Sequence
 
-| Order | Work | Stop if |
-| --- | --- | --- |
-| 1 | L1, then L3–L6. L2 is a rule, not a task | Orientation eval is the check that the map is enough |
-| 2 | E1–E3 | No retrieval change before a reviewed baseline |
-| 3 | S3, S7 item 1 (anonymous toggle), S1 leftovers | Spend and anonymous accounts are the launch risks that do not need the eval |
-| 4 | E4–E8, E9 | Keep dense retrieval if the ablation does not win |
-| 5 | S2, S4, S5, S6 | S5 consumes the E1 injection slice |
-| 6 | P1, then P2, then P3 | P2 depends on a worker that can canonicalize |
-| 7 | H1, H2 | H2's smoke set must be reviewed cases from E1 |
-| 8 | S8 and W2 | S8 waits on you and counsel. W2 waits on E3 and E8 |
+Ordered by net-new value a learner can see or trigger, highest first. Validations (evals, labelled reviews, audits, pilots) and steps that need a human approval are deferred to a later session. Until those are done, the build uses provisional defaults, each recorded in the PR that uses it, and anything that makes a claim about learning ships behind a flag.
 
-S7 dashboard items can run beside step 2. They are not code.
+### Now: highest net-new value
+
+| Order | Work | Why it is here | Stop if |
+| --- | --- | --- | --- |
+| 1 | G2, with G3b (math checked in code, drawn by code) | Math is the largest visible gap, and the picture is correct by construction | A wrong grade appears on any fixture |
+| 2 | G3c, G3e, G3f (structured diagram specs, caption first, accessibility) | Removes the word wall for every subject | A spec contains a label absent from the source |
+| 3 | O2, O3 (no blank states, first minute) | First impression for every new learner | A required field remains on first run |
+| 4 | M1, M2, M6, M8 (fewer failures, clear errors, facts kept in long sessions) | Learners feel reliability even though they never name it | |
+| 5 | G4, G5 (auto level, rush detection) | The adaptive feel. Uses provisional defaults for explanation length and the age band, and ships behind a flag | Director tests change |
+| 6 | G7, G8 (page and slide citations, flags, saved questions, export quality) | Trust and a visible deliverable | |
+| 7 | G6, then G10, G11 (due-review signal, companion, something waiting) | The reason to return. G6's comparison runs on synthetic data and is marked exploratory | Any copy references time away |
+| 8 | G13 (clarify and hand off) | Fewer wrong guesses | |
+| 9 | P1, then G3a (durable uploads, then figures from the learner's own material) | Uploads stop hanging, and real figures appear next to explanations | A forced retry creates a second chunk set |
+| 10 | S3, H3, H1, H4 (spend limits, resilience, telemetry) | Not user-visible, but they must be in place before anyone outside the invited group | |
+| 11 | O5, O6, O7 (loss framing, anchoring, endowment) | Conversion and ownership. O6 needs the price decision, so build the structure only | |
+| 12 | M3, M4, M5, M9, M10, M7, P2, P3, P4 | Quality and cost improvements, and the agent decision | |
+
+### Deferred: validations and human approvals
+
+These wait for another session. None of them blocks the steps above.
+
+| Work | Waits on |
+| --- | --- |
+| E1 to E10 (reviewed slice, baseline, ablation, grader benchmark, slicing) | A human reviewer for the labels |
+| L1 and L6 (orientation eval) | A fresh-session run |
+| S5, S10, S11 (live injection eval, extra LLM risks, NIST mapping) | Evals and a checklist review |
+| S1, S2, S4, S6, S7 (supply chain leftovers, headers, uploads, small fixes, dashboard walk) | Owner dashboard steps |
+| S8 (age band, child privacy, counsel) | The owner and counsel |
+| O1 and O4 (guardrails and payment path, free allowance) | The price and processor decision |
+| O8 (funnel measures) | H4 and real traffic |
+| G1 (formal measures), G12 (learning-outcome pilot) | Real learners and consent |
+| H2, H5, H6, H7 (CI smoke, pinning, config, consistency check) | The eval set and owner setup |
+| W2, W3, W4 (case study, decision records, interview packaging) | Evidence from the steps above |
+
+Provisional defaults to record in the first PR that needs them: the explanation length cap (G1), the default level (`standard` until G4 is proven), and the age band (assume the youngest supported until S8 decides).
+
+S7 dashboard items can still run beside any step. They are not code.
 
 ### If time is short
 
-Do L1, L3, L6, E1–E3, E7, E9's first 50 labels, S3, and the anonymous-signin toggle. Skip the reranker, skip a new vector database, skip the case-study doc, and do not publish a scorecard from unreviewed cases.
+Do G2, G3b, G3c, O2, O3, M1, M2, and M6. Skip the reranker, skip a new vector database, skip the case-study doc, and do not publish a scorecard from unreviewed cases.
+
+## Decisions on record
+
+Product decisions already made. A step that contradicts one of these needs the owner's approval first.
+
+| Decision | Source | Affects |
+| --- | --- | --- |
+| No teacher-facing view | Owner | G and O have no teacher dashboard step |
+| Learning is the mechanic. Position against test-like platforms (iReady, Progress Learning) and against Prodigy's separation of game and learning | Owner | G1, G9 |
+| Show, don't tell: visuals carry the idea, words are the caption | Owner | G3 |
+| `auto` shadow level is the default, the manual level stays as an override, two axes (scaffolding per topic, language per learner), no grade label shown to the child | Owner | G4 |
+| Rewards come from what Studigo measures (demonstrated recall, completed reviews), never from uploaded grades. Cosmetic only. The currency is never sold | Agreed | G10 |
+| Pull, not push: no guilt, neglect, or streak loss. Fixed, predictable rewards, no variable-reward mechanics | Owner accepted | G10, G11 |
+| No parental limit-setting feature | Owner | No step |
+| The companion never changes mastery. Its rendering makes no network calls | Existing rule, kept | G10 |
+| No pressure surfaces on a child's screen. Purchase surfaces are for the paying adult. No threats about data: retention window, export, deletion path | Agreed | O1, O5, S8 |
+| Claims about learning wait for a measurement. No "proven" before a pilot | Agreed | G12, W4 |
+| 5 free coaching sessions and 5 free study guides, then $19.99 one time | Owner, not verified | O4 |
+| Stay a workflow in the core loop. Deterministic code decides, the model reports evidence | Existing rule | P4, W3 |
+
+## Open decisions
+
+- Age band and child-privacy approach (S8). Gates G4, G5, G10, G11, and O1 to O6.
+- Payment path and price: this plan assumes $19.99 one time for the study app, and the roadmap mentions $3.99 for the game (O1).
+- Which export is the raw text one (G8). A PDF study guide already exists.
+- What counts as one "coaching session" (O4).
+- Approval to reverse the written rules against a reward economy (G10).
+- Whether a bounded ingestion agent is ever justified (P4).
+- Real review logs for the scheduler comparison (G6).
+
+## Sources and how to treat them
+
+- Claude Certified Architect, Foundations exam guide v1.0 (July 2026), supplied by the owner. Domains and task statements informed M, E10, P4, G13, and H6. A community anti-pattern list (claudecertprep.com) is not from Anthropic.
+- OpenAI: "A Practical Guide to Building Agents", and the structured-outputs, function-calling, and prompt-caching guides. These informed M1, M3, M5, S9, and P4.
+- OWASP Top 10 for LLM Applications (2025) informed S10. NIST AI 600-1 informed S11. Anthropic's "Building effective agents" informed M7 and P4. SRE-style reliability practice informed H3 and H4.
+- Competitor and market review (Khanmigo, NotebookLM, Quizlet, Gizmo, FSRS, Prodigy, i-Ready, Progress Learning) comes from blogs, reviews, and advocacy groups, including a 2021 complaint to the FTC about Prodigy. Treat these as allegations and use them to choose what to test, not as evidence.
+- Sources were read through search summaries and are not independently verified. Check a primary source before quoting one.
 
 ## Risks
 
@@ -290,6 +587,10 @@ Do L1, L3, L6, E1–E3, E7, E9's first 50 labels, S3, and the anonymous-signin t
 - Fixture cases do not measure OCR. Scans stay a separate gate.
 - The judge will drift. Humans label. The model does not fill review fields.
 - A map goes stale. L5 checks paths, not sentences. L6 checks sentences.
+- G4 makes a claim about learning. It stays behind a flag and unannounced until a G1 measure shows no harm.
+- Persuasion principles (reciprocity, loss framing, anchoring) become dark patterns when aimed at children or when the claims are false. O1 sets the limits and counsel reviews O4 to O6. Pressure never appears on a child's screen.
+- Competitor criticisms (Prodigy, i-Ready) come from advocacy and blog sources. Use them to choose what to test, not as evidence.
+- No payment code exists. Pricing and processor are undecided (O1), so no O4 work starts before that decision.
 - Merging PR #81 on top of this file will delete the merge. That PR is closed. Do not rebase it onto this plan.
 
 ## Definition of done
@@ -300,6 +601,10 @@ Do L1, L3, L6, E1–E3, E7, E9's first 50 labels, S3, and the anonymous-signin t
 - Zero unauthorized retrievals on every committed run. CI fails on a regression of that gate.
 - Generated public-launch gate is `ready`, or each remaining blocker is `accepted_risk` with owner and rationale.
 - P1–P3 either landed or explicitly deferred in this file with a date.
+- M1 and M2 merged, and failure kinds appear in logs (M6).
+- G1 and O1 written. Each G and O step is landed, or deferred in this file with a date. G4 and G10 stay behind flags until a G1 measure shows no harm.
+- G12's method is committed before any outcome claim is made.
+- H3 to H5 landed, and M7 to M10 landed or deferred in this file with a date.
 - You can explain the system in 30 seconds, 2 minutes, and 10 minutes from `ENGINEERING.md` without calling an unmeasured result finished.
 
 ## How to explain it

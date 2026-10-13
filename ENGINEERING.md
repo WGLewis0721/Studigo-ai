@@ -4,7 +4,7 @@
 >
 > Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
 >
-> What to build next is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, S, H, W). That file is the single execution plan. Do not add another plan, tour, or security checklist.
+> What to build next is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). That file is the single execution plan. Do not add another plan, tour, or security checklist.
 
 ## System in one sentence
 
