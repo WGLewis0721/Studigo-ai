@@ -17,6 +17,7 @@ import {
 import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
+import { DEFAULT_ROOM_TITLE, inferRoomTitle } from "@/lib/room-defaults";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
 const MAX_ATTEMPTS = 3;
@@ -413,7 +414,32 @@ export async function buildTopicMap(args: {
     p_topics: topics.map((topic, index) => ({ ...topic, evidence: evidence[index] ?? [] }))
   });
   if (error) throw new Error(`Refreshing study topics failed: ${error.message}`);
+  // Naming the room is a courtesy; it must never fail a document that is otherwise ready.
+  await nameRoomFromTopics({ roomId: args.roomId, ownerId: args.ownerId, topics }).catch(() => undefined);
   return Number(data ?? 0);
+}
+
+/**
+ * A room still wearing the default title with no subject takes its title from
+ * the topics just extracted. The condition is part of the UPDATE, so a title or
+ * subject the learner typed, even a moment ago, is never overwritten. The owner
+ * and room come from the document row this ingest run already holds, and
+ * refresh_topic_map has just confirmed that document belongs to both.
+ */
+async function nameRoomFromTopics(args: {
+  roomId: string;
+  ownerId: string;
+  topics: Array<{ title: string; priority: number }>;
+}) {
+  const title = inferRoomTitle(args.topics);
+  if (!title) return;
+  await createServiceSupabaseClient()
+    .from("study_rooms")
+    .update({ title })
+    .eq("id", args.roomId)
+    .eq("owner_id", args.ownerId)
+    .eq("title", DEFAULT_ROOM_TITLE)
+    .is("subject", null);
 }
 
 function normalizeTitle(title: string) {

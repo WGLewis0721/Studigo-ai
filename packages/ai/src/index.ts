@@ -5,6 +5,7 @@ export * from "./embeddings";
 export * from "./grounding";
 export * from "./ocr";
 export * from "./rerank";
+export { STRUCTURED_OUTPUT_KINDS, StructuredOutputError, type StructuredOutputKind } from "./structured-output";
 export * from "./study";
 export * from "./typos";
 export * from "./verify-claim";

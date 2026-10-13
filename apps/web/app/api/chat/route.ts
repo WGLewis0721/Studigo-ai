@@ -8,6 +8,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { assertRoomAccess, MIN_SIMILARITY } from "@/lib/retrieval";
 import { runStudigoEngine } from "@/lib/engine";
 import { isUuid } from "@/lib/ids";
+import { structuredFailure } from "@/lib/structured-failure";
 import { writeStudyTrace } from "@/lib/study-trace";
 
 export const runtime = "nodejs";
@@ -178,9 +179,10 @@ export async function POST(request: Request) {
           });
         }
       } catch (error) {
+        const failure = structuredFailure(error, { route: "api/chat", ownerId: user.id, started });
         send({
           type: "error",
-          error: error instanceof Error ? error.message : "Studigo could not finish that answer."
+          error: failure?.message ?? (error instanceof Error ? error.message : "Studigo could not finish that answer.")
         });
       } finally {
         writeStudyTrace({

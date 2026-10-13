@@ -15,3 +15,19 @@ Run `node evals/rag/run.mjs compare CASES TS_RUN PYTHON_RUN TS_REVIEWS PYTHON_RE
 The existing Python prototype can supply chunking tests/adapters but has no authenticated production boundary. A production Python service is not authorized by a unit-test comparison. [Supabase's permission-preserving RAG guidance](https://supabase.com/docs/guides/ai/rag-with-permissions) and [LangChain's retrieval documentation](https://docs.langchain.com/oss/python/langchain/retrieval) describe the relevant data/retrieval boundaries.
 
 `node --test evals/rag/*.test.mjs` verifies the scorer using explicitly artificial results. No child data or provider credentials are needed.
+
+## Reviewing the first slice (E1)
+
+`review/slice-50.jsonl` holds 50 of the 120 cases, one per line: 9 `plain`, 9 `table`, and 8 each of `unsupported`, `conflict`, `injection`, and `foreign-user`, spread across both grade bands and all twelve topics. `node evals/rag/run.mjs review-slice` writes it and refuses to regenerate once any row has been touched.
+
+Status: 0 of 50 reviewed, 50 pending. The other 70 cases are not in a slice. Update this line from the output of `review-check` when it changes.
+
+To review a case, read its `chunks`, `question`, `expected`, and `permitted`, then fill in the `review` block at the start of the line:
+
+- `status`: `"reviewed"`.
+- `reviewer`: your name. Fixture, template, and model names are rejected.
+- `expectedCorrect`: `true` if `expected` (the answer, or that the tutor should abstain, or that a conflict must be disclosed) is what a correct tutor would do with only these chunks.
+- `scopeCorrect`: `true` if `permitted` lists exactly the chunks this learner may be shown in this room.
+- `notes`: required when either answer is `false`. Say what is wrong so the case can be fixed.
+
+`node evals/rag/run.mjs review-check` validates the file and prints reviewed, accepted, needs-fix, and pending counts. A row whose case text changed after it was written fails the check and must be reviewed again. Only cases with both answers `true` become the corpus for a scored run (`reviewedCases` in `review.mjs`). Nothing in this repository fills these fields for you, and a model must not.

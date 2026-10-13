@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { requireApiUser } from "@/lib/auth";
 import { reserveAiBudget } from "@/lib/ai-budget";
 import { processDocument, runIngestWorker, syncIngestEnabled } from "@/lib/ingest";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
 /** Extraction, OCR, and embedding of a long chapter need real time. */
@@ -49,10 +50,22 @@ export async function POST(request: Request) {
     return Response.json(result, { status: result.status === "failed" ? 500 : 200 });
   }
 
-  // Async mode. RLS: migration 002 revokes UPDATE on public.documents from
-  // `authenticated`, so the user-scoped client cannot set status. We leave the
-  // row untouched; upload already marks it "queued" and claim_next_document
-  // accepts uploaded/failed/queued rows, so the worker will claim it.
+  // Async mode. The worker claims only documents carrying ingest_requested_at,
+  // so this write is what turns the reservation above into permission to run
+  // OCR and embeddings. Migration 002 revokes UPDATE on public.documents from
+  // `authenticated`, hence the service client; ownership was proven by the RLS
+  // read above and is repeated in the filter. A document already processing
+  // matches no row and keeps its current run.
+  const { error: requestError } = await createServiceSupabaseClient()
+    .from("documents")
+    .update({ status: "queued", ingest_requested_at: new Date().toISOString(), error_message: null })
+    .eq("id", documentId)
+    .eq("owner_id", user.id)
+    .in("status", ["uploaded", "queued", "failed"]);
+  if (requestError) {
+    return Response.json({ error: "Processing could not start. Retry from Materials." }, { status: 500 });
+  }
+
   after(async () => {
     try {
       await runIngestWorker({ deadlineMs: 240_000 });

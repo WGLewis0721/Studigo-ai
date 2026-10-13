@@ -67,35 +67,25 @@ export function HomeHero({ next }: { next: HomeNext }) {
   );
 }
 
-const STEPS = 3;
-
 /**
- * Home, with no rooms yet: Studigo walks a new learner through their first
- * Study Room. It asks for a name and, if they know it, a test date. Nothing else.
+ * Home, with no rooms yet: one action opens the first Study Room with nothing
+ * typed, and it opens on Materials, where the real upload is. A name, a test
+ * date and a color are offered, never asked for.
  * `fixture` runs the flow without creating anything (local preview only).
  */
 export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const router = useRouter();
   const stage = useRef<StageHandle>(null);
-  const [step, setStep] = useState(1);
+  const createButton = useRef<HTMLButtonElement>(null);
+  const swatches = useRef<Array<HTMLButtonElement | null>>([]);
   const [title, setTitle] = useState("");
   const [testDate, setTestDate] = useState("");
   const [theme, setTheme] = useState<RoomTheme>("teal");
-  const [did, setDid] = useState({ poke: false, pet: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => { stage.current?.react("wave", 1700); }, []);
-  // Each step starts at its heading, for keyboard and screen-reader users.
-  useEffect(() => { if (step > 1) headingRef.current?.focus({ preventScroll: true }); }, [step]);
 
-  function next(event: FormEvent) {
-    event.preventDefault();
-    if (step === 1 && !title.trim()) return;
-    setStep((value) => Math.min(STEPS, value + 1));
-  }
-  const swatches = useRef<Array<HTMLButtonElement | null>>([]);
   function pickTheme(id: RoomTheme) {
     setTheme(id);
     stage.current?.react("celebrate", 800);
@@ -109,13 +99,14 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     pickTheme(ROOM_THEMES[at].id);
     swatches.current[at]?.focus();
   }
-  async function finish(event: MouseEvent<HTMLButtonElement>) {
-    if (busy) return;
-    const button = event.currentTarget;
+  async function create(event: FormEvent) {
+    event.preventDefault();
+    const button = createButton.current;
+    if (busy || !button) return;
     setBusy(true); setError(null);
     if (fixture) { setError("Preview only: this would create the room and open it."); setBusy(false); return; }
     const data = new FormData();
-    data.set("title", title.trim());
+    if (title.trim()) data.set("title", title.trim());
     if (testDate) data.set("testDate", testDate);
     try {
       const result = await createFirstRoomAction(data);
@@ -133,42 +124,31 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   return (
     <section className="firstRoom" data-tone={theme} aria-label="Set up your first Study Room">
       <div className="stageScreen firstRoomStage">
-        <StudigoStage ref={stage} size={210} onTouch={(kind) => setDid((value) => ({ ...value, [kind]: true }))} />
+        <StudigoStage ref={stage} size={210} />
         <Sill />
       </div>
 
-      <form className="firstRoomBody" onSubmit={next}>
-        <div className="firstRoomBar">
-          {step > 1
-            ? <button type="button" className="firstRoomBack" onClick={() => setStep((value) => value - 1)} disabled={busy}><span aria-hidden="true">‹</span> Back</button>
-            : <span />}
-          <span className="firstRoomDots" role="img" aria-label={`Step ${step} of ${STEPS}`}>
-            {Array.from({ length: STEPS }, (_, index) => <i key={index} data-on={index + 1 === step || undefined} data-past={index + 1 < step || undefined} />)}
-          </span>
-        </div>
+      <form className="firstRoomBody" onSubmit={create}>
+        <span className="tinyLabel">HI, I&apos;M STUDIGO</span>
+        <h1 className="pageTitle">Let&apos;s get you ready for your next test.</h1>
+        <p className="pageLede">Each Study Room holds one test&apos;s worth of material. I study with you, using your own class files.</p>
+        {error && <p className="formError" role="alert">{error}</p>}
+        <button ref={createButton} className="buttonPrimary" type="submit" disabled={busy}>
+          {busy ? "Creating your room…" : "Add my study guide"} <span aria-hidden="true">→</span>
+        </button>
+        <p className="hintText">I only teach from what you give me, and I show the page each answer came from.</p>
 
-        {step === 1 && (
-          <>
-            <span className="tinyLabel">HI, I&apos;M STUDIGO</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>What&apos;s your next test?</h1>
-            <p className="pageLede">Each Study Room holds one test&apos;s worth of material. I study with you, using your own class files.</p>
+        <details className="firstRoomMore">
+          <summary>Name it, set a test date, or pick a color <small className="optionalTag">(all optional)</small></summary>
+          <div className="firstRoomMoreBody">
             <label className="field">
-              <span>Room name</span>
-              <input name="title" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={160} placeholder="Biology Midterm" autoComplete="off" enterKeyHint="next" />
+              <span>Room name <small className="optionalTag">(optional)</small></span>
+              <input name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} placeholder="Biology Midterm" autoComplete="off" enterKeyHint="go" />
             </label>
             <label className="field">
-              <span>Test date <small>(if you know it)</small></span>
+              <span>Test date <small className="optionalTag">(optional)</small></span>
               <input name="testDate" type="date" value={testDate} onChange={(event) => setTestDate(event.target.value)} />
             </label>
-            <button className="buttonPrimary" type="submit" disabled={!title.trim()}>Next <span aria-hidden="true">→</span></button>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <span className="tinyLabel">STEP 2 OF {STEPS}</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Pick a color for this room.</h1>
-            <p className="pageLede">It tints the whole room, so you always know where you are.</p>
             <div className="cdSwatches" role="radiogroup" aria-label="Room color" onKeyDown={onSwatchKey}>
               {ROOM_THEMES.map((item, index) => (
                 <button key={item.id} ref={(node) => { swatches.current[index] = node; }} type="button" role="radio" className="cdSwatch" data-tone={item.id} aria-checked={theme === item.id} tabIndex={theme === item.id ? 0 : -1} onClick={() => pickTheme(item.id)}>
@@ -176,30 +156,8 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
                 </button>
               ))}
             </div>
-            <div className="roomCard firstRoomPreview" data-tone={theme} aria-hidden="true">
-              <span className="roomCardMeta">YOUR FIRST ROOM</span>
-              <strong>{title.trim() || "Your room"}</strong>
-            </div>
-            <button className="buttonPrimary" type="submit">Next <span aria-hidden="true">→</span></button>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <span className="tinyLabel">STEP 3 OF {STEPS}</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>I&apos;ll keep you company.</h1>
-            <p className="pageLede">Try it now. I react to you.</p>
-            <ul className="firstRoomTry">
-              <li data-done={did.poke || undefined}><i aria-hidden="true">✓</i><div><b>Tap me</b><span>I&apos;m ticklish.</span></div></li>
-              <li data-done={did.pet || undefined}><i aria-hidden="true">✓</i><div><b>Pet me</b><span>Press and slide across me.</span></div></li>
-            </ul>
-            <p className="hintText">Next you add your study guide. I only teach from what you give me, and I show the page each answer came from.</p>
-            {error && <p className="formError" role="alert">{error}</p>}
-            <button className="buttonPrimary" type="button" onClick={finish} disabled={busy}>
-              {busy ? "Creating your room…" : "Open my Study Room"} <span aria-hidden="true">→</span>
-            </button>
-          </>
-        )}
+          </div>
+        </details>
       </form>
     </section>
   );

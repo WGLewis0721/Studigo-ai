@@ -1,6 +1,7 @@
 "use server";
 
 import { drainStorageCleanup } from "@/lib/storage-cleanup";
+import { DEFAULT_ROOM_TITLE } from "@/lib/room-defaults";
 import { parseTestDate } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,11 +30,10 @@ function optional(formData: FormData, key: string) {
 }
 
 async function insertRoom(formData: FormData): Promise<{ roomId: string } | { error: string }> {
+  const title = readTitle(formData) || DEFAULT_ROOM_TITLE;
   const local=await serverLocalSession();
-  if(local){try{const roomId=createLocalRoom(local,readTitle(formData));revalidatePath('/app');return {roomId};}catch{return {error:'Could not create room. Use a short title.'};}}
+  if(local){try{const roomId=createLocalRoom(local,title);revalidatePath('/app');return {roomId};}catch{return {error:'Could not create room. Use a short title.'};}}
   const user = await requireUser();
-  const title = readTitle(formData);
-  if (!title) return { error: "Give the room a name, like “Biology Midterm”." };
 
   let testDate: string | null;
   try { testDate = parseTestDate(formData.get("testDate")); }

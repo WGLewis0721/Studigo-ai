@@ -7,40 +7,58 @@ import {
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
+import { StructuredOutputError, planRetry, readStructuredOutput, type StructuredRetry } from "./structured-output";
 import { stripAnswerFiller, termMatch } from "./typos";
 
-/** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
+/**
+ * Exported for reuse by other structured-generation modules (e.g. coach.ts).
+ *
+ * A failed reply is retried at most once (see `planRetry`); a second failure throws a
+ * `StructuredOutputError` of the last kind. Each call is a separate provider call, and the
+ * app's AI budget is reserved once per route call, so this limit is what bounds the extra spend.
+ */
 export async function structured<T>(args: {
   system: string;
   user: string;
   schemaName: string;
   schema: Record<string, unknown>;
+  /** Returns a short description of what is wrong with the value, or null when it is acceptable. Never include the model's own text in it: it is sent back to the model on the retry. */
+  validate?: (value: T) => string | null;
 }): Promise<T> {
-  const response = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: [
-      { role: "system", content: `${args.system} ${PLAIN_PUNCTUATION_RULE}` },
-      { role: "user", content: args.user }
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: args.schemaName,
-        strict: true,
-        schema: args.schema
+  const attempt = async (retry?: StructuredRetry) => {
+    const response = await client().responses.create({
+      model: chatModel(),
+      ...responseOptions(retry?.maxOutputTokens),
+      input: [
+        { role: "system", content: `${args.system} ${PLAIN_PUNCTUATION_RULE}` },
+        { role: "user", content: args.user },
+        ...(retry?.note ? [{ role: "system" as const, content: retry.note }] : [])
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: args.schemaName,
+          strict: true,
+          schema: args.schema
+        }
       }
-    }
-  });
+    });
 
-  const raw = response.output_text?.trim();
-  if (!raw) throw new Error(`${args.schemaName}: model returned no output`);
+    const read = readStructuredOutput<T>(response);
+    if (!read.ok) return read;
+    const problem = args.validate?.(read.value) ?? null;
+    return problem ? { ok: false as const, kind: "invalid" as const, problem } : read;
+  };
 
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    throw new Error(`${args.schemaName}: model returned unparsable JSON`);
-  }
+  const first = await attempt();
+  if (first.ok) return first.value;
+
+  const retry = planRetry(first, responseOptions().max_output_tokens);
+  if (!retry) throw new StructuredOutputError(first.kind, args.schemaName);
+
+  const second = await attempt(retry);
+  if (second.ok) return second.value;
+  throw new StructuredOutputError(second.kind, args.schemaName);
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +94,12 @@ const TOPIC_SCHEMA = {
   }
 };
 
+function topicMapProblem(value: { topics?: unknown }): string | null {
+  if (!Array.isArray(value.topics)) return "topics must be an array";
+  const blank = value.topics.findIndex((topic) => typeof topic?.title !== "string" || !topic.title.trim());
+  return blank === -1 ? null : `topic ${blank + 1} has an empty title`;
+}
+
 /**
  * Reads what the teacher actually asked for. The topic map is only as
  * authoritative as its source, so nothing is invented to round out a list.
@@ -105,7 +129,7 @@ export async function extractTopicMap(args: {
 
   const result = await structured<{
     topics: Array<{ title: string; objective: string; key_terms: string[]; priority: number }>;
-  }>({ system, user, schemaName: "studigo_topic_map", schema: TOPIC_SCHEMA });
+  }>({ system, user, schemaName: "studigo_topic_map", schema: TOPIC_SCHEMA, validate: topicMapProblem });
 
   return result.topics
     .filter((topic) => topic.title.trim().length > 0)
@@ -241,13 +265,40 @@ export async function generateQuizQuestions(args: {
     system,
     user,
     schemaName: "studigo_quiz",
-    schema: QUIZ_SCHEMA
+    schema: QUIZ_SCHEMA,
+    validate: quizAnswerKeyProblem
   });
 
   return result.questions
     .map((raw) => normalizeGeneratedQuestion(raw, args.chunks.length))
     .filter((question): question is GeneratedQuestion => question !== null)
     .filter((question) => !allowed || allowed.includes(question.kind));
+}
+
+const MAX_REPORTED_KEY_PROBLEMS = 5;
+
+/**
+ * Catches an item that cannot be graded (no key, or a key outside its options) while a retry can
+ * still replace it. `normalizeGeneratedQuestion` stays as the last line of defence for the same
+ * items and for the defects a key check does not cover.
+ */
+function quizAnswerKeyProblem(value: { questions?: unknown }): string | null {
+  if (!Array.isArray(value.questions)) return "questions must be an array";
+  const problems: string[] = [];
+  value.questions.forEach((raw: Record<string, unknown> | null, index) => {
+    const kind = (QUESTION_KINDS as readonly string[]).includes(raw?.kind as string) ? raw?.kind : "multiple_choice";
+    const key = raw?.correct_choice;
+    const choiceCount = Array.isArray(raw?.choices) ? raw.choices.length : 0;
+    const label = `question ${index + 1}`;
+    if (kind === "multiple_choice" && !(Number.isInteger(key) && (key as number) >= 0 && (key as number) < choiceCount)) {
+      problems.push(`${label} needs correct_choice to be the 0-based index of one of its options`);
+    } else if (kind === "true_false" && key !== 0 && key !== 1) {
+      problems.push(`${label} needs correct_choice to be 0 for True or 1 for False`);
+    } else if ((kind === "short_answer" || kind === "fill_blank") && !String(raw?.expected_answer ?? "").trim()) {
+      problems.push(`${label} needs an expected_answer`);
+    }
+  });
+  return problems.length ? problems.slice(0, MAX_REPORTED_KEY_PROBLEMS).join("; ") : null;
 }
 
 /**
@@ -421,7 +472,11 @@ export async function gradeShortAnswer(args: {
     system,
     user,
     schemaName: "studigo_short_answer_grade",
-    schema: GRADE_SCHEMA
+    schema: GRADE_SCHEMA,
+    validate: (value) =>
+      typeof value.score === "number" && value.score >= 0 && value.score <= 100
+        ? null
+        : "score must be a number from 0 to 100"
   });
 
   const score = Math.min(100, Math.max(0, Math.round(result.score)));
