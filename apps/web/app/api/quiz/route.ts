@@ -3,6 +3,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
 import { buildMathQuestions, isMathKey, mathFamilyForTopic, mathPracticeEnabled, mathPresentation } from "@/lib/math-practice";
+import { structuredFailureResponse } from "@/lib/structured-failure";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -15,6 +16,7 @@ const MAX_QUESTIONS = 10;
  * practice goes where it is needed.
  */
 export async function POST(request: Request) {
+  const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -99,13 +101,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const generated = await generateQuizQuestions({
-    chunks,
-    topicTitle: topic?.title,
-    objective: topic?.objective ?? undefined,
-    count,
-    kinds: requestedKinds
-  });
+  let generated;
+  try {
+    generated = await generateQuizQuestions({
+      chunks,
+      topicTitle: topic?.title,
+      objective: topic?.objective ?? undefined,
+      count,
+      kinds: requestedKinds
+    });
+  } catch (error) {
+    const failure = structuredFailureResponse(error, { route: "api/quiz", ownerId: user.id, started });
+    if (failure) return failure;
+    throw error;
+  }
 
   if (!generated.length) {
     return Response.json(

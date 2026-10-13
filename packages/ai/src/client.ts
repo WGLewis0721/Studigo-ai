@@ -141,9 +141,12 @@ export function embeddingModel() {
  * not retained as stored responses (SECURITY_AUDIT_CHECKLIST LLM02-02). Nothing
  * in Studigo reads a stored response back. Gateway and Ollama transports are
  * left unchanged until their handling of the field is verified.
+ *
+ * `maxOutputTokens` replaces the configured cap for one call, so a retry after a
+ * truncated response can ask for a larger budget.
  */
-export function responseOptions(): { store?: false; max_output_tokens?: number } {
-  const cap = Number(process.env.STUDIGO_MAX_OUTPUT_TOKENS || 1200);
+export function responseOptions(maxOutputTokens?: number): { store?: false; max_output_tokens?: number } {
+  const cap = maxOutputTokens ?? Number(process.env.STUDIGO_MAX_OUTPUT_TOKENS || 1200);
   const limited = Number.isFinite(cap) && cap > 0 ? { max_output_tokens: Math.floor(cap) } : {};
   const transport = resolveTransport();
   if (transport === "ollama") return {};

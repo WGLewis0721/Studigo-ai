@@ -2,12 +2,14 @@ import { GradingError, gradeAnswer, readConfidence, readSelectedChoice } from "@
 import { requireApiUser } from "@/lib/auth";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { mathSolution, readMathKey } from "@/lib/math-practice";
+import { structuredFailureResponse } from "@/lib/structured-failure";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Grades one answer, records it, and lets mastery move as a result. */
 export async function POST(request: Request) {
+  const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -42,6 +44,8 @@ export async function POST(request: Request) {
     graded = await gradeAnswer({ question, response, selectedChoice });
   } catch (error) {
     if (error instanceof GradingError) return Response.json({ error: error.message }, { status: 400 });
+    const failure = structuredFailureResponse(error, { route: "api/quiz/attempt", ownerId: user.id, started });
+    if (failure) return failure;
     throw error;
   }
 

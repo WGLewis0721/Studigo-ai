@@ -6,6 +6,7 @@ import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/ret
 import { allocateTestQuestions } from '@/lib/study-planning';
 import { readConfidence, readSelectedChoice } from '@/lib/grading';
 import { TOPIC_COLUMNS, type Topic } from '@/lib/rooms';
+import { structuredFailureResponse } from '@/lib/structured-failure';
 export const runtime='nodejs';
 export const maxDuration=300;
 const SAFE_QUESTION_COLUMNS='id,kind,prompt,choices,difficulty,topic_id,test_position';
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const started=Date.now();
   const {supabase,user,unauthorized}=await requireApiUser(); if(!user) return unauthorized;
   const body=await request.json().catch(()=>null);
   if(typeof body?.roomId!=='string' || ![6,10,15,20].includes(body?.count)) return Response.json({error:'Choose a room and test length.'},{status:400});
@@ -61,7 +63,11 @@ export async function POST(request: Request) {
     });
     if(saveError||!testId) throw new Error('The test could not be saved. The study scope may have changed; try again.');
     return Response.json({testId,coveredTopics:allocation.length,totalTopics:topics.length},{status:201});
-  } catch(error) { return Response.json({error:error instanceof Error?error.message:'Could not build the test.'},{status:422}); }
+  } catch(error) {
+    const failure=structuredFailureResponse(error,{route:'api/practice-tests',ownerId:user.id,started});
+    if(failure) return failure;
+    return Response.json({error:error instanceof Error?error.message:'Could not build the test.'},{status:422});
+  }
 }
 
 /** Autosave only responses, never scores or answer keys. */

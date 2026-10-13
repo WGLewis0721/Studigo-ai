@@ -2,6 +2,7 @@ import { generateFlashcards } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
+import { structuredFailureResponse } from "@/lib/structured-failure";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -70,7 +72,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const generated = await generateFlashcards({ chunks, topicTitle: topic?.title, count });
+  let generated;
+  try {
+    generated = await generateFlashcards({ chunks, topicTitle: topic?.title, count });
+  } catch (error) {
+    const failure = structuredFailureResponse(error, { route: "api/flashcards", ownerId: user.id, started });
+    if (failure) return failure;
+    throw error;
+  }
   if (!generated.length) {
     return Response.json({ error: "Studigo couldn't build grounded cards from this material." }, { status: 422 });
   }
