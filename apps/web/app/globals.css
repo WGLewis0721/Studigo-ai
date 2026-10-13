@@ -693,7 +693,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .documentMeta { min-width: 0; }
 .documentMeta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .96rem; }
-.documentMeta small { color: var(--muted); font-size: .8rem; }
+.documentMeta small { color: var(--muted); font-size: .8rem; overflow-wrap: anywhere; }
+.documentMeta .documentReport { display: block; margin-top: 3px; line-height: 1.45; }
 .docStatus {
   display: inline-flex; align-items: center; gap: 6px; margin-right: 8px;
   font-size: .72rem; font-weight: 700; color: var(--ink-2);

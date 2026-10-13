@@ -276,6 +276,12 @@ export function CardsPanel({
           <small className="hintText">
             Your wording is kept when new cards are generated, and your review schedule is not reset.
           </small>
+          {(card.citations ?? []).length > 0 && (
+            <>
+              <small className="hintText">Check your wording against the source.</small>
+              <CitationChips citations={card.citations ?? []} />
+            </>
+          )}
           <div className="cardEditorActions">
             <button className="buttonPrimary" type="button" onClick={() => void saveEdit()} disabled={saving}>
               {saving ? "Saving…" : "Save card"}

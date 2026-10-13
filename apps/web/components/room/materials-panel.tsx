@@ -29,11 +29,19 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function countOf(count: number, word: string) {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
+function pageWord(document: StudyDocument) {
+  return (document.page_label || "page").toLowerCase();
+}
+
 function statusCopy(document: StudyDocument) {
   switch (document.status) {
     case "ready":
-      return `${document.chunk_count} passages${
-        document.page_count ? ` · ${document.page_count} ${document.page_label}s` : ""
+      return `${countOf(document.chunk_count, "passage")}${
+        document.page_count ? ` · ${countOf(document.page_count, pageWord(document))}` : ""
       }${document.ocr_page_count ? ` · ${document.ocr_page_count} scanned` : ""}`;
     case "processing":
       return "Reading the document…";
@@ -43,6 +51,32 @@ function statusCopy(document: StudyDocument) {
     case "failed":
       return document.error_message || "Processing failed";
   }
+}
+
+/**
+ * Plain-language read of the totals the ingest run stores. Which individual
+ * pages were scanned or could not be read is not stored, so none is named.
+ */
+function readReport(document: StudyDocument) {
+  if (document.status === "failed") {
+    return "Studigo isn't using this file yet. You can retry it, or add a clearer copy.";
+  }
+  if (document.status !== "ready" || !document.page_count) return null;
+
+  const word = pageWord(document);
+  const total = countOf(document.page_count, word);
+  const scanned = document.ocr_page_count;
+  // Only PDF pages and photos are scanned. A picture on a slide or in a document is skipped, so say so.
+  if (!scanned) return word === "page" ? `Read ${total} as text.` : `Read the text on ${total}. Pictures on a ${word} are not read.`;
+
+  const caveat = "Scanned text can have small mistakes, so open the original if something looks off.";
+  if (scanned >= document.page_count) return `Read ${total} by scanning. ${caveat}`;
+  return `Read ${total}. ${scanned} had too little text to copy, so Studigo scanned ${scanned === 1 ? "it" : "them"}. ${caveat}`;
+}
+
+function DocumentReport({ document }: { document: StudyDocument }) {
+  const report = readReport(document);
+  return report ? <small className="documentReport">{report}</small> : null;
 }
 
 export function MaterialsPanel({
@@ -306,6 +340,7 @@ export function MaterialsPanel({
                 </b>
                 {formatSize(document.size_bytes)} · {statusCopy(document)}
               </small>
+              <DocumentReport document={document} />
             </div>
             <div className="documentActions">
               <a
