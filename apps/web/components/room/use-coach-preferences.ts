@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { compileCoachPreferences, normalizeCoachPreferences, type CoachPreferences } from "@/lib/coach-preferences";
+import { useRouter } from "next/navigation";
+import { compileCoachPreferences, normalizeCoachPreferences, sameCoachPreferences, type CoachPreferences } from "@/lib/coach-preferences";
 import { DEFAULT_LEARN_PREFERENCES, normalizeLearnPreferences, type LearnPreferences } from "@/lib/learn-preferences";
 import type { StudyRoom } from "@/lib/rooms";
 
 export function useCoachPreferences(room: StudyRoom) {
+  const router = useRouter();
   const [applied, setApplied] = useState(() => normalizeCoachPreferences(room.coach_preferences, room.explain_level));
   const [learnApplied, setLearnApplied] = useState<LearnPreferences>(() => normalizeLearnPreferences(room.learn_preferences));
   const [applying, setApplying] = useState(false);
@@ -18,8 +20,10 @@ export function useCoachPreferences(room: StudyRoom) {
   const learnApplyingRef = useRef(false);
 
   useEffect(() => {
-    setApplied(normalizeCoachPreferences(room.coach_preferences, room.explain_level));
-    setLearnApplied(normalizeLearnPreferences(room.learn_preferences));
+    const coach = normalizeCoachPreferences(room.coach_preferences, room.explain_level);
+    const learn = normalizeLearnPreferences(room.learn_preferences);
+    setApplied((current) => (sameCoachPreferences(current, coach) ? current : coach));
+    setLearnApplied((current) => (current.mode === learn.mode ? current : learn));
   }, [room.id, room.explain_level, room.coach_preferences, room.learn_preferences]);
 
   useEffect(() => {
@@ -54,6 +58,7 @@ export function useCoachPreferences(room: StudyRoom) {
         saved = result.preferences;
       }
       setApplied(saved);
+      if (room.id !== "fixture") router.refresh();
       setStatus("Applied to Coach. Coach will recalibrate from the next reply.");
       return true;
     } catch (cause) {
@@ -63,7 +68,7 @@ export function useCoachPreferences(room: StudyRoom) {
     } finally {
       applyingRef.current = false; setApplying(false);
     }
-  }, [room.id, room.explain_level]);
+  }, [room.id, room.explain_level, router]);
 
   const applyLearn = useCallback(async (preferences: LearnPreferences) => {
     if (learnApplyingRef.current) return false;
@@ -84,6 +89,7 @@ export function useCoachPreferences(room: StudyRoom) {
         saved = result.preferences;
       }
       setLearnApplied(saved);
+      if (room.id !== "fixture") router.refresh();
       setLearnStatus("Applied to Learn. Learn will recalibrate from the next reply.");
       return true;
     } catch (cause) {
@@ -93,7 +99,7 @@ export function useCoachPreferences(room: StudyRoom) {
     } finally {
       learnApplyingRef.current = false; setLearnApplying(false);
     }
-  }, [room.id]);
+  }, [room.id, router]);
 
   return {
     applied, applying, status, error, apply,

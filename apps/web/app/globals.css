@@ -615,6 +615,32 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .dangerZone { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--hairline); padding-top: 16px; }
 .dangerZone strong { display: block; }
 .dangerZone small { color: var(--muted); }
+.learnedPrefs { display: grid; gap: 12px; border-top: 1px solid var(--hairline); padding-top: 16px; }
+.learnedPrefs h3 { margin: 0 0 6px; font-size: 1.02rem; }
+.learnedIntro, .learnedEmpty { margin: 0; max-width: 62ch; color: var(--muted); font-size: .86rem; line-height: 1.55; }
+.learnedList { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.learnedItem {
+  display: grid; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--white);
+  box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), var(--lift-1);
+}
+.learnedItem .tinyLabel { text-transform: uppercase; }
+.learnedSentence { margin: 3px 0 4px; font-weight: 700; line-height: 1.4; }
+.learnedMeta { display: block; color: var(--muted); font-size: .78rem; line-height: 1.4; }
+.learnedActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.learnedOptions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.learnedOption {
+  position: relative; display: grid; gap: 4px; align-content: start; min-height: 64px; padding: 11px 36px 11px 13px;
+  border: 0; border-radius: 14px; background: var(--white); text-align: left; cursor: pointer;
+  box-shadow: var(--edge), inset 0 0 0 1px var(--hairline-strong);
+}
+.learnedOption strong { font-size: .88rem; }
+.learnedOption span { color: var(--muted); font-size: .78rem; line-height: 1.35; }
+.learnedOption[aria-pressed="true"] { box-shadow: var(--edge), inset 0 0 0 2px var(--tone-ink); }
+.learnedOption[aria-pressed="true"]::after {
+  content: "✓"; position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--tone-ink); color: var(--white); font-size: .7rem; font-weight: 800;
+}
+.learnedStatus { margin: 0; color: var(--ink-2); font-size: .8rem; }
 
 /* Section headings inside modes */
 .modeEmpty { max-width: 640px; display: grid; gap: 14px; justify-items: start; }

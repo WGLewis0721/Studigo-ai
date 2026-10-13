@@ -1,16 +1,17 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, type RefObject } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
 import { RoomColorPicker } from "./room-color-picker";
+import { LearnedPreferences } from "./learned-preferences";
 import { RoomCompanionSettings } from "@/components/companion/companion";
 
-function SaveButton() {
+function SaveButton({ buttonRef }: { buttonRef: RefObject<HTMLButtonElement | null> }) {
   const { pending } = useFormStatus();
   return (
-    <button className="buttonPrimary" type="submit" disabled={pending}>
+    <button ref={buttonRef} className="buttonPrimary" type="submit" disabled={pending}>
       {pending ? "Applying…" : "Apply"}
     </button>
   );
@@ -18,6 +19,8 @@ function SaveButton() {
 
 export function RoomSettings({ room, onClose, closing = false }: { room: StudyRoom; onClose: () => void; closing?: boolean }) {
   const [state, formAction] = useActionState<RoomFormState, FormData>(renameRoomAction, {});
+  const levelRef = useRef<HTMLSelectElement>(null);
+  const applyRef = useRef<HTMLButtonElement>(null);
 
   return (
     <section className="roomSettings" data-state={closing ? "closing" : "open"} role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
@@ -42,7 +45,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
           </label>
           <label className="field">
             <span>Explanation level <small>(Coach and Learn, whole Study Room)</small></span>
-            <select name="explainLevel" defaultValue={room.explain_level}>
+            <select ref={levelRef} name="explainLevel" defaultValue={room.explain_level}>
               <option value="simpler">Simpler: plain words, more everyday examples</option>
               <option value="standard">Standard: the level of the material</option>
               <option value="deeper">Deeper: more precise, assumes the basics</option>
@@ -69,12 +72,21 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
         {state.appliedAt && <p role="status">Applied. Coach and Learn will use this explanation level from the next reply.</p>}
 
         <div className="settingsActions">
-          <SaveButton />
+          <SaveButton buttonRef={applyRef} />
           <button className="ghostButton" type="button" onClick={onClose}>
             Close
           </button>
         </div>
       </form>
+
+      <LearnedPreferences
+        room={room}
+        onChangeLevel={() => levelRef.current?.focus()}
+        onUseStandardLevel={() => {
+          if (levelRef.current) levelRef.current.value = "standard";
+          applyRef.current?.focus();
+        }}
+      />
 
       <form
         className="dangerZone"
