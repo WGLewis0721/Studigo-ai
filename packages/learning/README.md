@@ -10,6 +10,8 @@ Invariants:
 - This package owns production progression.
 - `packages/mastery` does not.
 
+Math practice lives in `src/math/`: problem families, exact answer checking, and picture specs as data. The answer is known before the question is asked, and a stored problem is re-validated before every use. The wording around a problem is in `apps/web/lib/math-copy.ts`, not here.
+
 Three words that are not interchangeable:
 
 - evidence stage: what the learner was observed doing

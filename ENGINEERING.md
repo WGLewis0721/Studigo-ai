@@ -81,6 +81,7 @@ What is in the system today. This is a map of the tree, not a decision log.
 | **pgvector** | `match_study_chunks` in `supabase/migrations/002_core_loop.sql` | Room- and owner-scoped dense retrieval beside the rows RLS already protects | A second vector database. There is not one on the production path |
 | **OpenAI-compatible client** | `packages/ai/src/client.ts` | Chat, OCR, structured generation, semantic grading, embeddings. Transports: direct, Vercel AI Gateway, Ollama for chat only. Embeddings stay 1536-d on direct or gateway | Progression, authorization, or mastery writes |
 | **Deterministic director** | `packages/learning` | Challenge, scaffold, and progression from learner state. No model call | Prompt-owned progression |
+| **Math practice** | `packages/learning/src/math`, `apps/web/lib/math-practice.ts` | Quiz problems for covered math topics, generated and graded in code by exact fraction arithmetic, with picture specs built from the same integers. No model call | A model-written or model-graded math question |
 | **Mastery math** | `packages/mastery` | BKT, Elo, and a scheduler as pure functions. Eval harness is `evals/ml`, synthetic data | The production mastery write. That stays with the director and learning events |
 | **Postgres functions / learning events** | `supabase/migrations/`, `apps/web/lib/learning/` | Idempotent, transactional evidence | Best-effort chat state |
 | **Python retrieval service** | `services/retrieval/` | Local FAISS prototype. Uses LangChain splitters, Hugging Face embeddings, and unauthenticated room-ID endpoints | Production retrieval. ADR 001 keeps the TypeScript path until a matched benchmark says otherwise |
@@ -106,6 +107,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | Coach protocol | `packages/ai/src/coach.ts` | Stateful Coach interaction protocol |
 | Documents | `packages/documents/`, `apps/web/lib/ingest.ts` | Upload policy, parsing, OCR, chunking, ingestion |
 | Adaptive learning | `packages/learning/`, `apps/web/lib/learning/` | Deterministic challenge/scaffold/progression |
+| Math practice | `packages/learning/src/math/`, `apps/web/lib/math-practice.ts`, `apps/web/lib/math-copy.ts`, `apps/web/components/room/math-visual.tsx` | Code-generated problems, exact answer checking, visual specs, wording, rendering |
 | Database/security | `supabase/migrations/` | Schema, RLS, pgvector, RPCs, transaction boundaries |
 | RAG evaluation | `evals/rag/` | Grounding, abstention, isolation, prompt-injection, latency/cost benchmark |
 | ML experiments | `evals/ml/` | Advisory BKT/calibration work |
@@ -122,6 +124,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | Change question/grading logic | `packages/ai/src/study.ts` | grader/question tests + semantic eval |
 | Change Coach behavior | `packages/ai/src/coach.ts` | Coach state, interaction IDs, learning-event path |
 | Change progression/scaffolding | `packages/learning/` | replay/determinism tests |
+| Change math practice | `packages/learning/src/math/`, `apps/web/lib/math-practice.ts` | property tests in `packages/learning/src/math.test.ts`; a wrong grade on any case is a stop |
 | Change file ingestion | `packages/documents/`, `apps/web/lib/ingest.ts` | upload security, provenance, stale-source tests |
 | Change auth | `apps/web/lib/auth.ts`, middleware, Supabase config | RLS, OAuth/session tests |
 | Change DB state | `supabase/migrations/` | migration rollback, RLS, concurrent/retry behavior |
@@ -197,6 +200,7 @@ See `implementation/ENGINEERING_PLAN.md` for the execution order.
 - Uploads are parsed in `packages/documents/` and orchestrated by `apps/web/lib/ingest.ts`.
 - Public launch: `implementation/security-readiness/` is the gate, and it is not ready.
 - Mastery math: `packages/mastery`. Advisory. `evals/ml/` is synthetic.
+- Math practice: `packages/learning/src/math` writes and grades the problem; `apps/web/lib/grading.ts` routes a math row to it. `STUDIGO_MATH_PRACTICE=0` turns it off. An unreadable answer is sent back, not graded.
 - A retry must not create a second learning event or a second ingest. Learning events live under `apps/web/lib/learning/`. Ingest claims through `claim_document`.
 
 ## Change methodology
