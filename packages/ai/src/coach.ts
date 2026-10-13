@@ -812,8 +812,11 @@ export function renderCaseFacts(args: {
   const earlier = context.facts;
   const counted = args.thisReply !== undefined && isAssessedOutcome(args.thisReply);
   const attempts = (earlier?.attempts ?? 0) + (counted ? 1 : 0);
-  const shownIndexes = expectedConcepts.flatMap((concept, index) => (earlier?.demonstrated.includes(concept.id) ? [index] : []));
-  const missingIndexes = expectedConcepts.flatMap((concept, index) => (earlier?.demonstrated.includes(concept.id) ? [] : [index]));
+  // A model-written id shared by two concepts cannot say which one was shown, so neither counts as shown.
+  const isShown = (concept: ExpectedConcept) =>
+    Boolean(earlier?.demonstrated.includes(concept.id)) && expectedConcepts.filter((other) => other.id === concept.id).length === 1;
+  const shownIndexes = expectedConcepts.flatMap((concept, index) => (isShown(concept) ? [index] : []));
+  const missingIndexes = expectedConcepts.flatMap((concept, index) => (isShown(concept) ? [] : [index]));
   const support =
     context.supportLevel === null
       ? "not known"

@@ -36,7 +36,7 @@ export function renderTopicClarification(candidates: ReadonlyArray<{ title: stri
   ].join("\n");
 }
 
-export type CoachHandoffNextStep = "ask_for_worked_example" | "switch_topic";
+export type CoachHandoffNextStep = "combine_ideas" | "ask_for_worked_example" | "switch_topic";
 
 /** Built only from what the Coach already holds for the pending question. Never lists a concept the learner has not shown. */
 export type CoachHandoff = {
@@ -79,8 +79,14 @@ export function buildCoachHandoff(args: {
   expectedConcepts: ExpectedConcept[];
   supportLevel: number | null;
 }): CoachHandoff {
-  const shown = args.expectedConcepts.filter((concept) => args.caseFacts.demonstrated.includes(concept.id));
+  // Concept ids are model-written and can repeat. A shared id cannot say which of its concepts was
+  // shown, so neither is counted or printed: printing both would reveal one the learner never gave.
+  const idUses = new Map<string, number>();
+  for (const concept of args.expectedConcepts) idUses.set(concept.id, (idUses.get(concept.id) ?? 0) + 1);
+  const shown = args.expectedConcepts.filter((concept) => idUses.get(concept.id) === 1 && args.caseFacts.demonstrated.includes(concept.id));
   const title = args.topicTitle ? plainLine(args.topicTitle, MAX_TITLE_CHARS) : "";
+  // Every idea was shown, but never in one reply, which is what a correct grade needs.
+  const allShownSeparately = args.expectedConcepts.length > 0 && shown.length === args.expectedConcepts.length;
   return {
     topicTitle: title || null,
     attempts: args.caseFacts.attempts,
@@ -91,11 +97,12 @@ export function buildCoachHandoff(args: {
       .map((concept) => plainLine(concept.description, MAX_CONCEPT_CHARS))
       .filter(Boolean),
     supportLevel: args.supportLevel,
-    nextStep: nextStepFor(args.supportLevel)
+    nextStep: allShownSeparately ? "combine_ideas" : nextStepFor(args.supportLevel)
   };
 }
 
 const NEXT_STEP_TEXT: Record<CoachHandoffNextStep, string> = {
+  combine_ideas: "You have given each idea, just not in the same answer. Try putting them together in one reply.",
   ask_for_worked_example: 'Say "show me the answer" and I\'ll go through it with you.',
   switch_topic: 'Say "next" to set this one aside, then name another topic. You can ask for this one again later.'
 };

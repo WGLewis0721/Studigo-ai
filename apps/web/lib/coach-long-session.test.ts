@@ -10,7 +10,7 @@ import {
   type RetrievedChunk
 } from "@studigo/ai";
 import { runCoachTurn } from "./coach-router";
-import { STUCK_ATTEMPT_THRESHOLD } from "./coach-handoff";
+import { STUCK_ATTEMPT_THRESHOLD, buildCoachHandoff, renderCoachHandoff } from "./coach-handoff";
 import type { CoachDirector } from "./coach-director";
 import { initialLearningState, nextChallenge } from "./learning";
 import type { Topic } from "./rooms";
@@ -214,4 +214,22 @@ test("a message that fits two topics gets one question back and changes nothing;
   assert.equal(started.log.outcome, "new_question");
   assert.deepEqual(chosen, [circuits.id]);
   assert.equal(saved.at(-1)?.kind, "awaiting_answer");
+});
+
+test("the stuck summary never prints an idea it cannot be sure the learner gave", () => {
+  const facts = { attempts: 3, outcomes: ["partial", "partial", "partial"] as Array<"partial">, demonstrated: ["opposites_attract", "likes_repel"] };
+
+  // Each idea was given on a different attempt: say so, and point at combining them, not at giving up.
+  const separate = buildCoachHandoff({ topicTitle: "Magnetism", caseFacts: facts, expectedConcepts: concepts, supportLevel: 1 });
+  assert.equal(separate.nextStep, "combine_ideas");
+  assert.ok(renderCoachHandoff(separate).includes("putting them together"));
+
+  // Two concepts sharing a model-written id: one demonstrated id cannot vouch for both descriptions.
+  const shared: ExpectedConcept[] = [
+    { id: "pole", description: SHOWN, weight: 0.5, critical: true },
+    { id: "pole", description: MISSING, weight: 0.5, critical: false }
+  ];
+  const text = renderCoachHandoff(buildCoachHandoff({ topicTitle: "Magnetism", caseFacts: { ...facts, demonstrated: ["pole"] }, expectedConcepts: shared, supportLevel: 1 }));
+  assert.ok(!text.includes(MISSING) && !text.includes(SHOWN), text);
+  assert.ok(text.includes("Ideas shown so far: 0 of 2"), text);
 });

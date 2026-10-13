@@ -315,7 +315,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
   const intent = detectTurnIntent(question, state);
   const route: LearningRoute = args.route ?? "studigo_default";
   const selectTopic=async (question:string,resolution:TopicResolution=resolveNamedTopic(topics,question)):Promise<Topic|undefined>=>{
-    const explicit=resolution.kind==='match'?resolution.topic:undefined;
+    // Ambiguity reaches here only when asking was not possible; the first written title wins, as it always did.
+    const explicit=resolution.kind==='match'?resolution.topic:resolution.kind==='ambiguous'?resolution.candidates[0]:undefined;
     if(process.env.STUDIGO_ADAPTIVE_SESSION!=='1'||!args.userId||!deps.director.recommendTopic)return explicit??highestPriorityTopic(topics);
     const selectedId=await deps.director.recommendTopic({supabase,userId:args.userId,roomId,topics,
       now:interaction?.createdAt??new Date().toISOString(),selectedTopicId:explicit?.id});
@@ -448,7 +449,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
   if (intent === "challenge") {
     const pendingTopic = state.kind !== "idle" ? topics.find((t) => t.id === state.topicId) : undefined;
     const named = pendingTopic ? undefined : resolveNamedTopic(topics, question);
-    if (named?.kind === "ambiguous") return yield* askWhichTopic(named.candidates);
+    // Only from idle: with a question pending, returning here would skip recordSkip and leave it open.
+    if (named?.kind === "ambiguous" && state.kind === "idle") return yield* askWhichTopic(named.candidates);
     const topic = pendingTopic ?? await selectTopic(question, named);
     await recordSkip(state);
     const issued = topic ? await issueFor(topic, "stretch") : undefined;
@@ -595,8 +597,7 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
         expectedConcepts: state.expectedConcepts,
         chunks,
         routeGuidance,
-        pedagogyDirectives,
-        caseFacts: caseFactsFor(state)
+        pedagogyDirectives
       });
       const nextState = withSupport({ ...state, question: choiceQuestion }, 4);
       await record(supportEvents("help", 4, 0));
@@ -622,7 +623,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
         chunks,
         routeGuidance,
         pedagogyDirectives,
-        caseFacts: caseFactsFor(state)
+        // A "choice" rewrite becomes the graded question, so it must not be steered by what was already shown.
+        ...(supportKind === "choice" ? {} : { caseFacts: caseFactsFor(state) })
       });
       const nextState = supportKind === "choice"
         ? withSupport({ ...state, question: support }, nextLevel)
@@ -784,7 +786,10 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
     // outcome, strictly after any attempt (base + 1 ms) and before it is shown.
     // An irrelevant reply is never an attempt: only its redirect clue is recorded.
     const support = feedbackSupport(outcome);
-    const caseFacts = recordAttemptInCaseFacts(state.caseFacts, { outcome, expectedConcepts: state.expectedConcepts, evaluated: evaluation.concepts });
+    // A replayed interaction whose attempt is already on record was counted the first time.
+    const caseFacts = recordedOutcome
+      ? state.caseFacts
+      : recordAttemptInCaseFacts(state.caseFacts, { outcome, expectedConcepts: state.expectedConcepts, evaluated: evaluation.concepts });
     const nextState = caseFacts ? { ...state, caseFacts } : state;
     if (support > 0) {
       await record(supportEvents(outcome === "incorrect" ? "revealed" : "help", support, assessed ? 1 : 0));

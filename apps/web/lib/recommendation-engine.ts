@@ -138,8 +138,8 @@ function distinctByTitle(topics: Topic[]): Topic[] {
 function writtenOut(title: string, text: string): boolean {
   for (let at = text.indexOf(title); at !== -1; at = text.indexOf(title, at + 1)) {
     const before = text[at - 1] ?? " ";
-    const after = text[at + title.length] ?? " ";
-    if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) return true;
+    // A plural ending still counts, so "ions" names "Ion" and "gases" names "Gas".
+    if (!/[a-z0-9]/.test(before) && /^(?:e?s)?(?![a-z0-9])/.test(text.slice(at + title.length))) return true;
   }
   return false;
 }
@@ -179,7 +179,8 @@ function closestTopicsByWords(topics: Topic[], text: string): Topic[] {
 }
 
 function namedTopicCandidates(topics: Topic[], message: string): { candidates: Topic[]; written: boolean } {
-  const text = message.toLowerCase();
+  // "Work on forces" is how the Coach itself invites a topic; that verb is not the physics topic "Work".
+  const text = message.toLowerCase().replace(/\bwork(?:ing)? on\b/g, " ");
   const written = titlesWrittenIn(topics, text);
   return written.length ? { candidates: written, written: true } : { candidates: closestTopicsByWords(topics, text), written: false };
 }
@@ -191,13 +192,14 @@ function namedTopicCandidates(topics: Topic[], message: string): { candidates: T
  * "photosynthesis". Two titles that are not nested in one another are ambiguous. With no title
  * written out, a topic counts as named when the message contains every meaningful word of its
  * title (two thirds of them for a long title), allowing for misspellings and word endings, so
- * "questions on photosythesis" or "unbalenced forces" still finds the topic. The topics with the
- * most matching words are the candidates; more than one of them is ambiguous.
+ * "questions on photosythesis" or "unbalenced forces" still finds the topic. A tie between such
+ * near matches names no topic. Only written-out titles are ever ambiguous: the reply to the Coach's
+ * question is one of those titles, which then resolves, so the question cannot repeat on itself.
  */
 export function resolveNamedTopic(topics: Topic[], message: string): TopicResolution {
-  const { candidates } = namedTopicCandidates(topics, message);
+  const { candidates, written } = namedTopicCandidates(topics, message);
   if (candidates.length === 1) return { kind: "match", topic: candidates[0] };
-  return candidates.length ? { kind: "ambiguous", candidates } : { kind: "none" };
+  return written && candidates.length > 1 ? { kind: "ambiguous", candidates } : { kind: "none" };
 }
 
 /**
