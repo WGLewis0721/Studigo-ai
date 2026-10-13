@@ -1,5 +1,6 @@
 import { generateQuizQuestions } from '@studigo/ai';
 import { requireApiUser } from '@/lib/auth';
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/retrieval';
 import { allocateTestQuestions } from '@/lib/study-planning';
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   if(error) return Response.json({error:'Could not load the current study scope.'},{status:500});
   const topics=(rows??[]) as Topic[];
   if(topics.length<2) return Response.json({error:'A full practice test needs at least two study topics. Add your study guide or use Quiz for one topic.'},{status:422});
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
   const allocation=allocateTestQuestions(topics,body.count);
   try {
     const questions: Array<Record<string,unknown>>=[];

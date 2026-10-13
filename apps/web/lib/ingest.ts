@@ -14,6 +14,7 @@ import {
   type ExtractedPage,
   type ExtractionResult
 } from "@studigo/documents";
+import { reindexCooldownElapsed, reindexCooldownMs } from "@/lib/ai-budget";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
 
@@ -27,6 +28,8 @@ export type IngestResult = {
   ocrPageCount?: number;
   topicsCreated?: number;
   error?: string;
+  /** Machine-readable refusal reason, so callers can map it to a status. */
+  code?: "reindex_cooldown";
 };
 
 /**
@@ -66,6 +69,16 @@ export async function processDocument(args: {
           error: "This study guide is still being processed. Wait for it to finish, then refresh again."
         };
       }
+    }
+
+    const lastForced = document.last_forced_reindex_at ? Date.parse(document.last_forced_reindex_at) : null;
+    if (!reindexCooldownElapsed(lastForced, Date.now(), reindexCooldownMs())) {
+      return {
+        documentId: document.id,
+        status: "failed",
+        code: "reindex_cooldown",
+        error: "This study guide was just refreshed. Wait a few minutes before refreshing it again."
+      };
     }
 
     // Manual refresh deliberately bypasses the normal three-attempt retry cap.

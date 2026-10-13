@@ -1,5 +1,6 @@
 import { askSocraticQuestion, respondToSocraticAnswer } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { readExplainLevel } from "@/lib/explain-level";
 import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
 
@@ -40,6 +41,16 @@ export async function POST(request: Request) {
 
   if (!topic) return Response.json({ error: "Topic not found" }, { status: 404 });
 
+  // Validate the answer/question pairing before spending budget.
+  const answer = typeof body?.answer === "string" ? body.answer.trim() : "";
+  const question = typeof body?.question === "string" ? body.question.trim() : "";
+  if (answer && !question) {
+    return Response.json({ error: "Start a check before answering it." }, { status: 400 });
+  }
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
+
   const level = await readExplainLevel(supabase, roomId);
   const query = [topic.title, topic.objective, (topic.key_terms as string[] | null)?.join(", ")]
     .filter(Boolean)
@@ -53,9 +64,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const answer = typeof body?.answer === "string" ? body.answer.trim() : "";
-  const question = typeof body?.question === "string" ? body.question.trim() : "";
-
   // No answer yet: open the check with a question.
   if (!answer) {
     const asked = await askSocraticQuestion({
@@ -65,10 +73,6 @@ export async function POST(request: Request) {
       level
     });
     return Response.json({ topicId, question: asked.question });
-  }
-
-  if (!question) {
-    return Response.json({ error: "Start a check before answering it." }, { status: 400 });
   }
 
   const response = await respondToSocraticAnswer({

@@ -1,6 +1,7 @@
 import { generateFlashcards } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
 
 export const runtime = "nodejs";
@@ -61,6 +62,9 @@ export async function POST(request: Request) {
   const query = topic
     ? `${topic.title}. ${topic.objective ?? ""}`
     : "key terms, definitions, and processes worth memorizing in these materials";
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
   const chunks = await retrieveForRoom({ supabase, roomId, query, matchCount: 14 });
   if (!chunks.length) {

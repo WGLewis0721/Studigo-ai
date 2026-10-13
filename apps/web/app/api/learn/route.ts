@@ -1,4 +1,5 @@
 import { explainTopic, toCitations, citationsUsedIn } from "@studigo/ai";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
 import { readExplainLevel } from "@/lib/explain-level";
@@ -34,6 +35,9 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (!topic) return Response.json({ error: "Topic not found" }, { status: 404 });
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
   const query = [topic.title, topic.objective, (topic.key_terms as string[] | null)?.join(", ")]
     .filter(Boolean)

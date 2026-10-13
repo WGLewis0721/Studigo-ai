@@ -1,4 +1,5 @@
 import { requireApiUser } from "@/lib/auth";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { processDocument } from "@/lib/ingest";
 
 export const runtime = "nodejs";
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   if (document.status === "ready") {
     return Response.json({ documentId, status: "ready", alreadyProcessed: true });
   }
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
   const result = await processDocument({ documentId, userId: user.id });
   return Response.json(result, { status: result.status === "failed" ? 500 : 200 });

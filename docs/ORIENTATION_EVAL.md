@@ -18,3 +18,5 @@ Scored against `AGENTS.md` and `ENGINEERING.md` only, after the lookup facts wer
 Score: 10/10 after the lookup section. Before that section, questions 2 and 10 were not answerable from `ENGINEERING.md` alone.
 
 Token note: `wc -w` on `AGENTS.md` and `ENGINEERING.md` was 418 + 1974 = 2392 words, about 3,100 tokens at 1.3 tokens per word. Do not add `docs/CODEMAP.md`. The ten answers fit in `ENGINEERING.md`.
+
+L6 rerun (2026-10-13): a fresh subagent given only `AGENTS.md` (413 words) and `ENGINEERING.md` (1,989 words, 2,402 total, about 3,100 tokens) answered 10/10, none marked not answerable. `docs/CODEMAP.md` stays unneeded.

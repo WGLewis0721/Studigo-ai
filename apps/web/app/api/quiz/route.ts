@@ -1,5 +1,6 @@
 import { QUESTION_KINDS, generateQuizQuestions, type QuestionKind } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
+import { reserveAiBudget } from "@/lib/ai-budget";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
 
@@ -57,6 +58,9 @@ export async function POST(request: Request) {
       .maybeSingle();
     topic = (data as QuizTopic | null) ?? null;
   }
+
+  const budget = await reserveAiBudget(supabase, user.id);
+  if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
   const query = topic
     ? [topic.title, topic.objective, topic.key_terms?.join(", ")].filter(Boolean).join(". ")
