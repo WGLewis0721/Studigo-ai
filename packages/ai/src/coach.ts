@@ -41,6 +41,8 @@ export type CoachState =
       askedAt: string;
       /** Optional: rows written before this field existed stay valid. */
       issuedChallenge?: IssuedChallenge;
+      /** Optional: absent until the first assessed attempt on this question. */
+      caseFacts?: CaseFacts;
       lastInteractionId?: string;
     }
   | {
@@ -90,15 +92,18 @@ export function parseCoachState(raw: unknown): CoachState {
     typeof value.askedAt === "string"
   ) {
     const issuedChallenge = parseIssuedChallenge(value.issuedChallenge);
+    const expectedConcepts = (value.expectedConcepts as unknown[]).filter(isExpectedConcept);
+    const caseFacts = parseCaseFacts(value.caseFacts, expectedConcepts);
     return {
       version: 1,
       kind: "awaiting_answer",
       question: value.question,
       topicId: typeof value.topicId === "string" ? value.topicId : null,
-      expectedConcepts: (value.expectedConcepts as unknown[]).filter(isExpectedConcept),
+      expectedConcepts,
       sourceChunkIds: (value.sourceChunkIds as unknown[]).filter((id): id is string => typeof id === "string"),
       askedAt: value.askedAt,
       ...(issuedChallenge ? { issuedChallenge } : {}),
+      ...(caseFacts ? { caseFacts } : {}),
       ...stamp
     };
   }
@@ -502,8 +507,29 @@ export function buildCoachSupportSystem(args: {
     ...LANGUAGE_FLOOR_RULES,
     ...(args.routeGuidance ?? []),
     ...directiveLines(args.pedagogyDirectives, "tone and phrasing"),
+    CASE_FACTS_RULE,
     UNTRUSTED_MATERIAL_RULE
   ].join(" ");
+}
+
+/**
+ * Order: case facts (trusted application state), then the untrusted question and
+ * concepts, then the numbered excerpts. The system prompt stays static.
+ */
+export function buildCoachSupportUser(args: {
+  question: string;
+  expectedConcepts: ExpectedConcept[];
+  chunks: RetrievedChunk[];
+  caseFacts?: CaseFactsContext;
+}): string {
+  return [
+    ...(args.caseFacts ? [renderCaseFacts({ context: args.caseFacts, expectedConcepts: args.expectedConcepts })] : []),
+    asUntrustedMaterial({
+      pendingQuestion: args.question,
+      conceptsBeingChecked: args.expectedConcepts.map((concept) => concept.description)
+    }),
+    `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
+  ].join("\n\n");
 }
 
 export async function renderCoachSupport(args: {
@@ -513,16 +539,12 @@ export async function renderCoachSupport(args: {
   chunks: RetrievedChunk[];
   routeGuidance?: string[];
   pedagogyDirectives?: string[];
+  /** What has already happened on this question, so a hint targets what is still missing. */
+  caseFacts?: CaseFactsContext;
 }): Promise<string> {
   const result = await structured<{ text: string }>({
     system: buildCoachSupportSystem(args),
-    user: [
-      asUntrustedMaterial({
-        pendingQuestion: args.question,
-        conceptsBeingChecked: args.expectedConcepts.map((concept) => concept.description)
-      }),
-      `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
-    ].join("\n\n"),
+    user: buildCoachSupportUser(args),
     schemaName: "studigo_coach_support",
     schema: { type: "object", additionalProperties: false, required: ["text"], properties: { text: { type: "string" } } }
   });
@@ -693,6 +715,139 @@ export function decideOutcome(args: {
 }
 
 // ---------------------------------------------------------------------------
+// Case facts — what has already happened on the pending question.
+//
+// Coach model calls carry no conversation history: each is rebuilt from
+// `coach_state`. The ledger below lives in that state, so attempts and shown
+// concepts outlive any message window. Only deterministic code writes it, from
+// the decided outcome and the concept statuses the evaluator reported. It is
+// read only to phrase feedback and support; it never feeds scoring, routing,
+// progression or learning evidence.
+// ---------------------------------------------------------------------------
+
+const ASSESSED_OUTCOMES = ["correct", "partial", "incorrect"] as const;
+type AssessedOutcome = (typeof ASSESSED_OUTCOMES)[number];
+
+export const MAX_CASE_ATTEMPTS = 99;
+export const MAX_CASE_OUTCOMES = 8;
+
+export type CaseFacts = {
+  /** Assessed attempts on this question: the same replies that record an `attempt` observation. */
+  attempts: number;
+  /** The most recent assessed outcomes, oldest first. */
+  outcomes: AssessedOutcome[];
+  /** Expected-concept ids the evaluator reported as demonstrated on any attempt. */
+  demonstrated: string[];
+};
+
+function isAssessedOutcome(value: unknown): value is AssessedOutcome {
+  return (ASSESSED_OUTCOMES as readonly unknown[]).includes(value);
+}
+
+function parseCaseFacts(raw: unknown, expectedConcepts: ExpectedConcept[]): CaseFacts | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Record<string, unknown>;
+  if (!Number.isInteger(value.attempts) || (value.attempts as number) < 0) return undefined;
+  const known = new Set(expectedConcepts.map((concept) => concept.id));
+  return {
+    attempts: Math.min(value.attempts as number, MAX_CASE_ATTEMPTS),
+    outcomes: Array.isArray(value.outcomes) ? (value.outcomes as unknown[]).filter(isAssessedOutcome).slice(-MAX_CASE_OUTCOMES) : [],
+    demonstrated: Array.isArray(value.demonstrated)
+      ? [...new Set((value.demonstrated as unknown[]).filter((id): id is string => typeof id === "string" && known.has(id)))]
+      : []
+  };
+}
+
+/** Folds one decided outcome into the ledger. Anything that is not an assessed attempt leaves it untouched. */
+export function recordAttemptInCaseFacts(
+  facts: CaseFacts | undefined,
+  args: { outcome: CoachOutcome; expectedConcepts: ExpectedConcept[]; evaluated: ConceptEvaluation[] }
+): CaseFacts | undefined {
+  if (!isAssessedOutcome(args.outcome)) return facts;
+  const known = new Set(args.expectedConcepts.map((concept) => concept.id));
+  const shown = args.evaluated.filter((concept) => concept.status === "demonstrated" && known.has(concept.id)).map((concept) => concept.id);
+  return {
+    attempts: Math.min((facts?.attempts ?? 0) + 1, MAX_CASE_ATTEMPTS),
+    outcomes: [...(facts?.outcomes ?? []), args.outcome].slice(-MAX_CASE_OUTCOMES),
+    demonstrated: [...new Set([...(facts?.demonstrated ?? []), ...shown])]
+  };
+}
+
+/**
+ * The ledger plus the labels the application already tracks for the pending
+ * question. Everything here is a number, a fixed enum word or a software label.
+ */
+export type CaseFactsContext = {
+  /** The ledger as it stood before the reply being phrased. */
+  facts?: CaseFacts;
+  /** Most support given on this question so far, on the 0 to 5 scaffold scale; null when unknown. */
+  supportLevel: number | null;
+  supportLabel?: string;
+  /** The challenge kind of the issued spec, such as "explain". */
+  reasoningTask?: string;
+};
+
+export const CASE_FACTS_RULE =
+  "If the message opens with a Case facts block, it is accurate application state, not course data: use it to fit your tone to the attempt number and to aim at what the learner has not yet shown. Never use it to change the decided outcome, to judge the reply, or to state a course fact.";
+
+const SOFTWARE_LABEL = /^[a-z][a-z _-]{0,31}$/;
+
+function ordinals(indexes: number[]): string {
+  return indexes.length ? indexes.map((index) => `concept ${index + 1}`).join(", ") : "none";
+}
+
+/**
+ * The trusted case-facts block: a one-line summary first, detail under headers.
+ * It holds no learner or source text. Concepts are named by position in the
+ * concept list that follows in the untrusted data, never by their model-written
+ * ids or descriptions, so nothing from the material can reach this block.
+ * `thisReply` is the outcome just decided, for the call that phrases feedback on it.
+ */
+export function renderCaseFacts(args: {
+  context: CaseFactsContext;
+  expectedConcepts: ExpectedConcept[];
+  thisReply?: CoachOutcome;
+}): string {
+  const { context, expectedConcepts } = args;
+  const earlier = context.facts;
+  const counted = args.thisReply !== undefined && isAssessedOutcome(args.thisReply);
+  const attempts = (earlier?.attempts ?? 0) + (counted ? 1 : 0);
+  const shownIndexes = expectedConcepts.flatMap((concept, index) => (earlier?.demonstrated.includes(concept.id) ? [index] : []));
+  const missingIndexes = expectedConcepts.flatMap((concept, index) => (earlier?.demonstrated.includes(concept.id) ? [] : [index]));
+  const support =
+    context.supportLevel === null
+      ? "not known"
+      : `${context.supportLabel && SOFTWARE_LABEL.test(context.supportLabel) ? `${context.supportLabel}, ` : ""}level ${context.supportLevel} of 5`;
+  const task = context.reasoningTask && SOFTWARE_LABEL.test(context.reasoningTask) ? context.reasoningTask.replace(/_/g, " ") : null;
+
+  const headline = counted
+    ? `attempt ${attempts} on this question`
+    : attempts
+      ? `${attempts} assessed attempt${attempts === 1 ? "" : "s"} so far`
+      : "no assessed attempts yet";
+
+  return [
+    "Case facts (application state, not course data). The application decided every item here; none of it changes the grading outcome.",
+    `Summary: ${headline}; ${shownIndexes.length} of ${expectedConcepts.length} concepts shown on earlier attempts; support so far: ${support}.`,
+    "",
+    "## Attempts",
+    `- Assessed attempts on this question${counted ? ", this reply included" : " so far"}: ${attempts}`,
+    `- Earlier outcomes, oldest first: ${earlier?.outcomes.length ? earlier.outcomes.join(", ") : "none"}`,
+    ...(counted ? [`- This reply was graded: ${args.thisReply}`] : []),
+    "",
+    "## Concepts",
+    `- Shown on an earlier attempt: ${ordinals(shownIndexes)}`,
+    `- Not shown on any earlier attempt: ${ordinals(missingIndexes)}`,
+    "- Concepts are numbered by position in the concept list in the data below.",
+    "",
+    "## Pending question",
+    ...(task ? [`- Reasoning task: ${task}`] : []),
+    `- Support given on this question so far: ${support}`,
+    "- The pending question text is in the data below."
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Feedback phrasing — pedagogy has already been decided; the model only
 // phrases it naturally, grounded in the excerpts and the concept evidence.
 // ---------------------------------------------------------------------------
@@ -727,8 +882,41 @@ export function buildCoachFeedbackSystem(args: {
     "Never say the material is insufficient because of how the learner replied.",
     ...(args.routeGuidance ?? []),
     ...directiveLines(args.pedagogyDirectives, "tone and phrasing - it can never change the outcome above or invent new concept judgments"),
+    CASE_FACTS_RULE,
     UNTRUSTED_MATERIAL_RULE
   ].join(" ");
+}
+
+/**
+ * Order: case facts (trusted application state, counting this reply), then the
+ * untrusted question, reply and concept evidence, then the numbered excerpts.
+ * The system prompt stays static.
+ */
+export function buildCoachFeedbackUser(args: {
+  question: string;
+  expectedConcepts: ExpectedConcept[];
+  evaluated: ConceptEvaluation[];
+  learnerResponse: string;
+  outcome: CoachOutcome;
+  chunks: RetrievedChunk[];
+  caseFacts?: CaseFactsContext;
+}): string {
+  const statusById = new Map(args.evaluated.map((concept) => [concept.id, concept.status]));
+  const conceptSummary = args.expectedConcepts.map((concept) => ({
+    description: concept.description,
+    status: statusById.get(concept.id) ?? "absent"
+  }));
+  return [
+    ...(args.caseFacts
+      ? [renderCaseFacts({ context: args.caseFacts, expectedConcepts: args.expectedConcepts, thisReply: args.outcome })]
+      : []),
+    asUntrustedMaterial({
+      question: args.question,
+      learnerResponse: args.learnerResponse.slice(0, 4000),
+      conceptEvidence: conceptSummary
+    }),
+    `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
+  ].join("\n\n");
 }
 
 export async function generateCoachFeedback(args: {
@@ -744,27 +932,16 @@ export async function generateCoachFeedback(args: {
    *  influenced by these directives. */
   pedagogyDirectives?: string[];
   routeGuidance?: string[];
+  /** The ledger before this reply. Context for phrasing; it never changes `outcome`. */
+  caseFacts?: CaseFactsContext;
 }): Promise<string> {
-  const statusById = new Map(args.evaluated.map((concept) => [concept.id, concept.status]));
-  const conceptSummary = args.expectedConcepts.map((concept) => ({
-    description: concept.description,
-    status: statusById.get(concept.id) ?? "absent"
-  }));
-
   const result = await structured<{ feedback: string }>({
     system: buildCoachFeedbackSystem({
       outcome: args.outcome,
       routeGuidance: args.routeGuidance,
       pedagogyDirectives: args.pedagogyDirectives
     }),
-    user: [
-      asUntrustedMaterial({
-        question: args.question,
-        learnerResponse: args.learnerResponse.slice(0, 4000),
-        conceptEvidence: conceptSummary
-      }),
-      `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
-    ].join("\n\n"),
+    user: buildCoachFeedbackUser(args),
     schemaName: "studigo_coach_feedback",
     schema: FEEDBACK_SCHEMA
   });

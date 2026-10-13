@@ -13,9 +13,11 @@ import {
   generateCoachFeedback,
   generateCoachQuestion,
   parseCoachState,
+  recordAttemptInCaseFacts,
   renderCoachSupport,
   scoreConcepts,
   toCitations,
+  type CaseFactsContext,
   type Citation,
   type IssuedChallenge,
   type LanguageFloorEnforcement,
@@ -32,7 +34,7 @@ import type { Topic } from "@/lib/rooms";
 import { randomUUID, createHash } from "node:crypto";
 import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-director";
 import { parseIssuedSpec, renderChallengeGuidance, renderRouteGuidance } from "@/lib/coach-render";
-import type { ChallengeRequest, ChallengeSpec, LearningEvent, LearningRoute } from "@/lib/learning";
+import { SCAFFOLD_LADDER, type ChallengeRequest, type ChallengeSpec, type LearningEvent, type LearningRoute } from "@/lib/learning";
 import { learningEventStore, type CoachEvidenceStore } from "@/lib/coach-evidence-store";
 import { commitAdaptiveCoachTurn,readCommittedCoachAnswer,hasIssuedCoachEncounter,readAcceptedEvaluation,acceptEvaluation, type AdaptiveCoachCommit } from './learning/atomic-coach';
 import {
@@ -188,6 +190,19 @@ function withSupport<T extends CoachState>(state: T, level: number): T {
   if (state.kind === "idle" || !state.issuedChallenge) return state;
   const used = state.issuedChallenge.scaffoldUsed;
   return { ...state, issuedChallenge: { ...state.issuedChallenge, scaffoldUsed: used === null ? null : Math.max(used, level) } };
+}
+
+/** The case facts for a pending question, from persisted state only: the ledger, the support level and the spec's challenge kind. */
+function caseFactsFor(state: Extract<CoachState, { kind: "awaiting_answer" }>): CaseFactsContext {
+  const level = state.issuedChallenge?.scaffoldUsed ?? null;
+  const label = level === null ? undefined : (SCAFFOLD_LADDER as readonly string[])[level];
+  const spec = parseIssuedSpec(state.issuedChallenge?.spec);
+  return {
+    ...(state.caseFacts ? { facts: state.caseFacts } : {}),
+    supportLevel: level,
+    ...(label ? { supportLabel: label.replace(/_/g, " ") } : {}),
+    ...(spec ? { reasoningTask: spec.challengeKind } : {})
+  };
 }
 
 /**
@@ -540,7 +555,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
         expectedConcepts: state.expectedConcepts,
         chunks,
         routeGuidance,
-        pedagogyDirectives
+        pedagogyDirectives,
+        caseFacts: caseFactsFor(state)
       });
       await record(supportEvents("help", SUPPORT_GIVEN.example, 0));
       await commit(withSupport(state, SUPPORT_GIVEN.example));
@@ -570,7 +586,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
         expectedConcepts: state.expectedConcepts,
         chunks,
         routeGuidance,
-        pedagogyDirectives
+        pedagogyDirectives,
+        caseFacts: caseFactsFor(state)
       });
       const nextState = withSupport({ ...state, question: choiceQuestion }, 4);
       await record(supportEvents("help", 4, 0));
@@ -595,7 +612,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
         expectedConcepts: state.expectedConcepts,
         chunks,
         routeGuidance,
-        pedagogyDirectives
+        pedagogyDirectives,
+        caseFacts: caseFactsFor(state)
       });
       const nextState = supportKind === "choice"
         ? withSupport({ ...state, question: support }, nextLevel)
@@ -718,7 +736,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       outcome,
       chunks,
       pedagogyDirectives,
-      routeGuidance
+      routeGuidance,
+      caseFacts: caseFactsFor(state)
     });
 
     // Real citations: a [n] marker in the feedback prose resolves to the
@@ -756,11 +775,13 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
     // outcome, strictly after any attempt (base + 1 ms) and before it is shown.
     // An irrelevant reply is never an attempt: only its redirect clue is recorded.
     const support = feedbackSupport(outcome);
+    const caseFacts = recordAttemptInCaseFacts(state.caseFacts, { outcome, expectedConcepts: state.expectedConcepts, evaluated: evaluation.concepts });
+    const nextState = caseFacts ? { ...state, caseFacts } : state;
     if (support > 0) {
       await record(supportEvents(outcome === "incorrect" ? "revealed" : "help", support, assessed ? 1 : 0));
-      await commit(withSupport(state, support));
+      await commit(withSupport(nextState, support));
     } else if (interaction) {
-      await commit(state);
+      await commit(nextState);
     }
 
     // Stay on the same pending question — the learner gets another try with

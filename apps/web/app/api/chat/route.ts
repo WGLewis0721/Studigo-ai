@@ -107,10 +107,13 @@ export async function POST(request: Request) {
     .from("messages")
     .select("role, content")
     .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(20);
 
+  // Newest 20, back in chronological order. Ascending with a limit pinned the
+  // history to the conversation's first 20 messages once it grew past them.
   const history = ((priorMessages ?? []) as Array<{ role: string; content: string }>)
+    .reverse()
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({ role: message.role as "user" | "assistant", content: message.content }));
 
