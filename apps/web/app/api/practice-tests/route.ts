@@ -1,4 +1,5 @@
 import { generateQuizQuestions } from '@studigo/ai';
+import { isMathKey } from '@/lib/math-practice';
 import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/retrieval';
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
         const generated=(await generateQuizQuestions({chunks,topicTitle:topic.title,objective:topic.objective??undefined,count,kind})).filter(q=>q.kind===kind&&q.sourceMarkers.length>0).slice(0,count);
         if(generated.length!==count) throw new Error(`Could not produce enough grounded questions for “${topic.title}”. Try again.`);
         return generated.map(q=>({topic_id:topic.id,kind:q.kind,prompt:q.prompt,choices:q.choices,correct_choice:q.correctChoice,
-          expected_answer:q.expectedAnswer,accepted_answers:q.acceptedAnswers,explanation:q.explanation,difficulty:q.difficulty,citations:markersToCitations(q.sourceMarkers,chunks)}));
+          expected_answer:q.expectedAnswer,accepted_answers:q.acceptedAnswers.filter(a=>!isMathKey(a)),explanation:q.explanation,difficulty:q.difficulty,citations:markersToCitations(q.sourceMarkers,chunks)}));
       }));
       questions.push(...batches.flat());
     }

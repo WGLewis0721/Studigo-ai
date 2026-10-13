@@ -93,6 +93,8 @@ export async function gradeAnswer(args: {
       }
       const math = readMathKey(question.accepted_answers);
       if (math === "invalid") {
+        // One unreadable key must not sink a whole practice test, and it is never graded by spelling instead.
+        if (args.allowUnanswered) return { score: 0, isCorrect: false, feedback: UNANSWERED_FEEDBACK };
         throw new GradingError("Studigo can't check this question. Build a new quiz to keep practicing.");
       }
       if (math) return gradeMathAnswer(math, response, args.allowUnanswered);

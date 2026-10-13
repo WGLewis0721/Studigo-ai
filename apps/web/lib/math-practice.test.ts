@@ -91,6 +91,8 @@ test("a row marked as math that does not hold a valid problem is refused, never 
     assert.equal(readMathKey([key]), "invalid", key);
     const question: GradableQuestion = { kind: "fill_blank", prompt: `x = ${BLANK}`, choices: null, correct_choice: null, expected_answer: "1/4", accepted_answers: [key, "1/4"], explanation: null };
     await assert.rejects(gradeAnswer({ question, response: "1/4", selectedChoice: null }), GradingError, key);
+    const inTest = await gradeAnswer({ question, response: "1/4", selectedChoice: null, allowUnanswered: true });
+    assert.deepEqual([inTest.isCorrect, inTest.score], [false, 0], "not graded by spelling even though 1/4 is listed");
   }
 });
 
