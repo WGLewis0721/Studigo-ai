@@ -1,3 +1,4 @@
+import { SOURCE_TYPE_LABELS } from '@studigo/documents';
 import { buildStudyGuidePdf } from '@/lib/study-guide-pdf';
 import { FIXTURE_ROOMS } from '@/lib/beta-fixtures';
 import { localBetaAllowed } from '@/lib/local-beta-access';
@@ -8,7 +9,8 @@ export async function GET(request: Request) {
   if (!room) return Response.json({ error: 'Choose a synthetic demo room.' }, { status: 400 });
   const pdf = buildStudyGuidePdf({ title: room.title, subject: room.subject, topics: room.topics.map(t => ({
     title: t.title, objective: t.objective, keyTerms: [],
-    sourceNotes: [{ text: t.source, documentName: room.title + ' synthetic study guide', pageNumber: t.page }]
+    sourceNotes: [{ text: t.source, documentName: room.title + ' synthetic study guide', pageNumber: t.page, pageLabel: 'page',
+      sourceLabel: SOURCE_TYPE_LABELS.study_guide, priority: 100 }]
   })) });
   return new Response(new Uint8Array(pdf), { headers: { 'Content-Type': 'application/pdf',
     'Content-Disposition': 'attachment; filename="Studigo-Demo-Study-Guide.pdf"', 'Cache-Control': 'private, no-store' } });

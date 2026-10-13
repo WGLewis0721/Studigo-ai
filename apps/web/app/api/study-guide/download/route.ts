@@ -1,3 +1,4 @@
+import { SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess } from "@/lib/retrieval";
 import { buildStudyGuidePdf, type StudyGuideTopic } from "@/lib/study-guide-pdf";
@@ -19,13 +20,17 @@ type DocumentRow = {
   id: string;
   name: string;
   page_label: string | null;
+  source_type: string | null;
+  source_priority: number | null;
 };
 
 type ChunkRow = {
   document_id: string;
   page_number: number | null;
+  page_label: string | null;
   chunk_index: number;
   content: string;
+  priority: number | null;
 };
 
 function filename(title: string): string {
@@ -61,7 +66,7 @@ export async function GET(request: Request) {
       .order("order_index", { ascending: true }),
     supabase
       .from("documents")
-      .select("id, name, page_label")
+      .select("id, name, page_label, source_type, source_priority")
       .eq("room_id", roomId)
       .eq("status", "ready")
   ]);
@@ -76,16 +81,17 @@ export async function GET(request: Request) {
   const topics = (topicResult.data ?? []) as TopicRow[];
   const documents = (documentResult.data ?? []) as DocumentRow[];
   const readyIds = new Set(documents.map(d => d.id));
+  const priorityById = new Map(documents.map(d => [d.id, d.source_priority] as const));
   const chunks: ChunkRow[] = [];
   // Bounded, paginated reads. Explicitly refuse an incomplete export.
   if (documents.length) for (let offset = 0; offset <= 10000; offset += 500) {
     const page = await supabase.from("document_chunks")
-      .select("document_id, page_number, chunk_index, content")
+      .select("document_id, page_number, page_label, chunk_index, content")
       .eq("room_id", roomId).in("document_id", [...readyIds])
       .order("document_id", { ascending: true }).order("chunk_index", { ascending: true }).order("id", { ascending: true })
       .range(offset, offset + 499);
     if (page.error) return Response.json({ error: "Could not read source material." }, { status: 503 });
-    chunks.push(...(page.data ?? []) as ChunkRow[]);
+    chunks.push(...((page.data ?? []) as Omit<ChunkRow, "priority">[]).map(row => ({ ...row, priority: priorityById.get(row.document_id) ?? null })));
     if (chunks.length > 10000) return Response.json({ error: "This room is too large for a complete PDF export. Narrow its source scope." }, { status: 413 });
     if ((page.data?.length ?? 0) < 500) break;
   }
@@ -117,7 +123,9 @@ export async function GET(request: Request) {
           text: chunk.content,
           documentName: document?.name ?? "Uploaded source",
           pageNumber: chunk.page_number,
-          pageLabel: document?.page_label ?? "page"
+          pageLabel: chunk.page_label || document?.page_label || "page",
+          sourceLabel: SOURCE_TYPE_LABELS[document?.source_type as SourceType] ?? null,
+          priority: chunk.priority
         };
       })
     };

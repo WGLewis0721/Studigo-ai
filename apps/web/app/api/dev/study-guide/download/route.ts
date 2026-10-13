@@ -1,3 +1,4 @@
+import { SOURCE_TYPE_LABELS } from "@studigo/documents";
 import { buildStudyGuidePdf } from "@/lib/study-guide-pdf";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 
@@ -12,19 +13,24 @@ export async function GET() {
     return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  const topics = Object.entries(MATERIAL_NOTES).map(([title, note]) => ({
-    title,
-    objective: note.summary,
-    keyTerms: [],
-    sourceNotes: [
-      {
-        text: `${note.summary} ${note.example}`,
-        documentName: sourceName(note.source),
-        pageNumber: null,
-        pageLabel: "page"
-      }
-    ]
-  }));
+  const topics = Object.entries(MATERIAL_NOTES).map(([title, note]) => {
+    const fromStudyGuide = /^Study guide\s*·/i.test(note.source);
+    return {
+      title,
+      objective: note.summary,
+      keyTerms: [],
+      sourceNotes: [
+        {
+          text: `${note.summary} ${note.example}`,
+          documentName: sourceName(note.source),
+          pageNumber: null,
+          pageLabel: "page",
+          sourceLabel: fromStudyGuide ? SOURCE_TYPE_LABELS.study_guide : null,
+          priority: fromStudyGuide ? 100 : null
+        }
+      ]
+    };
+  });
 
   const pdf = buildStudyGuidePdf({
     title: "Fifth Grade Science · Codespaces Preview",

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { SOURCE_TYPE_LABELS } from '@studigo/documents';
 import { betaStore, BetaError } from '@/lib/local-beta';
 import { localBetaAllowed } from '@/lib/local-beta-access';
 import { localSessionId } from '@/lib/local-beta-context';
@@ -43,7 +44,12 @@ async function handle(request:Request) {
       if(path==='/documents/download') {
         return new Response(selected.map(s=>'Page '+s.page+'\n'+s.text).join('\n\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Content-Disposition':'inline','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
       }
-      const pdf=buildStudyGuidePdf({title:room.room.title,subject:room.room.subject,topics:room.room.topics.filter(t=>t.active&&t.source).map(t=>({title:t.title,objective:t.objective,keyTerms:[],sourceNotes:[{text:t.source,documentName:selected.find(s=>s.id===t.documentId||s.id===t.documentId+':'+t.page)?.name??room.room.title,pageNumber:t.page}]}))});
+      // An authored source id is `document:page`. An imported file has no pages, so its stored page 1 is a default, not a citation.
+      const pdf=buildStudyGuidePdf({title:room.room.title,subject:room.room.subject,topics:room.room.topics.filter(t=>t.active&&t.source).map(t=>{
+        const source=selected.find(s=>s.id===t.documentId||s.id===t.documentId+':'+t.page),authored=source?.id===t.documentId+':'+t.page;
+        return {title:t.title,objective:t.objective,keyTerms:[],sourceNotes:[{text:t.source,documentName:source?.name??room.room.title,
+          pageNumber:authored?t.page:null,pageLabel:'page',sourceLabel:authored?SOURCE_TYPE_LABELS.study_guide:null,priority:authored?100:null}]};
+      })});
       return new Response(new Uint8Array(pdf),{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="Studigo-Study-Guide.pdf"','Cache-Control':'private, no-store'}});
     }
     if(path==='/documents/process') {
