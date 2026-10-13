@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import type { StudyDocument } from "@/lib/rooms";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
@@ -22,6 +22,11 @@ const STATUS_LABELS: Record<StudyDocument["status"], string> = {
   uploaded: "Queued",
   failed: "Needs attention"
 };
+
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 10 * 60 * 1000;
+/** A retried "failed" row can be read before the worker claims it; ignore it briefly. */
+const POLL_FAILED_GRACE_POLLS = 2;
 
 function formatSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -62,7 +67,32 @@ export function MaterialsPanel({
   const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const pollTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const unmounted = useRef(false);
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
+
+  useEffect(() => {
+    unmounted.current = false;
+    const timers = pollTimers.current;
+    return () => {
+      unmounted.current = true;
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
+    };
+  }, []);
+
+  const wait = useCallback(
+    (ms: number) =>
+      new Promise<void>((resolve, reject) => {
+        if (unmounted.current) return reject(new Error("Stopped waiting for processing."));
+        const timer = setTimeout(() => {
+          pollTimers.current.delete(timer);
+          resolve();
+        }, ms);
+        pollTimers.current.add(timer);
+      }),
+    []
+  );
 
   const refreshStudyGuide = useCallback(async () => {
     if (!latestStudyGuide || refreshingGuide) return;
@@ -97,6 +127,26 @@ export function MaterialsPanel({
     }
   }, [latestStudyGuide, onChanged, refreshingGuide, roomId, startTransition]);
 
+  const waitUntilProcessed = useCallback(
+    async (documentId: string) => {
+      const deadline = Date.now() + POLL_TIMEOUT_MS;
+      let polls = 0;
+      while (Date.now() < deadline) {
+        await wait(POLL_INTERVAL_MS);
+        polls += 1;
+        const response = await fetch(`/api/documents/${documentId}/status`, { cache: "no-store" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Processing failed");
+        if (payload.status === "ready") return;
+        if (payload.status === "failed" && polls > POLL_FAILED_GRACE_POLLS) {
+          throw new Error(payload.error_message || "Processing failed");
+        }
+      }
+      throw new Error("Still processing — refresh the page in a minute.");
+    },
+    [wait]
+  );
+
   const process = useCallback(
     async (documentId: string) => {
       const response = await fetch("/api/documents/process", {
@@ -106,9 +156,13 @@ export function MaterialsPanel({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Processing failed");
+      if (response.status === 202 || payload.status === "queued") {
+        await waitUntilProcessed(documentId);
+        return {} as { chunkCount?: number; topicsCreated?: number };
+      }
       return payload as { chunkCount?: number; topicsCreated?: number };
     },
-    []
+    [waitUntilProcessed]
   );
 
   const uploadFiles = useCallback(
