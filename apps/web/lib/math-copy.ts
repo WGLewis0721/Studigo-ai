@@ -1,5 +1,5 @@
 import { BLANK_MARKER } from "@studigo/ai";
-import { lcm, mathAnswerText, mathVisual, type FractionBar, type MathProblem, type MathVisual } from "@/lib/learning";
+import { barModel, compareFractions, lcm, mathAnswerText, mathVisual, numberLine, type BarModelBox, type FractionBar, type MathProblem, type MathVisual } from "@/lib/learning";
 
 /**
  * The words around code-generated math: the question, the worked steps and the
@@ -26,7 +26,17 @@ export function mathPrompt(problem: MathProblem): string {
       return `A rectangle is ${problem.length} ${problem.unit} long and ${problem.width} ${problem.unit} wide. Its area is ${blank} square ${problem.unit}.`;
     case "ratio_scale":
       return `For every ${problem.a} red tiles there are ${problem.b} blue tiles. With ${problem.a * problem.k} red tiles, there are ${blank} blue tiles.`;
+    case "fraction_compare":
+      return `Compare ${problem.a}/${problem.b} and ${problem.c}/${problem.d}. Which is greater, or are they equal?`;
+    case "linear_equation":
+      return `Solve for x. ${problem.a}x + ${problem.b} = ${problem.c}, so x = ${blank}`;
   }
+}
+
+/** The choices of a question answered by picking one, in the order the right position is counted in. Null when the learner types. */
+export function mathChoices(problem: MathProblem): string[] | null {
+  if (problem.family !== "fraction_compare") return null;
+  return [`${problem.a}/${problem.b} is greater`, `${problem.c}/${problem.d} is greater`, "They are equal"];
 }
 
 const bar = (shaded: number, parts: number): FractionBar => ({ parts, shaded, label: `${shaded}/${parts}` });
@@ -53,6 +63,7 @@ export function mathSteps(problem: MathProblem): MathStep[] {
       return [
         { text: `Both fractions are split into ${problem.d} equal parts, so the pieces are the same size.`, visual: mathVisual(problem) },
         { text: `Add the shaded pieces: ${problem.a} + ${problem.b} = ${sum}. That is ${sum}/${problem.d}.`, visual: bars([bar(sum, problem.d)]) },
+        { text: `On a number line, start at 0 and jump ${problem.a}/${problem.d}, then ${problem.b}/${problem.d} more. You land on ${sum}/${problem.d}.`, visual: numberLine(problem.d, [[0, problem.a], [problem.a, sum]]) },
         ...simplifyStep(`${sum}/${problem.d}`, answer)
       ];
     }
@@ -61,6 +72,7 @@ export function mathSteps(problem: MathProblem): MathStep[] {
       return [
         { text: `Both fractions are split into ${problem.d} equal parts, so the pieces are the same size.`, visual: mathVisual(problem) },
         { text: `Take away the shaded pieces: ${problem.a} − ${problem.b} = ${left}. That is ${left}/${problem.d}.`, visual: bars([bar(left, problem.d)]) },
+        { text: `On a number line, start at ${problem.a}/${problem.d} and jump back ${problem.b}/${problem.d}. You land on ${left}/${problem.d}.`, visual: numberLine(problem.d, [[problem.a, left]]) },
         ...simplifyStep(`${left}/${problem.d}`, answer)
       ];
     }

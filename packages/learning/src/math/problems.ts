@@ -1,4 +1,4 @@
-import { addRational, formatRational, lcm, rational, subtractRational, type Rational } from "./rational";
+import { addRational, compareRational, formatRational, lcm, rational, subtractRational, type Rational } from "./rational";
 
 /**
  * Math practice whose answer is known before it is asked. Code generates the
@@ -13,7 +13,9 @@ export const MATH_FAMILIES = [
   "fraction_equivalent",
   "fraction_add_unlike",
   "rect_area",
-  "ratio_scale"
+  "ratio_scale",
+  "fraction_compare",
+  "linear_equation"
 ] as const;
 
 export type MathFamily = (typeof MATH_FAMILIES)[number];
@@ -34,9 +36,14 @@ export type MathProblem =
   | { v: 1; family: "fraction_add_unlike"; a: number; b: number; c: number; d: number }
   | { v: 1; family: "rect_area"; length: number; width: number; unit: AreaUnit }
   /** a to b, scaled by k: a*k of the first goes with b*k of the second. */
-  | { v: 1; family: "ratio_scale"; a: number; b: number; k: number };
+  | { v: 1; family: "ratio_scale"; a: number; b: number; k: number }
+  /** a/b against c/d, both proper and never the same fraction written the same way. The learner picks which is greater, or that they are equal. */
+  | { v: 1; family: "fraction_compare"; a: number; b: number; c: number; d: number }
+  /** a·x + b = c, solved by a whole number x from 1 to 12. Only a, b and c are stored; x is worked out. */
+  | { v: 1; family: "linear_equation"; a: number; b: number; c: number };
 
 const MAX_PART = 12;
+const MAX_SOLUTION = 12;
 
 const FIELDS: Record<MathFamily, readonly string[]> = {
   fraction_name: ["a", "d"],
@@ -45,7 +52,9 @@ const FIELDS: Record<MathFamily, readonly string[]> = {
   fraction_equivalent: ["a", "d", "k"],
   fraction_add_unlike: ["a", "b", "c", "d"],
   rect_area: ["length", "width", "unit"],
-  ratio_scale: ["a", "b", "k"]
+  ratio_scale: ["a", "b", "k"],
+  fraction_compare: ["a", "b", "c", "d"],
+  linear_equation: ["a", "b", "c"]
 };
 
 function inRange(value: unknown, min: number, max: number): value is number {
@@ -75,6 +84,21 @@ function holds(problem: MathProblem): boolean {
       return inRange(problem.length, 1, MAX_PART) && inRange(problem.width, 1, MAX_PART) && (AREA_UNITS as readonly unknown[]).includes(problem.unit);
     case "ratio_scale":
       return inRange(problem.a, 1, MAX_PART) && inRange(problem.b, 1, MAX_PART) && problem.a !== problem.b && inRange(problem.k, 2, 9);
+    case "fraction_compare":
+      return (
+        inRange(problem.b, 2, MAX_PART) &&
+        inRange(problem.d, 2, MAX_PART) &&
+        inRange(problem.a, 1, problem.b - 1) &&
+        inRange(problem.c, 1, problem.d - 1) &&
+        !(problem.a === problem.c && problem.b === problem.d)
+      );
+    case "linear_equation":
+      return (
+        inRange(problem.a, 2, 9) &&
+        inRange(problem.b, 1, 20) &&
+        inRange(problem.c, 1, 9 * MAX_SOLUTION + 20) &&
+        inRange((problem.c - problem.b) / problem.a, 1, MAX_SOLUTION)
+      );
   }
 }
 
@@ -107,15 +131,45 @@ export function solveMathProblem(problem: MathProblem): Rational {
       return rational(problem.length * problem.width);
     case "ratio_scale":
       return rational(problem.b * problem.k);
+    case "fraction_compare": {
+      const first = rational(problem.a, problem.b);
+      const second = rational(problem.c, problem.d);
+      return compareRational(first, second) < 0 ? second : first;
+    }
+    case "linear_equation":
+      return rational(problem.c - problem.b, problem.a);
   }
 }
 
 /** Families whose blank is a single whole number, not a fraction. */
 export function expectsWholeNumber(problem: MathProblem): boolean {
-  return problem.family === "fraction_equivalent" || problem.family === "rect_area" || problem.family === "ratio_scale";
+  return problem.family === "fraction_equivalent" || problem.family === "rect_area" || problem.family === "ratio_scale" || problem.family === "linear_equation";
 }
 
-/** The answer as the learner would write it, in simplest form. */
+/** The order a comparison question lists its choices in: the first fraction is greater, the second is, or they are equal. */
+export const COMPARISONS = ["first", "second", "equal"] as const;
+export type Comparison = (typeof COMPARISONS)[number];
+
+/** Which side is greater, by exact cross-multiplication. */
+export function compareFractions(problem: Extract<MathProblem, { family: "fraction_compare" }>): Comparison {
+  const order = compareRational(rational(problem.a, problem.b), rational(problem.c, problem.d));
+  return order > 0 ? "first" : order < 0 ? "second" : "equal";
+}
+
+/** Families answered by picking a choice, not by typing. */
+export function answeredByChoice(family: MathFamily): boolean {
+  return family === "fraction_compare";
+}
+
+/** The right choice's position in the list, from the problem's own numbers. Null for a family answered by typing. */
+export function mathChoiceIndex(problem: MathProblem): number | null {
+  return problem.family === "fraction_compare" ? COMPARISONS.indexOf(compareFractions(problem)) : null;
+}
+
+/**
+ * The answer as the learner would write it, in simplest form. A comparison's
+ * value is the greater fraction, or the shared value when the two are equal.
+ */
 export function mathAnswerText(problem: MathProblem): string {
   return formatRational(solveMathProblem(problem));
 }
@@ -162,11 +216,37 @@ function draw(family: MathFamily, random: () => number): MathProblem {
       return { v: 1, family, length: int(2, MAX_PART), width: int(2, 9), unit: AREA_UNITS[int(0, AREA_UNITS.length - 1)] };
     case "ratio_scale":
       return { v: 1, family, a: int(1, 6), b: int(1, 9), k: int(2, 6) };
+    case "fraction_compare": {
+      if (int(0, 4) === 0) {
+        const b = int(2, 6);
+        const k = int(2, Math.floor(MAX_PART / b));
+        const a = int(1, b - 1);
+        return int(0, 1) ? { v: 1, family, a, b, c: a * k, d: b * k } : { v: 1, family, a: a * k, b: b * k, c: a, d: b };
+      }
+      const b = int(2, MAX_PART);
+      const d = int(2, MAX_PART);
+      return { v: 1, family, a: int(1, b - 1), b, c: int(1, d - 1), d };
+    }
+    case "linear_equation": {
+      const a = int(2, 6);
+      const b = int(1, 15);
+      return { v: 1, family, a, b, c: a * int(2, MAX_SOLUTION) + b };
+    }
   }
 }
 
-/** Friendlier numbers than the rules strictly require: addends in lowest terms and a common denominator a bar can show. */
+/**
+ * Friendlier numbers than the rules strictly require: addends in lowest terms
+ * and a common denominator a bar can show. A comparison keeps both fractions in
+ * lowest terms, except an equal pair, where one is a multiple of the other.
+ */
 function tidy(problem: MathProblem): boolean {
+  if (problem.family === "fraction_compare") {
+    const lowest = (n: number, d: number) => rational(n, d).d === BigInt(d);
+    const equal = compareFractions(problem) === "equal";
+    const reduced = equal ? lowest(problem.a, problem.b) || lowest(problem.c, problem.d) : lowest(problem.a, problem.b) && lowest(problem.c, problem.d);
+    return reduced && lcm(problem.b, problem.d) <= 24;
+  }
   if (problem.family !== "fraction_add_unlike") return true;
   return rational(problem.a, problem.b).d === BigInt(problem.b) && rational(problem.c, problem.d).d === BigInt(problem.d) && lcm(problem.b, problem.d) <= 24;
 }

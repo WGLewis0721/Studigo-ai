@@ -93,7 +93,7 @@ export function checkMathAnswer(problem: MathProblem, input: string): MathCheck 
 
   const text = normalize(input);
   if (!text || text.length > MAX_INPUT_CHARS) return unreadable(whole ? "whole_number" : "not_a_number");
-  const numberText = problem.family === "rect_area" ? withoutAreaUnit(text, problem.unit) : text;
+  const numberText = problem.family === "rect_area" ? withoutAreaUnit(text, problem.unit) : problem.family === "linear_equation" ? text.replace(/^x ?= ?/, "") : text;
   const parsed = numberText === null ? null : parseNumber(numberText);
   if (!parsed) return unreadable(whole ? "whole_number" : "not_a_number");
   if (whole && (parsed.form === "fraction" || parsed.form === "mixed")) return unreadable("whole_number");

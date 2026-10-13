@@ -21,6 +21,12 @@ export function rational(n: bigint | number, d: bigint | number = 1): Rational {
 export const addRational = (a: Rational, b: Rational): Rational => rational(a.n * b.d + b.n * a.d, a.d * b.d);
 export const subtractRational = (a: Rational, b: Rational): Rational => rational(a.n * b.d - b.n * a.d, a.d * b.d);
 export const equalRational = (a: Rational, b: Rational): boolean => a.n * b.d === b.n * a.d;
+/** Cross-multiplication, valid because every denominator is positive. */
+export const compareRational = (a: Rational, b: Rational): -1 | 0 | 1 => {
+  const left = a.n * b.d;
+  const right = b.n * a.d;
+  return left < right ? -1 : left > right ? 1 : 0;
+};
 export const isWhole = (value: Rational): boolean => value.d === 1n;
 
 /** True when the value has a finite decimal expansion, so a decimal can state it exactly. */
