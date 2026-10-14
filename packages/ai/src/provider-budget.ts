@@ -7,6 +7,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
  */
 type WorkState = {
   signal: AbortSignal;
+  controller: AbortController;
+  inFlight: Set<Promise<unknown>>;
   deadline: number;
   responseCalls: number;
   embeddingCalls: number;
@@ -19,20 +21,27 @@ type WorkState = {
 };
 const store = new AsyncLocalStorage<WorkState>();
 const DOC_OPERATIONS = new Set(["document-upload", "document-process", "document-reindex"]);
+/**
+ * One model call per topic or short answer. allocateTestQuestions and
+ * practice-test length both top out at 20, which is above the chat cap.
+ */
+const WIDE_RESPONSE_OPERATIONS = new Set(["practice-test-generate", "practice-test-grade"]);
 
 export function withProviderWorkBudget<T>(
   operation: string, requestSignal: AbortSignal, run: () => Promise<T>
 ): Promise<T> {
   const doc = DOC_OPERATIONS.has(operation);
-  // The whole operation times out before the six-minute SQL lease expires.
+  const wide = WIDE_RESPONSE_OPERATIONS.has(operation);
+  // The whole operation times out before the ten-minute SQL lease expires.
   const deadline = Date.now() + 180_000;
-  const signal = AbortSignal.any([requestSignal, AbortSignal.timeout(180_000)]);
+  const controller = new AbortController();
+  const signal = AbortSignal.any([requestSignal, controller.signal, AbortSignal.timeout(180_000)]);
   const state: WorkState = {
-    signal, deadline, responseCalls: 0, embeddingCalls: 0,
+    signal, controller, inFlight: new Set(), deadline, responseCalls: 0, embeddingCalls: 0,
     responseBytes: 0, embeddingChars: 0,
-    maxResponseCalls: doc ? 64 : 16,
+    maxResponseCalls: doc ? 64 : wide ? 20 : 16,
     maxEmbeddingCalls: doc ? 128 : 32,
-    maxResponseBytes: doc ? 80_000_000 : 4_000_000,
+    maxResponseBytes: doc ? 80_000_000 : wide ? 8_000_000 : 4_000_000,
     maxEmbeddingChars: doc ? 12_000_000 : 500_000
   };
   return store.run(state, run);
@@ -40,15 +49,44 @@ export function withProviderWorkBudget<T>(
 
 function active(): WorkState | undefined {
   const current = store.getStore();
+  if (!current && process.env.STUDIGO_AI_ADMISSION === "1") {
+    throw new Error("Provider work attempted outside an admission scope");
+  }
   if (current && (current.signal.aborted || Date.now() >= current.deadline)) {
     throw new Error("AI work deadline exceeded");
   }
   return current;
 }
 
+/** Register the real SDK request promise so admission can drain it before release. */
+export function trackProviderCall<T>(start: () => Promise<T>): Promise<T> {
+  const scope = active();
+  const work = start();
+  if (!scope) return work;
+  const tracked = work.finally(() => { scope.inFlight.delete(tracked); });
+  scope.inFlight.add(tracked);
+  return tracked;
+}
+
+/**
+ * Cancel cooperative SDK calls and retain the admission lease until every
+ * registered request has settled. Streaming routes must also track consumption
+ * (the Responses stream promise resolves when the stream opens, not when it ends).
+ */
+export async function abortAndDrainProviderWork(): Promise<void> {
+  const scope = store.getStore();
+  if (!scope) return;
+  if (!scope.controller.signal.aborted) scope.controller.abort("operation finished");
+  while (scope.inFlight.size) {
+    await Promise.allSettled([...scope.inFlight]);
+  }
+}
+
 /** Works even with a cancelled HTTP response because async-start inherits the scope. */
-export function providerAbortSignal(): AbortSignal | undefined {
-  return store.getStore()?.signal;
+export function providerAbortSignal(requestSignal?: AbortSignal): AbortSignal | undefined {
+  const budgetSignal = store.getStore()?.signal;
+  if (requestSignal && budgetSignal) return AbortSignal.any([requestSignal, budgetSignal]);
+  return requestSignal ?? budgetSignal;
 }
 
 const CHAT_MODELS = new Set(["gpt-4.1-mini", "openai/gpt-4.1-mini"]);

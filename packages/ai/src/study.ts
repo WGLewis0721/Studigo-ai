@@ -7,7 +7,7 @@ import {
   client
 } from "./client";
 import { buildContextBlock, OUTLINE_STYLE_RULE, type RetrievedChunk } from "./grounding";
-import { debitResponseWork, providerAbortSignal } from "./provider-budget";
+import { debitResponseWork, providerAbortSignal, trackProviderCall } from "./provider-budget";
 import { stripAnswerFiller, termMatch } from "./typos";
 
 /** Exported for reuse by other structured-generation modules (e.g. coach.ts). */
@@ -21,7 +21,7 @@ export async function structured<T>(args: {
     model: chatModel(), max_output_tokens: responseOptions().max_output_tokens,
     input: [args.system, args.user, JSON.stringify(args.schema)]
   });
-  const response = await client().responses.create({
+  const response = await trackProviderCall(() => client().responses.create({
     model: chatModel(),
     ...responseOptions(),
     input: [
@@ -36,7 +36,7 @@ export async function structured<T>(args: {
         schema: args.schema
       }
     }
-  }, { signal: providerAbortSignal() });
+  }, { signal: providerAbortSignal() }));
 
   const raw = response.output_text?.trim();
   if (!raw) throw new Error(`${args.schemaName}: model returned no output`);
@@ -534,12 +534,10 @@ export async function explainTopic(args: {
     return "There is nothing in this Study Room's materials covering that topic yet.";
   }
 
-  const response = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: [
+  const model = chatModel(), options = responseOptions();
+  const input = [
       {
-        role: "system",
+        role: "system" as const,
         content: [
           "You are Studigo, teaching one topic from one course's own materials.",
           "Use only the numbered excerpts supplied. Cite inline with [n] for every substantive claim.",
@@ -552,7 +550,7 @@ export async function explainTopic(args: {
         ].join(" ")
       },
       {
-        role: "user",
+        role: "user" as const,
         content: [
           asUntrustedMaterial({ topicTitle: args.topicTitle, objective: args.objective }),
           `Numbered source excerpts:\n${asUntrustedMaterial(buildContextBlock(args.chunks))}`
@@ -560,8 +558,13 @@ export async function explainTopic(args: {
           .filter(Boolean)
           .join("\n\n")
       }
-    ]
-  });
+    ];
+  debitResponseWork({ model, max_output_tokens: options.max_output_tokens, input });
+  const response = await trackProviderCall(() => client().responses.create({
+    model,
+    ...options,
+    input
+  }, { signal: providerAbortSignal() }));
 
   return response.output_text?.trim() || "I couldn't build a grounded explanation for that topic.";
 }

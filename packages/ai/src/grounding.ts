@@ -7,7 +7,7 @@ import {
   client
 } from "./client";
 import { groundingStatus, type GroundingStatus } from "./verify-claim";
-import { debitResponseWork, providerAbortSignal } from "./provider-budget";
+import { debitResponseWork, providerAbortSignal, trackProviderCall } from "./provider-budget";
 
 export type RetrievedChunk = {
   id: string;
@@ -168,9 +168,9 @@ export async function answerFromRetrievedContext(args: {
   const available = toCitations(args.chunks);
   const model = chatModel(), options = responseOptions(), input = buildInput(args);
   debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
-  const response = await client().responses.create({
+  const response = await trackProviderCall(() => client().responses.create({
     model, ...options, input
-  }, { signal: providerAbortSignal() });
+  }, { signal: providerAbortSignal() }));
 
   const text = response.output_text?.trim() || INSUFFICIENT_EVIDENCE_TEXT;
   const used = citationsUsedIn(text, available);
@@ -211,23 +211,32 @@ export async function* streamGroundedAnswer(args: {
   const available = toCitations(args.chunks);
   const model = chatModel(), options = responseOptions(), input = buildInput(args);
   debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
-  const stream = await client().responses.create({
-    model, ...options, input,
-    stream: true
-  }, { signal: args.signal ?? providerAbortSignal() });
+  const signal = providerAbortSignal(args.signal);
+  let releaseHold!: () => void;
+  const hold = new Promise<void>((resolve) => { releaseHold = resolve; });
+  const trackedHold = trackProviderCall(() => hold);
+  try {
+    const stream = await client().responses.create({
+      model, ...options, input,
+      stream: true
+    }, { signal });
 
-  let text = "";
-  for await (const event of stream) {
-    if (event.type === "response.output_text.delta") {
-      text += event.delta;
-      yield { type: "delta", text: event.delta };
+    let text = "";
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        text += event.delta;
+        yield { type: "delta", text: event.delta };
+      }
     }
-  }
 
-  const finalText = text.trim() || INSUFFICIENT_EVIDENCE_TEXT;
-  const used = citationsUsedIn(finalText, available);
-  yield {
-    type: "done",
-    answer: { text: finalText, citations: used, grounded: used.length > 0 }
-  };
+    const finalText = text.trim() || INSUFFICIENT_EVIDENCE_TEXT;
+    const used = citationsUsedIn(finalText, available);
+    yield {
+      type: "done",
+      answer: { text: finalText, citations: used, grounded: used.length > 0 }
+    };
+  } finally {
+    releaseHold();
+    await trackedHold.catch(() => undefined);
+  }
 }

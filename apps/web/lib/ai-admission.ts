@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { protectAiStream } from "./ai-stream-lease";
-import { withProviderWorkBudget } from "@studigo/ai";
+import { abortAndDrainProviderWork, withProviderWorkBudget } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import {
@@ -30,7 +30,7 @@ async function complete(writer: AiWriter, id: string) {
     const { error } = await writer.rpc("finish_studigo_ai_resource", { p_lease_id: id });
     if (error) throw error;
   } catch {
-    // The lease expires after six minutes. Do not expose provider or SQL details to learners.
+    // The lease has a ten-minute recovery horizon. Do not expose provider or SQL details to learners.
     console.error("Studigo AI admission lease completion failed");
   }
 }
@@ -85,7 +85,10 @@ export async function guardAiRequest(
     return denial("unavailable");
   }
 
-  const settle = () => complete(writer, leaseId);
+  const settle = async () => {
+    await abortAndDrainProviderWork();
+    await complete(writer, leaseId);
+  };
   return withProviderWorkBudget(operation, request.signal, async () => {
     try {
       const response = await handle(request);

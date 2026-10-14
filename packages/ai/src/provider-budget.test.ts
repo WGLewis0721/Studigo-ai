@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  withProviderWorkBudget, debitResponseWork, debitEmbeddingWork, providerAbortSignal
+  withProviderWorkBudget, debitResponseWork, debitEmbeddingWork, providerAbortSignal,
+  trackProviderCall, abortAndDrainProviderWork
 } from "./provider-budget";
 
 const chat = (input = "short") => ({
@@ -51,4 +52,44 @@ test("independent admitted requests never share a work counter", async () => {
       for (let i = 0; i < 16; i++) debitResponseWork(chat());
     })
   ));
+});
+
+test("a 20-question practice test fits its response envelope and the 21st call does not", async () => {
+  for (const operation of ["practice-test-generate", "practice-test-grade"]) {
+    await withProviderWorkBudget(operation, new AbortController().signal, async () => {
+      for (let i = 0; i < 20; i++) debitResponseWork(chat());
+      assert.throws(() => debitResponseWork(chat()), /allowance exhausted/);
+    });
+  }
+});
+
+test("admission refuses provider work that never entered a budget scope", async () => {
+  const previous = process.env.STUDIGO_AI_ADMISSION;
+  process.env.STUDIGO_AI_ADMISSION = "1";
+  try {
+    let started = false;
+    assert.throws(() => trackProviderCall(async () => { started = true; }), /outside an admission scope/);
+    assert.equal(started, false);
+    assert.throws(() => debitResponseWork(chat()), /outside an admission scope/);
+  } finally {
+    if (previous === undefined) delete process.env.STUDIGO_AI_ADMISSION;
+    else process.env.STUDIGO_AI_ADMISSION = previous;
+  }
+});
+
+test("drain waits for a registered provider call and aborts its budget signal", async () => {
+  await withProviderWorkBudget("chat", new AbortController().signal, async () => {
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => { release = resolve; });
+    const tracked = trackProviderCall(() => hold);
+    let drained = false;
+    const draining = abortAndDrainProviderWork().then(() => { drained = true; });
+    await Promise.resolve();
+    assert.equal(drained, false);
+    assert.equal(providerAbortSignal()?.aborted, true);
+    release();
+    await tracked;
+    await draining;
+    assert.equal(drained, true);
+  });
 });

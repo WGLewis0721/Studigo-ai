@@ -298,7 +298,8 @@ async function* runPracticeFollowup(
     instructions,
     chunks,
     // The conversation is only needed to tell which question an unnamed reply is about.
-    history: decided ? undefined : args.history
+    history: decided ? undefined : args.history,
+    signal: args.signal
   });
 }
 

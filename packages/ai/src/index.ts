@@ -4,6 +4,7 @@ export * from "./coach-language";
 export * from "./embeddings";
 export * from "./grounding";
 export * from "./ocr";
+export * from "./ocr-admission";
 export * from "./rerank";
 export * from "./study";
 export * from "./typos";
