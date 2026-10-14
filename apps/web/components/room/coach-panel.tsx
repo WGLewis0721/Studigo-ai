@@ -21,6 +21,7 @@ import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/l
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
+type MessagesByMode = Record<ChatMode, Message[]>;
 
 type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
@@ -69,7 +70,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [learnScopeStatus, setLearnScopeStatus] = useState<string | null>(null);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>("coach");
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Coach and Learn have separate persisted conversations. Keep their visible
+  // turn history separate too, so switching surfaces cannot make one appear
+  // to be context for the other.
+  const [messagesByMode, setMessagesByMode] = useState<MessagesByMode>({ coach: [], learn: [] });
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +99,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   }, [topics]);
 
   const activeTopicIds = chatMode === "coach" ? coachTopicIds : learnTopicIds;
+  const messages = messagesByMode[chatMode];
   const selectedTopics = topics.filter((topic) => activeTopicIds.includes(topic.id));
   const selectedTopic: SkillTopic = selectedTopics[0] ?? topics[0] ?? GENERAL_TOPIC;
   const activeScopeStatus = chatMode === "coach" ? coachScopeStatus : learnScopeStatus;
@@ -194,10 +199,19 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     // Snapshot the conversation so far — before the new user turn and the
     // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
-    const priorHistory = messages.filter((message) => !message.streaming && message.kind !== "guide").map((message) => ({ role: message.role, content: message.content }));
+    const priorHistory = messagesByMode[messageMode]
+      .filter((message) => !message.streaming && message.kind !== "guide")
+      .map((message) => ({ role: message.role, content: message.content }));
     const scopedTopicIds = topicIdsOverride ?? (replying === "coach" ? coachTopicIds : learnTopicIds);
     const scopedTopics = topics.filter((topic) => scopedTopicIds.includes(topic.id));
-    setMessages((current) => [...current, { id: interactionId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]);
+    setMessagesByMode((current) => ({
+      ...current,
+      [messageMode]: [
+        ...current[messageMode],
+        { id: interactionId, role: "user", content: text, mode: messageMode },
+        { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }
+      ]
+    }));
     try {
       // The learner's question stays clean for retrieval; saved preferences
       // shape presentation only and never what gets searched for.
@@ -227,14 +241,26 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
           const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
           if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
-          if (event.type === "delta" && event.text) setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message));
-          if (event.type === "done") setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message));
+          if (event.type === "delta" && event.text) setMessagesByMode((current) => ({
+            ...current,
+            [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message)
+          }));
+          if (event.type === "done") setMessagesByMode((current) => ({
+            ...current,
+            [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message)
+          }));
           if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
         }
       }
       // Refresh authoritative evidence after a completed turn; presentation stays unchanged.
       if (replying === "coach") onTopicsChanged();
-    } catch (coachError) { setError(coachError instanceof Error ? coachError.message : "Something went wrong."); setMessages((current) => current.filter((message) => message.id !== assistantId)); }
+    } catch (coachError) {
+      setError(coachError instanceof Error ? coachError.message : "Something went wrong.");
+      setMessagesByMode((current) => ({
+        ...current,
+        [messageMode]: current[messageMode].filter((message) => message.id !== assistantId)
+      }));
+    }
     finally { setBusy(false); }
   }
 
@@ -242,11 +268,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   function showLearnGuide(text: string) {
     if (busy) return;
     setError(null);
-    setMessages((current) => [
+    setMessagesByMode((current) => ({
       ...current,
-      { id: crypto.randomUUID(), role: "user", content: text, mode: "learn", kind: "guide" },
-      { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
-    ]);
+      learn: [
+        ...current.learn,
+        { id: crypto.randomUUID(), role: "user", content: text, mode: "learn", kind: "guide" },
+        { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
+      ]
+    }));
   }
 
   function coachTopic(topic: Topic) {

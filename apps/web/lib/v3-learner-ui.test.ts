@@ -78,6 +78,16 @@ test("Apply resets only the selected response surface", () => {
   assert.match(coachPanel, /if \(ok\) askConversationId\.current = null/);
 });
 
+test("Coach and Learn keep separate visible conversation histories", () => {
+  assert.match(coachPanel, /type MessagesByMode = Record<ChatMode, Message\[\]>;/);
+  assert.match(coachPanel, /const \[messagesByMode, setMessagesByMode\] = useState<MessagesByMode>/);
+  assert.match(coachPanel, /const messages = messagesByMode\[chatMode\]/);
+  assert.match(coachPanel, /const priorHistory = messagesByMode\[messageMode\]/);
+  assert.match(coachPanel, /\[messageMode\]: \[\s*\.\.\.current\[messageMode\]/);
+  assert.match(coachPanel, /learn: \[\n\s*\.\.\.current\.learn/);
+  assert.ok(!coachPanel.includes("const [messages, setMessages] = useState<Message[]>([])"));
+});
+
 test("persistent Challenge me and one-shot harder question use different learner copy", () => {
   assert.match(coachPreferences, /name: COACH_MODE_LABELS\.challenge/);
   assert.match(routeSelection, /Try a harder question/);
