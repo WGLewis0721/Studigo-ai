@@ -1,6 +1,7 @@
 import { UNTRUSTED_MATERIAL_RULE, chatModel, client, currentTransport, responseOptions } from "./client";
 import type { Response, ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
 import { executeAdmittedOcrRequest, ocrAdmissionMeter } from "./ocr-admission";
+import { ProviderWorkBudgetError } from "./provider-budget";
 
 const OCR_PROMPT = [
   "Transcribe all readable text from this scanned study material, in reading order.",
@@ -61,7 +62,8 @@ async function requestOcr(body: ResponseCreateParamsNonStreaming, timeoutMs = 60
         .then(completedOcrText)
     });
   } catch (error) {
-    if (error instanceof OcrResponseError) throw error;
+    // Preserve admission denials as distinct, actionable safe failures.
+    if (error instanceof OcrResponseError || error instanceof ProviderWorkBudgetError) throw error;
     throw new OcrResponseError("request_failed");
   }
 }
