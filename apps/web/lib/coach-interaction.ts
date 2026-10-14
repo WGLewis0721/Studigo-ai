@@ -9,6 +9,29 @@ export function isInteractionId(value: unknown): value is string {
 /** Reuse of an interaction ID for a different message. Always fails closed. */
 export class InteractionConflictError extends Error {}
 
+export class ConversationScopeError extends Error {}
+export class ConversationLookupError extends Error {}
+
+/** Admission check before budget reservation or any provider work. */
+export async function requireActiveConversationSurface(args: {
+  supabase: SupabaseClient;
+  conversationId: string;
+  roomId: string;
+  ownerId: string;
+  surface: "coach" | "learn" | "ask";
+}): Promise<string> {
+  const { data, error } = await args.supabase
+    .from("conversations")
+    .select("id, room_id, owner_id, surface, archived_at")
+    .eq("id", args.conversationId)
+    .maybeSingle();
+  if (error) throw new ConversationLookupError("Could not check the conversation");
+  if (!data || data.room_id !== args.roomId || data.owner_id !== args.ownerId || data.surface !== args.surface || data.archived_at) {
+    throw new ConversationScopeError("Conversation is not active for this surface");
+  }
+  return data.id as string;
+}
+
 /** Recover a first submission when its conversation SSE never reached the client. */
 export async function recoverCoachConversation(args:{supabase:SupabaseClient;interactionId:string;roomId:string;content:string}):Promise<string|null> {
   const existing=await args.supabase.from('messages').select('conversation_id,role,content').eq('id',args.interactionId).maybeSingle();

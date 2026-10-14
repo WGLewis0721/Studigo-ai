@@ -77,11 +77,13 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [messagesByMode, setMessagesByMode] = useState<MessagesByMode>({ coach: [], learn: [] });
   const [prompts, setPrompts] = useState<ModeState<string>>({ coach: "", learn: "" });
   const [pending, setPending] = useState<ModeState<boolean>>({ coach: false, learn: false });
+  const [clearing, setClearing] = useState<ModeState<boolean>>({ coach: false, learn: false });
   const [errors, setErrors] = useState<ModeState<string | null>>({ coach: null, learn: null });
   const prompt = prompts[chatMode];
   const busy = pending[chatMode];
   const error = errors[chatMode];
   const pendingRef = useRef<ModeState<boolean>>({ coach: false, learn: false });
+  const clearingRef = useRef<ModeState<boolean>>({ coach: false, learn: false });
   const requestIdByMode = useRef<ModeState<string | null>>({ coach: null, learn: null });
   const threadGeneration = useRef<ModeState<number>>({ coach: 0, learn: 0 });
   const scrollPositions = useRef<ModeState<number>>({ coach: 0, learn: 0 });
@@ -225,7 +227,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     const replying: ReplyMode = modeOverride ?? (chatMode === "learn" ? "ask" : "coach");
     const messageMode: ChatMode = replying === "ask" ? "learn" : "coach";
     const text = input.trim();
-    if (!text || pendingRef.current[messageMode] || (messageMode === "coach" ? coaching.applying : coaching.learnApplying)) return;
+    if (!text || pendingRef.current[messageMode] || clearingRef.current[messageMode] || (messageMode === "coach" ? coaching.applying : coaching.learnApplying)) return;
     setPrompts((current) => ({ ...current, [messageMode]: "" }));
     setErrors((current) => ({ ...current, [messageMode]: null }));
     pendingRef.current[messageMode] = true;
@@ -273,7 +275,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
-          : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
+          : JSON.stringify({ roomId, question: text, mode: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -318,7 +320,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
 
   /** The "How Learn works" starter: answered locally with fixed copy, no model call. */
   function showLearnGuide(text: string) {
-    if (pendingRef.current.learn) return;
+    if (pendingRef.current.learn || clearingRef.current.learn) return;
     setErrors((current) => ({ ...current, learn: null }));
     setMessagesByMode((current) => ({
       ...current,
@@ -328,6 +330,40 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
       ]
     }));
+  }
+
+  async function startFresh() {
+    const mode = chatMode;
+    if (pendingRef.current[mode] || clearingRef.current[mode]) return;
+    if (!window.confirm(`Start fresh in ${mode === "coach" ? "Coach" : "Learn"}? Earlier chats remain stored, and your mastery is kept.`)) return;
+    clearingRef.current[mode] = true;
+    setClearing((current) => ({ ...current, [mode]: true }));
+    try {
+      if (roomId !== "fixture") {
+        const response = await fetch("/api/chat/start-fresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId, surface: mode, conversationId: mode === "coach" ? conversationId.current : askConversationId.current })
+        });
+        if (!response.ok) throw new Error("Could not start a fresh chat. Please retry.");
+      }
+      if (mode === "coach") conversationId.current = null;
+      else askConversationId.current = null;
+      resetThreadIdentity(mode);
+      setMessagesByMode((current) => ({ ...current, [mode]: [] }));
+      setPrompts((current) => ({ ...current, [mode]: "" }));
+      setErrors((current) => ({ ...current, [mode]: null }));
+      scrollPositions.current[mode] = 0;
+      if (mode === chatMode && threadRef.current) threadRef.current.scrollTop = 0;
+    } catch (clearError) {
+      setErrors((current) => ({
+        ...current,
+        [mode]: clearError instanceof Error ? clearError.message : "Could not start a fresh chat. Please retry."
+      }));
+    } finally {
+      clearingRef.current[mode] = false;
+      setClearing((current) => ({ ...current, [mode]: false }));
+    }
   }
 
   function coachTopic(topic: Topic) {
@@ -505,6 +541,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
           </button>
         )}
+        <div className="chatChips" aria-label="Chat actions">
+          <button type="button" onClick={() => void startFresh()} disabled={busy || clearing[chatMode]}>
+            Clear {chatMode === "coach" ? "Coach" : "Learn"}
+          </button>
+        </div>
         <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={(event) => { scrollPositions.current[chatMode] = event.currentTarget.scrollTop; }}>
         {messages.length === 0 ? (
           chatMode === "coach" ? (
@@ -527,8 +568,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
         <div className="threadEnd" aria-hidden="true" />
         </div>
-        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
-        {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
+        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy || clearing[chatMode]} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
+        {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy || clearing[chatMode]} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
         <StudigoComposer
           variant="chat"
@@ -537,7 +578,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           value={prompt}
           onChange={(value) => setPrompts((current) => ({ ...current, [chatMode]: value }))}
           onSubmit={() => void coach(prompt)}
-          disabled={busy}
+          disabled={busy || clearing[chatMode]}
           ariaLabel="Message Studigo"
         />
       </section>
