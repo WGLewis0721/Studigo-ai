@@ -54,3 +54,16 @@ Owner successfully completed three chat requests in the same 15:17 UTC minute, t
 Updated **only** branch-scoped Vercel preview variables for `stabilize/c07-ai-admission-20261014`: `STUDIGO_AI_USER_PER_MINUTE=15`, `STUDIGO_AI_IP_PER_MINUTE=15`, `STUDIGO_AI_GLOBAL_PER_MINUTE=20`. Kept concurrency at one per user/IP/global, day budgets at 1,500,000/1,800,000 micro-USD, admission enabled only in preview. No database rows were modified; production variables remain untouched. The preview requires a fresh build to pick up deployment-time environment changes. See latest deployment and tests on PR #111.
 
 The configured daily micro-USD reservations still estimate work, not real provider billed spend; provider-side caps and hosted cancellation validation remain separate security-release gates. Use the stable branch preview alias, not old immutable deployment URLs.
+
+
+## 2026-10-14 — functional acceptance after the original guide's live OCR and Learn verification
+
+This entry **supersedes** the earlier "original OCR not performed" language above. The earlier wording describes the state before the owner completed the hosted preview test.
+
+1. Original 5.1 MB image-only three-page guide was uploaded through the new signed Storage path. OCR successfully processed all three pages; four chunks received embeddings, and six study topics were created. Stored file hash matched the original.
+2. Content review and room-scoped hybrid retrieval verified page-1 primary/secondary sources, page-2 branches and Supreme Court, and page-3 *Every Vote Counts* vocabulary.
+3. A narrow source-navigation repair corrected generic guide/vocabulary questions that semantic retrieval had falsely classified as unsupported (previously zero chunks). It retains the existing strict search threshold for specific factual questions.
+4. **Owner's five Learn screenshots** prove the repaired UI now renders supported overview, follow-up overview, and key-terms definitions with inline page-linked citations. Read-only message records corroborated guide-overview citations across pages **1, 2 and 3**, vocabulary citations on pages **1 and 3**, and another overview on pages **1 and 2**.
+5. Functional status: **PASS on branch Preview**. Production/security release status: **NOT ACCEPTED**, independently pending provider spending bounds, hosted cancellation/lease/receipt evidence, WAF and rollout review. Do not merge or enable production admission solely because the preview learning task passes.
+
+C07 is no longer functionally blocked on the original scanned PDF. See `implementation/codex-failures.md` for the acceptance record. Retain the existing source PR branches as drafts; PR #111 remains the integration candidate.
