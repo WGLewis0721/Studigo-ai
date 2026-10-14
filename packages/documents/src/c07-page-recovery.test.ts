@@ -4,7 +4,11 @@ import { test } from "node:test";
 import { extractPdf, pageWithOcrTranscription, pagesNeedingOcr, pdfPageQualityIssues } from "./extract";
 import type { ExtractionResult } from "./types";
 
-test("original government guide page facts stay in reading order without unnecessary OCR", async () => {
+test("clean government guide page facts stay in reading order without unnecessary OCR", {
+  skip: !process.env.STUDIGO_C07_GOVERNMENT_PDF
+    ? "Private clean PDF fixture unavailable in CI; required for controlled source acceptance"
+    : false
+}, async () => {
   const path = process.env.STUDIGO_C07_GOVERNMENT_PDF;
   assert.ok(path, "Set STUDIGO_C07_GOVERNMENT_PDF to the supplied source; never commit learner material");
   const bytes = await readFile(path);
@@ -28,7 +32,8 @@ test("quality selection flags corrupt layers and OCR replaces rather than duplic
   const spaced = { pageNumber: 4, text: `U n i t e d S t a t e s C o n s t i t u t i o n ${"Government branches are on this page. ".repeat(4)}` };
   const result: ExtractionResult = { pages: [healthy, corrupt, glyphs, spaced], pageCount: 4, pageLabel: "page", ocrPageCount: 0 };
   assert.deepEqual(pdfPageQualityIssues(healthy), []);
-  assert.deepEqual(pagesNeedingOcr(result), [2, 3, 4]);
+  assert.deepEqual(pagesNeedingOcr(result), []);
+  assert.deepEqual(pagesNeedingOcr(result, { includeQuality: true }), [2, 3, 4]);
   assert.deepEqual(pagesNeedingOcr(result, { includeQuality: false }), []);
   const recovered = pageWithOcrTranscription(corrupt, "# The three branches\nExecutive | enforces laws\nLegislative | makes laws\nJudicial | reviews laws");
   assert.equal(recovered.ocr, true);
@@ -36,4 +41,20 @@ test("quality selection flags corrupt layers and OCR replaces rather than duplic
   assert.match(recovered.text, /^# The three branches\nExecutive \| enforces laws/);
   assert.doesNotMatch(recovered.text, /UnitedStatesConstitution/);
   assert.throws(() => pageWithOcrTranscription(corrupt, "   "), /no readable text/);
+});
+
+
+test("image-only PDF pages remain OCR targets with quality heuristics disabled", () => {
+  const result: ExtractionResult = {
+    pages: [
+      { pageNumber: 1, text: "", rawText: "" },
+      { pageNumber: 2, text: " ", rawText: " " },
+      { pageNumber: 3, text: "Executive legislative judicial", rawText: "Executive legislative judicial" }
+    ],
+    pageCount: 3,
+    pageLabel: "page",
+    ocrPageCount: 0
+  };
+  assert.deepEqual(pagesNeedingOcr(result), [1, 2, 3]);
+  assert.deepEqual(pagesNeedingOcr(result, { includeQuality: false }), [1, 2, 3]);
 });
