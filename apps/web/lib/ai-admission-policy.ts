@@ -73,3 +73,41 @@ export function admissionLimits(env: Record<string, string | undefined>): Admiss
     globalDailyMicroUsd: positive("STUDIGO_AI_GLOBAL_DAILY_MICRO_USD")
   };
 }
+
+/** Clients must send a stable UUID per user action to make a retry replay-safe. */
+export function isValidOperationId(value: string): boolean {
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
+}
+
+/**
+ * The network identity an IP limit is keyed on. IPv4 is used as is; an IPv6 address is
+ * reduced to its /64 because a single subscriber routinely owns an entire /64, so keying
+ * on the full address lets one client rotate through 2^64 values and never hit the limit.
+ * IPv4-mapped IPv6 is treated as the IPv4 address it carries. Input must already be a valid
+ * IP (see trustedClientIp).
+ */
+export function ipLimitKey(ip: string): string {
+  const version = isIP(ip);
+  if (version === 4) return ip;
+  if (version !== 6) throw new Error("not an IP address");
+  let text = ip.split("%")[0].toLowerCase();
+  const embedded = /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(text);
+  if (embedded) {
+    const [a, b, c, d] = embedded.slice(1).map(Number);
+    text = text.slice(0, embedded.index) + ((a << 8) | b).toString(16) + ":" + ((c << 8) | d).toString(16);
+  }
+  const halves = text.split("::");
+  const head = halves[0] ? halves[0].split(":") : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(":") : [];
+  const groups = halves.length === 2
+    ? [...head, ...Array(8 - head.length - tail.length).fill("0"), ...tail]
+    : head;
+  const words = groups.map((group) => parseInt(group, 16));
+  if (words.length !== 8 || words.some((word) => !Number.isInteger(word) || word < 0 || word > 0xffff)) {
+    throw new Error("not an IPv6 address");
+  }
+  if (words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff) {
+    return `${words[6] >> 8}.${words[6] & 255}.${words[7] >> 8}.${words[7] & 255}`;
+  }
+  return "v6/64:" + words.slice(0, 4).map((word) => word.toString(16)).join(":");
+}

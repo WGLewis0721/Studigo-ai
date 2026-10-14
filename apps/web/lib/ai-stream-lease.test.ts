@@ -91,3 +91,28 @@ test("actual HTTP client disconnect cannot free an active provider's lease", asy
     await new Promise<void>(resolve => server.close(() => resolve()));
   }
 });
+
+test("settle is told whether the stream finished on its own, was cancelled, or errored", async () => {
+  const outcomes: Array<boolean | undefined> = [];
+  const make = (source: ReadableStream<Uint8Array>, signal?: AbortSignal) =>
+    protectAiStream(new Response(source), async (completed) => { outcomes.push(completed); }, signal);
+
+  const natural = make(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); c.close(); } })).body!.getReader();
+  while (!(await natural.read()).done) { /* drain */ }
+
+  const cancelled = make(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); } })).body!.getReader();
+  await cancelled.read();
+  await cancelled.cancel();
+
+  const errored = make(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); }, pull(c) { c.error(new Error("upstream")); } })).body!.getReader();
+  await errored.read();
+  await assert.rejects(errored.read());
+
+  const abort = new AbortController();
+  const aborted = make(new ReadableStream({ start(c) { c.enqueue(new Uint8Array([1])); } }), abort.signal).body!.getReader();
+  await aborted.read();
+  abort.abort();
+  for (let i = 0; i < 20 && outcomes.length < 4; i++) await new Promise<void>((resolve) => setImmediate(resolve));
+
+  assert.deepEqual(outcomes.sort(), [false, false, false, true]);
+});

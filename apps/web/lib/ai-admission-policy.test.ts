@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  admissionLimits, estimatedReservation, hashedIp, requestKey, trustedClientIp
+  admissionLimits, estimatedReservation, hashedIp, ipLimitKey, isValidOperationId, requestKey, trustedClientIp
 } from "./ai-admission-policy";
 
 const good = {
@@ -51,4 +51,25 @@ test("request keys only reuse recognized UUIDs, otherwise generate unique IDs", 
   assert.equal(requestKey(valid), valid);
   assert.match(requestKey("not-a-uuid"), /^[a-f0-9-]{36}$/);
   assert.notEqual(requestKey(null), requestKey(null));
+});
+
+test("operation ids must be UUIDs", () => {
+  assert.equal(isValidOperationId("123e4567-e89b-42d3-a456-426614174000"), true);
+  for (const bad of ["", "retry", "123e4567-e89b-42d3-a456-42661417400", "123e4567e89b42d3a456426614174000", "g23e4567-e89b-42d3-a456-426614174000"]) {
+    assert.equal(isValidOperationId(bad), false, bad);
+  }
+});
+
+test("IPv6 addresses collapse to their /64 and IPv4-mapped addresses to IPv4", () => {
+  const key = ipLimitKey("2001:db8:1:2::1");
+  assert.equal(key, "v6/64:2001:db8:1:2");
+  assert.equal(ipLimitKey("2001:0db8:0001:0002:ffff:ffff:ffff:ffff"), key);
+  assert.equal(ipLimitKey("2001:DB8:1:2:abcd::"), key);
+  assert.notEqual(ipLimitKey("2001:db8:1:3::1"), key);
+  assert.equal(ipLimitKey("::1"), "v6/64:0:0:0:0");
+  assert.equal(ipLimitKey("::ffff:203.0.113.9"), "203.0.113.9");
+  assert.equal(ipLimitKey("::ffff:cb00:7109"), "203.0.113.9");
+  assert.equal(ipLimitKey("fe80::1%eth0"), "v6/64:fe80:0:0:0");
+  assert.equal(ipLimitKey("203.0.113.9"), "203.0.113.9");
+  assert.throws(() => ipLimitKey("nope"));
 });
