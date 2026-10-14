@@ -3406,8 +3406,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .appShell:has(.coachChat) .coachMaterial p { font-size: .9rem; line-height: 1.5; }
   .appShell:has(.coachChat) .coachMaterialExample { padding: 10px 14px; }
   .appShell:has(.coachChat) .coachChat { flex: 1 1 0; height: auto; min-height: 140px; }
-  .coachBody { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .coachMain { min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+  /* Flex-basis 0 only inside the fixed shell. On a content-sized page it
+     collapses the chat to 0px and overflow:hidden swallows Send. */
+  .appShell:has(.coachChat) .coachBody { flex: 1 1 0; min-height: 0; }
+  .appShell:has(.coachChat) .coachMain { min-height: 0; }
+  .coachBody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .coachMain { display: flex; flex-direction: column; gap: 14px; }
   .coachAside { display: none; }
 }
 /* A short window gives the conversation the room instead of the study-guide card: always

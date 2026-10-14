@@ -15,6 +15,23 @@
 
 Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Actions run 38503354107 passed, including web tests, typecheck and build. The three manual C01 checks remain the acceptance evidence. Disposition: DONE, accepted for integration.
 
+### C01 — 2026-10-14 — recheck 1 of maximum 3
+- Final/task commit: CSS scope fix in this change
+- Check name: focused two-mode draft/transcript/late-stream scenario
+- Command or manual steps: `STUDIGO_UI_TEST_URL=http://127.0.0.1:3102 node apps/web/scripts/verify-c01-mode-state.mjs two-mode` against `next dev` on the integration head
+- Environment: Node 22.23.3, pnpm 10.0.0, Playwright Chromium, viewport 1280×900, local `/dev/study` fixture
+- Result: FAIL before assertions
+- Failure details: Send click timed out. `.coachChat` computed height was 0. `overflow: hidden` clipped the composer, so hit-testing returned `.modeSurface.modeSurfaceFramed`.
+- Suspected cause: unscoped `.coachBody { flex: 1 1 0; min-height: 0 }` collapses a content-sized Coach page. The signed-in shell already had a definite height.
+- Impact: fixture could not exercise mode-owned chat. No security, privacy, mastery, or provider path was reached.
+- Action: scope the zero-basis flex to `.appShell:has(.coachChat)` only. Do not rerun until that layout is in the tree under test.
+- Remaining check slots: 2
+- Unverified acceptance criteria: two-mode survival; pending Coach switch; this round's web typecheck.
+- Task disposition: NOT DONE until the behavior checks pass on the fixed layout.
+- Follow-up: rerun the two named browser scenarios only.
+
+Resolution: After the scope fix, the same two-mode command passed, and `pending-coach` passed. Both used the two remaining slots. Web typecheck was not re-executed. Prior C01 typecheck evidence is unchanged because no TypeScript changed. Disposition: behavior proven on the fixed layout.
+
 ### C11 — 2026-10-14 — check 1 of maximum 3
 - Final/task commit: pending
 - Check name: web typecheck
