@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { currentTransport } from "@studigo/ai";
+import type { LearnReasonCode } from "@/lib/learn-outcome";
 
 /** Bumped only when the retrieval prompt contract changes. Not the prompt text. */
 export const RETRIEVAL_PROMPT_VERSION = "retrieval-2026-10-07";
@@ -11,6 +12,10 @@ export type StudyTrace = {
   cutoff: number;
   tokenEstimate: number;
   latencyMs: number;
+  reasonCode?: LearnReasonCode;
+  readyCount?: number;
+  processingCount?: number;
+  failedCount?: number;
 };
 
 const LEAKED = ["prompt", "question", "content", "filename", "name", "text", "query", "answer", "ownerId"] as const;
@@ -32,7 +37,11 @@ export function studyTraceRecord(input: StudyTrace & Record<string, unknown>) {
     transport: currentTransport(),
     tokenEstimate: input.tokenEstimate,
     latencyMs: input.latencyMs,
-    promptVersion: RETRIEVAL_PROMPT_VERSION
+    promptVersion: RETRIEVAL_PROMPT_VERSION,
+    reasonCode: input.reasonCode,
+    readyCount: input.readyCount,
+    processingCount: input.processingCount,
+    failedCount: input.failedCount
   };
   const json = JSON.stringify(record);
   for (const key of LEAKED) {

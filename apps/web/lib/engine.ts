@@ -1,6 +1,7 @@
 import { INSUFFICIENT_EVIDENCE_TEXT, asUntrustedMaterial, streamGroundedAnswer, toCitations, type GroundedStreamEvent } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { retrieveForRoom } from "@/lib/retrieval";
+import { fetchLearnMaterials, retrieveForRoom } from "@/lib/retrieval";
+import { classifyLearnOutcome, isLearnSuccess, type LearnOutcome } from "@/lib/learn-outcome";
 import { runCoachTurn } from "@/lib/coach-router";
 import type { LearningRoute } from "@/lib/learning";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
@@ -46,6 +47,8 @@ export type EngineRequest = {
    *  grounded Q&A. Requires `conversationId` — Coach state is persisted per
    *  conversation, not inferred from the message list each turn. */
   mode?: "ask" | "coach";
+  /** Distinguishes the Learn chat from standalone legacy Ask. */
+  surface?: "learn" | "ask" | "coach";
   conversationId?: string;
   /** Authenticated learner. Coach needs it to ask the learning-control plane
    *  for the next ChallengeSpec (the read itself stays RLS-scoped). */
@@ -62,7 +65,7 @@ export function scopeTopicsForRequest(roomTopics: Topic[], selectedTopicIds: rea
   if (!selectedTopicIds?.length) return roomTopics;
   const selected = new Set(selectedTopicIds);
   const scoped = roomTopics.filter((topic) => selected.has(topic.id));
-  if (!scoped.length) throw new Error("Your selected topics are no longer available. Pick a topic and try again.");
+  if (scoped.length !== selected.size) throw new Error("Your selected topics are no longer available. Pick a topic and try again.");
   return scoped;
 }
 
@@ -81,12 +84,28 @@ export function scopeTopicsForRequest(roomTopics: Topic[], selectedTopicIds: rea
  * fabricates content on its own. Route handlers and UI call this instead of
  * composing retrieval + generation + analytics themselves.
  */
-export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<GroundedStreamEvent> {
-  const [roomTopics, evidence] = await Promise.all([
-    fetchActiveTopics(request.supabase, request.roomId),
-    fetchRecentEvidence(request.supabase, request.roomId)
-  ]);
-  const topics = scopeTopicsForRequest(roomTopics, request.selectedTopicIds);
+export type EngineEvent = GroundedStreamEvent | { type: "outcome"; outcome: LearnOutcome };
+
+export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<EngineEvent> {
+  let roomTopics: Topic[];
+  let evidence: PracticeEvidence[];
+  try {
+    [roomTopics, evidence] = await Promise.all([
+      fetchActiveTopics(request.supabase, request.roomId),
+      fetchRecentEvidence(request.supabase, request.roomId)
+    ]);
+  } catch (error) {
+    if (request.surface !== "learn") throw error;
+    yield { type: "outcome", outcome: classifyLearnOutcome({ error: "retrieval_error" }) };
+    return;
+  }
+  let topics: Topic[];
+  try { topics = scopeTopicsForRequest(roomTopics, request.selectedTopicIds); }
+  catch (error) {
+    if (request.surface !== "learn") throw error;
+    yield { type: "outcome", outcome: classifyLearnOutcome({ error: "invalid_topic_scope" }) };
+    return;
+  }
   // Ask/Learn scope is derived here from owned topics, never from browser text.
   const args: EngineRequest = request.mode === "coach"
     ? request
@@ -109,6 +128,55 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
       userId: args.userId,
       interaction: args.interaction
     });
+    return;
+  }
+
+  if (args.surface === "learn") {
+    let materials;
+    try { materials = await fetchLearnMaterials(args.supabase, args.roomId); }
+    catch {
+      yield { type: "outcome", outcome: classifyLearnOutcome({ error: "retrieval_error" }) };
+      return;
+    }
+    const availability = classifyLearnOutcome({ materials });
+    if (!isLearnSuccess(availability)) {
+      yield { type: "outcome", outcome: availability };
+      return;
+    }
+    let chunks;
+    try {
+      chunks = await retrieveForRoom({
+        supabase: args.supabase, roomId: args.roomId, query: args.question,
+        ownerId: args.userId, traceRoute: "engine:learn"
+      });
+    } catch {
+      yield { type: "outcome", outcome: classifyLearnOutcome({ materials, error: "retrieval_error" }) };
+      return;
+    }
+    const outcome = classifyLearnOutcome({ materials, evidenceCount: chunks.length });
+    yield { type: "outcome", outcome };
+    if (!isLearnSuccess(outcome)) return;
+    let completed = false;
+    try {
+      const instructions = formatDirectives(args.directives, [buildLearnerStateDirective(topics, evidence)]);
+      for await (const event of streamGroundedAnswer({
+        question: args.question, instructions: instructions || undefined,
+        format: "outline", chunks, history: args.history
+      })) {
+        if (event.type === "done") {
+          if (!event.answer.citations.length) {
+            yield { type: "outcome", outcome: classifyLearnOutcome({ materials, error: "generation_error" }) };
+            return;
+          }
+          completed = true;
+        }
+        yield event;
+      }
+    } catch {
+      yield { type: "outcome", outcome: classifyLearnOutcome({ materials, error: "generation_error" }) };
+      return;
+    }
+    if (!completed) yield { type: "outcome", outcome: classifyLearnOutcome({ materials, error: "generation_error" }) };
     return;
   }
 

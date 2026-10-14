@@ -14,3 +14,6 @@
 - Follow-up: review the automatic check on PR #104 before merging into integration.
 
 Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Actions run 38503354107 passed, including web tests, typecheck and build. The three manual C01 checks remain the acceptance evidence. Disposition: DONE, accepted for integration.
+# C04 focused Learn UI check — 2026-10-14
+
+- Check 2/3, `node scripts/verify-c04-learn-ui.mjs` under Node 22: FAIL before the first mocked SSE request. Playwright timed out clicking the disabled Send button at line 46. The fixture navigation/fill ran without waiting for client hydration; this is a harness timing failure, not evidence that the typed outcome or cited-answer rendering works or fails. Added an explicit Learn-mode DOM wait for a future review run, but did not rerun because the three-check policy counts failed attempts and disallows retries.

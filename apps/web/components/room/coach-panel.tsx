@@ -18,6 +18,7 @@ import { useFitViewport } from "./use-fit-viewport";
 import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
+import { isLearnSuccess, learnOutcomeMessage, type LearnOutcome } from "@/lib/learn-outcome";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
@@ -78,6 +79,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [prompts, setPrompts] = useState<ModeState<string>>({ coach: "", learn: "" });
   const [pending, setPending] = useState<ModeState<boolean>>({ coach: false, learn: false });
   const [errors, setErrors] = useState<ModeState<string | null>>({ coach: null, learn: null });
+  const [learnOutcome, setLearnOutcome] = useState<LearnOutcome | null>(null);
   const prompt = prompts[chatMode];
   const busy = pending[chatMode];
   const error = errors[chatMode];
@@ -99,6 +101,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const skipAutoScroll = useRef(false);
 
   const resetThreadIdentity = (mode: ChatMode) => {
+    if (mode === "learn") setLearnOutcome(null);
     threadGeneration.current[mode] += 1;
     requestIdByMode.current[mode] = null;
     pendingRef.current[mode] = false;
@@ -228,6 +231,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     if (!text || pendingRef.current[messageMode] || (messageMode === "coach" ? coaching.applying : coaching.learnApplying)) return;
     setPrompts((current) => ({ ...current, [messageMode]: "" }));
     setErrors((current) => ({ ...current, [messageMode]: null }));
+    if (messageMode === "learn") setLearnOutcome(null);
     pendingRef.current[messageMode] = true;
     setPending((current) => ({ ...current, [messageMode]: true }));
     const assistantId = crypto.randomUUID();
@@ -273,7 +277,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
-          : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
+          : JSON.stringify({ roomId, question: text, mode: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
       if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
@@ -282,9 +286,16 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? "";
         for (const frame of frames) {
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
-          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
+          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string; outcome?: LearnOutcome };
           if (!isCurrentThread()) continue;
           if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
+          if (event.type === "outcome" && messageMode === "learn" && event.outcome) {
+            setLearnOutcome(event.outcome);
+            if (!isLearnSuccess(event.outcome)) setMessagesByMode((current) => ({
+              ...current,
+              learn: current.learn.filter((message) => message.id !== assistantId)
+            }));
+          }
           if (event.type === "delta" && event.text) setMessagesByMode((current) => ({
             ...current,
             [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message)
@@ -319,6 +330,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   /** The "How Learn works" starter: answered locally with fixed copy, no model call. */
   function showLearnGuide(text: string) {
     if (pendingRef.current.learn) return;
+    setLearnOutcome(null);
     setErrors((current) => ({ ...current, learn: null }));
     setMessagesByMode((current) => ({
       ...current,
@@ -530,6 +542,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
+        {chatMode === "learn" && learnOutcome && !isLearnSuccess(learnOutcome) && (
+          <div className="formError chatError" role="status">
+            <p>{learnOutcomeMessage(learnOutcome.reasonCode)}</p>
+            {["no_relevant_evidence", "invalid_topic_scope"].includes(learnOutcome.reasonCode) && (
+              <button type="button" className="ghostButton" onClick={() => onViewChange("topics")}>See topics</button>
+            )}
+          </div>
+        )}
         <StudigoComposer
           variant="chat"
           accent={chatMode === "learn" ? "learn" : undefined}

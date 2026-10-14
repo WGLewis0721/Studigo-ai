@@ -2,6 +2,7 @@ import { embedText, rerankByOverlap, type RetrievedChunk } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toRetrievedChunks } from "@/lib/ingest";
 import { writeStudyTrace } from "@/lib/study-trace";
+import type { LearnMaterial } from "@/lib/learn-outcome";
 
 export const MAX_RETRIEVAL_CHUNKS = Number(process.env.STUDIGO_MAX_RETRIEVAL_CHUNKS || 8);
 export const MIN_SIMILARITY = Number(process.env.STUDIGO_MIN_SIMILARITY || 0.35);
@@ -11,6 +12,16 @@ export const SOURCE_PRIORITY_BOOST_DIVISOR = 1000;
 
 function hybridEnabled() {
   return process.env.STUDIGO_HYBRID_RETRIEVAL === "1";
+}
+
+/** RLS-scoped availability, separate from semantic matching. */
+export async function fetchLearnMaterials(supabase: SupabaseClient, roomId: string): Promise<LearnMaterial[]> {
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, status")
+    .eq("room_id", roomId);
+  if (error) throw new Error("Could not read Study Room material status");
+  return (data ?? []) as LearnMaterial[];
 }
 
 /**

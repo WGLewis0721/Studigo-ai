@@ -9,6 +9,7 @@ import { assertRoomAccess, MIN_SIMILARITY } from "@/lib/retrieval";
 import { runStudigoEngine } from "@/lib/engine";
 import { isUuid } from "@/lib/ids";
 import { writeStudyTrace } from "@/lib/study-trace";
+import { classifyLearnOutcome, type LearnOutcome } from "@/lib/learn-outcome";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -19,7 +20,7 @@ type ChatRequest = {
   conversationId?: string | null;
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
-  mode?: "ask" | "coach";
+  mode?: "ask" | "coach" | "learn";
   /** Client-generated UUID, once per submitted turn. Becomes the user
    *  message's ID and the stable identity of any learning evidence. */
   interactionId?: string;
@@ -39,7 +40,10 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as ChatRequest | null;
   const roomId = typeof body?.roomId==='string'?body.roomId.trim():'';
   const question = typeof body?.question==='string'?body.question.trim():'';
-  const mode = body?.mode === "coach" ? "coach" : "ask";
+  if (body?.mode != null && !["ask", "coach", "learn"].includes(body.mode)) {
+    return Response.json({ error: "Invalid learning mode." }, { status: 400 });
+  }
+  const mode = body?.mode ?? "ask";
   const topicIds = Array.isArray(body?.topicIds)
     ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
     : [];
@@ -70,7 +74,7 @@ export async function POST(request: Request) {
   let learnPreferences;
   try {
     preferences = await readCoachPreferences(supabase, roomId);
-    learnPreferences = mode === "ask" ? await readLearnPreferences(supabase, roomId) : undefined;
+    learnPreferences = mode !== "coach" ? await readLearnPreferences(supabase, roomId) : undefined;
     teaching = compileCoachPreferences(preferences);
   } catch {
     return Response.json({ error: "Could not load your Study Room settings. Please retry." }, { status: 503 });
@@ -117,7 +121,7 @@ export async function POST(request: Request) {
   // Stored preferences are authoritative, including after a reload or tab change.
   // No browser-supplied directive text reaches the system prompt: the engine
   // builds the Ask topic scope from the validated topicIds.
-  const directives = directivesForTurn(mode, preferences, [], learnPreferences);
+  const directives = directivesForTurn(mode === "coach" ? "coach" : "ask", preferences, [], learnPreferences);
 
   // Coach turns can produce learning evidence, so they require a stable
   // interaction ID: the persisted user message's own ID. Exact retries reuse
@@ -141,6 +145,7 @@ export async function POST(request: Request) {
       .insert({ conversation_id: conversationId, role: "user", content: question });
   }
   const route = mode === "coach" ? teaching.route : undefined;
+  let learnOutcome: LearnOutcome | null = null;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -152,7 +157,12 @@ export async function POST(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode: mode === "coach" ? "coach" : "ask", surface: mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds })) {
+          if (event.type === "outcome") {
+            learnOutcome = event.outcome;
+            send({ type: "outcome", outcome: event.outcome });
+            continue;
+          }
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
@@ -176,10 +186,15 @@ export async function POST(request: Request) {
           });
         }
       } catch (error) {
-        send({
-          type: "error",
-          error: error instanceof Error ? error.message : "Studigo could not finish that answer."
-        });
+        if (mode === "learn") {
+          learnOutcome = classifyLearnOutcome({ error: "generation_error" });
+          send({ type: "outcome", outcome: learnOutcome });
+        } else {
+          send({
+            type: "error",
+            error: error instanceof Error ? error.message : "Studigo could not finish that answer."
+          });
+        }
       } finally {
         writeStudyTrace({
           route: "api/chat",
@@ -187,7 +202,11 @@ export async function POST(request: Request) {
           chunkIds: [],
           cutoff: MIN_SIMILARITY,
           tokenEstimate: 0,
-          latencyMs: Date.now() - started
+          latencyMs: Date.now() - started,
+          reasonCode: learnOutcome?.reasonCode,
+          readyCount: learnOutcome?.counts.ready,
+          processingCount: learnOutcome?.counts.processing,
+          failedCount: learnOutcome?.counts.failed
         });
         controller.close();
       }

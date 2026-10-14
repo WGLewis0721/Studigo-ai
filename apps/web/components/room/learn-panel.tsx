@@ -5,6 +5,7 @@ import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
+import { isLearnSuccess, learnOutcomeMessage, type LearnOutcome } from "@/lib/learn-outcome";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -32,6 +33,7 @@ export function LearnPanel({
 }) {
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[] }>>({});
+  const [outcomes, setOutcomes] = useState<Record<string, LearnOutcome>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export function LearnPanel({
 
     setLoadingId(topic.id);
     setError(null);
+    setOutcomes((current) => { const next = { ...current }; delete next[topic.id]; return next; });
     try {
       const response = await fetch("/api/learn", {
         method: "POST",
@@ -58,7 +61,13 @@ export function LearnPanel({
         body: JSON.stringify({ roomId, topicId: topic.id })
       });
       const payload = await response.json();
+      if (payload.outcome && !isLearnSuccess(payload.outcome as LearnOutcome)) {
+        setOutcomes((current) => ({ ...current, [topic.id]: payload.outcome as LearnOutcome }));
+        return;
+      }
       if (!response.ok) throw new Error(payload.error || "Could not build that lesson.");
+      if (typeof payload.explanation !== "string") throw new Error("Could not build that lesson.");
+      if (payload.outcome) setOutcomes((current) => ({ ...current, [topic.id]: payload.outcome as LearnOutcome }));
       setLessons((current) => ({
         ...current,
         [topic.id]: { text: payload.explanation, citations: payload.citations ?? [] }
@@ -388,6 +397,15 @@ export function LearnPanel({
                   )}
 
                   {loadingId === topic.id && <p className="hintText">Reading your materials…</p>}
+
+                  {outcomes[topic.id] && !isLearnSuccess(outcomes[topic.id]) && (
+                    <div className="formError" role="status">
+                      <p>{learnOutcomeMessage(outcomes[topic.id].reasonCode)}</p>
+                      {["no_relevant_evidence", "invalid_topic_scope"].includes(outcomes[topic.id].reasonCode) && (
+                        <button type="button" className="ghostButton" onClick={() => setOpenTopicId(null)}>See topics</button>
+                      )}
+                    </div>
+                  )}
 
                   {lesson && (
                     <>
