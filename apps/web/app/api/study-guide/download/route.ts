@@ -1,7 +1,10 @@
 import { requireApiUser } from "@/lib/auth";
+import { loadReadingGuideEdition } from "@/lib/guide-reading";
 import { assertRoomAccess } from "@/lib/retrieval";
+import { currentBlockKeySet, filterGuideEditionExport, revisionStamp } from "@/lib/source-freshness";
 import { buildEditionDocx, DOCX_MIME, guideFileFormat } from "@/lib/study-guide-docx";
 import { buildEditionPdf, guideDownloadDecision } from "@/lib/study-guide-pdf";
+import type { StudyGuideContent } from "@studigo/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -30,10 +33,28 @@ export async function GET(request: Request) {
   const roomResult = room
     ? await supabase.from("study_rooms").select("title, subject, course_name, test_date").eq("id", roomId).maybeSingle()
     : { data: null, error: null };
-  const editionResult = room
-    ? await supabase.from("guide_editions").select("content").eq("room_id", roomId).order("created_at", { ascending: false }).limit(1).maybeSingle()
-    : { data: null, error: null };
-  const decision = guideDownloadDecision({ room, edition: editionResult.data?.content ?? null });
+  const loaded = room ? await loadReadingGuideEdition(supabase, roomId) : { content: null, updateAvailable: false };
+  if ("error" in loaded) return Response.json({ error: "Could not load this Study Room.", code: "no_valid_edition" }, { status: 409 });
+  let edition: unknown = loaded.content;
+  if (room && edition) {
+    const [{ data: blocks, error: blockError }, { data: documents, error: documentError }] = await Promise.all([
+      supabase.from("source_blocks").select("block_key, document_id, revision").eq("room_id", roomId),
+      supabase.from("documents").select("id, active_revision").eq("room_id", roomId)
+    ]);
+    if (blockError || documentError) {
+      return Response.json({ error: "Could not verify guide sources.", code: "source_unavailable" }, { status: 409 });
+    }
+    const currentKeys = currentBlockKeySet(
+      (documents ?? []).map((document) => ({ id: String(document.id), revision: revisionStamp(document.active_revision) })),
+      (blocks ?? []).map((block) => ({
+        documentId: String(block.document_id),
+        revision: revisionStamp(block.revision) ?? -1,
+        blockKey: String(block.block_key)
+      }))
+    );
+    edition = filterGuideEditionExport(edition as StudyGuideContent, currentKeys);
+  }
+  const decision = guideDownloadDecision({ room, edition });
   if (!decision.pdf) {
     const error = decision.code === "room_not_found"
       ? "Study Room not found"

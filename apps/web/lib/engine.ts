@@ -1,6 +1,7 @@
 import { INSUFFICIENT_EVIDENCE_TEXT, asUntrustedMaterial, streamGroundedAnswer, toCitations, type GroundedStreamEvent, type RetrievedChunk } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
+import { selectFreshChunks } from "@/lib/source-freshness";
 import { guideNavigationIntent, retrieveGuideNavigationChunks } from "@/lib/guide-navigation";
 import { classifyLearnOutcome, learnOutcomeMessage, type LearnDocumentStatus, type LearnOutcome } from "@/lib/learn-outcome";
 import { passagesForLesson, planContextualSearch } from "@/lib/contextual-retrieval";
@@ -171,7 +172,7 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
   // absent/processing files from a ready room whose retrieval found no match.
   const { data: documentRows, error: documentError } = await args.supabase
     .from("documents")
-    .select("id, status")
+    .select("id, status, active_revision")
     .eq("room_id", args.roomId);
   if (documentError) throw new LearnStageError("retrieval_error");
   const documentStatuses = (documentRows ?? []) as LearnDocumentStatus[];
@@ -223,6 +224,13 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
   } catch {
     throw new LearnStageError("retrieval_error", classifyLearnOutcome({ documentStatuses, failure: "retrieval_error" }));
   }
+  chunks = selectFreshChunks(
+    ((documentRows ?? []) as Array<{ id: string; active_revision?: number | null }>).map((row) => ({
+      id: row.id,
+      revision: typeof row.active_revision === "number" ? row.active_revision : null
+    })),
+    chunks
+  );
   if (search.topic) {
     const passages = passagesForLesson({
       topic: search.topic,

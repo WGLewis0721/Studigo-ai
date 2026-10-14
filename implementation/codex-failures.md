@@ -187,34 +187,21 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Result: FAIL typecheck. The paragraph helper only accepted Heading1.
 - Action: accept every heading level and rebuild.
 
-Resolution: After the relative import, one run executed both named behavior tests and both passed. Web typecheck then passed. No further behavior rerun. Disposition: DONE for the checked restore behavior. Not merged. No production migration.
-
-### C21 — 2026-10-14 — check 2 of maximum 3
-- Final/task commit: pending on codex/c21-mobile-lessons
-- Check name: iPad-width keyboard focus with companion expanded and minimized
-- Command or manual steps: `pnpm --filter @studigo/web exec node --import tsx --test --test-name-pattern='C21 iPad focus' lib/mobile-lessons.test.ts`
-- Environment: Node 22.23.3, worktree /tmp/studigo-c21, no physical iPad
-- Result: CSS/DOM PASS; physical iPad UNVERIFIED
-- Failure details: The CSS and DOM contract passed. Mode and topic are in the accessible names, and `.lessonActions` stays in document flow at 701–1100px while companion dock margins cover both window sizes. A physical iPad keyboard was not observed. This is not a device pass.
-- Suspected cause: no iPad is attached to this environment.
-- Impact: defining feature
-- Action: record and continue
-- Remaining check slots: 1
-- Unverified acceptance criteria: physical iPad keyboard focus with the companion expanded and minimized
-- Task disposition: DONE for the CSS/DOM contract; physical iPad UNVERIFIED
-- Follow-up: physical iPad smoke when a device is available
-
-### C21 — 2026-10-14 — iPhone Safari device smoke, not executed
-- Final/task commit: pending on codex/c21-mobile-lessons
-- Check name: physical iPhone Safari Clear, Next, and citation smoke
-- Command or manual steps: not run. The third executed check was `pnpm --filter @studigo/web typecheck` instead of a fake device run.
-- Environment: no physical iPhone
-- Result: UNVERIFIED
-- Failure details: No iPhone Safari session was invented. Typecheck passed as the third executed check. Phone behavior at 320 and 390 CSS pixels was asserted by the compact lesson fixture, not by a device.
-- Suspected cause: no iPhone is attached to this environment.
-- Impact: defining feature
-- Action: record and continue
-- Remaining check slots: 0
-- Unverified acceptance criteria: physical iPhone Safari Clear, Next, and citation smoke
-- Task disposition: DONE for the executed contract; physical iPhone Safari UNVERIFIED
 - Follow-up: physical iPhone Safari smoke when a device is available
+
+### C24 — 2026-10-14 — check 1 of maximum 3
+- Final/task commit: pending
+- Check name: C24 source-freshness scenarios (replacement, delete/export, failed refresh)
+- Command or manual steps: `node --experimental-strip-types --test --test-name-pattern='C24' apps/web/lib/source-freshness.test.ts`
+- Environment: Node 22.23.3, pure functions, no database
+- Result: FAIL
+- Failure details: The file failed to load before any assertion. Node's native type stripper cannot resolve the extensionless import `./source-freshness`. No replacement, export, mastery, or refresh result was asserted.
+- Suspected cause: confirmed runner mismatch. Repository tests load TypeScript through tsx, which resolves extensionless imports. The scenarios themselves were not reached.
+- Impact: defining feature unverified; no privacy, integrity, security, or financial path ran
+- Action: rerun the same three scenarios once with tsx. Do not change the freshness decisions for this load failure.
+- Remaining check slots: 2
+- Unverified acceptance criteria: old B excluded from new lesson/Coach/guide selections; deleted cached text denied and a stale challenge awards no mastery; failed refresh keeps the previous edition and index
+- Task disposition: NOT DONE until those scenarios pass
+- Follow-up: one tsx run of `apps/web/lib/source-freshness.test.ts`
+
+Resolution: the same three scenarios passed under tsx on Node 22.23.3. Old B was absent from new lesson, Coach, and guide selections while A and C remained; deleting B denied export of its cached text and a stale pending challenge awarded no mastery; a failed refresh kept the previous edition and index. Receipts, mastery, and historical messages were unchanged. No further manual check was run.

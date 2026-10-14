@@ -65,6 +65,8 @@ export type IssuedChallenge = {
   generatorVersion?:string;
   evaluatorVersion?:string;
   sourceRevisions?:Array<{id:string;sha256:string}>;
+  /** Corpus revision when this challenge was issued. Absent on older rows. */
+  corpusRevision?: number;
   spec: Record<string, unknown>;
   encounterId: string;
   scaffoldUsed: number | null;
@@ -148,7 +150,8 @@ function parseIssuedChallenge(raw: unknown): IssuedChallenge | undefined {
     ...(value.schemaVersion===1?{schemaVersion:1 as const}:{}),
     ...(typeof value.generatorVersion==='string'?{generatorVersion:value.generatorVersion}:{}),
     ...(typeof value.evaluatorVersion==='string'?{evaluatorVersion:value.evaluatorVersion}:{}),
-    ...(Array.isArray(value.sourceRevisions)&&value.sourceRevisions.every(s=>s&&typeof s==='object'&&typeof s.id==='string'&&typeof s.sha256==='string'&&/^[a-f0-9]{64}$/.test(s.sha256))?{sourceRevisions:value.sourceRevisions as Array<{id:string;sha256:string}>}:{})
+    ...(Array.isArray(value.sourceRevisions)&&value.sourceRevisions.every(s=>s&&typeof s==='object'&&typeof s.id==='string'&&typeof s.sha256==='string'&&/^[a-f0-9]{64}$/.test(s.sha256))?{sourceRevisions:value.sourceRevisions as Array<{id:string;sha256:string}>}:{}),
+    ...(Number.isSafeInteger(value.corpusRevision)&&(value.corpusRevision as number)>=0?{corpusRevision:value.corpusRevision as number}:{})
   };
 }
 
