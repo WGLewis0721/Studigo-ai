@@ -67,7 +67,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | DONE |
 | C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | DONE |
 | C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | DONE |
-| C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
+| C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | DONE |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | NOT STARTED |
 | C15 | P1 | Grounded educational content edition | Definitions, explanations, examples, practice and answers | C10, C12 | NOT STARTED |
 | C16 | P1 | Automatic build/rebuild lifecycle | Guide readiness and update availability are clear | C14, C15 | NOT STARTED |
@@ -563,7 +563,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C10 | DONE | `84431a9` / [PR #120](https://github.com/WGLewis0721/Studigo-ai/pull/120) | 3/3: guide plus notes plus slides compose and a notes replacement keeps the other sources; edits, removals, conflicts, and a second guide keep history. | On the integration line. Not on main. |
 | C11 | DONE | `866948b` / [PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Bounded queue merged to integration. Signed upload and admission ids kept. Queue keys are a counter, not a random operation id. | Merged to integration. #121 is a duplicate attempt and is not the integration result. |
 | C12 | DONE | `e368ea8` / [PR #122](https://github.com/WGLewis0721/Studigo-ai/pull/122) | 3/3: term and table blocks keep page 2 and link to the chunk; another learner cannot read them. | On the integration line. Not on main. |
-| C13 | NOT STARTED | — | — | — |
+| C13 | DONE | durable jobs on this branch | 3/3: a repeated process reuses one queued job and reload still says queued; another learner cannot read or enqueue it; web typecheck failed once on a dropped queue import, then PASS. Durable mode stays off unless STUDIGO_DURABLE_INGEST=1. | Not merged. No production flag change. |
 | C14 | NOT STARTED | — | — | — |
 | C15 | NOT STARTED | — | — | — |
 | C16 | NOT STARTED | — | — | — |

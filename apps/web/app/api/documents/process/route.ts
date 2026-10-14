@@ -1,6 +1,8 @@
 import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
+import { durableIngestEnabled } from "@/lib/ingest-jobs";
 import { processDocument } from "@/lib/ingest";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
 /** Extraction, OCR, and embedding of a long chapter need real time. */
@@ -26,8 +28,22 @@ async function guardedPost(request: Request) {
   if (!document) {
     return Response.json({ error: "Document not found" }, { status: 404 });
   }
-  if (document.status === "ready") {
+  if (document.status === "ready" && !durableIngestEnabled()) {
     return Response.json({ documentId, status: "ready", alreadyProcessed: true });
+  }
+
+  if (durableIngestEnabled()) {
+    const operation = request.headers.get("x-studigo-operation-id")?.trim() || `process:${documentId}`;
+    const service = createServiceSupabaseClient();
+    const queued = await service.rpc("enqueue_ingest_job", {
+      p_document: documentId,
+      p_owner: user.id,
+      p_operation: operation
+    });
+    if (queued.error || !queued.data) {
+      return Response.json({ error: "Could not record the processing job." }, { status: 500 });
+    }
+    return Response.json({ documentId, jobId: queued.data, status: "queued" }, { status: 202 });
   }
 
   const result = await processDocument({ documentId, userId: user.id });

@@ -5,6 +5,7 @@ import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType,
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import type { StudyDocument } from "@/lib/rooms";
+import { visibleIngestStage } from "@/lib/ingest-jobs";
 import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
@@ -30,6 +31,7 @@ type QueueItem = {
   stage: "waiting" | "uploading" | "queued" | "processing" | "done" | "error";
   message?: string;
   documentId?: string;
+  jobId?: string;
 };
 
 const STATUS_LABELS: Record<StudyDocument["status"], string> = {
@@ -149,10 +151,13 @@ export function MaterialsPanel({
         });
         gestures.current.finish(slot, response.status);
         const payload = await response.json().catch(() => ({}));
+        if (response.status === 202 && payload.jobId && payload.status === "queued") {
+          return payload as { jobId: string; status: "queued" };
+        }
         if (response.status === 202 || response.status === 409 || !response.ok) {
           throw new Error(payload.error || "Processing failed");
         }
-        return payload as { chunkCount?: number; topicsCreated?: number };
+        return payload as { chunkCount?: number; topicsCreated?: number; status?: string };
       } catch (error) {
         gestures.current.abort(slot);
         throw error;
@@ -172,9 +177,12 @@ export function MaterialsPanel({
             item.key === job.key ? { ...item, stage: "processing" } : item
           ));
           try {
-            await process(job.documentId);
+            const result = await process(job.documentId);
+            const queued = result && "jobId" in result && result.status === "queued";
             setQueue((current) => current.map((item) =>
-              item.key === job.key ? { ...item, stage: "done" } : item
+              item.key === job.key
+                ? { ...item, stage: queued ? "queued" : "done", documentId: job.documentId, jobId: queued ? result.jobId : item.jobId }
+                : item
             ));
           } catch (processError) {
             setQueue((current) => current.map((item) =>
@@ -207,6 +215,31 @@ export function MaterialsPanel({
     })();
   }, [onChanged, process, startTransition]);
   runProcessQueueRef.current = runProcessQueue;
+
+  useEffect(() => {
+    const pending = queue.filter((item) => item.jobId && item.stage === "queued");
+    if (!pending.length) return;
+    let stopped = false;
+    const timer = setInterval(() => {
+      for (const item of pending) {
+        void fetch(`/api/documents/jobs?jobId=${item.jobId}`).then(async (response) => {
+          if (!response.ok || stopped) return;
+          const body = await response.json().catch(() => null) as { stage?: string } | null;
+          if (!body?.stage) return;
+          const visible = visibleIngestStage(body.stage);
+          if (visible === "queued") return;
+          setQueue((current) => current.map((entry) =>
+            entry.jobId === item.jobId ? { ...entry, stage: visible === "done" ? "done" : visible === "error" ? "error" : "processing" } : entry
+          ));
+          startTransition(onChanged);
+        }).catch(() => undefined);
+      }
+    }, 3000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [onChanged, queue, startTransition]);
 
   useEffect(() => () => {
     if (clearDoneTimerRef.current) clearTimeout(clearDoneTimerRef.current);

@@ -146,3 +146,8 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: A/B/C composition, first attempts
 - Result: FAIL. A PL/pgSQL variable named topic_id collided with the membership column (`column reference "topic_id" is ambiguous`).
 - Action: renamed the variable and qualified the column. The composition check then passed.
+
+### C13 — 2026-10-14 — web typecheck import
+- Check: web typecheck, first attempt
+- Result: FAIL. Replacing an import dropped createBoundedUploadQueue.
+- Action: restored the queue import. The rerun passed. Job behavior checks were already green.
