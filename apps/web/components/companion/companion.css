@@ -92,6 +92,12 @@
 @keyframes cmpDrum { 0%, 60%, 100% { transform: none; } 70% { transform: translateY(-1.5px) rotate(-1deg); } 85% { transform: translateY(0) rotate(.6deg); } }
 .cmp[data-pose="support"] .cmpBody { animation: cmpNod 1.5s ease-in-out 2; }
 @keyframes cmpNod { 0%, 100% { transform: none; } 30% { transform: rotate(-3deg) translateY(1px); } 60% { transform: rotate(1.5deg); } }
+/* One existing nod for a ready or visited lesson. No loop and no particles. */
+.cmp.quietAck .cmpBody { animation: cmpNod .7s ease-in-out 1; }
+.lessonProgressRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lessonProgressRow .quietStatus { margin: 0; font-size: .8rem; font-weight: 700; color: var(--ink-2); }
+.lessonProgressRow[data-quiet="once"] .quietStatus { animation: quietSettle .45s ease-out 1; }
+@keyframes quietSettle { from { opacity: .35; } to { opacity: 1; } }
 .cmp.bob .cmpBody { animation: cmpBob .16s ease-out 1; }
 @keyframes cmpBob { 50% { transform: translateY(1.6px) rotate(-.6deg); } }
 .cmp.sway .cmpBody { animation: cmpSway 1.6s ease-in-out 1; }
@@ -330,5 +336,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cmp, .cmpWin, .cmpScale, .cmpTab, .cmpSill { transition: none; animation: none; }
-  .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble { animation: none !important; }
+  .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble, .cmp.quietAck .cmpBody, .lessonProgressRow .quietStatus { animation: none !important; }
 }

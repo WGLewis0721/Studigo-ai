@@ -77,7 +77,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C20 | P1 | Restore active threads on reload | Return to the correct lesson/Coach conversation | C03 | NOT STARTED |
 | C21 | P1 | Mobile lessons and accessible controls | Progress, Clear, Next and citations work on iPhone/iPad | C06, C08, C17, C20 | NOT STARTED |
 | C22 | P1 | Export save/share actions | Save or share actual PDF/Word files on mobile | C17, C18, C19 | DONE |
-| C23 | P2 | Quiet companion/progress feedback | Brief, optional feedback without interrupting learning | C21 | NOT STARTED |
+| C23 | P2 | Quiet companion/progress feedback | Brief, optional feedback without interrupting learning | C21 | DONE |
 | C24 | P0 | Cross-surface source revision invalidation | Replaced/deleted source facts stop being taught as current | C06, C10, C16, C18, C19, C20 | NOT STARTED |
 
 ### Parallel lanes and ownership
@@ -573,7 +573,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C20 | NOT STARTED | — | — | — |
 | C21 | NOT STARTED | — | — | — |
 | C22 | DONE | guide share on this branch | 3/3: a supported share returns the PDF or DOCX File name and type and an unsupported browser downloads; cancellation is not an error and an in-flight duplicate is rejected. Print uses the edition text and includes the answer key only when revealed; the share payload has no blob or signed URL. Web typecheck PASS. No model call. | Not merged. |
-| C23 | NOT STARTED | — | — | — |
+| C23 | DONE | quiet feedback on this branch | 2/2: one lesson-open or guide-ready success acknowledges once, and the same key on rerender or reload does not; error and loading do not acknowledge. Reduced motion and a minimized companion stay static with no animation. Lesson text and actions are not gated on the confirmation. Web typecheck not run. | Not merged. |
 | C24 | NOT STARTED | — | — | — |
 
 **Dispatch rule:** choose the earliest NOT STARTED task whose dependencies are accepted in integration; give Codex only that card/contract plus prerequisite SHAs. Commit each completed assignment before any next assignment. A runner may select the next card in a new context only after the previous PR is reviewed and integrated; no agent silently chains unfinished tasks. If all eligible tasks are BLOCKED, report exact missing prerequisites once. Do not create investigative substitutes or bypass SEC.
