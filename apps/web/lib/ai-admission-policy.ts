@@ -4,7 +4,8 @@ import { isIP } from "node:net";
 export type AiOperation =
   | "chat" | "learn" | "learn-check" | "quiz-generate" | "quiz-grade"
   | "flashcards-generate" | "practice-test-generate" | "practice-test-grade"
-  | "document-process" | "document-reindex" | "topic-regenerate";
+  | "document-upload" | "document-process" | "document-reindex" | "topic-regenerate"
+  | "flashcards-local";
 
 const RESERVATIONS_MICRO_USD: Record<AiOperation, number> = {
   chat: 20_000,
@@ -15,6 +16,8 @@ const RESERVATIONS_MICRO_USD: Record<AiOperation, number> = {
   "flashcards-generate": 50_000,
   "practice-test-generate": 300_000,
   "practice-test-grade": 180_000,
+  "document-upload": 20_000,
+  "flashcards-local": 10_000,
   "document-process": 800_000,
   "document-reindex": 800_000,
   "topic-regenerate": 150_000
