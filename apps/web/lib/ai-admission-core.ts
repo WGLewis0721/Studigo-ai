@@ -33,8 +33,8 @@ const MESSAGES: Record<string, [number, string]> = {
   completed: [202, "This operation already completed. Reload its Study Room result instead of running it again."],
   duplicate: [429, "This operation is already being handled. Wait for the result before retrying."],
   running: [429, "This operation is already being handled. Wait for the result before retrying."],
-  user_budget: [429, "Today’s study-resource allowance is used up. Try again tomorrow."],
-  global_budget: [429, "Today’s shared study-resource allowance is used up. Try again tomorrow."],
+  user_budget: [429, "The daily study-resource allowance is used up. Try again tomorrow."],
+  global_budget: [429, "The shared daily study-resource allowance is used up. Try again tomorrow."],
   rate: [429, "Too many study requests in one minute. Please try again shortly."],
   concurrent: [429, "Studigo is already working on another study request. Wait for it to finish."],
   busy: [429, "Studigo is busy starting another request. Try again shortly."]
