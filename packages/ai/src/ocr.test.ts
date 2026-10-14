@@ -35,3 +35,34 @@ test("C07 OCR rejects incomplete provider transcription without retrying or expo
     else process.env.OPENAI_API_KEY = previousKey;
   }
 });
+
+
+test("admission rejects out-of-scope OCR before starting provider work", async () => {
+  const previousAdmission = process.env.STUDIGO_AI_ADMISSION;
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousFetch = globalThis.fetch;
+  let calls = 0;
+  process.env.OPENAI_API_KEY = "synthetic-offline-test-key";
+  process.env.STUDIGO_AI_ADMISSION = "1";
+  globalThis.fetch = async () => {
+    calls += 1;
+    throw new Error("Provider must never be reached without admission");
+  };
+  try {
+    await assert.rejects(
+      ocrPagePdf({ pdf: new Uint8Array([37, 80, 68, 70]), filename: "unadmitted.pdf" }),
+      (error: Error) => {
+        assert.equal(error.name, "ProviderWorkBudgetError");
+        assert.match(error.message, /outside an admission scope/);
+        return true;
+      }
+    );
+    assert.equal(calls, 0, "Fail-closed denial must not cause a billable request");
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousAdmission === undefined) delete process.env.STUDIGO_AI_ADMISSION;
+    else process.env.STUDIGO_AI_ADMISSION = previousAdmission;
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
