@@ -124,7 +124,7 @@ export async function guardAiRequest(
     }
   } catch {
     if (receiptClaimed && writer! && ownerId! && operationKey!) {
-      await writer.rpc("finish_studigo_ai_receipt", { p_owner_id: ownerId, p_operation: operation, p_request_key: operationKey, p_completed: false }).catch(() => undefined);
+      await Promise.resolve(writer.rpc("finish_studigo_ai_receipt", { p_owner_id: ownerId, p_operation: operation, p_request_key: operationKey, p_completed: false })).catch(() => undefined);
     }
     console.error("Studigo AI admission failed closed");
     return denial("unavailable");
@@ -159,9 +159,9 @@ export async function guardAiRequest(
       stopRenewal();
       await abortAndDrainProviderWork();
       await complete(writer, leaseId);
-      await writer.rpc("finish_studigo_ai_receipt", {
+      await Promise.resolve(writer.rpc("finish_studigo_ai_receipt", {
         p_owner_id: ownerId, p_operation: operation, p_request_key: operationKey, p_completed: false
-      }).catch(() => undefined);
+      })).catch(() => undefined);
       throw error;
     }
   });

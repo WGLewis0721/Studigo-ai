@@ -333,7 +333,7 @@ export function normalizeGeneratedQuestion(
 export function normalizeBlankAnswer(value: string) {
   return value
     .normalize("NFKD")
-    .replace(/[`-?]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\b(a|an|the)\b/g, " ")
