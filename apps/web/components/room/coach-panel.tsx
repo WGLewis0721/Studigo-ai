@@ -4,6 +4,7 @@ import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPrefe
 import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { activeTopicId, leavePendingChallenge, nextTopic } from "@/lib/topic-cursor";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
@@ -73,6 +74,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const defaultTopicIds = topics[0] ? [topics[0].id] : [];
   const [coachTopicIds, setCoachTopicIds] = useState<string[]>(defaultTopicIds);
   const [learnTopicIds, setLearnTopicIds] = useState<string[]>(defaultTopicIds);
+  const [cursors, setCursors] = useState<{ coach: number; learn: number }>({ coach: 0, learn: 0 });
+  const cursorRef = useRef(cursors);
   const [topicDraftIds, setTopicDraftIds] = useState<string[]>(defaultTopicIds);
   const [coachScopeStatus, setCoachScopeStatus] = useState<string | null>(null);
   const [learnScopeStatus, setLearnScopeStatus] = useState<string | null>(null);
@@ -134,8 +137,9 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
 
   const activeTopicIds = chatMode === "coach" ? coachTopicIds : learnTopicIds;
   const messages = messagesByMode[chatMode];
-  const selectedTopics = topics.filter((topic) => activeTopicIds.includes(topic.id));
-  const selectedTopic: SkillTopic = selectedTopics[0] ?? topics[0] ?? GENERAL_TOPIC;
+  const cursorTopicId = activeTopicId(activeTopicIds, cursors[chatMode]);
+  const selectedTopics = topics.filter((topic) => topic.id === cursorTopicId);
+  const selectedTopic: SkillTopic = topics.find((topic) => topic.id === cursorTopicId) ?? topics[0] ?? GENERAL_TOPIC;
   const activeScopeStatus = chatMode === "coach" ? coachScopeStatus : learnScopeStatus;
 
   useEffect(() => {
@@ -252,7 +256,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     const priorHistory = messagesByMode[messageMode]
       .filter((message) => !message.streaming && message.kind !== "guide")
       .map((message) => ({ role: message.role, content: message.content }));
-    const scopedTopicIds = topicIdsOverride ?? (replying === "coach" ? coachTopicIds : learnTopicIds);
+    const scopedTopicIds = topicIdsOverride ?? (activeTopicId(replying === "coach" ? coachTopicIds : learnTopicIds, cursorRef.current[messageMode]) ? [activeTopicId(replying === "coach" ? coachTopicIds : learnTopicIds, cursorRef.current[messageMode]) as string] : []);
     const scopedTopics = topics.filter((topic) => scopedTopicIds.includes(topic.id));
     setMessagesByMode((current) => ({
       ...current,
@@ -376,10 +380,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     }));
   }
 
-  async function startFresh() {
-    if (pendingRef.current[chatMode]) return;
-    const label = chatMode === "coach" ? "Coach" : "Learn";
-    if (!window.confirm(`Earlier ${label} chats stay stored. Mastery is kept. This only starts a new ${label} chat.`)) return;
+  async function archiveCurrent() {
     const currentId = chatMode === "coach" ? conversationId.current : askConversationId.current;
     if (currentId && roomId !== "fixture") {
       const response = await fetch("/api/chat/clear", {
@@ -387,16 +388,45 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ roomId, conversationId: currentId, surface: chatMode })
       });
-      if (!response.ok) {
-        setErrors((current) => ({ ...current, [chatMode]: "Could not start a fresh chat." }));
-        return;
-      }
+      if (!response.ok) return false;
     }
     if (chatMode === "coach") conversationId.current = null;
     else askConversationId.current = null;
     setMessagesByMode((current) => ({ ...current, [chatMode]: [] }));
     setPrompts((current) => ({ ...current, [chatMode]: "" }));
     resetThreadIdentity(chatMode);
+    return true;
+  }
+
+  async function startFresh() {
+    if (pendingRef.current[chatMode]) return;
+    const label = chatMode === "coach" ? "Coach" : "Learn";
+    if (!window.confirm(`Earlier ${label} chats stay stored. Mastery is kept. This only starts a new ${label} chat.`)) return;
+    if (!await archiveCurrent()) setErrors((current) => ({ ...current, [chatMode]: "Could not start a fresh chat." }));
+  }
+
+  async function goToNextTopic() {
+    if (pendingRef.current[chatMode]) return;
+    const result = nextTopic({ orderedIds: activeTopicIds, index: cursors[chatMode], knownIds: topics.map((topic) => topic.id) });
+    const setStatus = chatMode === "coach" ? setCoachScopeStatus : setLearnScopeStatus;
+    if (result.status === "last") { setStatus("This is the last topic."); return; }
+    if (result.status === "choose_more") { setStatus("Choose more topics."); return; }
+    if (result.status === "removed") { setStatus("That topic was removed from this room."); return; }
+    const pendingChallenge = chatMode === "coach" && messages.at(-1)?.role === "assistant";
+    const left = leavePendingChallenge({
+      pending: Boolean(pendingChallenge),
+      confirmed: pendingChallenge ? window.confirm("Leave this challenge unanswered? It will not be graded.") : true,
+      mastery: 0
+    });
+    if (!left.advanced || left.graded) return;
+    const next = { ...cursorRef.current, [chatMode]: result.index };
+    cursorRef.current = next;
+    setCursors(next);
+    if (!await archiveCurrent()) return;
+    const topic = topics.find((item) => item.id === result.topicId);
+    if (!topic) return;
+    if (chatMode === "learn") void coach(`Explain ${topic.title} simply.`, "ask", [topic.id]);
+    else void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
   }
 
   function coachTopic(topic: Topic) {
@@ -614,6 +644,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
+        <button className="ghostButton" type="button" disabled={busy} onClick={() => void goToNextTopic()}>Next topic</button>
         <button className="ghostButton" type="button" disabled={busy} onClick={() => void startFresh()}>Start fresh</button>
         <StudigoComposer
           variant="chat"

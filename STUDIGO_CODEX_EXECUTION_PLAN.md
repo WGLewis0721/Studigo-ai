@@ -57,7 +57,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 |---|---|---|---|---|---|
 | C01 | P0 | Complete mode-owned chat state | Drafts, loading, errors, and scrolling stay with their chat | PR #102 head | NOT STARTED |
 | C02 | P0 | Safe Clear with server surface identity | Start fresh in one mode without losing progress | C01 | DONE |
-| C03 | P0 | Independent topic navigation | Visit every chosen topic in each mode | C02 | NOT STARTED |
+| C03 | P0 | Independent topic navigation | Visit every chosen topic in each mode | C02 | DONE |
 | C04 | P0 | Typed Learn outcomes and recovery | Honest errors instead of false missing-material replies | — | DONE |
 | C05 | P0 | Contextual Learn retrieval | Short follow-ups and known terms use the current topic | C04 | DONE |
 | C06 | P0 | Enumerated unit overview | Every selected topic has a supported section or explicit gap | C03, C05 | NOT STARTED |
@@ -553,7 +553,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 |---|---|---|---|---|
 | C01 | DONE | `455573f` implementation, `d72edcc` CI repair / [PR #104](https://github.com/WGLewis0721/Studigo-ai/pull/104); fixture chat-height scope follows | 2026-10-14 recheck, 3 executions: two-mode FAIL before assertions because unscoped flex collapsed `/dev/study` chat to 0px; after scoping that flex to the app shell, two-mode PASS and pending-Coach PASS. Web typecheck not re-run. Original Node 22 typecheck and CI remain the type evidence. | Behavior reconfirmed on integration; no production or database verification claimed. |
 | C02 | DONE | pglite receipt on this branch | Archiving a Coach chat leaves the receipt completed, the message stored, and mastery at 72. A second archive is a no-op. Wrong owner, room, surface, and legacy null surface are refused before a provider call. Web typecheck PASS. The old Docker receipt check is replaced by this disposable Postgres receipt. | Not merged. |
-| C03 | NOT STARTED | — | — | — |
+| C03 | DONE | cursor on this branch | Six selected topics are visited in order. Learn advancing leaves the Coach cursor at the first topic. The last topic does not wrap, one topic asks for more, and a removed topic is named. Leaving a pending challenge keeps mastery at 40 and writes no grade. Web typecheck PASS. | Not merged. |
 | C04 | DONE | `12ee8bc` implementation / [PR #115](https://github.com/WGLewis0721/Studigo-ai/pull/115) | Manual 3/3: eight-kind outcome/recovery table and stale-topic fail-closed PASS; cited JSON/SSE legacy-field compatibility PASS; web typecheck initially failed on a test-only narrowing error, corrected before commit. Automatic Node 22 CI run `38611411725` passed typecheck, tests and build on `12ee8bc`; postgres-multisession passed. RLS-scoped reads, no mastery/admission changes; no live provider claim. | Focused PR to current main `1b095aaf` awaits review; no merge or production enablement. |
 | C05 | DONE | `5d1afd7` / [PR #123](https://github.com/WGLewis0721/Studigo-ai/pull/123) | 3/3 on integration `277bf39`: known legislative-branch definition cites the laws passage; Help stays on the user question and a fabricated army claim returns `no_relevant_evidence`; web typecheck PASS. No provider call or cutoff change. | Targets integration. Not merged. #117 is the earlier stack and is not the integration PR. |
 | C06 | NOT STARTED | — | — | — |
