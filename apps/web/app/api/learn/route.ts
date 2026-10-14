@@ -1,8 +1,17 @@
 import { guardAiRequest } from "@/lib/ai-admission";
-import { explainTopic, toCitations, citationsUsedIn } from "@studigo/ai";
+import { explainTopic, toCitations, citationsUsedIn, type ExplainLevel, type RetrievedChunk } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
-import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
+import { retrieveForRoom, MIN_SIMILARITY } from "@/lib/retrieval";
 import { readExplainLevel } from "@/lib/explain-level";
+import {
+  buildLearnSuccess,
+  classifyLearnOutcome,
+  learnOutcomeMessage,
+  learnOutcomeStatus,
+  type LearnDocumentStatus,
+  type LearnOutcome
+} from "@/lib/learn-outcome";
+import { writeStudyTrace } from "@/lib/study-trace";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -12,48 +21,127 @@ async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
+  const started = Date.now();
+  let documentStatuses: LearnDocumentStatus[] = [];
+  let evidenceDocumentIds: string[] = [];
+  let evidenceChunkCount = 0;
+  let selectedTopicId: string | null = null;
+  let retrievedChunkIds: string[] = [];
+  const outcomeFor = (failure?: "invalid_topic_scope" | "retrieval_error" | "generation_error") =>
+    classifyLearnOutcome({ documentStatuses, evidenceDocumentIds, evidenceChunkCount, failure });
+  const trace = (outcome: LearnOutcome) => writeStudyTrace({
+    route: "api/learn",
+    ownerId: user.id,
+    chunkIds: retrievedChunkIds,
+    cutoff: MIN_SIMILARITY,
+    tokenEstimate: 0,
+    latencyMs: Date.now() - started,
+    outcome: outcome.kind,
+    readyDocumentCount: outcome.counts.readyMaterials,
+    processingDocumentCount: outcome.counts.processingMaterials,
+    evidenceChunkCount: outcome.counts.relevantChunks,
+    coverageTopicIds: selectedTopicId && outcome.coverageIds.length ? [selectedTopicId] : []
+  });
+  const fail = (outcome: LearnOutcome) => {
+    trace(outcome);
+    return Response.json({
+      ...(selectedTopicId ? { topicId: selectedTopicId } : {}),
+      error: learnOutcomeMessage(outcome.kind),
+      outcome
+    }, { status: learnOutcomeStatus(outcome.kind) });
+  };
+
   const body = (await request.json().catch(() => null)) as
     | { roomId?: string; topicId?: string }
     | null;
-  const roomId = body?.roomId?.trim();
-  const topicId = body?.topicId?.trim();
+  const roomId = typeof body?.roomId === "string" ? body.roomId.trim() : "";
+  const topicId = typeof body?.topicId === "string" ? body.topicId.trim() : "";
 
   if (!roomId || !topicId) {
-    return Response.json({ error: "roomId and topicId are required" }, { status: 400 });
+    const outcome = outcomeFor("invalid_topic_scope");
+    trace(outcome);
+    return Response.json({ error: "roomId and topicId are required", outcome }, { status: 400 });
   }
 
-  const room = await assertRoomAccess(supabase, roomId);
+  const { data: room, error: roomError } = await supabase
+    .from("study_rooms")
+    .select("id")
+    .eq("id", roomId)
+    .maybeSingle();
+  if (roomError) return fail(outcomeFor("retrieval_error"));
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
 
-  const level = await readExplainLevel(supabase, roomId);
-
-  const { data: topic } = await supabase
+  const { data: topic, error: topicError } = await supabase
     .from("topics")
     .select("id, title, objective, key_terms").eq("active", true)
     .eq("id", topicId)
     .eq("room_id", roomId)
     .maybeSingle();
 
-  if (!topic) return Response.json({ error: "Topic not found" }, { status: 404 });
+  if (topicError) return fail(outcomeFor("retrieval_error"));
+  if (!topic) return fail(outcomeFor("invalid_topic_scope"));
+  selectedTopicId = topicId;
+
+  const { data: documents, error: documentsError } = await supabase
+    .from("documents")
+    .select("id, status")
+    .eq("room_id", roomId);
+  if (documentsError) return fail(outcomeFor("retrieval_error"));
+  documentStatuses = (documents ?? []) as LearnDocumentStatus[];
+
+  const materials = outcomeFor();
+  if (materials.kind === "materials_processing" || materials.kind === "no_ready_materials") {
+    return fail(materials);
+  }
 
   const query = [topic.title, topic.objective, (topic.key_terms as string[] | null)?.join(", ")]
     .filter(Boolean)
     .join(". ");
 
-  const chunks = await retrieveForRoom({ supabase, roomId, query, matchCount: 10 });
-  const explanation = await explainTopic({
-    topicTitle: topic.title as string,
-    objective: (topic.objective as string | null) ?? null,
-    chunks,
-    level
-  });
+  let chunks: RetrievedChunk[];
+  let level: ExplainLevel;
+  try {
+    level = await readExplainLevel(supabase, roomId);
+    chunks = await retrieveForRoom({
+      supabase, roomId, query, matchCount: 10, ownerId: user.id, traceRoute: "api/learn/retrieval"
+    });
+  } catch {
+    return fail(outcomeFor("retrieval_error"));
+  }
+  retrievedChunkIds = chunks.map((chunk) => chunk.id);
+  evidenceDocumentIds = chunks.map((chunk) => chunk.documentId);
+  evidenceChunkCount = chunks.length;
+  const evidence = outcomeFor();
+  if (evidence.kind === "no_relevant_evidence") return fail(evidence);
 
-  return Response.json({
+  let explanation;
+  try {
+    explanation = await explainTopic({
+      topicTitle: topic.title as string,
+      objective: (topic.objective as string | null) ?? null,
+      chunks,
+      level
+    });
+  } catch {
+    return fail(outcomeFor("generation_error"));
+  }
+
+  const citations = citationsUsedIn(explanation, toCitations(chunks));
+  if (!explanation.trim() || !citations.length) return fail(outcomeFor("generation_error"));
+
+  // Only the two success kinds can carry a cited lesson.
+  if (evidence.kind !== "ready" && evidence.kind !== "partial_coverage") {
+    return fail(outcomeFor("generation_error"));
+  }
+  trace(evidence);
+
+  return Response.json(buildLearnSuccess({
     topicId,
     level,
     explanation,
-    citations: citationsUsedIn(explanation, toCitations(chunks))
-  });
+    citations,
+    outcome: evidence as LearnOutcome & { kind: "ready" | "partial_coverage" }
+  }));
 }
 
 export async function POST(request: Request) {
