@@ -186,3 +186,21 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: web build
 - Result: FAIL typecheck. The paragraph helper only accepted Heading1.
 - Action: accept every heading level and rebuild.
+
+### C24 — 2026-10-14 — check 1 of maximum 3
+- Final/task commit: pending
+- Check name: C24 source-freshness scenarios (replacement, delete/export, failed refresh)
+- Command or manual steps: `node --experimental-strip-types --test --test-name-pattern='C24' apps/web/lib/source-freshness.test.ts`
+- Environment: Node 22.23.3, pure functions, no database
+- Result: FAIL
+- Failure details: The file failed to load before any assertion. Node's native type stripper cannot resolve the extensionless import `./source-freshness`. No replacement, export, mastery, or refresh result was asserted.
+- Suspected cause: confirmed runner mismatch. Repository tests load TypeScript through tsx, which resolves extensionless imports. The scenarios themselves were not reached.
+- Impact: defining feature unverified; no privacy, integrity, security, or financial path ran
+- Action: rerun the same three scenarios once with tsx. Do not change the freshness decisions for this load failure.
+- Remaining check slots: 2
+- Unverified acceptance criteria: old B excluded from new lesson/Coach/guide selections; deleted cached text denied and a stale challenge awards no mastery; failed refresh keeps the previous edition and index
+- Task disposition: NOT DONE until those scenarios pass
+- Follow-up: one tsx run of `apps/web/lib/source-freshness.test.ts`
+
+Resolution: the same three scenarios passed under tsx on Node 22.23.3. Old B was absent from new lesson, Coach, and guide selections while A and C remained; deleting B denied export of its cached text and a stale pending challenge awarded no mastery; a failed refresh kept the previous edition and index. Receipts, mastery, and historical messages were unchanged. No further manual check was run.
+

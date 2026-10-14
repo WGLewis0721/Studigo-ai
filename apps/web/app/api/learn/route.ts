@@ -2,6 +2,7 @@ import { guardAiRequest } from "@/lib/ai-admission";
 import { explainTopic, toCitations, citationsUsedIn, type ExplainLevel, type RetrievedChunk } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { retrieveForRoom, MIN_SIMILARITY } from "@/lib/retrieval";
+import { selectFreshChunks } from "@/lib/source-freshness";
 import { passagesForLesson, planContextualSearch } from "@/lib/contextual-retrieval";
 import { readExplainLevel } from "@/lib/explain-level";
 import {
@@ -90,7 +91,7 @@ async function guardedPost(request: Request) {
 
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
-    .select("id, status, page_coverage")
+    .select("id, status, page_coverage, active_revision")
     .eq("room_id", roomId);
   if (documentsError) return fail(outcomeFor("retrieval_error"));
   documentStatuses = (documents ?? []) as LearnDocumentStatus[];
@@ -125,6 +126,13 @@ async function guardedPost(request: Request) {
   } catch {
     return fail(outcomeFor("retrieval_error"));
   }
+  chunks = selectFreshChunks(
+    ((documents ?? []) as Array<{ id: string; active_revision?: number | null }>).map((document) => ({
+      id: document.id,
+      revision: typeof document.active_revision === "number" ? document.active_revision : null
+    })),
+    chunks
+  );
   if (search.kind === "search" && search.topic) {
     chunks = [...new Map(passagesForLesson({
       topic: search.topic,

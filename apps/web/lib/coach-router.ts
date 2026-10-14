@@ -28,6 +28,7 @@ import {
 } from "@studigo/ai";
 import { findNamedTopic } from "@/lib/recommendation-engine";
 import { fetchChunksByIds, retrieveForRoom } from "@/lib/retrieval";
+import { awardForPendingChallenge, type Corpus } from "@/lib/source-freshness";
 import type { Topic } from "@/lib/rooms";
 import { randomUUID, createHash } from "node:crypto";
 import { learningControlPlaneDirector, type CoachDirector } from "@/lib/coach-director";
@@ -188,6 +189,24 @@ function withSupport<T extends CoachState>(state: T, level: number): T {
   if (state.kind === "idle" || !state.issuedChallenge) return state;
   const used = state.issuedChallenge.scaffoldUsed;
   return { ...state, issuedChallenge: { ...state.issuedChallenge, scaffoldUsed: used === null ? null : Math.max(used, level) } };
+}
+
+async function readCorpusRevision(supabase: SupabaseClient, roomId: string): Promise<number | null> {
+  try {
+    const table = supabase.from("study_rooms") as {
+      select?: (columns: string) => {
+        eq: (column: string, value: string) => {
+          maybeSingle: () => Promise<{ data: { corpus_revision?: unknown } | null; error: { message: string } | null }>;
+        };
+      };
+    };
+    if (!table || typeof table.select !== "function") return null;
+    const { data, error } = await table.select("corpus_revision").eq("id", roomId).maybeSingle();
+    if (error || !data || typeof data.corpus_revision !== "number" || !Number.isSafeInteger(data.corpus_revision)) return null;
+    return data.corpus_revision;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -461,6 +480,71 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
     // material isn't fair to the learner, since the question may reference
     // a concept that lived in exactly the chunk that's now missing.
     const chunks = await deps.fetchChunksByIds(supabase, roomId, state.sourceChunkIds);
+    const evidenceRevision = state.issuedChallenge?.corpusRevision;
+    if (typeof evidenceRevision === "number") {
+      const corpusRevision = await readCorpusRevision(supabase, roomId);
+      if (corpusRevision !== null && corpusRevision !== evidenceRevision) {
+        let fresh: RetrievedChunk[] = [];
+        try {
+          fresh = await deps.retrieveForRoom({ supabase, roomId, query: state.question, matchCount: 4 });
+        } catch {
+          fresh = [];
+        }
+        const corpus: Corpus = {
+          revision: corpusRevision,
+          sources: fresh.map((chunk) => ({ id: chunk.documentId, revision: corpusRevision, present: true }))
+        };
+        const decision = awardForPendingChallenge({
+          corpus,
+          challenge: {
+            evidenceRevision,
+            sourceId: chunks[0]?.documentId ?? "stale-source",
+            sourceRevision: evidenceRevision,
+            factText: state.question
+          },
+          currentFacts: fresh.map((chunk) => ({
+            id: chunk.id,
+            sourceId: chunk.documentId,
+            sourceRevision: corpusRevision,
+            text: chunk.content
+          })),
+          evidence: { receipts: [], mastery: 0, messages: [] }
+        });
+        const offer = decision.awardMastery ? null : decision.offer;
+        const text = offer
+          ? `That question used an outdated source, so it was not graded. Try this instead: ${offer.text}`
+          : "That question used an outdated source, so it was not graded.";
+        if (offer && state.issuedChallenge) {
+          await commit({
+            version: 1,
+            kind: "awaiting_answer",
+            question: offer.text,
+            topicId: state.topicId,
+            expectedConcepts: [{ id: offer.id, description: offer.text.slice(0, 280), weight: 1, critical: true }],
+            sourceChunkIds: [offer.id],
+            askedAt: new Date().toISOString(),
+            issuedChallenge: {
+              spec: state.issuedChallenge.spec,
+              encounterId: `${state.issuedChallenge.encounterId}:current`,
+              scaffoldUsed: null,
+              contextId: null,
+              corpusRevision
+            }
+          });
+        } else {
+          await commit(IDLE_COACH_STATE);
+        }
+        yield { type: "delta", text };
+        yield { type: "done", answer: { text, citations: [], grounded: false } };
+        return {
+          stateBefore: state.kind,
+          turnIntent: intent,
+          semanticScore: null,
+          outcome: "control",
+          stateAfter: offer ? "awaiting_answer" : "idle"
+        };
+      }
+    }
     const sourceChanged=state.issuedChallenge?.sourceRevisions?.some(source=>{
       const chunk=chunks.find(c=>c.id===source.id);
       return !chunk||createHash('sha256').update(JSON.stringify([chunk.documentId,chunk.content,chunk.pageNumber??null])).digest('hex')!==source.sha256;
@@ -854,6 +938,7 @@ async function* openCoachQuestion(args: {
       })
   });
   const questionText = floor.question;
+  const corpusRevision = await readCorpusRevision(args.supabase, args.roomId);
   if(args.issued&&spec?.constraints.requireNewContext) {
     // Content identity, rather than a fresh random label, prevents replaying a
     // repeated question as evidence of transfer to a new context.
@@ -873,7 +958,8 @@ async function* openCoachQuestion(args: {
     sourceChunkIds: coachQuestion.sourceChunkIds,
     askedAt: new Date().toISOString(),
     ...(args.issued ? { issuedChallenge: {...args.issued,schemaVersion:1,generatorVersion:'grounded-coach-1',evaluatorVersion:'semantic-concepts-1',
-      sourceRevisions:chunks.filter(c=>coachQuestion.sourceChunkIds.includes(c.id)).map(c=>({id:c.id,sha256:createHash('sha256').update(JSON.stringify([c.documentId,c.content,c.pageNumber??null])).digest('hex')}))} } : {})
+      sourceRevisions:chunks.filter(c=>coachQuestion.sourceChunkIds.includes(c.id)).map(c=>({id:c.id,sha256:createHash('sha256').update(JSON.stringify([c.documentId,c.content,c.pageNumber??null])).digest('hex')})),
+      ...(corpusRevision === null ? {} : { corpusRevision }) } } : {})
   };
   await args.commit(nextState);
 
