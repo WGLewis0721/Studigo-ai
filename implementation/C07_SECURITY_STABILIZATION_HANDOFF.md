@@ -45,3 +45,12 @@
 **No live OCR, migrations, secret mutations, hard-cap setup, paid provider test, or production enablement was performed by the integration author.** Source PRs and production main were not merged or modified. PR #111 remains draft pending independent review and staging acceptance.
 
 If later changes land in #98/#99/#107/#110, compare their exact SHAs against the pinned sources above before adopting them; do not silently replace the reconciled `ocr.ts`, `ingest.ts` or `ai-admission.ts`.
+
+
+## 2026-10-14: Learn rate-limit test correction
+
+Owner successfully completed three chat requests in the same 15:17 UTC minute, then the fourth and fifth were denied with `rate`. The original preview-only admission limits of 3 user/min, 3 IP/min, 4 global/min were too restrictive for normal Coach/Learn UI use. All three provider executions and lease closures succeeded; no stuck lease or OCR failure was involved.
+
+Updated **only** branch-scoped Vercel preview variables for `stabilize/c07-ai-admission-20261014`: `STUDIGO_AI_USER_PER_MINUTE=15`, `STUDIGO_AI_IP_PER_MINUTE=15`, `STUDIGO_AI_GLOBAL_PER_MINUTE=20`. Kept concurrency at one per user/IP/global, day budgets at 1,500,000/1,800,000 micro-USD, admission enabled only in preview. No database rows were modified; production variables remain untouched. The preview requires a fresh build to pick up deployment-time environment changes. See latest deployment and tests on PR #111.
+
+The configured daily micro-USD reservations still estimate work, not real provider billed spend; provider-side caps and hosted cancellation validation remain separate security-release gates. Use the stable branch preview alias, not old immutable deployment URLs.
