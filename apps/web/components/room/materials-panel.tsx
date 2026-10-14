@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, coverageLimitation, type SourceType } from "@studigo/documents";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import type { StudyDocument } from "@/lib/rooms";
+import { createProcessGate, runMaterialIntake } from "@/lib/material-intake";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const ACCEPT =
@@ -83,7 +84,15 @@ export function MaterialsPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const gestures = useRef(createGestureBook());
   const uploadLock = useRef(false);
+  const mounted = useRef(true);
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processGate = useRef(createProcessGate());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
+
+  useEffect(() => () => {
+    mounted.current = false;
+    if (clearTimer.current) clearTimeout(clearTimer.current);
+  }, []);
 
   const refreshStudyGuide = useCallback(async () => {
     if (!latestStudyGuide || refreshingGuide) return;
@@ -127,6 +136,7 @@ export function MaterialsPanel({
 
   const process = useCallback(
     async (documentId: string) => {
+      return processGate.current(documentId, async () => {
       const body = JSON.stringify({ documentId });
       const slot = `process:${documentId}`;
       const attempt = gestures.current.begin(slot, body);
@@ -147,6 +157,7 @@ export function MaterialsPanel({
         gestures.current.abort(slot);
         throw error;
       }
+      });
     },
     []
   );
@@ -156,19 +167,30 @@ export function MaterialsPanel({
       if (!files.length || uploadLock.current) return;
       uploadLock.current = true;
       setError(null);
+      const chosenType = sourceType;
 
       try {
-      for (const file of files) {
-        const key = `${file.name}-${file.size}-${Date.now()}`;
-        setQueue((current) => [...current, { key, name: file.name, stage: "uploading" }]);
-
-        try {
-          // Only metadata crosses the Vercel function boundary. Vercel imposes a
-          // ~4.5 MB request limit even though Studigo accepts up to 50 MB.
+      await runMaterialIntake({
+        files: files.map((file) => ({
+          file,
+          key: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name: file.name
+        })),
+        sourceType: chosenType,
+        active: () => mounted.current,
+        onStage: (item, stage, message) => {
+          if (!mounted.current) return;
+          setQueue((current) => current.some((entry) => entry.key === item.key)
+            ? current.map((entry) => entry.key === item.key ? { ...entry, stage, message } : entry)
+            : [...current, { key: item.key, name: item.name, stage, message }]);
+          if (stage !== "uploading") startTransition(onChanged);
+        },
+        upload: async (item, type) => {
+          const file = item.file;
           const mimeType = assertUploadAllowed({
             name: file.name, size: file.size, type: resolveMimeType(file)
           });
-          const body = JSON.stringify({ roomId, sourceType, name: file.name, size: file.size, type: mimeType });
+          const body = JSON.stringify({ roomId, sourceType: type, name: file.name, size: file.size, type: mimeType });
           const slot = `prepare:${file.name}:${file.size}:${mimeType}`;
           const attempt = gestures.current.begin(slot, body);
           if (!attempt.started) throw new Error("That file is already being prepared.");
@@ -192,58 +214,34 @@ export function MaterialsPanel({
           if (!prepared?.upload?.path || !prepared?.upload?.token || !prepared?.document?.id) {
             throw new Error("Could not obtain a secure upload destination.");
           }
-
-          // The signed token authorizes this one private user-owned Storage path.
-          // Never send file bytes to a Vercel API route.
           const { error: storageError } = await createBrowserSupabaseClient().storage
             .from("study-materials")
             .uploadToSignedUrl(prepared.upload.path, prepared.upload.token, file, { contentType: mimeType });
           if (storageError) {
-            // Remove the pending metadata and schedule Storage cleanup if needed.
             await fetch(`/api/documents/${prepared.document.id}`, { method: "DELETE" }).catch(() => null);
             throw new Error(`Supabase Storage rejected the file: ${storageError.message || "Unknown storage error"}.`);
           }
-
           const finalize = await fetch("/api/documents/upload/complete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ documentId: prepared.document.id })
           });
           const payload = await readUploadReply(finalize, "Could not confirm the uploaded file");
-
-          setQueue((current) =>
-            current.map((item) => (item.key === key ? { ...item, stage: "processing" } : item))
-          );
-          // The list should show the new row while it is being read.
-          startTransition(onChanged);
-
-          await process(payload.document.id as string);
-
-          setQueue((current) =>
-            current.map((item) => (item.key === key ? { ...item, stage: "done" } : item))
-          );
-          startTransition(onChanged);
-        } catch (uploadError) {
-          const message =
-            uploadError instanceof Error ? uploadError.message : "Something went wrong";
-          setQueue((current) =>
-            current.map((item) =>
-              item.key === key ? { ...item, stage: "error", message } : item
-            )
-          );
-          startTransition(onChanged);
+          return { id: String(payload.document.id) };
+        },
+        processOne: async (documentId) => {
+          await process(documentId);
         }
-      }
-
-      // Clear finished rows once the learner has seen them land.
-      setTimeout(() => {
-        setQueue((current) => current.filter((item) => item.stage !== "done"));
+      });
+      if (clearTimer.current) clearTimeout(clearTimer.current);
+      clearTimer.current = setTimeout(() => {
+        if (mounted.current) setQueue((current) => current.filter((item) => item.stage !== "done"));
       }, 2500);
       } finally {
         uploadLock.current = false;
       }
     },
-    [onChanged, process, roomId, sourceType]
+    [onChanged, process, roomId, sourceType, startTransition]
   );
 
   const retry = async (documentId: string) => {

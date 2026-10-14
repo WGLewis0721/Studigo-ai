@@ -65,7 +65,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | DONE |
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | DONE |
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
-| C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | NOT STARTED |
+| C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | DONE |
 | C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | NOT STARTED |
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | NOT STARTED |
@@ -561,7 +561,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C08 | DONE | `2d09067` / [PR #118](https://github.com/WGLewis0721/Studigo-ai/pull/118) | 3/3: three-page fixture names page 2 and keeps pages 1 and 3 citable; match/session RPCs reject uncertain pages; documents and web typecheck PASS. No status backfill and no production migration. | Stacked on C04 PR #115; not merged. |
 | C09 | DONE | `fc5b919` / [PR #119](https://github.com/WGLewis0721/Studigo-ai/pull/119) | 3/3: stale token and a second claim cannot replace the active revision; a failed refresh still retrieves the old text and a later publish exposes only the new text; web typecheck PASS. No production migration. | Stacked on C08 PR #118; not merged. Draft #109 remains the older integration attempt. |
 | C10 | NOT STARTED | — | — | — |
-| C11 | NOT STARTED | — | — | — |
+| C11 | DONE | independent uploads on `codex/c11-independent-uploads` | 3/3: B and C upload while A is processing; A failing still processes B and C and a repeated Retry runs once; web typecheck PASS. | Branched from #119; not merged. |
 | C12 | NOT STARTED | — | — | — |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
