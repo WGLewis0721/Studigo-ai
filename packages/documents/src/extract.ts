@@ -64,7 +64,7 @@ export function pagesNeedingOcr(result: ExtractionResult, options: { includeQual
   return result.pages
     .filter((page) => {
       const issues = pdfPageQualityIssues(page);
-      return options.includeQuality === false ? issues.includes("missing_text") : issues.length > 0;
+      return options.includeQuality === true ? issues.length > 0 : issues.includes("missing_text");
     })
     .map((page) => page.pageNumber);
 }
