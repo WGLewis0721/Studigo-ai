@@ -4,6 +4,7 @@ import {
   ocrImage,
   ocrPagePdf,
   OcrCapabilityError,
+  OcrResponseError,
   type RetrievedChunk
 } from "@studigo/ai";
 import {
@@ -276,6 +277,9 @@ async function applyOcr(args: {
       ocrPageCount += 1;
     } catch (error) {
       if (error instanceof OcrCapabilityError) throw error;
+      if (error instanceof OcrResponseError) {
+        throw new Error(`OCR could not process Page ${pageNumber}: ${error.message} This file has not been marked ready.`);
+      }
       if (error instanceof Error && error.message === "OCR returned no readable text") {
         throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
       }
