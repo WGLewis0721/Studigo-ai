@@ -232,11 +232,51 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     };
   }, [modalOpen]);
 
+  async function teachSelected(text: string) {
+    const messageMode: ChatMode = "learn";
+    if (pendingRef.current.learn) return;
+    if (learnTopicIds.length <= 1) {
+      void coach(`Explain ${selectedTopic.title} simply.`, "ask", [selectedTopic.id]);
+      return;
+    }
+    setPrompts((current) => ({ ...current, learn: "" }));
+    pendingRef.current.learn = true;
+    setPending((current) => ({ ...current, learn: true }));
+    const userId = crypto.randomUUID();
+    const assistantId = crypto.randomUUID();
+    setMessagesByMode((current) => ({
+      ...current,
+      learn: [...current.learn, { id: userId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]
+    }));
+    try {
+      const response = await fetch("/api/learn", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ roomId, overview: true, topicIds: learnTopicIds })
+      });
+      const payload = await response.json().catch(() => null) as { error?: string; sections?: Array<{ title: string; text: string; citation: string | null; status: string }> } | null;
+      const content = payload?.sections?.length
+        ? payload.sections.map((section) => `## ${section.title}\n${section.text}${section.citation ? `\nSource: ${section.citation}` : ""}`).join("\n\n")
+        : payload?.error || "Could not open that unit.";
+      setMessagesByMode((current) => ({
+        ...current,
+        learn: current.learn.map((message) => message.id === assistantId ? { ...message, content, streaming: false, grounded: Boolean(payload?.sections?.length) } : message)
+      }));
+    } finally {
+      pendingRef.current.learn = false;
+      setPending((current) => ({ ...current, learn: false }));
+    }
+  }
+
   async function coach(input: string, modeOverride?: ReplyMode, topicIdsOverride?: string[]) {
     const replying: ReplyMode = modeOverride ?? (chatMode === "learn" ? "ask" : "coach");
     const messageMode: ChatMode = replying === "ask" ? "learn" : "coach";
     const text = input.trim();
     if (!text || pendingRef.current[messageMode] || (messageMode === "coach" ? coaching.applying : coaching.learnApplying)) return;
+    if (messageMode === "learn" && /\b(explain all topics|teach my selected topics)\b/i.test(text)) {
+      void teachSelected(text);
+      return;
+    }
     setPrompts((current) => ({ ...current, [messageMode]: "" }));
     setErrors((current) => ({ ...current, [messageMode]: null }));
     pendingRef.current[messageMode] = true;
@@ -641,7 +681,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         })}
         <div className="threadEnd" aria-hidden="true" />
         </div>
-        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
+        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}<button type="button" disabled={busy} onClick={() => void teachSelected("Teach my selected topics")}>Teach my selected topics</button></div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
         <button className="ghostButton" type="button" disabled={busy} onClick={() => void goToNextTopic()}>Next topic</button>

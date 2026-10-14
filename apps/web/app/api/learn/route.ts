@@ -13,6 +13,7 @@ import {
   type LearnOutcome
 } from "@/lib/learn-outcome";
 import { writeStudyTrace } from "@/lib/study-trace";
+import { composeUnitOverview, compactExcerpt } from "@/lib/unit-overview";
 import { coverageLimitation, type PageCoverageEntry } from "@studigo/documents";
 
 export const runtime = "nodejs";
@@ -167,6 +168,50 @@ async function guardedPost(request: Request) {
   })));
 }
 
+async function overviewPost(request: Request) {
+  const { supabase, user, unauthorized } = await requireApiUser();
+  if (!user) return unauthorized;
+  const body = await request.json().catch(() => null) as { roomId?: string; topicIds?: string[] } | null;
+  const roomId = body?.roomId?.trim() ?? "";
+  const requestedIds = [...new Set((body?.topicIds ?? []).filter((id): id is string => typeof id === "string" && id.trim().length > 0))];
+  if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
+  const room = await supabase.from("study_rooms").select("id").eq("id", roomId).maybeSingle();
+  if (room.error) return Response.json({ error: "Could not load the Study Room." }, { status: 503 });
+  if (!room.data) return Response.json({ error: "Study Room not found" }, { status: 404 });
+  const topics = await supabase.from("topics").select("id, title").eq("room_id", roomId).eq("active", true);
+  if (topics.error) return Response.json({ error: "Could not load topics." }, { status: 503 });
+  const roomTopics = (topics.data ?? []) as Array<{ id: string; title: string }>;
+  const gate = composeUnitOverview({
+    requestedIds,
+    roomTopics,
+    retrieve: () => ({ text: "pending", citation: "pending" })
+  });
+  if (!gate.ok) return Response.json({ error: gate.error, providerCalls: 0 }, { status: 400 });
+  const sections = [];
+  for (const id of requestedIds) {
+    const topic = roomTopics.find((item) => item.id === id)!;
+    let found: { text: string; citation: string } | null = null;
+    try {
+      const chunks = await retrieveForRoom({
+        supabase, roomId, query: topic.title, matchCount: 3, ownerId: user.id, traceRoute: "api/learn/overview"
+      });
+      const first = chunks[0];
+      found = first?.content ? { text: compactExcerpt(first.content), citation: `${first.documentName}, p. ${first.pageNumber ?? "source"}` } : null;
+    } catch {
+      found = null;
+    }
+    sections.push(found
+      ? { topicId: id, title: topic.title, status: "supported" as const, text: found.text, citation: found.citation }
+      : { topicId: id, title: topic.title, status: "gap" as const, text: `${topic.title} needs a source in this room.`, citation: null });
+  }
+  return Response.json({ overview: true, providerCalls: 0, sections });
+}
+
 export async function POST(request: Request) {
+  const peeked = await request.clone().json().catch(() => null) as { overview?: boolean; topicIds?: string[] } | null;
+  if (peeked?.overview === true && (peeked.topicIds?.length ?? 0) !== 1) return overviewPost(request);
   return guardAiRequest(request, "learn", guardedPost);
 }
+
+
+
