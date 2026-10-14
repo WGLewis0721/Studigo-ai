@@ -551,7 +551,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 
 | ID | State | Final commit / PR | Acceptance evidence / checks used | Integrated commit or blocker |
 |---|---|---|---|---|
-| C01 | NOT STARTED | — | — | — |
+| C01 | DONE | `455573f` / [PR #104](https://github.com/WGLewis0721/Studigo-ai/pull/104) | 3/3 checks PASS under Node 22: four switches preserved two drafts/transcripts and per-mode scroll; delayed Learn/Coach chunks, loading and error stayed in the original mode; pending Coach switch made no extra AI request or evidence write in the synthetic fixture; web typecheck passed. | Awaiting integration review; no production or database verification claimed. |
 | C02 | NOT STARTED | — | — | — |
 | C03 | NOT STARTED | — | — | — |
 | C04 | NOT STARTED | — | — | — |
