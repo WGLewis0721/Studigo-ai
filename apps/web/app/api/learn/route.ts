@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { explainTopic, toCitations, citationsUsedIn } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, retrieveForRoom } from "@/lib/retrieval";
@@ -7,7 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 /** Learn mode: teach one topic from this room's own materials, with citations. */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -53,4 +54,8 @@ export async function POST(request: Request) {
     explanation,
     citations: citationsUsedIn(explanation, toCitations(chunks))
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "learn", guardedPost);
 }

@@ -1,3 +1,5 @@
+import { guardAiRequest } from "@/lib/ai-admission";
+import { trackAiStreamProducer } from "@/lib/ai-stream-lease";
 import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences, readLearnPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";
@@ -31,7 +33,7 @@ type ChatRequest = {
  * Ask Studigo: retrieve inside this room only, answer from what came back, and
  * stream the answer followed by the citations the answer actually used.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
@@ -143,16 +145,27 @@ export async function POST(request: Request) {
   const route = mode === "coach" ? teaching.route : undefined;
 
   const encoder = new TextEncoder();
+  // Real request cancellation must not make the lease outlive its producer
+  // without tracking it; provider requests receive the same abort signal.
+  const abort = new AbortController();
+  let cancelled = request.signal.aborted;
+  if (cancelled) abort.abort();
+  const onAbort = () => { cancelled = true; abort.abort(); };
+  request.signal.addEventListener("abort", onAbort, { once: true });
+  let finished!: () => void;
+  const producerDone = new Promise<void>((resolve) => { finished = resolve; });
   const stream = new ReadableStream({
+    cancel() { cancelled = true; abort.abort(); },
+
     async start(controller) {
       const send = (event: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        if (!cancelled) controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
       };
 
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
@@ -189,16 +202,22 @@ export async function POST(request: Request) {
           tokenEstimate: 0,
           latencyMs: Date.now() - started
         });
-        controller.close();
+        request.signal.removeEventListener("abort", onAbort);
+        if (!cancelled) controller.close();
+        finished();
       }
     }
   });
 
-  return new Response(stream, {
+  return trackAiStreamProducer(new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive"
     }
-  });
+  }), producerDone);
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "chat", guardedPost);
 }

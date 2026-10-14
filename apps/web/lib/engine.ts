@@ -54,6 +54,8 @@ export type EngineRequest = {
   interaction?: CoachInteraction;
   /** Learner-selected active-topic scope. The server intersects it with this room's active topics. */
   selectedTopicIds?: string[];
+  /** Abort upstream model requests when a client disconnects. */
+  signal?: AbortSignal;
 };
 
 const EVIDENCE_WINDOW = 300;
@@ -157,7 +159,8 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
     instructions: instructions || undefined,
     format: "outline",
     chunks,
-    history: args.history
+    history: args.history,
+    signal: args.signal
   });
 }
 
@@ -295,7 +298,8 @@ async function* runPracticeFollowup(
     instructions,
     chunks,
     // The conversation is only needed to tell which question an unnamed reply is about.
-    history: decided ? undefined : args.history
+    history: decided ? undefined : args.history,
+    signal: args.signal
   });
 }
 
