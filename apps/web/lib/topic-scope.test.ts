@@ -34,13 +34,13 @@ test("multi-select preserves room order while restricting the director", () => {
 test("stale/cross-room topic IDs fail closed when none are active in this room", () => {
   assert.throws(
     () => scopeTopicsForRequest([A, B], ["10000000-0000-4000-8000-000000000099"]),
-    /selected topics are no longer available/i
+    /selected topics are no longer active/i
   );
 });
 
-test("a stale ID does not poison valid selected topics", () => {
-  assert.deepEqual(
-    scopeTopicsForRequest([A, B, C], [B.id, "10000000-0000-4000-8000-000000000099"]),
-    [B]
+test("a stale ID among valid selections fails closed instead of silently narrowing the scope", () => {
+  assert.throws(
+    () => scopeTopicsForRequest([A, B, C], [B.id, "10000000-0000-4000-8000-000000000099"]),
+    /selected topics are no longer active/i
   );
 });

@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { QUESTION_KINDS, generateQuizQuestions, type QuestionKind } from "@studigo/ai";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
@@ -13,7 +14,7 @@ const MAX_QUESTIONS = 10;
  * targets it; otherwise it aims at the topics the learner is weakest on, so
  * practice goes where it is needed.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -120,4 +121,8 @@ export async function POST(request: Request) {
     topic: topic ? { id: topic.id, title: topic.title } : null,
     questions: inserted
   });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "quiz-generate", guardedPost);
 }

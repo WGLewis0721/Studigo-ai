@@ -11,6 +11,11 @@ export type StudyTrace = {
   cutoff: number;
   tokenEstimate: number;
   latencyMs: number;
+  outcome?: string;
+  readyDocumentCount?: number;
+  processingDocumentCount?: number;
+  evidenceChunkCount?: number;
+  coverageTopicIds?: string[];
 };
 
 const LEAKED = ["prompt", "question", "content", "filename", "name", "text", "query", "answer", "ownerId"] as const;
@@ -32,7 +37,12 @@ export function studyTraceRecord(input: StudyTrace & Record<string, unknown>) {
     transport: currentTransport(),
     tokenEstimate: input.tokenEstimate,
     latencyMs: input.latencyMs,
-    promptVersion: RETRIEVAL_PROMPT_VERSION
+    promptVersion: RETRIEVAL_PROMPT_VERSION,
+    outcome: input.outcome ?? null,
+    readyDocumentCount: input.readyDocumentCount ?? null,
+    processingDocumentCount: input.processingDocumentCount ?? null,
+    evidenceChunkCount: input.evidenceChunkCount ?? null,
+    coverageTopicIds: input.coverageTopicIds ?? []
   };
   const json = JSON.stringify(record);
   for (const key of LEAKED) {

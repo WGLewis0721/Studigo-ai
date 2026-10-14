@@ -7,6 +7,7 @@ import {
   client
 } from "./client";
 import { groundingStatus, type GroundingStatus } from "./verify-claim";
+import { debitResponseWork, providerAbortSignal, trackProviderCall } from "./provider-budget";
 
 export type RetrievedChunk = {
   id: string;
@@ -165,11 +166,11 @@ export async function answerFromRetrievedContext(args: {
   }
 
   const available = toCitations(args.chunks);
-  const response = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: buildInput(args)
-  });
+  const model = chatModel(), options = responseOptions(), input = buildInput(args);
+  debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
+  const response = await trackProviderCall(() => client().responses.create({
+    model, ...options, input
+  }, { signal: providerAbortSignal() }));
 
   const text = response.output_text?.trim() || INSUFFICIENT_EVIDENCE_TEXT;
   const used = citationsUsedIn(text, available);
@@ -191,6 +192,7 @@ export type GroundedStreamEvent =
 
 /** Streams the answer token by token, then emits the citations it actually used. */
 export async function* streamGroundedAnswer(args: {
+  signal?: AbortSignal;
   question: string;
   instructions?: string;
   format?: AnswerFormat;
@@ -207,25 +209,35 @@ export async function* streamGroundedAnswer(args: {
   }
 
   const available = toCitations(args.chunks);
-  const stream = await client().responses.create({
-    model: chatModel(),
-    ...responseOptions(),
-    input: buildInput(args),
-    stream: true
-  });
+  const model = chatModel(), options = responseOptions(), input = buildInput(args);
+  debitResponseWork({ model, input, max_output_tokens: options.max_output_tokens });
+  const signal = providerAbortSignal(args.signal);
+  let releaseHold!: () => void;
+  const hold = new Promise<void>((resolve) => { releaseHold = resolve; });
+  const trackedHold = trackProviderCall(() => hold);
+  try {
+    const stream = await client().responses.create({
+      model, ...options, input,
+      stream: true
+    }, { signal });
 
-  let text = "";
-  for await (const event of stream) {
-    if (event.type === "response.output_text.delta") {
-      text += event.delta;
-      yield { type: "delta", text: event.delta };
+    let text = "";
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        text += event.delta;
+        yield { type: "delta", text: event.delta };
+      }
     }
-  }
 
-  const finalText = text.trim() || INSUFFICIENT_EVIDENCE_TEXT;
-  const used = citationsUsedIn(finalText, available);
-  yield {
-    type: "done",
-    answer: { text: finalText, citations: used, grounded: used.length > 0 }
-  };
+    const finalText = text.trim();
+    if (!finalText) throw new Error("The answer provider returned no text.");
+    const used = citationsUsedIn(finalText, available);
+    yield {
+      type: "done",
+      answer: { text: finalText, citations: used, grounded: used.length > 0 }
+    };
+  } finally {
+    releaseHold();
+    await trackedHold.catch(() => undefined);
+  }
 }

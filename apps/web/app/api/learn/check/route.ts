@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { askSocraticQuestion, respondToSocraticAnswer } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { readExplainLevel } from "@/lib/explain-level";
@@ -13,7 +14,7 @@ export const maxDuration = 120;
  * This is formative on purpose. It records no attempt and moves no mastery —
  * mastery is earned in Quiz, where the learner knows they are being measured.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -80,4 +81,8 @@ export async function POST(request: Request) {
   });
 
   return Response.json({ topicId, ...response });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "learn-check", guardedPost);
 }

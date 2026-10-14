@@ -1,3 +1,5 @@
+import { guardAiRequest } from "@/lib/ai-admission";
+import { trackAiStreamProducer } from "@/lib/ai-stream-lease";
 import { compileCoachPreferences, directivesForTurn } from "@/lib/coach-preferences";
 import { readCoachPreferences, readLearnPreferences } from "@/lib/coach-preferences-store";
 import { InteractionConflictError, isInteractionId, persistUserInteraction, recoverCoachConversation } from "@/lib/coach-interaction";
@@ -5,8 +7,9 @@ import type { CoachInteraction } from "@/lib/coach-learning-events";
 import { requireApiUser } from "@/lib/auth";
 import { reserveAiBudget } from "@/lib/ai-budget";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
-import { assertRoomAccess, MIN_SIMILARITY } from "@/lib/retrieval";
-import { runStudigoEngine } from "@/lib/engine";
+import { MIN_SIMILARITY } from "@/lib/retrieval";
+import { InvalidTopicScopeError, LearnStageError, runStudigoEngine } from "@/lib/engine";
+import { classifyLearnOutcome, learnStreamDone, learnStreamError, type LearnOutcome } from "@/lib/learn-outcome";
 import { isUuid } from "@/lib/ids";
 import { writeStudyTrace } from "@/lib/study-trace";
 
@@ -31,7 +34,7 @@ type ChatRequest = {
  * Ask Studigo: retrieve inside this room only, answer from what came back, and
  * stream the answer followed by the citations the answer actually used.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const started = Date.now();
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
@@ -40,11 +43,17 @@ export async function POST(request: Request) {
   const roomId = typeof body?.roomId==='string'?body.roomId.trim():'';
   const question = typeof body?.question==='string'?body.question.trim():'';
   const mode = body?.mode === "coach" ? "coach" : "ask";
+  const learnFailure = (failure: "invalid_topic_scope" | "retrieval_error", status: number) => {
+    const outcome = classifyLearnOutcome({ documentStatuses: [], failure });
+    return Response.json({ error: learnStreamError(outcome).error, outcome }, { status });
+  };
   const topicIds = Array.isArray(body?.topicIds)
     ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
     : [];
   if (topicIds.length > 80 || topicIds.some((value) => !isInteractionId(value))) {
-    return Response.json({ error: "Choose valid Study Room topics." }, { status: 400 });
+    return mode === "ask"
+      ? learnFailure("invalid_topic_scope", 400)
+      : Response.json({ error: "Choose valid Study Room topics." }, { status: 400 });
   }
 
   if (!isUuid(roomId) || !question) {
@@ -59,7 +68,14 @@ export async function POST(request: Request) {
   const budget = await reserveAiBudget(supabase, user.id);
   if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
-  const room = await assertRoomAccess(supabase, roomId);
+  const { data: room, error: roomError } = await supabase
+    .from("study_rooms")
+    .select("id")
+    .eq("id", roomId)
+    .maybeSingle();
+  if (roomError) return mode === "ask"
+    ? learnFailure("retrieval_error", 503)
+    : Response.json({ error: "Could not load the Study Room. Please retry." }, { status: 503 });
   if (!room) return Response.json({ error: "Study Room not found" }, { status: 404 });
   // All conversation-state and message mutations are server-owned. The
   // user-scoped client above proves ownership; the service writer performs
@@ -73,7 +89,9 @@ export async function POST(request: Request) {
     learnPreferences = mode === "ask" ? await readLearnPreferences(supabase, roomId) : undefined;
     teaching = compileCoachPreferences(preferences);
   } catch {
-    return Response.json({ error: "Could not load your Study Room settings. Please retry." }, { status: 503 });
+    return mode === "ask"
+      ? learnFailure("retrieval_error", 503)
+      : Response.json({ error: "Could not load your Study Room settings. Please retry." }, { status: 503 });
   }
 
   let conversationId = body?.conversationId ?? null;
@@ -143,16 +161,28 @@ export async function POST(request: Request) {
   const route = mode === "coach" ? teaching.route : undefined;
 
   const encoder = new TextEncoder();
+  let terminalOutcome: LearnOutcome | undefined;
+  // Real request cancellation must not make the lease outlive its producer
+  // without tracking it; provider requests receive the same abort signal.
+  const abort = new AbortController();
+  let cancelled = request.signal.aborted;
+  if (cancelled) abort.abort();
+  const onAbort = () => { cancelled = true; abort.abort(); };
+  request.signal.addEventListener("abort", onAbort, { once: true });
+  let finished!: () => void;
+  const producerDone = new Promise<void>((resolve) => { finished = resolve; });
   const stream = new ReadableStream({
+    cancel() { cancelled = true; abort.abort(); },
+
     async start(controller) {
       const send = (event: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        if (!cancelled) controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
       };
 
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;
@@ -168,18 +198,28 @@ export async function POST(request: Request) {
             if(saved.error)throw new Error('Could not save the reply. Please retry.');
           }
 
-          send({
-            type: "done",
-            text: event.answer.text,
-            citations: event.answer.citations,
-            grounded: event.answer.grounded
-          });
+          terminalOutcome = event.outcome;
+          send(event.outcome
+            ? learnStreamDone(event.answer, event.outcome)
+            : {
+                type: "done",
+                text: event.answer.text,
+                citations: event.answer.citations,
+                grounded: event.answer.grounded
+              });
         }
       } catch (error) {
-        send({
-          type: "error",
-          error: error instanceof Error ? error.message : "Studigo could not finish that answer."
-        });
+        if (mode === "ask") {
+          const failure = error instanceof InvalidTopicScopeError
+            ? "invalid_topic_scope"
+            : error instanceof LearnStageError ? error.stage : "generation_error";
+          terminalOutcome = error instanceof LearnStageError && error.outcome
+            ? error.outcome
+            : classifyLearnOutcome({ documentStatuses: [], failure });
+          send(learnStreamError(terminalOutcome));
+        } else {
+          send({ type: "error", error: "Studigo could not finish that coaching session. Please retry." });
+        }
       } finally {
         writeStudyTrace({
           route: "api/chat",
@@ -187,18 +227,29 @@ export async function POST(request: Request) {
           chunkIds: [],
           cutoff: MIN_SIMILARITY,
           tokenEstimate: 0,
-          latencyMs: Date.now() - started
+          latencyMs: Date.now() - started,
+          outcome: terminalOutcome?.kind,
+          readyDocumentCount: terminalOutcome?.counts.readyMaterials,
+          processingDocumentCount: terminalOutcome?.counts.processingMaterials,
+          evidenceChunkCount: terminalOutcome?.counts.relevantChunks,
+          coverageTopicIds: []
         });
-        controller.close();
+        request.signal.removeEventListener("abort", onAbort);
+        if (!cancelled) controller.close();
+        finished();
       }
     }
   });
 
-  return new Response(stream, {
+  return trackAiStreamProducer(new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive"
     }
-  });
+  }), producerDone);
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "chat", guardedPost);
 }

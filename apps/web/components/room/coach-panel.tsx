@@ -1,6 +1,7 @@
 "use client";
 
 import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPreferences } from "@/lib/coach-preferences";
+import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -18,9 +19,11 @@ import { useFitViewport } from "./use-fit-viewport";
 import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
+import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
+import type { LearnOutcome } from "@/lib/learn-outcome";
 
 type ChatMode = "coach" | "learn";
-type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
+type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean; outcome?: LearnOutcome };
 type MessagesByMode = Record<ChatMode, Message[]>;
 type ModeState<T> = Record<ChatMode, T>;
 
@@ -34,6 +37,10 @@ function answerLabel(message: Message): string {
   if (message.kind === "guide") return "LEARN · HOW IT WORKS";
   if (message.mode === "learn") {
     if (state === "streaming") return "LEARN · READING YOUR MATERIALS…";
+    if (message.outcome) {
+      const view = learnOutcomeView(message.outcome);
+      if (view) return `LEARN · ${view.title.toUpperCase()}`;
+    }
     return state === "grounded" ? "LEARN · FROM YOUR MATERIALS" : "LEARN · NOT IN YOUR MATERIALS";
   }
   if (state === "streaming") return "COACH · THINKING…";
@@ -274,26 +281,65 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
           : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
-      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
-      if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
+      const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
+      if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        const outcome = messageMode === "learn" ? readLearnOutcome(payload.outcome) : null;
+        const view = outcome && learnOutcomeView(outcome);
+        if (outcome && view && isCurrentThread()) {
+          setMessagesByMode((current) => ({
+            ...current,
+            learn: current.learn.map((message) => message.id === assistantId
+              ? { ...message, content: view.message, citations: [], grounded: false, streaming: false, outcome }
+              : message)
+          }));
+          return;
+        }
+        throw new Error(payload.error || "Studigo could not coach that attempt.");
+      }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {
         const { done, value } = await reader.read(); if (done) break;
         buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? "";
         for (const frame of frames) {
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
-          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
+          const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string; outcome?: unknown };
           if (!isCurrentThread()) continue;
           if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
           if (event.type === "delta" && event.text) setMessagesByMode((current) => ({
             ...current,
             [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message)
           }));
-          if (event.type === "done") setMessagesByMode((current) => ({
-            ...current,
-            [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message)
-          }));
-          if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
+          if (event.type === "done") {
+            const outcome = messageMode === "learn" ? readLearnOutcome(event.outcome) : null;
+            const view = outcome && learnOutcomeView(outcome);
+            const unavailable = outcome && outcome.kind !== "ready" && outcome.kind !== "partial_coverage";
+            setMessagesByMode((current) => ({
+              ...current,
+              [messageMode]: current[messageMode].map((message) => message.id === assistantId ? {
+                ...message,
+                content: unavailable && view ? view.message : event.text ?? message.content,
+                citations: unavailable ? [] : event.citations,
+                grounded: unavailable ? false : event.grounded,
+                streaming: false,
+                ...(outcome ? { outcome } : {})
+              } : message)
+            }));
+          }
+          if (event.type === "error") {
+            const outcome = messageMode === "learn" ? readLearnOutcome(event.outcome) : null;
+            const view = outcome && learnOutcomeView(outcome);
+            if (outcome && view) {
+              setMessagesByMode((current) => ({
+                ...current,
+                learn: current.learn.map((message) => message.id === assistantId
+                  ? { ...message, content: view.message, citations: [], grounded: false, streaming: false, outcome }
+                  : message)
+              }));
+            } else {
+              throw new Error(event.error || "Studigo could not finish that coaching session.");
+            }
+          }
         }
       }
       // Refresh authoritative evidence after a completed turn; presentation stays unchanged.
@@ -370,7 +416,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     onViewChange("chat");
   }
 
-  if (readyCount === 0) return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button></div>;
+  if (readyCount === 0 && chatMode === "coach") return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button><button className="ghostButton" type="button" onClick={() => { switchChatMode("learn"); onViewChange("chat"); }}>Open Learn</button></div>;
 
   // Chat stays the conversation view. Topics is now the topic-scope control itself,
   // so there is no second green topic dropdown competing with it.
@@ -407,12 +453,12 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       {view === "topics" ? (
         <div className="coachTopicsView">
           {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}
-          <LearnPanel embedded roomId={roomId} topics={focusTopicId ? topics.filter((topic) => topic.id === focusTopicId) : topics} hasMaterials onChanged={onTopicsChanged} onCoachTopic={coachTopic} />
+          <LearnPanel embedded roomId={roomId} topics={focusTopicId ? topics.filter((topic) => topic.id === focusTopicId) : topics} hasMaterials={readyCount > 0} onChanged={onTopicsChanged} onCoachTopic={coachTopic} onOpenMaterials={onOpenMaterials} />
         </div>
       ) : (
       <div className="coachBody">
       <div className="coachMain">
-      {(() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
+      {readyCount > 0 && (() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
       {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
       {skillPickerOpen && (
@@ -524,7 +570,22 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               <p className="coachEmptyStyle"><b>{learnActive.label}:</b> {learnActive.expect}</p>
             </div>
           )
-        ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
+        ) : messages.map((message, index) => {
+          if (message.role === "user") return <div className="studentBubble" key={message.id}>{message.content}</div>;
+          const view = message.outcome && learnOutcomeView(message.outcome);
+          const priorQuestion = messages.slice(0, index).reverse().find((turn) => turn.role === "user")?.content;
+          return (
+            <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}>
+              <span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span>
+              <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>
+              {message.citations && <CitationChips citations={message.citations} />}
+              {view && message.outcome?.kind === "partial_coverage" && <p className="formNotice" role="status">{view.message}</p>}
+              {view?.action === "materials" && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>}
+              {view?.action === "see_topics" && <button className="ghostButton" type="button" onClick={() => onViewChange("topics")}>See topics</button>}
+              {view?.action === "retry" && priorQuestion && <button className="ghostButton" type="button" onClick={() => setPrompts((current) => ({ ...current, learn: priorQuestion }))}>Edit and retry</button>}
+            </div>
+          );
+        })}
         <div className="threadEnd" aria-hidden="true" />
         </div>
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}

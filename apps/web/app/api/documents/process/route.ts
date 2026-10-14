@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
 import { processDocument } from "@/lib/ingest";
 
@@ -5,7 +6,7 @@ export const runtime = "nodejs";
 /** Extraction, OCR, and embedding of a long chapter need real time. */
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -31,4 +32,8 @@ export async function POST(request: Request) {
 
   const result = await processDocument({ documentId, userId: user.id });
   return Response.json(result, { status: result.status === "failed" ? 500 : 200 });
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "document-process", guardedPost);
 }
