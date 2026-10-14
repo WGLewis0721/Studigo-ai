@@ -1,5 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
+/** Safe, deterministic denial before starting billable provider work. */
+export class ProviderWorkBudgetError extends Error {
+  constructor(message: string) { super(message); this.name = "ProviderWorkBudgetError"; }
+}
+
 /**
  * Hard, per-request provider work envelopes. Every supported model call in
  * @studigo/ai must debit this scope BEFORE sending a provider request.
@@ -50,10 +55,10 @@ export function withProviderWorkBudget<T>(
 function active(): WorkState | undefined {
   const current = store.getStore();
   if (!current && process.env.STUDIGO_AI_ADMISSION === "1") {
-    throw new Error("Provider work attempted outside an admission scope");
+    throw new ProviderWorkBudgetError("Provider work attempted outside an admission scope");
   }
   if (current && (current.signal.aborted || Date.now() >= current.deadline)) {
-    throw new Error("AI work deadline exceeded");
+    throw new ProviderWorkBudgetError("AI work deadline exceeded");
   }
   return current;
 }
@@ -97,16 +102,16 @@ export function debitResponseWork(params: {
 }): void {
   const scope = active();
   if (!scope) return;
-  if (!CHAT_MODELS.has(params.model)) throw new Error("This provider model has no approved work budget");
+  if (!CHAT_MODELS.has(params.model)) throw new ProviderWorkBudgetError("This provider model has no approved work budget");
   const output = params.max_output_tokens;
   if (!Number.isSafeInteger(output) || (output ?? 0) < 1 || (output ?? 0) > 4096) {
-    throw new Error("Model output budget is missing or exceeds the hard cap");
+    throw new ProviderWorkBudgetError("Model output budget is missing or exceeds the hard cap");
   }
   const bytes = Buffer.byteLength(JSON.stringify(params.input ?? ""));
   if (bytes > 4_000_000 ||
       scope.responseCalls + 1 > scope.maxResponseCalls ||
       scope.responseBytes + bytes > scope.maxResponseBytes) {
-    throw new Error("AI response work allowance exhausted");
+    throw new ProviderWorkBudgetError("AI response work allowance exhausted");
   }
   scope.responseCalls += 1;
   scope.responseBytes += bytes;
@@ -115,12 +120,12 @@ export function debitResponseWork(params: {
 export function debitEmbeddingWork(model: string, inputs: string[]): void {
   const scope = active();
   if (!scope) return;
-  if (!EMBEDDING_MODELS.has(model)) throw new Error("This embedding model has no approved work budget");
+  if (!EMBEDDING_MODELS.has(model)) throw new ProviderWorkBudgetError("This embedding model has no approved work budget");
   const chars = inputs.reduce((sum, value) => sum + value.length, 0);
   if (inputs.length > 96 || chars > 96 * 24_000 ||
       scope.embeddingCalls + 1 > scope.maxEmbeddingCalls ||
       scope.embeddingChars + chars > scope.maxEmbeddingChars) {
-    throw new Error("AI embedding work allowance exhausted");
+    throw new ProviderWorkBudgetError("AI embedding work allowance exhausted");
   }
   scope.embeddingCalls += 1;
   scope.embeddingChars += chars;
