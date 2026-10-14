@@ -44,7 +44,7 @@ export function GuidePreview({
       <h2>{model.title}</h2>
       <div className="guideActions">
         <StudyGuideDownloadButton roomId={roomId} />
-        <button type="button">Word</button>
+        <StudyGuideDownloadButton roomId={roomId} format="docx" />
         <button type="button" onClick={() => window.print()}>Print</button>
       </div>
       {loaded.chapters.map((chapter) => (

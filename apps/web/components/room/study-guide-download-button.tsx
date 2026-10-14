@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function StudyGuideDownloadButton({ roomId }: { roomId: string }) {
+export function StudyGuideDownloadButton({ roomId, format = "pdf" }: { roomId: string; format?: "pdf" | "docx" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,7 +14,7 @@ export function StudyGuideDownloadButton({ roomId }: { roomId: string }) {
       const endpoint =
         roomId === "fixture"
           ? "/api/dev/study-guide/download"
-          : `/api/study-guide/download?roomId=${encodeURIComponent(roomId)}`;
+          : `/api/study-guide/download?roomId=${encodeURIComponent(roomId)}${format === "docx" ? "&format=docx" : ""}`;
       const response = await fetch(endpoint, { method: "GET" });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -43,7 +43,7 @@ export function StudyGuideDownloadButton({ roomId }: { roomId: string }) {
   return (
     <span className="studyGuideDownload">
       <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy}>
-        <span className="studyGuideDownloadLabel">{busy ? "Building PDF..." : "Download study guide"}</span>
+        <span className="studyGuideDownloadLabel">{busy ? "Building..." : format === "docx" ? "Word" : "Download study guide"}</span>
         <span className="studyGuideDownloadIcon" aria-hidden="true">↓</span>
       </button>
       {error && <small className="formError" role="alert">{error}</small>}

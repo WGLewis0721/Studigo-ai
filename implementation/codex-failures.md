@@ -176,3 +176,13 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: web typecheck
 - Result: FAIL. The chat route lost its writeStudyTrace import during the surface edit.
 - Action: restore the import and rerun typecheck.
+
+### C19 — 2026-10-14 — definition apostrophe
+- Check: Word/PDF equivalence, first attempt
+- Result: FAIL on the assertion. The definition was in both files. Word stored the apostrophe as an XML entity inside a text run.
+- Action: unescape the XML before comparing. No product change.
+
+### C19 — 2026-10-14 — heading type
+- Check: web build
+- Result: FAIL typecheck. The paragraph helper only accepted Heading1.
+- Action: accept every heading level and rebuild.
