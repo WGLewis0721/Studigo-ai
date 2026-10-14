@@ -43,3 +43,49 @@ export async function advanceIngestJob(input: {
     published: next === "publish"
   };
 }
+
+export type RunnerJob = {
+  id: string;
+  stage: "queued" | "running" | "complete" | "failed";
+  checkpoint: IngestCheckpoint;
+  lease: string | null;
+  attempts: number;
+  maxAttempts: number;
+  published: boolean;
+};
+
+/** One worker pass. A live lease owned by someone else is left alone. */
+export async function runIngestPass(input: {
+  jobs: RunnerJob[];
+  worker: string;
+  now?: number;
+  leases?: Map<string, number>;
+  run: (job: RunnerJob, stage: IngestStageName) => Promise<void>;
+}): Promise<RunnerJob[]> {
+  const leases = input.leases ?? new Map<string, number>();
+  const now = input.now ?? Date.now();
+  return Promise.all(input.jobs.map(async (job) => {
+    if (job.stage === "complete" || job.stage === "failed") return job;
+    const heldUntil = job.lease ? leases.get(job.lease) ?? 0 : 0;
+    if (job.lease && job.lease !== input.worker && heldUntil > now) return job;
+    if (job.attempts >= job.maxAttempts && job.stage !== "queued") {
+      return { ...job, stage: "failed" as const, lease: null };
+    }
+    const step = await advanceIngestJob({
+      checkpoint: job.checkpoint,
+      alreadyPublished: job.published,
+      run: (stage) => input.run(job, stage)
+    });
+    const published = job.published || step.published;
+    const finished = step.checkpoint.completed.includes("publish");
+    if (step.published) leases.set(input.worker, now + 1);
+    return {
+      ...job,
+      checkpoint: step.checkpoint,
+      stage: finished ? "complete" as const : "running" as const,
+      lease: finished ? null : input.worker,
+      attempts: job.attempts + (step.yielded ? 1 : 0),
+      published
+    };
+  }));
+}
