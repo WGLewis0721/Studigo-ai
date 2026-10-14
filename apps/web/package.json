@@ -22,7 +22,7 @@
     "@studigo/documents": "workspace:*",
     "@studigo/learning": "workspace:*",
     "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.116.0",
+    "@supabase/supabase-js": "2.117.3",
     "docx": "^9.11.0",
     "next": "16.3.8",
     "pdf-lib": "^1.17.1",
