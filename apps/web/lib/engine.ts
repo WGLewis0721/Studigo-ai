@@ -1,6 +1,8 @@
 import { INSUFFICIENT_EVIDENCE_TEXT, asUntrustedMaterial, streamGroundedAnswer, toCitations, type GroundedStreamEvent } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
+import { guideNavigationIntent, retrieveGuideNavigationChunks } from "@/lib/guide-navigation";
+import { writeStudyTrace } from "@/lib/study-trace";
 import { runCoachTurn } from "@/lib/coach-router";
 import type { LearningRoute } from "@/lib/learning";
 import type { CoachInteraction } from "@/lib/coach-learning-events";
@@ -146,13 +148,36 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
 
   const instructions = formatDirectives(args.directives, [learnerStateDirective]);
 
-  const chunks = await retrieveForRoom({
-    supabase: args.supabase,
-    roomId: args.roomId,
-    query: args.question,
-    ownerId: args.userId,
-    traceRoute: `engine:${args.mode ?? "ask"}`
-  });
+  // A guide overview or vocabulary list is source navigation, not a
+  // fact-specific semantic question. Never turn an already indexed guide into
+  // "not in your materials" just because a generic query has weak similarity.
+  // Ordinary fact questions keep the same strict vector retrieval threshold.
+  const navigation = guideNavigationIntent(args.question);
+  const chunks = navigation
+    ? await retrieveGuideNavigationChunks({
+        supabase: args.supabase,
+        roomId: args.roomId,
+        ownerId: args.userId,
+        question: args.question,
+        intent: navigation
+      })
+    : await retrieveForRoom({
+        supabase: args.supabase,
+        roomId: args.roomId,
+        query: args.question,
+        ownerId: args.userId,
+        traceRoute: `engine:${args.mode ?? "ask"}`
+      });
+  if (navigation) {
+    writeStudyTrace({
+      route: `engine:ask:guide-${navigation}`,
+      ownerId: args.userId ?? "",
+      chunkIds: chunks.map((chunk) => chunk.id),
+      cutoff: 0,
+      tokenEstimate: Math.ceil(chunks.reduce((total, chunk) => total + chunk.content.length, 0) / 4),
+      latencyMs: 0
+    });
+  }
 
   yield* streamGroundedAnswer({
     question: args.question,
