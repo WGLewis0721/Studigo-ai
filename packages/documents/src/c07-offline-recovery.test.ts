@@ -24,7 +24,9 @@ const syntheticTranscriptions = [
 
 test("C07 synthetic no-text PDF recovers three citable pages with a mocked OCR provider", async () => {
   const buffer = await scannedLikePdf();
+  const originalByteLength = buffer.byteLength;
   const extraction = await extractPdf(buffer);
+  assert.equal(buffer.byteLength, originalByteLength, "PDF extraction must not detach bytes needed for OCR");
   assert.equal(extraction.pageCount, 3);
   assert.deepEqual(pagesNeedingOcr(extraction), [1, 2, 3]);
 
