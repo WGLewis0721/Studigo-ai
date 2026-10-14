@@ -1,5 +1,6 @@
 import { UNTRUSTED_MATERIAL_RULE, chatModel, client, currentTransport, responseOptions } from "./client";
 import type { Response, ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
+import { executeAdmittedOcrRequest, ocrAdmissionMeter } from "./ocr-admission";
 
 const OCR_PROMPT = [
   "Transcribe all readable text from this scanned study material, in reading order.",
@@ -51,10 +52,14 @@ function completedOcrText(response: Response) {
 
 async function requestOcr(body: ResponseCreateParamsNonStreaming, timeoutMs = 60_000) {
   try {
-    const response = await client().responses.create(body, {
-      signal: AbortSignal.timeout(timeoutMs), maxRetries: 0
+    const meter = ocrAdmissionMeter(body.input);
+    if (meter.model !== body.model) throw new OcrResponseError("request_failed");
+    return await executeAdmittedOcrRequest({
+      ...meter,
+      timeoutMs,
+      start: (signal) => client().responses.create(body, { signal, maxRetries: 0 })
+        .then(completedOcrText)
     });
-    return completedOcrText(response);
   } catch (error) {
     if (error instanceof OcrResponseError) throw error;
     throw new OcrResponseError("request_failed");
