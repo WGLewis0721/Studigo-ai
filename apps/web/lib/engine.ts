@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { guideNavigationIntent, retrieveGuideNavigationChunks } from "@/lib/guide-navigation";
 import { classifyLearnOutcome, learnOutcomeMessage, type LearnDocumentStatus, type LearnOutcome } from "@/lib/learn-outcome";
+import { passagesForLesson, planContextualSearch } from "@/lib/contextual-retrieval";
 import { writeStudyTrace } from "@/lib/study-trace";
 import { runCoachTurn } from "@/lib/coach-router";
 import type { LearningRoute } from "@/lib/learning";
@@ -182,11 +183,26 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
     return;
   }
 
-  // A guide overview or vocabulary list is source navigation, not a
-  // fact-specific semantic question. Never turn an already indexed guide into
-  // "not in your materials" just because a generic query has weak similarity.
-  // Ordinary fact questions keep the same strict vector retrieval threshold.
-  const navigation = guideNavigationIntent(args.question);
+  const lessonTopics = topics.map((topic) => ({
+    id: topic.id,
+    title: topic.title,
+    objective: topic.objective,
+    keyTerms: topic.key_terms ?? []
+  }));
+  const search = planContextualSearch({
+    topics: lessonTopics,
+    question: args.question,
+    history: args.history
+  });
+  if (search.kind === "clarify") {
+    yield { type: "delta", text: search.message };
+    yield { type: "done", answer: { text: search.message, citations: [], grounded: false } };
+    return;
+  }
+
+  // A guide overview stays whole-room only when no single lesson is selected.
+  // A selected lesson's key-term question is enumerated from retrieved passages.
+  const navigation = search.topic ? null : guideNavigationIntent(args.question);
   let chunks: RetrievedChunk[];
   try {
     chunks = navigation
@@ -200,12 +216,42 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
       : await retrieveForRoom({
         supabase: args.supabase,
         roomId: args.roomId,
-        query: args.question,
+        query: search.query,
         ownerId: args.userId,
         traceRoute: `engine:${args.mode ?? "ask"}`
       });
   } catch {
     throw new LearnStageError("retrieval_error", classifyLearnOutcome({ documentStatuses, failure: "retrieval_error" }));
+  }
+  if (search.topic) {
+    const passages = passagesForLesson({
+      topic: search.topic,
+      substantive: search.substantive,
+      chunks,
+      termList: search.termList
+    });
+    const supported = [...new Map(passages.map((passage) => [passage.chunk.id, passage.chunk])).values()];
+    if (!supported.length) {
+      const outcome = classifyLearnOutcome({ documentStatuses, evidenceChunkCount: 0 });
+      const text = learnOutcomeMessage(outcome.kind);
+      yield { type: "delta", text };
+      yield { type: "done", answer: { text, citations: [], grounded: false }, outcome };
+      return;
+    }
+    if (search.termList) {
+      const markers = new Map(supported.map((chunk, index) => [chunk.id, index + 1]));
+      const text = passages.map((passage) => `- **${passage.term}**: ${passage.excerpt} [${markers.get(passage.chunk.id)}]`).join("\n");
+      const citations = toCitations(supported);
+      const outcome = classifyLearnOutcome({
+        documentStatuses,
+        evidenceDocumentIds: supported.map((chunk) => chunk.documentId),
+        evidenceChunkCount: supported.length
+      });
+      yield { type: "delta", text };
+      yield { type: "done", answer: { text, citations, grounded: true }, outcome };
+      return;
+    }
+    chunks = supported;
   }
   if (navigation) {
     writeStudyTrace({
