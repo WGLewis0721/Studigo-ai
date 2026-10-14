@@ -12,3 +12,5 @@
 - Unverified acceptance criteria: none in the focused browser checks; CI must pass before integration.
 - Task disposition: NOT DONE until the CI gate passes.
 - Follow-up: review the automatic check on PR #104 before merging into integration.
+
+Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Actions run 38503354107 passed, including web tests, typecheck and build. The three manual C01 checks remain the acceptance evidence. Disposition: DONE, accepted for integration.
