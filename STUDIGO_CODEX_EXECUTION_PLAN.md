@@ -61,7 +61,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C04 | P0 | Typed Learn outcomes and recovery | Honest errors instead of false missing-material replies | — | NOT STARTED |
 | C05 | P0 | Contextual Learn retrieval | Short follow-ups and known terms use the current topic | C04 | NOT STARTED |
 | C06 | P0 | Enumerated unit overview | Every selected topic has a supported section or explicit gap | C03, C05 | NOT STARTED |
-| C07 | P0 | Quality-driven page recovery | Scans retain readable definitions and reading order | — | NOT STARTED |
+| C07 | P0 | Quality-driven page recovery | Scans retain readable definitions and reading order | — | FUNCTIONAL PASS ON PREVIEW — SEC RELEASE GATE OPEN |
 | C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | NOT STARTED |
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | NOT STARTED |
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
