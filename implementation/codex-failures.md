@@ -25,7 +25,7 @@ Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Acti
 - Suspected cause: embedded database/runtime failure; exact cause unverified.
 - Impact: defining transactional acceptance remains unverified; no production/provider calls or migration application.
 - Action: stop database checks per parent instruction; no repeated harness/Docker workaround. Keep the two focused regression scenarios for later review.
-- Remaining check slots: 1 after check 2, the planned affected web compiler, passed using `/workspace/.studigo-toolchain/node_modules/node/bin/node ./node_modules/typescript/bin/tsc --noEmit --incremental false` from `apps/web`.
+- Remaining check slots: 1 after check 2, the planned affected web compiler, passed using `/workspace/.studigo-toolchain/node_modules/node/bin/node ./node_modules/typescript/bin/tsc --noEmit --incremental false` from `apps/web`. Review then added an empty-topic guard; the final head was not rechecked.
 - Unverified acceptance criteria: insertion/derivation failure leaves previous index retrievable; concurrent/stale publication fences; success exposes only new chunks; original object, receipts and mastery preserved. Preservation/success scenario not executed. Database advisors unavailable without a working disposable database.
 - Task disposition: NOT DONE; no commit, push or PR performed.
 - Follow-up: database acceptance requires a functioning disposable environment and authorization to resume after standby. SEC is absent at this base; no live provider retries performed.
