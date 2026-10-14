@@ -11,6 +11,7 @@ import { MIN_SIMILARITY } from "@/lib/retrieval";
 import { InvalidTopicScopeError, LearnStageError, runStudigoEngine } from "@/lib/engine";
 import { classifyLearnOutcome, learnStreamDone, learnStreamError, type LearnOutcome } from "@/lib/learn-outcome";
 import { isUuid } from "@/lib/ids";
+import { surfaceForRequest, admitThread, type ConversationRow } from "@/lib/conversation-surface";
 import { writeStudyTrace } from "@/lib/study-trace";
 
 export const runtime = "nodejs";
@@ -23,6 +24,7 @@ type ChatRequest = {
   /** "coach" routes the turn through the Coach state machine instead of
    *  free-form grounded Q&A. Defaults to "ask". */
   mode?: "ask" | "coach";
+  surface?: "learn" | "coach" | "ask";
   /** Client-generated UUID, once per submitted turn. Becomes the user
    *  message's ID and the stable identity of any learning evidence. */
   interactionId?: string;
@@ -65,6 +67,27 @@ async function guardedPost(request: Request) {
   if(body?.conversationId!=null&&!isInteractionId(body.conversationId))return Response.json({error:'Invalid conversationId.'},{status:400});
   if(mode==='coach'&&!isInteractionId(body?.interactionId))return Response.json({error:'A valid interactionId is required for Coach turns.'},{status:400});
 
+  const surface = surfaceForRequest({ mode, surface: body?.surface });
+  if (!surface) return Response.json({ error: "Choose Learn, Coach, or Ask." }, { status: 400 });
+  let existingConversation: ConversationRow | null = null;
+  if (body?.conversationId) {
+    const loaded = await supabase
+      .from("conversations")
+      .select("id, owner_id, room_id, surface, archived_at")
+      .eq("id", body.conversationId)
+      .maybeSingle();
+    if (loaded.error) return Response.json({ error: "Could not load that chat." }, { status: 503 });
+    existingConversation = loaded.data as ConversationRow | null;
+  }
+  const admission = admitThread({
+    conversationId: body?.conversationId ?? null,
+    row: existingConversation,
+    ownerId: user.id,
+    roomId,
+    surface
+  });
+  if (!admission.ok) return Response.json({ error: admission.error }, { status: admission.status });
+
   const budget = await reserveAiBudget(supabase, user.id);
   if (!budget.ok) return Response.json({ error: budget.error }, { status: 429 });
 
@@ -94,25 +117,16 @@ async function guardedPost(request: Request) {
       : Response.json({ error: "Could not load your Study Room settings. Please retry." }, { status: 503 });
   }
 
-  let conversationId = body?.conversationId ?? null;
+  let conversationId = admission.reuse ? existingConversation?.id ?? null : null;
   if(mode==='coach'&&!conversationId) {
     try {conversationId=await recoverCoachConversation({supabase,interactionId:body!.interactionId!,roomId,content:question});}
     catch(error) {return Response.json({error:'Could not recover your Coach submission.'},{status:error instanceof InteractionConflictError?409:503});}
-  }
-  if (conversationId) {
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("id", conversationId)
-      .eq("room_id", roomId)
-      .maybeSingle();
-    conversationId = existing?.id ?? null;
   }
 
   if (!conversationId) {
     const { data: created, error } = await supabase
       .from("conversations")
-      .insert({ room_id: roomId, owner_id: user.id, title: question.slice(0, 120) })
+      .insert({ room_id: roomId, owner_id: user.id, title: question.slice(0, 120), surface })
       .select("id")
       .single();
     if (error) {

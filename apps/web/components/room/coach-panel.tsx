@@ -279,8 +279,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       const body = isFixture
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
-          : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
+          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
+          : JSON.stringify({ roomId, question: text, surface: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
       if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
         const payload = await response.json().catch(() => ({}));
@@ -374,6 +374,29 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
       ]
     }));
+  }
+
+  async function startFresh() {
+    if (pendingRef.current[chatMode]) return;
+    const label = chatMode === "coach" ? "Coach" : "Learn";
+    if (!window.confirm(`Earlier ${label} chats stay stored. Mastery is kept. This only starts a new ${label} chat.`)) return;
+    const currentId = chatMode === "coach" ? conversationId.current : askConversationId.current;
+    if (currentId && roomId !== "fixture") {
+      const response = await fetch("/api/chat/clear", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ roomId, conversationId: currentId, surface: chatMode })
+      });
+      if (!response.ok) {
+        setErrors((current) => ({ ...current, [chatMode]: "Could not start a fresh chat." }));
+        return;
+      }
+    }
+    if (chatMode === "coach") conversationId.current = null;
+    else askConversationId.current = null;
+    setMessagesByMode((current) => ({ ...current, [chatMode]: [] }));
+    setPrompts((current) => ({ ...current, [chatMode]: "" }));
+    resetThreadIdentity(chatMode);
   }
 
   function coachTopic(topic: Topic) {
@@ -591,6 +614,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
         {error && <p className="formError chatError" role="alert">{error}</p>}
+        <button className="ghostButton" type="button" disabled={busy} onClick={() => void startFresh()}>Start fresh</button>
         <StudigoComposer
           variant="chat"
           accent={chatMode === "learn" ? "learn" : undefined}

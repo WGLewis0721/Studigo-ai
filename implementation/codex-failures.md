@@ -166,3 +166,13 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: compact preview, first attempt
 - Result: FAIL on the assertion. The link was present as `&blockKey=laws`.
 - Action: match the encoded href. No product change.
+
+### C02 — 2026-10-14 — test runner
+- Check: persisted receipt start-fresh, first attempt
+- Result: FAIL to launch. Repo-root tsx is not installed. The test was not executed.
+- Action: run it with the web workspace tsx.
+
+### C02 — 2026-10-14 — typecheck
+- Check: web typecheck
+- Result: FAIL. The chat route lost its writeStudyTrace import during the surface edit.
+- Action: restore the import and rerun typecheck.
