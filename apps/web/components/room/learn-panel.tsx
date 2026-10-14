@@ -7,6 +7,7 @@ import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
 import { learnOutcomeView, readLearnOutcome, type LearnOutcomeView } from "@/lib/learn-outcome-client";
+import { requestQuietAcknowledgement, type QuietAcknowledgement, type QuietPhase } from "@/lib/quiet-feedback";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -142,13 +143,28 @@ export function LearnPanel({
   const [checks, setChecks] = useState<Record<string, Check>>({});
   const [checkDraft, setCheckDraft] = useState("");
   const [checking, setChecking] = useState(false);
+  const [lessonQuiet, setLessonQuiet] = useState<{ eventKey: string; acknowledgement: Exclude<QuietAcknowledgement, "none">; status: string } | null>(null);
   const gestures = useRef(createGestureBook());
   const [, startTransition] = useTransition();
+
+  function settleLesson(topicId: string, phase: QuietPhase) {
+    const eventKey = `lesson-open:${roomId}:${topicId}`;
+    const decision = requestQuietAcknowledgement({ phase, kind: "lesson-open", eventKey });
+    if (phase !== "success" || decision.acknowledgement === "none" || !decision.status) {
+      setLessonQuiet(null);
+      return;
+    }
+    setLessonQuiet({ eventKey, acknowledgement: decision.acknowledgement, status: decision.status });
+  }
 
   async function open(topic: Topic) {
     const next = openTopicId === topic.id ? null : topic.id;
     setOpenTopicId(next);
-    if (!next || lessons[topic.id]) return;
+    if (!next) {
+      setLessonQuiet(null);
+      return;
+    }
+    if (lessons[topic.id]) return;
 
     await loadLesson(topic);
   }
@@ -160,6 +176,12 @@ export function LearnPanel({
     if (!attempt.started) return;
     setLoadingId(topic.id);
     setError(null);
+    settleLesson(topic.id, "loading");
+    setLessonOutcomes((current) => {
+      const next = { ...current };
+      delete next[topic.id];
+      return next;
+    });
     try {
       const response = await fetch("/api/learn", { method: "POST", headers: operationHeaders(attempt.id), body });
       gestures.current.finish(`learn:${topic.id}`, response.status);
@@ -169,6 +191,7 @@ export function LearnPanel({
         const view = learnOutcomeView(outcome);
         if (view) setLessonOutcomes((current) => ({ ...current, [topic.id]: view }));
         setLessons((current) => retainSuccessfulLesson(current, topic.id, keptLesson, null));
+        settleLesson(topic.id, "error");
         return;
       }
       if (response.status === 202 || response.status === 409 || !response.ok) {
@@ -184,10 +207,12 @@ export function LearnPanel({
           ? { title: "Some pages need attention", message: payload.coverageLimitation, action: "materials" }
           : outcome ? learnOutcomeView(outcome) : null
       }));
+      settleLesson(topic.id, "success");
     } catch (learnError) {
       gestures.current.abort(`learn:${topic.id}`);
       setLessons((current) => retainSuccessfulLesson(current, topic.id, keptLesson, null));
       setError(learnError instanceof Error ? learnError.message : "Something went wrong.");
+      settleLesson(topic.id, "error");
     } finally {
       setLoadingId(null);
     }
@@ -530,6 +555,12 @@ export function LearnPanel({
                   )}
 
                   {loadingId === topic.id && <p className="hintText">Reading your materials…</p>}
+
+                  {lessonQuiet?.eventKey === `lesson-open:${roomId}:${topic.id}` && lessonQuiet.status && (
+                    <div className="lessonProgressRow" data-quiet={lessonQuiet.acknowledgement}>
+                      <p className="quietStatus" role="status">{lessonQuiet.status}</p>
+                    </div>
+                  )}
 
                   {lessonOutcome && (
                     <div className="formNotice" role="status">

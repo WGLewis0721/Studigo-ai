@@ -3,6 +3,7 @@ import {
   roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
 } from "@/lib/companion-logic";
+import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -578,6 +579,28 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const heartbeat = window.setInterval(tick, 320);
   applyScale(prefs.scale, false);
   if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
+
+  /* A lesson opened or a guide became ready. One brief nod, or nothing if he is minimized or motion is reduced. */
+  const quietSeen = new Set<string>();
+  function acknowledgeQuiet(detail: QuietFeedbackDetail) {
+    const acknowledged = Array.from(new Set([...detail.acknowledged, ...quietSeen]));
+    const decision = quietFeedback({
+      phase: detail.phase,
+      kind: detail.kind,
+      eventKey: detail.eventKey,
+      acknowledged,
+      reducedMotion: reduced,
+      minimized: rt.mode !== "window"
+    });
+    for (const key of decision.acknowledged) quietSeen.add(key);
+    if (decision.animate) pulse("quietAck", 700);
+    return decision;
+  }
+  document.addEventListener(QUIET_FEEDBACK_EVENT, (event) => {
+    const detail = (event as CustomEvent<QuietFeedbackDetail>).detail;
+    if (!detail || detail.decision || dead) return;
+    detail.decision = acknowledgeQuiet(detail);
+  }, { signal });
 
   return {
     event(name) {

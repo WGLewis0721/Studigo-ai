@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
 import { guidePrintEdition } from "@/lib/guide-share";
+import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
 
 export function GuidePreview({
@@ -17,6 +18,7 @@ export function GuidePreview({
 }) {
   const [loaded, setLoaded] = useState<StudyGuideContent | null>(edition ?? null);
   const [showAnswers, setShowAnswers] = useState(initialAnswersRevealed);
+  const [guideQuiet, setGuideQuiet] = useState<{ acknowledgement: Exclude<QuietAcknowledgement, "none">; status: string } | null>(null);
 
   useEffect(() => {
     if (edition !== undefined) {
@@ -30,11 +32,35 @@ export function GuidePreview({
         const body = await response.json().catch(() => null) as { edition?: StudyGuideContent | null } | null;
         if (!stopped) setLoaded(body?.edition ?? null);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!stopped) {
+          requestQuietAcknowledgement({ phase: "error", kind: "guide-ready", eventKey: `guide-ready:${roomId}` });
+          setGuideQuiet(null);
+        }
+      });
     return () => {
       stopped = true;
     };
   }, [edition, roomId]);
+
+  useEffect(() => {
+    if (!loaded) {
+      setGuideQuiet(null);
+      if (edition === undefined) {
+        requestQuietAcknowledgement({ phase: "loading", kind: "guide-ready", eventKey: `guide-ready:${roomId}` });
+      }
+      return;
+    }
+    const decision = requestQuietAcknowledgement({
+      phase: "success",
+      kind: "guide-ready",
+      eventKey: `guide-ready:${roomId}:${loaded.sourceSnapshot}`
+    });
+    setGuideQuiet(decision.acknowledgement === "none" || !decision.status ? null : {
+      acknowledgement: decision.acknowledgement,
+      status: decision.status
+    });
+  }, [edition, loaded, roomId]);
 
   if (!loaded) {
     return <p className="setupLead">Your guide will show up here after your files are ready.</p>;
@@ -46,7 +72,8 @@ export function GuidePreview({
     <article className="guideReading" aria-label="Study guide preview" style={{ overflowWrap: "anywhere", background: "#fff", maxWidth: 320 }}>
       <p className="tinyLabel">Guide · {model.level} · version {model.version} · {model.sourceCount} sources</p>
       <h2>{model.title}</h2>
-      <div className="guideActions">
+      <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
+        {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
         <StudyGuideDownloadButton roomId={roomId} />
         <StudyGuideDownloadButton roomId={roomId} format="docx" />
         <button type="button" onClick={() => window.print()}>Print</button>
