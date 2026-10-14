@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type ReactNode, type Ref, type UIEvent } from "react";
 import type { Topic } from "@/lib/rooms";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
@@ -15,6 +15,98 @@ type Check = {
   done: boolean;
 };
 
+/** "Lesson 2 of 6", clamped to the cursor's list. A failed load does not change this. */
+export function lessonPositionLabel(index: number, count: number): string | null {
+  if (!Number.isFinite(count) || count < 1) return null;
+  const position = Math.min(count, Math.max(1, Math.floor(index) + 1 || 1));
+  return `Lesson ${position} of ${count}`;
+}
+
+/** A failed refresh keeps the last successful lesson. A success replaces only that topic. */
+export function retainSuccessfulLesson<T>(current: Record<string, T>, topicId: string, kept: T | null, incoming: T | null): Record<string, T> {
+  if (incoming) return { ...current, [topicId]: incoming };
+  if (current[topicId]) return current;
+  if (kept) return { ...current, [topicId]: kept };
+  return current;
+}
+
+export type LearnSurfaces<L, O, C> = { lesson: L; overview: O; coach: C };
+
+/** Patching one surface returns the other two unchanged. */
+export function keepIndependentSurfaces<L, O, C>(current: LearnSurfaces<L, O, C>, patch: Partial<LearnSurfaces<L, O, C>>): LearnSurfaces<L, O, C> {
+  return {
+    lesson: patch.lesson === undefined ? current.lesson : patch.lesson,
+    overview: patch.overview === undefined ? current.overview : patch.overview,
+    coach: patch.coach === undefined ? current.coach : patch.coach
+  };
+}
+
+/**
+ * Phone lesson chrome: the cursor label, the reading, wrapping citations, and
+ * Clear / Next. Citations and actions are siblings of the scroller so a full
+ * thread cannot clip them.
+ */
+export function LessonMobileFrame({
+  mode,
+  label,
+  topicTitle,
+  text,
+  citations,
+  status,
+  onRetry,
+  onClear,
+  onNext,
+  actionsDisabled,
+  threadRef,
+  onScroll,
+  children
+}: {
+  mode: "learn" | "coach";
+  label: string | null;
+  topicTitle: string;
+  text: string | null;
+  citations: Citation[];
+  status?: string | null;
+  onRetry?: () => void;
+  onClear: () => void;
+  onNext: () => void;
+  actionsDisabled?: boolean;
+  threadRef: Ref<HTMLDivElement>;
+  onScroll: (event: UIEvent<HTMLDivElement>) => void;
+  children: ReactNode;
+}) {
+  const modeName = mode === "learn" ? "Learn" : "Coach";
+  const nextName = mode === "learn" ? "lesson" : "topic";
+  return (
+    <>
+      {mode === "learn" && label ? (
+        <p className="lessonPosition" data-lesson-label>
+          {label}
+          <span className="lessonPositionTopic">{topicTitle}</span>
+        </p>
+      ) : null}
+      <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={onScroll}>
+        <div className="lessonReading" data-learn-surface={mode === "learn" ? "lesson" : "practice"} aria-label={`${modeName}, ${topicTitle}`}>
+          {status ? <p className="lessonStatus" role="status">{status}</p> : null}
+          {text ? <RichText className="lessonText" text={text} /> : null}
+          {onRetry ? <button className="ghostButton" type="button" onClick={onRetry} disabled={actionsDisabled}>Try again</button> : null}
+        </div>
+        {children}
+        <div className="threadEnd" aria-hidden="true" />
+      </div>
+      {citations.length > 0 ? (
+        <div className="lessonCitations">
+          <CitationChips citations={citations} />
+        </div>
+      ) : null}
+      <div className="lessonActions" data-lesson-actions role="group" aria-label={`${modeName} actions for ${topicTitle}`}>
+        <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Clear ${modeName} for ${topicTitle}`} onClick={onClear}>Clear</button>
+        <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Next ${nextName} for ${topicTitle}`} onClick={onNext}>Next</button>
+      </div>
+    </>
+  );
+}
+
 export function LearnPanel({
   roomId,
   topics,
@@ -22,7 +114,8 @@ export function LearnPanel({
   onChanged,
   embedded = false,
   onCoachTopic,
-  onOpenMaterials
+  onOpenMaterials,
+  lessonCursor = null
 }: {
   roomId: string;
   topics: Topic[];
@@ -33,6 +126,8 @@ export function LearnPanel({
   /** Hand a topic to the Coach chat. */
   onCoachTopic?: (topic: Topic) => void;
   onOpenMaterials?: () => void;
+  /** Existing Learn cursor. Management does not move it. */
+  lessonCursor?: { index: number; count: number; title: string } | null;
 }) {
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[]; notice: LearnOutcomeView | null }>>({});
@@ -59,16 +154,12 @@ export function LearnPanel({
   }
 
   async function loadLesson(topic: Topic) {
+    const keptLesson = lessons[topic.id] ?? null;
     const body = JSON.stringify({ roomId, topicId: topic.id });
     const attempt = gestures.current.begin(`learn:${topic.id}`, body);
     if (!attempt.started) return;
     setLoadingId(topic.id);
     setError(null);
-    setLessonOutcomes((current) => {
-      const next = { ...current };
-      delete next[topic.id];
-      return next;
-    });
     try {
       const response = await fetch("/api/learn", { method: "POST", headers: operationHeaders(attempt.id), body });
       gestures.current.finish(`learn:${topic.id}`, response.status);
@@ -77,6 +168,7 @@ export function LearnPanel({
       if (outcome && outcome.kind !== "ready" && outcome.kind !== "partial_coverage") {
         const view = learnOutcomeView(outcome);
         if (view) setLessonOutcomes((current) => ({ ...current, [topic.id]: view }));
+        setLessons((current) => retainSuccessfulLesson(current, topic.id, keptLesson, null));
         return;
       }
       if (response.status === 202 || response.status === 409 || !response.ok) {
@@ -85,18 +177,16 @@ export function LearnPanel({
       if (typeof payload.explanation !== "string" || !payload.explanation.trim()) {
         throw new Error("Could not build that lesson. Please try again.");
       }
-      setLessons((current) => ({
-        ...current,
-        [topic.id]: {
-          text: payload.explanation,
-          citations: Array.isArray(payload.citations) ? payload.citations : [],
-          notice: typeof payload.coverageLimitation === "string" && payload.coverageLimitation.trim()
-            ? { title: "Some pages need attention", message: payload.coverageLimitation, action: "materials" }
-            : outcome ? learnOutcomeView(outcome) : null
-        }
+      setLessons((current) => retainSuccessfulLesson(current, topic.id, keptLesson, {
+        text: payload.explanation,
+        citations: Array.isArray(payload.citations) ? payload.citations : [],
+        notice: typeof payload.coverageLimitation === "string" && payload.coverageLimitation.trim()
+          ? { title: "Some pages need attention", message: payload.coverageLimitation, action: "materials" }
+          : outcome ? learnOutcomeView(outcome) : null
       }));
     } catch (learnError) {
       gestures.current.abort(`learn:${topic.id}`);
+      setLessons((current) => retainSuccessfulLesson(current, topic.id, keptLesson, null));
       setError(learnError instanceof Error ? learnError.message : "Something went wrong.");
     } finally {
       setLoadingId(null);
@@ -337,10 +427,18 @@ export function LearnPanel({
     );
   }
 
+  const cursorLabel = lessonCursor ? lessonPositionLabel(lessonCursor.index, lessonCursor.count) : null;
+
   return (
     <div className="learnMode">
+      {cursorLabel && (
+        <p className="lessonPosition" data-lesson-label>
+          {cursorLabel}
+          <span className="lessonPositionTopic">{lessonCursor?.title}</span>
+        </p>
+      )}
       <div className="learnHeader">
-        <p className="phSub topicsLead">{topics.length} {topics.length === 1 ? "topic" : "topics"} from your study guide.{embedded ? " Open one for a lesson." : ""}</p>
+        <p className="phSub topicsLead">{topics.length} {topics.length === 1 ? "topic" : "topics"} from your study guide.{embedded ? " Manage them here. The lesson cursor stays in Learn." : ""}</p>
         <div className="learnHeaderActions">
           <button
             className="ghostButton"
@@ -459,7 +557,9 @@ export function LearnPanel({
                         </div>
                       )}
                       <RichText className="lessonText" text={lesson.text} />
-                      <CitationChips citations={lesson.citations} />
+                      <div className="lessonCitations">
+                        <CitationChips citations={lesson.citations} />
+                      </div>
                       {onCoachTopic && (
                         <button className="buttonPrimary coachThisTopic" type="button" onClick={() => onCoachTopic(topic)}>
                           Coach me on this <span aria-hidden="true">→</span>

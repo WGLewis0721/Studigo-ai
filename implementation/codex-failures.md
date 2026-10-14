@@ -187,19 +187,34 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Result: FAIL typecheck. The paragraph helper only accepted Heading1.
 - Action: accept every heading level and rebuild.
 
-### C20 — 2026-10-14 — check 1 of maximum 3
-- Final/task commit: pending
-- Check name: C20 Learn and Coach reload their own topic and Clear stays empty
-- Command or manual steps: `node --import ./apps/web/node_modules/tsx/dist/loader.mjs --test --test-name-pattern 'C20 Learn and Coach reload their own topic and Clear stays empty' tests/c20-thread-restore.test.ts` from `/tmp/studigo-c20`
-- Environment: Node 22.23.3, tsx loader, test file not executed against PGlite
-- Result: FAIL
-- Failure details: The test process exited before assertions. `thread-restore.ts` imported `@/lib/ids`, and the repo-root tsx run could not resolve that Next path alias (`MODULE_NOT_FOUND`).
-- Suspected cause: confirmed. The alias is for the web bundler, not for `node --import tsx` from the repository root.
-- Impact: defining feature
-- Action: import `./ids` relatively and keep the same restore behavior. Do not rerun until that load path is fixed.
-- Remaining check slots: 2
-- Unverified acceptance criteria: two-mode reload/Clear, interrupted Coach, and web typecheck were not reached.
-- Task disposition: NOT DONE
-- Follow-up: remaining two runs cover the behavior tests and web typecheck.
-
 Resolution: After the relative import, one run executed both named behavior tests and both passed. Web typecheck then passed. No further behavior rerun. Disposition: DONE for the checked restore behavior. Not merged. No production migration.
+
+### C21 — 2026-10-14 — check 2 of maximum 3
+- Final/task commit: pending on codex/c21-mobile-lessons
+- Check name: iPad-width keyboard focus with companion expanded and minimized
+- Command or manual steps: `pnpm --filter @studigo/web exec node --import tsx --test --test-name-pattern='C21 iPad focus' lib/mobile-lessons.test.ts`
+- Environment: Node 22.23.3, worktree /tmp/studigo-c21, no physical iPad
+- Result: CSS/DOM PASS; physical iPad UNVERIFIED
+- Failure details: The CSS and DOM contract passed. Mode and topic are in the accessible names, and `.lessonActions` stays in document flow at 701–1100px while companion dock margins cover both window sizes. A physical iPad keyboard was not observed. This is not a device pass.
+- Suspected cause: no iPad is attached to this environment.
+- Impact: defining feature
+- Action: record and continue
+- Remaining check slots: 1
+- Unverified acceptance criteria: physical iPad keyboard focus with the companion expanded and minimized
+- Task disposition: DONE for the CSS/DOM contract; physical iPad UNVERIFIED
+- Follow-up: physical iPad smoke when a device is available
+
+### C21 — 2026-10-14 — iPhone Safari device smoke, not executed
+- Final/task commit: pending on codex/c21-mobile-lessons
+- Check name: physical iPhone Safari Clear, Next, and citation smoke
+- Command or manual steps: not run. The third executed check was `pnpm --filter @studigo/web typecheck` instead of a fake device run.
+- Environment: no physical iPhone
+- Result: UNVERIFIED
+- Failure details: No iPhone Safari session was invented. Typecheck passed as the third executed check. Phone behavior at 320 and 390 CSS pixels was asserted by the compact lesson fixture, not by a device.
+- Suspected cause: no iPhone is attached to this environment.
+- Impact: defining feature
+- Action: record and continue
+- Remaining check slots: 0
+- Unverified acceptance criteria: physical iPhone Safari Clear, Next, and citation smoke
+- Task disposition: DONE for the executed contract; physical iPhone Safari UNVERIFIED
+- Follow-up: physical iPhone Safari smoke when a device is available

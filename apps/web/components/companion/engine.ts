@@ -143,7 +143,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /** The message field and whatever sits directly above it (chips, an error): what his window stands beside. */
   function rowHeight() {
     let height = 0;
-    ws.querySelectorAll(".chatComposer, .chatChips, .chatError").forEach((node) => { if (shown(node)) height += node.getBoundingClientRect().height; });
+    ws.querySelectorAll(".chatComposer, .chatChips, .chatError, .lessonActions, .lessonCitations").forEach((node) => { if (shown(node)) height += node.getBoundingClientRect().height; });
     return height;
   }
   function controls(a: Area): Rect[] {

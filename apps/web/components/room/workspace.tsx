@@ -96,7 +96,7 @@ export function RoomWorkspace({
   const [mode, setMode] = useState<Mode>(
     MODES.some((item) => item.id === initialMode) ? (initialMode as Mode) : initialMode === "ask" || initialMode === "learn" ? "coach" : defaultMode
   );
-  const [coachView, setCoachView] = useState<"chat" | "topics">(initialMode === "learn" ? "topics" : "chat");
+  const [coachView, setCoachView] = useState<"chat" | "topics">("chat");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
   const closeTimer = useRef(0);
@@ -151,8 +151,7 @@ export function RoomWorkspace({
   useEffect(() => { companionThinking(mascotState === "thinking"); }, [mascotState, companionThinking]);
   function navigate(target: NavTarget, topicId: string | null = null) {
     const nextMode: Mode = target === "ask" || target === "learn" ? "coach" : target;
-    if (target === "learn") setCoachView("topics");
-    if (target === "ask") setCoachView("chat");
+    if (target === "learn" || target === "ask") setCoachView("chat");
     setFocusTopicId(topicId);
     setMode(nextMode);
     if (nextMode === "cram") setCramStarted(true);
@@ -223,7 +222,7 @@ export function RoomWorkspace({
 
       <CompanionContext.Provider value={companion.api}>
       <HeaderSlots.Provider value={slots}>
-      <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"}>
+      <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"} data-layout={coachFramed ? "lessons" : undefined}>
         {mode === "materials" && (
           <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
         )}

@@ -362,6 +362,11 @@ phones. Launch order: Google, Apple, Microsoft, then email under a divider.
   keys as equal columns with the icon above the label); marketing floats
   reposition inside the device; shell-picker names collapse to swatches
   (accessible names kept).
+- **Lessons on a phone:** Learn shows the cursor label (Lesson 2 of 6), the
+  lesson, and Clear, Next, and wrapping citations. Those controls stay at least
+  44px with safe-area padding and are not clipped when the thread is empty.
+  Focus names the mode and the topic. The companion, at either size, stays off
+  the composer and that action row. One scope picker remains; Coach stays practice.
 
 ## Accessibility
 
