@@ -1,7 +1,8 @@
-import { INSUFFICIENT_EVIDENCE_TEXT, asUntrustedMaterial, streamGroundedAnswer, toCitations, type GroundedStreamEvent } from "@studigo/ai";
+import { INSUFFICIENT_EVIDENCE_TEXT, asUntrustedMaterial, streamGroundedAnswer, toCitations, type GroundedStreamEvent, type RetrievedChunk } from "@studigo/ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { retrieveForRoom } from "@/lib/retrieval";
 import { guideNavigationIntent, retrieveGuideNavigationChunks } from "@/lib/guide-navigation";
+import { classifyLearnOutcome, learnOutcomeMessage, type LearnDocumentStatus, type LearnOutcome } from "@/lib/learn-outcome";
 import { writeStudyTrace } from "@/lib/study-trace";
 import { runCoachTurn } from "@/lib/coach-router";
 import type { LearningRoute } from "@/lib/learning";
@@ -60,13 +61,30 @@ export type EngineRequest = {
   signal?: AbortSignal;
 };
 
+export class LearnStageError extends Error {
+  constructor(
+    readonly stage: "retrieval_error" | "generation_error",
+    readonly outcome?: LearnOutcome
+  ) {
+    super(stage);
+  }
+}
+
+export class InvalidTopicScopeError extends Error {
+  constructor() {
+    super("Selected topics are no longer active in this Study Room.");
+  }
+}
+
+type EngineEvent = GroundedStreamEvent & { outcome?: LearnOutcome; responseStored?: true };
+
 const EVIDENCE_WINDOW = 300;
 
 export function scopeTopicsForRequest(roomTopics: Topic[], selectedTopicIds: readonly string[] | undefined): Topic[] {
   if (!selectedTopicIds?.length) return roomTopics;
   const selected = new Set(selectedTopicIds);
   const scoped = roomTopics.filter((topic) => selected.has(topic.id));
-  if (!scoped.length) throw new Error("Your selected topics are no longer available. Pick a topic and try again.");
+  if (scoped.length !== selected.size) throw new InvalidTopicScopeError();
   return scoped;
 }
 
@@ -85,7 +103,7 @@ export function scopeTopicsForRequest(roomTopics: Topic[], selectedTopicIds: rea
  * fabricates content on its own. Route handlers and UI call this instead of
  * composing retrieval + generation + analytics themselves.
  */
-export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<GroundedStreamEvent> {
+export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<EngineEvent> {
   const [roomTopics, evidence] = await Promise.all([
     fetchActiveTopics(request.supabase, request.roomId),
     fetchRecentEvidence(request.supabase, request.roomId)
@@ -148,26 +166,47 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
 
   const instructions = formatDirectives(args.directives, [learnerStateDirective]);
 
+  // This read stays under the authenticated caller's RLS. It distinguishes
+  // absent/processing files from a ready room whose retrieval found no match.
+  const { data: documentRows, error: documentError } = await args.supabase
+    .from("documents")
+    .select("id, status")
+    .eq("room_id", args.roomId);
+  if (documentError) throw new LearnStageError("retrieval_error");
+  const documentStatuses = (documentRows ?? []) as LearnDocumentStatus[];
+  const availability = classifyLearnOutcome({ documentStatuses });
+  if (availability.kind === "no_ready_materials" || availability.kind === "materials_processing") {
+    const text = learnOutcomeMessage(availability.kind);
+    yield { type: "delta", text };
+    yield { type: "done", answer: { text, citations: [], grounded: false }, outcome: availability };
+    return;
+  }
+
   // A guide overview or vocabulary list is source navigation, not a
   // fact-specific semantic question. Never turn an already indexed guide into
   // "not in your materials" just because a generic query has weak similarity.
   // Ordinary fact questions keep the same strict vector retrieval threshold.
   const navigation = guideNavigationIntent(args.question);
-  const chunks = navigation
-    ? await retrieveGuideNavigationChunks({
+  let chunks: RetrievedChunk[];
+  try {
+    chunks = navigation
+      ? await retrieveGuideNavigationChunks({
         supabase: args.supabase,
         roomId: args.roomId,
         ownerId: args.userId,
         question: args.question,
         intent: navigation
       })
-    : await retrieveForRoom({
+      : await retrieveForRoom({
         supabase: args.supabase,
         roomId: args.roomId,
         query: args.question,
         ownerId: args.userId,
         traceRoute: `engine:${args.mode ?? "ask"}`
       });
+  } catch {
+    throw new LearnStageError("retrieval_error", classifyLearnOutcome({ documentStatuses, failure: "retrieval_error" }));
+  }
   if (navigation) {
     writeStudyTrace({
       route: `engine:ask:guide-${navigation}`,
@@ -179,14 +218,50 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
     });
   }
 
-  yield* streamGroundedAnswer({
-    question: args.question,
-    instructions: instructions || undefined,
-    format: "outline",
-    chunks,
-    history: args.history,
-    signal: args.signal
+  const outcome = classifyLearnOutcome({
+    documentStatuses,
+    evidenceDocumentIds: chunks.map((chunk) => chunk.documentId),
+    evidenceChunkCount: chunks.length
   });
+  if (outcome.kind === "no_relevant_evidence") {
+    const text = learnOutcomeMessage(outcome.kind);
+    yield { type: "delta", text };
+    yield { type: "done", answer: { text, citations: [], grounded: false }, outcome };
+    return;
+  }
+
+  try {
+    for await (const event of streamGroundedAnswer({
+      question: args.question,
+      instructions: instructions || undefined,
+      format: "outline",
+      chunks,
+      history: args.history,
+      signal: args.signal
+    })) {
+      if (event.type === "done") {
+        const groundedOutcome = event.answer.grounded
+          ? outcome
+          : classifyLearnOutcome({ documentStatuses });
+        yield event.answer.grounded
+          ? { ...event, outcome: groundedOutcome }
+          : {
+              type: "done",
+              answer: { text: learnOutcomeMessage(groundedOutcome.kind), citations: [], grounded: false },
+              outcome: groundedOutcome
+            };
+      } else {
+        yield event;
+      }
+    }
+  } catch {
+    throw new LearnStageError("generation_error", classifyLearnOutcome({
+      documentStatuses,
+      evidenceDocumentIds: chunks.map((chunk) => chunk.documentId),
+      evidenceChunkCount: chunks.length,
+      failure: "generation_error"
+    }));
+  }
 }
 
 async function* runPracticeQuestionFlow(
@@ -336,7 +411,7 @@ async function fetchActiveTopics(supabase: SupabaseClient, roomId: string): Prom
     .eq("active", true)
     .order("order_index", { ascending: true });
 
-  if (error) throw new Error('Could not load the current study scope. Please retry.');
+  if (error) throw new LearnStageError("retrieval_error");
   return (data ?? []) as Topic[];
 }
 

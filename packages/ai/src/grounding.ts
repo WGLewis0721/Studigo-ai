@@ -229,7 +229,8 @@ export async function* streamGroundedAnswer(args: {
       }
     }
 
-    const finalText = text.trim() || INSUFFICIENT_EVIDENCE_TEXT;
+    const finalText = text.trim();
+    if (!finalText) throw new Error("The answer provider returned no text.");
     const used = citationsUsedIn(finalText, available);
     yield {
       type: "done",

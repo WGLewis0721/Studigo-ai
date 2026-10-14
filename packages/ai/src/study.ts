@@ -564,7 +564,9 @@ export async function explainTopic(args: {
     input
   }, { signal: providerAbortSignal() }));
 
-  return response.output_text?.trim() || "I couldn't build a grounded explanation for that topic.";
+  const explanation = response.output_text?.trim();
+  if (!explanation) throw new Error("Grounded explanation was empty.");
+  return explanation;
 }
 
 // ---------------------------------------------------------------------------

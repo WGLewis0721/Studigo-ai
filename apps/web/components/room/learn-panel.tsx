@@ -6,6 +6,7 @@ import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
+import { learnOutcomeView, readLearnOutcome, type LearnOutcomeView } from "@/lib/learn-outcome-client";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -20,7 +21,8 @@ export function LearnPanel({
   hasMaterials,
   onChanged,
   embedded = false,
-  onCoachTopic
+  onCoachTopic,
+  onOpenMaterials
 }: {
   roomId: string;
   topics: Topic[];
@@ -30,9 +32,11 @@ export function LearnPanel({
   embedded?: boolean;
   /** Hand a topic to the Coach chat. */
   onCoachTopic?: (topic: Topic) => void;
+  onOpenMaterials?: () => void;
 }) {
   const [openTopicId, setOpenTopicId] = useState<string | null>(null);
-  const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[] }>>({});
+  const [lessons, setLessons] = useState<Record<string, { text: string; citations: Citation[]; notice: LearnOutcomeView | null }>>({});
+  const [lessonOutcomes, setLessonOutcomes] = useState<Record<string, LearnOutcomeView>>({});
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,21 +55,43 @@ export function LearnPanel({
     setOpenTopicId(next);
     if (!next || lessons[topic.id]) return;
 
+    await loadLesson(topic);
+  }
+
+  async function loadLesson(topic: Topic) {
     const body = JSON.stringify({ roomId, topicId: topic.id });
     const attempt = gestures.current.begin(`learn:${topic.id}`, body);
     if (!attempt.started) return;
     setLoadingId(topic.id);
     setError(null);
+    setLessonOutcomes((current) => {
+      const next = { ...current };
+      delete next[topic.id];
+      return next;
+    });
     try {
       const response = await fetch("/api/learn", { method: "POST", headers: operationHeaders(attempt.id), body });
       gestures.current.finish(`learn:${topic.id}`, response.status);
       const payload = await response.json();
+      const outcome = readLearnOutcome(payload?.outcome);
+      if (outcome && outcome.kind !== "ready" && outcome.kind !== "partial_coverage") {
+        const view = learnOutcomeView(outcome);
+        if (view) setLessonOutcomes((current) => ({ ...current, [topic.id]: view }));
+        return;
+      }
       if (response.status === 202 || response.status === 409 || !response.ok) {
         throw new Error(payload.error || "Could not build that lesson.");
       }
+      if (typeof payload.explanation !== "string" || !payload.explanation.trim()) {
+        throw new Error("Could not build that lesson. Please try again.");
+      }
       setLessons((current) => ({
         ...current,
-        [topic.id]: { text: payload.explanation, citations: payload.citations ?? [] }
+        [topic.id]: {
+          text: payload.explanation,
+          citations: Array.isArray(payload.citations) ? payload.citations : [],
+          notice: outcome ? learnOutcomeView(outcome) : null
+        }
       }));
     } catch (learnError) {
       gestures.current.abort(`learn:${topic.id}`);
@@ -304,6 +330,7 @@ export function LearnPanel({
           <span aria-hidden="true">→</span>
         </button>
         {!hasMaterials && <small className="hintText">Add and process a document first.</small>}
+        {!hasMaterials && onOpenMaterials && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>}
       </div>
     );
   }
@@ -350,6 +377,7 @@ export function LearnPanel({
         {topics.map((topic, index) => {
           const isOpen = openTopicId === topic.id;
           const lesson = lessons[topic.id];
+          const lessonOutcome = lessonOutcomes[topic.id];
           const check = checks[topic.id];
 
           return (
@@ -403,8 +431,31 @@ export function LearnPanel({
 
                   {loadingId === topic.id && <p className="hintText">Reading your materials…</p>}
 
+                  {lessonOutcome && (
+                    <div className="formNotice" role="status">
+                      <strong>{lessonOutcome.title}</strong>
+                      <p>{lessonOutcome.message}</p>
+                      {lessonOutcome.action === "retry" && (
+                        <button className="ghostButton" type="button" onClick={() => void loadLesson(topic)} disabled={loadingId === topic.id}>Try again</button>
+                      )}
+                      {lessonOutcome.action === "see_topics" && (
+                        <button className="ghostButton" type="button" onClick={() => setOpenTopicId(null)}>See topics</button>
+                      )}
+                      {lessonOutcome.action === "materials" && onOpenMaterials && (
+                        <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>
+                      )}
+                    </div>
+                  )}
+
                   {lesson && (
                     <>
+                      {lesson.notice && (
+                        <div className="formNotice" role="status">
+                          <strong>{lesson.notice.title}</strong>
+                          <p>{lesson.notice.message}</p>
+                          {onOpenMaterials && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>}
+                        </div>
+                      )}
                       <RichText className="lessonText" text={lesson.text} />
                       <CitationChips citations={lesson.citations} />
                       {onCoachTopic && (
