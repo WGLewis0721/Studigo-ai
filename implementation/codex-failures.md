@@ -156,3 +156,13 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: government edition inspection, first attempt
 - Result: FAIL before assertions. Importing the provider module at load time broke the test linker.
 - Action: load the provider only when live generation is enabled. The rerun passed. No model call.
+
+### C17 — 2026-10-14 — preview assertion
+- Check: content-to-preview equivalence, first attempt
+- Result: FAIL on the test, not the preview. The definition was present with an encoded apostrophe.
+- Action: match the rendered text. The rerun is the same check.
+
+### C17 — 2026-10-14 — citation link assertion
+- Check: compact preview, first attempt
+- Result: FAIL on the assertion. The link was present as `&blockKey=laws`.
+- Action: match the encoded href. No product change.

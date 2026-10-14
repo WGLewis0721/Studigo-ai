@@ -3831,6 +3831,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .coachActiveStyle em { font-style: normal; color: var(--muted); white-space: nowrap; }
 .coachEmptyStyle { font-size: .88rem; color: var(--ink-2); }
 
+.guideReading {
+  background: #fff; color: var(--ink); overflow-wrap: anywhere;
+  padding: 28px 24px; border: 1px solid var(--edge); border-radius: 16px;
+  display: grid; gap: 14px; max-width: 760px;
+}
+.guideReading h2, .guideReading h3, .guideReading h4 { margin: 0; }
+.guideReading p, .guideReading li { margin: 0; line-height: 1.55; }
+.guideReading a { color: var(--teal, #0f6f6a); }
+.guideActions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 420px) {
+  .guideReading { padding: 18px 14px; }
+}
+
 @media (max-width: 520px) {
   .studyGuideRefresh { align-items: stretch; flex-direction: column; }
   .studyGuideRefresh .ghostButton { width: 100%; }

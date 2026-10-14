@@ -174,6 +174,8 @@ never changes inside a room; the tone changes with every mode.
 
 Tokens: `--edge`, `--recess`, `--gloss`, `--gloss-key`, `--lift-1/2/3`.
 
+The guide preview (`.guideReading`) is a matte white reading surface. It uses semantic headings, generous spacing, and `overflow-wrap: anywhere` so long terms and source links wrap at a compact width. Source links open the stored block. Rendering the preview does not generate text.
+
 ## Geometry
 
 - Radii: `8 · 12 · 16 · 22 · 30 · 40`. Nest concentrically (inner = outer − padding).

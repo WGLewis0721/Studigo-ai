@@ -5,6 +5,22 @@ import type { StudyGuideContent } from "@studigo/ai";
 
 export const runtime = "nodejs";
 
+export async function GET(request: Request) {
+  const { supabase, user, unauthorized } = await requireApiUser();
+  if (!user) return unauthorized;
+  const roomId = new URL(request.url).searchParams.get("roomId")?.trim();
+  if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
+  const { data, error } = await supabase
+    .from("guide_editions")
+    .select("content")
+    .eq("room_id", roomId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return Response.json({ error: "Could not read the guide." }, { status: 500 });
+  return Response.json({ edition: data?.content ?? null });
+}
+
 export async function POST(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
