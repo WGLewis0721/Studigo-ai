@@ -193,8 +193,8 @@ function withSupport<T extends CoachState>(state: T, level: number): T {
 
 async function readCorpusRevision(supabase: SupabaseClient, roomId: string): Promise<number | null> {
   try {
-    const table = supabase.from("study_rooms") as {
-      select?: (columns: string) => {
+    const table = supabase.from("study_rooms") as unknown as {
+      select: (columns: string) => {
         eq: (column: string, value: string) => {
           maybeSingle: () => Promise<{ data: { corpus_revision?: unknown } | null; error: { message: string } | null }>;
         };

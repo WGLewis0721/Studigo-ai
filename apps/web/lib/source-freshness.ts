@@ -194,7 +194,7 @@ export function applyFailedRefresh<T extends {
     reading: state.reading,
     evidence: state.evidence,
     invalidated: false
-  };
+  } as T & { invalidated: false };
 }
 
 export function awardForPendingChallenge(input: {
