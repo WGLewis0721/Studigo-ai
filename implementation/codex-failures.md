@@ -55,3 +55,5 @@ Read-only source update after the check cap: the subsequently supplied original 
 - Check 2/3: Node 22 grounded-answer and SSE compatibility, PASS (1 test).
 - Check 3/3: package-local web `tsc --noEmit`, FAIL: `lib/learn-outcome-contract.test.ts:186` passed a broad `LearnOutcome` to a success-only type. The synthetic fixture already asserted `kind === "ready"`; its compile-time narrowing was corrected with an explicit success-kind type assertion after this check.
 - No manual retry is permitted under the three-check cap. Application code did not cause the reported compiler error, but final-commit manual type safety remains unverified. Normal PR CI may supply independent final-commit evidence; until then C04 is NOT DONE.
+
+Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Automatic Node 22 GitHub Actions run `38611411725` passed web typecheck, tests, and build; the independent `postgres-multisession` check also passed. Manual check consumption remains 3/3 with no retry. C04 acceptance is based on the focused behavioral tests, cited SSE contract check, source review, and automatic CI, not on the failed manual compiler run.
