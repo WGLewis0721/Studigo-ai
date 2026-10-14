@@ -552,7 +552,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | ID | State | Final commit / PR | Acceptance evidence / checks used | Integrated commit or blocker |
 |---|---|---|---|---|
 | C01 | DONE | `455573f` implementation, `d72edcc` CI repair / [PR #104](https://github.com/WGLewis0721/Studigo-ai/pull/104) | 3/3 manual checks PASS under Node 22: four switches preserved two drafts/transcripts and per-mode scroll; delayed Learn/Coach chunks, loading and error stayed in the original mode; pending Coach switch made no extra AI request or evidence write in the synthetic fixture; web typecheck passed. Automatic CI passed after the stale source assertion was updated. | Accepted for integration; no production or database verification claimed. |
-| C02 | NOT STARTED | — | — | — |
+| C02 | NOT DONE | `f370716` / [draft PR #105](https://github.com/WGLewis0721/Studigo-ai/pull/105) | 3/3 slots: synthetic Clear UI PASS; owner/room/surface admission scenario PASS; web typecheck PASS. The required disposable persisted Coach receipt and RLS check is UNVERIFIED. | Local Supabase Postgres image unpack failed under Docker VFS with `no space left on device`; do not integrate until persisted receipt/mastery and wrong-scope checks pass. |
 | C03 | NOT STARTED | — | — | — |
 | C04 | NOT STARTED | — | — | — |
 | C05 | NOT STARTED | — | — | — |
