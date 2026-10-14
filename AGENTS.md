@@ -14,7 +14,8 @@ Then open only what the task requires:
 
 - product behavior → `docs/PRODUCT.md`
 - deep runtime/data architecture → `docs/ARCHITECTURE.md`
-- hardening / planned engineering work → `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W; the only execution plan)
+- hardening / broader planned engineering work → `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W)
+- document-learning reliability / readable guides → one assigned task card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`; do not load the whole queue. Create a branch per task from `integration/document-learning-reliability`, commit before the next assignment, and open the PR against integration. Maximum three individual validation checks per task, including failed/repeated checks; no manual broad suites. Do not merge main or deploy production without authorization.
 - security/public release → `implementation/security-readiness/`
 - release sequence → `docs/ROADMAP.md`
 
@@ -45,7 +46,7 @@ For game work, use `prototypes/moon-road/`; the game is a separate release track
 - Add tests/evals around behavior being changed.
 - Document material architectural changes in the specialist contract. Update `ENGINEERING.md` when the live system map, technology rationale, authority boundary, or code ownership changes; update `implementation/ENGINEERING_PLAN.md` when priorities or planned engineering work change.
 - Use feature branches and PRs for substantial work.
-- Do not create another engineering overview/walkthrough/hardening document. `ENGINEERING.md` is the compact current map and `implementation/ENGINEERING_PLAN.md` is the single canonical engineering plan.
+- Do not create another engineering overview/walkthrough/hardening document. `ENGINEERING.md` is the compact current map, `implementation/ENGINEERING_PLAN.md` is the broader engineering backlog, and `STUDIGO_CODEX_EXECUTION_PLAN.md` is the single executable queue for the document-learning track.
 - Do not delete product/architecture documentation just because implementation evolves; update it.
 
 ## UX discipline
