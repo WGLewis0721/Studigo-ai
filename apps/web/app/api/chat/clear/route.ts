@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     const service = createServiceSupabaseClient();
     const archived = await service.from("conversations").update({ archived_at: new Date().toISOString() }).eq("id", conversationId);
     if (archived.error) return Response.json({ error: "Could not archive that chat." }, { status: 503 });
+    await service.from("chat_thread_pointers").update({ conversation_id: null, updated_at: new Date().toISOString() }).eq("owner_id", user.id).eq("room_id", roomId).eq("surface", surface).eq("conversation_id", conversationId);
   }
   return Response.json({ archived: true });
 }

@@ -186,3 +186,20 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: web build
 - Result: FAIL typecheck. The paragraph helper only accepted Heading1.
 - Action: accept every heading level and rebuild.
+
+### C20 — 2026-10-14 — check 1 of maximum 3
+- Final/task commit: pending
+- Check name: C20 Learn and Coach reload their own topic and Clear stays empty
+- Command or manual steps: `node --import ./apps/web/node_modules/tsx/dist/loader.mjs --test --test-name-pattern 'C20 Learn and Coach reload their own topic and Clear stays empty' tests/c20-thread-restore.test.ts` from `/tmp/studigo-c20`
+- Environment: Node 22.23.3, tsx loader, test file not executed against PGlite
+- Result: FAIL
+- Failure details: The test process exited before assertions. `thread-restore.ts` imported `@/lib/ids`, and the repo-root tsx run could not resolve that Next path alias (`MODULE_NOT_FOUND`).
+- Suspected cause: confirmed. The alias is for the web bundler, not for `node --import tsx` from the repository root.
+- Impact: defining feature
+- Action: import `./ids` relatively and keep the same restore behavior. Do not rerun until that load path is fixed.
+- Remaining check slots: 2
+- Unverified acceptance criteria: two-mode reload/Clear, interrupted Coach, and web typecheck were not reached.
+- Task disposition: NOT DONE
+- Follow-up: remaining two runs cover the behavior tests and web typecheck.
+
+Resolution: After the relative import, one run executed both named behavior tests and both passed. Web typecheck then passed. No further behavior rerun. Disposition: DONE for the checked restore behavior. Not merged. No production migration.
