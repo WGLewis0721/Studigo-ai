@@ -557,7 +557,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C04 | NOT STARTED | — | — | — |
 | C05 | NOT STARTED | — | — | — |
 | C06 | NOT STARTED | — | — | — |
-| C07 | NOT STARTED | — | — | — |
+| C07 | NOT DONE | Focused implementation on `codex/c07-page-recovery`; PR pending | 3/3 checks used: supplied clean three-page Government guide facts and no-OCR selection PASS; synthetic healthy/corrupt-layer selection and OCR replacement PASS; affected-package typecheck FAILED before compiler startup because root `tsc` path was absent. Actual failing scanned PDF and real OCR unverified. | Hold for scanned source, accepted SEC gate, and renewed compiler check; quality-only OCR remains disabled by default. |
 | C08 | NOT STARTED | — | — | — |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |

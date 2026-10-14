@@ -3,6 +3,7 @@ import {
   extractTopicMap,
   ocrImage,
   ocrPagePdf,
+  OcrCapabilityError,
   type RetrievedChunk
 } from "@studigo/ai";
 import {
@@ -11,6 +12,7 @@ import {
   extractSinglePagePdf,
   isImageMimeType,
   pagesNeedingOcr,
+  pageWithOcrTranscription,
   type ExtractedPage,
   type ExtractionResult
 } from "@studigo/documents";
@@ -228,10 +230,22 @@ async function applyOcr(args: {
   mimeType: string;
   filename: string;
 }): Promise<ExtractionResult> {
+  // Quality-only OCR can increase provider work. Keep it disabled until the
+  // accepted spend/concurrency admission protects this workload.
+  const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1";
+  const configuredDuration = Number(process.env.STUDIGO_OCR_TOTAL_TIMEOUT_MS ?? 180_000);
+  const maxDurationMs = Number.isFinite(configuredDuration) ? Math.max(1_000, Math.min(configuredDuration, 240_000)) : 180_000;
+  const deadline = Date.now() + maxDurationMs;
+  const remainingTime = () => {
+    const remaining = Math.min(60_000, deadline - Date.now());
+    if (remaining <= 0) throw new Error("OCR time limit reached; this file has not been marked ready.");
+    return remaining;
+  };
   if (isImageMimeType(args.mimeType)) {
     const text = await ocrImage({
       bytes: new Uint8Array(args.buffer),
-      mimeType: args.mimeType
+      mimeType: args.mimeType,
+      timeoutMs: remainingTime()
     });
     return {
       ...args.extraction,
@@ -242,7 +256,7 @@ async function applyOcr(args: {
 
   if (args.mimeType !== "application/pdf") return args.extraction;
 
-  const targets = pagesNeedingOcr(args.extraction);
+  const targets = pagesNeedingOcr(args.extraction, { includeQuality: qualityOcrEnabled });
   assertIngestLimit(targets.length, MAX_OCR_PAGES, "OCR pages");
   if (!targets.length) return args.extraction;
 
@@ -254,19 +268,18 @@ async function applyOcr(args: {
   for (const pageNumber of targets) {
     try {
       const pagePdf = await extractSinglePagePdf(args.buffer, pageNumber);
-      const text = await ocrPagePdf({ pdf: pagePdf, filename: `${args.filename}-p${pageNumber}` });
+      const text = await ocrPagePdf({ pdf: pagePdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() });
       if (!text.trim()) throw new Error("OCR returned no readable text");
 
       const existing = byPage.get(pageNumber);
-      byPage.set(pageNumber, {
-        pageNumber,
-        // Keep whatever thin text layer existed; OCR supplements it.
-        text: [existing?.text, text].filter(Boolean).join("\n").trim(),
-        ocr: true
-      });
+      byPage.set(pageNumber, pageWithOcrTranscription(existing ?? { pageNumber, text: "" }, text));
       ocrPageCount += 1;
-    } catch {
-      throw new Error(`Page ${pageNumber} could not be read. Upload a clearer copy; this file has not been marked ready.`);
+    } catch (error) {
+      if (error instanceof OcrCapabilityError) throw error;
+      if (error instanceof Error && error.message === "OCR returned no readable text") {
+        throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
+      }
+      throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
     }
   }
 

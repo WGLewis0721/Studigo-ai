@@ -22,6 +22,8 @@ export {
   extractSinglePagePdf,
   normalizeText,
   pagesNeedingOcr,
+  pdfPageQualityIssues,
+  pageWithOcrTranscription,
   OCR_TEXT_THRESHOLD
 } from "./extract";
 

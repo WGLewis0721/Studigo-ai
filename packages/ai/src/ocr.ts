@@ -1,4 +1,4 @@
-import { UNTRUSTED_MATERIAL_RULE, chatModel, client, responseOptions } from "./client";
+import { UNTRUSTED_MATERIAL_RULE, chatModel, client, currentTransport, responseOptions } from "./client";
 
 const OCR_PROMPT = [
   "Transcribe all readable text from this scanned study material, in reading order.",
@@ -11,6 +11,14 @@ const OCR_PROMPT = [
 
 export const OCR_EMPTY_MARKER = "NO_TEXT";
 
+export class OcrCapabilityError extends Error {
+  constructor() { super("The configured AI provider does not support document OCR."); }
+}
+
+function assertOcrCapability() {
+  if (currentTransport() === "ollama") throw new OcrCapabilityError();
+}
+
 /**
  * OCR for pages with no usable text layer. A scanned page is handed to the
  * vision model as its own small PDF so the transcription stays tied to one
@@ -19,7 +27,9 @@ export const OCR_EMPTY_MARKER = "NO_TEXT";
 export async function ocrPagePdf(args: {
   pdf: Uint8Array;
   filename: string;
+  timeoutMs?: number;
 }): Promise<string> {
+  assertOcrCapability();
   const response = await client().responses.create({
     model: chatModel(),
     ...responseOptions(),
@@ -36,7 +46,7 @@ export async function ocrPagePdf(args: {
         ]
       }
     ]
-  });
+  }, { signal: AbortSignal.timeout(args.timeoutMs ?? 60_000) });
 
   return cleanOcrText(response.output_text ?? "");
 }
@@ -44,7 +54,9 @@ export async function ocrPagePdf(args: {
 export async function ocrImage(args: {
   bytes: Uint8Array;
   mimeType: string;
+  timeoutMs?: number;
 }): Promise<string> {
+  assertOcrCapability();
   const response = await client().responses.create({
     model: chatModel(),
     ...responseOptions(),
@@ -61,7 +73,7 @@ export async function ocrImage(args: {
         ]
       }
     ]
-  });
+  }, { signal: AbortSignal.timeout(args.timeoutMs ?? 60_000) });
 
   return cleanOcrText(response.output_text ?? "");
 }

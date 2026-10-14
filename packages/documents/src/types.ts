@@ -45,6 +45,8 @@ export type ExtractedPage = {
   /** 1-based page, slide, or section number as a learner would cite it. */
   pageNumber: number;
   text: string;
+  /** Original PDF text-layer bytes as decoded by the parser; never embedded. */
+  rawText?: string;
   /** True when the text came from OCR rather than an embedded text layer. */
   ocr?: boolean;
 };

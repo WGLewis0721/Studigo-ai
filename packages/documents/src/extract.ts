@@ -27,7 +27,8 @@ export async function extractPdf(buffer: ArrayBuffer): Promise<ExtractionResult>
   const { totalPages, text } = await extractText(pdf, { mergePages: false });
   const pages: ExtractedPage[] = (text as string[]).map((raw, index) => ({
     pageNumber: index + 1,
-    text: normalizeText(raw ?? "")
+    text: normalizeText(raw ?? ""),
+    rawText: raw ?? ""
   }));
 
   return {
@@ -38,14 +39,41 @@ export async function extractPdf(buffer: ArrayBuffer): Promise<ExtractionResult>
   };
 }
 
-/**
- * Pages whose text layer is too thin to study from. The ingestion worker hands
- * these to OCR; everything else is used as-is.
- */
-export function pagesNeedingOcr(result: ExtractionResult) {
+export type PdfPageQualityIssue = "missing_text" | "replacement_glyphs" | "low_character_density" | "fused_words" | "spaced_letters";
+
+/** Deterministic suspicion only: OCR must still return readable page text. */
+export function pdfPageQualityIssues(page: ExtractedPage): PdfPageQualityIssue[] {
+  const text = page.text;
+  const compact = text.replace(/\s/g, "");
+  const issues: PdfPageQualityIssue[] = [];
+  if (compact.length < OCR_TEXT_THRESHOLD) issues.push("missing_text");
+  if (compact.length >= OCR_TEXT_THRESHOLD) {
+    const replacementCount = (text.match(/[\uFFFD\u25A0\u25A1]/g) ?? []).length;
+    if (replacementCount >= 2) issues.push("replacement_glyphs");
+    const readableCount = (text.match(/[\p{L}\p{N}]/gu) ?? []).length;
+    if (readableCount / compact.length < 0.45) issues.push("low_character_density");
+    const words = text.match(/[\p{L}]{2,}/gu) ?? [];
+    if (readableCount >= 120 && (words.some((word) => word.length >= 32) || words.length < 8)) issues.push("fused_words");
+    if (/(?:\b[\p{L}]\s+){8,}[\p{L}]\b/gu.test(text)) issues.push("spaced_letters");
+  }
+  return issues;
+}
+
+/** Quality-only OCR stays opt-in until its provider-spend admission is accepted. */
+export function pagesNeedingOcr(result: ExtractionResult, options: { includeQuality?: boolean } = {}) {
   return result.pages
-    .filter((page) => page.text.replace(/\s/g, "").length < OCR_TEXT_THRESHOLD)
+    .filter((page) => {
+      const issues = pdfPageQualityIssues(page);
+      return options.includeQuality === false ? issues.includes("missing_text") : issues.length > 0;
+    })
     .map((page) => page.pageNumber);
+}
+
+/** OCR replaces a suspect layer; it is never concatenated with corrupt words. */
+export function pageWithOcrTranscription(page: ExtractedPage, transcription: string): ExtractedPage {
+  const text = normalizeText(transcription);
+  if (!text) throw new Error("OCR returned no readable text");
+  return { ...page, text, ocr: true };
 }
 
 /** Isolates one page as its own small PDF so it can be sent to an OCR model. */
