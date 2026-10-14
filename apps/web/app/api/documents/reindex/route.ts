@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   if (result.status !== "ready") {
     return Response.json(
       { error: result.error || "The study guide could not be refreshed.", ...result },
-      { status: 500 }
+      { status: result.status === "skipped" ? 409 : result.error?.includes("just refreshed") ? 429 : 500 }
     );
   }
 

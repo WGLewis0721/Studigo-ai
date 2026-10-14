@@ -16,6 +16,7 @@ import {
 } from "@studigo/documents";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
+import { reindexCooldownMs } from "@/lib/ai-budget";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
 const MAX_ATTEMPTS = 3;
@@ -55,46 +56,15 @@ export async function processDocument(args: {
     return { documentId: args.documentId, status: "failed", error: "Document not found" };
   }
 
-  if (args.force) {
-    if (document.status === "processing") {
-      const started = document.processing_started_at ? Date.parse(document.processing_started_at) : NaN;
-      const stillActive = Number.isFinite(started) && Date.now() - started < 10 * 60 * 1000;
-      if (stillActive) {
-        return {
-          documentId: document.id,
-          status: "failed",
-          error: "This study guide is still being processed. Wait for it to finish, then refresh again."
-        };
-      }
-    }
-
-    // Manual refresh deliberately bypasses the normal three-attempt retry cap.
-    // The original file stays in Storage; processing below replaces only the
-    // derived chunks/topic map after a fresh extraction + embedding pass.
-    const { error: resetError } = await supabase
-      .from("documents")
-      .update({
-        status: "queued",
-        attempts: 0,
-        processing_started_at: null,
-        processed_at: null,
-        error_message: null,
-        last_forced_reindex_at: new Date().toISOString()
-      })
-      .eq("id", document.id)
-      .eq("owner_id", args.userId);
-    if (resetError) {
-      return { documentId: document.id, status: "failed", error: resetError.message };
-    }
-  }
-
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_document", {
-    p_document_id: document.id, p_owner_id: args.userId
+  const { data: claimed, error: claimError } = await supabase.rpc("claim_document_revision", {
+    p_document_id: document.id, p_room_id: document.room_id, p_owner_id: args.userId,
+    p_force: args.force ?? false, p_cooldown_ms: reindexCooldownMs()
   });
   if (claimError) return { documentId: document.id, status: "failed", error: claimError.message };
 
   // Another run already owns this document.
   if (!claimed) return { documentId: document.id, status: "skipped" };
+  const claim = claimed as { token: string; revision: number };
 
   try {
     const { data: file, error: downloadError } = await supabase.storage
@@ -129,39 +99,54 @@ export async function processDocument(args: {
 
     const embeddings = await embedTexts(chunks.map((chunk) => chunk.content));
 
-    // Re-ingestion replaces the previous pass rather than layering on top of it.
-    const { error: clearError } = await supabase.from("document_chunks").delete().eq("document_id", document.id);
-    if (clearError) throw new Error(clearError.message);
+    if (embeddings.length !== chunks.length || embeddings.some((value) =>
+      value.length !== 1536 || value.some((component) => !Number.isFinite(component)))) {
+      throw new Error("Incomplete document embeddings");
+    }
 
     for (let start = 0; start < chunks.length; start += 200) {
       const batch = chunks.slice(start, start + 200).map((chunk, offset) => ({
         document_id: document.id,
         room_id: document.room_id,
         owner_id: document.owner_id,
+        claim_token: claim.token,
         chunk_index: chunk.chunkIndex,
-        page_number: chunk.pageNumber,
-        page_label: withOcr.pageLabel,
-        content: chunk.content,
-        token_count: chunk.tokenCount,
-        metadata: chunk.metadata,
-        embedding: embeddings[start + offset] as unknown as string
+        payload: {
+          page_number: chunk.pageNumber,
+          content: chunk.content,
+          token_count: chunk.tokenCount,
+          metadata: chunk.metadata,
+          embedding: JSON.stringify(embeddings[start + offset])
+        }
       }));
 
-      const { error: insertError } = await supabase.from("document_chunks").insert(batch);
+      const { error: insertError } = await supabase.from("document_ingest_staging").insert(batch);
       if (insertError) throw new Error(`Storing chunks failed: ${insertError.message}`);
     }
 
-    let topicsCreated = 0;
+    let topics: Awaited<ReturnType<typeof prepareTopicMap>> | null = null;
     if (document.source_type === "study_guide" || document.source_type === "teacher_material") {
-      topicsCreated = await buildTopicMap({
+      topics = await prepareTopicMap({
         roomId: document.room_id,
         ownerId: document.owner_id,
         documentId: document.id,
         documentName: document.name,
         isTeacherStudyGuide: document.source_type === "study_guide",
-        pages: withOcr.pages
+        pages: withOcr.pages,
+        stagedChunks: chunks.map((chunk, index) => ({
+          pageNumber: chunk.pageNumber, embedding: embeddings[index]
+        }))
       });
     }
+
+    const { data: published, error: publishError } = await supabase.rpc("publish_document_revision", {
+      p_document_id: document.id, p_room_id: document.room_id, p_owner_id: args.userId,
+      p_claim_token: claim.token, p_revision: claim.revision, p_chunk_count: chunks.length,
+      p_page_count: withOcr.pageCount, p_page_label: withOcr.pageLabel,
+      p_ocr_page_count: withOcr.ocrPageCount, p_topics: topics
+    });
+    if (publishError) throw new Error(`Publishing document failed: ${publishError.message}`);
+    const topicsCreated = Number(published ?? 0);
 
     // Optional, best-effort: mirror the same pages into the local
     // zero-cost retrieval service (services/retrieval) if one is
@@ -180,21 +165,6 @@ export async function processDocument(args: {
       }
     }
 
-    const { error: readyError } = await supabase
-      .from("documents")
-      .update({
-        status: "ready",
-        page_count: withOcr.pageCount,
-        page_label: withOcr.pageLabel,
-        ocr_page_count: withOcr.ocrPageCount,
-        chunk_count: chunks.length,
-        processed_at: new Date().toISOString(),
-        error_message: null
-      })
-      .eq("id", document.id);
-
-    if (readyError) throw new Error(readyError.message);
-
     return {
       documentId: document.id,
       status: "ready",
@@ -204,10 +174,10 @@ export async function processDocument(args: {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Processing failed";
-    await supabase
-      .from("documents")
-      .update({ status: "failed", error_message: message.slice(0, 500) })
-      .eq("id", document.id);
+    await supabase.rpc("fail_document_revision", {
+      p_document_id: document.id, p_owner_id: args.userId,
+      p_claim_token: claim.token, p_revision: claim.revision, p_error: message.slice(0, 500)
+    });
 
     return { documentId: document.id, status: "failed", error: message };
   }
@@ -281,15 +251,17 @@ async function applyOcr(args: {
  * Study-guide intelligence: read what the teacher says is testable, then link
  * each topic back to the passages in this room that support it.
  */
-export async function buildTopicMap(args: {
+type TopicMapInput = {
   roomId: string;
   ownerId: string;
   documentId: string;
   documentName: string;
   isTeacherStudyGuide: boolean;
   pages: ExtractedPage[];
-}): Promise<number> {
-  const supabase = createServiceSupabaseClient();
+  stagedChunks?: Array<{ pageNumber: number | null; embedding: number[] }>;
+};
+
+async function prepareTopicMap(args: TopicMapInput) {
   const materialText = args.pages.map((page) => page.text).join("\n\n").trim();
   if (!materialText) throw new Error("No study-guide text available");
 
@@ -298,16 +270,26 @@ export async function buildTopicMap(args: {
     sourceLabel: args.documentName,
     isTeacherStudyGuide: args.isTeacherStudyGuide
   });
+  if (!topics.length) throw new Error("No study topics could be derived; the previous revision remains available.");
 
 
   const evidence = await findTopicEvidence({
     roomId: args.roomId, ownerId: args.ownerId,
-    topics: topics.map((topic) => `${topic.title}. ${topic.objective}`)
+    topics: topics.map((topic) => `${topic.title}. ${topic.objective}`),
+    staged: args.stagedChunks ? {
+      documentId: args.documentId, documentName: args.documentName, chunks: args.stagedChunks
+    } : undefined
   });
+  return topics.map((topic, index) => ({ ...topic, evidence: evidence[index] ?? [] }));
+}
+
+export async function buildTopicMap(args: TopicMapInput): Promise<number> {
+  const supabase = createServiceSupabaseClient();
+  const topics = await prepareTopicMap(args);
   const { data, error } = await supabase.rpc("refresh_topic_map", {
     p_room_id: args.roomId, p_owner_id: args.ownerId, p_document_id: args.documentId,
     p_is_guide: args.isTeacherStudyGuide,
-    p_topics: topics.map((topic, index) => ({ ...topic, evidence: evidence[index] ?? [] }))
+    p_topics: topics
   });
   if (error) throw new Error(`Refreshing study topics failed: ${error.message}`);
   return Number(data ?? 0);
@@ -322,13 +304,17 @@ async function findTopicEvidence(args: {
   roomId: string;
   ownerId: string;
   topics: string[];
+  staged?: {
+    documentId: string; documentName: string;
+    chunks: Array<{ pageNumber: number | null; embedding: number[] }>;
+  };
 }): Promise<Array<Array<{ documentId: string; documentName: string; pageNumber: number | null }>>> {
   const supabase = createServiceSupabaseClient();
   const embeddings = await embedTexts(args.topics);
 
   return Promise.all(
     embeddings.map(async (embedding) => {
-      const { data } = await supabase.rpc("match_study_chunks", {
+      const { data, error } = await supabase.rpc("match_study_chunks", {
         p_room_id: args.roomId,
         p_query_embedding: embedding as unknown as string,
         p_match_count: 3,
@@ -336,13 +322,29 @@ async function findTopicEvidence(args: {
         p_owner_id: args.ownerId
       });
 
-      return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+      if (error) throw new Error(`Retrieving topic evidence failed: ${error.message}`);
+      const active = ((data ?? []) as Array<Record<string, unknown>>)
+        .filter((row) => row.document_id !== args.staged?.documentId).map((row) => ({
         documentId: String(row.document_id),
         documentName: String(row.document_name),
-        pageNumber: row.page_number == null ? null : Number(row.page_number)
+        pageNumber: row.page_number == null ? null : Number(row.page_number),
+        similarity: Number(row.similarity)
       }));
+      const staged = args.staged?.chunks.map((chunk) => ({
+        documentId: args.staged!.documentId, documentName: args.staged!.documentName,
+        pageNumber: chunk.pageNumber, similarity: cosineSimilarity(embedding, chunk.embedding)
+      })).filter((chunk) => chunk.similarity >= 0.3) ?? [];
+      return [...active, ...staged].sort((a, b) => b.similarity - a.similarity).slice(0, 3)
+        .map(({ documentId, documentName, pageNumber }) => ({ documentId, documentName, pageNumber }));
     })
   );
+}
+
+function cosineSimilarity(a: number[], b: number[]) {
+  const dot = a.reduce((sum, value, index) => sum + value * b[index], 0);
+  const norm = Math.sqrt(a.reduce((sum, value) => sum + value * value, 0)
+    * b.reduce((sum, value) => sum + value * value, 0));
+  return norm ? dot / norm : 0;
 }
 
 export function toRetrievedChunks(rows: Array<Record<string, unknown>>): RetrievedChunk[] {

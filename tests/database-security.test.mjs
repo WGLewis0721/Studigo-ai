@@ -58,6 +58,93 @@ before(async () => {
 });
 after(async()=> { await db?.close(); });
 
+const c09Vector = JSON.stringify([1, ...Array(1535).fill(0)]);
+async function c09Fixture(n) {
+  const room = id(n), document = id(n+1);
+  await db.query('insert into study_rooms(id,owner_id,title) values($1,$2,\'Synthetic C09 room\')',[room,A]);
+  await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status,source_type,active_revision,chunk_count)
+    values($1,$2,$3,'synthetic.pdf','application/pdf',10,$4,'ready','study_guide',1,1)`,[document,room,A,`${A}/${room}/synthetic.pdf`]);
+  await db.query(`insert into storage.objects(bucket_id,name) values('study-materials',$1)`,[`${A}/${room}/synthetic.pdf`]);
+  await db.query(`insert into document_chunks(document_id,room_id,owner_id,chunk_index,content,page_number,embedding)
+    values($1,$2,$3,0,'Synthetic old revision.',1,$4::extensions.vector)`,[document,room,A,c09Vector]);
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective,mastery_score,source_document_ids)
+    values($1,$2,$3,'Synthetic branches','Describe branches',64,array[$4::uuid])`,[id(n+2),room,A,document]);
+  await db.query(`insert into quiz_attempts(id,room_id,owner_id,topic_id,is_correct,score)
+    values($1,$2,$3,$4,true,80)`,[id(n+3),room,A,id(n+2)]);
+  return { room, document, topic: id(n+2), receipt: id(n+3) };
+}
+const c09Claim = async f => (await one('select claim_document_revision($1,$2,$3,true,0) as claim',[f.document,f.room,A])).claim;
+async function c09Stage(f, claim, content='Synthetic new revision.') {
+  await db.query(`insert into document_ingest_staging(document_id,room_id,owner_id,claim_token,chunk_index,payload)
+    values($1,$2,$3,$4,0,$5::jsonb)`,[f.document,f.room,A,claim.token,JSON.stringify({content,page_number:2,token_count:4,embedding:c09Vector})]);
+}
+const c09Topics = [{title:'Synthetic branches',objective:'Describe branches',priority:90,keyTerms:['branches'],evidence:[]}];
+const c09Publish = (f, claim, topics=c09Topics) => one(
+  `select publish_document_revision($1,$2,$3,$4,$5,1,2,'page',0,$6::jsonb) as count`,
+  [f.document,f.room,A,claim.token,claim.revision,JSON.stringify(topics)]);
+async function c09Visible(f) {
+  return as('authenticated',A,async()=> (await db.query(
+    'select content from match_study_chunks($1,$2::extensions.vector,8,0.3,null)',[f.room,c09Vector])).rows.map(row=>row.content));
+}
+
+test('C09 concurrent forced claims and stale publication are fenced', async()=>{
+  const f=await c09Fixture(901);
+  await as('service_role',null,async()=>{
+    const contenders=await Promise.all([c09Claim(f),c09Claim(f)]);
+    assert.equal(contenders.filter(Boolean).length,1);
+    const old=contenders.find(Boolean);
+    await c09Stage(f,old);
+    await db.query(`update documents set processing_started_at=now()-interval '11 minutes' where id=$1`,[f.document]);
+    const current=await c09Claim(f);
+    assert.notEqual(current.token,old.token);
+    await c09Stage(f,current);
+    await assert.rejects(c09Publish(f,old),/Stale ingestion claim/);
+    assert.equal((await one('select fail_document_revision($1,$2,$3,$4,\'stale failure\') as changed',
+      [f.document,A,old.token,old.revision])).changed,false);
+    await c09Publish(f,current);
+    await assert.rejects(c09Publish(f,current),/Stale ingestion claim/);
+    await assert.rejects(one('select claim_document_revision($1,$2,$3,true,900000)',[f.document,f.room,A]),/just refreshed/);
+    await assert.rejects(one('select claim_document_revision($1,$2,$3,true,0)',[f.document,f.room,B]),/Room not found/);
+  });
+  assert.deepEqual(await c09Visible(f),['Synthetic new revision.']);
+  assert.equal((await one('select active_revision from documents where id=$1',[f.document])).active_revision,2);
+  await as('authenticated',A,async()=>{
+    await assert.rejects(c09Claim(f),/permission denied/);
+    await assert.rejects(db.query('select * from document_ingest_staging'),/permission denied/);
+  });
+});
+
+test('C09 failed insertion and derivation preserve the usable revision before success', async()=>{
+  const f=await c09Fixture(911);
+  const beforeDoc=await one('select storage_path,processed_at,chunk_count,active_revision from documents where id=$1',[f.document]);
+  const beforeReceipt=await one('select * from quiz_attempts where id=$1',[f.receipt]);
+  const original=await one('select id,name from storage.objects where name=$1',[beforeDoc.storage_path]);
+  const claim=await as('service_role',null,()=>c09Claim(f));
+  assert.deepEqual(await c09Visible(f),['Synthetic old revision.']);
+  await as('service_role',null,async()=>{
+    await c09Stage(f,claim,'');
+    await assert.rejects(c09Publish(f,claim),/check constraint/);
+    await db.query('update document_ingest_staging set payload=jsonb_set(payload,\'{content}\',\'"Synthetic new revision."\') where document_id=$1',[f.document]);
+    await assert.rejects(c09Publish(f,claim,[{...c09Topics[0],priority:101}]),/check constraint/);
+  });
+  assert.deepEqual(await c09Visible(f),['Synthetic old revision.']);
+  assert.deepEqual(await one('select storage_path,processed_at,chunk_count,active_revision from documents where id=$1',[f.document]),beforeDoc);
+  await as('service_role',null,async()=>{
+    assert.equal((await one('select fail_document_revision($1,$2,$3,$4,\'Synthetic derivation failure\') as changed',
+      [f.document,A,claim.token,claim.revision])).changed,true);
+  });
+  assert.equal((await one('select status,refresh_error_message from documents where id=$1',[f.document])).status,'ready');
+  assert.equal((await one('select refresh_error_message from documents where id=$1',[f.document])).refresh_error_message,'Synthetic derivation failure');
+  await as('service_role',null,async()=>{
+    const retry=await c09Claim(f); await c09Stage(f,retry); await c09Publish(f,retry);
+  });
+  assert.deepEqual(await c09Visible(f),['Synthetic new revision.']);
+  assert.deepEqual(await one('select * from quiz_attempts where id=$1',[f.receipt]),beforeReceipt);
+  assert.deepEqual(await one('select id,name from storage.objects where name=$1',[beforeDoc.storage_path]),original);
+  assert.equal(Number((await one('select mastery_score from topics where id=$1',[f.topic])).mastery_score),64);
+  assert.equal((await one('select refresh_error_message from documents where id=$1',[f.document])).refresh_error_message,null);
+});
+
 test('Coaching settings persist for the room owner and remain isolated', async()=>{
   const chosen = JSON.stringify({coach_mode:'challenge',style:'default',tradition:'tradition-default',practice:'transfer'});
   await as('authenticated',A,async()=>{

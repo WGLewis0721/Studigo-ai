@@ -559,7 +559,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C06 | NOT STARTED | — | — | — |
 | C07 | NOT STARTED | — | — | — |
 | C08 | NOT STARTED | — | — | — |
-| C09 | NOT STARTED | — | — | — |
+| C09 | NOT DONE | Uncommitted isolated branch `codex/c09-atomic-reindex`; no PR | 2/3 checks used: PGlite concurrency/fencing scenario failed with WASM runtime error before useful assertions; affected web typecheck PASS under Node 22. Preservation/success scenario not run. | Disposable database acceptance unverified; no providers/production database used. |
 | C10 | NOT STARTED | — | — | — |
 | C11 | NOT STARTED | — | — | — |
 | C12 | NOT STARTED | — | — | — |
