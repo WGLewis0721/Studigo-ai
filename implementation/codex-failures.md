@@ -16,7 +16,7 @@
 Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Actions run 38503354107 passed, including web tests, typecheck and build. The three manual C01 checks remain the acceptance evidence. Disposition: DONE, accepted for integration.
 
 ### C09 — 2026-10-14 — check 1 of maximum 3
-- Final/task commit: uncommitted `codex/c09-atomic-reindex`, integration base `2388152963988c8b405c647e1a95c8ec66e5a8fa`; parent owns commit/PR after review.
+- Final/task commit: `f4c8900`, draft PR #109, integration base `2388152963988c8b405c647e1a95c8ec66e5a8fa`.
 - Check name: concurrent forced claims and stale publication fencing.
 - Command or manual steps: `node --test --test-name-pattern='^C09 concurrent forced claims and stale publication are fenced$' tests/database-security.test.mjs`.
 - Environment: disposable PGlite 0.3.14 with pgvector; default Node 24.19.0; synthetic fixtures only.
@@ -28,4 +28,4 @@ Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Acti
 - Remaining check slots: 1 after check 2, the planned affected web compiler, passed using `/workspace/.studigo-toolchain/node_modules/node/bin/node ./node_modules/typescript/bin/tsc --noEmit --incremental false` from `apps/web`.
 - Unverified acceptance criteria: insertion/derivation failure leaves previous index retrievable; concurrent/stale publication fences; success exposes only new chunks; original object, receipts and mastery preserved. Preservation/success scenario not executed. Database advisors unavailable without a working disposable database.
 - Task disposition: NOT DONE; no commit, push or PR performed.
-- Follow-up: parent reviews isolated diff and migration; database acceptance requires a functioning disposable environment and authorization to resume after standby. SEC is absent at this base; no live provider retries performed.
+- Follow-up: database acceptance requires a functioning disposable environment and authorization to resume after standby. SEC is absent at this base; no live provider retries performed.
