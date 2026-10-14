@@ -1,5 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { isPageCitable, type PageCoverageEntry } from "@studigo/documents";
 import type { RetrievedChunk } from "@studigo/ai";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchChunksByIds } from "@/lib/retrieval";
 
 export type GuideNavigationIntent = "overview" | "terms";
@@ -28,6 +29,7 @@ type DocumentSource = {
   name: string;
   source_type: string | null;
   source_priority: number | null;
+  page_coverage?: PageCoverageEntry[] | null;
 };
 type ChunkSource = {
   id: string;
@@ -52,9 +54,9 @@ export async function retrieveGuideNavigationChunks(args: {
   maxChunks?: number;
 }): Promise<RetrievedChunk[]> {
   let query = args.supabase.from("documents")
-    .select("id,name,source_type,source_priority")
+    .select("id,name,source_type,source_priority,page_coverage")
     .eq("room_id", args.roomId)
-    .eq("status", "ready");
+    .in("status", ["ready", "partial"]);
   if (args.ownerId) query = query.eq("owner_id", args.ownerId);
   const { data: documentData, error: documentError } = await query
     .order("source_priority", { ascending: false })
@@ -79,7 +81,10 @@ export async function retrieveGuideNavigationChunks(args: {
     .order("chunk_index", { ascending: true })
     .limit(48);
   if (chunkError) throw new Error("Could not read Study Room source passages");
-  const rows = (chunkData ?? []) as ChunkSource[];
+  const coverageByDocument = new Map(selected.map((doc) => [doc.id, doc.page_coverage]));
+  const rows = ((chunkData ?? []) as ChunkSource[]).filter((row) =>
+    isPageCitable(coverageByDocument.get(row.document_id), row.page_number)
+  );
   const documentOrder = new Map(selected.map((doc, index) => [doc.id, index]));
   rows.sort((a, b) =>
     (documentOrder.get(a.document_id) ?? 99) - (documentOrder.get(b.document_id) ?? 99) ||

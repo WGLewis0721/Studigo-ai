@@ -13,7 +13,7 @@ import { assertSafeZip } from "./file-safety";
 
 export * from "./types";
 export * from "./chunk";
-export { recoverPdfPages, PdfOcrPageError } from "./ocr-recovery";
+export { recoverPdfPages, recoverPdfPagesAllowingGaps, PdfOcrPageError } from "./ocr-recovery";
 export { assertContentMatchesType, assertSafeZip, UnsafeFileError, ZIP_LIMITS } from "./file-safety";
 export {
   extractDocx,
@@ -27,6 +27,18 @@ export {
   pageWithOcrTranscription,
   OCR_TEXT_THRESHOLD
 } from "./extract";
+
+export {
+  assessPageCoverage,
+  coverageLimitation,
+  isPageCitable,
+  type PageCoverageAssessment,
+  type PageCoverageEntry,
+  type PageCoverageReason,
+  type PageCoverageState
+} from "./page-coverage";
+
+export { deriveSourceBlocks, blockKeyForChunk, type SourceBlock, type SourceBlockKind } from "./source-blocks";
 
 export function sanitizeFilename(name: string) {
   return (

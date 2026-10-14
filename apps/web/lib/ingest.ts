@@ -3,17 +3,17 @@ import {
   extractTopicMap,
   ocrImage,
   ocrPagePdf,
-  OcrCapabilityError,
-  OcrResponseError,
   type RetrievedChunk
 } from "@studigo/ai";
 import {
+  blockKeyForChunk,
   chunkPages,
+  deriveSourceBlocks,
   extractDocument,
   isImageMimeType,
   pagesNeedingOcr,
-  recoverPdfPages,
-  PdfOcrPageError,
+  recoverPdfPagesAllowingGaps,
+  assessPageCoverage,
   type ExtractedPage,
   type ExtractionResult
 } from "@studigo/documents";
@@ -26,11 +26,13 @@ const MAX_ATTEMPTS = 3;
 
 export type IngestResult = {
   documentId: string;
-  status: "ready" | "failed" | "skipped";
+  status: "ready" | "partial" | "failed" | "skipped";
   chunkCount?: number;
   ocrPageCount?: number;
   topicsCreated?: number;
   error?: string;
+  /** True when a failed refresh left the previous searchable revision in place. */
+  preserved?: boolean;
 };
 
 /**
@@ -63,6 +65,9 @@ export async function processDocument(args: {
   // reset a queued/processing row before a claim: concurrent refreshes must
   // not produce duplicate OCR work or competing writes.
   let claimed: boolean;
+  let publishToken: string | null = null;
+  let stagedRevision = 1;
+  let priorStatus = document.status as string;
   if (args.force) {
     const cooldownSeconds = Math.min(86400, Math.max(900, Math.ceil(reindexCooldownMs() / 1000)));
     const { data, error } = await supabase.rpc("claim_forced_studigo_reindex", {
@@ -71,13 +76,16 @@ export async function processDocument(args: {
       p_cooldown_seconds: cooldownSeconds
     });
     if (error) return { documentId: document.id, status: "failed", error: "Reindex claim failed" };
-    const claim = data as { claimed?: boolean; reason?: string } | null;
+    const claim = data as { claimed?: boolean; reason?: string; token?: string; revision?: number; prior_status?: string } | null;
     if (!claim?.claimed) return {
       documentId: document.id,
       status: "skipped",
       error: claim?.reason === "cooldown" ? "reindex_cooldown"
         : claim?.reason === "processing" ? "reindex_processing" : "reindex_unavailable"
     };
+    publishToken = claim.token ?? null;
+    stagedRevision = Number(claim.revision ?? 1);
+    priorStatus = claim.prior_status ?? priorStatus;
     claimed = true;
   } else {
     const { data, error } = await supabase.rpc("claim_document", {
@@ -85,6 +93,17 @@ export async function processDocument(args: {
     });
     if (error) return { documentId: document.id, status: "failed", error: error.message };
     claimed = Boolean(data);
+    if (claimed) {
+      const { data: fence } = await supabase
+        .from("documents")
+        .select("publish_token, active_revision, refresh_prior_status")
+        .eq("id", document.id)
+        .eq("owner_id", args.userId)
+        .maybeSingle();
+      publishToken = (fence?.publish_token as string | null) ?? null;
+      stagedRevision = Number(fence?.active_revision ?? 1) + 1;
+      priorStatus = (fence?.refresh_prior_status as string | null) ?? priorStatus;
+    }
   }
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
@@ -99,17 +118,20 @@ export async function processDocument(args: {
 
     const buffer = await file.arrayBuffer();
     const extraction = await extractDocument({ mimeType: document.mime_type, buffer });
-    const withOcr = await applyOcr({
+    const covered = await applyOcr({
       extraction,
       buffer,
       mimeType: document.mime_type,
       filename: document.name
     });
+    if (covered.status === "failed") {
+      throw new Error(covered.limitation ?? "No readable text could be extracted. If this is a scan or a photo, try a clearer copy.");
+    }
 
-    const chunks = chunkPages(withOcr.pages, {
+    const chunks = chunkPages(covered.publishable, {
       documentName: document.name,
       sourceType: document.source_type,
-      pageLabel: withOcr.pageLabel
+      pageLabel: covered.pageLabel
     });
     assertIngestLimit(chunks.length, MAX_CHUNKS_PER_DOCUMENT, "text chunks");
 
@@ -119,89 +141,130 @@ export async function processDocument(args: {
       );
     }
 
-    const embeddings = await embedTexts(chunks.map((chunk) => chunk.content));
+    const blocks = deriveSourceBlocks(covered.publishable);
+    const linked = chunks.map((chunk) => ({
+      ...chunk,
+      metadata: { ...chunk.metadata, blockKey: blockKeyForChunk(blocks, chunk.pageNumber, chunk.content) }
+    }));
 
-    // Re-ingestion replaces the previous pass rather than layering on top of it.
-    const { error: clearError } = await supabase.from("document_chunks").delete().eq("document_id", document.id);
-    if (clearError) throw new Error(clearError.message);
+    const embeddings = await embedTexts(linked.map((chunk) => chunk.content));
 
-    for (let start = 0; start < chunks.length; start += 200) {
-      const batch = chunks.slice(start, start + 200).map((chunk, offset) => ({
+    if (blocks.length) {
+      const { error: blockError } = await supabase.from("source_blocks").insert(blocks.map((block) => ({
+        document_id: document.id,
+        room_id: document.room_id,
+        owner_id: document.owner_id,
+        revision: stagedRevision,
+        block_key: block.blockKey,
+        kind: block.kind,
+        page_number: block.pageNumber,
+        reading_order: block.readingOrder,
+        raw_text: block.rawText,
+        normalized_text: block.text,
+        coverage: block.coverage,
+        fingerprint: block.fingerprint
+      })));
+      if (blockError) throw new Error(`Storing source blocks failed: ${blockError.message}`);
+    }
+
+    for (let start = 0; start < linked.length; start += 200) {
+      const batch = linked.slice(start, start + 200).map((chunk, offset) => ({
         document_id: document.id,
         room_id: document.room_id,
         owner_id: document.owner_id,
         chunk_index: chunk.chunkIndex,
         page_number: chunk.pageNumber,
-        page_label: withOcr.pageLabel,
+        page_label: covered.pageLabel,
         content: chunk.content,
         token_count: chunk.tokenCount,
         metadata: chunk.metadata,
-        embedding: embeddings[start + offset] as unknown as string
+        embedding: embeddings[start + offset] as unknown as string,
+        revision: stagedRevision,
+        block_key: typeof chunk.metadata.blockKey === "string" ? chunk.metadata.blockKey : null
       }));
 
       const { error: insertError } = await supabase.from("document_chunks").insert(batch);
       if (insertError) throw new Error(`Storing chunks failed: ${insertError.message}`);
     }
 
+    const activated = await supabase.rpc("activate_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_revision: stagedRevision
+    });
+    if (activated.error || !(activated.data as { published?: boolean } | null)?.published) {
+      throw new Error("The refresh was no longer the active attempt.");
+    }
+
     let topicsCreated = 0;
-    if (document.source_type === "study_guide" || document.source_type === "teacher_material") {
+    const definesObjectives = document.source_type === "study_guide" || document.source_type === "teacher_material";
+    const addsSupport = document.source_type === "student_notes" || document.source_type === "presentation" || document.source_type === "worksheet";
+    if (definesObjectives || addsSupport) {
       topicsCreated = await buildTopicMap({
         roomId: document.room_id,
         ownerId: document.owner_id,
         documentId: document.id,
         documentName: document.name,
-        isTeacherStudyGuide: document.source_type === "study_guide",
-        pages: withOcr.pages
+        isTeacherStudyGuide: definesObjectives,
+        pages: covered.publishable
       });
     }
 
-    // Optional, best-effort: mirror the same pages into the local
-    // zero-cost retrieval service (services/retrieval) if one is
-    // configured. Never allowed to fail ingestion — it's supplementary
-    // infrastructure, not the primary RAG path.
+    const committed = await supabase.rpc("commit_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_revision: stagedRevision,
+      p_status: covered.status,
+      p_page_count: covered.pageCount,
+      p_page_label: covered.pageLabel,
+      p_ocr_page_count: covered.ocrPageCount,
+      p_chunk_count: chunks.length,
+      p_page_coverage: covered.coverage,
+      p_error_message: covered.limitation
+    });
+    if (committed.error || !(committed.data as { published?: boolean } | null)?.published) {
+      throw new Error("The refresh could not be published.");
+    }
+    await supabase.from("source_blocks").delete().eq("document_id", document.id).neq("revision", stagedRevision);
+
     if (retrievalServiceConfigured()) {
       try {
         await indexDocumentLocally({
           roomId: document.room_id,
           documentId: document.id,
           documentName: document.name,
-          pages: withOcr.pages.map((page) => ({ page_number: page.pageNumber, text: page.text }))
+          pages: covered.publishable.map((page) => ({ page_number: page.pageNumber, text: page.text }))
         });
       } catch {
         // Swallowed deliberately: the local retrieval service is optional.
       }
     }
 
-    const { error: readyError } = await supabase
-      .from("documents")
-      .update({
-        status: "ready",
-        page_count: withOcr.pageCount,
-        page_label: withOcr.pageLabel,
-        ocr_page_count: withOcr.ocrPageCount,
-        chunk_count: chunks.length,
-        processed_at: new Date().toISOString(),
-        error_message: null
-      })
-      .eq("id", document.id);
-
-    if (readyError) throw new Error(readyError.message);
-
     return {
       documentId: document.id,
-      status: "ready",
+      status: covered.status,
       chunkCount: chunks.length,
-      ocrPageCount: withOcr.ocrPageCount,
+      ocrPageCount: covered.ocrPageCount,
       topicsCreated
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Processing failed";
-    await supabase
-      .from("documents")
-      .update({ status: "failed", error_message: message.slice(0, 500) })
-      .eq("id", document.id);
-
-    return { documentId: document.id, status: "failed", error: message };
+    await supabase.rpc("abort_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_error: message
+    });
+    await supabase.from("source_blocks").delete().eq("document_id", document.id).eq("revision", stagedRevision);
+    const restoredStatus = priorStatus === "partial" ? "partial" : priorStatus === "ready" ? "ready" : null;
+    return {
+      documentId: document.id,
+      status: restoredStatus ?? "failed",
+      preserved: restoredStatus !== null,
+      error: message
+    };
   }
 }
 
@@ -219,9 +282,7 @@ async function applyOcr(args: {
   buffer: ArrayBuffer;
   mimeType: string;
   filename: string;
-}): Promise<ExtractionResult> {
-  // Quality-only OCR can increase provider work. Keep it disabled until the
-  // accepted spend/concurrency admission protects this workload.
+}) {
   const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1"
     && process.env.STUDIGO_AI_ADMISSION === "1";
   const configuredDuration = Number(process.env.STUDIGO_OCR_TOTAL_TIMEOUT_MS ?? 180_000);
@@ -232,46 +293,38 @@ async function applyOcr(args: {
     if (remaining <= 0) throw new Error("OCR time limit reached; this file has not been marked ready.");
     return remaining;
   };
+  const cover = (extraction: ExtractionResult, failedPages: number[] = [], pdfQuality = false) => {
+    const assessment = assessPageCoverage(extraction.pages, failedPages, { pdfQuality });
+    return { ...extraction, ...assessment };
+  };
+
   if (isImageMimeType(args.mimeType)) {
-    const text = await ocrImage({
-      bytes: new Uint8Array(args.buffer),
-      mimeType: args.mimeType,
-      timeoutMs: remainingTime()
-    });
-    return {
-      ...args.extraction,
-      pages: [{ pageNumber: 1, text, ocr: true }],
-      ocrPageCount: text ? 1 : 0
-    };
+    try {
+      const text = await ocrImage({
+        bytes: new Uint8Array(args.buffer),
+        mimeType: args.mimeType,
+        timeoutMs: remainingTime()
+      });
+      return cover({ ...args.extraction, pages: [{ pageNumber: 1, text, ocr: true }], ocrPageCount: text ? 1 : 0 }, [], true);
+    } catch {
+      return cover(args.extraction, [1], true);
+    }
   }
 
-  if (args.mimeType !== "application/pdf") return args.extraction;
+  if (args.mimeType !== "application/pdf") return cover(args.extraction);
 
   const targets = pagesNeedingOcr(args.extraction, { includeQuality: qualityOcrEnabled });
   assertIngestLimit(targets.length, MAX_OCR_PAGES, "OCR pages");
-  if (!targets.length) return args.extraction;
+  if (!targets.length) return cover(args.extraction, [], true);
 
-  try {
-    return await recoverPdfPages({
-      extraction: args.extraction,
-      buffer: args.buffer,
-      targetPages: targets,
-      transcribePage: ({ pdf, pageNumber }) =>
-        ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
-    });
-  } catch (error) {
-    if (!(error instanceof PdfOcrPageError)) throw error;
-    const pageNumber = error.pageNumber;
-    const cause = error.originalError;
-    if (cause instanceof OcrCapabilityError) throw cause;
-    if (cause instanceof OcrResponseError) {
-      throw new Error(`OCR could not process Page ${pageNumber}: ${cause.message} This file has not been marked ready.`);
-    }
-    if (cause instanceof Error && cause.message === "OCR returned no readable text") {
-      throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
-    }
-    throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
-  }
+  const recovered = await recoverPdfPagesAllowingGaps({
+    extraction: args.extraction,
+    buffer: args.buffer,
+    targetPages: targets,
+    transcribePage: ({ pdf, pageNumber }) =>
+      ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
+  });
+  return cover(recovered.extraction, recovered.failedPages, true);
 }
 
 /**

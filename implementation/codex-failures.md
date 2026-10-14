@@ -131,3 +131,18 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: billable room actions source scan in CI run 38629183364
 - Result: FAIL. C11 queue keys used crypto.randomUUID() inside materials-panel.tsx. The admission scan rejects any random UUID in that file.
 - Action: queue keys are now a local counter. Prepare, process, and reindex still use the gesture book. The focused scan passed afterward.
+
+### C08 — 2026-10-14 — page-coverage check constraint
+- Check: retrieval/source-scope RPC (slot 2), first attempt
+- Result: FAIL while applying `20261014140000_page_coverage.sql`: PostgreSQL rejected `jsonb_array_elements` inside a CHECK (`cannot use subquery in check constraint`).
+- Action: validate coverage with an immutable function, then rerun the same RPC check. The rerun passed. No source text was published.
+
+### C09 — 2026-10-14 — revision constraint lookup
+- Check: concurrent/stale publish fencing, first apply
+- Result: FAIL while applying `20261014160000_atomic_reindex.sql` (`missing FROM-clause entry for table "con"`).
+- Action: qualify the constraint lookup, then rerun the same fencing check. The rerun passed. No original was rewritten.
+
+### C10 — 2026-10-14 — membership column name
+- Check: A/B/C composition, first attempts
+- Result: FAIL. A PL/pgSQL variable named topic_id collided with the membership column (`column reference "topic_id" is ambiguous`).
+- Action: renamed the variable and qualified the column. The composition check then passed.

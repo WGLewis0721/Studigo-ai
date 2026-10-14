@@ -31,6 +31,12 @@ async function guardedPost(request: Request) {
   }
 
   const result = await processDocument({ documentId, userId: user.id });
+  if (result.preserved) {
+    return Response.json(
+      { error: "Processing did not finish. The previous version is still searchable.", ...result },
+      { status: 409 }
+    );
+  }
   return Response.json(result, { status: result.status === "failed" ? 500 : 200 });
 }
 

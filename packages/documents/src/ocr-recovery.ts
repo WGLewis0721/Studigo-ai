@@ -59,3 +59,47 @@ export async function recoverPdfPages(args: {
     ocrPageCount: args.extraction.ocrPageCount + ocrPageCount
   };
 }
+
+/**
+ * Same page recovery as `recoverPdfPages`, but one failed page does not
+ * discard the pages that already succeeded. Failed pages are named, not published.
+ */
+export async function recoverPdfPagesAllowingGaps(args: {
+  extraction: ExtractionResult;
+  buffer: ArrayBuffer;
+  targetPages: readonly number[];
+  transcribePage: (args: { pdf: Uint8Array; pageNumber: number }) => Promise<string>;
+}): Promise<{ extraction: ExtractionResult; failedPages: number[] }> {
+  if (args.targetPages.length === 0) return { extraction: args.extraction, failedPages: [] };
+
+  const byPage = new Map<number, ExtractedPage>(
+    args.extraction.pages.map((page) => [page.pageNumber, page])
+  );
+  const targets = new Set(args.targetPages);
+  if (targets.size !== args.targetPages.length ||
+      args.targetPages.some((pageNumber) => !Number.isInteger(pageNumber) || !byPage.has(pageNumber))) {
+    throw new Error("Invalid OCR page selection");
+  }
+
+  const failedPages: number[] = [];
+  let ocrPageCount = 0;
+  for (const pageNumber of args.targetPages) {
+    try {
+      const pdf = await extractSinglePagePdf(args.buffer, pageNumber);
+      const transcription = await args.transcribePage({ pdf, pageNumber });
+      byPage.set(pageNumber, pageWithOcrTranscription(byPage.get(pageNumber)!, transcription));
+      ocrPageCount += 1;
+    } catch {
+      failedPages.push(pageNumber);
+    }
+  }
+
+  return {
+    extraction: {
+      ...args.extraction,
+      pages: [...byPage.values()].sort((a, b) => a.pageNumber - b.pageNumber),
+      ocrPageCount: args.extraction.ocrPageCount + ocrPageCount
+    },
+    failedPages
+  };
+}

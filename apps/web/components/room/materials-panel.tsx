@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, type SourceType } from "@studigo/documents";
+import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, coverageLimitation, type SourceType } from "@studigo/documents";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import type { StudyDocument } from "@/lib/rooms";
@@ -34,6 +34,7 @@ type QueueItem = {
 
 const STATUS_LABELS: Record<StudyDocument["status"], string> = {
   ready: "Ready",
+  partial: "Needs review",
   processing: "Reading",
   queued: "Queued",
   uploaded: "Queued",
@@ -52,6 +53,9 @@ function statusCopy(document: StudyDocument) {
       return `${document.chunk_count} passages${
         document.page_count ? ` · ${document.page_count} ${document.page_label}s` : ""
       }${document.ocr_page_count ? ` · ${document.ocr_page_count} scanned` : ""}`;
+    case "partial":
+      return coverageLimitation(document.page_coverage ?? [], document.page_label || "page")
+        ?? "Some pages need a clearer copy. The readable pages can still be used.";
     case "processing":
       return "Reading the document…";
     case "queued":
@@ -87,6 +91,7 @@ export function MaterialsPanel({
   const processingIdsRef = useRef(new Set<string>());
   const processorRunningRef = useRef(false);
   const queueKeyRef = useRef(0);
+  const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
 
@@ -460,10 +465,11 @@ export function MaterialsPanel({
               </a>
               <a href={`/api/documents/download?documentId=${document.id}`}>Download</a>
               {(document.status === "failed" ||
+                document.status === "partial" ||
                 document.status === "queued" ||
                 document.status === "uploaded") && (
                 <button type="button" disabled={retryingIds.has(document.id)} onClick={() => retry(document)}>
-                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" ? "Retry" : "Process now"}
+                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" || document.status === "partial" ? "Retry unread pages" : "Process now"}
                 </button>
               )}
               <button type="button" className="danger" onClick={() => void remove(document)}>

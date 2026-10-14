@@ -62,11 +62,11 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C05 | P0 | Contextual Learn retrieval | Short follow-ups and known terms use the current topic | C04 | DONE |
 | C06 | P0 | Enumerated unit overview | Every selected topic has a supported section or explicit gap | C03, C05 | NOT STARTED |
 | C07 | P0 | Quality-driven page recovery | Scans retain readable definitions and reading order | — | FUNCTIONAL PASS ON PREVIEW — SEC RELEASE GATE OPEN |
-| C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | NOT STARTED |
-| C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | NOT STARTED |
-| C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
+| C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | DONE |
+| C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | DONE |
+| C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | DONE |
 | C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | DONE |
-| C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | NOT STARTED |
+| C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | DONE |
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | NOT STARTED |
 | C15 | P1 | Grounded educational content edition | Definitions, explanations, examples, practice and answers | C10, C12 | NOT STARTED |
@@ -558,11 +558,11 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C05 | DONE | `5d1afd7` / [PR #123](https://github.com/WGLewis0721/Studigo-ai/pull/123) | 3/3 on integration `277bf39`: known legislative-branch definition cites the laws passage; Help stays on the user question and a fabricated army claim returns `no_relevant_evidence`; web typecheck PASS. No provider call or cutoff change. | Targets integration. Not merged. #117 is the earlier stack and is not the integration PR. |
 | C06 | NOT STARTED | — | — | — |
 | C07 | BLOCKED | `a23be3e`, `383e14f` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | Clean PDF and synthetic selection checks passed; incomplete OCR response acceptance was reproduced before and rejected after `383e14f`; Node 22 web typecheck passed. Original image-only scan already selects all three pages for OCR, but actual OCR output, indexed page facts, and Learn retrieval were not verified. | Required protection is absent from integration: draft PR #98 head `2aefe6e` (atomic admission/receipt primitives and `20261008100000_ai_resource_admission.sql`) plus stacked draft PR #99 head `493ea893` (expensive-route coverage) are unmerged and unaccepted. Staging still needs the migration, server-only IP hash secret, eight explicit limits, enabled admission, WAF/provider spend controls, and concurrent/budget/lease/receipt evidence. After that, verify the original scan's named facts on the correct pages through OCR, indexing and retrieval; do not infer its failure from the separate incomplete-response defect. |
-| C08 | NOT STARTED | — | — | — |
-| C09 | NOT STARTED | — | — | — |
-| C10 | NOT STARTED | — | — | — |
-| C11 | DONE | `866948b` intake, `ce2e978` panel-wide bound / [PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Earlier setup/harness failures retained in `implementation/codex-failures.md`. Final authorized 3/3: delayed-A fixture FAIL before assertions; combined failed-A/repeated-Retry browser check PASS and also verified B/C uploads while A remained processing, distinct IDs/type/status, dedupe and ready-status completion; Node 22 package-local web typecheck PASS. Review found a cross-batch concurrency gap; automatic CI run `38612994010` passed its new overlapping-batch regression, typecheck, tests and build after `ce2e978`, with no fourth manual check. | Await PR review/acceptance into integration; no live storage/provider or production verification claimed. |
-| C12 | NOT STARTED | — | — | — |
+| C08 | DONE | `2d09067` / [PR #118](https://github.com/WGLewis0721/Studigo-ai/pull/118) | 3/3: three-page fixture names page 2 and keeps pages 1 and 3 citable; match/session RPCs reject uncertain pages; documents and web typecheck PASS. | Brought onto the integration line with C11's queue kept. Not on main. |
+| C09 | DONE | `fc5b919` / [PR #119](https://github.com/WGLewis0721/Studigo-ai/pull/119) | 3/3: stale token and a second claim cannot replace the active revision; a failed refresh still retrieves the old text and a later publish exposes only the new text. | On the integration line. Draft #109 stays blocked. Not on main. |
+| C10 | DONE | `84431a9` / [PR #120](https://github.com/WGLewis0721/Studigo-ai/pull/120) | 3/3: guide plus notes plus slides compose and a notes replacement keeps the other sources; edits, removals, conflicts, and a second guide keep history. | On the integration line. Not on main. |
+| C11 | DONE | `866948b` / [PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Bounded queue merged to integration. Signed upload and admission ids kept. Queue keys are a counter, not a random operation id. | Merged to integration. #121 is a duplicate attempt and is not the integration result. |
+| C12 | DONE | `e368ea8` / [PR #122](https://github.com/WGLewis0721/Studigo-ai/pull/122) | 3/3: term and table blocks keep page 2 and link to the chunk; another learner cannot read them. | On the integration line. Not on main. |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
 | C15 | NOT STARTED | — | — | — |

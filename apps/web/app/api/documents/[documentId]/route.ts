@@ -14,7 +14,7 @@ export async function GET(
   const { data: document } = await supabase
     .from("documents")
     .select(
-      "id, room_id, name, mime_type, size_bytes, source_type, status, error_message, page_count, page_label, ocr_page_count, chunk_count, attempts, created_at"
+      "id, room_id, name, mime_type, size_bytes, source_type, status, error_message, page_count, page_label, ocr_page_count, chunk_count, page_coverage, attempts, created_at"
     )
     .eq("id", documentId)
     .maybeSingle();

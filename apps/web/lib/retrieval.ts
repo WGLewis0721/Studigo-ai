@@ -1,4 +1,5 @@
 import { embedText, rerankByOverlap, type RetrievedChunk } from "@studigo/ai";
+import { isPageCitable, type PageCoverageEntry } from "@studigo/documents";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toRetrievedChunks } from "@/lib/ingest";
 import { writeStudyTrace } from "@/lib/study-trace";
@@ -124,7 +125,7 @@ export async function fetchChunksByIds(
   if (documentIds.length) {
     const { data: documentData, error: documentError } = await supabase
       .from("documents")
-      .select("id, name, source_type, page_label, source_priority, status")
+      .select("id, name, source_type, page_label, source_priority, status, page_coverage")
       .in("id", documentIds)
       .eq("room_id", roomId);
 
@@ -132,13 +133,16 @@ export async function fetchChunksByIds(
       throw new Error(`Could not re-fetch Coach source document metadata: ${documentError.message}`);
     }
 
-    for (const row of (documentData ?? []) as unknown as DocumentRow[]) {
-      if((row as DocumentRow & {status?:string}).status==='ready')documentsById.set(row.id, row);
+    for (const row of (documentData ?? []) as unknown as Array<DocumentRow & { status?: string; page_coverage?: PageCoverageEntry[] | null }>) {
+      if (row.status === "ready" || row.status === "partial") documentsById.set(row.id, row);
     }
   }
 
   const byId = new Map<string, RetrievedChunk>(
-    chunkRows.filter(row=>documentsById.has(row.document_id)).map((row) => {
+    chunkRows.filter((row) => {
+      const document = documentsById.get(row.document_id) as (DocumentRow & { page_coverage?: PageCoverageEntry[] | null }) | undefined;
+      return Boolean(document && isPageCitable(document.page_coverage, row.page_number));
+    }).map((row) => {
       const document = documentsById.get(row.document_id);
       return [
         row.id,

@@ -90,7 +90,9 @@ export function LearnPanel({
         [topic.id]: {
           text: payload.explanation,
           citations: Array.isArray(payload.citations) ? payload.citations : [],
-          notice: outcome ? learnOutcomeView(outcome) : null
+          notice: typeof payload.coverageLimitation === "string" && payload.coverageLimitation.trim()
+            ? { title: "Some pages need attention", message: payload.coverageLimitation, action: "materials" }
+            : outcome ? learnOutcomeView(outcome) : null
         }
       }));
     } catch (learnError) {

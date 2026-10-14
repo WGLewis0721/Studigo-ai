@@ -64,7 +64,13 @@ async function guardedPost(request: Request) {
   if (result.error === "reindex_processing") {
     return Response.json({ error: "This study guide is being processed. Wait for it to finish." }, { status: 409 });
   }
-  if (result.status !== "ready") {
+  if (result.preserved) {
+    return Response.json(
+      { error: "The refresh did not finish. The previous version is still searchable.", ...result },
+      { status: 409 }
+    );
+  }
+  if (result.status !== "ready" && result.status !== "partial") {
     return Response.json(
       { error: result.error || "The study guide could not be refreshed.", ...result },
       { status: 500 }
