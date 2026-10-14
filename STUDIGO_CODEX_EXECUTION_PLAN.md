@@ -562,7 +562,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C09 | DONE | `fc5b919` / [PR #119](https://github.com/WGLewis0721/Studigo-ai/pull/119) | 3/3: stale token and a second claim cannot replace the active revision; a failed refresh still retrieves the old text and a later publish exposes only the new text; web typecheck PASS. No production migration. | Stacked on C08 PR #118; not merged. Draft #109 remains the older integration attempt. |
 | C10 | DONE | room composition on `codex/c10-room-composition` | 3/3: guide plus notes plus slides compose and a notes replacement keeps the other sources; edits, removals, conflicts, and a second guide keep history; web typecheck PASS. | Stacked on #119; not merged. |
 | C11 | NOT STARTED | — | — | — |
-| C12 | DONE | source blocks on `codex/c12-source-blocks` | 3/3: term and table blocks keep page 2 and link to the chunk; another learner cannot read them; documents and web typecheck PASS. | Stacked on #120; not merged. |
+| C12 | DONE | `e368ea8` / [PR #122](https://github.com/WGLewis0721/Studigo-ai/pull/122) | 3/3: term and table blocks keep page 2 and link to the chunk; another learner cannot read them; documents and web typecheck PASS. | Stacked on #120; not merged. |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
 | C15 | NOT STARTED | — | — | — |
