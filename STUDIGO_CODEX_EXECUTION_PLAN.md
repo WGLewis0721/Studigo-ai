@@ -75,7 +75,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C18 | P1 | Student-ready PDF | Readable print layout with intact Unicode and complete sentences | C15 | DONE |
 | C19 | P1 | Editable Word export | Edit the same guide in Word | C15 | DONE |
 | C20 | P1 | Restore active threads on reload | Return to the correct lesson/Coach conversation | C03 | NOT STARTED |
-| C21 | P1 | Mobile lessons and accessible controls | Progress, Clear, Next and citations work on iPhone/iPad | C06, C08, C17, C20 | NOT STARTED |
+| C21 | P1 | Mobile lessons and accessible controls | Progress, Clear, Next and citations work on iPhone/iPad | C06, C08, C17, C20 | DONE |
 | C22 | P1 | Export save/share actions | Save or share actual PDF/Word files on mobile | C17, C18, C19 | DONE |
 | C23 | P2 | Quiet companion/progress feedback | Brief, optional feedback without interrupting learning | C21 | NOT STARTED |
 | C24 | P0 | Cross-surface source revision invalidation | Replaced/deleted source facts stop being taught as current | C06, C10, C16, C18, C19, C20 | NOT STARTED |
@@ -571,7 +571,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C18 | DONE | readable PDF on this branch | Government PDF is 4 letter pages. Diacritics survive, Invalid Date is omitted, the long paragraph paginates without a midword cut, and the answer key is its own page. A foreign room returns 404 and no PDF bytes. Web build PASS. | Not merged. No production deploy. |
 | C19 | DONE | docx on this branch | The Government edition opens as an editable Word file. Definitions and table cells are text, headings and a page break are present, and the same facts, questions, and answers are in the PDF. A bad format or foreign room returns JSON and no file. Web build PASS. | Not merged. |
 | C20 | NOT STARTED | — | — | — |
-| C21 | NOT STARTED | — | — | — |
+| C21 | DONE | mobile lessons on this branch | 3/3 executed: compact 320/390 lesson render PASS (Lesson 2 of 6, Clear, Next, wrapping citation); iPad-width CSS/DOM focus contract PASS. Physical iPad and physical iPhone Safari are UNVERIFIED, not a device pass. Web typecheck PASS. | Not merged. |
 | C22 | DONE | guide share on this branch | 3/3: a supported share returns the PDF or DOCX File name and type and an unsupported browser downloads; cancellation is not an error and an in-flight duplicate is rejected. Print uses the edition text and includes the answer key only when revealed; the share payload has no blob or signed URL. Web typecheck PASS. No model call. | Not merged. |
 | C23 | NOT STARTED | — | — | — |
 | C24 | NOT STARTED | — | — | — |

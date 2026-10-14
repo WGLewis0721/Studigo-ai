@@ -186,3 +186,33 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: web build
 - Result: FAIL typecheck. The paragraph helper only accepted Heading1.
 - Action: accept every heading level and rebuild.
+
+### C21 — 2026-10-14 — check 2 of maximum 3
+- Final/task commit: pending on codex/c21-mobile-lessons
+- Check name: iPad-width keyboard focus with companion expanded and minimized
+- Command or manual steps: `pnpm --filter @studigo/web exec node --import tsx --test --test-name-pattern='C21 iPad focus' lib/mobile-lessons.test.ts`
+- Environment: Node 22.23.3, worktree /tmp/studigo-c21, no physical iPad
+- Result: CSS/DOM PASS; physical iPad UNVERIFIED
+- Failure details: The CSS and DOM contract passed. Mode and topic are in the accessible names, and `.lessonActions` stays in document flow at 701–1100px while companion dock margins cover both window sizes. A physical iPad keyboard was not observed. This is not a device pass.
+- Suspected cause: no iPad is attached to this environment.
+- Impact: defining feature
+- Action: record and continue
+- Remaining check slots: 1
+- Unverified acceptance criteria: physical iPad keyboard focus with the companion expanded and minimized
+- Task disposition: DONE for the CSS/DOM contract; physical iPad UNVERIFIED
+- Follow-up: physical iPad smoke when a device is available
+
+### C21 — 2026-10-14 — iPhone Safari device smoke, not executed
+- Final/task commit: pending on codex/c21-mobile-lessons
+- Check name: physical iPhone Safari Clear, Next, and citation smoke
+- Command or manual steps: not run. The third executed check was `pnpm --filter @studigo/web typecheck` instead of a fake device run.
+- Environment: no physical iPhone
+- Result: UNVERIFIED
+- Failure details: No iPhone Safari session was invented. Typecheck passed as the third executed check. Phone behavior at 320 and 390 CSS pixels was asserted by the compact lesson fixture, not by a device.
+- Suspected cause: no iPhone is attached to this environment.
+- Impact: defining feature
+- Action: record and continue
+- Remaining check slots: 0
+- Unverified acceptance criteria: physical iPhone Safari Clear, Next, and citation smoke
+- Task disposition: DONE for the executed contract; physical iPhone Safari UNVERIFIED
+- Follow-up: physical iPhone Safari smoke when a device is available
