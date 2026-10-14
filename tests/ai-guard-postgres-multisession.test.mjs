@@ -67,3 +67,115 @@ test("global admission contention fails closed quickly and still preserves the c
 });
 
 
+
+// ---- Cross-session atomicity and role enforcement on a real PostgreSQL server ----
+const owner2 = "00000000-0000-4000-8000-000000000002";
+const BIG = { um: 100000, im: 100000, gm: 100000, uc: 1000, ic: 1000, gc: 1000, ud: 1e12, gd: 1e12 };
+const decideSql = (n, { owner: who = owner, ip = "f".repeat(64), key = "k-" + n, cost = 100, limits }) =>
+  `select public.admit_studigo_ai_resource('${uuid(n)}'::uuid,'${who}'::uuid,'${ip}'::text,'chat'::text,'${key}'::text,${cost}::bigint,` +
+  `${limits.um}::integer,${limits.im}::integer,${limits.gm}::integer,${limits.uc}::integer,${limits.ic}::integer,${limits.gc}::integer,` +
+  `${limits.ud}::bigint,${limits.gd}::bigint)`;
+const parse = out => JSON.parse(out.split("\n").find(line => line.startsWith("{")));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function decide(n, spec) {
+  // 'busy' is the designed fail-closed answer to lock contention; a real client retries.
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const reply = parse(await sql(`begin; ${auth} ${decideSql(n, spec)}; commit;`));
+    if (reply.reason !== "busy") return reply;
+    await sleep(3 + Math.floor(Math.random() * 20));
+  }
+  throw new Error("admission stayed busy");
+}
+async function cleanSlate() {
+  await sql(`insert into auth.users(id) values('${owner2}') on conflict do nothing;
+    delete from public.studigo_ai_guard_leases; delete from public.studigo_ai_guard_receipts;
+    delete from public.studigo_ai_guard_windows; update public.studigo_ai_guard_state set paused=false where id=true`);
+  // Per-minute windows would split across a boundary; wait it out so the cap is exact.
+  const into = Date.now() % 60_000;
+  if (into > 48_000) await sleep(60_000 - into + 500);
+}
+const tally = replies => replies.reduce((m, r) => (m[r.allowed ? "allowed" : r.reason] = (m[r.allowed ? "allowed" : r.reason] ?? 0) + 1, m), {});
+
+test("24 truly parallel sessions cannot exceed the global concurrency cap", { skip: !TEST_DATABASE_URL }, async () => {
+  await cleanSlate();
+  const limits = { ...BIG, gc: 5 };
+  const replies = await Promise.all(Array.from({ length: 24 }, (_, i) =>
+    decide(200 + i, { owner: i % 2 ? owner : owner2, ip: String(i % 4).repeat(64), limits })));
+  assert.deepEqual(tally(replies), { allowed: 5, concurrent: 19 });
+  assert.equal(Number(await sql("select count(*) from public.studigo_ai_guard_leases where completed_at is null")), 5);
+});
+
+test("parallel sessions cannot exceed per-user and per-IP concurrency", { skip: !TEST_DATABASE_URL }, async () => {
+  await cleanSlate();
+  const user = await Promise.all(Array.from({ length: 16 }, (_, i) =>
+    decide(300 + i, { owner, ip: String(i % 8).repeat(64), limits: { ...BIG, uc: 3 } })));
+  assert.deepEqual(tally(user), { allowed: 3, concurrent: 13 });
+  await cleanSlate();
+  const ip = await Promise.all(Array.from({ length: 16 }, (_, i) =>
+    decide(320 + i, { owner: i % 2 ? owner : owner2, ip: "9".repeat(64), limits: { ...BIG, ic: 4 } })));
+  assert.deepEqual(tally(ip), { allowed: 4, concurrent: 12 });
+});
+
+test("parallel sessions cannot exceed per-minute rate limits for user, IP or globally", { skip: !TEST_DATABASE_URL }, async () => {
+  for (const [name, limits, spec] of [
+    ["user", { ...BIG, um: 7 }, i => ({ owner, ip: String(i % 8).repeat(64) })],
+    ["ip", { ...BIG, im: 6 }, i => ({ owner: i % 2 ? owner : owner2, ip: "8".repeat(64) })],
+    ["global", { ...BIG, gm: 5 }, i => ({ owner: i % 2 ? owner : owner2, ip: String(i % 8).repeat(64) })]
+  ]) {
+    await cleanSlate();
+    const replies = await Promise.all(Array.from({ length: 18 }, (_, i) =>
+      decide(400 + i, { ...spec(i), limits })));
+    const t = tally(replies), cap = { user: 7, ip: 6, global: 5 }[name];
+    assert.deepEqual(t, { allowed: cap, rate: 18 - cap }, name);
+  }
+});
+
+test("parallel sessions cannot exceed the user or global daily reservation ceilings", { skip: !TEST_DATABASE_URL }, async () => {
+  await cleanSlate();
+  const user = await Promise.all(Array.from({ length: 20 }, (_, i) =>
+    decide(500 + i, { owner, ip: String(i % 8).repeat(64), cost: 100, limits: { ...BIG, ud: 1000 } })));
+  assert.deepEqual(tally(user), { allowed: 10, user_budget: 10 });
+  assert.equal(Number(await sql("select reserved_micro_usd from public.studigo_ai_guard_windows where scope='user_day'")), 1000);
+  await cleanSlate();
+  const global = await Promise.all(Array.from({ length: 20 }, (_, i) =>
+    decide(520 + i, { owner: i % 2 ? owner : owner2, ip: String(i % 8).repeat(64), cost: 100, limits: { ...BIG, gd: 700 } })));
+  assert.deepEqual(tally(global), { allowed: 7, global_budget: 13 });
+  assert.equal(Number(await sql("select reserved_micro_usd from public.studigo_ai_guard_windows where scope='global_day'")), 700);
+});
+
+test("ten parallel sessions racing one operation key create exactly one lease", { skip: !TEST_DATABASE_URL }, async () => {
+  await cleanSlate();
+  const replies = await Promise.all(Array.from({ length: 10 }, (_, i) =>
+    decide(600 + i, { owner, key: "same-key", limits: BIG })));
+  assert.deepEqual(tally(replies), { allowed: 1, duplicate: 9 });
+  assert.equal(Number(await sql("select count(*) from public.studigo_ai_guard_leases where request_key='same-key'")), 1);
+});
+
+test("a real server enforces the service-role boundary for every RPC and table", { skip: !TEST_DATABASE_URL }, async () => {
+  await cleanSlate();
+  const denied = /permission denied|service role required/;
+  const calls = [
+    decideSql(700, { limits: BIG }),
+    `select public.claim_studigo_ai_receipt('${owner}'::uuid,'chat','r','${"a".repeat(64)}')`,
+    `select public.start_studigo_ai_receipt('${owner}'::uuid,'chat','r')`,
+    `select public.finish_studigo_ai_receipt('${owner}'::uuid,'chat','r',true)`,
+    `select public.finish_studigo_ai_resource('${uuid(700)}'::uuid)`,
+    `select public.renew_studigo_ai_resource('${uuid(700)}'::uuid)`
+  ];
+  for (const role of ["anon", "authenticated"]) {
+    for (const call of calls) {
+      // Even a forged service_role claim cannot help a role without EXECUTE.
+      await assert.rejects(sql(`begin; set local role ${role}; set local request.jwt.claim.role='service_role'; ${call}; commit;`), denied, `${role}: ${call.slice(0, 60)}`);
+    }
+    for (const table of ["state", "windows", "leases", "receipts"]) {
+      await assert.rejects(sql(`begin; set local role ${role}; select * from public.studigo_ai_guard_${table}; commit;`), denied, `${role} reads ${table}`);
+    }
+  }
+  // service_role with the wrong or missing JWT role claim is still refused inside the function.
+  for (const claim of ["authenticated", "anon", ""]) {
+    await assert.rejects(sql(`begin; set local role service_role; set local request.jwt.claim.role='${claim}'; ${calls[0]}; commit;`), denied, `claim '${claim}'`);
+  }
+  assert.equal(Number(await sql("select count(*) from public.studigo_ai_guard_leases")), 0, "denied calls changed nothing");
+  // And the legitimate path still works.
+  assert.equal(parse(await sql(`begin; set local role service_role; ${auth} ${decideSql(701, { limits: BIG })}; commit;`)).allowed, true);
+});

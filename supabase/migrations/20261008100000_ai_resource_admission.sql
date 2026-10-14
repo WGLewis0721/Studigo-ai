@@ -56,6 +56,10 @@ create index if not exists studigo_ai_guard_finished_retention_idx
   where completed_at is not null;
 create index if not exists studigo_ai_guard_receipt_retention_idx
   on public.studigo_ai_guard_receipts (updated_at);
+create index if not exists studigo_ai_guard_receipt_claimed_idx
+  on public.studigo_ai_guard_receipts (updated_at) where state = 'claimed';
+create index if not exists studigo_ai_guard_receipt_running_idx
+  on public.studigo_ai_guard_receipts (updated_at) where state = 'running';
 
 alter table public.studigo_ai_guard_state enable row level security;
 alter table public.studigo_ai_guard_windows enable row level security;
@@ -75,8 +79,12 @@ begin
   if auth.role() is distinct from 'service_role' then
     raise exception 'service role required' using errcode = '42501';
   end if;
-  if p_owner_id is null or length(coalesce(p_operation,'')) not between 1 and 64 or
-     length(coalesce(p_request_key,'')) not between 1 and 80 or
+  -- Every argument is checked with an explicit IS NULL: a NULL inside an OR chain
+  -- makes the whole condition NULL, which IF treats as false and would skip rejection.
+  if p_owner_id is null or p_operation is null or p_request_key is null or
+     p_request_fingerprint is null or
+     length(p_operation) not between 1 and 64 or
+     length(p_request_key) not between 1 and 80 or
      p_request_fingerprint !~ '^[0-9a-f]{64}$' then
     return jsonb_build_object('claimed',false,'reason','invalid');
   end if;
@@ -92,6 +100,17 @@ begin
   end if;
   if v_receipt.state='completed' then
     return jsonb_build_object('claimed',false,'reason','completed');
+  end if;
+  -- Crash recovery: provider work started but its lease expired without completion.
+  -- The outcome is unknown, so the key is never silently re-run.
+  if v_receipt.state='running' and exists (
+    select 1 from public.studigo_ai_guard_leases l
+    where l.owner_id=p_owner_id and l.operation=p_operation and l.request_key=p_request_key
+      and l.completed_at is null and l.expires_at < clock_timestamp()
+  ) then
+    update public.studigo_ai_guard_receipts set state='ambiguous', updated_at=now()
+      where owner_id=p_owner_id and operation=p_operation and request_key=p_request_key;
+    return jsonb_build_object('claimed',false,'reason','ambiguous');
   end if;
   if v_receipt.state in ('running','ambiguous') then
     return jsonb_build_object('claimed',false,'reason',v_receipt.state);
@@ -126,7 +145,8 @@ begin
       case when provider_started_at is null then 'claimed' else 'ambiguous' end end,
     completed_at=case when p_completed then now() else completed_at end,
     updated_at=now()
-  where owner_id=p_owner_id and operation=p_operation and request_key=p_request_key;
+  where owner_id=p_owner_id and operation=p_operation and request_key=p_request_key
+    and state <> 'completed';
   return found;
 end $$;
 
@@ -157,15 +177,19 @@ declare
   v_user text := p_owner_id::text;
   v_calls integer;
   v_reserved bigint;
+  v_prior public.studigo_ai_guard_leases%rowtype;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception 'service role required' using errcode = '42501';
   end if;
-  if p_lease_id is null or p_owner_id is null or
+  -- Every argument is checked with an explicit IS NULL (see claim_studigo_ai_receipt).
+  if p_lease_id is null or p_owner_id is null or p_ip_hash is null or
+     p_operation is null or p_request_key is null or
      p_ip_hash !~ '^[0-9a-f]{64}$' or
-     length(coalesce(p_operation, '')) not between 1 and 64 or
-     length(coalesce(p_request_key, '')) not between 1 and 80 or
+     length(p_operation) not between 1 and 64 or
+     length(p_request_key) not between 1 and 80 or
      p_reserved_micro_usd is null or p_reserved_micro_usd <= 0 or
+     p_reserved_micro_usd > 1000000000 or
      (p_user_minute is null or p_ip_minute is null or p_global_minute is null or
       p_user_concurrent is null or p_ip_concurrent is null or p_global_concurrent is null or
       p_user_daily_micro_usd is null or p_global_daily_micro_usd is null or
@@ -197,20 +221,51 @@ begin
        or (completed_at is null and expires_at < v_now - interval '30 days')
     limit 128
   );
+  -- Reconcile: provider work that started (receipt running) but whose lease expired
+  -- uncompleted, or whose lease finished but the receipt was never closed, has an
+  -- unknown outcome. Mark it ambiguous so it is never silently re-run and can age out.
+  update public.studigo_ai_guard_receipts r set state='ambiguous', updated_at=v_now
+  where (r.owner_id,r.operation,r.request_key) in (
+    select s.owner_id,s.operation,s.request_key
+    from public.studigo_ai_guard_receipts s
+    join public.studigo_ai_guard_leases l
+      on l.owner_id=s.owner_id and l.operation=s.operation and l.request_key=s.request_key
+    where s.state='running'
+      and ((l.completed_at is null and l.expires_at < v_now)
+        or (l.completed_at is not null and l.completed_at < v_now - interval '5 minutes'))
+    limit 128
+  );
+  -- A claimed receipt never reached the provider; it only reserves the key briefly.
   delete from public.studigo_ai_guard_receipts
   where (owner_id,operation,request_key) in (
     select owner_id,operation,request_key from public.studigo_ai_guard_receipts
-    where state='completed' and updated_at < v_now - interval '30 days'
+    where state='claimed' and updated_at < v_now - interval '1 hour'
+    order by updated_at limit 128
+  );
+  -- Every other state is retained 30 days so duplicate keys stay safe, then pruned.
+  delete from public.studigo_ai_guard_receipts
+  where (owner_id,operation,request_key) in (
+    select owner_id,operation,request_key from public.studigo_ai_guard_receipts
+    where updated_at < v_now - interval '30 days'
     order by updated_at limit 128
   );
   if (select paused from public.studigo_ai_guard_state where id = true) is distinct from false then
     return jsonb_build_object('allowed', false, 'reason', 'paused');
   end if;
-  if exists (
-    select 1 from public.studigo_ai_guard_leases
-    where owner_id=p_owner_id and operation=p_operation and request_key=p_request_key
-  ) then
-    return jsonb_build_object('allowed', false, 'reason', 'duplicate');
+  select * into v_prior from public.studigo_ai_guard_leases
+    where owner_id=p_owner_id and operation=p_operation and request_key=p_request_key;
+  if found then
+    -- An active lease for this key is always a duplicate. An inactive one may be
+    -- replaced only when the receipt proves the provider never started, which is
+    -- the one case where a retry cannot double-run billable work.
+    if (v_prior.completed_at is null and v_prior.expires_at > v_now) or not exists (
+      select 1 from public.studigo_ai_guard_receipts r
+      where r.owner_id=p_owner_id and r.operation=p_operation and r.request_key=p_request_key
+        and r.state='claimed' and r.provider_started_at is null
+    ) then
+      return jsonb_build_object('allowed', false, 'reason', 'duplicate');
+    end if;
+    delete from public.studigo_ai_guard_leases where id = v_prior.id;
   end if;
 
   if (select count(*) from public.studigo_ai_guard_leases

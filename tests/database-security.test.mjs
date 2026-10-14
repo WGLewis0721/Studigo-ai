@@ -938,3 +938,147 @@ test('AI admission prunes old windows and completed leases without touching curr
 });
 
 
+
+// ---- Receipt / lease state machine hardening (independent regression tests) ----
+const ROOMY = { userMinute: 1000, ipMinute: 1000, globalMinute: 1000,
+  userConcurrent: 50, ipConcurrent: 50, globalConcurrent: 50, userDaily: 1e12, globalDaily: 1e12 };
+const claimSql = 'select public.claim_studigo_ai_receipt($1::uuid,$2::text,$3::text,$4::text) as d';
+const FP = 'a'.repeat(64);
+const receiptState = async key => (await one(
+  'select state, provider_started_at is not null as started from public.studigo_ai_guard_receipts where request_key=$1', [key]));
+
+test('every single NULL argument to the admission and receipt RPCs is rejected without state change', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const base = [id(99800), A, 'c'.repeat(64), 'chat', 'null-every-arg', 100,
+      10, 10, 10, 2, 3, 5, 10_000, 100_000];
+    for (let index = 0; index < base.length; index++) {
+      const args = [...base]; args[index] = null;
+      const reply = (await one(admissionSql, args)).decision;
+      assert.equal(reply.allowed, false, `admit arg ${index} NULL`);
+      assert.equal(reply.reason, 'invalid', `admit arg ${index} NULL`);
+    }
+    for (let index = 0; index < 4; index++) {
+      const args = [A, 'chat', 'null-claim', FP]; args[index] = null;
+      const reply = (await one(claimSql, args)).d;
+      assert.equal(reply.claimed, false, `claim arg ${index} NULL`);
+      assert.equal(reply.reason, 'invalid', `claim arg ${index} NULL`);
+    }
+    for (const table of ['leases', 'receipts', 'windows']) {
+      assert.equal((await one(`select count(*)::int as n from public.studigo_ai_guard_${table}`)).n, 0, `${table} untouched`);
+    }
+  });
+});
+
+test('oversized single reservations are rejected before sums can overflow', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    for (const cost of [1_000_000_001, 9_223_372_036_854_775_807n]) {
+      const reply = await aiAdmit(A, id(99810), 'huge-' + cost, cost, ROOMY);
+      assert.equal(reply.reason, 'invalid');
+    }
+    assert.equal((await aiAdmit(A, id(99811), 'edge', 1_000_000_000, ROOMY)).allowed, true);
+  });
+});
+
+test('a retry may reuse its key only when the provider provably never started', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const ip = 'd'.repeat(64);
+    // Never started: lease released, receipt released -> key reusable.
+    assert.equal((await one(claimSql, [A, 'chat', 'k-never', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(A, id(99820), 'k-never', 100, ROOMY, ip)).allowed, true);
+    // While that first attempt is still active, an identical concurrent attempt is a duplicate.
+    assert.equal((await one(claimSql, [A, 'chat', 'k-never', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(A, id(99821), 'k-never', 100, ROOMY, ip)).reason, 'duplicate');
+    await one('select public.finish_studigo_ai_resource($1::uuid) as r', [id(99820)]);
+    await one("select public.finish_studigo_ai_receipt($1::uuid,'chat','k-never',false) as r", [A]);
+    assert.equal((await receiptState('k-never')).state, 'claimed');
+    assert.equal((await one(claimSql, [A, 'chat', 'k-never', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(A, id(99822), 'k-never', 100, ROOMY, ip)).allowed, true);
+    assert.equal((await one('select count(*)::int as n from public.studigo_ai_guard_leases where request_key=$1', ['k-never'])).n, 1);
+
+    // Provider started then failed: the key is permanently ambiguous, never re-runnable.
+    assert.equal((await one(claimSql, [A, 'chat', 'k-started', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(A, id(99823), 'k-started', 100, ROOMY, ip)).allowed, true);
+    assert.equal((await one("select public.start_studigo_ai_receipt($1::uuid,'chat','k-started') as r", [A])).r, true);
+    await one('select public.finish_studigo_ai_resource($1::uuid) as r', [id(99823)]);
+    await one("select public.finish_studigo_ai_receipt($1::uuid,'chat','k-started',false) as r", [A]);
+    assert.equal((await receiptState('k-started')).state, 'ambiguous');
+    assert.equal((await one(claimSql, [A, 'chat', 'k-started', FP])).d.reason, 'ambiguous');
+    assert.equal((await aiAdmit(A, id(99824), 'k-started', 100, ROOMY, ip)).reason, 'duplicate');
+  });
+});
+
+test('a late failure report can never regress a completed receipt', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    assert.equal((await one(claimSql, [A, 'learn', 'k-done', FP])).d.claimed, true);
+    await one("select public.start_studigo_ai_receipt($1::uuid,'learn','k-done') as r", [A]);
+    await one("select public.finish_studigo_ai_receipt($1::uuid,'learn','k-done',true) as r", [A]);
+    await one("select public.finish_studigo_ai_receipt($1::uuid,'learn','k-done',false) as r", [A]);
+    assert.equal((await receiptState('k-done')).state, 'completed');
+    assert.equal((await one(claimSql, [A, 'learn', 'k-done', FP])).d.reason, 'completed');
+  });
+});
+
+test('crashed provider work reconciles to ambiguous on claim and in bounded maintenance, and frees concurrency', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const ip = 'e'.repeat(64);
+    const tight = { ...ROOMY, userConcurrent: 1 };
+    // Path 1: a retry arrives after the worker died and the lease expired.
+    assert.equal((await one(claimSql, [A, 'chat', 'k-crash-1', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(A, id(99830), 'k-crash-1', 100, tight, ip)).allowed, true);
+    await one("select public.start_studigo_ai_receipt($1::uuid,'chat','k-crash-1') as r", [A]);
+    assert.equal((await aiAdmit(A, id(99831), 'other-1', 100, tight, ip)).reason, 'concurrent');
+    await db.query("update public.studigo_ai_guard_leases set expires_at=now()-interval '1 minute' where id=$1", [id(99830)]);
+    assert.equal((await one(claimSql, [A, 'chat', 'k-crash-1', FP])).d.reason, 'ambiguous');
+    assert.equal((await receiptState('k-crash-1')).state, 'ambiguous');
+    assert.equal((await aiAdmit(A, id(99831), 'other-1', 100, tight, ip)).allowed, true, 'expired lease freed the slot');
+    await one('select public.finish_studigo_ai_resource($1::uuid) as r', [id(99831)]);
+
+    // Path 2: nobody retries; maintenance reconciles. Also a lease that finished
+    // but whose receipt was never closed (receipt RPC failed) after five minutes.
+    for (const [key, lease] of [['k-crash-2', id(99832)], ['k-orphan', id(99833)]]) {
+      assert.equal((await one(claimSql, [B, 'chat', key, FP])).d.claimed, true);
+      assert.equal((await aiAdmit(B, lease, key, 100, ROOMY, ip)).allowed, true);
+      await one('select public.start_studigo_ai_receipt($1::uuid,$2::text,$3::text) as r', [B, 'chat', key]);
+    }
+    await db.query("update public.studigo_ai_guard_leases set expires_at=now()-interval '1 minute' where id=$1", [id(99832)]);
+    await db.query("update public.studigo_ai_guard_leases set completed_at=now()-interval '6 minutes' where id=$1", [id(99833)]);
+    assert.equal((await aiAdmit(A, id(99834), 'trigger-maintenance', 100, ROOMY, ip)).allowed, true);
+    assert.equal((await receiptState('k-crash-2')).state, 'ambiguous');
+    assert.equal((await receiptState('k-orphan')).state, 'ambiguous');
+    // A healthy running receipt with an active lease is left alone.
+    assert.equal((await one(claimSql, [B, 'chat', 'k-healthy', FP])).d.claimed, true);
+    assert.equal((await aiAdmit(B, id(99835), 'k-healthy', 100, ROOMY, ip)).allowed, true);
+    await one("select public.start_studigo_ai_receipt($1::uuid,'chat','k-healthy') as r", [B]);
+    assert.equal((await aiAdmit(A, id(99836), 'trigger-2', 100, ROOMY, ip)).allowed, true);
+    assert.equal((await receiptState('k-healthy')).state, 'running');
+  });
+});
+
+test('stuck receipts are pruned in bounded batches while recent and in-flight ones survive', async () => {
+  await resetAdmission();
+  await as('service_role', null, async () => {
+    const ip = 'f'.repeat(64);
+    await db.query(`insert into public.studigo_ai_guard_receipts(owner_id,operation,request_key,request_fingerprint,state,updated_at)
+      select $1::uuid,'chat','old-claimed-'||g,repeat('a',64),'claimed',now()-interval '2 hours' from generate_series(1,130) g`, [A]);
+    const row = (key, state, age) => db.query(`insert into public.studigo_ai_guard_receipts(owner_id,operation,request_key,request_fingerprint,state,updated_at)
+      values($1::uuid,'chat',$2,repeat('a',64),$3,now()-$4::interval)`, [B, key, state, age]);
+    await row('recent-claimed', 'claimed', '10 minutes');
+    await row('recent-done', 'completed', '10 days');
+    await row('old-ambiguous', 'ambiguous', '31 days');
+    await row('old-done', 'completed', '31 days');
+    const left = async like => (await one('select count(*)::int as n from public.studigo_ai_guard_receipts where request_key like $1', [like])).n;
+    assert.equal((await aiAdmit(A, id(99840), 'prune-1', 100, ROOMY, ip)).allowed, true);
+    assert.equal(await left('old-claimed-%'), 2, 'one pass prunes at most 128 so lock hold time stays bounded');
+    assert.equal((await aiAdmit(A, id(99841), 'prune-2', 100, ROOMY, ip)).allowed, true);
+    assert.equal(await left('old-claimed-%'), 0);
+    assert.equal(await left('recent-claimed'), 1);
+    assert.equal(await left('recent-done'), 1);
+    assert.equal(await left('old-ambiguous'), 0, 'ambiguous receipts age out after the 30 day horizon');
+    assert.equal(await left('old-done'), 0);
+  });
+});
