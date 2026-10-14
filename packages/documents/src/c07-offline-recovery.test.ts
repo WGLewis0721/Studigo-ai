@@ -35,7 +35,7 @@ test("C07 synthetic no-text PDF recovers three citable pages with a mocked OCR p
     targetPages: pagesNeedingOcr(extraction),
     transcribePage: async ({ pdf, pageNumber }) => {
       invocations.push(pageNumber);
-      const onePage = await extractPdf(pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength));
+      const onePage = await extractPdf(pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer);
       assert.equal(onePage.pageCount, 1, "each paid call receives only one original page");
       return syntheticTranscriptions[pageNumber - 1]!;
     }
