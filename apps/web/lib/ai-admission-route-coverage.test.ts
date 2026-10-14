@@ -13,6 +13,7 @@ const guarded = [
   ["practice-tests", "practice-test-generate"],
   ["practice-tests/submit", "practice-test-grade"],
   ["documents/upload", "document-upload"],
+  ["documents/upload/prepare", "document-upload"],
   ["documents/process", "document-process"],
   ["documents/reindex", "document-reindex"],
   ["topics", "topic-regenerate"]
@@ -62,7 +63,7 @@ test("unguarded API routes do not import a billable provider entrypoint", () => 
     "chat/route.ts", "learn/route.ts", "learn/check/route.ts", "learn/preferences/route.ts",
     "quiz/route.ts", "quiz/attempt/route.ts", "flashcards/route.ts", "flashcards/local/route.ts",
     "flashcards/review/route.ts", "practice-tests/route.ts", "practice-tests/submit/route.ts",
-    "documents/upload/route.ts", "documents/process/route.ts", "documents/reindex/route.ts",
+    "documents/upload/route.ts", "documents/upload/prepare/route.ts", "documents/process/route.ts", "documents/reindex/route.ts",
     "topics/route.ts", "dev/coach/route.ts", "study-plan/route.ts", "learning/challenge/route.ts",
     "coach/preferences/route.ts", "local-beta/route.ts", "v1/learning/sessions/route.ts"
   ];
