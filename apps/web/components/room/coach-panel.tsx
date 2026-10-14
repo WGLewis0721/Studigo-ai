@@ -1,6 +1,7 @@
 "use client";
 
 import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPreferences } from "@/lib/coach-preferences";
+import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -274,8 +275,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         : replying === "coach"
           ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
           : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
-      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
-      if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
+      const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
+      if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
+        throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
+      }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {
         const { done, value } = await reader.read(); if (done) break;

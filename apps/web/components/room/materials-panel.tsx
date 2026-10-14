@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, type SourceType } from "@studigo/documents";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import type { StudyDocument } from "@/lib/rooms";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
@@ -76,6 +77,8 @@ export function MaterialsPanel({
   const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const gestures = useRef(createGestureBook());
+  const uploadLock = useRef(false);
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
 
   const refreshStudyGuide = useCallback(async () => {
@@ -88,6 +91,9 @@ export function MaterialsPanel({
       `Refresh “${latestStudyGuide.name}”? Studigo will reread the stored file, rebuild its search index and topic map, and start fresh Coach/Learn context the next time you open them. Practice history is kept.`
     );
     if (!confirmed) return;
+    const body = JSON.stringify({ roomId, documentId: latestStudyGuide.id });
+    const attempt = gestures.current.begin(`reindex:${latestStudyGuide.id}`, body);
+    if (!attempt.started) return;
 
     setRefreshingGuide(true);
     setRefreshStatus(null);
@@ -95,16 +101,20 @@ export function MaterialsPanel({
     try {
       const response = await fetch("/api/documents/reindex", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, documentId: latestStudyGuide.id })
+        headers: operationHeaders(attempt.id),
+        body
       });
+      gestures.current.finish(`reindex:${latestStudyGuide.id}`, response.status);
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Could not refresh that study guide.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not refresh that study guide.");
+      }
       setRefreshStatus(
         `Refreshed ${latestStudyGuide.name}. Studigo rebuilt the source index and study topics from this file.`
       );
       startTransition(onChanged);
     } catch (refreshError) {
+      gestures.current.abort(`reindex:${latestStudyGuide.id}`);
       setError(refreshError instanceof Error ? refreshError.message : "Could not refresh that study guide.");
     } finally {
       setRefreshingGuide(false);
@@ -113,26 +123,37 @@ export function MaterialsPanel({
 
   const process = useCallback(
     async (documentId: string) => {
-      const response = await fetch("/api/documents/process", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-studigo-operation-id": crypto.randomUUID()
-        },
-        body: JSON.stringify({ documentId })
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Processing failed");
-      return payload as { chunkCount?: number; topicsCreated?: number };
+      const body = JSON.stringify({ documentId });
+      const slot = `process:${documentId}`;
+      const attempt = gestures.current.begin(slot, body);
+      if (!attempt.started) throw new Error("That file is already being read.");
+      try {
+        const response = await fetch("/api/documents/process", {
+          method: "POST",
+          headers: operationHeaders(attempt.id),
+          body
+        });
+        gestures.current.finish(slot, response.status);
+        const payload = await response.json().catch(() => ({}));
+        if (response.status === 202 || response.status === 409 || !response.ok) {
+          throw new Error(payload.error || "Processing failed");
+        }
+        return payload as { chunkCount?: number; topicsCreated?: number };
+      } catch (error) {
+        gestures.current.abort(slot);
+        throw error;
+      }
     },
     []
   );
 
   const uploadFiles = useCallback(
     async (files: File[]) => {
-      if (!files.length) return;
+      if (!files.length || uploadLock.current) return;
+      uploadLock.current = true;
       setError(null);
 
+      try {
       for (const file of files) {
         const key = `${file.name}-${file.size}-${Date.now()}`;
         setQueue((current) => [...current, { key, name: file.name, stage: "uploading" }]);
@@ -143,14 +164,26 @@ export function MaterialsPanel({
           const mimeType = assertUploadAllowed({
             name: file.name, size: file.size, type: resolveMimeType(file)
           });
-          const prepare = await fetch("/api/documents/upload/prepare", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-studigo-operation-id": crypto.randomUUID()
-            },
-            body: JSON.stringify({ roomId, sourceType, name: file.name, size: file.size, type: mimeType })
-          });
+          const body = JSON.stringify({ roomId, sourceType, name: file.name, size: file.size, type: mimeType });
+          const slot = `prepare:${file.name}:${file.size}:${mimeType}`;
+          const attempt = gestures.current.begin(slot, body);
+          if (!attempt.started) throw new Error("That file is already being prepared.");
+          let prepare: Response;
+          try {
+            prepare = await fetch("/api/documents/upload/prepare", {
+              method: "POST",
+              headers: operationHeaders(attempt.id),
+              body
+            });
+            gestures.current.finish(slot, prepare.status);
+          } catch (error) {
+            gestures.current.abort(slot);
+            throw error;
+          }
+          if (prepare.status === 202 || prepare.status === 409) {
+            const denied = await prepare.json().catch(() => ({}));
+            throw new Error(denied.error || "Could not prepare the upload");
+          }
           const prepared = await readUploadReply(prepare, "Could not prepare the upload");
           if (!prepared?.upload?.path || !prepared?.upload?.token || !prepared?.document?.id) {
             throw new Error("Could not obtain a secure upload destination.");
@@ -202,6 +235,9 @@ export function MaterialsPanel({
       setTimeout(() => {
         setQueue((current) => current.filter((item) => item.stage !== "done"));
       }, 2500);
+      } finally {
+        uploadLock.current = false;
+      }
     },
     [onChanged, process, roomId, sourceType]
   );

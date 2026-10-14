@@ -1,8 +1,9 @@
 "use client";
 
 import { TopicReadout } from "./topic-readout";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
+import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
@@ -87,6 +88,7 @@ export function QuizPanel({
   const [loading, setLoading] = useState(false);
   const [grading, setGrading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const gestures = useRef(createGestureBook());
   const [, startTransition] = useTransition();
   const companion = useCompanion();
 
@@ -96,17 +98,19 @@ export function QuizPanel({
   const hasAnswer = usesChoices ? selected !== null : written.trim().length > 0;
 
   async function build() {
+    const body = JSON.stringify({ roomId, topicId: topicId || null, count: 5 });
+    const attempt = gestures.current.begin("quiz-build", body);
+    if (!attempt.started) return;
     setLoading(true);
     setError(null);
     setAnswered([]);
     try {
-      const response = await fetch("/api/quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, topicId: topicId || null, count: 5 })
-      });
+      const response = await fetch("/api/quiz", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish("quiz-build", response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not build a quiz.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not build a quiz.");
+      }
 
       setQuestions(payload.questions as Question[]);
       setIndex(0);
@@ -114,6 +118,7 @@ export function QuizPanel({
       setWritten("");
       setResult(null);
     } catch (buildError) {
+      gestures.current.abort("quiz-build");
       setError(buildError instanceof Error ? buildError.message : "Something went wrong.");
     } finally {
       setLoading(false);
@@ -122,22 +127,24 @@ export function QuizPanel({
 
   async function submit(confidence: 1 | 2 | 3) {
     if (!current || grading || !hasAnswer) return;
+    const body = JSON.stringify({
+      questionId: current.id,
+      selectedChoice: usesChoices ? selected : null,
+      response: usesChoices ? null : written,
+      confidence
+    });
+    const attempt = gestures.current.begin(`quiz-grade:${current.id}`, body);
+    if (!attempt.started) return;
 
     setGrading(true);
     setError(null);
     try {
-      const response = await fetch("/api/quiz/attempt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionId: current.id,
-          selectedChoice: usesChoices ? selected : null,
-          response: usesChoices ? null : written,
-          confidence
-        })
-      });
+      const response = await fetch("/api/quiz/attempt", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish(`quiz-grade:${current.id}`, response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not grade that answer.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not grade that answer.");
+      }
 
       setResult(payload as Result);
       setAnswered((previous) => [
@@ -147,6 +154,7 @@ export function QuizPanel({
       companion.event(payload.isCorrect ? "correct" : confidence === 3 ? "blindspot" : "wrong");
       startTransition(onGraded);
     } catch (gradeError) {
+      gestures.current.abort(`quiz-grade:${current.id}`);
       setError(gradeError instanceof Error ? gradeError.message : "Something went wrong.");
     } finally {
       setGrading(false);

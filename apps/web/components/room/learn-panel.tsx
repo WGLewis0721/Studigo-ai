@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
+import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
@@ -42,6 +43,7 @@ export function LearnPanel({
   const [checks, setChecks] = useState<Record<string, Check>>({});
   const [checkDraft, setCheckDraft] = useState("");
   const [checking, setChecking] = useState(false);
+  const gestures = useRef(createGestureBook());
   const [, startTransition] = useTransition();
 
   async function open(topic: Topic) {
@@ -49,21 +51,24 @@ export function LearnPanel({
     setOpenTopicId(next);
     if (!next || lessons[topic.id]) return;
 
+    const body = JSON.stringify({ roomId, topicId: topic.id });
+    const attempt = gestures.current.begin(`learn:${topic.id}`, body);
+    if (!attempt.started) return;
     setLoadingId(topic.id);
     setError(null);
     try {
-      const response = await fetch("/api/learn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, topicId: topic.id })
-      });
+      const response = await fetch("/api/learn", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish(`learn:${topic.id}`, response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not build that lesson.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not build that lesson.");
+      }
       setLessons((current) => ({
         ...current,
         [topic.id]: { text: payload.explanation, citations: payload.citations ?? [] }
       }));
     } catch (learnError) {
+      gestures.current.abort(`learn:${topic.id}`);
       setError(learnError instanceof Error ? learnError.message : "Something went wrong.");
     } finally {
       setLoadingId(null);
@@ -71,22 +76,25 @@ export function LearnPanel({
   }
 
   async function startCheck(topic: Topic) {
+    const body = JSON.stringify({ roomId, topicId: topic.id });
+    const attempt = gestures.current.begin(`check-start:${topic.id}`, body);
+    if (!attempt.started) return;
     setChecking(true);
     setError(null);
     setCheckDraft("");
     try {
-      const response = await fetch("/api/learn/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, topicId: topic.id })
-      });
+      const response = await fetch("/api/learn/check", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish(`check-start:${topic.id}`, response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not start a check.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not start a check.");
+      }
       setChecks((current) => ({
         ...current,
         [topic.id]: { question: payload.question as string, turns: [], done: false }
       }));
     } catch (checkError) {
+      gestures.current.abort(`check-start:${topic.id}`);
       setError(checkError instanceof Error ? checkError.message : "Something went wrong.");
     } finally {
       setChecking(false);
@@ -98,17 +106,19 @@ export function LearnPanel({
     const check = checks[topic.id];
     const answer = checkDraft.trim();
     if (!check || !answer || checking) return;
+    const body = JSON.stringify({ roomId, topicId: topic.id, question: check.question, answer });
+    const attempt = gestures.current.begin(`check-answer:${topic.id}`, body);
+    if (!attempt.started) return;
 
     setChecking(true);
     setError(null);
     try {
-      const response = await fetch("/api/learn/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, topicId: topic.id, question: check.question, answer })
-      });
+      const response = await fetch("/api/learn/check", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish(`check-answer:${topic.id}`, response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not check that answer.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not check that answer.");
+      }
 
       setChecks((current) => ({
         ...current,
@@ -125,6 +135,7 @@ export function LearnPanel({
       }));
       setCheckDraft("");
     } catch (answerError) {
+      gestures.current.abort(`check-answer:${topic.id}`);
       setError(answerError instanceof Error ? answerError.message : "Something went wrong.");
     } finally {
       setChecking(false);
@@ -218,18 +229,21 @@ export function LearnPanel({
   }
 
   async function buildTopicMap() {
+    const body = JSON.stringify({ roomId });
+    const attempt = gestures.current.begin("topic-regenerate", body);
+    if (!attempt.started) return;
     setBuilding(true);
     setError(null);
     try {
-      const response = await fetch("/api/topics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId })
-      });
+      const response = await fetch("/api/topics", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish("topic-regenerate", response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not build the topic map.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not build the topic map.");
+      }
       startTransition(onChanged);
     } catch (buildError) {
+      gestures.current.abort("topic-regenerate");
       setError(buildError instanceof Error ? buildError.message : "Something went wrong.");
     } finally {
       setBuilding(false);

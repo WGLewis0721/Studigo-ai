@@ -222,7 +222,8 @@ async function applyOcr(args: {
 }): Promise<ExtractionResult> {
   // Quality-only OCR can increase provider work. Keep it disabled until the
   // accepted spend/concurrency admission protects this workload.
-  const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1";
+  const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1"
+    && process.env.STUDIGO_AI_ADMISSION === "1";
   const configuredDuration = Number(process.env.STUDIGO_OCR_TOTAL_TIMEOUT_MS ?? 180_000);
   const maxDurationMs = Number.isFinite(configuredDuration) ? Math.max(1_000, Math.min(configuredDuration, 240_000)) : 180_000;
   const deadline = Date.now() + maxDurationMs;

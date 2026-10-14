@@ -23,6 +23,10 @@ test("Study Guide refresh forces a fresh ingestion pass of the stored original",
   assert.match(reindexRoute, /force: true/);
 });
 
+test("quality-only OCR stays off unless admission is enforcing the work envelope", () => {
+  assert.match(ingest, /STUDIGO_QUALITY_OCR_ENABLED === "1"\s*&&\s*process\.env\.STUDIGO_AI_ADMISSION === "1"/);
+});
+
 test("forced ingestion uses one atomic SQL claim without resetting an active worker", () => {
   assert.match(ingest, /if \(args\.force\)/);
   assert.match(ingest, /claim_forced_studigo_reindex/);

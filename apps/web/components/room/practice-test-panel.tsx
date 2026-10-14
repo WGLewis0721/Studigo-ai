@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createGestureBook, operationHeaders } from '@/lib/ai-operation-client';
 import { CitationChips, type Citation } from './citations';
 import { StudigoMascot } from '@/components/studigo-mascot';
 import { ChipSelect, HeaderChip, HeaderMascot } from './mode-header';
@@ -15,7 +16,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
   const [tests,setTests]=useState<Test[]>([]);const [active,setActive]=useState<Test|null>(null);const [questions,setQuestions]=useState<Question[]>([]);
   const [answers,setAnswers]=useState<Record<string,Answer>>({});const [index,setIndex]=useState(0);const [count,setCount]=useState(10);
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);const [saveState,setSaveState]=useState('');const [confirmSubmit,setConfirmSubmit]=useState(false);
-  const operation=useRef(false);const saveChain=useRef<Promise<void>>(Promise.resolve());const saveVersion=useRef(0);
+  const operation=useRef(false);const saveChain=useRef<Promise<void>>(Promise.resolve());const saveVersion=useRef(0);const gestures=useRef(createGestureBook());
   useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(saveState==='Saving…'||saveState.startsWith('Draft not saved'))event.preventDefault();};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[saveState]);
   const loadList=useCallback(async()=>{try{const r=await fetch(`/api/practice-tests?roomId=${encodeURIComponent(roomId)}`);const p=await r.json();if(!r.ok)throw new Error(p.error);setTests(p.tests);}catch(e){setError(e instanceof Error?e.message:'Could not load tests.');}},[roomId]);
   useEffect(()=>{void loadList();},[loadList]);
@@ -25,9 +26,9 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     catch(e){setError(e instanceof Error?e.message:'Could not open test.');}finally{setBusy(false);}
   }
   async function build() {
-    if(operation.current)return;operation.current=true;setBusy(true);setError(null);
-    try {const r=await fetch('/api/practice-tests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roomId,count})});const p=await r.json();if(!r.ok)throw new Error(p.error);await open(p.testId);await loadList();}
-    catch(e){setError(e instanceof Error?e.message:'Could not build test.');}finally{operation.current=false;setBusy(false);}
+    if(operation.current)return;const body=JSON.stringify({roomId,count});const attempt=gestures.current.begin('practice-build',body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
+    try {const r=await fetch('/api/practice-tests',{method:'POST',headers:operationHeaders(attempt.id),body});gestures.current.finish('practice-build',r.status);const p=await r.json();if(r.status===202||r.status===409||!r.ok)throw new Error(p.error);await open(p.testId);await loadList();}
+    catch(e){gestures.current.abort('practice-build');setError(e instanceof Error?e.message:'Could not build test.');}finally{operation.current=false;setBusy(false);}
   }
   function change(id:string,value:Answer) {
     const next={...answers,[id]:value};const version=++saveVersion.current;setAnswers(next);setSaveState('Saving…');
@@ -40,12 +41,12 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     }).catch(()=>{setSaveState('Draft not saved. Check your connection.');});
   }
   async function submit() {
-    if(!active||operation.current)return;operation.current=true;setBusy(true);setError(null);
+    if(!active||operation.current)return;const body=JSON.stringify({testId:active.id,answers});const attempt=gestures.current.begin(`practice-submit:${active.id}`,body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
     try {
       await saveChain.current;
-      const r=await fetch('/api/practice-tests/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({testId:active.id,answers})});const p=await r.json();if(!r.ok)throw new Error(p.error);
+      const r=await fetch('/api/practice-tests/submit',{method:'POST',headers:operationHeaders(attempt.id),body});gestures.current.finish(`practice-submit:${active.id}`,r.status);const p=await r.json();if(r.status===202||r.status===409||!r.ok)throw new Error(p.error);
       setActive({...active,status:'submitted',result:p.result});setConfirmSubmit(false);onGraded();await loadList();
-    }catch(e){setError(e instanceof Error?e.message:'Submission failed. Retry with your answers intact.');}finally{operation.current=false;setBusy(false);}
+    }catch(e){gestures.current.abort(`practice-submit:${active.id}`);setError(e instanceof Error?e.message:'Submission failed. Retry with your answers intact.');}finally{operation.current=false;setBusy(false);}
   }
   const answered=(q:Question)=>q.kind==='multiple_choice'?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
   const completed=questions.filter(answered).length;const current=questions[index];
