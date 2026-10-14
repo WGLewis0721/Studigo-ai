@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import type { StudyDocument } from "@/lib/rooms";
+import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const ACCEPT =
@@ -11,8 +12,9 @@ const ACCEPT =
 type QueueItem = {
   key: string;
   name: string;
-  stage: "uploading" | "processing" | "done" | "error";
+  stage: "waiting" | "uploading" | "queued" | "processing" | "done" | "error";
   message?: string;
+  documentId?: string;
 };
 
 const STATUS_LABELS: Record<StudyDocument["status"], string> = {
@@ -62,6 +64,14 @@ export function MaterialsPanel({
   const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadQueueRef = useRef<ReturnType<typeof createBoundedUploadQueue> | null>(null);
+  if (!uploadQueueRef.current) uploadQueueRef.current = createBoundedUploadQueue(3);
+  const processQueueRef = useRef<Array<{ key: string; documentId: string }>>([]);
+  const runProcessQueueRef = useRef<() => void>(() => {});
+  const processingIdsRef = useRef(new Set<string>());
+  const processorRunningRef = useRef(false);
+  const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
 
   const refreshStudyGuide = useCallback(async () => {
@@ -106,42 +116,102 @@ export function MaterialsPanel({
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Processing failed");
-      return payload as { chunkCount?: number; topicsCreated?: number };
+      if (payload.status !== "ready") {
+        throw new Error("Processing did not finish. Refresh this file's status before retrying.");
+      }
+      return payload as { documentId: string; status: "ready"; chunkCount?: number; topicsCreated?: number };
     },
     []
   );
 
+  const runProcessQueue = useCallback(() => {
+    if (processorRunningRef.current) return;
+    processorRunningRef.current = true;
+    void (async () => {
+      try {
+        while (processQueueRef.current.length) {
+          const job = processQueueRef.current.shift()!;
+          setQueue((current) => current.map((item) =>
+            item.key === job.key ? { ...item, stage: "processing" } : item
+          ));
+          try {
+            await process(job.documentId);
+            setQueue((current) => current.map((item) =>
+              item.key === job.key ? { ...item, stage: "done" } : item
+            ));
+          } catch (processError) {
+            setQueue((current) => current.map((item) =>
+              item.key === job.key
+                ? { ...item, stage: "error", message: processError instanceof Error ? processError.message : "Processing failed" }
+                : item
+            ));
+          } finally {
+            processingIdsRef.current.delete(job.documentId);
+            setRetryingIds((current) => {
+              if (!current.has(job.documentId)) return current;
+              const next = new Set(current);
+              next.delete(job.documentId);
+              return next;
+            });
+            startTransition(onChanged);
+          }
+        }
+      } finally {
+        processorRunningRef.current = false;
+        if (processQueueRef.current.length) {
+          runProcessQueueRef.current();
+        } else {
+          if (clearDoneTimerRef.current) clearTimeout(clearDoneTimerRef.current);
+          clearDoneTimerRef.current = setTimeout(() => {
+            setQueue((current) => current.filter((item) => item.stage !== "done"));
+          }, 2500);
+        }
+      }
+    })();
+  }, [onChanged, process, startTransition]);
+  runProcessQueueRef.current = runProcessQueue;
+
+  useEffect(() => () => {
+    if (clearDoneTimerRef.current) clearTimeout(clearDoneTimerRef.current);
+  }, []);
+
   const uploadFiles = useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (!files.length) return;
       setError(null);
 
-      for (const file of files) {
-        const key = `${file.name}-${file.size}-${Date.now()}`;
-        setQueue((current) => [...current, { key, name: file.name, stage: "uploading" }]);
-
+      const jobs = files.map((file) => {
+        const key = crypto.randomUUID();
+        setQueue((current) => [...current, { key, name: file.name, stage: "waiting" }]);
+        return { file, key };
+      });
+      enqueueUploadBatch(uploadQueueRef.current!, jobs, sourceType, async ({ file, key }, selectedSourceType) => {
+        setQueue((current) => current.map((item) =>
+          item.key === key ? { ...item, stage: "uploading" } : item
+        ));
         try {
           const form = new FormData();
           form.set("file", file);
           form.set("roomId", roomId);
-          form.set("sourceType", sourceType);
+          form.set("sourceType", selectedSourceType);
 
           const response = await fetch("/api/documents/upload", { method: "POST", body: form });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(payload.error || "Upload failed");
 
-          setQueue((current) =>
-            current.map((item) => (item.key === key ? { ...item, stage: "processing" } : item))
-          );
-          // The list should show the new row while it is being read.
+          const documentId = payload.document?.id;
+          if (typeof documentId !== "string" || !documentId) {
+            throw new Error("Upload response did not include a document ID.");
+          }
+          setQueue((current) => current.map((item) =>
+            item.key === key ? { ...item, stage: "queued", documentId } : item
+          ));
           startTransition(onChanged);
-
-          await process(payload.document.id as string);
-
-          setQueue((current) =>
-            current.map((item) => (item.key === key ? { ...item, stage: "done" } : item))
-          );
-          startTransition(onChanged);
+          if (!processingIdsRef.current.has(documentId)) {
+            processingIdsRef.current.add(documentId);
+            processQueueRef.current.push({ key, documentId });
+            runProcessQueue();
+          }
         } catch (uploadError) {
           const message =
             uploadError instanceof Error ? uploadError.message : "Something went wrong";
@@ -152,24 +222,26 @@ export function MaterialsPanel({
           );
           startTransition(onChanged);
         }
-      }
-
-      // Clear finished rows once the learner has seen them land.
-      setTimeout(() => {
-        setQueue((current) => current.filter((item) => item.stage !== "done"));
-      }, 2500);
+      });
     },
-    [onChanged, process, roomId, sourceType]
+    [onChanged, roomId, runProcessQueue, sourceType]
   );
 
-  const retry = async (documentId: string) => {
+  const retry = (document: StudyDocument) => {
+    const { id: documentId } = document;
+    if (processingIdsRef.current.has(documentId)) return;
+    processingIdsRef.current.add(documentId);
+    setRetryingIds((current) => new Set(current).add(documentId));
     setError(null);
-    try {
-      await process(documentId);
-    } catch (retryError) {
-      setError(retryError instanceof Error ? retryError.message : "Retry failed");
-    }
-    startTransition(onChanged);
+    const key = `retry-${documentId}`;
+    setQueue((current) => [...current.filter((item) => item.key !== key), {
+      key,
+      name: document.name,
+      documentId,
+      stage: "queued"
+    }]);
+    processQueueRef.current.push({ key, documentId });
+    runProcessQueue();
   };
 
   const remove = async (document: StudyDocument) => {
@@ -272,7 +344,9 @@ export function MaterialsPanel({
               <span className="queueSpinner" aria-hidden="true" />
               <strong>{item.name}</strong>
               <small>
+                {item.stage === "waiting" && "Waiting to upload…"}
                 {item.stage === "uploading" && "Uploading…"}
+                {item.stage === "queued" && "Uploaded · waiting to be read…"}
                 {item.stage === "processing" && "Reading, OCR'ing, and indexing…"}
                 {item.stage === "done" && "Ready to study"}
                 {item.stage === "error" && item.message}
@@ -319,8 +393,8 @@ export function MaterialsPanel({
               {(document.status === "failed" ||
                 document.status === "queued" ||
                 document.status === "uploaded") && (
-                <button type="button" onClick={() => void retry(document.id)}>
-                  {document.status === "failed" ? "Retry" : "Process now"}
+                <button type="button" disabled={retryingIds.has(document.id)} onClick={() => retry(document)}>
+                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" ? "Retry" : "Process now"}
                 </button>
               )}
               <button type="button" className="danger" onClick={() => void remove(document)}>

@@ -65,7 +65,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | NOT STARTED |
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | NOT STARTED |
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
-| C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | NOT STARTED |
+| C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | DONE |
 | C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | NOT STARTED |
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | NOT STARTED |
@@ -561,7 +561,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C08 | NOT STARTED | — | — | — |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |
-| C11 | NOT STARTED | — | — | — |
+| C11 | DONE | `866948b` intake, `ce2e978` panel-wide bound / [PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Earlier setup/harness failures retained in `implementation/codex-failures.md`. Final authorized 3/3: delayed-A fixture FAIL before assertions; combined failed-A/repeated-Retry browser check PASS and also verified B/C uploads while A remained processing, distinct IDs/type/status, dedupe and ready-status completion; Node 22 package-local web typecheck PASS. Review found a cross-batch concurrency gap; automatic CI run `38612994010` passed its new overlapping-batch regression, typecheck, tests and build after `ce2e978`, with no fourth manual check. | Await PR review/acceptance into integration; no live storage/provider or production verification claimed. |
 | C12 | NOT STARTED | — | — | — |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
