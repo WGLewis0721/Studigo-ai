@@ -6,6 +6,7 @@ export * from "./grounding";
 export * from "./ocr";
 export * from "./ocr-admission";
 export * from "./rerank";
+export * from "./guide-content";
 export * from "./study";
 export * from "./typos";
 export * from "./verify-claim";

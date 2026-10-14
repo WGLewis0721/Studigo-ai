@@ -151,3 +151,8 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: web typecheck, first attempt
 - Result: FAIL. Replacing an import dropped createBoundedUploadQueue.
 - Action: restored the queue import. The rerun passed. Job behavior checks were already green.
+
+### C15 — 2026-10-14 — edition test loader
+- Check: government edition inspection, first attempt
+- Result: FAIL before assertions. Importing the provider module at load time broke the test linker.
+- Action: load the provider only when live generation is enabled. The rerun passed. No model call.
