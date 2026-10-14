@@ -9,6 +9,19 @@ import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
 
+async function readUploadReply(response: Response, fallback: string): Promise<Record<string, any>> {
+  const payload = await response.json().catch(() => null) as Record<string, any> | null;
+  if (response.ok) return payload ?? {};
+  if (response.status === 413) {
+    throw new Error("Upload request was too large for the server. This file needs direct Storage upload.");
+  }
+  if (response.status === 401) {
+    throw new Error("Your sign-in expired. Please sign in again.");
+  }
+  throw new Error(payload?.error || `${fallback} (HTTP ${response.status}).`);
+}
+
+
 type QueueItem = {
   key: string;
   name: string;
@@ -102,7 +115,10 @@ export function MaterialsPanel({
     async (documentId: string) => {
       const response = await fetch("/api/documents/process", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-studigo-operation-id": crypto.randomUUID()
+        },
         body: JSON.stringify({ documentId })
       });
       const payload = await response.json().catch(() => ({}));
@@ -129,12 +145,15 @@ export function MaterialsPanel({
           });
           const prepare = await fetch("/api/documents/upload/prepare", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-studigo-operation-id": crypto.randomUUID()
+            },
             body: JSON.stringify({ roomId, sourceType, name: file.name, size: file.size, type: mimeType })
           });
-          const prepared = await prepare.json().catch(() => ({}));
-          if (!prepare.ok || !prepared?.upload?.path || !prepared?.upload?.token || !prepared?.document?.id) {
-            throw new Error(prepared.error || "Could not prepare the upload.");
+          const prepared = await readUploadReply(prepare, "Could not prepare the upload");
+          if (!prepared?.upload?.path || !prepared?.upload?.token || !prepared?.document?.id) {
+            throw new Error("Could not obtain a secure upload destination.");
           }
 
           // The signed token authorizes this one private user-owned Storage path.
@@ -153,8 +172,7 @@ export function MaterialsPanel({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ documentId: prepared.document.id })
           });
-          const payload = await finalize.json().catch(() => ({}));
-          if (!finalize.ok) throw new Error(payload.error || "Could not confirm the uploaded file.");
+          const payload = await readUploadReply(finalize, "Could not confirm the uploaded file");
 
           setQueue((current) =>
             current.map((item) => (item.key === key ? { ...item, stage: "processing" } : item))
