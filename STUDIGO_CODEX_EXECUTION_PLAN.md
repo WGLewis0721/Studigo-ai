@@ -557,7 +557,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C04 | NOT STARTED | — | — | — |
 | C05 | NOT STARTED | — | — | — |
 | C06 | NOT STARTED | — | — | — |
-| C07 | NOT DONE | `a23be3e` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | 3/3 checks used: clean Government PDF facts/no-OCR PASS; synthetic quality selection/replacement PASS; compiler path failure before startup. Later read-only inspection of the original PDF found three image-only pages with zero extractable text, so the existing threshold already selects all three; actual OCR/provider outcome remains unverified. | Hold for SEC-gated original OCR and renewed compiler check; quality-only OCR remains disabled by default. This change does not establish the original scan's failure cause. |
+| C07 | NOT DONE | `a23be3e`, `383e14f` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | Original checks: clean PDF facts PASS, synthetic quality selection PASS, compiler path FAIL. Renewed checks: synthetic incomplete-response FAIL before/PASS after, Node 22 web typecheck PASS. Original is image-only and already selected for OCR; its actual provider/ingestion outcome remains unverified. | Hold for SEC-gated original OCR/page-fact verification. Quality-only OCR stays disabled; no claim that this fixes the reported scan failure. |
 | C08 | NOT STARTED | — | — | — |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |

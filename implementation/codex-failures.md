@@ -24,3 +24,10 @@ Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Acti
 - Task disposition: NOT DONE. Do not merge or enable quality-only OCR until the compiler check, original failing scan, and SEC gate are verified with renewed authority.
 
 Read-only source update after the check cap: the subsequently supplied original `1-Study-guide-.pdf` is a three-page, image-only PDF (one embedded image per page; zero extractable text on every page). This means the existing low-character OCR selector would already choose all three pages. The quality-signal change in PR #107 addresses a separate suspect-text-layer case and is **not** a verified fix for the original failure. Provider/OCR and downstream ingestion stages remain unexecuted and unclassified under the missing SEC gate.
+
+### C07 newly authorized three-check round — 2026-10-14
+
+- Check 1/3, Node 22 targeted offline `C07 OCR rejects incomplete provider transcription without retrying or exposing text`: FAIL as expected before correction. The existing adapter accepted a synthetic `status=incomplete`, `max_output_tokens` response as usable text.
+- Check 2/3, same targeted offline test after correction: PASS. The adapter rejected the partial response with safe `output_limit`, did not expose transcript text, and made one intercepted request.
+- Check 3/3, Node 22 web TypeScript compiler over the changed AI import path: PASS.
+- Corrected defect: incomplete/refused/failed OCR responses no longer become learning text. This proves the adapter flaw, **not** that the original three-page scan hit it. No live original OCR was run because accepted spend/concurrency admission remains absent. Original page-fact recovery and all C07 acceptance criteria remain unverified. Draft PR only; NOT DONE.
