@@ -44,3 +44,14 @@ Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Acti
 - Unverified acceptance criteria: delayed-A three-file UI/network behavior; failed-A plus repeated Retry; clean web typecheck.
 - Task disposition: NOT DONE
 - Follow-up: restore isolated worktree dependencies, then run only the remaining scoped checks.
+
+### C11 — 2026-10-14 — newly authorized validation round, 3 of 3
+- Final/task commit: pending review; existing draft PR #108
+- Environment: isolated `/workspace/work/c11-worktree`; Node 22.23.3; `pnpm install --offline --frozen-lockfile` completed and linked 84 packages before validation. Dependency setup did not run a check.
+- Check 1, delayed-A three-file browser UI/network scenario: FAIL before upload assertions. A temporary Playwright fixture bundled the real `MaterialsPanel`, but its file input never rendered; the first run timed out waiting for the input.
+- Check 2, the same scenario after adding fixture diagnostics: FAIL before upload assertions. Browser page error was `process is not defined`, leaving the fixture root empty.
+- Check 3, the same scenario after defining `process.env.NODE_ENV` in the fixture bundle: FAIL before upload assertions with the same `process is not defined` page error. Some bundled dependency still expects the Node `process` global.
+- Command for each run: `/workspace/.studigo-toolchain/node_modules/node/bin/node /workspace/work/c11-ui-check.mjs delayed`. The fixture lives outside the checkout under `/workspace/work/`; it is not product code.
+- Impact: no application upload, process, or Retry behavior was exercised; the failed-A/repeated-Retry scenario and web typecheck were not run. There is no evidence to call C11 DONE.
+- Action: retained all prior failure entries and kept application code unchanged. Further validation needs a separately authorized check round with a working browser fixture or direct app route harness.
+- Remaining check slots in this newly authorized round: 0. Task disposition: NOT DONE.
