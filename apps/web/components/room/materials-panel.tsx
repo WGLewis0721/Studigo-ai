@@ -86,7 +86,7 @@ export function MaterialsPanel({
   const runProcessQueueRef = useRef<() => void>(() => {});
   const processingIdsRef = useRef(new Set<string>());
   const processorRunningRef = useRef(false);
-  const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queueKeyRef = useRef(0);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
 
@@ -213,7 +213,7 @@ export function MaterialsPanel({
       setError(null);
 
       const jobs = files.map((file) => {
-        const key = crypto.randomUUID();
+        const key = `file-${queueKeyRef.current += 1}`;
         setQueue((current) => [...current, { key, name: file.name, stage: "waiting" }]);
         return { file, key };
       });
