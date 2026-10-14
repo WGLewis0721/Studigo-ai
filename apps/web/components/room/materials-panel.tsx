@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
 import type { StudyDocument } from "@/lib/rooms";
+import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const ACCEPT =
@@ -11,7 +12,7 @@ const ACCEPT =
 type QueueItem = {
   key: string;
   name: string;
-  stage: "uploading" | "queued" | "processing" | "done" | "error";
+  stage: "waiting" | "uploading" | "queued" | "processing" | "done" | "error";
   message?: string;
   documentId?: string;
 };
@@ -63,6 +64,8 @@ export function MaterialsPanel({
   const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+  const uploadQueueRef = useRef<ReturnType<typeof createBoundedUploadQueue> | null>(null);
+  if (!uploadQueueRef.current) uploadQueueRef.current = createBoundedUploadQueue(3);
   const processQueueRef = useRef<Array<{ key: string; documentId: string }>>([]);
   const runProcessQueueRef = useRef<() => void>(() => {});
   const processingIdsRef = useRef(new Set<string>());
@@ -173,55 +176,53 @@ export function MaterialsPanel({
   }, []);
 
   const uploadFiles = useCallback(
-    async (files: File[]) => {
+    (files: File[]) => {
       if (!files.length) return;
       setError(null);
 
-      const selectedSourceType = sourceType;
-      let nextFileIndex = 0;
-      const uploadNext = async () => {
-        while (nextFileIndex < files.length) {
-          const file = files[nextFileIndex++];
-          const key = crypto.randomUUID();
-          setQueue((current) => [...current, { key, name: file.name, stage: "uploading" }]);
+      const jobs = files.map((file) => {
+        const key = crypto.randomUUID();
+        setQueue((current) => [...current, { key, name: file.name, stage: "waiting" }]);
+        return { file, key };
+      });
+      enqueueUploadBatch(uploadQueueRef.current!, jobs, sourceType, async ({ file, key }, selectedSourceType) => {
+        setQueue((current) => current.map((item) =>
+          item.key === key ? { ...item, stage: "uploading" } : item
+        ));
+        try {
+          const form = new FormData();
+          form.set("file", file);
+          form.set("roomId", roomId);
+          form.set("sourceType", selectedSourceType);
 
-          try {
-            const form = new FormData();
-            form.set("file", file);
-            form.set("roomId", roomId);
-            form.set("sourceType", selectedSourceType);
+          const response = await fetch("/api/documents/upload", { method: "POST", body: form });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || "Upload failed");
 
-            const response = await fetch("/api/documents/upload", { method: "POST", body: form });
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.error || "Upload failed");
-
-            const documentId = payload.document?.id;
-            if (typeof documentId !== "string" || !documentId) {
-              throw new Error("Upload response did not include a document ID.");
-            }
-            setQueue((current) => current.map((item) =>
-              item.key === key ? { ...item, stage: "queued", documentId } : item
-            ));
-            startTransition(onChanged);
-            if (!processingIdsRef.current.has(documentId)) {
-              processingIdsRef.current.add(documentId);
-              processQueueRef.current.push({ key, documentId });
-              runProcessQueue();
-            }
-          } catch (uploadError) {
-            const message =
-              uploadError instanceof Error ? uploadError.message : "Something went wrong";
-            setQueue((current) =>
-              current.map((item) =>
-                item.key === key ? { ...item, stage: "error", message } : item
-              )
-            );
-            startTransition(onChanged);
+          const documentId = payload.document?.id;
+          if (typeof documentId !== "string" || !documentId) {
+            throw new Error("Upload response did not include a document ID.");
           }
+          setQueue((current) => current.map((item) =>
+            item.key === key ? { ...item, stage: "queued", documentId } : item
+          ));
+          startTransition(onChanged);
+          if (!processingIdsRef.current.has(documentId)) {
+            processingIdsRef.current.add(documentId);
+            processQueueRef.current.push({ key, documentId });
+            runProcessQueue();
+          }
+        } catch (uploadError) {
+          const message =
+            uploadError instanceof Error ? uploadError.message : "Something went wrong";
+          setQueue((current) =>
+            current.map((item) =>
+              item.key === key ? { ...item, stage: "error", message } : item
+            )
+          );
+          startTransition(onChanged);
         }
-      };
-      await Promise.all(Array.from({ length: Math.min(3, files.length) }, () => uploadNext()));
-
+      });
     },
     [onChanged, roomId, runProcessQueue, sourceType]
   );
@@ -343,6 +344,7 @@ export function MaterialsPanel({
               <span className="queueSpinner" aria-hidden="true" />
               <strong>{item.name}</strong>
               <small>
+                {item.stage === "waiting" && "Waiting to upload…"}
                 {item.stage === "uploading" && "Uploading…"}
                 {item.stage === "queued" && "Uploaded · waiting to be read…"}
                 {item.stage === "processing" && "Reading, OCR'ing, and indexing…"}
