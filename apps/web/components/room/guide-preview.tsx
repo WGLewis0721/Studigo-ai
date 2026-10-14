@@ -3,17 +3,20 @@
 import { useEffect, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
+import { guidePrintEdition } from "@/lib/guide-share";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
 
 export function GuidePreview({
   roomId,
-  edition
+  edition,
+  initialAnswersRevealed = false
 }: {
   roomId: string;
   edition?: StudyGuideContent | null;
+  initialAnswersRevealed?: boolean;
 }) {
   const [loaded, setLoaded] = useState<StudyGuideContent | null>(edition ?? null);
-  const [showAnswers, setShowAnswers] = useState(false);
+  const [showAnswers, setShowAnswers] = useState(initialAnswersRevealed);
 
   useEffect(() => {
     if (edition !== undefined) {
@@ -38,6 +41,7 @@ export function GuidePreview({
   }
 
   const model = guidePreviewModel(loaded);
+  const printText = guidePrintEdition(loaded, showAnswers);
   return (
     <article className="guideReading" aria-label="Study guide preview" style={{ overflowWrap: "anywhere", background: "#fff", maxWidth: 320 }}>
       <p className="tinyLabel">Guide · {model.level} · version {model.version} · {model.sourceCount} sources</p>
@@ -47,6 +51,7 @@ export function GuidePreview({
         <StudyGuideDownloadButton roomId={roomId} format="docx" />
         <button type="button" onClick={() => window.print()}>Print</button>
       </div>
+      <pre className="guidePrintSheet" aria-hidden="true">{printText}</pre>
       {loaded.chapters.map((chapter) => (
         <section key={chapter.id}>
           <h3>{chapter.title}</h3>
@@ -68,7 +73,7 @@ export function GuidePreview({
           </ol>
           <h4>Answers</h4>
           {showAnswers ? (
-            <ol>
+            <ol className="guideAnswerKey">
               {chapter.answers.map((answer) => <li key={answer.id}>{answer.text}</li>)}
             </ol>
           ) : (
