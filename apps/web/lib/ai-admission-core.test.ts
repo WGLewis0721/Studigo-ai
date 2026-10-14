@@ -266,3 +266,27 @@ test("a stream that ends on its own completes the receipt; a cancelled one does 
   assert.equal(cancelled.last("finish_studigo_ai_receipt")!.args.p_completed, false);
   assert.ok(cancelled.names().includes("finish_studigo_ai_resource"), "released once the producer stopped");
 });
+
+test("daily admission budgets have actionable messages distinct from short-term throttling", async () => {
+  for (const [reason, phrase] of [
+    ["user_budget", "daily"],
+    ["global_budget", "daily"],
+    ["rate", "minute"],
+    ["concurrent", "working"]
+  ] as const) {
+    const writer = fakeWriter({
+      admit_studigo_ai_resource: () => ({ data: { allowed: false, reason }, error: null })
+    });
+    let handled = 0;
+    const response = await guardAiRequestWith(deps(writer), request(), "learn", async () => {
+      handled += 1;
+      return ok();
+    });
+    const body = await response.json() as { error: string; code: string };
+    assert.equal(response.status, 429, reason);
+    assert.equal(body.code, reason);
+    assert.match(body.error.toLowerCase(), new RegExp(phrase), reason);
+    assert.equal(handled, 0, reason);
+    assert.equal(writer.last("finish_studigo_ai_receipt")?.args.p_completed, false);
+  }
+});
