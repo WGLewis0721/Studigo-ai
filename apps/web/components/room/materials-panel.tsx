@@ -145,7 +145,7 @@ export function MaterialsPanel({
           if (storageError) {
             // Remove the pending metadata and schedule Storage cleanup if needed.
             await fetch(`/api/documents/${prepared.document.id}`, { method: "DELETE" }).catch(() => null);
-            throw new Error("Storage upload failed. Please retry.");
+            throw new Error(`Supabase Storage rejected the file: ${storageError.message || "Unknown storage error"}.`);
           }
 
           const finalize = await fetch("/api/documents/upload/complete", {
