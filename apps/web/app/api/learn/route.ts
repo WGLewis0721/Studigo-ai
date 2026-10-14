@@ -2,6 +2,7 @@ import { guardAiRequest } from "@/lib/ai-admission";
 import { explainTopic, toCitations, citationsUsedIn, type ExplainLevel, type RetrievedChunk } from "@studigo/ai";
 import { requireApiUser } from "@/lib/auth";
 import { retrieveForRoom, MIN_SIMILARITY } from "@/lib/retrieval";
+import { passagesForLesson, planContextualSearch } from "@/lib/contextual-retrieval";
 import { readExplainLevel } from "@/lib/explain-level";
 import {
   buildLearnSuccess,
@@ -94,9 +95,16 @@ async function guardedPost(request: Request) {
     return fail(materials);
   }
 
-  const query = [topic.title, topic.objective, (topic.key_terms as string[] | null)?.join(", ")]
-    .filter(Boolean)
-    .join(". ");
+  const search = planContextualSearch({
+    topics: [{
+      id: topic.id as string,
+      title: topic.title as string,
+      objective: (topic.objective as string | null) ?? null,
+      keyTerms: (topic.key_terms as string[] | null) ?? []
+    }],
+    question: `Explain ${topic.title as string}`
+  });
+  const query = search.kind === "search" ? search.query : `${topic.title as string}. ${topic.objective ?? ""}`;
 
   let chunks: RetrievedChunk[];
   let level: ExplainLevel;
@@ -107,6 +115,13 @@ async function guardedPost(request: Request) {
     });
   } catch {
     return fail(outcomeFor("retrieval_error"));
+  }
+  if (search.kind === "search" && search.topic) {
+    chunks = [...new Map(passagesForLesson({
+      topic: search.topic,
+      substantive: search.substantive,
+      chunks
+    }).map((passage) => [passage.chunk.id, passage.chunk])).values()];
   }
   retrievedChunkIds = chunks.map((chunk) => chunk.id);
   evidenceDocumentIds = chunks.map((chunk) => chunk.documentId);

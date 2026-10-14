@@ -41,6 +41,9 @@ export const COACH_CONTROL_COMMANDS = [
  */
 export type LearnStarter = { id: string; label: string; text: string; local: boolean };
 
+/** Short Learn follow-up. The server keeps this on the active topic instead of embedding the word alone. */
+export const LEARN_HELP_PROMPT = "Help";
+
 export function learnStarters(topicTitle: string): LearnStarter[] {
   return [
     { id: "how", label: "How Learn works", text: "How does Learn work?", local: true },
