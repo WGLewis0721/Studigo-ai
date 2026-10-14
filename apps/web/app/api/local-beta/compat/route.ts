@@ -43,7 +43,7 @@ async function handle(request:Request) {
       if(path==='/documents/download') {
         return new Response(selected.map(s=>'Page '+s.page+'\n'+s.text).join('\n\n'),{headers:{'Content-Type':'text/plain; charset=utf-8','Content-Disposition':'inline','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});
       }
-      const pdf=buildStudyGuidePdf({title:room.room.title,subject:room.room.subject,topics:room.room.topics.filter(t=>t.active&&t.source).map(t=>({title:t.title,objective:t.objective,keyTerms:[],sourceNotes:[{text:t.source,documentName:selected.find(s=>s.id===t.documentId||s.id===t.documentId+':'+t.page)?.name??room.room.title,pageNumber:t.page}]}))});
+      const pdf=await buildStudyGuidePdf({title:room.room.title,subject:room.room.subject,topics:room.room.topics.filter(t=>t.active&&t.source).map(t=>({title:t.title,objective:t.objective,keyTerms:[],sourceNotes:[{text:t.source,documentName:selected.find(s=>s.id===t.documentId||s.id===t.documentId+':'+t.page)?.name??room.room.title,pageNumber:t.page}]}))});
       return new Response(new Uint8Array(pdf),{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="Studigo-Study-Guide.pdf"','Cache-Control':'private, no-store'}});
     }
     if(path==='/documents/process') {

@@ -72,7 +72,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C15 | P1 | Grounded educational content edition | Definitions, explanations, examples, practice and answers | C10, C12 | DONE |
 | C16 | P1 | Automatic build/rebuild lifecycle | Guide readiness and update availability are clear | C14, C15 | DONE |
 | C17 | P1 | Readable study-guide preview | Read the composed guide and inspect its citations in-app | C15 | DONE |
-| C18 | P1 | Student-ready PDF | Readable print layout with intact Unicode and complete sentences | C15 | NOT STARTED |
+| C18 | P1 | Student-ready PDF | Readable print layout with intact Unicode and complete sentences | C15 | DONE |
 | C19 | P1 | Editable Word export | Edit the same guide in Word | C15 | NOT STARTED |
 | C20 | P1 | Restore active threads on reload | Return to the correct lesson/Coach conversation | C03 | NOT STARTED |
 | C21 | P1 | Mobile lessons and accessible controls | Progress, Clear, Next and citations work on iPhone/iPad | C06, C08, C17, C20 | NOT STARTED |
@@ -568,7 +568,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C15 | DONE | grounded edition on this branch | Government edition quotes the three branch definitions, a supported example, and matching answers; the stored row is reused and another learner cannot read it. Invalid output is not stored and a duplicate build runs once. AI and web typecheck PASS. The first loader failure did not call a provider. Live generation stays off. | Not merged. No production migration applied. |
 | C16 | DONE | lifecycle on this branch | Three files stay processing until all are ready, then one edition is published. A newer revision keeps the current edition and shows update available. A stale or failed build does not replace it, and the same snapshot builds once. Web typecheck PASS. | Not merged. |
 | C17 | DONE | preview on this branch | The preview shows the edition sections and hides the answer key until requested. Compact markup wraps, source links point at the owner-scoped block route, and rendering does not generate. Web typecheck PASS. Two assertion mismatches were encoded HTML, not missing content. | Not merged. |
-| C18 | NOT STARTED | — | — | — |
+| C18 | DONE | readable PDF on this branch | Government PDF is 4 letter pages. Diacritics survive, Invalid Date is omitted, the long paragraph paginates without a midword cut, and the answer key is its own page. A foreign room returns 404 and no PDF bytes. Web build PASS. | Not merged. No production deploy. |
 | C19 | NOT STARTED | — | — | — |
 | C20 | NOT STARTED | — | — | — |
 | C21 | NOT STARTED | — | — | — |

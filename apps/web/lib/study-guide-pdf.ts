@@ -1,3 +1,8 @@
+import { readFileSync } from "node:fs";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import type { StudyGuideContent } from "@studigo/ai";
+
 export type StudyGuideSourceNote = {
   text: string;
   documentName: string;
@@ -20,154 +25,255 @@ export type StudyGuidePdfInput = {
   topics: StudyGuideTopic[];
 };
 
-type PdfLine = {
-  text: string;
-  size: number;
-  bold?: boolean;
-  indent?: number;
-  gapAfter?: number;
-};
+export type GuidePageFormat = "letter" | "a4";
 
-function ascii(value: string): string {
-  return value
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-")
-    .replace(/\u2026/g, "...")
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+const MARGIN = 54;
+const BODY = 12.5;
+const BODY_LEADING = 19;
+const HEADING = 22;
+const TITLE = 24;
+
+export function formatGuideDate(value: string | null | undefined): string | null {
+  if (!value || /invalid date/i.test(value)) return null;
+  const parsed = new Date(value.includes("T") ? value : value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
-function escapePdfText(value: string): string {
-  return ascii(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+export function editionIsRenderable(value: unknown): value is StudyGuideContent {
+  if (!value || typeof value !== "object") return false;
+  const content = value as StudyGuideContent;
+  if (content.version !== 1 || !Array.isArray(content.chapters) || content.chapters.length === 0) return false;
+  return content.chapters.every((chapter) => {
+    if (!chapter.title || !Array.isArray(chapter.facts) || !Array.isArray(chapter.answers) || !Array.isArray(chapter.practice)) return false;
+    return chapter.answers.every((answer) => {
+      const question = chapter.practice.find((item) => item.id === answer.questionId);
+      return Boolean(answer.text && question && question.answerId === answer.id);
+    });
+  });
 }
 
-function wrap(value: string, maxChars: number): string[] {
-  const text = ascii(value);
-  if (!text) return [];
-  const words = text.split(/\s+/);
+export function guideDownloadDecision(input: { room: { id: string } | null; edition: unknown }) {
+  if (!input.room) return { status: 404 as const, code: "room_not_found", pdf: false as const };
+  if (!editionIsRenderable(input.edition)) return { status: 409 as const, code: "no_valid_edition", pdf: false as const };
+  return { status: 200 as const, pdf: true as const, edition: input.edition };
+}
+
+function pageBox(format: GuidePageFormat) {
+  return format === "a4" ? { width: 595.28, height: 841.89 } : { width: 612, height: 792 };
+}
+
+function wrap(font: PDFFont, text: string, size: number, width: number) {
+  const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let current = "";
   for (const word of words) {
     const next = current ? `${current} ${word}` : word;
-    if (next.length <= maxChars) {
-      current = next;
-      continue;
+    if (font.widthOfTextAtSize(next, size) <= width) current = next;
+    else {
+      if (current) lines.push(current);
+      current = word;
     }
-    if (current) lines.push(current);
-    current = word.length <= maxChars ? word : word.slice(0, maxChars);
   }
   if (current) lines.push(current);
-  return lines;
+  return lines.length ? lines : [""];
 }
 
-function buildLines(input: StudyGuidePdfInput): PdfLine[] {
-  const lines: PdfLine[] = [];
-  lines.push({ text: input.title, size: 20, bold: true, gapAfter: 6 });
-  const context = [input.subject, input.courseName].filter(Boolean).join(" / ");
-  if (context) lines.push({ text: context, size: 10, gapAfter: 2 });
-  if (input.testDate) lines.push({ text: `Test date: ${input.testDate}`, size: 10, gapAfter: 10 });
-  lines.push({
-    text: "Built from this Study Room's current topic map and uploaded sources. Use the source references to verify anything you are unsure about.",
-    size: 9,
-    gapAfter: 14
+type Draw = {
+  doc: PDFDocument;
+  font: PDFFont;
+  page: PDFPage;
+  y: number;
+  width: number;
+  height: number;
+  pageNumber: number;
+};
+
+function newPage(draw: Draw) {
+  draw.page.drawText(String(draw.pageNumber), {
+    x: draw.width / 2 - 6,
+    y: 28,
+    size: 10,
+    font: draw.font,
+    color: rgb(0.2, 0.2, 0.2)
   });
-
-  input.topics.forEach((topic, index) => {
-    lines.push({ text: `${index + 1}. ${topic.title}`, size: 14, bold: true, gapAfter: 4 });
-    if (topic.objective) {
-      for (const line of wrap(`What to know: ${topic.objective}`, 88)) {
-        lines.push({ text: line, size: 10, gapAfter: 1 });
-      }
-    }
-    if (topic.keyTerms.length) {
-      for (const line of wrap(`Key terms: ${topic.keyTerms.join(", ")}`, 88)) {
-        lines.push({ text: line, size: 9, gapAfter: 1 });
-      }
-    }
-
-    if (topic.sourceNotes.length) {
-      lines.push({ text: "From your materials:", size: 10, bold: true, gapAfter: 2 });
-      for (const note of topic.sourceNotes) {
-        const source = [note.documentName, note.pageNumber ? `${note.pageLabel || "page"} ${note.pageNumber}` : ""]
-          .filter(Boolean)
-          .join(", ");
-        const excerpt = ascii(note.text).slice(0, 520);
-        for (const line of wrap(`- ${excerpt}`, 84)) {
-          lines.push({ text: line, size: 9, indent: 12, gapAfter: 1 });
-        }
-        lines.push({ text: `Source: ${source}`, size: 8, indent: 18, gapAfter: 4 });
-      }
-    } else {
-      lines.push({ text: "No supporting passage was linked strongly enough to include here.", size: 9, gapAfter: 4 });
-    }
-
-    for (const line of wrap(`Check yourself: Explain ${topic.title} in your own words without looking, then verify it against the source above.`, 88)) {
-      lines.push({ text: line, size: 9, bold: true, gapAfter: 1 });
-    }
-    lines.push({ text: "", size: 9, gapAfter: 10 });
-  });
-
-  return lines;
+  draw.page = draw.doc.addPage([draw.width, draw.height]);
+  draw.pageNumber += 1;
+  draw.y = draw.height - MARGIN;
 }
 
-export function buildStudyGuidePdf(input: StudyGuidePdfInput): Uint8Array {
-  const lines = buildLines(input);
-  const pages: string[][] = [[]];
-  let y = 744;
+function ensure(draw: Draw, needed: number) {
+  if (draw.y - needed < MARGIN) newPage(draw);
+}
 
+function writeLines(draw: Draw, lines: string[], size: number, leading: number, indent = 0) {
   for (const line of lines) {
-    const leading = Math.max(12, line.size + 3);
-    if (y - leading < 54) {
-      pages.push([]);
-      y = 744;
-    }
-    if (line.text) {
-      const font = line.bold ? "F2" : "F1";
-      const x = 54 + (line.indent ?? 0);
-      pages[pages.length - 1].push(
-        `BT /${font} ${line.size} Tf 1 0 0 1 ${x} ${y} Tm (${escapePdfText(line.text)}) Tj ET`
-      );
-    }
-    y -= leading + (line.gapAfter ?? 0);
+    ensure(draw, leading);
+    draw.page.drawText(line, {
+      x: MARGIN + indent,
+      y: draw.y - size,
+      size,
+      font: draw.font,
+      color: rgb(0, 0, 0)
+    });
+    draw.y -= leading;
   }
+}
 
-  const pageCount = pages.length;
-  const fontRegularObject = 3 + pageCount * 2;
-  const fontBoldObject = fontRegularObject + 1;
-  const objects: string[] = [];
-  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-  const kids = pages.map((_, index) => `${3 + index * 2} 0 R`).join(" ");
-  objects[2] = `<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>`;
+function writeParagraph(draw: Draw, text: string, size = BODY, leading = BODY_LEADING, indent = 0) {
+  const width = draw.width - MARGIN * 2 - indent;
+  writeLines(draw, wrap(draw.font, text, size, width), size, leading, indent);
+}
 
-  pages.forEach((commands, index) => {
-    const pageObject = 3 + index * 2;
-    const contentObject = pageObject + 1;
-    const stream = commands.join("\n");
-    objects[pageObject] =
-      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${fontRegularObject} 0 R /F2 ${fontBoldObject} 0 R >> >> /Contents ${contentObject} 0 R >>`;
-    objects[contentObject] = `<< /Length ${Buffer.byteLength(stream, "ascii")} >>\nstream\n${stream}\nendstream`;
+function writeTable(draw: Draw, rows: string[][]) {
+  const columns = Math.max(...rows.map((row) => row.length), 1);
+  const tableWidth = draw.width - MARGIN * 2;
+  const columnWidth = tableWidth / columns;
+  for (const row of rows) {
+    const wrapped = row.map((cell) => wrap(draw.font, cell, 11, columnWidth - 8));
+    const height = Math.max(...wrapped.map((lines) => lines.length), 1) * 16 + 8;
+    ensure(draw, height);
+    const top = draw.y;
+    draw.page.drawRectangle({
+      x: MARGIN,
+      y: top - height,
+      width: tableWidth,
+      height,
+      borderColor: rgb(0.35, 0.35, 0.35),
+      borderWidth: 0.6,
+      color: rgb(1, 1, 1)
+    });
+    wrapped.forEach((lines, index) => {
+      lines.forEach((line, lineIndex) => {
+        draw.page.drawText(line, {
+          x: MARGIN + columnWidth * index + 4,
+          y: top - 16 - lineIndex * 16,
+          size: 11,
+          font: draw.font,
+          color: rgb(0, 0, 0)
+        });
+      });
+    });
+    draw.y = top - height - 8;
+  }
+}
+
+function blocksFromEdition(content: StudyGuideContent, meta: { title: string; detail: string | null }) {
+  const blocks: Array<{ kind: "title" | "h2" | "body" | "term" | "example" | "table" | "source" | "break"; text: string; extra?: string }> = [];
+  blocks.push({ kind: "title", text: meta.title });
+  if (meta.detail) blocks.push({ kind: "body", text: meta.detail });
+  for (const chapter of content.chapters) {
+    blocks.push({ kind: "h2", text: chapter.title });
+    if (chapter.objective && chapter.objective !== chapter.title) blocks.push({ kind: "body", text: chapter.objective });
+    for (const fact of chapter.facts) {
+      if (fact.text.includes("|")) {
+        blocks.push({ kind: "table", text: fact.text });
+      } else {
+        blocks.push({ kind: "body", text: fact.text });
+      }
+      const source = fact.evidence.map((ref) => `p. ${ref.pageNumber}`).join(", ");
+      if (source) blocks.push({ kind: "source", text: `Source ${source}` });
+    }
+    for (const term of chapter.terms) blocks.push({ kind: "term", text: term.term, extra: term.definition });
+    for (const example of chapter.examples) blocks.push({ kind: "example", text: example.text });
+    if (chapter.practice.length) {
+      blocks.push({ kind: "h2", text: "Practice" });
+      chapter.practice.forEach((question, index) => blocks.push({ kind: "body", text: `${index + 1}. ${question.prompt}` }));
+    }
+  }
+  blocks.push({ kind: "break", text: "" });
+  blocks.push({ kind: "title", text: "Answer key" });
+  for (const chapter of content.chapters) {
+    chapter.answers.forEach((answer, index) => blocks.push({ kind: "body", text: `${index + 1}. ${answer.text}` }));
+  }
+  return blocks;
+}
+
+export async function buildEditionPdf(content: StudyGuideContent, options: {
+  title: string;
+  subject?: string | null;
+  courseName?: string | null;
+  testDate?: string | null;
+  page?: GuidePageFormat;
+} ): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.registerFontkit(fontkit);
+  const font = await doc.embedFont(readFileSync(new URL("./fonts/DejaVuSans.ttf", import.meta.url)), { subset: true });
+  const box = pageBox(options.page ?? "letter");
+  const page = doc.addPage([box.width, box.height]);
+  const draw: Draw = { doc, font, page, y: box.height - MARGIN, width: box.width, height: box.height, pageNumber: 1 };
+  const date = formatGuideDate(options.testDate);
+  const detail = [options.subject, options.courseName, date ? `Test date: ${date}` : null, `Level ${content.level}`].filter(Boolean).join(" · ");
+  for (const block of blocksFromEdition(content, { title: options.title, detail: detail || null })) {
+    if (block.kind === "break") {
+      newPage(draw);
+      continue;
+    }
+    if (block.kind === "title") {
+      writeParagraph(draw, block.text, TITLE, 32);
+      draw.y -= 6;
+    } else if (block.kind === "h2") {
+      draw.y -= 8;
+      writeParagraph(draw, block.text, HEADING, 30);
+    } else if (block.kind === "term") {
+      writeParagraph(draw, block.text, 13, 18);
+      writeParagraph(draw, block.extra ?? "", BODY, BODY_LEADING, 12);
+    } else if (block.kind === "example") {
+      writeParagraph(draw, block.text, BODY, BODY_LEADING, 12);
+    } else if (block.kind === "table") {
+      writeTable(draw, block.text.split("\n").map((row) => row.split("|").map((cell) => cell.trim())).filter((row) => row.some(Boolean)));
+    } else if (block.kind === "source") {
+      writeParagraph(draw, block.text, 10, 14);
+      draw.y -= 6;
+    } else {
+      writeParagraph(draw, block.text, BODY, BODY_LEADING);
+      draw.y -= 4;
+    }
+  }
+  draw.page.drawText(String(draw.pageNumber), {
+    x: draw.width / 2 - 6, y: 28, size: 10, font, color: rgb(0.2, 0.2, 0.2)
   });
+  doc.setTitle(options.title);
+  return doc.save();
+}
 
-  objects[fontRegularObject] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
-  objects[fontBoldObject] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
+function topicsToEdition(input: StudyGuidePdfInput): StudyGuideContent {
+  return {
+    version: 1,
+    schemaVersion: 1,
+    promptVersion: 1,
+    level: "general",
+    roomId: "legacy",
+    topicIds: [],
+    sourceSnapshot: "legacy",
+    chapters: input.topics.map((topic, index) => ({
+      id: `chapter-${index + 1}`,
+      title: topic.title,
+      objective: topic.objective ?? topic.title,
+      objectiveEvidence: [],
+      facts: topic.sourceNotes.map((note, noteIndex) => ({
+        id: `fact-${noteIndex + 1}`,
+        text: note.text,
+        evidence: [{ blockKey: note.documentName, pageNumber: note.pageNumber ?? 0 }]
+      })),
+      terms: topic.keyTerms.map((term, termIndex) => ({
+        id: `term-${termIndex + 1}`,
+        term,
+        definition: term,
+        evidence: []
+      })),
+      examples: [],
+      practice: [],
+      answers: []
+    }))
+  };
+}
 
-  let pdf = "%PDF-1.4\n%Studigo\n";
-  const offsets: number[] = [0];
-  for (let index = 1; index < objects.length; index += 1) {
-    offsets[index] = Buffer.byteLength(pdf, "ascii");
-    pdf += `${index} 0 obj\n${objects[index]}\nendobj\n`;
-  }
-
-  const xrefOffset = Buffer.byteLength(pdf, "ascii");
-  pdf += `xref\n0 ${objects.length}\n`;
-  pdf += "0000000000 65535 f \n";
-  for (let index = 1; index < objects.length; index += 1) {
-    pdf += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  }
-  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
-
-  return new Uint8Array(Buffer.from(pdf, "ascii"));
+export async function buildStudyGuidePdf(input: StudyGuidePdfInput): Promise<Uint8Array> {
+  return buildEditionPdf(topicsToEdition(input), {
+    title: input.title,
+    subject: input.subject,
+    courseName: input.courseName,
+    testDate: input.testDate
+  });
 }

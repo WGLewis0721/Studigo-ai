@@ -26,7 +26,7 @@ export async function GET() {
     ]
   }));
 
-  const pdf = buildStudyGuidePdf({
+  const pdf = await buildStudyGuidePdf({
     title: "Fifth Grade Science · Codespaces Preview",
     subject: "Life, physical & earth science",
     courseName: "Synthetic fixture",

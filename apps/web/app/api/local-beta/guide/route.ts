@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   if (!localBetaAllowed(request)) return new Response(null, { status: 404 });
   const room = FIXTURE_ROOMS.find(r => r.id === new URL(request.url).searchParams.get('roomId'));
   if (!room) return Response.json({ error: 'Choose a synthetic demo room.' }, { status: 400 });
-  const pdf = buildStudyGuidePdf({ title: room.title, subject: room.subject, topics: room.topics.map(t => ({
+  const pdf = await buildStudyGuidePdf({ title: room.title, subject: room.subject, topics: room.topics.map(t => ({
     title: t.title, objective: t.objective, keyTerms: [],
     sourceNotes: [{ text: t.source, documentName: room.title + ' synthetic study guide', pageNumber: t.page }]
   })) });
