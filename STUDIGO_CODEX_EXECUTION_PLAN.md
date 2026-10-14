@@ -561,7 +561,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C08 | NOT STARTED | — | — | — |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |
-| C11 | NOT DONE | `866948b` implementation / [draft PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Original round: 2 typecheck setup failures. Renewed 3/3 checks: delayed-A browser fixture failed before upload assertions (missing browser `process` global); Retry scenario and final typecheck unrun. | `implementation/codex-failures.md`; hold from integration, no product pass claimed. |
+| C11 | DONE | `866948b` implementation / [PR #108](https://github.com/WGLewis0721/Studigo-ai/pull/108) | Earlier setup/harness failures retained in `implementation/codex-failures.md`. Final authorized 3/3: delayed-A fixture FAIL before assertions; combined failed-A/repeated-Retry browser check PASS and also verified B/C uploads while A remained processing, distinct IDs/type/status, dedupe and ready-status completion; Node 22 package-local web typecheck PASS. Automatic PR CI was green on `eb31204` before final evidence commit. | Await PR review/acceptance into integration; no live storage/provider or production verification claimed. |
 | C12 | NOT STARTED | — | — | — |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
