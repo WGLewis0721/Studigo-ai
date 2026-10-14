@@ -23,7 +23,9 @@ export function normalizeText(input: string) {
 
 export async function extractPdf(buffer: ArrayBuffer): Promise<ExtractionResult> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(new Uint8Array(buffer));
+  // unpdf/PDF.js may transfer its input to a worker, detaching that ArrayBuffer.
+  // OCR must retain the original bytes to isolate scanned pages afterward.
+  const pdf = await getDocumentProxy(new Uint8Array(buffer.slice(0)));
   const { totalPages, text } = await extractText(pdf, { mergePages: false });
   const pages: ExtractedPage[] = (text as string[]).map((raw, index) => ({
     pageNumber: index + 1,
