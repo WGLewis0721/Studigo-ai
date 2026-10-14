@@ -62,3 +62,8 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: retrieval/source-scope RPC (slot 2), first attempt
 - Result: FAIL while applying `20261014140000_page_coverage.sql`: PostgreSQL rejected `jsonb_array_elements` inside a CHECK (`cannot use subquery in check constraint`).
 - Action: validate coverage with an immutable function, then rerun the same RPC check. The rerun passed. No source text was published.
+
+### C09 — 2026-10-14 — revision constraint lookup
+- Check: concurrent/stale publish fencing, first apply
+- Result: FAIL while applying `20261014160000_atomic_reindex.sql` (`missing FROM-clause entry for table "con"`).
+- Action: qualify the constraint lookup, then rerun the same fencing check. The rerun passed. No original was rewritten.

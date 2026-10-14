@@ -13,8 +13,7 @@ import {
   recoverPdfPagesAllowingGaps,
   assessPageCoverage,
   type ExtractedPage,
-  type ExtractionResult,
-  type PageCoverageEntry
+  type ExtractionResult
 } from "@studigo/documents";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
@@ -30,6 +29,8 @@ export type IngestResult = {
   ocrPageCount?: number;
   topicsCreated?: number;
   error?: string;
+  /** True when a failed refresh left the previous searchable revision in place. */
+  preserved?: boolean;
 };
 
 /**
@@ -62,6 +63,9 @@ export async function processDocument(args: {
   // reset a queued/processing row before a claim: concurrent refreshes must
   // not produce duplicate OCR work or competing writes.
   let claimed: boolean;
+  let publishToken: string | null = null;
+  let stagedRevision = 1;
+  let priorStatus = document.status as string;
   if (args.force) {
     const cooldownSeconds = Math.min(86400, Math.max(900, Math.ceil(reindexCooldownMs() / 1000)));
     const { data, error } = await supabase.rpc("claim_forced_studigo_reindex", {
@@ -70,13 +74,16 @@ export async function processDocument(args: {
       p_cooldown_seconds: cooldownSeconds
     });
     if (error) return { documentId: document.id, status: "failed", error: "Reindex claim failed" };
-    const claim = data as { claimed?: boolean; reason?: string } | null;
+    const claim = data as { claimed?: boolean; reason?: string; token?: string; revision?: number; prior_status?: string } | null;
     if (!claim?.claimed) return {
       documentId: document.id,
       status: "skipped",
       error: claim?.reason === "cooldown" ? "reindex_cooldown"
         : claim?.reason === "processing" ? "reindex_processing" : "reindex_unavailable"
     };
+    publishToken = claim.token ?? null;
+    stagedRevision = Number(claim.revision ?? 1);
+    priorStatus = claim.prior_status ?? priorStatus;
     claimed = true;
   } else {
     const { data, error } = await supabase.rpc("claim_document", {
@@ -84,11 +91,20 @@ export async function processDocument(args: {
     });
     if (error) return { documentId: document.id, status: "failed", error: error.message };
     claimed = Boolean(data);
+    if (claimed) {
+      const { data: fence } = await supabase
+        .from("documents")
+        .select("publish_token, active_revision, refresh_prior_status")
+        .eq("id", document.id)
+        .eq("owner_id", args.userId)
+        .maybeSingle();
+      publishToken = (fence?.publish_token as string | null) ?? null;
+      stagedRevision = Number(fence?.active_revision ?? 1) + 1;
+      priorStatus = (fence?.refresh_prior_status as string | null) ?? priorStatus;
+    }
   }
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
-  let publishedCoverage: PageCoverageEntry[] | null = null;
-  let publishedLimitation: string | null = null;
   try {
     const { data: file, error: downloadError } = await supabase.storage
       .from("study-materials")
@@ -106,8 +122,6 @@ export async function processDocument(args: {
       mimeType: document.mime_type,
       filename: document.name
     });
-    publishedCoverage = covered.coverage;
-    publishedLimitation = covered.limitation;
     if (covered.status === "failed") {
       throw new Error(covered.limitation ?? "No readable text could be extracted. If this is a scan or a photo, try a clearer copy.");
     }
@@ -127,10 +141,6 @@ export async function processDocument(args: {
 
     const embeddings = await embedTexts(chunks.map((chunk) => chunk.content));
 
-    // Re-ingestion replaces the previous pass rather than layering on top of it.
-    const { error: clearError } = await supabase.from("document_chunks").delete().eq("document_id", document.id);
-    if (clearError) throw new Error(clearError.message);
-
     for (let start = 0; start < chunks.length; start += 200) {
       const batch = chunks.slice(start, start + 200).map((chunk, offset) => ({
         document_id: document.id,
@@ -142,11 +152,22 @@ export async function processDocument(args: {
         content: chunk.content,
         token_count: chunk.tokenCount,
         metadata: chunk.metadata,
-        embedding: embeddings[start + offset] as unknown as string
+        embedding: embeddings[start + offset] as unknown as string,
+        revision: stagedRevision
       }));
 
       const { error: insertError } = await supabase.from("document_chunks").insert(batch);
       if (insertError) throw new Error(`Storing chunks failed: ${insertError.message}`);
+    }
+
+    const activated = await supabase.rpc("activate_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_revision: stagedRevision
+    });
+    if (activated.error || !(activated.data as { published?: boolean } | null)?.published) {
+      throw new Error("The refresh was no longer the active attempt.");
     }
 
     let topicsCreated = 0;
@@ -161,10 +182,23 @@ export async function processDocument(args: {
       });
     }
 
-    // Optional, best-effort: mirror the same pages into the local
-    // zero-cost retrieval service (services/retrieval) if one is
-    // configured. Never allowed to fail ingestion — it's supplementary
-    // infrastructure, not the primary RAG path.
+    const committed = await supabase.rpc("commit_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_revision: stagedRevision,
+      p_status: covered.status,
+      p_page_count: covered.pageCount,
+      p_page_label: covered.pageLabel,
+      p_ocr_page_count: covered.ocrPageCount,
+      p_chunk_count: chunks.length,
+      p_page_coverage: covered.coverage,
+      p_error_message: covered.limitation
+    });
+    if (committed.error || !(committed.data as { published?: boolean } | null)?.published) {
+      throw new Error("The refresh could not be published.");
+    }
+
     if (retrievalServiceConfigured()) {
       try {
         await indexDocumentLocally({
@@ -178,22 +212,6 @@ export async function processDocument(args: {
       }
     }
 
-    const { error: readyError } = await supabase
-      .from("documents")
-      .update({
-        status: covered.status,
-        page_count: covered.pageCount,
-        page_label: covered.pageLabel,
-        ocr_page_count: covered.ocrPageCount,
-        chunk_count: chunks.length,
-        page_coverage: covered.coverage,
-        processed_at: new Date().toISOString(),
-        error_message: covered.limitation
-      })
-      .eq("id", document.id);
-
-    if (readyError) throw new Error(readyError.message);
-
     return {
       documentId: document.id,
       status: covered.status,
@@ -203,22 +221,18 @@ export async function processDocument(args: {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Processing failed";
-    const keepPartial = Boolean(publishedCoverage?.some((entry) => entry.state === "readable"));
-    await supabase
-      .from("documents")
-      .update(keepPartial
-        ? {
-            status: "partial",
-            page_coverage: publishedCoverage,
-            error_message: (publishedLimitation ?? message).slice(0, 500)
-          }
-        : { status: "failed", error_message: message.slice(0, 500) })
-      .eq("id", document.id);
-
+    await supabase.rpc("abort_document_revision", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_token: publishToken,
+      p_error: message
+    });
+    const restoredStatus = priorStatus === "partial" ? "partial" : priorStatus === "ready" ? "ready" : null;
     return {
       documentId: document.id,
-      status: keepPartial ? "partial" : "failed",
-      error: keepPartial ? publishedLimitation ?? message : message
+      status: restoredStatus ?? "failed",
+      preserved: restoredStatus !== null,
+      error: message
     };
   }
 }
