@@ -66,7 +66,7 @@ export function classifyLearnOutcome(input: {
   const scoped = scope.size
     ? input.documentStatuses.filter((document) => scope.has(document.id))
     : input.documentStatuses;
-  const readyIds = new Set(scoped.filter((document) => document.status === "ready").map((document) => document.id));
+  const readyIds = new Set(scoped.filter((document) => document.status === "ready" || document.status === "partial").map((document) => document.id));
   const processingMaterials = scoped.filter((document) =>
     ["uploaded", "queued", "processing"].includes(document.status)
   ).length;

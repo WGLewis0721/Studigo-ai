@@ -62,7 +62,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C05 | P0 | Contextual Learn retrieval | Short follow-ups and known terms use the current topic | C04 | NOT STARTED |
 | C06 | P0 | Enumerated unit overview | Every selected topic has a supported section or explicit gap | C03, C05 | NOT STARTED |
 | C07 | P0 | Quality-driven page recovery | Scans retain readable definitions and reading order | — | FUNCTIONAL PASS ON PREVIEW — SEC RELEASE GATE OPEN |
-| C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | NOT STARTED |
+| C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | DONE |
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | NOT STARTED |
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
 | C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | NOT STARTED |
@@ -558,7 +558,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C05 | NOT STARTED | — | — | — |
 | C06 | NOT STARTED | — | — | — |
 | C07 | BLOCKED | `a23be3e`, `383e14f` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | Clean PDF and synthetic selection checks passed; incomplete OCR response acceptance was reproduced before and rejected after `383e14f`; Node 22 web typecheck passed. Original image-only scan already selects all three pages for OCR, but actual OCR output, indexed page facts, and Learn retrieval were not verified. | Required protection is absent from integration: draft PR #98 head `2aefe6e` (atomic admission/receipt primitives and `20261008100000_ai_resource_admission.sql`) plus stacked draft PR #99 head `493ea893` (expensive-route coverage) are unmerged and unaccepted. Staging still needs the migration, server-only IP hash secret, eight explicit limits, enabled admission, WAF/provider spend controls, and concurrent/budget/lease/receipt evidence. After that, verify the original scan's named facts on the correct pages through OCR, indexing and retrieval; do not infer its failure from the separate incomplete-response defect. |
-| C08 | NOT STARTED | — | — | — |
+| C08 | DONE | page coverage on `codex/c08-page-coverage` | 3/3: three-page fixture names page 2 and keeps pages 1 and 3 citable; match/session RPCs reject uncertain pages; documents and web typecheck PASS. No status backfill and no production migration. | Stacked on C04 PR #115; not merged. |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |
 | C11 | NOT STARTED | — | — | — |

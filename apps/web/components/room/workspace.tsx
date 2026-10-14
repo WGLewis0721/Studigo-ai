@@ -91,7 +91,7 @@ export function RoomWorkspace({
 }) {
   const router = useRouter();
   const coaching = useCoachPreferences(room);
-  const readyDocuments = documents.filter((document) => document.status === "ready");
+  const readyDocuments = documents.filter((document) => document.status === "ready" || document.status === "partial");
   const defaultMode: Mode = readyDocuments.length ? "coach" : "materials";
   const [mode, setMode] = useState<Mode>(
     MODES.some((item) => item.id === initialMode) ? (initialMode as Mode) : initialMode === "ask" || initialMode === "learn" ? "coach" : defaultMode

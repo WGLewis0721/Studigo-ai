@@ -12,6 +12,7 @@ import {
   type LearnOutcome
 } from "@/lib/learn-outcome";
 import { writeStudyTrace } from "@/lib/study-trace";
+import { coverageLimitation, type PageCoverageEntry } from "@studigo/documents";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -42,13 +43,16 @@ async function guardedPost(request: Request) {
     evidenceChunkCount: outcome.counts.relevantChunks,
     coverageTopicIds: selectedTopicId && outcome.coverageIds.length ? [selectedTopicId] : []
   });
+  let coverageNote: string | null = null;
+  const withNote = <T extends Record<string, unknown>>(payload: T) =>
+    coverageNote ? { ...payload, coverageLimitation: coverageNote } : payload;
   const fail = (outcome: LearnOutcome) => {
     trace(outcome);
-    return Response.json({
+    return Response.json(withNote({
       ...(selectedTopicId ? { topicId: selectedTopicId } : {}),
       error: learnOutcomeMessage(outcome.kind),
       outcome
-    }, { status: learnOutcomeStatus(outcome.kind) });
+    }), { status: learnOutcomeStatus(outcome.kind) });
   };
 
   const body = (await request.json().catch(() => null)) as
@@ -84,10 +88,14 @@ async function guardedPost(request: Request) {
 
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
-    .select("id, status")
+    .select("id, status, page_coverage")
     .eq("room_id", roomId);
   if (documentsError) return fail(outcomeFor("retrieval_error"));
   documentStatuses = (documents ?? []) as LearnDocumentStatus[];
+  coverageNote = ((documents ?? []) as Array<{ page_coverage?: PageCoverageEntry[] | null }>)
+    .map((document) => coverageLimitation(Array.isArray(document.page_coverage) ? document.page_coverage : []))
+    .filter((text): text is string => Boolean(text))
+    .join(" ") || null;
 
   const materials = outcomeFor();
   if (materials.kind === "materials_processing" || materials.kind === "no_ready_materials") {
@@ -135,13 +143,13 @@ async function guardedPost(request: Request) {
   }
   trace(evidence);
 
-  return Response.json(buildLearnSuccess({
+  return Response.json(withNote(buildLearnSuccess({
     topicId,
     level,
     explanation,
     citations,
     outcome: evidence as LearnOutcome & { kind: "ready" | "partial_coverage" }
-  }));
+  })));
 }
 
 export async function POST(request: Request) {

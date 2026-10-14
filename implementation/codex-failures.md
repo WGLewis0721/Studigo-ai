@@ -57,3 +57,8 @@ Read-only source update after the check cap: the subsequently supplied original 
 - No manual retry is permitted under the three-check cap. Application code did not cause the reported compiler error, but final-commit manual type safety remains unverified. Normal PR CI may supply independent final-commit evidence; until then C04 is NOT DONE.
 
 Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Automatic Node 22 GitHub Actions run `38611411725` passed web typecheck, tests, and build; the independent `postgres-multisession` check also passed. Manual check consumption remains 3/3 with no retry. C04 acceptance is based on the focused behavioral tests, cited SSE contract check, source review, and automatic CI, not on the failed manual compiler run.
+
+### C08 — 2026-10-14 — page-coverage check constraint
+- Check: retrieval/source-scope RPC (slot 2), first attempt
+- Result: FAIL while applying `20261014140000_page_coverage.sql`: PostgreSQL rejected `jsonb_array_elements` inside a CHECK (`cannot use subquery in check constraint`).
+- Action: validate coverage with an immutable function, then rerun the same RPC check. The rerun passed. No source text was published.

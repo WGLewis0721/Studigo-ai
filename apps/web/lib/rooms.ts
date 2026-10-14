@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { SourceType } from "@studigo/documents";
+import type { PageCoverageEntry, SourceType } from "@studigo/documents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CoachPreferences } from "./coach-preferences";
 import type { LearnPreferences } from "./learn-preferences";
@@ -28,12 +28,13 @@ export type StudyDocument = {
   mime_type: string;
   size_bytes: number;
   source_type: SourceType;
-  status: "uploaded" | "queued" | "processing" | "ready" | "failed";
+  status: "uploaded" | "queued" | "processing" | "ready" | "partial" | "failed";
   error_message: string | null;
   page_count: number | null;
   page_label: string;
   ocr_page_count: number;
   chunk_count: number;
+  page_coverage?: PageCoverageEntry[];
   created_at: string;
 };
 
@@ -54,7 +55,7 @@ export type Topic = {
 };
 
 export const DOCUMENT_COLUMNS =
-  "id, room_id, name, mime_type, size_bytes, source_type, status, error_message, page_count, page_label, ocr_page_count, chunk_count, created_at";
+  "id, room_id, name, mime_type, size_bytes, source_type, status, error_message, page_count, page_label, ocr_page_count, chunk_count, page_coverage, created_at";
 
 export const TOPIC_COLUMNS =
   "id, room_id, title, objective, key_terms, priority, order_index, origin, mastery_score, status, last_practiced_at, learner_edited";

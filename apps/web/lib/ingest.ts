@@ -3,8 +3,6 @@ import {
   extractTopicMap,
   ocrImage,
   ocrPagePdf,
-  OcrCapabilityError,
-  OcrResponseError,
   type RetrievedChunk
 } from "@studigo/ai";
 import {
@@ -12,10 +10,11 @@ import {
   extractDocument,
   isImageMimeType,
   pagesNeedingOcr,
-  recoverPdfPages,
-  PdfOcrPageError,
+  recoverPdfPagesAllowingGaps,
+  assessPageCoverage,
   type ExtractedPage,
-  type ExtractionResult
+  type ExtractionResult,
+  type PageCoverageEntry
 } from "@studigo/documents";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
@@ -26,7 +25,7 @@ const MAX_ATTEMPTS = 3;
 
 export type IngestResult = {
   documentId: string;
-  status: "ready" | "failed" | "skipped";
+  status: "ready" | "partial" | "failed" | "skipped";
   chunkCount?: number;
   ocrPageCount?: number;
   topicsCreated?: number;
@@ -88,6 +87,8 @@ export async function processDocument(args: {
   }
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
+  let publishedCoverage: PageCoverageEntry[] | null = null;
+  let publishedLimitation: string | null = null;
   try {
     const { data: file, error: downloadError } = await supabase.storage
       .from("study-materials")
@@ -99,17 +100,22 @@ export async function processDocument(args: {
 
     const buffer = await file.arrayBuffer();
     const extraction = await extractDocument({ mimeType: document.mime_type, buffer });
-    const withOcr = await applyOcr({
+    const covered = await applyOcr({
       extraction,
       buffer,
       mimeType: document.mime_type,
       filename: document.name
     });
+    publishedCoverage = covered.coverage;
+    publishedLimitation = covered.limitation;
+    if (covered.status === "failed") {
+      throw new Error(covered.limitation ?? "No readable text could be extracted. If this is a scan or a photo, try a clearer copy.");
+    }
 
-    const chunks = chunkPages(withOcr.pages, {
+    const chunks = chunkPages(covered.publishable, {
       documentName: document.name,
       sourceType: document.source_type,
-      pageLabel: withOcr.pageLabel
+      pageLabel: covered.pageLabel
     });
     assertIngestLimit(chunks.length, MAX_CHUNKS_PER_DOCUMENT, "text chunks");
 
@@ -132,7 +138,7 @@ export async function processDocument(args: {
         owner_id: document.owner_id,
         chunk_index: chunk.chunkIndex,
         page_number: chunk.pageNumber,
-        page_label: withOcr.pageLabel,
+        page_label: covered.pageLabel,
         content: chunk.content,
         token_count: chunk.tokenCount,
         metadata: chunk.metadata,
@@ -151,7 +157,7 @@ export async function processDocument(args: {
         documentId: document.id,
         documentName: document.name,
         isTeacherStudyGuide: document.source_type === "study_guide",
-        pages: withOcr.pages
+        pages: covered.publishable
       });
     }
 
@@ -165,7 +171,7 @@ export async function processDocument(args: {
           roomId: document.room_id,
           documentId: document.id,
           documentName: document.name,
-          pages: withOcr.pages.map((page) => ({ page_number: page.pageNumber, text: page.text }))
+          pages: covered.publishable.map((page) => ({ page_number: page.pageNumber, text: page.text }))
         });
       } catch {
         // Swallowed deliberately: the local retrieval service is optional.
@@ -175,13 +181,14 @@ export async function processDocument(args: {
     const { error: readyError } = await supabase
       .from("documents")
       .update({
-        status: "ready",
-        page_count: withOcr.pageCount,
-        page_label: withOcr.pageLabel,
-        ocr_page_count: withOcr.ocrPageCount,
+        status: covered.status,
+        page_count: covered.pageCount,
+        page_label: covered.pageLabel,
+        ocr_page_count: covered.ocrPageCount,
         chunk_count: chunks.length,
+        page_coverage: covered.coverage,
         processed_at: new Date().toISOString(),
-        error_message: null
+        error_message: covered.limitation
       })
       .eq("id", document.id);
 
@@ -189,19 +196,30 @@ export async function processDocument(args: {
 
     return {
       documentId: document.id,
-      status: "ready",
+      status: covered.status,
       chunkCount: chunks.length,
-      ocrPageCount: withOcr.ocrPageCount,
+      ocrPageCount: covered.ocrPageCount,
       topicsCreated
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Processing failed";
+    const keepPartial = Boolean(publishedCoverage?.some((entry) => entry.state === "readable"));
     await supabase
       .from("documents")
-      .update({ status: "failed", error_message: message.slice(0, 500) })
+      .update(keepPartial
+        ? {
+            status: "partial",
+            page_coverage: publishedCoverage,
+            error_message: (publishedLimitation ?? message).slice(0, 500)
+          }
+        : { status: "failed", error_message: message.slice(0, 500) })
       .eq("id", document.id);
 
-    return { documentId: document.id, status: "failed", error: message };
+    return {
+      documentId: document.id,
+      status: keepPartial ? "partial" : "failed",
+      error: keepPartial ? publishedLimitation ?? message : message
+    };
   }
 }
 
@@ -219,9 +237,7 @@ async function applyOcr(args: {
   buffer: ArrayBuffer;
   mimeType: string;
   filename: string;
-}): Promise<ExtractionResult> {
-  // Quality-only OCR can increase provider work. Keep it disabled until the
-  // accepted spend/concurrency admission protects this workload.
+}) {
   const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1"
     && process.env.STUDIGO_AI_ADMISSION === "1";
   const configuredDuration = Number(process.env.STUDIGO_OCR_TOTAL_TIMEOUT_MS ?? 180_000);
@@ -232,46 +248,38 @@ async function applyOcr(args: {
     if (remaining <= 0) throw new Error("OCR time limit reached; this file has not been marked ready.");
     return remaining;
   };
+  const cover = (extraction: ExtractionResult, failedPages: number[] = [], pdfQuality = false) => {
+    const assessment = assessPageCoverage(extraction.pages, failedPages, { pdfQuality });
+    return { ...extraction, ...assessment };
+  };
+
   if (isImageMimeType(args.mimeType)) {
-    const text = await ocrImage({
-      bytes: new Uint8Array(args.buffer),
-      mimeType: args.mimeType,
-      timeoutMs: remainingTime()
-    });
-    return {
-      ...args.extraction,
-      pages: [{ pageNumber: 1, text, ocr: true }],
-      ocrPageCount: text ? 1 : 0
-    };
+    try {
+      const text = await ocrImage({
+        bytes: new Uint8Array(args.buffer),
+        mimeType: args.mimeType,
+        timeoutMs: remainingTime()
+      });
+      return cover({ ...args.extraction, pages: [{ pageNumber: 1, text, ocr: true }], ocrPageCount: text ? 1 : 0 }, [], true);
+    } catch {
+      return cover(args.extraction, [1], true);
+    }
   }
 
-  if (args.mimeType !== "application/pdf") return args.extraction;
+  if (args.mimeType !== "application/pdf") return cover(args.extraction);
 
   const targets = pagesNeedingOcr(args.extraction, { includeQuality: qualityOcrEnabled });
   assertIngestLimit(targets.length, MAX_OCR_PAGES, "OCR pages");
-  if (!targets.length) return args.extraction;
+  if (!targets.length) return cover(args.extraction, [], true);
 
-  try {
-    return await recoverPdfPages({
-      extraction: args.extraction,
-      buffer: args.buffer,
-      targetPages: targets,
-      transcribePage: ({ pdf, pageNumber }) =>
-        ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
-    });
-  } catch (error) {
-    if (!(error instanceof PdfOcrPageError)) throw error;
-    const pageNumber = error.pageNumber;
-    const cause = error.originalError;
-    if (cause instanceof OcrCapabilityError) throw cause;
-    if (cause instanceof OcrResponseError) {
-      throw new Error(`OCR could not process Page ${pageNumber}: ${cause.message} This file has not been marked ready.`);
-    }
-    if (cause instanceof Error && cause.message === "OCR returned no readable text") {
-      throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
-    }
-    throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
-  }
+  const recovered = await recoverPdfPagesAllowingGaps({
+    extraction: args.extraction,
+    buffer: args.buffer,
+    targetPages: targets,
+    transcribePage: ({ pdf, pageNumber }) =>
+      ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
+  });
+  return cover(recovered.extraction, recovered.failedPages, true);
 }
 
 /**

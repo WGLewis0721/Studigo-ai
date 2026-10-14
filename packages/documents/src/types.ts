@@ -38,6 +38,7 @@ export type DocumentProcessingStatus =
   | "queued"
   | "processing"
   | "ready"
+  | "partial"
   | "failed";
 
 /** A unit of a source document that keeps its human-addressable location. */
