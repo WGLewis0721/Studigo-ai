@@ -67,3 +67,8 @@ Resolution: The corrected fixture landed in implementation commit `12ee8bc`. Aut
 - Check: concurrent/stale publish fencing, first apply
 - Result: FAIL while applying `20261014160000_atomic_reindex.sql` (`missing FROM-clause entry for table "con"`).
 - Action: qualify the constraint lookup, then rerun the same fencing check. The rerun passed. No original was rewritten.
+
+### C10 — 2026-10-14 — membership column name
+- Check: A/B/C composition, first attempts
+- Result: FAIL. A PL/pgSQL variable named topic_id collided with the membership column (`column reference "topic_id" is ambiguous`).
+- Action: renamed the variable and qualified the column. The composition check then passed.

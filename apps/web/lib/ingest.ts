@@ -171,13 +171,15 @@ export async function processDocument(args: {
     }
 
     let topicsCreated = 0;
-    if (document.source_type === "study_guide" || document.source_type === "teacher_material") {
+    const definesObjectives = document.source_type === "study_guide" || document.source_type === "teacher_material";
+    const addsSupport = document.source_type === "student_notes" || document.source_type === "presentation" || document.source_type === "worksheet";
+    if (definesObjectives || addsSupport) {
       topicsCreated = await buildTopicMap({
         roomId: document.room_id,
         ownerId: document.owner_id,
         documentId: document.id,
         documentName: document.name,
-        isTeacherStudyGuide: document.source_type === "study_guide",
+        isTeacherStudyGuide: definesObjectives,
         pages: covered.publishable
       });
     }

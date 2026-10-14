@@ -64,7 +64,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C07 | P0 | Quality-driven page recovery | Scans retain readable definitions and reading order | — | FUNCTIONAL PASS ON PREVIEW — SEC RELEASE GATE OPEN |
 | C08 | P0 | Page coverage and partial-source handling | Unreadable pages are identified; readable pages remain useful | C04, C07 | DONE |
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | DONE |
-| C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | NOT STARTED |
+| C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | DONE |
 | C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | NOT STARTED |
 | C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | NOT STARTED |
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
@@ -560,7 +560,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C07 | BLOCKED | `a23be3e`, `383e14f` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | Clean PDF and synthetic selection checks passed; incomplete OCR response acceptance was reproduced before and rejected after `383e14f`; Node 22 web typecheck passed. Original image-only scan already selects all three pages for OCR, but actual OCR output, indexed page facts, and Learn retrieval were not verified. | Required protection is absent from integration: draft PR #98 head `2aefe6e` (atomic admission/receipt primitives and `20261008100000_ai_resource_admission.sql`) plus stacked draft PR #99 head `493ea893` (expensive-route coverage) are unmerged and unaccepted. Staging still needs the migration, server-only IP hash secret, eight explicit limits, enabled admission, WAF/provider spend controls, and concurrent/budget/lease/receipt evidence. After that, verify the original scan's named facts on the correct pages through OCR, indexing and retrieval; do not infer its failure from the separate incomplete-response defect. |
 | C08 | DONE | `2d09067` / [PR #118](https://github.com/WGLewis0721/Studigo-ai/pull/118) | 3/3: three-page fixture names page 2 and keeps pages 1 and 3 citable; match/session RPCs reject uncertain pages; documents and web typecheck PASS. No status backfill and no production migration. | Stacked on C04 PR #115; not merged. |
 | C09 | DONE | `fc5b919` / [PR #119](https://github.com/WGLewis0721/Studigo-ai/pull/119) | 3/3: stale token and a second claim cannot replace the active revision; a failed refresh still retrieves the old text and a later publish exposes only the new text; web typecheck PASS. No production migration. | Stacked on C08 PR #118; not merged. Draft #109 remains the older integration attempt. |
-| C10 | NOT STARTED | — | — | — |
+| C10 | DONE | room composition on `codex/c10-room-composition` | 3/3: guide plus notes plus slides compose and a notes replacement keeps the other sources; edits, removals, conflicts, and a second guide keep history; web typecheck PASS. | Stacked on #119; not merged. |
 | C11 | NOT STARTED | — | — | — |
 | C12 | NOT STARTED | — | — | — |
 | C13 | NOT STARTED | — | — | — |
