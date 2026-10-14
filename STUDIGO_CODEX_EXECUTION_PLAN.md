@@ -559,7 +559,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C06 | NOT STARTED | — | — | — |
 | C07 | NOT STARTED | — | — | — |
 | C08 | NOT STARTED | — | — | — |
-| C09 | NOT DONE | `f4c8900` implementation / [draft PR #109](https://github.com/WGLewis0721/Studigo-ai/pull/109) | 2/3 checks used: PGlite concurrency/fencing scenario failed with WASM runtime error before useful assertions; affected web typecheck PASS under Node 22 before the final empty-topic guard. Preservation/success scenario not run. | Final-head type safety and disposable database acceptance unverified; no providers/production database used. |
+| C09 | NOT DONE | `f4c8900` implementation / [draft PR #109](https://github.com/WGLewis0721/Studigo-ai/pull/109) | Original round: 2/3 used, PGlite failed before assertions and pre-guard Node 22 typecheck passed. Separately authorized second round: 3/3 used; two SQL fixture errors and a deadlocked concurrency harness prevented acceptance assertions. See `implementation/codex-failures.md`. | Final-head type safety and disposable database acceptance unverified; no providers/production database used. |
 | C10 | NOT STARTED | — | — | — |
 | C11 | NOT STARTED | — | — | — |
 | C12 | NOT STARTED | — | — | — |

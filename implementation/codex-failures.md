@@ -15,6 +15,14 @@
 
 Resolution: The source assertion was updated in `d72edcc`; automatic GitHub Actions run 38503354107 passed, including web tests, typecheck and build. The three manual C01 checks remain the acceptance evidence. Disposition: DONE, accepted for integration.
 
+### C09 — 2026-10-14 — separately authorized second validation round (3/3 used)
+- Environment: disposable PostgreSQL 17 with pgvector in a Docker container; repository migrations and synthetic Auth/Storage catalogs only. No production database or provider calls.
+- Check 1: concurrent/stale SQL scenario stopped on a psql variable-quoting error after fixture creation. No acceptance assertion completed. FAIL.
+- Check 2: corrected combined SQL scenario stopped on a fixture `topics` INSERT missing the `owner_id` value. No publication assertion completed. FAIL.
+- Check 3: corrected scenario reached concurrent claims but its `dblink_get_result` call waited inside the transaction holding the document lock required by the second connection. The query was canceled in the disposable database. No acceptance assertion completed. FAIL.
+- Root cause of these three failures: test-harness defects; they do not establish a product defect or a pass. The earlier PGlite WASM failure and earlier pre-guard Node 22 typecheck remain recorded above.
+- Remaining checks: 0. Final-head typecheck, failure preservation, concurrent/stale fencing, successful replacement, and history preservation remain unverified. Disposition: NOT DONE. No production migration, provider execution, commit, push, or merge.
+
 ### C09 — 2026-10-14 — check 1 of maximum 3
 - Final/task commit: `f4c8900`, draft PR #109, integration base `2388152963988c8b405c647e1a95c8ec66e5a8fa`.
 - Check name: concurrent forced claims and stale publication fencing.
