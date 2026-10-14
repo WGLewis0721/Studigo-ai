@@ -38,6 +38,8 @@ export {
   type PageCoverageState
 } from "./page-coverage";
 
+export { deriveSourceBlocks, blockKeyForChunk, type SourceBlock, type SourceBlockKind } from "./source-blocks";
+
 export function sanitizeFilename(name: string) {
   return (
     name

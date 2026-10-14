@@ -6,7 +6,9 @@ import {
   type RetrievedChunk
 } from "@studigo/ai";
 import {
+  blockKeyForChunk,
   chunkPages,
+  deriveSourceBlocks,
   extractDocument,
   isImageMimeType,
   pagesNeedingOcr,
@@ -139,10 +141,34 @@ export async function processDocument(args: {
       );
     }
 
-    const embeddings = await embedTexts(chunks.map((chunk) => chunk.content));
+    const blocks = deriveSourceBlocks(covered.publishable);
+    const linked = chunks.map((chunk) => ({
+      ...chunk,
+      metadata: { ...chunk.metadata, blockKey: blockKeyForChunk(blocks, chunk.pageNumber, chunk.content) }
+    }));
 
-    for (let start = 0; start < chunks.length; start += 200) {
-      const batch = chunks.slice(start, start + 200).map((chunk, offset) => ({
+    const embeddings = await embedTexts(linked.map((chunk) => chunk.content));
+
+    if (blocks.length) {
+      const { error: blockError } = await supabase.from("source_blocks").insert(blocks.map((block) => ({
+        document_id: document.id,
+        room_id: document.room_id,
+        owner_id: document.owner_id,
+        revision: stagedRevision,
+        block_key: block.blockKey,
+        kind: block.kind,
+        page_number: block.pageNumber,
+        reading_order: block.readingOrder,
+        raw_text: block.rawText,
+        normalized_text: block.text,
+        coverage: block.coverage,
+        fingerprint: block.fingerprint
+      })));
+      if (blockError) throw new Error(`Storing source blocks failed: ${blockError.message}`);
+    }
+
+    for (let start = 0; start < linked.length; start += 200) {
+      const batch = linked.slice(start, start + 200).map((chunk, offset) => ({
         document_id: document.id,
         room_id: document.room_id,
         owner_id: document.owner_id,
@@ -153,7 +179,8 @@ export async function processDocument(args: {
         token_count: chunk.tokenCount,
         metadata: chunk.metadata,
         embedding: embeddings[start + offset] as unknown as string,
-        revision: stagedRevision
+        revision: stagedRevision,
+        block_key: typeof chunk.metadata.blockKey === "string" ? chunk.metadata.blockKey : null
       }));
 
       const { error: insertError } = await supabase.from("document_chunks").insert(batch);
@@ -200,6 +227,7 @@ export async function processDocument(args: {
     if (committed.error || !(committed.data as { published?: boolean } | null)?.published) {
       throw new Error("The refresh could not be published.");
     }
+    await supabase.from("source_blocks").delete().eq("document_id", document.id).neq("revision", stagedRevision);
 
     if (retrievalServiceConfigured()) {
       try {
@@ -229,6 +257,7 @@ export async function processDocument(args: {
       p_token: publishToken,
       p_error: message
     });
+    await supabase.from("source_blocks").delete().eq("document_id", document.id).eq("revision", stagedRevision);
     const restoredStatus = priorStatus === "partial" ? "partial" : priorStatus === "ready" ? "ready" : null;
     return {
       documentId: document.id,

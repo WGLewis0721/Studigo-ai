@@ -66,7 +66,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C09 | P0 | Atomic reindex publication | A failed refresh keeps the previous usable index | — | DONE |
 | C10 | P0 | All-source topic composition | Added notes enrich lessons without replacing teacher scope | C09 | DONE |
 | C11 | P0 | Independent multi-file intake | File B uploads while file A is still being read | — | NOT STARTED |
-| C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | NOT STARTED |
+| C12 | P1 | Versioned normalized source blocks | Lessons and guides retain exact source locations | C08, C09 | DONE |
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | NOT STARTED |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | NOT STARTED |
 | C15 | P1 | Grounded educational content edition | Definitions, explanations, examples, practice and answers | C10, C12 | NOT STARTED |
@@ -562,7 +562,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C09 | DONE | `fc5b919` / [PR #119](https://github.com/WGLewis0721/Studigo-ai/pull/119) | 3/3: stale token and a second claim cannot replace the active revision; a failed refresh still retrieves the old text and a later publish exposes only the new text; web typecheck PASS. No production migration. | Stacked on C08 PR #118; not merged. Draft #109 remains the older integration attempt. |
 | C10 | DONE | room composition on `codex/c10-room-composition` | 3/3: guide plus notes plus slides compose and a notes replacement keeps the other sources; edits, removals, conflicts, and a second guide keep history; web typecheck PASS. | Stacked on #119; not merged. |
 | C11 | NOT STARTED | — | — | — |
-| C12 | NOT STARTED | — | — | — |
+| C12 | DONE | source blocks on `codex/c12-source-blocks` | 3/3: term and table blocks keep page 2 and link to the chunk; another learner cannot read them; documents and web typecheck PASS. | Stacked on #120; not merged. |
 | C13 | NOT STARTED | — | — | — |
 | C14 | NOT STARTED | — | — | — |
 | C15 | NOT STARTED | — | — | — |
