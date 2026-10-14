@@ -10,10 +10,10 @@ import {
 import {
   chunkPages,
   extractDocument,
-  extractSinglePagePdf,
   isImageMimeType,
   pagesNeedingOcr,
-  pageWithOcrTranscription,
+  recoverPdfPages,
+  PdfOcrPageError,
   type ExtractedPage,
   type ExtractionResult
 } from "@studigo/documents";
@@ -261,37 +261,27 @@ async function applyOcr(args: {
   assertIngestLimit(targets.length, MAX_OCR_PAGES, "OCR pages");
   if (!targets.length) return args.extraction;
 
-  const byPage = new Map<number, ExtractedPage>(
-    args.extraction.pages.map((page) => [page.pageNumber, page])
-  );
-  let ocrPageCount = 0;
-
-  for (const pageNumber of targets) {
-    try {
-      const pagePdf = await extractSinglePagePdf(args.buffer, pageNumber);
-      const text = await ocrPagePdf({ pdf: pagePdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() });
-      if (!text.trim()) throw new Error("OCR returned no readable text");
-
-      const existing = byPage.get(pageNumber);
-      byPage.set(pageNumber, pageWithOcrTranscription(existing ?? { pageNumber, text: "" }, text));
-      ocrPageCount += 1;
-    } catch (error) {
-      if (error instanceof OcrCapabilityError) throw error;
-      if (error instanceof OcrResponseError) {
-        throw new Error(`OCR could not process Page ${pageNumber}: ${error.message} This file has not been marked ready.`);
-      }
-      if (error instanceof Error && error.message === "OCR returned no readable text") {
-        throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
-      }
-      throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
+  try {
+    return await recoverPdfPages({
+      extraction: args.extraction,
+      buffer: args.buffer,
+      targetPages: targets,
+      transcribePage: ({ pdf, pageNumber }) =>
+        ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
+    });
+  } catch (error) {
+    if (!(error instanceof PdfOcrPageError)) throw error;
+    const pageNumber = error.pageNumber;
+    const cause = error.originalError;
+    if (cause instanceof OcrCapabilityError) throw cause;
+    if (cause instanceof OcrResponseError) {
+      throw new Error(`OCR could not process Page ${pageNumber}: ${cause.message} This file has not been marked ready.`);
     }
+    if (cause instanceof Error && cause.message === "OCR returned no readable text") {
+      throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
+    }
+    throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
   }
-
-  return {
-    ...args.extraction,
-    pages: [...byPage.values()].sort((a, b) => a.pageNumber - b.pageNumber),
-    ocrPageCount
-  };
 }
 
 /**
