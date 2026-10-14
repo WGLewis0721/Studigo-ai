@@ -554,7 +554,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C01 | DONE | `455573f` implementation, `d72edcc` CI repair / [PR #104](https://github.com/WGLewis0721/Studigo-ai/pull/104) | 3/3 manual checks PASS under Node 22: four switches preserved two drafts/transcripts and per-mode scroll; delayed Learn/Coach chunks, loading and error stayed in the original mode; pending Coach switch made no extra AI request or evidence write in the synthetic fixture; web typecheck passed. Automatic CI passed after the stale source assertion was updated. | Merged into integration at `2388152963988c8b405c647e1a95c8ec66e5a8fa`; no production or database verification claimed. |
 | C02 | NOT STARTED | — | — | — |
 | C03 | NOT STARTED | — | — | — |
-| C04 | NOT DONE | Focused implementation on `codex/c04-learn-outcomes`; PR pending | 3/3 allowed checks used under Node 22: table-driven outcome contract PASS; functional Learn SSE UI check FAIL before first mocked request (fixture hydration race, so recovery and cited rendering unverified); web typecheck PASS. No successful functional UI claim. | Hold for review/one newly authorized functional rerun; C05/C08 remain ineligible. |
+| C04 | NOT DONE | `561df97` implementation / [draft PR #106](https://github.com/WGLewis0721/Studigo-ai/pull/106) | 3/3 allowed checks used under Node 22: table-driven outcome contract PASS; functional Learn SSE UI check FAIL before first mocked request (fixture hydration race, so recovery and cited rendering unverified); web typecheck PASS. No successful functional UI claim. | Hold for review/one newly authorized functional rerun; C05/C08 remain ineligible. |
 | C05 | NOT STARTED | — | — | — |
 | C06 | NOT STARTED | — | — | — |
 | C07 | NOT STARTED | — | — | — |
