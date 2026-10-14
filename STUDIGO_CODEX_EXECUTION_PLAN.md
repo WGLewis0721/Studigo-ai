@@ -557,7 +557,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C04 | NOT STARTED | — | — | — |
 | C05 | NOT STARTED | — | — | — |
 | C06 | NOT STARTED | — | — | — |
-| C07 | NOT DONE | `a23be3e` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | 3/3 checks used: supplied clean three-page Government guide facts and no-OCR selection PASS; synthetic healthy/corrupt-layer selection and OCR replacement PASS; affected-package typecheck FAILED before compiler startup because root `tsc` path was absent. Actual failing scanned PDF and real OCR unverified. | Hold for scanned source, accepted SEC gate, and renewed compiler check; quality-only OCR remains disabled by default. |
+| C07 | NOT DONE | `a23be3e` implementation / [draft PR #107](https://github.com/WGLewis0721/Studigo-ai/pull/107) | 3/3 checks used: clean Government PDF facts/no-OCR PASS; synthetic quality selection/replacement PASS; compiler path failure before startup. Later read-only inspection of the original PDF found three image-only pages with zero extractable text, so the existing threshold already selects all three; actual OCR/provider outcome remains unverified. | Hold for SEC-gated original OCR and renewed compiler check; quality-only OCR remains disabled by default. This change does not establish the original scan's failure cause. |
 | C08 | NOT STARTED | — | — | — |
 | C09 | NOT STARTED | — | — | — |
 | C10 | NOT STARTED | — | — | — |
