@@ -74,8 +74,8 @@ test("Coach and Learn have independent Apply paths", () => {
 });
 
 test("Apply resets only the selected response surface", () => {
-  assert.match(coachPanel, /if \(ok\) conversationId\.current = null/);
-  assert.match(coachPanel, /if \(ok\) askConversationId\.current = null/);
+  assert.match(coachPanel, /if \(ok\) \{ conversationId\.current = null; resetThreadIdentity\("coach"\); \}/);
+  assert.match(coachPanel, /if \(ok\) \{ askConversationId\.current = null; resetThreadIdentity\("learn"\); \}/);
 });
 
 test("Coach and Learn keep separate visible conversation histories", () => {
