@@ -4,7 +4,7 @@
 >
 > Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
 >
-> What to build next is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). That file is the single execution plan. Do not add another plan, tour, or security checklist.
+> Broader planned engineering work is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). For the document-learning reliability track, use one assigned card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`. Do not add competing plans, tours, or security checklists.
 
 ## System in one sentence
 

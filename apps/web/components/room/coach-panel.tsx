@@ -1,10 +1,11 @@
 "use client";
 
 import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPreferences } from "@/lib/coach-preferences";
+import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CitationChips, type Citation } from "./citations";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import { coachMaterialLabel, coachMaterialState } from "@/lib/coach-material-state";
@@ -21,6 +22,8 @@ import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/l
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean };
+type MessagesByMode = Record<ChatMode, Message[]>;
+type ModeState<T> = Record<ChatMode, T>;
 
 type CoachView = "chat" | "topics";
 type ReplyMode = "coach" | "ask";
@@ -69,10 +72,20 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [learnScopeStatus, setLearnScopeStatus] = useState<string | null>(null);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>("coach");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [prompt, setPrompt] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Coach and Learn have separate persisted conversations. Keep their visible
+  // turn history separate too, so switching surfaces cannot make one appear
+  // to be context for the other.
+  const [messagesByMode, setMessagesByMode] = useState<MessagesByMode>({ coach: [], learn: [] });
+  const [prompts, setPrompts] = useState<ModeState<string>>({ coach: "", learn: "" });
+  const [pending, setPending] = useState<ModeState<boolean>>({ coach: false, learn: false });
+  const [errors, setErrors] = useState<ModeState<string | null>>({ coach: null, learn: null });
+  const prompt = prompts[chatMode];
+  const busy = pending[chatMode];
+  const error = errors[chatMode];
+  const pendingRef = useRef<ModeState<boolean>>({ coach: false, learn: false });
+  const requestIdByMode = useRef<ModeState<string | null>>({ coach: null, learn: null });
+  const threadGeneration = useRef<ModeState<number>>({ coach: 0, learn: 0 });
+  const scrollPositions = useRef<ModeState<number>>({ coach: 0, learn: 0 });
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
   useFitViewport(view === "chat");
@@ -82,7 +95,26 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
   const handledFocusTopicId = useRef<string | null>(null);
-  const threadEndRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const lastAutoScrollMode = useRef<ChatMode | null>(null);
+  const skipAutoScroll = useRef(false);
+
+  const resetThreadIdentity = (mode: ChatMode) => {
+    threadGeneration.current[mode] += 1;
+    requestIdByMode.current[mode] = null;
+    pendingRef.current[mode] = false;
+    setPending((current) => ({ ...current, [mode]: false }));
+    setMessagesByMode((current) => current[mode].some((message) => message.streaming)
+      ? { ...current, [mode]: current[mode].filter((message) => !message.streaming) }
+      : current);
+  };
+
+  const switchChatMode = (mode: ChatMode) => {
+    if (mode === chatMode) return;
+    if (threadRef.current) scrollPositions.current[chatMode] = threadRef.current.scrollTop;
+    setPersonalizeOpen(false);
+    setChatMode(mode);
+  };
 
   useEffect(() => {
     const valid = new Set(topics.map((topic) => topic.id));
@@ -95,6 +127,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   }, [topics]);
 
   const activeTopicIds = chatMode === "coach" ? coachTopicIds : learnTopicIds;
+  const messages = messagesByMode[chatMode];
   const selectedTopics = topics.filter((topic) => activeTopicIds.includes(topic.id));
   const selectedTopic: SkillTopic = selectedTopics[0] ?? topics[0] ?? GENERAL_TOPIC;
   const activeScopeStatus = chatMode === "coach" ? coachScopeStatus : learnScopeStatus;
@@ -111,9 +144,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     if (chatMode === "coach") {
       setCoachTopicIds([focused.id]);
       conversationId.current = null;
+      resetThreadIdentity("coach");
     } else {
       setLearnTopicIds([focused.id]);
       askConversationId.current = null;
+      resetThreadIdentity("learn");
     }
     setTopicDraftIds([focused.id]);
   }, [focusTopicId, topics, chatMode]);
@@ -133,13 +168,20 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     setSkillPickerOpen(true);
   };
 
+  useLayoutEffect(() => {
+    skipAutoScroll.current = lastAutoScrollMode.current !== chatMode;
+    if (view === "chat" && threadRef.current) threadRef.current.scrollTop = scrollPositions.current[chatMode];
+    lastAutoScrollMode.current = chatMode;
+  }, [chatMode, view]);
+
   useEffect(() => {
-    if (!messages.length) return;
-    const frame = window.requestAnimationFrame(() => {
-      threadEndRef.current?.scrollIntoView({ behavior: busy ? "auto" : "smooth", block: "nearest" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [messages, busy]);
+    if (skipAutoScroll.current) { skipAutoScroll.current = false; return; }
+    if (view !== "chat" || !messages.length) return;
+    const thread = threadRef.current;
+    if (!thread) return;
+    thread.scrollTop = thread.scrollHeight;
+    scrollPositions.current[chatMode] = thread.scrollTop;
+  }, [messages, chatMode, view]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -184,9 +226,16 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     const replying: ReplyMode = modeOverride ?? (chatMode === "learn" ? "ask" : "coach");
     const messageMode: ChatMode = replying === "ask" ? "learn" : "coach";
     const text = input.trim();
-    if (!text || busy || coaching.applying) return;
-    setPrompt(""); setError(null); setBusy(true);
+    if (!text || pendingRef.current[messageMode] || (messageMode === "coach" ? coaching.applying : coaching.learnApplying)) return;
+    setPrompts((current) => ({ ...current, [messageMode]: "" }));
+    setErrors((current) => ({ ...current, [messageMode]: null }));
+    pendingRef.current[messageMode] = true;
+    setPending((current) => ({ ...current, [messageMode]: true }));
     const assistantId = crypto.randomUUID();
+    const submittedGeneration = threadGeneration.current[messageMode];
+    const submittedConversationId = messageMode === "coach" ? conversationId.current : askConversationId.current;
+    requestIdByMode.current[messageMode] = assistantId;
+    const isCurrentThread = () => threadGeneration.current[messageMode] === submittedGeneration && requestIdByMode.current[messageMode] === assistantId;
     // One UUID per submitted turn. It becomes the persisted user message's ID
     // and the identity of any learning evidence, so a resend of this same
     // turn is recognized server-side instead of being recorded twice.
@@ -194,10 +243,19 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     // Snapshot the conversation so far — before the new user turn and the
     // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
-    const priorHistory = messages.filter((message) => !message.streaming && message.kind !== "guide").map((message) => ({ role: message.role, content: message.content }));
+    const priorHistory = messagesByMode[messageMode]
+      .filter((message) => !message.streaming && message.kind !== "guide")
+      .map((message) => ({ role: message.role, content: message.content }));
     const scopedTopicIds = topicIdsOverride ?? (replying === "coach" ? coachTopicIds : learnTopicIds);
     const scopedTopics = topics.filter((topic) => scopedTopicIds.includes(topic.id));
-    setMessages((current) => [...current, { id: interactionId, role: "user", content: text, mode: messageMode }, { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }]);
+    setMessagesByMode((current) => ({
+      ...current,
+      [messageMode]: [
+        ...current[messageMode],
+        { id: interactionId, role: "user", content: text, mode: messageMode },
+        { id: assistantId, role: "assistant", content: "", mode: messageMode, streaming: true }
+      ]
+    }));
     try {
       // The learner's question stays clean for retrieval; saved preferences
       // shape presentation only and never what gets searched for.
@@ -215,10 +273,12 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       const body = isFixture
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: conversationId.current, topicIds: scopedTopicIds })
-          : JSON.stringify({ roomId, question: text, conversationId: askConversationId.current, topicIds: scopedTopicIds });
-      const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body });
-      if (!response.ok || !response.body) throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
+          ? JSON.stringify({ roomId, question: text, mode: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
+          : JSON.stringify({ roomId, question: text, conversationId: submittedConversationId, topicIds: scopedTopicIds });
+      const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
+      if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
+        throw new Error((await response.json().catch(() => ({}))).error || "Studigo could not coach that attempt.");
+      }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
       while (true) {
         const { done, value } = await reader.read(); if (done) break;
@@ -226,47 +286,72 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         for (const frame of frames) {
           const line = frame.trim(); if (!line.startsWith("data:")) continue;
           const event = JSON.parse(line.slice(5).trim()) as { type: string; text?: string; citations?: Citation[]; grounded?: boolean; conversationId?: string; error?: string };
+          if (!isCurrentThread()) continue;
           if (event.type === "start") { if (replying === "coach") conversationId.current = event.conversationId ?? null; else askConversationId.current = event.conversationId ?? null; }
-          if (event.type === "delta" && event.text) setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message));
-          if (event.type === "done") setMessages((current) => current.map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message));
+          if (event.type === "delta" && event.text) setMessagesByMode((current) => ({
+            ...current,
+            [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message)
+          }));
+          if (event.type === "done") setMessagesByMode((current) => ({
+            ...current,
+            [messageMode]: current[messageMode].map((message) => message.id === assistantId ? { ...message, content: event.text ?? message.content, citations: event.citations, grounded: event.grounded, streaming: false } : message)
+          }));
           if (event.type === "error") throw new Error(event.error || "Studigo could not finish that coaching session.");
         }
       }
       // Refresh authoritative evidence after a completed turn; presentation stays unchanged.
       if (replying === "coach") onTopicsChanged();
-    } catch (coachError) { setError(coachError instanceof Error ? coachError.message : "Something went wrong."); setMessages((current) => current.filter((message) => message.id !== assistantId)); }
-    finally { setBusy(false); }
+    } catch (coachError) {
+      if (isCurrentThread()) {
+        setErrors((current) => ({ ...current, [messageMode]: coachError instanceof Error ? coachError.message : "Something went wrong." }));
+        setMessagesByMode((current) => ({
+          ...current,
+          [messageMode]: current[messageMode].filter((message) => message.id !== assistantId)
+        }));
+      }
+    }
+    finally {
+      if (isCurrentThread()) {
+        requestIdByMode.current[messageMode] = null;
+        pendingRef.current[messageMode] = false;
+        setPending((current) => ({ ...current, [messageMode]: false }));
+      }
+    }
   }
 
   /** The "How Learn works" starter: answered locally with fixed copy, no model call. */
   function showLearnGuide(text: string) {
-    if (busy) return;
-    setError(null);
-    setMessages((current) => [
+    if (pendingRef.current.learn) return;
+    setErrors((current) => ({ ...current, learn: null }));
+    setMessagesByMode((current) => ({
       ...current,
-      { id: crypto.randomUUID(), role: "user", content: text, mode: "learn", kind: "guide" },
-      { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
-    ]);
+      learn: [
+        ...current.learn,
+        { id: crypto.randomUUID(), role: "user", content: text, mode: "learn", kind: "guide" },
+        { id: crypto.randomUUID(), role: "assistant", content: LEARN_GUIDE_TEXT, mode: "learn", kind: "guide", grounded: false }
+      ]
+    }));
   }
 
   function coachTopic(topic: Topic) {
     setCoachTopicIds([topic.id]);
     setTopicDraftIds([topic.id]);
     conversationId.current = null;
-    setChatMode("coach");
+    resetThreadIdentity("coach");
+    switchChatMode("coach");
     onViewChange("chat");
     void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
   }
 
   async function applySurfaceSettings() {
-    if (busy) return;
+    if (pendingRef.current[chatMode]) return;
     if (chatMode === "coach") {
       const ok = await coaching.apply(draft);
-      if (ok) conversationId.current = null;
+      if (ok) { conversationId.current = null; resetThreadIdentity("coach"); }
       return;
     }
     const ok = await coaching.applyLearn(learnDraft);
-    if (ok) askConversationId.current = null;
+    if (ok) { askConversationId.current = null; resetThreadIdentity("learn"); }
   }
 
   function applyTopicScope() {
@@ -276,10 +361,12 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     if (chatMode === "coach") {
       setCoachTopicIds(ordered);
       conversationId.current = null;
+      resetThreadIdentity("coach");
       setCoachScopeStatus(`Applied ${count} to Coach. Learn topics were not changed.`);
     } else {
       setLearnTopicIds(ordered);
       askConversationId.current = null;
+      resetThreadIdentity("learn");
       setLearnScopeStatus(`Applied ${count} to Learn. Coach topics were not changed.`);
     }
     setSkillPickerOpen(false);
@@ -308,10 +395,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <span className="chatMascotDot" aria-hidden="true" />
         </button>
         <div className="chatModes" role="group" aria-label="How Studigo helps">
-          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => { setPersonalizeOpen(false); setChatMode("coach"); }}>
+          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} onClick={() => switchChatMode("coach")}>
             <strong>Coach</strong><small>Practice and apply</small>
           </button>
-          <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => { setPersonalizeOpen(false); setChatMode("learn"); }}>
+          <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} onClick={() => switchChatMode("learn")}>
             <strong>Learn</strong><small>Facts, with sources</small>
           </button>
         </div>
@@ -421,7 +508,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
           </button>
         )}
-        <div className="chatThread" role="log" aria-live="polite" aria-label="Messages">
+        <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={(event) => { scrollPositions.current[chatMode] = event.currentTarget.scrollTop; }}>
         {messages.length === 0 ? (
           chatMode === "coach" ? (
             <div className="coachEmpty">
@@ -441,7 +528,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             </div>
           )
         ) : messages.map((message) => message.role === "user" ? <div className="studentBubble" key={message.id}>{message.content}</div> : <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}><span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span><div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>{message.citations && <CitationChips citations={message.citations} />}</div>)}
-        <div ref={threadEndRef} className="threadEnd" aria-hidden="true" />
+        <div className="threadEnd" aria-hidden="true" />
         </div>
         {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}</div>}
         {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
@@ -451,7 +538,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           accent={chatMode === "learn" ? "learn" : undefined}
           placeholder={chatMode === "learn" ? "Ask about your materials" : "Answer, or message your coach"}
           value={prompt}
-          onChange={setPrompt}
+          onChange={(value) => setPrompts((current) => ({ ...current, [chatMode]: value }))}
           onSubmit={() => void coach(prompt)}
           disabled={busy}
           ariaLabel="Message Studigo"
@@ -462,9 +549,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         if (chatMode === "coach") {
           setCoachTopicIds([topic.id]);
           conversationId.current = null;
+          resetThreadIdentity("coach");
         } else {
           setLearnTopicIds([topic.id]);
           askConversationId.current = null;
+          resetThreadIdentity("learn");
         }
       }} onAllTopics={openTopicPicker} />
       </div>

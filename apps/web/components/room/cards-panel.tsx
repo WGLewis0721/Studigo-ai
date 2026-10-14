@@ -6,6 +6,7 @@ import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
+import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { StudigoFigure } from "@/components/companion/figure";
 
 type Card = {
@@ -46,6 +47,7 @@ export function CardsPanel({
   const [saving, setSaving] = useState(false);
   const reviewRef = useRef<{ cardId: string; requestId: string; rating: 1 | 2 | 3 } | null>(null);
   const savingRef = useRef(false);
+  const gestures = useRef(createGestureBook());
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ front: "", back: "" });
@@ -73,19 +75,22 @@ export function CardsPanel({
   }, [loadDue]);
 
   async function generate() {
+    const body = JSON.stringify({ roomId, topicId: topicId || null, count: 10 });
+    const attempt = gestures.current.begin("flashcards-generate", body);
+    if (!attempt.started) return;
     setGenerating(true);
     setError(null);
     try {
-      const response = await fetch("/api/flashcards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, topicId: topicId || null, count: 10 })
-      });
+      const response = await fetch("/api/flashcards", { method: "POST", headers: operationHeaders(attempt.id), body });
+      gestures.current.finish("flashcards-generate", response.status);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not build cards.");
+      if (response.status === 202 || response.status === 409 || !response.ok) {
+        throw new Error(payload.error || "Could not build cards.");
+      }
       await loadDue();
       startTransition(onReviewed);
     } catch (generateError) {
+      gestures.current.abort("flashcards-generate");
       setError(generateError instanceof Error ? generateError.message : "Something went wrong.");
     } finally {
       setGenerating(false);

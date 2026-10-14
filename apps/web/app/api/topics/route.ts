@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { requireApiUser } from "@/lib/auth";
 import { buildTopicMap } from "@/lib/ingest";
 import { assertRoomAccess } from "@/lib/retrieval";
@@ -11,7 +12,7 @@ export const maxDuration = 180;
  * study guide lands; this is the manual "rebuild" path, and the fallback for a
  * room whose only materials are notes and textbook pages.
  */
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const { supabase, user, unauthorized } = await requireApiUser();
   if (!user) return unauthorized;
 
@@ -97,4 +98,11 @@ export async function POST(request: Request) {
   }
 
   return Response.json({ topicsCreated: created });
+}
+
+// Manually adding a topic needs no model call; retain it when AI generation is paused.
+export async function POST(request: Request) {
+  const body = await request.clone().json().catch(() => null);
+  if (body?.intent === "create") return guardedPost(request);
+  return guardAiRequest(request, "topic-regenerate", guardedPost);
 }

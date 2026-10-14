@@ -13,6 +13,7 @@ import { assertSafeZip } from "./file-safety";
 
 export * from "./types";
 export * from "./chunk";
+export { recoverPdfPages, PdfOcrPageError } from "./ocr-recovery";
 export { assertContentMatchesType, assertSafeZip, UnsafeFileError, ZIP_LIMITS } from "./file-safety";
 export {
   extractDocx,
@@ -22,6 +23,8 @@ export {
   extractSinglePagePdf,
   normalizeText,
   pagesNeedingOcr,
+  pdfPageQualityIssues,
+  pageWithOcrTranscription,
   OCR_TEXT_THRESHOLD
 } from "./extract";
 

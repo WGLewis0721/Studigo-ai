@@ -1,3 +1,4 @@
+import { guardAiRequest } from "@/lib/ai-admission";
 import { generateQuizQuestions } from '@studigo/ai';
 import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   return Response.json({tests:tests??[]});
 }
 
-export async function POST(request: Request) {
+async function guardedPost(request: Request) {
   const {supabase,user,unauthorized}=await requireApiUser(); if(!user) return unauthorized;
   const body=await request.json().catch(()=>null);
   if(typeof body?.roomId!=='string' || ![6,10,15,20].includes(body?.count)) return Response.json({error:'Choose a room and test length.'},{status:400});
@@ -82,4 +83,8 @@ export async function PATCH(request: Request) {
   const {data:saved,error}=await createServiceSupabaseClient().from('practice_tests').update({draft_answers:answers}).eq('id',owned.id).eq('owner_id',user.id).eq('status','draft').select('id').maybeSingle();
   if(error||!saved) return Response.json({error:'This draft could not be saved. Reload the test.'},{status:409});
   return Response.json({saved:true});
+}
+
+export async function POST(request: Request) {
+  return guardAiRequest(request, "practice-test-generate", guardedPost);
 }

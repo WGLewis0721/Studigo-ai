@@ -3,14 +3,17 @@ import {
   extractTopicMap,
   ocrImage,
   ocrPagePdf,
+  OcrCapabilityError,
+  OcrResponseError,
   type RetrievedChunk
 } from "@studigo/ai";
 import {
   chunkPages,
   extractDocument,
-  extractSinglePagePdf,
   isImageMimeType,
   pagesNeedingOcr,
+  recoverPdfPages,
+  PdfOcrPageError,
   type ExtractedPage,
   type ExtractionResult
 } from "@studigo/documents";
@@ -18,6 +21,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { indexDocumentLocally, retrievalServiceConfigured } from "@/lib/retrieval-client";
 
 import { assertIngestLimit, MAX_OCR_PAGES, MAX_CHUNKS_PER_DOCUMENT } from "@/lib/validation";
+import { reindexCooldownMs } from "@/lib/ai-budget";
 const MAX_ATTEMPTS = 3;
 
 export type IngestResult = {
@@ -55,45 +59,33 @@ export async function processDocument(args: {
     return { documentId: args.documentId, status: "failed", error: "Document not found" };
   }
 
+  // Claim cooldown and process ownership in one database transition. Never
+  // reset a queued/processing row before a claim: concurrent refreshes must
+  // not produce duplicate OCR work or competing writes.
+  let claimed: boolean;
   if (args.force) {
-    if (document.status === "processing") {
-      const started = document.processing_started_at ? Date.parse(document.processing_started_at) : NaN;
-      const stillActive = Number.isFinite(started) && Date.now() - started < 10 * 60 * 1000;
-      if (stillActive) {
-        return {
-          documentId: document.id,
-          status: "failed",
-          error: "This study guide is still being processed. Wait for it to finish, then refresh again."
-        };
-      }
-    }
-
-    // Manual refresh deliberately bypasses the normal three-attempt retry cap.
-    // The original file stays in Storage; processing below replaces only the
-    // derived chunks/topic map after a fresh extraction + embedding pass.
-    const { error: resetError } = await supabase
-      .from("documents")
-      .update({
-        status: "queued",
-        attempts: 0,
-        processing_started_at: null,
-        processed_at: null,
-        error_message: null,
-        last_forced_reindex_at: new Date().toISOString()
-      })
-      .eq("id", document.id)
-      .eq("owner_id", args.userId);
-    if (resetError) {
-      return { documentId: document.id, status: "failed", error: resetError.message };
-    }
+    const cooldownSeconds = Math.min(86400, Math.max(900, Math.ceil(reindexCooldownMs() / 1000)));
+    const { data, error } = await supabase.rpc("claim_forced_studigo_reindex", {
+      p_document_id: document.id,
+      p_owner_id: args.userId,
+      p_cooldown_seconds: cooldownSeconds
+    });
+    if (error) return { documentId: document.id, status: "failed", error: "Reindex claim failed" };
+    const claim = data as { claimed?: boolean; reason?: string } | null;
+    if (!claim?.claimed) return {
+      documentId: document.id,
+      status: "skipped",
+      error: claim?.reason === "cooldown" ? "reindex_cooldown"
+        : claim?.reason === "processing" ? "reindex_processing" : "reindex_unavailable"
+    };
+    claimed = true;
+  } else {
+    const { data, error } = await supabase.rpc("claim_document", {
+      p_document_id: document.id, p_owner_id: args.userId
+    });
+    if (error) return { documentId: document.id, status: "failed", error: error.message };
+    claimed = Boolean(data);
   }
-
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_document", {
-    p_document_id: document.id, p_owner_id: args.userId
-  });
-  if (claimError) return { documentId: document.id, status: "failed", error: claimError.message };
-
-  // Another run already owns this document.
   if (!claimed) return { documentId: document.id, status: "skipped" };
 
   try {
@@ -228,10 +220,23 @@ async function applyOcr(args: {
   mimeType: string;
   filename: string;
 }): Promise<ExtractionResult> {
+  // Quality-only OCR can increase provider work. Keep it disabled until the
+  // accepted spend/concurrency admission protects this workload.
+  const qualityOcrEnabled = process.env.STUDIGO_QUALITY_OCR_ENABLED === "1"
+    && process.env.STUDIGO_AI_ADMISSION === "1";
+  const configuredDuration = Number(process.env.STUDIGO_OCR_TOTAL_TIMEOUT_MS ?? 180_000);
+  const maxDurationMs = Number.isFinite(configuredDuration) ? Math.max(1_000, Math.min(configuredDuration, 240_000)) : 180_000;
+  const deadline = Date.now() + maxDurationMs;
+  const remainingTime = () => {
+    const remaining = Math.min(60_000, deadline - Date.now());
+    if (remaining <= 0) throw new Error("OCR time limit reached; this file has not been marked ready.");
+    return remaining;
+  };
   if (isImageMimeType(args.mimeType)) {
     const text = await ocrImage({
       bytes: new Uint8Array(args.buffer),
-      mimeType: args.mimeType
+      mimeType: args.mimeType,
+      timeoutMs: remainingTime()
     });
     return {
       ...args.extraction,
@@ -242,39 +247,31 @@ async function applyOcr(args: {
 
   if (args.mimeType !== "application/pdf") return args.extraction;
 
-  const targets = pagesNeedingOcr(args.extraction);
+  const targets = pagesNeedingOcr(args.extraction, { includeQuality: qualityOcrEnabled });
   assertIngestLimit(targets.length, MAX_OCR_PAGES, "OCR pages");
   if (!targets.length) return args.extraction;
 
-  const byPage = new Map<number, ExtractedPage>(
-    args.extraction.pages.map((page) => [page.pageNumber, page])
-  );
-  let ocrPageCount = 0;
-
-  for (const pageNumber of targets) {
-    try {
-      const pagePdf = await extractSinglePagePdf(args.buffer, pageNumber);
-      const text = await ocrPagePdf({ pdf: pagePdf, filename: `${args.filename}-p${pageNumber}` });
-      if (!text.trim()) throw new Error("OCR returned no readable text");
-
-      const existing = byPage.get(pageNumber);
-      byPage.set(pageNumber, {
-        pageNumber,
-        // Keep whatever thin text layer existed; OCR supplements it.
-        text: [existing?.text, text].filter(Boolean).join("\n").trim(),
-        ocr: true
-      });
-      ocrPageCount += 1;
-    } catch {
-      throw new Error(`Page ${pageNumber} could not be read. Upload a clearer copy; this file has not been marked ready.`);
+  try {
+    return await recoverPdfPages({
+      extraction: args.extraction,
+      buffer: args.buffer,
+      targetPages: targets,
+      transcribePage: ({ pdf, pageNumber }) =>
+        ocrPagePdf({ pdf, filename: `${args.filename}-p${pageNumber}`, timeoutMs: remainingTime() })
+    });
+  } catch (error) {
+    if (!(error instanceof PdfOcrPageError)) throw error;
+    const pageNumber = error.pageNumber;
+    const cause = error.originalError;
+    if (cause instanceof OcrCapabilityError) throw cause;
+    if (cause instanceof OcrResponseError) {
+      throw new Error(`OCR could not process Page ${pageNumber}: ${cause.message} This file has not been marked ready.`);
     }
+    if (cause instanceof Error && cause.message === "OCR returned no readable text") {
+      throw new Error(`Page ${pageNumber} has no legible text. Upload a clearer copy; this file has not been marked ready.`);
+    }
+    throw new Error(`OCR could not process Page ${pageNumber}. Please retry; this file has not been marked ready.`);
   }
-
-  return {
-    ...args.extraction,
-    pages: [...byPage.values()].sort((a, b) => a.pageNumber - b.pageNumber),
-    ocrPageCount
-  };
 }
 
 /**
