@@ -70,7 +70,7 @@ Inspection establishes source-level implementation boundaries. No new applicatio
 | C13 | P1 | Durable ingestion admission/status | Queued work and retries survive a closed page | C09, C11 | DONE |
 | C14 | P1 | Resumable bounded ingestion runner | Reading resumes after interruption without redoing finished work | C12, C13 | DONE |
 | C15 | P1 | Grounded educational content edition | Definitions, explanations, examples, practice and answers | C10, C12 | DONE |
-| C16 | P1 | Automatic build/rebuild lifecycle | Guide readiness and update availability are clear | C14, C15 | NOT STARTED |
+| C16 | P1 | Automatic build/rebuild lifecycle | Guide readiness and update availability are clear | C14, C15 | DONE |
 | C17 | P1 | Readable study-guide preview | Read the composed guide and inspect its citations in-app | C15 | NOT STARTED |
 | C18 | P1 | Student-ready PDF | Readable print layout with intact Unicode and complete sentences | C15 | NOT STARTED |
 | C19 | P1 | Editable Word export | Edit the same guide in Word | C15 | NOT STARTED |
@@ -566,7 +566,7 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 | C13 | DONE | durable jobs on this branch | 3/3: a repeated process reuses one queued job and reload still says queued; another learner cannot read or enqueue it; web typecheck failed once on a dropped queue import, then PASS. Durable mode stays off unless STUDIGO_DURABLE_INGEST=1. | Not merged. No production flag change. |
 | C14 | DONE | runner on this branch | 2/3 behavior: restart continues after extract and does not repeat it; a second worker does not publish again. Web typecheck PASS. The internal route stays idle unless STUDIGO_DURABLE_INGEST=1 and CRON_SECRET match. | Not merged. No production flag or scheduler enablement. |
 | C15 | DONE | grounded edition on this branch | Government edition quotes the three branch definitions, a supported example, and matching answers; the stored row is reused and another learner cannot read it. Invalid output is not stored and a duplicate build runs once. AI and web typecheck PASS. The first loader failure did not call a provider. Live generation stays off. | Not merged. No production migration applied. |
-| C16 | NOT STARTED | — | — | — |
+| C16 | DONE | lifecycle on this branch | Three files stay processing until all are ready, then one edition is published. A newer revision keeps the current edition and shows update available. A stale or failed build does not replace it, and the same snapshot builds once. Web typecheck PASS. | Not merged. |
 | C17 | NOT STARTED | — | — | — |
 | C18 | NOT STARTED | — | — | — |
 | C19 | NOT STARTED | — | — | — |

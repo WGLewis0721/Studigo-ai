@@ -5,6 +5,7 @@ import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType,
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import type { StudyDocument } from "@/lib/rooms";
+import { describeCorpus } from "@/lib/guide-lifecycle";
 import { visibleIngestStage } from "@/lib/ingest-jobs";
 import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
@@ -467,6 +468,7 @@ export function MaterialsPanel({
 
       <div className="materialsLibrary">
       <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>
+      <p className="setupLead">{describeCorpus(documents.map((document) => ({ id: document.id, revision: 0, status: document.status }))).notice}</p>
       <ul className="documentList">
         {documents.length === 0 && (
           <li className="emptyState">Nothing here yet. The study guide is the best first upload.</li>
