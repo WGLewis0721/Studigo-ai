@@ -65,8 +65,9 @@ export async function retrieveGuideNavigationChunks(args: {
   const guideDocuments = documents.filter((doc) =>
     doc.source_type === "study_guide" || /study[\s_-]*guide/i.test(doc.name)
   );
-  const explicitlyGuide = /\b(?:study\s+guide|my guide|the guide|this guide)\b/i.test(args.question);
-  const selected = (guideDocuments.length ? guideDocuments : explicitlyGuide ? [] : documents).slice(0, 3);
+  // Some uploads are classified as notes/other despite being the learner\'s guide.
+  // When no explicit study-guide type exists, use ready room materials instead.
+  const selected = (guideDocuments.length ? guideDocuments : documents).slice(0, 3);
   if (!selected.length) return [];
 
   // This query reads just one room's indexed chunks, not full uploaded bytes.
