@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useState, useTransition } from "react";
-import { SOURCE_TYPES, SOURCE_TYPE_LABELS, type SourceType } from "@studigo/documents";
+import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, type SourceType } from "@studigo/documents";
+import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import type { StudyDocument } from "@/lib/rooms";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
@@ -121,14 +122,39 @@ export function MaterialsPanel({
         setQueue((current) => [...current, { key, name: file.name, stage: "uploading" }]);
 
         try {
-          const form = new FormData();
-          form.set("file", file);
-          form.set("roomId", roomId);
-          form.set("sourceType", sourceType);
+          // Only metadata crosses the Vercel function boundary. Vercel imposes a
+          // ~4.5 MB request limit even though Studigo accepts up to 50 MB.
+          const mimeType = assertUploadAllowed({
+            name: file.name, size: file.size, type: resolveMimeType(file)
+          });
+          const prepare = await fetch("/api/documents/upload/prepare", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId, sourceType, name: file.name, size: file.size, type: mimeType })
+          });
+          const prepared = await prepare.json().catch(() => ({}));
+          if (!prepare.ok || !prepared?.upload?.path || !prepared?.upload?.token || !prepared?.document?.id) {
+            throw new Error(prepared.error || "Could not prepare the upload.");
+          }
 
-          const response = await fetch("/api/documents/upload", { method: "POST", body: form });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(payload.error || "Upload failed");
+          // The signed token authorizes this one private user-owned Storage path.
+          // Never send file bytes to a Vercel API route.
+          const { error: storageError } = await createBrowserSupabaseClient().storage
+            .from("study-materials")
+            .uploadToSignedUrl(prepared.upload.path, prepared.upload.token, file, { contentType: mimeType });
+          if (storageError) {
+            // Remove the pending metadata and schedule Storage cleanup if needed.
+            await fetch(`/api/documents/${prepared.document.id}`, { method: "DELETE" }).catch(() => null);
+            throw new Error("Storage upload failed. Please retry.");
+          }
+
+          const finalize = await fetch("/api/documents/upload/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ documentId: prepared.document.id })
+          });
+          const payload = await finalize.json().catch(() => ({}));
+          if (!finalize.ok) throw new Error(payload.error || "Could not confirm the uploaded file.");
 
           setQueue((current) =>
             current.map((item) => (item.key === key ? { ...item, stage: "processing" } : item))
