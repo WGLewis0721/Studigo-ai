@@ -4,9 +4,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
 import { RichText } from "./rich-text";
 import { CitationChips, type Citation } from "./citations";
+import { tapCheck } from "@/lib/learn-tap";
 
 type Mission = { topic_id: string; document_id: string; phase: "brief" | "show" | "try" | "check" | "done"; reflection: "ready" | "review" | null; paused: boolean; revision: number };
 type Snapshot = { mission: Mission | null; sourceCurrent?: boolean; source?: { documentName: string; pageNumber: number | null; excerpt: string } | null };
+
+const SAMPLES = {
+  elementary: {
+    title: "Inherited and learned behavior",
+    objective: "Explain which behaviors are inherited.",
+    excerpt: "Some animal behaviors are inherited. Other behaviors are learned through experience.",
+  },
+  college: {
+    title: "Net force and motion",
+    objective: "Explain what a net force does to an object's motion.",
+    excerpt: "A net force changes an object's motion. If the forces on an object are balanced, its velocity stays the same.",
+  },
+} as const;
 
 export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; onOpenMaterials: () => void;
@@ -18,6 +32,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
   const [lesson, setLesson] = useState<{ topicId: string; text: string; citations: Citation[] } | null>(null);
   const [lessonError, setLessonError] = useState<string | null>(null);
   const [choice, setChoice] = useState<"ready" | "review" | null>(null);
+  const [tapped, setTapped] = useState<number | null>(null);
+  const [hintOpen, setHintOpen] = useState(false);
+  const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const inFlight = useRef(false);
   const fixture = roomId === "fixture";
   const currentTopic = topics.find((topic) => topic.id === snapshot?.mission?.topic_id);
@@ -26,8 +43,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
 
   const reload = useCallback(async () => {
     if (roomId === "fixture") {
-      setSnapshot({ mission: { topic_id: topics[0]?.id ?? "fixture-topic", document_id: "source", phase: "brief", reflection: null, paused: false, revision: 0 },
-        sourceCurrent: true, source: { documentName: "Synthetic science study guide", pageNumber: 3, excerpt: "Some animal behaviors are inherited. Other behaviors are learned through experience." } });
+      const demo = SAMPLES[sample];
+      setSnapshot({ mission: { topic_id: sample, document_id: "source", phase: "brief", reflection: null, paused: false, revision: 0 },
+        sourceCurrent: true, source: { documentName: `${demo.title} — design fixture`, pageNumber: 2, excerpt: demo.excerpt } });
       setLoading(false);
       return;
     }
@@ -40,7 +58,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not restore your Learn mission.");
     } finally { setLoading(false); }
-  }, [roomId, topics]);
+  }, [roomId, topics, sample]);
 
   useEffect(() => { void reload(); }, [reload]);
 
@@ -71,7 +89,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
       const payload = await response.json().catch(() => null) as (Snapshot & { error?: string }) | null;
       if (!response.ok || !payload) throw new Error(payload?.error ?? "Could not save this step.");
       setSnapshot(payload);
-      if (action === "restart") setChoice(null);
+      if (action === "restart") { setChoice(null); setTapped(null); setHintOpen(false); }
       if (reflection) setChoice(reflection);
     } catch (caught) {
       await reload();
@@ -84,7 +102,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
     inFlight.current = true;
     setLessonError(null);
     if (fixture) {
-      setLesson({ topicId: mission.topic_id, text: "An inherited behavior comes naturally. A learned behavior grows through practice and experience.", citations: [] });
+      setLesson({ topicId: mission.topic_id, text: sample === "college"
+        ? "A net force is what is left after the forces on an object are combined. That leftover force changes the motion."
+        : "An inherited behavior comes naturally. A learned behavior grows through practice and experience.", citations: [] });
       inFlight.current = false;
       return;
     }
@@ -103,11 +123,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mission?.phase, mission?.topic_id, snapshot?.sourceCurrent]);
 
+  const heading = fixture ? SAMPLES[sample].title : currentTopic?.title ?? selectedTopic?.title ?? "Your next objective";
+  const objectiveText = fixture ? SAMPLES[sample].objective : currentTopic?.objective ?? selectedTopic?.objective ?? "Read one objective from your materials.";
+  const check = snapshot?.source?.excerpt ? tapCheck(objectiveText, snapshot.source.excerpt) : null;
+  const tryReflection: "ready" | "review" | null = check && tapped !== null ? (tapped === check.target ? "ready" : "review") : choice;
+
   if (loading && !snapshot) return <section className="learnMission" role="status">Restoring your Learn mission…</section>;
   return <section className="learnMission" aria-label="Guided Learn mission" data-phase={mission?.phase ?? "new"}>
-    {fixture && <p className="learnMissionFixture">Synthetic visual preview · steps are not saved and source/file actions are unavailable.</p>}
-    <div className="learnMissionHead"><span className="tinyLabel">GUIDED LEARN · NOT GRADED</span><h2>{currentTopic?.title ?? selectedTopic?.title ?? "Your next objective"}</h2>
-      <p>{currentTopic?.objective ?? selectedTopic?.objective ?? "Read one objective from your materials."}</p></div>
+    {fixture && <p className="learnMissionFixture">Synthetic visual preview · steps are not saved and source/file actions are unavailable. <span className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setHintOpen(false); setChoice(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</span></p>}
+    <div className="learnMissionHead"><span className="tinyLabel">GUIDED LEARN · NOT GRADED</span><h2>{heading}</h2>
+      <p>{objectiveText}</p></div>
     {error && <div className="formError" role="alert">{error} <button type="button" onClick={() => void reload()}>Reload mission</button></div>}
     {!mission ? (
       <div className="learnMissionCard"><p>Follow one objective through a brief, a source-backed explanation, a reflection, and a check. This does not change mastery.</p>
@@ -124,16 +149,23 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
         {mission.phase === "show" && <><h3>Show</h3><p>Studigo explains the idea using your room’s material. Compare it with the source.</p>
           {lesson?.topicId === mission.topic_id ? <><RichText text={lesson.text} /><CitationChips citations={lesson.citations} /></> : <p role="status">{lessonError ?? "Preparing an explanation…"}</p>}
           {lessonError && <button type="button" onClick={() => void loadExplanation()}>Retry explanation</button>}</>}
-        {mission.phase === "try" && <><h3>Try</h3><p>Could you explain this objective to someone else without looking? Choose honestly; this is a self-check, not a scored answer.</p>
-          <div className="learnMissionChoices"><button type="button" aria-pressed={choice === "ready"} onClick={() => setChoice("ready")}>I could explain it</button><button type="button" aria-pressed={choice === "review"} onClick={() => setChoice("review")}>I need another look</button></div></>}
-        {mission.phase === "check" && <><h3>Check</h3><p>{mission.reflection === "review" ? "Good call. Read the source again, then use Coach when you want practice." : "You marked this as understood. Compare your explanation with the source, then practice with Coach to test it."}</p></>}
+        {mission.phase === "try" && (check ? <><h3>Try</h3><p>Tap the sentence from your source that states this objective. This is not a grade.</p>
+          <div className="learnMissionChoices" role="group" aria-label="Sentences from your source">{check.sentences.map((sentence, index) => <button key={sentence} type="button" aria-pressed={tapped === index} onClick={() => setTapped(index)}>{sentence}</button>)}</div>
+          <button type="button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)}>Give me a hint</button>
+          {hintOpen && <p className="learnMissionHint">The source states it in this sentence: {check.sentences[check.target]}</p>}
+          {tapped !== null && <p role="status">{tapped === check.target ? "That sentence states this objective. Nothing was graded." : "That sentence is in the source, but it does not state this objective."}</p>}</>
+        : <><h3>Try</h3><p>Could you explain this objective to someone else without looking? Choose honestly; this is a self-check, not a scored answer.</p>
+          <div className="learnMissionChoices"><button type="button" aria-pressed={choice === "ready"} onClick={() => setChoice("ready")}>I could explain it</button><button type="button" aria-pressed={choice === "review"} onClick={() => setChoice("review")}>I need another look</button></div></>)}
+        {mission.phase === "check" && <><h3>Check</h3><p>{check
+          ? (mission.reflection === "review" ? "You tapped a different sentence. Read the source again. Nothing was graded." : "You tapped the sentence that states this objective. Nothing was graded.")
+          : (mission.reflection === "review" ? "Good call. Read the source again, then use Coach when you want practice." : "You marked this as understood. Compare your explanation with the source, then practice with Coach to test it.")}</p></>}
         {mission.phase === "done" && <><h3>Reading complete</h3><p>This was an ungraded Learn pass. It did not change your mastery or readiness. Switch to Coach or Practice to test what you know.</p><button type="button" disabled={busy} onClick={() => void act("restart")}>Start another reading</button></>}
         {mission.phase !== "brief" && snapshot?.source && <div className="learnMissionSource"><span className="tinyLabel">{fixture ? "SAMPLE SOURCE" : "FIND IT · VERIFIED SOURCE"}</span><p><strong>{snapshot.source.documentName}</strong>{snapshot.source.pageNumber ? ` · page ${snapshot.source.pageNumber}` : ""}</p><blockquote>{snapshot.source.excerpt}</blockquote>{!fixture && <a target="_blank" rel="noreferrer" href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original ↗</a>}</div>}
       </div>
       <div className="learnMissionActions">
         {mission.phase !== "brief" && mission.phase !== "done" && <button type="button" disabled={busy} onClick={() => void act("back")}>Back</button>}
         {mission.phase !== "done" && <button type="button" disabled={busy} onClick={() => void act("pause")}>Pause</button>}
-        {mission.phase !== "done" && <button className="buttonPrimary" type="button" disabled={busy || (mission.phase === "try" && !choice)} onClick={() => void act("advance", mission.phase === "try" ? choice : null)}>{mission.phase === "check" ? "Finish reading" : "Continue"}</button>}
+        {mission.phase !== "done" && <button className="buttonPrimary" type="button" disabled={busy || (mission.phase === "try" && tryReflection === null)} onClick={() => void act("advance", mission.phase === "try" ? tryReflection : null)}>{mission.phase === "check" ? "Finish reading" : "Continue"}</button>}
       </div>
     </>}
   </section>;

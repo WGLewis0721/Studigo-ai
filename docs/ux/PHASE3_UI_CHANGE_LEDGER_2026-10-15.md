@@ -65,7 +65,7 @@ The strip lock stands. The plan is not accepted. What is on `main`:
 | --- | --- | --- |
 | 0 Hallway | Five groups, one foundation flag, strip tuck on every room | Four-width and focus proof |
 | 1 Materials | Original shelf, generated guide, source passage | Signed-in stale and denied proof |
-| 2 Learn mission | An allowlisted room now shows the reading steps inside the locked frame. The hosted migration is reported applied. Embedded Postgres already proved resume without a mastery write. | Tap-answer check, hint, and college fixture remain open. This is not acceptance. |
+| 2 Learn mission | An allowlisted room shows the reading steps inside the locked frame. Try can tap a sentence from the verified excerpt and open a hint. The hosted migration is reported applied. Embedded Postgres already proved resume without a mastery write. | Four-width, keyboard, and a real elementary and college source remain open. The college sample is a synthetic fixture only. This is not acceptance. |
 | 3 Home | No Start button. It must not offer a mission that is not ready. | Blocked on Room 2 |
 | 4 Coach | Locked at `fb0ecc2` plus the later strip measurement fix. Do not retune it. | None for proportions |
 | 5–7 Practice, Progress, Plan | Flagged skins. Strip only. Existing grading and planning untouched. | Grade, evidence, and handoff proof |
