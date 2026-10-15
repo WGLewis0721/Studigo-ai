@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
+import type { StudyGuideContent } from "@studigo/ai";
 import Link from "next/link";
 import type { RoomReadiness, StudyDocument, StudyRoom, Topic } from "@/lib/rooms";
 import { MaterialsPanel } from "./materials-panel";
@@ -88,6 +89,8 @@ export function RoomWorkspace({
   readiness,
   initialMode,
   phase3Frame = false,
+  phase3Materials = false,
+  materialsPreviewEdition,
   evidence, planEvents, asOf
 }: {
   room: StudyRoom;
@@ -96,6 +99,8 @@ export function RoomWorkspace({
   readiness: RoomReadiness;
   initialMode?: string;
   phase3Frame?: boolean;
+  phase3Materials?: boolean;
+  materialsPreviewEdition?: StudyGuideContent;
   evidence: PracticeEvidence[];
   planEvents: PlanEvent[];
   asOf: number;
@@ -243,7 +248,7 @@ export function RoomWorkspace({
       <HeaderSlots.Provider value={slots}>
       <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"} data-layout={coachFramed ? "lessons" : undefined}>
         {mode === "materials" && (
-          <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
+          <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} phase3Materials={phase3Materials} previewEdition={materialsPreviewEdition} />
         )}
         {mode === "coach" && (
           <CoachPanel
