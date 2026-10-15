@@ -70,7 +70,7 @@ export function MasteryPanel({
                 ? "Practice a topic to start measuring."
                 : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`}
           </p>
-          <small>Lesson steps and reading do not change this estimate. Saved practice responses do.</small>
+          <small>A Learn reading is not in these numbers. Only Coach and Practice results change mastery.</small>
         </div>
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
       </div>

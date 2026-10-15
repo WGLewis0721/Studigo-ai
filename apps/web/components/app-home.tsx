@@ -72,7 +72,7 @@ export function HomeHero({ next }: { next: HomeNext }) {
           href={`/app/rooms/${next.roomId}?mode=${next.mode}`}
           onClick={(event: MouseEvent<HTMLAnchorElement>) => announceLeap(event.currentTarget)}
         >
-          {foundationUi ? "Open this room" : "Continue"} <span aria-hidden="true">{foundationUi ? "↗" : "→"}</span>
+          {next.door ? "Resume" : foundationUi ? "Open this room" : "Continue"} <span aria-hidden="true">{foundationUi && !next.door ? "↗" : "→"}</span>
         </Link>
       </div>
     </section>

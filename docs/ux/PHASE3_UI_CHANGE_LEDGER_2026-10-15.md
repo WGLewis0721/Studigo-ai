@@ -66,10 +66,10 @@ The strip lock stands. The plan is not accepted. What is on `main`:
 | 0 Hallway | Five groups, one foundation flag, strip tuck on every room | Four-width and focus proof |
 | 1 Materials | Original shelf, generated guide, source passage | Signed-in stale and denied proof |
 | 2 Learn mission | An allowlisted room shows the reading steps inside the locked frame. Try can tap a sentence from the verified excerpt and open a hint. The hosted migration is reported applied. Embedded Postgres already proved resume without a mastery write. | Four-width, keyboard, and a real elementary and college source remain open. The college sample is a synthetic fixture only. This is not acceptance. |
-| 3 Home | No Start button. It must not offer a mission that is not ready. | Blocked on Room 2 |
-| 4 Coach | Locked at `fb0ecc2` plus the later strip measurement fix. Do not retune it. | None for proportions |
-| 5–7 Practice, Progress, Plan | Flagged skins. Strip only. Existing grading and planning untouched. | Grade, evidence, and handoff proof |
-| 8 Whole path | Not started | Everything in 8 |
+| 3 Home | Resume appears only for an allowlisted room with an unfinished Learn cursor. The link is `?mode=learn`. There is still no Start from a document count. | Four-width and a signed-in resume capture. This is not acceptance. |
+| 4 Coach | Locked at `fb0ecc2` plus the later strip measurement fix. A Learn link opens the Learn chat. Proportions were not retuned. | None for proportions |
+| 5–7 Practice, Progress, Plan | Flagged skins. Strip only. Progress says a Learn reading is not mastery. Plan Start opens the activity and Mark done does not grade. Existing grading and planning untouched. | Grade, evidence, and handoff proof on a device |
+| 8 Whole path | The path is written in `docs/ux/PHASE3_ROOM8_PATH.md`. Home can resume, and Learn links open Learn. | Four-width, keyboard, signed-in sources, and the release gates |
 
 D1–D6, A–F, and S0–S4 stay open. A build is not acceptance.
 
