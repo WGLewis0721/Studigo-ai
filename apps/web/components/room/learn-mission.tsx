@@ -46,7 +46,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
     if (roomId === "fixture") {
       const demo = SAMPLES[sample];
       setSnapshot({ mission: { topic_id: sample, document_id: "source", phase: "brief", reflection: null, paused: false, revision: 0 },
-        sourceCurrent: true, source: { documentName: `${demo.title} \u2014 design fixture`, pageNumber: 2, excerpt: demo.excerpt } });
+        sourceCurrent: true, source: { documentName: `${demo.title} - design fixture`, pageNumber: 2, excerpt: demo.excerpt } });
       setLoading(false);
       return;
     }
@@ -134,10 +134,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
   const check = snapshot?.source?.excerpt ? tapCheck(objectiveText, snapshot.source.excerpt) : null;
   const tryReflection: "ready" | "review" | null = check && tapped !== null ? (tapped === check.target ? "ready" : "review") : choice;
 
-  if (loading && !snapshot) return <section ref={sectionRef} className="learnMission" role="status">Restoring your Learn mission\u2026</section>;
+  if (loading && !snapshot) return <section ref={sectionRef} className="learnMission" role="status">Restoring your Learn mission...</section>;
   return <section ref={sectionRef} className="learnMission" aria-label="Guided Learn mission" data-phase={mission?.phase ?? "new"}>
-    {fixture && <p className="learnMissionFixture">Synthetic visual preview \u00b7 steps are not saved and source/file actions are unavailable. <span className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setHintOpen(false); setChoice(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</span></p>}
-    <div className="learnMissionHead"><span className="tinyLabel">GUIDED LEARN \u00b7 NOT GRADED</span><h2>{heading}</h2>
+    {fixture && <p className="learnMissionFixture">Synthetic visual preview - steps are not saved and source/file actions are unavailable. <span className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setHintOpen(false); setChoice(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</span></p>}
+    <div className="learnMissionHead"><span className="tinyLabel">GUIDED LEARN - NOT GRADED</span><h2>{heading}</h2>
       <p>{objectiveText}</p></div>
     {error && <div className="formError" role="alert">{error} <button type="button" onClick={() => void reload()}>Reload mission</button></div>}
     {!mission ? (
@@ -152,8 +152,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
       <ol className="learnMissionSteps" aria-label="Mission steps">{(["brief","show","try","check"] as const).map((phase) => <li key={phase} aria-current={mission.phase === phase ? "step" : undefined}>{phase}</li>)}</ol>
       <div className="learnMissionCard">
         {mission.phase === "brief" && <><h3>Brief</h3><p>Here is what you are learning. Read the objective, then look at a passage from your own material.</p></>}
-        {mission.phase === "show" && <><h3>Show</h3><p>Studigo explains the idea using your room\u2019s material. Compare it with the source.</p>
-          {lesson?.topicId === mission.topic_id ? <><RichText text={lesson.text} /><CitationChips citations={lesson.citations} /></> : <p role="status">{lessonError ?? "Preparing an explanation\u2026"}</p>}
+        {mission.phase === "show" && <><h3>Show</h3><p>Studigo explains the idea using your room's material. Compare it with the source.</p>
+          {lesson?.topicId === mission.topic_id ? <><RichText text={lesson.text} /><CitationChips citations={lesson.citations} /></> : <p role="status">{lessonError ?? "Preparing an explanation..."}</p>}
           {lessonError && <button type="button" onClick={() => void loadExplanation()}>Retry explanation</button>}</>}
         {mission.phase === "try" && (check ? <><h3>Try</h3><p>Tap the sentence from your source that states this objective. This is not a grade.</p>
           <div className="learnMissionChoices" role="group" aria-label="Sentences from your source">{check.sentences.map((sentence, index) => <button key={sentence} type="button" aria-pressed={tapped === index} onClick={() => setTapped(index)}>{sentence}</button>)}</div>
@@ -166,7 +166,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
           ? (mission.reflection === "review" ? "You tapped a different sentence. Read the source again. Nothing was graded." : "You tapped the sentence that states this objective. Nothing was graded.")
           : (mission.reflection === "review" ? "Good call. Read the source again, then use Coach when you want practice." : "You marked this as understood. Compare your explanation with the source, then practice with Coach to test it.")}</p></>}
         {mission.phase === "done" && <><h3>Reading complete</h3><p>This was an ungraded Learn pass. It did not change your mastery or readiness. Switch to Coach or Practice to test what you know.</p><button type="button" disabled={busy} onClick={() => void act("restart")}>Start another reading</button></>}
-        {mission.phase !== "brief" && snapshot?.source && <div className="learnMissionSource"><span className="tinyLabel">{fixture ? "SAMPLE SOURCE" : "FIND IT \u00b7 VERIFIED SOURCE"}</span><p><strong>{snapshot.source.documentName}</strong>{snapshot.source.pageNumber ? ` \u00b7 page ${snapshot.source.pageNumber}` : ""}</p><blockquote>{snapshot.source.excerpt}</blockquote>{!fixture && <a target="_blank" rel="noreferrer" href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original \u2197</a>}</div>}
+        {mission.phase !== "brief" && snapshot?.source && <div className="learnMissionSource"><span className="tinyLabel">{fixture ? "SAMPLE SOURCE" : "FIND IT - VERIFIED SOURCE"}</span><p><strong>{snapshot.source.documentName}</strong>{snapshot.source.pageNumber ? ` - page ${snapshot.source.pageNumber}` : ""}</p><blockquote>{snapshot.source.excerpt}</blockquote>{!fixture && <a target="_blank" rel="noreferrer" href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original</a>}</div>}
       </div>
       <div className="learnMissionActions">
         {mission.phase !== "brief" && mission.phase !== "done" && <button type="button" disabled={busy} onClick={() => void act("back")}>Back</button>}
