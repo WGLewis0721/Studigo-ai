@@ -121,10 +121,19 @@ export function StudigoRail({ tone }: { tone: string }) {
 export function ModeFrame({ tone, children, compact = false, frameRef }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement> }) {
   const stripRef = useRef<HTMLDivElement>(null);
   const [stripHeight, setStripHeight] = useState<number | null>(null);
+  const [stripOpen, setStripOpen] = useState(false);
   useLayoutEffect(() => {
     if (tone !== "coach" || compact || !stripRef.current) return;
     setStripHeight(stripRef.current.offsetHeight);
   }, [tone, compact]);
+  useEffect(() => {
+    if (!stripOpen) return;
+    const close = (event: PointerEvent) => {
+      if (stripRef.current && event.target instanceof Node && !stripRef.current.contains(event.target)) setStripOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [stripOpen]);
   return (
     <div
       className="modeFrame"
@@ -133,7 +142,11 @@ export function ModeFrame({ tone, children, compact = false, frameRef }: { tone:
       ref={frameRef}
       style={stripHeight ? { ["--strip-h" as string]: `${stripHeight}px` } : undefined}
     >
-      {tone === "coach" ? <div className="modeStrip" ref={stripRef}>{children}</div> : children}
+      {tone === "coach" ? (
+        <div className="modeStrip" ref={stripRef} data-open={stripOpen ? "true" : undefined} onClick={() => setStripOpen(true)} onMouseLeave={() => setStripOpen(false)}>
+          {children}
+        </div>
+      ) : children}
       <StudigoRail tone={tone} />
     </div>
   );

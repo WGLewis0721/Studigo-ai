@@ -3342,6 +3342,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   transition: --strip-scale 560ms cubic-bezier(.22, .8, .2, 1);
 }
 .modeFrame[data-tone="coach"][data-compact="true"] { --strip-scale: 0.6; }
+.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip:hover),
+.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip:focus-within),
+.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
 .modeFrame[data-tone="coach"] .modeStrip {
   overflow: hidden;
   height: auto;
