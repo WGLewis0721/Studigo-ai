@@ -60,7 +60,7 @@ export function MissionPreview() {
   return <main className="p3Preview">
     <aside className="p3Sidebar" aria-label="Study Room navigation">
       <div className="p3Brand">
-        <img src="/design/phase3/brand/studigo-wordmark.svg" alt="Studigo" className="p3Brand__logo" />
+        <img src="/brand/studigo-wordmark.svg" alt="Studigo" className="p3Brand__logo" />
         <small>DESIGN FIXTURE</small>
       </div>
       <div className="p3Sidebar__room"><span className="p3Sidebar__roomIcon"><ModeGlyph name="learn" size={23}/></span><span><small>CURRENT ROOM</small><strong>{fixture.room}</strong></span></div>

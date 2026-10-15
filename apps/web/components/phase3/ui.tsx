@@ -36,12 +36,14 @@ export function SourceSpotlight({ title, page, passage, note, onClose }: { title
   return <div className="p3SourceBackdrop" onClick={onClose}><aside className="p3Source" role="dialog" aria-modal="true" aria-label="Source passage" onClick={event => event.stopPropagation()}><div className="p3Source__header"><span className="p3Eyebrow">SOURCE SPOTLIGHT</span><button className="p3IconButton" type="button" onClick={onClose} aria-label="Close source passage">×</button></div><div className="p3Source__paper"><span className="p3Source__page">{page}</span><h2>{title}</h2><p className="p3Source__passage">{passage}</p></div><p className="p3Source__note">{note}</p><Phase3Key variant="quiet" onClick={onClose}>Back to lesson</Phase3Key></aside></div>;
 }
 
-export function EvidenceRecovery({ state, onRetry, onOriginal }: { state: "missing" | "partial" | "stale"; onRetry?: () => void; onOriginal?: () => void }) {
+export function EvidenceRecovery({ state, onRetry, onOriginal }: { state: "missing" | "partial" | "stale" | "uncertain" | "denied"; onRetry?: () => void; onOriginal?: () => void }) {
   const copy = {
     missing: { title: "We can’t show that passage yet.", body: "This material has no verified source passage. You can keep learning, or choose a different material.", action: "Choose material" },
     partial: { title: "We found only part of the passage.", body: "The source text may be incomplete. Open the original before relying on this explanation.", action: "Open original" },
-    stale: { title: "This source has changed.", body: "The passage is no longer linked to the current material. Refresh the evidence before using it.", action: "Refresh source" }
+    stale: { title: "This source has changed.", body: "The passage is no longer linked to the current material. Refresh the evidence before using it.", action: "Refresh source" },
+    uncertain: { title: "This text is not verified.", body: "OCR could not confirm the passage. Open the original file and do not treat a quotation as verified.", action: "Open original" },
+    denied: { title: "This material cannot be opened.", body: "Access was not granted for this file.", action: "Back to materials" }
   }[state];
-  const action = state === "partial" ? onOriginal : onRetry;
+  const action = state === "partial" || state === "uncertain" ? onOriginal : onRetry;
   return <div className="p3Recovery" role="status" data-state={state}><span className="p3Recovery__icon" aria-hidden="true"><ActionGlyph name={state === "partial" ? "original" : "source"} size={24}/></span><div><span className="p3Eyebrow">SOURCE {state.toUpperCase()}</span><h3>{copy.title}</h3><p>{copy.body}</p><Phase3Key variant="quiet" onClick={action} disabled={!action}>{copy.action}</Phase3Key></div></div>;
 }
