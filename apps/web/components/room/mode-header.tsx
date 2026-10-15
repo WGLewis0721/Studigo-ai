@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { createPortal } from "react-dom";
 import { StudigoMascot, type MascotState } from "@/components/studigo-mascot";
 
@@ -118,10 +118,22 @@ export function StudigoRail({ tone }: { tone: string }) {
 }
 
 /** A page's header: its options row (children) with the Studigo rail beneath. */
-export function ModeFrame({ tone, children }: { tone: string; children: ReactNode }) {
+export function ModeFrame({ tone, children, compact = false, frameRef }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement> }) {
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [stripHeight, setStripHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (tone !== "coach" || compact || !stripRef.current) return;
+    setStripHeight(stripRef.current.offsetHeight);
+  }, [tone, compact]);
   return (
-    <div className="modeFrame" data-tone={tone}>
-      {children}
+    <div
+      className="modeFrame"
+      data-tone={tone}
+      data-compact={compact ? "true" : undefined}
+      ref={frameRef}
+      style={stripHeight ? { ["--strip-h" as string]: `${stripHeight}px` } : undefined}
+    >
+      {tone === "coach" ? <div className="modeStrip" ref={stripRef}>{children}</div> : children}
       <StudigoRail tone={tone} />
     </div>
   );
