@@ -6,8 +6,8 @@
   display: block; font: 800 .69rem/1.4 var(--mono); letter-spacing: .11em; color: var(--teal-ink);
 }
 [data-ui="phase3"] .learningPhaseIntro {
-  display: flex; justify-content: space-between; align-items: end; gap: 24px;
-  padding: clamp(20px, 3vw, 34px); border-radius: 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex: none; min-height: 0; padding: 10px 14px; border-radius: 16px;
   background: linear-gradient(125deg, var(--teal-soft), #f0faf9 60%, var(--white));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 27%, white), var(--lift-1);
 }
@@ -16,25 +16,34 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tangerine) 28%, white), var(--lift-1);
 }
 [data-ui="phase3"] .learningPhaseIntro[data-surface="coach"] .learningPhaseEyebrow { color: var(--tangerine-ink); }
-[data-ui="phase3"] .learningPhaseIntro h2, [data-ui="phase3"] .learningTopicsIntro h2,
-[data-ui="phase3"] .learningTopicsEmpty h2 {
+[data-ui="phase3"] .learningPhaseIntro > div:first-child { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+[data-ui="phase3"] .learningPhaseIntro h2 {
+  margin: 0; font: 800 1.15rem/1.15 var(--display); letter-spacing: -.03em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+[data-ui="phase3"] .learningTopicsIntro h2, [data-ui="phase3"] .learningTopicsEmpty h2 {
   margin: 8px 0 6px; font: 800 clamp(1.75rem, 3vw, 2.65rem)/1.05 var(--display); letter-spacing: -.045em;
 }
-[data-ui="phase3"] .learningPhaseIntro p, [data-ui="phase3"] .learningTopicsIntro p {
+[data-ui="phase3"] .learningPhaseIntro p { display: none; }
+[data-ui="phase3"] .learningTopicsIntro p {
   margin: 0; max-width: 48ch; color: var(--ink-2); line-height: 1.5;
 }
 [data-ui="phase3"] .learningPhaseFocus {
-  display: grid; gap: 3px; flex: 0 0 min(32%, 250px); min-width: 0; padding: 15px 18px;
-  border-radius: 17px; background: var(--white); box-shadow: var(--edge), var(--lift-1);
+  display: grid; gap: 1px; flex: 0 1 240px; min-width: 0; padding: 7px 12px;
+  border-radius: 12px; background: var(--white); box-shadow: var(--edge);
 }
-[data-ui="phase3"] .learningPhaseFocus span { font: 700 .66rem var(--mono); letter-spacing: .1em; color: var(--muted); }
-[data-ui="phase3"] .learningPhaseFocus strong { overflow-wrap: anywhere; font: 800 1.1rem/1.2 var(--display); }
-[data-ui="phase3"] .learningPhaseFocus small { color: var(--muted); }
+[data-ui="phase3"] .learningPhaseFocus span { font: 700 .62rem var(--mono); letter-spacing: .1em; color: var(--muted); }
+[data-ui="phase3"] .learningPhaseFocus strong {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 .92rem/1.2 var(--display);
+}
+[data-ui="phase3"] .learningPhaseFocus small { color: var(--muted); font-size: .75rem; }
+[data-ui="phase3"] .coachMode.activeSession .learningPhaseIntro { display: none; }
 
-[data-ui="phase3"] .coachMode { max-width: none; gap: 18px; }
-[data-ui="phase3"] .coachBody { gap: 20px; }
+[data-ui="phase3"] .coachMode { max-width: none; gap: 12px; min-height: 0; }
+[data-ui="phase3"] .coachBody { gap: 16px; min-height: 0; }
+[data-ui="phase3"] .coachMain { min-height: 0; }
 [data-ui="phase3"] .coachChat {
-  height: clamp(580px, 70vh, 850px); border-radius: 28px;
+  flex: 1 1 auto; height: auto; min-height: 0; border-radius: 22px;
   border: 1px solid var(--hairline-strong); box-shadow: var(--edge), var(--lift-2);
 }
 [data-ui="phase3"] .coachChat .chatThread { gap: 12px; padding: clamp(18px, 3vw, 34px); }
@@ -106,14 +115,20 @@
 [data-ui="phase3"] .learningTopicsEmpty > .learningPhaseEyebrow, [data-ui="phase3"] .learningTopicsEmpty > h2 { display: block; }
 
 [data-ui="phase3"] .coachAside { gap: 14px; }
-[data-ui="phase3"] .coachAside .asideCard { border-radius: 22px; padding: 22px; box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1); }
+[data-ui="phase3"] .coachAside .asideCard { border-radius: 18px; padding: 16px 18px; box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1); }
 [data-ui="phase3"] .coachAside .asideCard:first-child { background: linear-gradient(150deg, var(--white), var(--teal-soft)); }
-[data-ui="phase3"] .coachAside .asideCard h3 { font-size: 1.4rem; line-height: 1.18; }
-[data-ui="phase3"] .coachAside .asideMeter { margin-top: 20px; }
+[data-ui="phase3"] .coachAside .asideCard h3 { font-size: 1.12rem; line-height: 1.25; }
+[data-ui="phase3"] .coachAside .asideMeter { margin-top: 8px; }
 [data-ui="phase3"] .coachAside .asideList button { border-radius: 12px; }
 
 [data-ui="phase3"] .coachMode button:focus-visible, [data-ui="phase3"] .learnMode button:focus-visible {
   outline: 3px solid var(--blueberry-ink); outline-offset: 3px;
+}
+@media (min-width: 701px) {
+  .appShell:has(.coachChat) [data-ui="phase3"] .coachChat { flex: 1 1 auto; height: auto; min-height: 0; max-height: none; }
+  @container surface (min-width: 980px) {
+    [data-ui="phase3"] .learningPhaseFocus { display: none; }
+  }
 }
 @media (max-width: 700px) {
   [data-ui="phase3"] .learningPhaseIntro { align-items: center; flex-direction: row; padding: 10px 14px; gap: 10px; border-radius: 0; }
