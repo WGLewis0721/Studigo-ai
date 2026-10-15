@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildHomeNext, daysUntil, pickFocusRoom, progressLine, testLine } from "./home-next";
+import { buildHomeNext, daysUntil, missionDoor, pickFocusRoom, progressLine, testLine } from "./home-next";
 import type { WeakArea } from "./study-planning";
 
 const NOW = Date.parse("2026-10-01T12:00:00Z");
@@ -53,4 +53,15 @@ test("when nothing is slipping, Home says so instead of inventing a weak spot", 
   const next = buildHomeNext(room("Science", null), [], { topicCount: 4, practicedTopicCount: 4, masteredCount: 4 }, NOW);
   assert.equal(next.heading, "Everything here is strong");
   assert.equal(next.mode, "quiz");
+});
+
+test("Home resumes only an unfinished allowlisted reading", () => {
+  assert.equal(missionDoor({ allowlisted: false, phase: "show" }), null);
+  assert.equal(missionDoor({ allowlisted: true, phase: null }), null);
+  assert.equal(missionDoor({ allowlisted: true, phase: "done" }), null);
+  const door = missionDoor({ allowlisted: true, phase: "try" });
+  assert.equal(door?.label, "Resume");
+  assert.equal(door?.mode, "learn");
+  assert.match(door?.note ?? "", /try/);
+  assert.match(door?.note ?? "", /not a grade/);
 });

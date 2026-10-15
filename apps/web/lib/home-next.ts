@@ -42,7 +42,23 @@ export type HomeNext = {
   progress: string | null;
   /** Where "Continue" lands in the room. */
   mode: "learn" | "quiz" | "cards" | "materials";
+  /** A saved Learn reading. Absent unless that room has an unfinished mission. */
+  door?: MissionDoor | null;
 };
+
+export type MissionPhase = "brief" | "show" | "try" | "check" | "done";
+
+/** Resume only. Documents, topics, or a finished reading are not a Start button. */
+export function missionDoor(input: { allowlisted: boolean; phase: MissionPhase | null }): MissionDoor | null {
+  if (!input.allowlisted || !input.phase || input.phase === "done") return null;
+  return {
+    label: "Resume",
+    mode: "learn",
+    note: `Your reading is saved at ${input.phase}. Resume picks up there. It is not a grade.`
+  };
+}
+
+export type MissionDoor = { label: "Resume"; mode: "learn"; note: string };
 
 export function testLine(days: number | null): string {
   if (days === null) return "No test date yet. Add one in Room Settings when you know it.";

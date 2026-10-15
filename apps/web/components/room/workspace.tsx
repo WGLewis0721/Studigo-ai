@@ -101,6 +101,10 @@ export function RoomWorkspace({
   const [mode, setMode] = useState<Mode>(
     MODES.some((item) => item.id === initialMode) ? (initialMode as Mode) : initialMode === "ask" || initialMode === "learn" ? "coach" : defaultMode
   );
+  const [requestedChat, setRequestedChat] = useState<{ mode: "learn" | "coach"; nonce: number }>({
+    mode: initialMode === "learn" ? "learn" : "coach",
+    nonce: 0
+  });
   const [coachView, setCoachView] = useState<"chat" | "topics">("chat");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
@@ -156,6 +160,9 @@ export function RoomWorkspace({
   useEffect(() => { companionThinking(mascotState === "thinking"); }, [mascotState, companionThinking]);
   function navigate(target: NavTarget, topicId: string | null = null) {
     const nextMode: Mode = target === "ask" || target === "learn" ? "coach" : target;
+    if (target === "learn" || target === "ask" || target === "coach") {
+      setRequestedChat((current) => ({ mode: target === "learn" ? "learn" : "coach", nonce: current.nonce + 1 }));
+    }
     if (target === "learn" || target === "ask") setCoachView("chat");
     setFocusTopicId(topicId);
     setMode(nextMode);
@@ -245,6 +252,7 @@ export function RoomWorkspace({
             onClearFocus={() => setFocusTopicId(null)}
             onTopicsChanged={refresh}
             phase3Learn={phase3Learn}
+            requestedChat={requestedChat}
           />
         )}
         {mode === "quiz" && (

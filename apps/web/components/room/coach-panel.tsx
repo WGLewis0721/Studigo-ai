@@ -75,7 +75,7 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, requestedChat = { mode: "coach", nonce: 0 } }: {
   roomId: string;
   coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
@@ -88,6 +88,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   onClearFocus: () => void;
   onTopicsChanged: () => void;
   phase3Learn?: boolean;
+  requestedChat?: { mode: "learn" | "coach"; nonce: number };
 }) {
   const [draft, setDraft] = useState(coaching.applied);
   const [learnDraft, setLearnDraft] = useState<LearnPreferences>(coaching.learnApplied);
@@ -130,7 +131,13 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [coachScopeStatus, setCoachScopeStatus] = useState<string | null>(null);
   const [learnScopeStatus, setLearnScopeStatus] = useState<string | null>(null);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
-  const [chatMode, setChatMode] = useState<ChatMode>("coach");
+  const [chatMode, setChatMode] = useState<ChatMode>(requestedChat.mode);
+  const seenChatRequest = useRef(requestedChat.nonce);
+  useEffect(() => {
+    if (seenChatRequest.current === requestedChat.nonce) return;
+    seenChatRequest.current = requestedChat.nonce;
+    setChatMode(requestedChat.mode);
+  }, [requestedChat]);
   // Coach and Learn have separate persisted conversations. Keep their visible
   // turn history separate too, so switching surfaces cannot make one appear
   // to be context for the other.
@@ -265,10 +272,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       handledFocusTopicId.current = null;
       return;
     }
-    if (handledFocusTopicId.current === focusTopicId) return;
+    if (handledFocusTopicId.current === `${focusTopicId}:${chatMode}`) return;
     const focused = topics.find((topic) => topic.id === focusTopicId);
     if (!focused) return;
-    handledFocusTopicId.current = focusTopicId;
+    handledFocusTopicId.current = `${focusTopicId}:${chatMode}`;
     if (chatMode === "coach") {
       setCoachTopicIds([focused.id]);
       scopeEdited.current.coach = true;
