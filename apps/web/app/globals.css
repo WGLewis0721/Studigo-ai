@@ -3337,25 +3337,25 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   inherits: true;
   initial-value: 1;
 }
-.modeFrame[data-tone="coach"] {
+.modeFrame {
   --strip-scale: 1;
   transition: --strip-scale 560ms cubic-bezier(.22, .8, .2, 1);
 }
-.modeFrame[data-tone="coach"][data-compact="true"] { --strip-scale: 0.6; }
-.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip:hover),
-.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip:focus-within),
-.modeFrame[data-tone="coach"][data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
-.modeFrame[data-tone="coach"] .modeStrip {
+.modeFrame[data-compact="true"] { --strip-scale: 0.6; }
+.modeFrame[data-compact="true"]:has(.modeStrip:hover),
+.modeFrame[data-compact="true"]:has(.modeStrip:focus-within),
+.modeFrame[data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
+.modeFrame .modeStrip {
   overflow: hidden;
   height: auto;
   height: calc(var(--strip-h) * var(--strip-scale));
 }
-.modeFrame[data-tone="coach"] .modeStrip .modeHead {
+.modeFrame .modeStrip .modeHead {
   transform-origin: top left;
   transform: scale(var(--strip-scale));
   width: calc(100% / var(--strip-scale));
 }
-.modeFrame[data-tone="coach"][style*="--strip-h"] .modeStrip .modeHead {
+.modeFrame[style*="--strip-h"] .modeStrip .modeHead {
   height: var(--strip-h);
   min-height: 0;
   max-height: var(--strip-h);
@@ -3413,28 +3413,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .coachMode[data-work="grown"] .coachRest,
   .coachMode[data-work="grown"] .coachBody { --rest-scale: 1; --aside-scale: 1; }
 }
-@property --room-chrome {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-@media (min-width: 701px) {
-  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading) {
-    --room-chrome: 0.6;
-    zoom: var(--room-chrome);
-    transition: --room-chrome 420ms cubic-bezier(.22, .8, .2, 1);
-  }
-  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading):hover,
-  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading):focus-within,
-  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading)[data-open="true"] {
-    --room-chrome: 1;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading) { transition: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .modeFrame[data-tone="coach"] { transition: none; }
+  .modeFrame { transition: none; }
   .modeFrame[data-tone="coach"] + .coachMode .lessonText,
   .modeFrame[data-tone="coach"] + .coachMode .answerText,
   .modeFrame[data-tone="coach"] + .coachMode .lessonPosition { transition: none; }

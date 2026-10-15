@@ -118,14 +118,48 @@ export function StudigoRail({ tone }: { tone: string }) {
 }
 
 /** A page's header: its options row (children) with the Studigo rail beneath. */
-export function ModeFrame({ tone, children, compact = false, frameRef }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement> }) {
+export function ModeFrame({ tone, children, compact, frameRef }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement> }) {
   const stripRef = useRef<HTMLDivElement>(null);
   const [stripHeight, setStripHeight] = useState<number | null>(null);
   const [stripOpen, setStripOpen] = useState(false);
+  const [ownCompact, setOwnCompact] = useState(false);
+  const tucked = compact ?? ownCompact;
   useLayoutEffect(() => {
-    if (tone !== "coach" || compact || !stripRef.current) return;
+    if (tucked || !stripRef.current) return;
     setStripHeight(stripRef.current.offsetHeight);
-  }, [tone, compact]);
+  }, [tone, tucked]);
+  useEffect(() => {
+    if (compact !== undefined) return;
+    const frame = stripRef.current?.parentElement;
+    if (!frame) return;
+    setOwnCompact(false);
+    setStripOpen(false);
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      setOwnCompact(true);
+    };
+    const wait = window.setTimeout(settle, 500 + Math.random() * 1500);
+    const onPoint = () => settle();
+    const onType = (event: Event) => {
+      if (event.target instanceof Node && frame.contains(event.target)) settle();
+    };
+    frame.addEventListener("pointermove", onPoint);
+    frame.addEventListener("pointerdown", onPoint);
+    frame.addEventListener("wheel", onPoint, { passive: true });
+    frame.addEventListener("keydown", onType);
+    frame.addEventListener("input", onType);
+    return () => {
+      settled = true;
+      window.clearTimeout(wait);
+      frame.removeEventListener("pointermove", onPoint);
+      frame.removeEventListener("pointerdown", onPoint);
+      frame.removeEventListener("wheel", onPoint);
+      frame.removeEventListener("keydown", onType);
+      frame.removeEventListener("input", onType);
+    };
+  }, [compact, tone]);
   useEffect(() => {
     if (!stripOpen) return;
     const close = (event: PointerEvent) => {
@@ -138,15 +172,13 @@ export function ModeFrame({ tone, children, compact = false, frameRef }: { tone:
     <div
       className="modeFrame"
       data-tone={tone}
-      data-compact={compact ? "true" : undefined}
+      data-compact={tucked ? "true" : undefined}
       ref={frameRef}
       style={stripHeight ? { ["--strip-h" as string]: `${stripHeight}px` } : undefined}
     >
-      {tone === "coach" ? (
-        <div className="modeStrip" ref={stripRef} data-open={stripOpen ? "true" : undefined} onClick={() => setStripOpen(true)} onMouseLeave={() => setStripOpen(false)}>
-          {children}
-        </div>
-      ) : children}
+      <div className="modeStrip" ref={stripRef} data-open={stripOpen ? "true" : undefined} onClick={() => setStripOpen(true)} onMouseLeave={() => setStripOpen(false)}>
+        {children}
+      </div>
       <StudigoRail tone={tone} />
     </div>
   );

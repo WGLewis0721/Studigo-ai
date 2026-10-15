@@ -55,6 +55,6 @@ Accepted interaction, not a visual-acceptance close of rooms A–F. From `fb0ecc
 - The row between the room nav and the orange rail starts at full size, eases to 60% after 0.5–2s on arrival or on pointer, scroll, or typing, and returns to 100% on hover, focus, or click. The orange rail does not scale.
 - Clear, Previous, Next, the follow-up chips, the status line, and the topic column use the same 60% tuck and the same hover, focus, or click return. The conversation takes the freed height and the freed column width.
 - Learn stays on that same Coach frame. Phone controls stay full size. Flag-off Coach is unchanged.
-- Later rooms may reuse the tuck. They may not retune Coach to fit a new frame.
+- Later rooms reuse the tuck on that same strip only. Titles, shelves, questions, and plans do not scale on hover.
 
 
