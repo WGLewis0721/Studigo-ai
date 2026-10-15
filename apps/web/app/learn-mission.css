@@ -69,7 +69,7 @@
   display: block;
   width: 100%;
   margin: 0;
-  padding: 10px 28px 10px 12px;
+  padding: 10px 36px 10px 12px;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -78,39 +78,44 @@
   font-size: 17px;
   line-height: 1.5;
   text-align: left;
-  cursor: pointer;
 }
+
+button.learnLine { cursor: pointer; }
+p.learnLine { cursor: default; }
 
 .learnLine[aria-pressed="true"] {
   background: var(--teal-soft);
-  box-shadow: inset 3px 0 0 var(--teal);
+  box-shadow: inset 4px 0 0 var(--teal);
 }
 
 .learnLine[data-result="hit"],
 .learnLine[data-result="answer"] {
   background: var(--teal-soft);
-  box-shadow: inset 3px 0 0 var(--teal);
-  cursor: default;
+  box-shadow: inset 4px 0 0 var(--teal);
 }
 
 .learnLine[data-result="miss"] {
   background: var(--berry-soft);
-  box-shadow: inset 3px 0 0 var(--berry);
-  cursor: default;
+  box-shadow: inset 4px 0 0 var(--berry);
 }
 
 .learnMark {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
   border-radius: 50%;
-  background: var(--teal-ink);
+  background: var(--teal);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
 }
 
-.learnMarkMiss { background: var(--berry); }
+.learnMarkMiss { background: var(--berry); color: white; }
 
 .learnExplain {
   flex: none;

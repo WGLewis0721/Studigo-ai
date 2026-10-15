@@ -255,7 +255,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
                   ? (tapped === index && index !== lines.target ? "miss" : index === lines.target ? "answer" : undefined)
                   : undefined;
             if (revealed) {
-              return <p key={sentence} className="learnLine" data-result={result}>{sentence}{result && <span className={result === "miss" ? "learnMark learnMarkMiss" : "learnMark"} aria-hidden="true" />}</p>;
+              return <p key={sentence} className="learnLine" data-result={result}>{sentence}{result && <span className={result === "miss" ? "learnMark learnMarkMiss" : "learnMark"} aria-hidden="true">{result === "miss" ? "×" : "✓"}</span>}</p>;
             }
             return <button key={sentence} type="button" className="learnLine" aria-pressed={tapped === index} onClick={() => setTapped(index)}>{sentence}</button>;
           })}
