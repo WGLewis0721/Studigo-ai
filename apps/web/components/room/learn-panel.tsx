@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type ReactNode, type Ref, type UIEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode, type Ref, type UIEvent } from "react";
 import type { Topic } from "@/lib/rooms";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
@@ -49,6 +49,25 @@ export function keepIndependentSurfaces<L, O, C>(current: LearnSurfaces<L, O, C>
  * Clear / Previous / Next. Citations and actions are siblings of the scroller so a full
  * thread cannot clip them.
  */
+/** A control cluster that eases down with the Coach chrome and opens again on hover or click. */
+export function RestRegion({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
+  return (
+    <div ref={ref} className={className} data-open={open ? "true" : undefined} onClick={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      {children}
+    </div>
+  );
+}
+
 export function LessonMobileFrame({
   mode,
   label,
@@ -63,7 +82,8 @@ export function LessonMobileFrame({
   actionsDisabled,
   threadRef,
   onScroll,
-  children
+  children,
+  dock = null
 }: {
   mode: "learn" | "coach";
   label: string | null;
@@ -79,6 +99,7 @@ export function LessonMobileFrame({
   threadRef: Ref<HTMLDivElement>;
   onScroll: (event: UIEvent<HTMLDivElement>) => void;
   children: ReactNode;
+  dock?: ReactNode;
 }) {
   const modeName = mode === "learn" ? "Learn" : "Coach";
   const nextName = mode === "learn" ? "lesson" : "topic";
@@ -105,11 +126,14 @@ export function LessonMobileFrame({
           <CitationChips citations={citations} />
         </div>
       ) : null}
+      <RestRegion className="coachRest">
       <div className="lessonActions" data-lesson-actions role="group" aria-label={`${modeName} actions for ${topicTitle}`}>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Clear ${modeName} for ${topicTitle}`} onClick={onClear}>Clear</button>
         <button className="ghostButton" type="button" disabled={actionsDisabled || !onPrevious} aria-label={`Previous ${nextName} for ${topicTitle}`} onClick={onPrevious}>Previous</button>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Next ${nextName} for ${topicTitle}`} onClick={onNext}>Next</button>
       </div>
+      {dock}
+      </RestRegion>
     </>
   );
 }

@@ -975,6 +975,16 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           actionsDisabled={busy || restoring}
           threadRef={threadRef}
           onScroll={(event) => { scrollPositions.current[chatMode] = event.currentTarget.scrollTop; }}
+          dock={(
+            <>
+              {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}<button type="button" disabled={busy} onClick={() => void teachSelected("Teach my selected topics")}>Teach my selected topics</button></div>}
+              {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
+              {error && <p className="formError chatError" role="alert">{error}</p>}
+              {chatMode === "coach" && turns.coach === "pending" && <p className="coachPreferenceStatus" role="status">Coach is waiting for your answer. Reloading did not grade it.</p>}
+              {turns[chatMode] === "interrupted" && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? "This Coach reply was interrupted. It was not sent again or graded." : "This Learn reply was interrupted. It was not sent again."}</p>}
+              {chatMode === "coach" && turns.coach === "interrupted" && retryIds.coach && <button className="ghostButton" type="button" disabled={busy || restoring} onClick={() => void retryInterrupted()}>Retry this submission</button>}
+            </>
+          )}
         >
         {showingOverview && <button className="ghostButton" type="button" onClick={() => setLearnView("lesson")}>Show this lesson</button>}
         {messages.length === 0 ? (
@@ -1018,12 +1028,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           );
         })}
         </LessonMobileFrame>
-        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}<button type="button" disabled={busy} onClick={() => void teachSelected("Teach my selected topics")}>Teach my selected topics</button></div>}
-        {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
-        {error && <p className="formError chatError" role="alert">{error}</p>}
-        {chatMode === "coach" && turns.coach === "pending" && <p className="coachPreferenceStatus" role="status">Coach is waiting for your answer. Reloading did not grade it.</p>}
-        {turns[chatMode] === "interrupted" && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? "This Coach reply was interrupted. It was not sent again or graded." : "This Learn reply was interrupted. It was not sent again."}</p>}
-        {chatMode === "coach" && turns.coach === "interrupted" && retryIds.coach && <button className="ghostButton" type="button" disabled={busy || restoring} onClick={() => void retryInterrupted()}>Retry this submission</button>}
         <StudigoComposer
           variant="chat"
           accent={chatMode === "learn" ? "learn" : undefined}
