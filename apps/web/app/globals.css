@@ -237,6 +237,32 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    --------------------------------------------------------------------------- */
 
 .field { display: grid; gap: 7px; }
+.accuracyGauge { display: grid; gap: 8px; }
+.accuracyGauge > span { font-size: .78rem; font-weight: 700; color: var(--ink-2); }
+.accuracyGaugeEnds { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--muted); font-size: .75rem; font-weight: 700; }
+.accuracyGaugeEnds strong { color: var(--ink); font-size: .84rem; }
+.accuracyGauge input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 28px; margin: 0; padding: 0; border: 0; min-height: 0;
+  background: transparent; box-shadow: none; border-radius: 0;
+}
+.accuracyGauge input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px; border-radius: 999px;
+  background: linear-gradient(90deg, #8eb7ef, #f3c16b 58%, #e15b4a);
+}
+.accuracyGauge input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; margin-top: -7px;
+  border-radius: 50%; background: #fff; border: 2px solid #39435a;
+  box-shadow: 0 1px 3px rgba(20, 27, 45, .25);
+}
+.accuracyGauge input[type="range"]::-moz-range-track {
+  height: 12px; border: 0; border-radius: 999px;
+  background: linear-gradient(90deg, #8eb7ef, #f3c16b 58%, #e15b4a);
+}
+.accuracyGauge input[type="range"]::-moz-range-thumb {
+  width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 2px solid #39435a;
+}
+.accuracyGauge small { color: var(--muted); line-height: 1.45; }
 .field > span { font-size: .78rem; font-weight: 700; color: var(--ink-2); }
 .field input, .field select, .field textarea, .shortAnswer, .blankInput,
 .topicEditor textarea, .cardEditor textarea, .testQuestion textarea, .coachChoiceRow select {
@@ -3304,6 +3330,117 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice .modeHead .coachTabs, .roomDevice .mhChipBar .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
 .roomDevice .modeHead .coachTabs button[aria-pressed="true"], .roomDevice .mhChipBar .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
 
+/* Coach arrival: the options strip above the orange rail eases from 100% to 60%.
+   Width stays full because scale and width stay reciprocals of the same number. */
+@property --strip-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+.modeFrame {
+  --strip-scale: 1;
+  width: 100%;
+  transition: --strip-scale 560ms cubic-bezier(.22, .8, .2, 1);
+}
+.modeFrame[data-compact="true"] { --strip-scale: 0.6; }
+.modeFrame[data-compact="true"]:has(.modeStrip:hover),
+.modeFrame[data-compact="true"]:has(.modeStrip:focus-within),
+.modeFrame[data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
+.modeFrame .modeStrip {
+  width: 100%;
+  overflow: hidden;
+  height: auto;
+  height: calc(var(--strip-h) * var(--strip-scale));
+}
+.modeFrame[data-compact="true"] .modeStrip .modeHead {
+  transform-origin: top left;
+  transform: scale(var(--strip-scale));
+  width: calc(100% / var(--strip-scale));
+}
+.modeFrame[style*="--strip-h"] .modeStrip .modeHead {
+  height: var(--strip-h);
+  min-height: 0;
+  max-height: var(--strip-h);
+}
+.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .lessonText,
+.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .answerText,
+.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .answerBubble p {
+  font-size: 1.16rem;
+  transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
+}
+.learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
+.learnMissionHead h2 { margin: 4px 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.15; }
+.learnMissionHead p { margin: 0; color: var(--ink-2); line-height: 1.5; }
+.learnMissionSteps { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0; margin: 0; }
+.learnMissionSteps li { padding: 8px 4px; border-radius: 10px; text-align: center; text-transform: capitalize; font-size: .78rem; font-weight: 700; color: var(--ink-2); background: var(--snow-2); }
+.learnMissionSteps li[aria-current] { color: var(--ink); background: var(--teal-soft); box-shadow: inset 0 0 0 2px var(--teal); }
+.learnMissionCard { padding: 14px 16px; border-radius: 16px; background: var(--white); box-shadow: var(--edge), var(--lift-1); line-height: 1.55; }
+.learnMissionCard h3 { margin: 0 0 8px; font-family: var(--display); font-size: 1.15rem; }
+.learnMissionCard p { margin: 0 0 10px; }
+.learnMissionSource { margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--snow-2); border-left: 4px solid var(--teal); }
+.learnMissionSource blockquote { margin: 8px 0 12px; white-space: pre-wrap; }
+.learnMissionActions, .learnMissionChoices { display: flex; gap: 10px; flex-wrap: wrap; }
+.learnMissionActions { justify-content: flex-end; }
+.learnMissionChoices button[aria-pressed="true"] { background: var(--teal-soft); box-shadow: inset 0 0 0 2px var(--teal); }
+.learnMissionActions button, .learnMissionChoices button { min-height: 44px; }
+.learnMissionFixture { margin: 0; padding: 8px 12px; border-radius: 10px; background: var(--dandelion-soft); font-size: .82rem; }
+.chatThread .learnMission { max-width: none; margin: 0; padding: 0; }
+.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .lessonPosition {
+  font-size: 1.35rem;
+  transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
+}
+@property --rest-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --aside-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+.coachMode[data-work="grown"] .coachRest,
+.coachMode[data-work="grown"] .coachBody {
+  --rest-scale: 0.6;
+  --aside-scale: 0.6;
+  transition: --rest-scale 420ms cubic-bezier(.22, .8, .2, 1), --aside-scale 420ms cubic-bezier(.22, .8, .2, 1);
+}
+.coachMode[data-work="grown"] .coachRest {
+  zoom: var(--rest-scale);
+}
+.coachMode[data-work="grown"] .coachRest:hover,
+.coachMode[data-work="grown"] .coachRest:focus-within,
+.coachMode[data-work="grown"] .coachRest[data-open="true"] {
+  --rest-scale: 1;
+}
+.coachMode[data-work="grown"] .coachBody:has(.coachAside:hover),
+.coachMode[data-work="grown"] .coachBody:has(.coachAside:focus-within),
+.coachMode[data-work="grown"] .coachBody:has(.coachAside[data-open="true"]) {
+  --aside-scale: 1;
+}
+.coachAsideScale { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.coachMode[data-work="grown"] .coachAside { overflow: hidden; }
+.coachMode[data-work="grown"] .coachAside:hover,
+.coachMode[data-work="grown"] .coachAside:focus-within,
+.coachMode[data-work="grown"] .coachAside[data-open="true"] { overflow: auto; }
+.coachMode[data-work="grown"] .coachAsideScale {
+  width: calc(100% / var(--aside-scale));
+  transform: scale(var(--aside-scale));
+  transform-origin: top left;
+}
+@media (max-width: 700px) {
+  .coachMode[data-work="grown"] .coachRest,
+  .coachMode[data-work="grown"] .coachBody { --rest-scale: 1; --aside-scale: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modeFrame { transition: none; }
+  .modeFrame[data-tone="coach"] + .coachMode .lessonText,
+  .modeFrame[data-tone="coach"] + .coachMode .answerText,
+  .modeFrame[data-tone="coach"] + .coachMode .lessonPosition { transition: none; }
+  .coachMode[data-work="grown"] .coachRest,
+  .coachMode[data-work="grown"] .coachBody { transition: none; }
+}
+
 /* Materials: a file's buttons drop to their own line when the column is narrow, so its name keeps room. */
 .documentList { container: docs / inline-size; }
 @container docs (max-width: 760px) {
@@ -3647,6 +3784,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @container surface (min-width: 980px) {
   /* Coach: the chat, with the room's own numbers beside it. */
   .coachBody { grid-template-columns: minmax(0, 1fr) clamp(280px, 26%, 360px); }
+  .coachMode[data-work="grown"] .coachBody { grid-template-columns: minmax(0, 1fr) calc(clamp(280px, 26%, 360px) * var(--aside-scale, 1)); }
   .coachAside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
   .asideCard {
     display: grid; gap: 8px; padding: 16px 18px; border-radius: var(--r-lg);

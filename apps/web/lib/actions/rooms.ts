@@ -1,5 +1,7 @@
 "use server";
 
+import { roomTitleFromGuess, sampleMastery } from "@/lib/first-run";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { drainStorageCleanup } from "@/lib/storage-cleanup";
 import { parseTestDate } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
@@ -28,11 +30,18 @@ function optional(formData: FormData, key: string) {
   return value ? value.slice(0, 160) : null;
 }
 
-async function insertRoom(formData: FormData): Promise<{ roomId: string } | { error: string }> {
+async function insertRoom(
+  formData: FormData,
+  options?: { deriveTitle?: boolean }
+): Promise<{ roomId: string } | { error: string }> {
+  let title = readTitle(formData);
+  // Later rooms still require a title. Only the first-run action passes deriveTitle.
+  if (!title && options?.deriveTitle) {
+    title = roomTitleFromGuess(String(formData.get("subject") || ""), String(formData.get("topic") || "")).slice(0, 160);
+  }
   const local=await serverLocalSession();
-  if(local){try{const roomId=createLocalRoom(local,readTitle(formData));revalidatePath('/app');return {roomId};}catch{return {error:'Could not create room. Use a short title.'};}}
+  if(local){try{const roomId=createLocalRoom(local,title);revalidatePath('/app');return {roomId};}catch{return {error:'Could not create room. Use a short title.'};}}
   const user = await requireUser();
-  const title = readTitle(formData);
   if (!title) return { error: "Give the room a name, like “Biology Midterm”." };
 
   let testDate: string | null;
@@ -67,12 +76,43 @@ export async function createRoomAction(
 }
 
 /**
+ * Topics inserts elsewhere are service-role writes:
+ * `insert into topics(room_id, owner_id, title, objective)` in refresh_topic_map,
+ * and create_topic which also sets priority, origin, order_index, learner_edited.
+ * owner_id is required. mastery_score and status exist, so a first topic states them.
+ * A sample always starts at mastery 0. No migration and no model call.
+ */
+async function insertFirstRunTopic(formData: FormData, roomId: string): Promise<string | null> {
+  const title = String(formData.get("topic") || "").trim().slice(0, 160);
+  if (!title) return null;
+  if (await serverLocalSession()) return null;
+  const user = await requireUser();
+  const objective = String(formData.get("objective") || "").trim().slice(0, 600);
+  const { error } = await createServiceSupabaseClient().from("topics").insert({
+    room_id: roomId,
+    owner_id: user.id,
+    title,
+    objective: objective || null,
+    mastery_score: sampleMastery(),
+    status: "not_started"
+  });
+  if (error) return error.message;
+  revalidatePath(`/app/rooms/${roomId}`);
+  return null;
+}
+
+/**
  * First-run setup creates the room and then finishes in the browser (the room's
  * color is saved there, and Studigo leaps in), so it returns the id instead of
- * redirecting.
+ * redirecting. An empty title is derived from subject or topic. Later rooms
+ * still go through createRoomAction, which keeps the required title.
  */
 export async function createFirstRoomAction(formData: FormData): Promise<{ roomId?: string; error?: string }> {
-  return insertRoom(formData);
+  const created = await insertRoom(formData, { deriveTitle: true });
+  if ("error" in created) return { error: created.error };
+  const topicError = await insertFirstRunTopic(formData, created.roomId);
+  if (topicError) return { error: topicError };
+  return { roomId: created.roomId };
 }
 
 export async function renameRoomAction(

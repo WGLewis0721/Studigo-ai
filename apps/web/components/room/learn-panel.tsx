@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type ReactNode, type Ref, type UIEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode, type Ref, type UIEvent } from "react";
 import type { Topic } from "@/lib/rooms";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { CitationChips, type Citation } from "./citations";
@@ -8,6 +8,8 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
 import { learnOutcomeView, readLearnOutcome, type LearnOutcomeView } from "@/lib/learn-outcome-client";
 import { requestQuietAcknowledgement, type QuietAcknowledgement, type QuietPhase } from "@/lib/quiet-feedback";
+import { mathModelFromPrompt } from "@/lib/math-model";
+import { MathModelView } from "./math-model-view";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -44,9 +46,28 @@ export function keepIndependentSurfaces<L, O, C>(current: LearnSurfaces<L, O, C>
 
 /**
  * Phone lesson chrome: the cursor label, the reading, wrapping citations, and
- * Clear / Next. Citations and actions are siblings of the scroller so a full
+ * Clear / Previous / Next. Citations and actions are siblings of the scroller so a full
  * thread cannot clip them.
  */
+/** A control cluster that eases down with the Coach chrome and opens again on hover or click. */
+export function RestRegion({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
+  return (
+    <div ref={ref} className={className} data-open={open ? "true" : undefined} onClick={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      {children}
+    </div>
+  );
+}
+
 export function LessonMobileFrame({
   mode,
   label,
@@ -56,11 +77,13 @@ export function LessonMobileFrame({
   status,
   onRetry,
   onClear,
+  onPrevious,
   onNext,
   actionsDisabled,
   threadRef,
   onScroll,
-  children
+  children,
+  dock = null
 }: {
   mode: "learn" | "coach";
   label: string | null;
@@ -70,11 +93,13 @@ export function LessonMobileFrame({
   status?: string | null;
   onRetry?: () => void;
   onClear: () => void;
+  onPrevious?: () => void;
   onNext: () => void;
   actionsDisabled?: boolean;
   threadRef: Ref<HTMLDivElement>;
   onScroll: (event: UIEvent<HTMLDivElement>) => void;
   children: ReactNode;
+  dock?: ReactNode;
 }) {
   const modeName = mode === "learn" ? "Learn" : "Coach";
   const nextName = mode === "learn" ? "lesson" : "topic";
@@ -89,6 +114,7 @@ export function LessonMobileFrame({
       <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={onScroll}>
         <div className="lessonReading" data-learn-surface={mode === "learn" ? "lesson" : "practice"} aria-label={`${modeName}, ${topicTitle}`}>
           {status ? <p className="lessonStatus" role="status">{status}</p> : null}
+          {text && mathModelFromPrompt(text) ? <MathModelView model={mathModelFromPrompt(text)!} /> : null}
           {text ? <RichText className="lessonText" text={text} /> : null}
           {onRetry ? <button className="ghostButton" type="button" onClick={onRetry} disabled={actionsDisabled}>Try again</button> : null}
         </div>
@@ -100,10 +126,14 @@ export function LessonMobileFrame({
           <CitationChips citations={citations} />
         </div>
       ) : null}
+      <RestRegion className="coachRest">
       <div className="lessonActions" data-lesson-actions role="group" aria-label={`${modeName} actions for ${topicTitle}`}>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Clear ${modeName} for ${topicTitle}`} onClick={onClear}>Clear</button>
+        <button className="ghostButton" type="button" disabled={actionsDisabled || !onPrevious} aria-label={`Previous ${nextName} for ${topicTitle}`} onClick={onPrevious}>Previous</button>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Next ${nextName} for ${topicTitle}`} onClick={onNext}>Next</button>
       </div>
+      {dock}
+      </RestRegion>
     </>
   );
 }

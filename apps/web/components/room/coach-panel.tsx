@@ -4,7 +4,8 @@ import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPrefe
 import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { activeTopicId, leavePendingChallenge, nextTopic } from "@/lib/topic-cursor";
+import { activeTopicId, leavePendingChallenge, nextTopic, previousTopic } from "@/lib/topic-cursor";
+import { closeTeachingStyle } from "@/lib/coach-setup";
 import { isUuid } from "@/lib/ids";
 import { shouldAutoResumeStoredTurn, type RestoredThread } from "@/lib/thread-restore";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -16,6 +17,7 @@ import { StudigoComposer } from "./studigo-composer";
 import { ModeFrame } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { LearnPanel, LessonMobileFrame, keepIndependentSurfaces, lessonPositionLabel, retainSuccessfulLesson } from "./learn-panel";
+import { LearnMission } from "./learn-mission";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
@@ -24,6 +26,11 @@ import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
 import type { LearnOutcome } from "@/lib/learn-outcome";
+import { readGauge } from "@/lib/accuracy-bar";
+import { mathModelFromPrompt } from "@/lib/math-model";
+import { comboForDisplay } from "@/lib/math-combo";
+import { MathModelView } from "./math-model-view";
+import { MathComboView } from "./math-combo-view";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean; outcome?: LearnOutcome };
@@ -139,9 +146,40 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const scrollPositions = useRef<ModeState<number>>({ coach: 0, learn: 0 });
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  const [chromeCompact, setChromeCompact] = useState(false);
+  const frameRef = useRef<HTMLDivElement>(null);
   useFitViewport(view === "chat");
   const { thinking: companionThinking } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
+  useEffect(() => {
+    const surface = frameRef.current?.parentElement;
+    if (!surface) return;
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      setChromeCompact(true);
+    };
+    const wait = window.setTimeout(settle, 500 + Math.random() * 1500);
+    const onPoint = () => settle();
+    const onInput = (event: Event) => {
+      if (event.target instanceof Node && surface.contains(event.target)) settle();
+    };
+    surface.addEventListener("pointermove", onPoint);
+    surface.addEventListener("pointerdown", onPoint);
+    surface.addEventListener("wheel", onPoint, { passive: true });
+    surface.addEventListener("keydown", onInput);
+    surface.addEventListener("input", onInput);
+    return () => {
+      settled = true;
+      window.clearTimeout(wait);
+      surface.removeEventListener("pointermove", onPoint);
+      surface.removeEventListener("pointerdown", onPoint);
+      surface.removeEventListener("wheel", onPoint);
+      surface.removeEventListener("keydown", onInput);
+      surface.removeEventListener("input", onInput);
+    };
+  }, []);
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
@@ -211,6 +249,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const learnTopicTitle = topics.find((topic) => topic.id === learnCursorId)?.title ?? GENERAL_TOPIC.title;
   const learnLabel = lessonPositionLabel(cursors.learn, learnTopicIds.length);
   const showingOverview = chatMode === "learn" && learnView === "overview";
+  const guidedLearn = roomId === "fixture" && chatMode === "learn";
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {
@@ -261,6 +300,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     setPersonalizeOpen(false);
     setTopicDraftIds(activeTopicIds.length ? activeTopicIds : topics[0] ? [topics[0].id] : []);
     setSkillPickerOpen(true);
+  };
+
+  const closeTeachingStyleSheet = () => {
+    const coachClosed = closeTeachingStyle(coaching.applied);
+    const learnClosed = closeTeachingStyle(coaching.learnApplied);
+    setDraft(coachClosed.draft);
+    setLearnDraft(learnClosed.draft);
+    setPersonalizeOpen(coachClosed.open);
   };
 
   useLayoutEffect(() => {
@@ -316,6 +363,17 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       window.scrollTo(0, scrollY);
     };
   }, [modalOpen]);
+
+  useEffect(() => {
+    if (!personalizeOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeTeachingStyleSheet();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [personalizeOpen, coaching.applied, coaching.learnApplied]);
 
   useEffect(() => {
     if (!storedThreads) return;
@@ -524,10 +582,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         [{ name: "Current topics", instruction: scopeInstruction }],
         coaching.learnApplied
       );
+      const gauge = readGauge(roomId);
       const body = isFixture
-        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
+        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives, gauge })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
+          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds, gauge, history: priorHistory })
           : JSON.stringify({ roomId, question: text, surface: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
       if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
@@ -680,6 +739,29 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
   }
 
+  async function goToPreviousTopic() {
+    if (pendingRef.current[chatMode]) return;
+    const result = previousTopic({ orderedIds: activeTopicIds, index: cursors[chatMode], knownIds: topics.map((topic) => topic.id) });
+    const setStatus = chatMode === "coach" ? setCoachScopeStatus : setLearnScopeStatus;
+    if (result.status === "first") { setStatus("This is the first topic."); return; }
+    if (result.status === "choose_more") { setStatus("Choose more topics."); return; }
+    if (result.status === "removed") { setStatus("That topic was removed from this room."); return; }
+    const pendingChallenge = chatMode === "coach" && messages.at(-1)?.role === "assistant";
+    const left = leavePendingChallenge({
+      pending: Boolean(pendingChallenge),
+      confirmed: pendingChallenge ? window.confirm("Leave this challenge unanswered? It will not be graded.") : true,
+      mastery: 0
+    });
+    if (!left.advanced || left.graded) return;
+    const next = { ...cursorRef.current, [chatMode]: result.index };
+    commitCursors(next);
+    if (chatMode === "learn") setLearnView("lesson");
+    if (!await archiveCurrent()) return;
+    const topic = topics.find((item) => item.id === result.topicId);
+    if (!topic || chatMode === "learn") return;
+    void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
+  }
+
   async function retryInterrupted() {
     if (chatMode !== "coach" || turns.coach !== "interrupted" || !retryIds.coach || pendingRef.current.coach) return;
     const text = messagesByMode.coach.find((message) => message.id === retryIds.coach)?.content ?? "";
@@ -754,7 +836,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
 
   return (
     <>
-    <ModeFrame tone="coach">
+    <ModeFrame tone="coach" compact={chromeCompact} frameRef={frameRef}>
       <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         <button type="button" className="chatMascot" aria-label={chatMode === "coach" ? "Coach settings" : "Learn settings"} aria-expanded={personalizeOpen} aria-controls="coach-personalization" title={chatMode === "coach" ? "Coach settings" : "Learn settings"} onClick={() => { if (personalizeOpen) setPersonalizeOpen(false); else openSetup(); }}>
           <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
@@ -771,7 +853,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         <div className="chatTopicRow mhChipRow">{contextControls}</div>
       </header>
     </ModeFrame>
-    <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
+    <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>{contextControls}</div>
       {view === "topics" ? (
         <div className="coachTopicsView">
@@ -816,7 +898,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           </div>
         </section>
       )}
-      {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={() => setPersonalizeOpen(false)} />}
+      {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={closeTeachingStyleSheet} />}
       <section
         id="coach-personalization"
         className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"}
@@ -828,6 +910,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <div><span className="tinyLabel">{chatMode === "coach" ? "COACH SETUP" : "LEARN SETUP"}</span><strong>{chatMode === "coach" ? "How should Studigo coach you?" : "How should Studigo explain things?"}</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
+        <button className="ghostButton" type="button" onClick={closeTeachingStyleSheet}>Close</button>
         {chatMode === "coach" ? (
           <>
             <div className="coachExpect" aria-live="polite">
@@ -878,8 +961,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           mode={chatMode}
           label={learnLabel}
           topicTitle={chatMode === "learn" ? learnTopicTitle : coachTopicTitle}
-          text={chatMode !== "learn" ? null : showingOverview ? (overviewDoc?.text ?? null) : (cursorLesson?.text ?? null)}
-          citations={chatMode === "learn" && !showingOverview ? (cursorLesson?.citations ?? []) : []}
+          text={guidedLearn || chatMode !== "learn" ? null : showingOverview ? (overviewDoc?.text ?? null) : (cursorLesson?.text ?? null)}
+          citations={!guidedLearn && chatMode === "learn" && !showingOverview ? (cursorLesson?.citations ?? []) : []}
           status={chatMode !== "learn" ? null : showingOverview
             ? (overviewPhase === "loading" ? "Opening the unit overview…" : overviewPhase === "error" ? "The overview could not refresh. The lesson and cursor were kept." : null)
             : (lessonPhase === "loading" && !cursorLesson ? "Reading your materials…" : lessonPhase === "loading" ? "Checking this lesson again…" : lessonPhase === "error" ? "This lesson could not refresh. The last lesson is still here." : null)}
@@ -889,11 +972,23 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               ? () => { const topic = topics.find((item) => item.id === learnCursorId); if (topic) void loadCursorLesson(topic, "retry"); }
               : undefined}
           onClear={() => void startFresh()}
+          onPrevious={() => void goToPreviousTopic()}
           onNext={() => void goToNextTopic()}
           actionsDisabled={busy || restoring}
           threadRef={threadRef}
           onScroll={(event) => { scrollPositions.current[chatMode] = event.currentTarget.scrollTop; }}
+          dock={(
+            <>
+              {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}<button type="button" disabled={busy} onClick={() => void teachSelected("Teach my selected topics")}>Teach my selected topics</button></div>}
+              {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
+              {error && <p className="formError chatError" role="alert">{error}</p>}
+              {chatMode === "coach" && turns.coach === "pending" && <p className="coachPreferenceStatus" role="status">Coach is waiting for your answer. Reloading did not grade it.</p>}
+              {turns[chatMode] === "interrupted" && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? "This Coach reply was interrupted. It was not sent again or graded." : "This Learn reply was interrupted. It was not sent again."}</p>}
+              {chatMode === "coach" && turns.coach === "interrupted" && retryIds.coach && <button className="ghostButton" type="button" disabled={busy || restoring} onClick={() => void retryInterrupted()}>Retry this submission</button>}
+            </>
+          )}
         >
+        {guidedLearn ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} onOpenMaterials={onOpenMaterials} /> : <>
         {showingOverview && <button className="ghostButton" type="button" onClick={() => setLearnView("lesson")}>Show this lesson</button>}
         {messages.length === 0 ? (
           restoring ? (
@@ -905,7 +1000,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               <p className="coachEmptyStyle"><b>{active.label}:</b> {active.expect}</p>
               <div className="starterList">
                 <button type="button" disabled={busy || restoring} onClick={() => void coach(selectedTopics.length > 1 ? `Coach me across these selected topics: ${selectedTopics.map((topic) => topic.title).join(", ")}.` : `Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>{selectedTopics.length > 1 ? `Coach me across ${selectedTopics.length} topics` : `Coach me on ${selectedTopic.title}`}</button>
-                <button type="button" disabled={busy || restoring} onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button>
+                <button type="button" disabled={busy || restoring} onClick={() => void coach("Show me an example")}>Show me an example</button>
               </div>
             </div>
           ) : cursorLesson || showingOverview ? null : (
@@ -919,10 +1014,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           if (message.role === "user") return <div className="studentBubble" key={message.id}>{message.content}</div>;
           const outcomeView = message.outcome && learnOutcomeView(message.outcome);
           const priorQuestion = messages.slice(0, index).reverse().find((turn) => turn.role === "user")?.content;
+          const combo = comboForDisplay(message.content);
+          const model = combo ? null : mathModelFromPrompt(message.content) ?? (priorQuestion ? mathModelFromPrompt(priorQuestion) : null);
           return (
             <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}>
               <span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span>
-              <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>
+              {combo ? <MathComboView combo={combo.combo} /> : null}
+              {model ? <MathModelView model={model} /> : null}
+              {combo ? (combo.prompt ? <div className="answerText">{combo.prompt}</div> : null) : <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>}
               {message.citations && <div className="lessonCitations"><CitationChips citations={message.citations} /></div>}
               {outcomeView && message.outcome?.kind === "partial_coverage" && <p className="formNotice" role="status">{outcomeView.message}</p>}
               {outcomeView?.action === "materials" && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>}
@@ -931,13 +1030,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             </div>
           );
         })}
+        </>}
         </LessonMobileFrame>
-        {chatMode === "learn" && <div className="chatChips" aria-label="Learn starters">{learnStarters(selectedTopic.title).map((starter) => <button key={starter.id} type="button" disabled={busy} onClick={() => starter.local ? showLearnGuide(starter.text) : void coach(starter.text)}>{starter.label}</button>)}<button type="button" disabled={busy} onClick={() => void teachSelected("Teach my selected topics")}>Teach my selected topics</button></div>}
-        {chatMode === "coach" && messages.length > 0 && <div className="chatChips" aria-label="Coach controls">{COACH_CONTROL_COMMANDS.map((command) => <button key={command.label} type="button" disabled={busy} onClick={() => void coach(command.text)}>{command.label}</button>)}</div>}
-        {error && <p className="formError chatError" role="alert">{error}</p>}
-        {chatMode === "coach" && turns.coach === "pending" && <p className="coachPreferenceStatus" role="status">Coach is waiting for your answer. Reloading did not grade it.</p>}
-        {turns[chatMode] === "interrupted" && <p className="coachPreferenceStatus" role="status">{chatMode === "coach" ? "This Coach reply was interrupted. It was not sent again or graded." : "This Learn reply was interrupted. It was not sent again."}</p>}
-        {chatMode === "coach" && turns.coach === "interrupted" && retryIds.coach && <button className="ghostButton" type="button" disabled={busy || restoring} onClick={() => void retryInterrupted()}>Retry this submission</button>}
         <StudigoComposer
           variant="chat"
           accent={chatMode === "learn" ? "learn" : undefined}
