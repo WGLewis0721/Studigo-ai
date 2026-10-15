@@ -4,7 +4,7 @@ This slice starts from `main` at `89e1e94`. It changes the shared Study Room fra
 
 ## Switch and rollback
 
-`PHASE3_ROOM0_ROOM_IDS` is a server-only, comma-separated list of room IDs. An empty value leaves every room on the old frame. Listing one ID enables the treatment only for that room; remove it and redeploy to return to the old markup and styling. `/dev/study?frame=phase3` previews the on state locally, and `/dev/study` previews the off state with the same synthetic fixture. The production flag is resolved after the signed-in room is loaded; it is not controlled by a browser query string.
+`PHASE3_ROOM0_ROOM_IDS` is a server-only, comma-separated list of room IDs. An empty value leaves every room on the old frame. Listing one ID enables the treatment only for that room; remove it and redeploy to return to the old markup and styling. `/dev/study?frame=phase3` previews the on state, and `/dev/study` previews the off state with the same synthetic fixture. This review route is available locally and on Vercel preview deployments, and returns 404 in production. The production flag is resolved after the signed-in room is loaded; it is not controlled by a browser query string. The preview route uses synthetic material and its Coach/file actions are unavailable on a deployed preview.
 
 ## Visible change
 

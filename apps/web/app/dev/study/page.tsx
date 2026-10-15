@@ -3,9 +3,10 @@ import { RoomWorkspace } from '@/components/room/workspace';
 import { AppShell } from '@/components/app-shell';
 import type { Topic } from '@/lib/rooms';
 
-// Synthetic visual/Coach fixture for local development only.
+// Synthetic visual fixture for local development and Vercel PR previews only.
+// This route is unavailable on production deployments.
 export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;frame?:string}>}) {
-  if (process.env.NODE_ENV !== 'development') notFound();
+  if (process.env.NODE_ENV !== 'development' && process.env.VERCEL_ENV !== 'preview') notFound();
   const {mode='coach',phone,bare,shell,rail,frame}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1${frame==='phase3'?'&frame=phase3':''}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
@@ -27,5 +28,5 @@ export default async function StudyFixture({searchParams}:{searchParams:Promise<
   // ?shell=1 mounts the room inside the real sidebar (with sample rooms); ?rail=collapsed starts it collapsed.
   if(shell) return <AppShell initialCollapsed={rail==='collapsed'} rooms={[{id:'fixture',title:'Fifth Grade Science'},{id:'algebra',title:'Algebra I'},{id:'history',title:'US History: Reconstruction'}]} profile={{initials:'WL',label:'william@example.com'}}>{workspace}</AppShell>;
   if(bare) return <div className="appShell"><div className="appMain">{workspace}</div></div>;
-  return <main style={{maxWidth:1180,margin:'24px auto',padding:'0 16px'}}><p className="hintText">LOCAL VISUAL FIXTURE · Synthetic evidence · Saving and AI require a configured project</p>{workspace}</main>;
+  return <main style={{maxWidth:1180,margin:'24px auto',padding:'0 16px'}}><p className="hintText">VISUAL REVIEW FIXTURE · Synthetic materials · Coach and file actions are unavailable in a deployed preview</p>{workspace}</main>;
 }
