@@ -3367,16 +3367,56 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   font-size: 1.35rem;
   transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
 }
-.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .coachAside .asideCard h3 {
-  font-size: 1.28rem;
-  transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
+@property --rest-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --aside-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+.coachMode[data-work="grown"] .coachRest,
+.coachMode[data-work="grown"] .coachBody {
+  --rest-scale: 0.6;
+  --aside-scale: 0.6;
+  transition: --rest-scale 420ms cubic-bezier(.22, .8, .2, 1), --aside-scale 420ms cubic-bezier(.22, .8, .2, 1);
+}
+.coachMode[data-work="grown"] .coachRest {
+  zoom: var(--rest-scale);
+}
+.coachMode[data-work="grown"] .coachRest:hover,
+.coachMode[data-work="grown"] .coachRest:focus-within,
+.coachMode[data-work="grown"] .coachRest[data-open="true"] {
+  --rest-scale: 1;
+}
+.coachMode[data-work="grown"] .coachBody:has(.coachAside:hover),
+.coachMode[data-work="grown"] .coachBody:has(.coachAside:focus-within),
+.coachMode[data-work="grown"] .coachBody:has(.coachAside[data-open="true"]) {
+  --aside-scale: 1;
+}
+.coachAsideScale { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.coachMode[data-work="grown"] .coachAside { overflow: hidden; }
+.coachMode[data-work="grown"] .coachAside:hover,
+.coachMode[data-work="grown"] .coachAside:focus-within,
+.coachMode[data-work="grown"] .coachAside[data-open="true"] { overflow: auto; }
+.coachMode[data-work="grown"] .coachAsideScale {
+  width: calc(100% / var(--aside-scale));
+  transform: scale(var(--aside-scale));
+  transform-origin: top left;
+}
+@media (max-width: 700px) {
+  .coachMode[data-work="grown"] .coachRest,
+  .coachMode[data-work="grown"] .coachBody { --rest-scale: 1; --aside-scale: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .modeFrame[data-tone="coach"] { transition: none; }
   .modeFrame[data-tone="coach"] + .coachMode .lessonText,
   .modeFrame[data-tone="coach"] + .coachMode .answerText,
-  .modeFrame[data-tone="coach"] + .coachMode .lessonPosition,
-  .modeFrame[data-tone="coach"] + .coachMode .asideCard h3 { transition: none; }
+  .modeFrame[data-tone="coach"] + .coachMode .lessonPosition { transition: none; }
+  .coachMode[data-work="grown"] .coachRest,
+  .coachMode[data-work="grown"] .coachBody { transition: none; }
 }
 
 /* Materials: a file's buttons drop to their own line when the column is narrow, so its name keeps room. */
@@ -3722,6 +3762,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @container surface (min-width: 980px) {
   /* Coach: the chat, with the room's own numbers beside it. */
   .coachBody { grid-template-columns: minmax(0, 1fr) clamp(280px, 26%, 360px); }
+  .coachMode[data-work="grown"] .coachBody { grid-template-columns: minmax(0, 1fr) calc(clamp(280px, 26%, 360px) * var(--aside-scale, 1)); }
   .coachAside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
   .asideCard {
     display: grid; gap: 8px; padding: 16px 18px; border-radius: var(--r-lg);

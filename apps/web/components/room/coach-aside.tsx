@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
 import type { WeakArea } from "@/lib/study-planning";
 
@@ -28,9 +29,20 @@ export function CoachAside({
   const score = Math.round(Number(current.mastery_score));
   const next = areas.filter((area) => area.topic.id !== current.id).slice(0, 4);
   const terms = (current.key_terms ?? []).slice(0, 8);
+  const ref = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
 
   return (
-    <aside className="coachAside" aria-label="Topic overview">
+    <aside className="coachAside" aria-label="Topic overview" ref={ref} data-open={open ? "true" : undefined} onClick={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <div className="coachAsideScale">
       <section className="asideCard">
         <span className="tinyLabel">CURRENT TOPIC</span>
         <h3>{current.title}</h3>
@@ -71,6 +83,7 @@ export function CoachAside({
           All {topics.length} topics <span aria-hidden="true">→</span>
         </button>
       )}
+      </div>
     </aside>
   );
 }
