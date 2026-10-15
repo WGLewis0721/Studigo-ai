@@ -61,3 +61,30 @@ These are gaps in the Study Room that already exists. They are part of this plan
 | Give me a hint | Ask for a hint again on the same question. | Each press in a row is a stronger hint. The third consecutive "Give me a hint" gives the answer. Any other action resets that count. A revealed answer is help, not a correct answer, and does not raise mastery. |
 | Show me an example | See the kind of answer Coach will accept for this question. | One worked example shows the shape and the level of understanding expected, then the same question returns. It does not reveal the pending answer, and it does not replace the question with a different problem. |
 | How correct is correct | Set, for the whole Study Room, how much of the guide an answer must cover. | A slider in room settings. Low: about half the expected points is enough (50% or better). High: about 80–95% of the expected points. Wording does not have to match the guide. The first time through a topic uses Low unless the learner moves the slider. |
+
+## A study sheet, not a text dump
+
+The download today is a plain PDF from `apps/web/lib/study-guide-pdf.ts`: a title, headings, and paragraphs. It is not the government study sheet. That sheet is the target.
+
+**Outcome.** From the learner's upload, Download produces a sheet they can study from: a running header, a title, vocabulary as a term set apart from its definition, and a study page of short labeled sections and bullets. Page numbers included. Every line comes from the upload. Studigo does not add a second textbook.
+
+| Check | Pass |
+| --- | --- |
+| Vocabulary | Each term is on its own line, visually distinct from the definition |
+| Study page | Section titles, then short bullets. Branches, who/where/job, and levels stay grouped |
+| Chrome | Running header and a page number |
+| Source | Nothing on the sheet that is not in the uploaded material |
+| Action | The same Download control. The original file stays separately named |
+
+## Math and arithmetic
+
+Words are not enough for math. When the material or the question is arithmetic or mathematics, Coach and Learn show the idea.
+
+**Outcome.** A picture is drawn by code from the known numbers: a number line, fraction bars, an area model, or a simple table. The learner sees at least two worked examples, the second with less help than the first. The answer is checked in code. The model may explain. It does not decide whether the answer is right, and it does not draw the picture.
+
+| Check | Pass |
+| --- | --- |
+| A fraction or arithmetic fixture | Shows a correct model and two examples |
+| Grade | Matches the computed answer. A wrong number is wrong |
+| Labels | Come from the problem. A label that is not in the problem is rejected |
+| Fallback | If a picture cannot be drawn, the steps still appear as text |
