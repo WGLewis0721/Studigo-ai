@@ -231,43 +231,40 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   }
 
   const showPassage = Boolean(mission && snapshot?.sourceCurrent !== false && lines);
-  const buttonLabel = showPassage && !revealed ? "Check" : "Continue";
+  const waiting = showPassage && !revealed && tapped === null;
+  const explain = miss ? (lesson?.topicId === mission?.topic_id ? lesson.text : lines?.sentences[lines.target] ?? "") : "";
 
-  return <section ref={sectionRef} className="learnMission" aria-label="Reading" data-phase={mission?.phase ?? "new"}>
-    {fixture && <div className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
-    <div className="learnProgress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Reading progress">
+  return <section ref={sectionRef} className="learnReading" aria-label="Reading">
+    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
+    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Reading progress">
       <span style={{ width: `${progress}%` }} />
     </div>
-    {objectiveText && <h2 className="learnQuestion">{objectiveText}</h2>}
-    {error && <div className="formError" role="alert">{error}</div>}
-    {loading && !snapshot ? <p className="srOnly" role="status">Restoring this reading.</p> : null}
-    {snapshot?.sourceCurrent === false ? (
-      <p role="status">This passage changed.</p>
-    ) : showPassage && lines ? (
-      <>
-        <div className="learnPassage" role="group" aria-label="Passage">
-          {lines.sentences.map((sentence, index) => {
-            const result = !revealed || !mission ? undefined
-              : mission.reflection === "ready"
-                ? (index === lines.target ? "hit" : undefined)
-                : mission.reflection === "review"
-                  ? (tapped === index && index !== lines.target ? "miss" : index === lines.target ? "answer" : undefined)
-                  : undefined;
-            if (revealed) {
-              return <p key={sentence} className="learnLine" data-result={result}>{sentence}{result && <span className={result === "miss" ? "learnMark learnMarkMiss" : "learnMark"} aria-hidden="true">{result === "miss" ? "×" : "✓"}</span>}</p>;
-            }
-            return <button key={sentence} type="button" className="learnLine" aria-pressed={tapped === index} onClick={() => setTapped(index)}>{sentence}</button>;
-          })}
-        </div>
-        {revealed && <p className="srOnly" role="status">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
-        {miss && <div className="learnExplain"><RichText text={lesson?.topicId === mission?.topic_id ? lesson.text : lines.sentences[lines.target] ?? ""} /></div>}
-      </>
-    ) : !mission && !loading && !selectedTopic ? <p role="status">Choose a topic.</p> : <p className="srOnly" role="status">Opening the passage.</p>}
-    {mission?.phase !== "done" && (showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnCheck" type="button" disabled={busy || loading || (showPassage && snapshot?.sourceCurrent !== false && !revealed && tapped === null)} onClick={() => {
+    {objectiveText && <h2 className="learnAsk">{objectiveText}</h2>}
+    {error && <p className="formError" role="alert">{error}</p>}
+    {snapshot?.sourceCurrent === false ? <p role="status">This passage changed.</p> : showPassage && lines ? (
+      <div className="learnChoices" role="group" aria-label="Passage">
+        {lines.sentences.map((sentence, index) => {
+          const result = !revealed || !mission ? undefined
+            : mission.reflection === "ready"
+              ? (index === lines.target ? "hit" : undefined)
+              : mission.reflection === "review"
+                ? (tapped === index && index !== lines.target ? "miss" : index === lines.target ? "answer" : undefined)
+                : undefined;
+          const mark = result === "miss" ? "×" : result === "hit" || result === "answer" || tapped === index ? "✓" : "";
+          if (revealed) {
+            return <p key={sentence} className="learnChoice" data-result={result}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</p>;
+          }
+          return <button key={sentence} type="button" className="learnChoice" aria-pressed={tapped === index} onClick={() => setTapped(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</button>;
+        })}
+      </div>
+    ) : <p className="srOnly" role="status">{loading ? "Opening the passage." : "Choose a topic."}</p>}
+    {miss && explain ? <div className="learnSheet"><RichText text={explain} /></div> : null}
+    {revealed && <p className="srOnly">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
+    {mission?.phase !== "done" && (showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || waiting} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { startTried.current = false; void act("start"); return; }
       if (revealed) void act("advance");
       else void submitCheck();
-    }}>{buttonLabel}</button>}
+    }}>{showPassage && !revealed ? "Check" : "Continue"}</button>}
   </section>;
 }
