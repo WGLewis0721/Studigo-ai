@@ -128,6 +128,56 @@ export function RoomWorkspace({
   useEffect(() => {
     if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
   }, [mode, coachView]);
+  const [roomTucked, setRoomTucked] = useState(false);
+  useEffect(() => {
+    if (mode === "coach") return;
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    setRoomTucked(false);
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      setRoomTucked(true);
+    };
+    const wait = window.setTimeout(settle, 500 + Math.random() * 1500);
+    const onPoint = () => settle();
+    const onType = (event: Event) => {
+      if (event.target instanceof Node && surface.contains(event.target)) settle();
+    };
+    const chromeOf = (event: Event) => {
+      if (!(event.target instanceof Element)) return null;
+      return event.target.closest(".materialsIntro, .roomSectionIntro, .setupHeading");
+    };
+    const onClick = (event: Event) => {
+      const chrome = chromeOf(event);
+      if (chrome && surface.contains(chrome)) chrome.setAttribute("data-open", "true");
+    };
+    const onLeave = (event: MouseEvent) => {
+      const chrome = chromeOf(event);
+      if (!chrome) return;
+      if (event.relatedTarget instanceof Node && chrome.contains(event.relatedTarget)) return;
+      chrome.removeAttribute("data-open");
+    };
+    surface.addEventListener("pointermove", onPoint);
+    surface.addEventListener("pointerdown", onPoint);
+    surface.addEventListener("wheel", onPoint, { passive: true });
+    surface.addEventListener("keydown", onType);
+    surface.addEventListener("input", onType);
+    surface.addEventListener("click", onClick);
+    surface.addEventListener("mouseout", onLeave);
+    return () => {
+      settled = true;
+      window.clearTimeout(wait);
+      surface.removeEventListener("pointermove", onPoint);
+      surface.removeEventListener("pointerdown", onPoint);
+      surface.removeEventListener("wheel", onPoint);
+      surface.removeEventListener("keydown", onType);
+      surface.removeEventListener("input", onType);
+      surface.removeEventListener("click", onClick);
+      surface.removeEventListener("mouseout", onLeave);
+    };
+  }, [mode]);
   const [theme] = useRoomTheme(room.id);
   const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
   const [chipBarHost, setChipBarHost] = useState<HTMLElement | null>(null);
@@ -225,7 +275,7 @@ export function RoomWorkspace({
 
       <CompanionContext.Provider value={companion.api}>
       <HeaderSlots.Provider value={slots}>
-      <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"} data-layout={coachFramed ? "lessons" : undefined}>
+      <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"} data-layout={coachFramed ? "lessons" : undefined} data-room-tuck={mode !== "coach" && roomTucked ? "true" : undefined}>
         {mode === "materials" && (
           <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
         )}
