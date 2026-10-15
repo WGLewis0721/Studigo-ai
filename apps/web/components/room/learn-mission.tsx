@@ -22,6 +22,20 @@ const SAMPLES = {
   },
 } as const;
 
+const PHASES = ["brief", "show", "try", "check"] as const;
+
+function Passage({ fixture, documentId, source }: {
+  fixture: boolean;
+  documentId: string;
+  source: { documentName: string; pageNumber: number | null; excerpt: string };
+}) {
+  return <div className="learnMissionSource">
+    <span className="tinyLabel">{source.documentName}{source.pageNumber ? ` - page ${source.pageNumber}` : ""}</span>
+    <blockquote>{source.excerpt}</blockquote>
+    {!fixture && <a target="_blank" rel="noreferrer" href={`/api/documents/download?documentId=${encodeURIComponent(documentId)}&inline=1${source.pageNumber ? `&page=${source.pageNumber}` : ""}`}>Open original</a>}
+  </div>;
+}
+
 export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; onOpenMaterials: () => void;
 }) {
@@ -129,50 +143,52 @@ export function LearnMission({ roomId, topics, selectedTopicId, onOpenMaterials 
     if (thread instanceof HTMLElement) thread.scrollTop = 0;
   }, [mission?.phase, mission?.paused, loading]);
 
-  const heading = fixture ? SAMPLES[sample].title : currentTopic?.title ?? selectedTopic?.title ?? "Your next objective";
   const objectiveText = fixture ? SAMPLES[sample].objective : currentTopic?.objective ?? selectedTopic?.objective ?? "Read one objective from your materials.";
   const check = snapshot?.source?.excerpt ? tapCheck(objectiveText, snapshot.source.excerpt) : null;
   const tryReflection: "ready" | "review" | null = check && tapped !== null ? (tapped === check.target ? "ready" : "review") : choice;
+  const phaseCursor = !mission ? -1 : mission.phase === "done" ? PHASES.length : PHASES.indexOf(mission.phase as typeof PHASES[number]);
 
   if (loading && !snapshot) return <section ref={sectionRef} className="learnMission" role="status">Restoring your Learn mission...</section>;
   return <section ref={sectionRef} className="learnMission" aria-label="Guided Learn mission" data-phase={mission?.phase ?? "new"}>
-    {fixture && <p className="learnMissionFixture">Synthetic visual preview - steps are not saved and source/file actions are unavailable. <span className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setHintOpen(false); setChoice(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</span></p>}
-    <div className="learnMissionHead"><span className="tinyLabel">GUIDED LEARN - NOT GRADED</span><h2>{heading}</h2>
-      <p>{objectiveText}</p></div>
+    {fixture && <p className="learnMissionFixture">Synthetic visual preview. Steps are not saved. <span className="learnMissionChoices">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setHintOpen(false); setChoice(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</span></p>}
     {error && <div className="formError" role="alert">{error} <button type="button" onClick={() => void reload()}>Reload mission</button></div>}
     {!mission ? (
-      <div className="learnMissionCard"><p>Follow one objective through a brief, a source-backed explanation, a reflection, and a check. This does not change mastery.</p>
-        {selectedTopic ? <button className="buttonPrimary" type="button" disabled={busy || loading} onClick={() => void act("start")}>Start {selectedTopic.title}</button> : <p>Choose a topic to start.</p>}
+      <div className="learnMissionCard learnMissionStart">
+        {selectedTopic ? <button className="buttonPrimary" type="button" disabled={busy || loading} onClick={() => void act("start")}>{selectedTopic.title}</button> : <p>Choose a topic.</p>}
       </div>
     ) : snapshot?.sourceCurrent === false ? (
-      <div className="learnMissionCard" role="status"><h3>Source changed</h3><p>This objective is no longer backed by the same eligible passage. Nothing was graded.</p><button type="button" onClick={onOpenMaterials}>Open Materials</button> <button type="button" disabled={busy} onClick={() => void act("restart")}>Restart from current source</button></div>
-    ) : mission.paused ? (
-      <div className="learnMissionCard"><p>Paused at {mission.phase}. Your place is saved.</p><button className="buttonPrimary" type="button" disabled={busy} onClick={() => void act("resume")}>Resume</button></div>
+      <div className="learnMissionCard" role="status"><h3>Source changed</h3><button type="button" onClick={onOpenMaterials}>Open Materials</button> <button type="button" disabled={busy} onClick={() => void act("restart")}>Restart</button></div>
     ) : <>
-      <ol className="learnMissionSteps" aria-label="Mission steps">{(["brief","show","try","check"] as const).map((phase) => <li key={phase} aria-current={mission.phase === phase ? "step" : undefined}>{phase}</li>)}</ol>
-      <div className="learnMissionCard">
-        {mission.phase === "brief" && <><h3>Brief</h3><p>Here is what you are learning. Read the objective, then look at a passage from your own material.</p></>}
-        {mission.phase === "show" && <><h3>Show</h3><p>Studigo explains the idea using your room's material. Compare it with the source.</p>
-          {lesson?.topicId === mission.topic_id ? <><RichText text={lesson.text} /><CitationChips citations={lesson.citations} /></> : <p role="status">{lessonError ?? "Preparing an explanation..."}</p>}
-          {lessonError && <button type="button" onClick={() => void loadExplanation()}>Retry explanation</button>}</>}
-        {mission.phase === "try" && (check ? <><h3>Try</h3><p>Tap the sentence from your source that states this objective. This is not a grade.</p>
-          <div className="learnMissionChoices" role="group" aria-label="Sentences from your source">{check.sentences.map((sentence, index) => <button key={sentence} type="button" aria-pressed={tapped === index} onClick={() => setTapped(index)}>{sentence}</button>)}</div>
-          <button type="button" aria-expanded={hintOpen} onClick={() => setHintOpen((open) => !open)}>Give me a hint</button>
-          {hintOpen && <p className="learnMissionHint">The source states it in this sentence: {check.sentences[check.target]}</p>}
-          {tapped !== null && <p role="status">{tapped === check.target ? "That sentence states this objective. Nothing was graded." : "That sentence is in the source, but it does not state this objective."}</p>}</>
-        : <><h3>Try</h3><p>Could you explain this objective to someone else without looking? Choose honestly; this is a self-check, not a scored answer.</p>
-          <div className="learnMissionChoices"><button type="button" aria-pressed={choice === "ready"} onClick={() => setChoice("ready")}>I could explain it</button><button type="button" aria-pressed={choice === "review"} onClick={() => setChoice("review")}>I need another look</button></div></>)}
-        {mission.phase === "check" && <><h3>Check</h3><p>{check
-          ? (mission.reflection === "review" ? "You tapped a different sentence. Read the source again. Nothing was graded." : "You tapped the sentence that states this objective. Nothing was graded.")
-          : (mission.reflection === "review" ? "Good call. Read the source again, then use Coach when you want practice." : "You marked this as understood. Compare your explanation with the source, then practice with Coach to test it.")}</p></>}
-        {mission.phase === "done" && <><h3>Reading complete</h3><p>This was an ungraded Learn pass. It did not change your mastery or readiness. Switch to Coach or Practice to test what you know.</p><button type="button" disabled={busy} onClick={() => void act("restart")}>Start another reading</button></>}
-        {mission.phase !== "brief" && snapshot?.source && <div className="learnMissionSource"><span className="tinyLabel">{fixture ? "SAMPLE SOURCE" : "FIND IT - VERIFIED SOURCE"}</span><p><strong>{snapshot.source.documentName}</strong>{snapshot.source.pageNumber ? ` - page ${snapshot.source.pageNumber}` : ""}</p><blockquote>{snapshot.source.excerpt}</blockquote>{!fixture && <a target="_blank" rel="noreferrer" href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original</a>}</div>}
-      </div>
-      <div className="learnMissionActions">
-        {mission.phase !== "brief" && mission.phase !== "done" && <button type="button" disabled={busy} onClick={() => void act("back")}>Back</button>}
-        {mission.phase !== "done" && <button type="button" disabled={busy} onClick={() => void act("pause")}>Pause</button>}
-        {mission.phase !== "done" && <button className="buttonPrimary" type="button" disabled={busy || (mission.phase === "try" && tryReflection === null)} onClick={() => void act("advance", mission.phase === "try" ? tryReflection : null)}>{mission.phase === "check" ? "Finish reading" : "Continue"}</button>}
-      </div>
+      <ol className="learnMissionSteps" aria-label="Mission steps">{PHASES.map((phase, index) => <li key={phase} aria-current={mission.phase === phase ? "step" : undefined} data-state={index < phaseCursor ? "done" : undefined}>{phase}</li>)}</ol>
+      {mission.paused ? (
+        <div className="learnMissionActions"><button className="buttonPrimary" type="button" disabled={busy} onClick={() => void act("resume")}>Resume</button></div>
+      ) : <>
+        <div className="learnMissionHead"><h2>{objectiveText}</h2></div>
+        <div className="learnMissionCard">
+          {mission.phase === "show" && (lesson?.topicId === mission.topic_id
+            ? <><RichText text={lesson.text} /><CitationChips citations={lesson.citations} /></>
+            : <div className="learnMissionSkeleton" role="status"><span className="srOnly">{lessonError ?? "Preparing an explanation..."}</span>{lessonError && <button type="button" onClick={() => void loadExplanation()}>Retry</button>}</div>)}
+          {mission.phase === "try" && (check ? <div className="learnMissionChoices learnMissionLines" role="group" aria-label="Sentences from your source">{check.sentences.map((sentence, index) => <button key={sentence} type="button" aria-pressed={tapped === index} data-hint={hintOpen && index === check.target ? "true" : undefined} onClick={() => setTapped(index)}>{sentence}</button>)}</div>
+            : <div className="learnMissionChoices learnMissionLines"><button type="button" aria-pressed={choice === "ready"} onClick={() => setChoice("ready")}>I could explain it</button><button type="button" aria-pressed={choice === "review"} onClick={() => setChoice("review")}>I need another look</button></div>)}
+          {mission.phase === "check" && check && <div className="learnMissionLines" role="list">{check.sentences.map((sentence, index) => {
+            const picked = tapped === index;
+            const answer = index === check.target;
+            const result = mission.reflection === "review" ? (picked ? "miss" : answer ? "answer" : undefined) : (answer ? "match" : undefined);
+            return <p key={sentence} role="listitem" data-result={result}>{sentence}</p>;
+          })}<p className="srOnly" role="status">{mission.reflection === "review" ? "A different sentence was selected." : "The sentence that states this objective was selected."}</p></div>}
+          {mission.phase === "check" && !check && <div className="learnMissionChoices learnMissionLines"><p data-result={mission.reflection === "review" ? "miss" : "match"}>{mission.reflection === "review" ? "I need another look" : "I could explain it"}</p></div>}
+          {mission.phase === "done" && <div className="learnMissionDone" role="status"><span aria-hidden="true" /><button type="button" disabled={busy} onClick={() => void act("restart")}>Read again</button></div>}
+          {snapshot?.source && mission.phase !== "try" && mission.phase !== "done" && !(mission.phase === "check" && check) && <Passage fixture={fixture} documentId={mission.document_id} source={snapshot.source} />}
+        </div>
+        {mission.phase !== "done" && <div className="learnMissionActions">
+          <div className="learnMissionQuiet">
+            {mission.phase !== "brief" && <button type="button" className="learnMissionIcon" aria-label="Back" disabled={busy} onClick={() => void act("back")}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></button>}
+            <button type="button" className="learnMissionIcon" aria-label="Pause" disabled={busy} onClick={() => void act("pause")}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6.5v11M15 6.5v11" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg></button>}
+            {mission.phase === "try" && check && <button type="button" className="learnMissionIcon" aria-label="Hint" aria-pressed={hintOpen} onClick={() => setHintOpen((open) => !open)}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4.5a5 5 0 0 0-2.2 9.5c.4.3.7.8.7 1.3V16h3v-.7c0-.5.3-1 .7-1.3A5 5 0 0 0 12 4.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="M10 18.5h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg></button>}
+          </div>
+          <button className="buttonPrimary" type="button" disabled={busy || (mission.phase === "try" && tryReflection === null)} onClick={() => void act("advance", mission.phase === "try" ? tryReflection : null)}>{mission.phase === "check" ? "Finish" : "Continue"}</button>
+        </div>}
+      </>}
     </>}
   </section>;
 }
