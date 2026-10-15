@@ -32,14 +32,14 @@ export function CoachAside({
   return (
     <aside className="coachAside" aria-label="Topic overview">
       <section className="asideCard">
-        <span className="tinyLabel">YOUR FOCUS / 01</span>
+        <span className="tinyLabel">CURRENT TOPIC</span>
         <h3>{current.title}</h3>
         {current.objective && current.objective !== current.title && <p>{current.objective}</p>}
         <div className="asideMeter" data-practiced={practiced}>
           <div className="asideMeterBar" aria-hidden="true">
             <span style={{ width: `${practiced ? Math.max(4, Math.min(100, score)) : 0}%` }} />
           </div>
-          <small>{practiced ? `${score}% from saved practice · ${current.status === "mastered" ? "Strong" : "Needs work"}` : "Not practiced yet · Learn does not change this"}</small>
+          <small>{practiced ? `${score}% · ${current.status === "mastered" ? "Strong" : "Needs work"}` : "Not practiced yet"}</small>
         </div>
         {terms.length > 0 && (
           <ul className="asideTerms" aria-label="Key terms">

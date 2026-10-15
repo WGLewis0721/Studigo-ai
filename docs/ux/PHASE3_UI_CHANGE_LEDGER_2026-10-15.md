@@ -44,3 +44,8 @@ High-risk seams: Home readiness vs real mission availability; changing source re
 
 PR #157 compacted the Coach/Learn intro on every width. A later phone rule still assigned the chat `min(72dvh, 700px)` and `min-height: 440px`, which can lose to the shell's flex rule today and win again if specificity changes. The follow-up keeps the phone chat on `height: auto` / `min-height: 0` at specificity above the shell rule, tucks the mode subtitle away while a chat is open, and treats Materials, Practice, Progress, and Plan intros the same way on a phone: a short title, the explanatory paragraph hidden, and the mastery hero no longer a 235px poster. The quiz prompt stays the question. Flag-off markup is unchanged. This is not four-width, keyboard, or signed-in acceptance. The Learn mission in draft #154 is still not on `main`.
 
+## Coach and Learn rollback — 2026-10-15
+
+The Phase 3 interior on Coach and Learn is removed: `learning-phase3.css`, the intro strip, and the lesson-stage wrapper. Those two surfaces are the application baseline `62715fda381cf00d844dd61649e048d1be1d4d35`, the tree behind `docs/golden/2026-10-15/coach-demo.jpg` and `learn-demo.jpg`. The other flagged rooms stay as they are. This restores those files. It is not a new visual acceptance.
+
+
