@@ -18,8 +18,8 @@ const RESERVATIONS_MICRO_USD: Record<AiOperation, number> = {
   "practice-test-grade": 180_000,
   "document-upload": 20_000,
   "flashcards-local": 10_000,
-  "document-process": 800_000,
-  "document-reindex": 800_000,
+  "document-process": 20_000,
+  "document-reindex": 20_000,
   "topic-regenerate": 150_000
 };
 
