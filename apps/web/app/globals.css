@@ -3954,3 +3954,135 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .lessonActions { display: flex; flex: none; position: relative; z-index: 4; overflow: visible; }
   .lessonPosition { display: flex; overflow: visible; }
 }
+
+/* Phase 3 Room 0: opt-in shared frame only. No panel or Coach selectors here. */
+.roomDevice[data-phase3-frame="on"] .workspaceTopbar {
+  background: color-mix(in oklab, var(--th-bar) 70%, white);
+  border-bottom: 1px solid var(--th-line);
+}
+.phase3RoomLocation {
+  display: block;
+  color: var(--ink-2);
+  font-size: .68rem;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.phase3RoomLocation span { color: var(--th-ink); margin-inline: .3em; }
+.roomDevice[data-phase3-frame="on"] .workspaceTitle strong { margin-top: 4px; }
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut {
+  border: 0;
+  min-height: 44px;
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut:hover { box-shadow: inset 0 0 0 1px var(--th-ink), var(--lift-1); }
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut:focus-visible,
+.roomDevice[data-phase3-frame="on"] .studyGroups button:focus-visible {
+  outline: 3px solid var(--th-ink);
+  outline-offset: 3px;
+}
+.roomDevice[data-phase3-frame="on"] .studyGroups {
+  background: color-mix(in oklab, var(--th-bar) 45%, white);
+  box-shadow: inset 0 0 0 1px var(--th-line), inset 0 2px 5px rgba(20,27,45,.06);
+}
+.roomDevice[data-phase3-frame="on"] .studyGroups button[aria-current] {
+  background: white;
+  box-shadow: inset 0 0 0 1px var(--th-line), 0 3px 8px rgba(20,27,45,.12);
+}
+.phase3GroupDetail { display: none; }
+@media (min-width: 701px) {
+  .roomDevice[data-phase3-frame="on"] .workspaceTopbar {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding-bottom: 0;
+  }
+  .roomDevice[data-phase3-frame="on"] .workspaceTitle { flex: 1 1 250px; }
+  .roomDevice[data-phase3-frame="on"] .topbarRight { margin-left: auto; }
+  .roomDevice[data-phase3-frame="on"] .workspaceTopbar .topbarNav {
+    order: 3;
+    flex: 1 0 100%;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    max-width: none;
+    padding: 10px 0 12px;
+    overflow: visible;
+    border-top: 1px solid var(--th-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .roomDevice[data-phase3-frame="on"] .workspaceTopbar .topbarNav button {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    align-content: center;
+    justify-content: start;
+    min-height: 68px;
+    padding: 9px 10px;
+    text-align: left;
+    border: 1px solid var(--th-line);
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 3px 0 color-mix(in oklab, var(--th) 18%, #aeb6c2);
+  }
+  .roomDevice[data-phase3-frame="on"] .topbarNav .studyGroupIcon {
+    display: grid;
+    grid-row: 1 / 3;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    color: var(--th-ink);
+    background: var(--th-pane);
+  }
+  .roomDevice[data-phase3-frame="on"] .topbarNav .studyGroupLabel { min-width: 0; line-height: 1.1; }
+  .roomDevice[data-phase3-frame="on"] .topbarNav .phase3GroupDetail {
+    display: block;
+    min-width: 0;
+    font-size: .68rem;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: normal;
+    color: var(--ink-2);
+  }
+  .roomDevice[data-phase3-frame="on"] .topbarNav button[aria-current] {
+    color: var(--th-on);
+    background: var(--th-key);
+    border-color: transparent;
+    box-shadow: 0 3px 0 var(--th-ink), 0 7px 15px color-mix(in oklab, var(--th) 25%, transparent);
+  }
+  .roomDevice[data-phase3-frame="on"] .topbarNav button[aria-current]::before { content: none; }
+  .roomDevice[data-phase3-frame="on"] .topbarNav button[aria-current] .studyGroupIcon {
+    color: var(--th-on);
+    background: color-mix(in oklab, var(--th-on) 15%, transparent);
+  }
+  .roomDevice[data-phase3-frame="on"] .topbarNav button[aria-current] .phase3GroupDetail { color: var(--th-on); opacity: .85; }
+  .roomDevice[data-phase3-frame="on"] .topbarNav button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--th-ink); }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .roomDevice[data-phase3-frame="on"] .workspaceTopbar .topbarNav {
+    grid-template-columns: repeat(5, minmax(138px, 1fr));
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+}
+@media (max-width: 700px) {
+  .roomDevice[data-phase3-frame="on"] .phase3RoomLocation { font-size: .59rem; }
+  .roomDevice[data-phase3-frame="on"] .studyGroups {
+    background: color-mix(in oklab, var(--th-bar) 52%, white);
+    border-color: white;
+    box-shadow: 0 12px 30px rgba(20,27,45,.16), inset 0 0 0 1px var(--th-line);
+  }
+  .roomDevice[data-phase3-frame="on"] .studyGroups button[aria-current] {
+    color: var(--th-on);
+    background: var(--th-key);
+    box-shadow: 0 3px 0 var(--th-ink), 0 5px 12px color-mix(in oklab, var(--th) 28%, transparent);
+  }
+  .roomDevice[data-phase3-frame="on"] .studyGroups button[aria-current] .studyGroupIcon { color: var(--th-on); }
+}
