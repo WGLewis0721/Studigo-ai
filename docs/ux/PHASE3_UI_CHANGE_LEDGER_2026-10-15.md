@@ -65,7 +65,7 @@ The strip lock stands. The plan is not accepted. What is on `main`:
 | --- | --- | --- |
 | 0 Hallway | Five groups, one foundation flag, strip tuck on every room | Four-width and focus proof |
 | 1 Materials | Original shelf, generated guide, source passage | Signed-in stale and denied proof |
-| 2 Learn mission | Code, migration file, and route are on `main`. Embedded Postgres proved a paused Show step reloads as Show, a second account cannot read it, and mastery plus quiz attempts stay unchanged. The live lesson is unchanged. A real room stays on the current lesson until `PHASE3_ROOM2_ROOM_IDS` includes it and the migration is applied to the hosted database. | Hosted migration is not applied. Tap-answer check, hint, and college fixture remain open. |
+| 2 Learn mission | An allowlisted room now shows the reading steps inside the locked frame. The hosted migration is reported applied. Embedded Postgres already proved resume without a mastery write. | Tap-answer check, hint, and college fixture remain open. This is not acceptance. |
 | 3 Home | No Start button. It must not offer a mission that is not ready. | Blocked on Room 2 |
 | 4 Coach | Locked at `fb0ecc2` plus the later strip measurement fix. Do not retune it. | None for proportions |
 | 5–7 Practice, Progress, Plan | Flagged skins. Strip only. Existing grading and planning untouched. | Grade, evidence, and handoff proof |

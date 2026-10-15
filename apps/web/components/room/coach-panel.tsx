@@ -75,7 +75,7 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false }: {
   roomId: string;
   coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
@@ -87,6 +87,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   focusTopicId: string | null;
   onClearFocus: () => void;
   onTopicsChanged: () => void;
+  phase3Learn?: boolean;
 }) {
   const [draft, setDraft] = useState(coaching.applied);
   const [learnDraft, setLearnDraft] = useState<LearnPreferences>(coaching.learnApplied);
@@ -249,7 +250,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const learnTopicTitle = topics.find((topic) => topic.id === learnCursorId)?.title ?? GENERAL_TOPIC.title;
   const learnLabel = lessonPositionLabel(cursors.learn, learnTopicIds.length);
   const showingOverview = chatMode === "learn" && learnView === "overview";
-  const guidedLearn = roomId === "fixture" && chatMode === "learn";
+  const guidedLearn = (roomId === "fixture" || phase3Learn) && chatMode === "learn";
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {

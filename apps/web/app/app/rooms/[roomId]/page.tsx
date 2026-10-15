@@ -35,6 +35,8 @@ export default async function RoomPage({
     loadStudyEvidence(roomId)
   ]);
 
+  const phase3Learn = (process.env.PHASE3_ROOM2_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id);
+
   return (
     <RoomWorkspace
       room={room}
@@ -42,6 +44,7 @@ export default async function RoomPage({
       topics={topics}
       readiness={readiness}
       initialMode={mode}
+      phase3Learn={phase3Learn}
       {...studyEvidence}
     />
   );

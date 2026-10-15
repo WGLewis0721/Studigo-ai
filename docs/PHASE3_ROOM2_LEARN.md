@@ -1,6 +1,6 @@
 # Phase 3 · Room 2 guided Learn reading
 
-The code is on `main` and is off for every real room. `PHASE3_ROOM2_ROOM_IDS` is a server-side comma-separated allowlist. Until a room is listed and migration `20261015010000_learn_mission_cursor.sql` is applied, Learn stays the current lesson. The synthetic fixture (`roomId === "fixture"`, `/dev/study`) shows the steps inside the locked Coach frame: the strip, Clear/Previous/Next, the topic column, and the composer do not move. Steps on the fixture are not saved.
+The signed-in room page reads `PHASE3_ROOM2_ROOM_IDS`. A listed room shows the reading steps inside the locked Coach frame. Every other room keeps the current lesson. The synthetic fixture (`roomId === "fixture"`, `/dev/study`) shows the steps without saving them. The strip, Clear/Previous/Next, the topic column, and the composer do not move.
 
 Embedded Postgres, running every migration in this repo, proved one owned room can start, replay the same request, advance to Show, pause, and read that same step back. A second account is denied. Topic mastery and quiz-attempt counts do not change. That is not a hosted Supabase apply. Do not set `PHASE3_ROOM2_ROOM_IDS` until this migration is applied there.
 
