@@ -1,13 +1,162 @@
-/* Guided Learn stays inside the existing chat pane. The old lesson title
-   sits on top of this reading, so it is not part of this surface. */
-.coachChat:has(.learnMission) .lessonPosition { display: none; }
-.coachChat:has(.learnMission) .lessonReading:not(:has(*)) { display: none; }
-.coachChat:has(.learnMission) .chatThread { display: flex; flex-direction: column; }
-.coachChat .learnMission {
-  flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;
+/* Learn reading fills the chat pane. The strip above the orange rail stays. */
+.coachChat:has(.learnMission) .lessonPosition,
+.coachChat:has(.learnMission) .lessonReading,
+.coachChat:has(.learnMission) .lessonActions,
+.coachChat:has(.learnMission) .lessonCitations,
+.coachChat:has(.learnMission) .chatChips,
+.coachChat:has(.learnMission) .coachRest,
+.coachChat:has(.learnMission) > .coachActiveStyle,
+.coachChat:has(.learnMission) .threadEnd,
+.coachChat:has(.learnMission) .chatDock,
+.roomDevice:has(.coachChat):has(.learnMission) .chatDock,
+.roomDevice:has(.coachChat):has(.learnMission) .chatEraser,
+.roomDevice:has(.coachChat):has(.learnMission) .coachPhoneNav .coachNavStep {
+  display: none;
 }
-.coachChat .learnMissionHead,
-.coachChat .learnMissionSteps,
-.coachChat .learnMissionActions { flex: none; }
-.coachChat .learnMissionHead { position: static; }
-.coachChat .learnMissionCard { flex: 1; min-height: 0; overflow: auto; }
+
+.coachChat:has(.learnMission) .chatThread {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.coachChat .learnMission {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 4px 4px;
+}
+
+.learnProgress {
+  flex: none;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--snow-3);
+  overflow: hidden;
+}
+
+.learnProgress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--teal);
+}
+
+.learnQuestion {
+  flex: none;
+  margin: 2px 0 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.learnPassage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.learnLine {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 10px 28px 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.learnLine[aria-pressed="true"] {
+  background: var(--teal-soft);
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+
+.learnLine[data-result="hit"],
+.learnLine[data-result="answer"] {
+  background: var(--teal-soft);
+  box-shadow: inset 3px 0 0 var(--teal);
+  cursor: default;
+}
+
+.learnLine[data-result="miss"] {
+  background: var(--berry-soft);
+  box-shadow: inset 3px 0 0 var(--berry);
+  cursor: default;
+}
+
+.learnMark {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--teal-ink);
+}
+
+.learnMarkMiss { background: var(--berry); }
+
+.learnExplain {
+  flex: none;
+  max-height: 38%;
+  overflow: auto;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.learnExplain p { margin: 0 0 8px; }
+
+.learnCheck {
+  flex: none;
+  width: 100%;
+  margin-top: auto;
+}
+
+.learnCheck:disabled {
+  opacity: 1;
+  color: var(--muted);
+  background: var(--snow-3);
+  background-image: none;
+  box-shadow: none;
+  cursor: default;
+}
+
+.coachChat .learnMissionChoices {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.coachChat .learnMissionChoices button {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--snow-2);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: .82rem;
+  cursor: pointer;
+}
+
+.coachChat .learnMissionChoices button[aria-pressed="true"] {
+  background: var(--teal-soft);
+  color: var(--teal-ink);
+}
