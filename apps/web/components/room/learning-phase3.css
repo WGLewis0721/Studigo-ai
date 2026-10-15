@@ -116,10 +116,16 @@
   outline: 3px solid var(--blueberry-ink); outline-offset: 3px;
 }
 @media (max-width: 700px) {
-  [data-ui="phase3"] .learningPhaseIntro { align-items: stretch; flex-direction: column; padding: 22px; border-radius: 20px; }
-  [data-ui="phase3"] .learningPhaseFocus { flex-basis: auto; padding: 12px 15px; }
+  [data-ui="phase3"] .learningPhaseIntro { align-items: center; flex-direction: row; padding: 10px 14px; gap: 10px; border-radius: 0; }
+  [data-ui="phase3"] .learningPhaseIntro h2 { margin: 2px 0 0; font-size: 1.15rem; }
+  [data-ui="phase3"] .learningPhaseIntro p, [data-ui="phase3"] .learningPhaseFocus span, [data-ui="phase3"] .learningPhaseFocus small { display: none; }
+  [data-ui="phase3"] .learningPhaseEyebrow { font-size: .55rem; }
+  [data-ui="phase3"] .learningPhaseFocus { flex: 1 1 45%; padding: 8px 10px; box-shadow: none; }
+  [data-ui="phase3"] .learningPhaseFocus strong { font-size: .78rem; line-height: 1.2; }
   [data-ui="phase3"] .coachMode { gap: 12px; }
   [data-ui="phase3"] .coachChat { margin-inline: -14px; height: min(72dvh, 700px); min-height: 440px; border-radius: 0; }
+  [data-ui="phase3"] .lessonActions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px 10px; }
+  [data-ui="phase3"] .lessonActions .ghostButton { min-width: 0; min-height: 44px; padding: 5px 3px; font-size: .72rem; }
   [data-ui="phase3"] .coachChat .chatThread { padding: 16px; }
   [data-ui="phase3"] .coachChat .answerBubble { max-width: 94%; padding: 16px; }
   [data-ui="phase3"] .coachChat .coachEmpty { padding: 20px; }
