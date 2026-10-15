@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
-import { RichText } from "./rich-text";
-import type { Citation } from "./citations";
 import { sourceSentences, tapCheck } from "@/lib/learn-tap";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
@@ -24,7 +22,12 @@ const SAMPLES = {
   },
 } as const;
 
-/** How far through this reading. The bar is unlabeled on purpose. */
+function questionFrom(objective: string): string {
+  const text = objective.trim();
+  const colon = text.indexOf(":");
+  if (colon >= 24 && colon < text.length - 1) return text.slice(0, colon).trim();
+  return text;
+}
 function readingProgress(phase: Phase | "new"): number {
   if (phase === "done") return 100;
   if (phase === "check") return 72;
@@ -47,7 +50,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lesson, setLesson] = useState<{ topicId: string; text: string } | null>(null);
   const [tapped, setTapped] = useState<number | null>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
@@ -57,9 +59,10 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const mission = snapshot?.mission ?? null;
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
-  const objectiveText = fixture
+  const objectiveSource = fixture
     ? SAMPLES[sample].objective
     : currentTopic?.objective || selectedTopic?.objective || currentTopic?.title || selectedTopic?.title || "";
+  const objectiveText = questionFrom(objectiveSource);
 
   const reload = useCallback(async () => {
     if (roomId === "fixture") {
@@ -85,8 +88,8 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
 
   useEffect(() => { void reload(); }, [reload]);
 
-  async function post(current: Mission | null, action: Action, reflection: "ready" | "review" | null = null): Promise<Snapshot> {
-    const topicId = action === "restart" ? selectedTopic?.id ?? current?.topic_id : current?.topic_id ?? selectedTopic?.id;
+  async function post(current: Mission | null, action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string): Promise<Snapshot> {
+    const topicId = topicOverride ?? (action === "restart" ? selectedTopic?.id ?? current?.topic_id : current?.topic_id ?? selectedTopic?.id);
     if (!topicId) throw new Error("Choose a topic.");
     if (fixture) {
       const nextPhase: Phase = action === "advance"
@@ -110,10 +113,9 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     let chunkId: string | null = null;
     if (action === "start" || action === "restart") {
       const prepared = await fetch("/api/learn", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ roomId, topicId }) });
-      const reading = await prepared.json().catch(() => null) as { explanation?: string; citations?: Citation[]; error?: string } | null;
+      const reading = await prepared.json().catch(() => null) as { explanation?: string; citations?: { chunkId?: string }[]; error?: string } | null;
       chunkId = reading?.citations?.find((citation) => citation.chunkId)?.chunkId ?? null;
       if (!prepared.ok || !reading?.explanation?.trim() || !chunkId) throw new Error(reading?.error ?? "A cited passage is not ready for this objective.");
-      setLesson({ topicId, text: reading.explanation });
     }
     const response = await fetch("/api/learn/mission", {
       method: "POST",
@@ -126,13 +128,13 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     return payload;
   }
 
-  async function act(action: Action, reflection: "ready" | "review" | null = null) {
+  async function act(action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string) {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
-      await post(mission, action, reflection);
+      await post(mission, action, reflection, topicOverride);
       if (action === "restart" || action === "start") setTapped(null);
     } catch (caught) {
       await reload();
@@ -140,27 +142,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     } finally {
       inFlight.current = false;
       setBusy(false);
-    }
-  }
-
-  async function loadExplanation(topicId: string) {
-    if (lesson?.topicId === topicId || inFlight.current) return;
-    if (fixture) {
-      setLesson({
-        topicId,
-        text: sample === "college"
-          ? "A net force is what is left after the forces on an object are combined. That leftover force changes the motion."
-          : "An inherited behavior comes naturally. A learned behavior grows through practice and experience.",
-      });
-      return;
-    }
-    try {
-      const response = await fetch("/api/learn", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ roomId, topicId }) });
-      const payload = await response.json().catch(() => null) as { explanation?: string } | null;
-      if (!response.ok || !payload?.explanation?.trim()) return;
-      setLesson({ topicId, text: payload.explanation });
-    } catch {
-      /* The marked sentence stays on screen when a second explanation cannot load. */
     }
   }
 
@@ -184,16 +165,10 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     if (thread instanceof HTMLElement) thread.scrollTop = 0;
   }, [mission?.phase, loading]);
 
-  const lines = snapshot?.source?.excerpt ? passageLines(objectiveText, snapshot.source.excerpt) : null;
+  const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
   const revealed = mission?.phase === "check" || mission?.phase === "done";
   const miss = revealed && mission?.reflection === "review";
   const progress = readingProgress(mission?.phase ?? "new");
-
-  useEffect(() => {
-    if (miss && mission) void loadExplanation(mission.topic_id);
-    // Explanation follows a miss. A hit does not request one.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [miss, mission?.topic_id]);
 
   async function submitCheck() {
     if (!mission || !lines || tapped === null || revealed || inFlight.current) return;
@@ -232,10 +207,39 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
 
   const showPassage = Boolean(mission && snapshot?.sourceCurrent !== false && lines);
   const waiting = showPassage && !revealed && tapped === null;
-  const explain = miss ? (lesson?.topicId === mission?.topic_id ? lesson.text : lines?.sentences[lines.target] ?? "") : "";
+  const explain = miss ? lines?.sentences[lines.target] ?? "" : "";
+
+  async function continueReading() {
+    if (!mission || inFlight.current) return;
+    if (mission.phase !== "check" && mission.phase !== "done") {
+      void act("advance");
+      return;
+    }
+    inFlight.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      let current = mission;
+      if (current.phase === "check") {
+        const advanced = await post(current, "advance");
+        if (!advanced.mission) throw new Error("Could not save this reading.");
+        current = advanced.mission;
+      }
+      const index = topics.findIndex((topic) => topic.id === current.topic_id);
+      const next = topics[index + 1] ?? topics[0];
+      await post(current, "restart", null, next?.id ?? current.topic_id);
+      setTapped(null);
+    } catch (caught) {
+      await reload();
+      setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
 
   return <section ref={sectionRef} className="learnReading" aria-label="Reading">
-    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); setLesson(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
+    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
     <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Reading progress">
       <span style={{ width: `${progress}%` }} />
     </div>
@@ -258,12 +262,12 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
         })}
       </div>
     ) : <p className="srOnly" role="status">{loading ? "Opening the passage." : "Choose a topic."}</p>}
-    {miss && explain ? <div className="learnSheet"><RichText text={explain} /></div> : null}
+    {miss && explain ? <p className="learnSheet">{explain}</p> : null}
     {revealed && <p className="srOnly">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
-    {mission?.phase !== "done" && (showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || waiting} onClick={() => {
+    {(showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (mission?.phase !== "done" && waiting)} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { startTried.current = false; void act("start"); return; }
-      if (revealed) void act("advance");
+      if (revealed) continueReading();
       else void submitCheck();
     }}>{showPassage && !revealed ? "Check" : "Continue"}</button>}
   </section>;
