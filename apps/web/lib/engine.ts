@@ -61,6 +61,8 @@ export type EngineRequest = {
   selectedTopicIds?: string[];
   /** Abort upstream model requests when a client disconnects. */
   signal?: AbortSignal;
+  /** Coach accuracy slider. Omitted keeps the default bar. */
+  correctAt?: number;
 };
 
 export class LearnStageError extends Error {
@@ -131,7 +133,8 @@ export async function* runStudigoEngine(request: EngineRequest): AsyncGenerator<
       directives: args.directives,
       route: args.route,
       userId: args.userId,
-      interaction: args.interaction
+      interaction: args.interaction,
+      correctAt: args.correctAt
     });
     return;
   }

@@ -13,6 +13,7 @@ import { classifyLearnOutcome, learnStreamDone, learnStreamError, type LearnOutc
 import { isUuid } from "@/lib/ids";
 import { surfaceForRequest, admitThread, type ConversationRow } from "@/lib/conversation-surface";
 import { writeStudyTrace } from "@/lib/study-trace";
+import { requiredCoverage, type AccuracySetting } from "@/lib/accuracy-bar";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -30,6 +31,8 @@ type ChatRequest = {
   interactionId?: string;
   /** Optional learner-selected study scope. Server intersects with active room topics. */
   topicIds?: string[];
+  accuracy?: AccuracySetting;
+  firstPass?: boolean;
 };
 
 /**
@@ -49,6 +52,9 @@ async function guardedPost(request: Request) {
     const outcome = classifyLearnOutcome({ documentStatuses: [], failure });
     return Response.json({ error: learnStreamError(outcome).error, outcome }, { status });
   };
+  const accuracy: AccuracySetting | null = body?.accuracy === "high" || body?.accuracy === "low" ? body.accuracy : null;
+  const firstPass = body?.firstPass === true;
+  const correctAt = mode === "coach" && (accuracy !== null || firstPass) ? requiredCoverage(accuracy, firstPass) : undefined;
   const topicIds = Array.isArray(body?.topicIds)
     ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
     : [];
@@ -196,7 +202,7 @@ async function guardedPost(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal, correctAt })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

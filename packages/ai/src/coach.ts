@@ -671,6 +671,8 @@ export function decideOutcome(args: {
   expectedConcepts: ExpectedConcept[];
   evaluated: ConceptEvaluation[];
   score: number;
+  /** Room accuracy slider. Omitted keeps the default bar. */
+  correctAt?: number;
 }): CoachOutcome {
   if (args.intent === "conversation_control") return "control";
   if (
@@ -690,7 +692,8 @@ export function decideOutcome(args: {
   );
   if (criticalContradicted) return "incorrect";
 
-  if (args.score >= CORRECT_THRESHOLD) return "correct";
+  const correctAt = args.correctAt ?? CORRECT_THRESHOLD;
+  if (args.score >= correctAt) return "correct";
   if (args.score >= PARTIAL_THRESHOLD) return "partial";
   return "incorrect";
 }

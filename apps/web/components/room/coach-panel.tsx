@@ -4,7 +4,8 @@ import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPrefe
 import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
 import { StudigoMascot } from "@/components/studigo-mascot";
-import { activeTopicId, leavePendingChallenge, nextTopic } from "@/lib/topic-cursor";
+import { activeTopicId, leavePendingChallenge, nextTopic, previousTopic } from "@/lib/topic-cursor";
+import { closeTeachingStyle } from "@/lib/coach-setup";
 import { isUuid } from "@/lib/ids";
 import { shouldAutoResumeStoredTurn, type RestoredThread } from "@/lib/thread-restore";
 import { COACH_CONTROL_COMMANDS, LEARN_GUIDE_TEXT, learnStarters } from "@/lib/coach-route-selection";
@@ -24,6 +25,9 @@ import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
 import type { LearnOutcome } from "@/lib/learn-outcome";
+import { readAccuracySetting } from "@/lib/accuracy-bar";
+import { mathModelFromPrompt } from "@/lib/math-model";
+import { MathModelView } from "./math-model-view";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean; outcome?: LearnOutcome };
@@ -263,6 +267,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     setSkillPickerOpen(true);
   };
 
+  const closeTeachingStyleSheet = () => {
+    const coachClosed = closeTeachingStyle(coaching.applied);
+    const learnClosed = closeTeachingStyle(coaching.learnApplied);
+    setDraft(coachClosed.draft);
+    setLearnDraft(learnClosed.draft);
+    setPersonalizeOpen(coachClosed.open);
+  };
+
   useLayoutEffect(() => {
     skipAutoScroll.current = lastAutoScrollMode.current !== chatMode;
     if (view === "chat" && threadRef.current) threadRef.current.scrollTop = scrollPositions.current[chatMode];
@@ -316,6 +328,17 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       window.scrollTo(0, scrollY);
     };
   }, [modalOpen]);
+
+  useEffect(() => {
+    if (!personalizeOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      closeTeachingStyleSheet();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [personalizeOpen, coaching.applied, coaching.learnApplied]);
 
   useEffect(() => {
     if (!storedThreads) return;
@@ -524,10 +547,12 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         [{ name: "Current topics", instruction: scopeInstruction }],
         coaching.learnApplied
       );
+      const accuracy = readAccuracySetting(roomId);
+      const firstPass = scopedTopics.length > 0 && scopedTopics.every((topic) => Number(topic.mastery_score) === 0);
       const body = isFixture
         ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds })
+          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds, ...(accuracy ? { accuracy } : {}), ...(firstPass ? { firstPass: true } : {}) })
           : JSON.stringify({ roomId, question: text, surface: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
       if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {
@@ -662,6 +687,29 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     const result = nextTopic({ orderedIds: activeTopicIds, index: cursors[chatMode], knownIds: topics.map((topic) => topic.id) });
     const setStatus = chatMode === "coach" ? setCoachScopeStatus : setLearnScopeStatus;
     if (result.status === "last") { setStatus("This is the last topic."); return; }
+    if (result.status === "choose_more") { setStatus("Choose more topics."); return; }
+    if (result.status === "removed") { setStatus("That topic was removed from this room."); return; }
+    const pendingChallenge = chatMode === "coach" && messages.at(-1)?.role === "assistant";
+    const left = leavePendingChallenge({
+      pending: Boolean(pendingChallenge),
+      confirmed: pendingChallenge ? window.confirm("Leave this challenge unanswered? It will not be graded.") : true,
+      mastery: 0
+    });
+    if (!left.advanced || left.graded) return;
+    const next = { ...cursorRef.current, [chatMode]: result.index };
+    commitCursors(next);
+    if (chatMode === "learn") setLearnView("lesson");
+    if (!await archiveCurrent()) return;
+    const topic = topics.find((item) => item.id === result.topicId);
+    if (!topic || chatMode === "learn") return;
+    void coach(`Coach me through: ${topic.title}. ${topic.objective ?? "Start with a quick diagnostic."}`, "coach", [topic.id]);
+  }
+
+  async function goToPreviousTopic() {
+    if (pendingRef.current[chatMode]) return;
+    const result = previousTopic({ orderedIds: activeTopicIds, index: cursors[chatMode], knownIds: topics.map((topic) => topic.id) });
+    const setStatus = chatMode === "coach" ? setCoachScopeStatus : setLearnScopeStatus;
+    if (result.status === "first") { setStatus("This is the first topic."); return; }
     if (result.status === "choose_more") { setStatus("Choose more topics."); return; }
     if (result.status === "removed") { setStatus("That topic was removed from this room."); return; }
     const pendingChallenge = chatMode === "coach" && messages.at(-1)?.role === "assistant";
@@ -816,7 +864,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           </div>
         </section>
       )}
-      {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={() => setPersonalizeOpen(false)} />}
+      {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={closeTeachingStyleSheet} />}
       <section
         id="coach-personalization"
         className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"}
@@ -828,6 +876,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <div><span className="tinyLabel">{chatMode === "coach" ? "COACH SETUP" : "LEARN SETUP"}</span><strong>{chatMode === "coach" ? "How should Studigo coach you?" : "How should Studigo explain things?"}</strong></div>
           <button type="button" onClick={() => setPersonalizeOpen(false)}>Done</button>
         </div>
+        <button className="ghostButton" type="button" onClick={closeTeachingStyleSheet}>Close</button>
         {chatMode === "coach" ? (
           <>
             <div className="coachExpect" aria-live="polite">
@@ -889,6 +938,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               ? () => { const topic = topics.find((item) => item.id === learnCursorId); if (topic) void loadCursorLesson(topic, "retry"); }
               : undefined}
           onClear={() => void startFresh()}
+          onPrevious={() => void goToPreviousTopic()}
           onNext={() => void goToNextTopic()}
           actionsDisabled={busy || restoring}
           threadRef={threadRef}
@@ -919,9 +969,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           if (message.role === "user") return <div className="studentBubble" key={message.id}>{message.content}</div>;
           const outcomeView = message.outcome && learnOutcomeView(message.outcome);
           const priorQuestion = messages.slice(0, index).reverse().find((turn) => turn.role === "user")?.content;
+          const model = mathModelFromPrompt(message.content) ?? (priorQuestion ? mathModelFromPrompt(priorQuestion) : null);
           return (
             <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}>
               <span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span>
+              {model ? <MathModelView model={model} /> : null}
               <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>
               {message.citations && <div className="lessonCitations"><CitationChips citations={message.citations} /></div>}
               {outcomeView && message.outcome?.kind === "partial_coverage" && <p className="formNotice" role="status">{outcomeView.message}</p>}
