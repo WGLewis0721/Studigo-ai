@@ -48,7 +48,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lesson, setLesson] = useState<{ topicId: string; text: string } | null>(null);
-  const [lessonError, setLessonError] = useState<string | null>(null);
   const [tapped, setTapped] = useState<number | null>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
@@ -114,6 +113,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       const reading = await prepared.json().catch(() => null) as { explanation?: string; citations?: Citation[]; error?: string } | null;
       chunkId = reading?.citations?.find((citation) => citation.chunkId)?.chunkId ?? null;
       if (!prepared.ok || !reading?.explanation?.trim() || !chunkId) throw new Error(reading?.error ?? "A cited passage is not ready for this objective.");
+      setLesson({ topicId, text: reading.explanation });
     }
     const response = await fetch("/api/learn/mission", {
       method: "POST",
@@ -145,7 +145,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
 
   async function loadExplanation(topicId: string) {
     if (lesson?.topicId === topicId || inFlight.current) return;
-    setLessonError(null);
     if (fixture) {
       setLesson({
         topicId,
@@ -158,10 +157,10 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     try {
       const response = await fetch("/api/learn", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ roomId, topicId }) });
       const payload = await response.json().catch(() => null) as { explanation?: string } | null;
-      if (!response.ok || !payload?.explanation?.trim()) throw new Error("Explanation unavailable.");
+      if (!response.ok || !payload?.explanation?.trim()) return;
       setLesson({ topicId, text: payload.explanation });
-    } catch (caught) {
-      setLessonError(caught instanceof Error ? caught.message : "Explanation unavailable.");
+    } catch {
+      /* The marked sentence stays on screen when a second explanation cannot load. */
     }
   }
 
@@ -261,9 +260,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
           })}
         </div>
         {revealed && <p className="srOnly" role="status">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
-        {miss && <div className="learnExplain">
-          {lesson?.topicId === mission?.topic_id ? <RichText text={lesson.text} /> : lessonError ? <p role="status">{lessonError}</p> : <p className="srOnly" role="status">Explanation</p>}
-        </div>}
+        {miss && <div className="learnExplain"><RichText text={lesson?.topicId === mission?.topic_id ? lesson.text : lines.sentences[lines.target] ?? ""} /></div>}
       </>
     ) : !mission && !loading && !selectedTopic ? <p role="status">Choose a topic.</p> : <p className="srOnly" role="status">Opening the passage.</p>}
     {mission?.phase !== "done" && (showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnCheck" type="button" disabled={busy || loading || (showPassage && snapshot?.sourceCurrent !== false && !revealed && tapped === null)} onClick={() => {
