@@ -1048,8 +1048,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         </>}
         </LessonMobileFrame>
         <div className="chatDock">
-          <button type="button" className="chatEraser" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Erase Learn chat" : "Erase Coach chat"} onClick={() => void startFresh()}>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g transform="rotate(-28 12 12)"><rect x="3.4" y="8.2" width="17.2" height="7.6" rx="1.6" fill="#F6B7C6" stroke="#1E2433" strokeWidth="1.35" /><rect x="12.1" y="8.2" width="3.2" height="7.6" fill="#F7F4EF" stroke="#1E2433" strokeWidth="1.15" /></g></svg>
+          <button type="button" className="chatEraser" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Clear Learn chat" : "Clear Coach chat"} onClick={() => void startFresh()}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4.5 7h15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M9.2 7V5.4A1.4 1.4 0 0 1 10.6 4h2.8a1.4 1.4 0 0 1 1.4 1.4V7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M7.2 7.2 8.1 19a1.6 1.6 0 0 0 1.6 1.4h4.6a1.6 1.6 0 0 0 1.6-1.4l.9-11.8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M10.2 10.6v6M13.8 10.6v6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
           </button>
           <StudigoComposer
             variant="chat"
