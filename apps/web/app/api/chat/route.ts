@@ -124,7 +124,7 @@ async function guardedPost(request: Request) {
   }
 
   if (!conversationId) {
-    const { data: created, error } = await supabase
+    const { data: created, error } = await service
       .from("conversations")
       .insert({ room_id: roomId, owner_id: user.id, title: question.slice(0, 120), surface })
       .select("id")
