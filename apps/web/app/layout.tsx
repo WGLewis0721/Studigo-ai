@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Figtree, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./learn-mission.css";
 import { RegisterServiceWorker } from "./register-sw";
 
 // Self-hosted at build time by next/font: no runtime request to Google, no
