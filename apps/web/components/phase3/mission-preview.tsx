@@ -59,7 +59,10 @@ export function MissionPreview() {
 
   return <main className="p3Preview">
     <aside className="p3Sidebar" aria-label="Study Room navigation">
-      <div className="p3Brand"><span>Studigo<small>DESIGN FIXTURE</small></span></div>
+      <div className="p3Brand">
+        <img src="/design/phase3/brand/studigo-wordmark.svg" alt="Studigo" className="p3Brand__logo" />
+        <small>DESIGN FIXTURE</small>
+      </div>
       <div className="p3Sidebar__room"><span className="p3Sidebar__roomIcon"><ModeGlyph name="learn" size={23}/></span><span><small>CURRENT ROOM</small><strong>{fixture.room}</strong></span></div>
       <nav className="p3Sidebar__nav" aria-label="Preview sections"><span className="p3Sidebar__navItem" data-active="true"><ModeGlyph name="learn" size={19}/> Guided Learn</span><span className="p3Sidebar__navItem"><ModeGlyph name="materials" size={19}/> Materials</span><span className="p3Sidebar__navItem"><ModeGlyph name="mastery" size={19}/> Progress</span></nav>
       <div className="p3Sidebar__foot"><span className="p3Sidebar__avatar">SL</span><span>Visual prototype<small>All lesson data is synthetic</small></span></div>
