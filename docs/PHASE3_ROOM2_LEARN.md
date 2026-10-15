@@ -2,6 +2,8 @@
 
 The code is on `main` and is off for every real room. `PHASE3_ROOM2_ROOM_IDS` is a server-side comma-separated allowlist. Until a room is listed and migration `20261015010000_learn_mission_cursor.sql` is applied, Learn stays the current lesson. The synthetic fixture (`roomId === "fixture"`, `/dev/study`) shows the steps inside the locked Coach frame: the strip, Clear/Previous/Next, the topic column, and the composer do not move. Steps on the fixture are not saved.
 
+Embedded Postgres, running every migration in this repo, proved one owned room can start, replay the same request, advance to Show, pause, and read that same step back. A second account is denied. Topic mastery and quiz-attempt counts do not change. That is not a hosted Supabase apply. Do not set `PHASE3_ROOM2_ROOM_IDS` until this migration is applied there.
+
 This is not Room 2 acceptance. Do not point Home's Start action at it. A self-report is not evidence of knowledge.
 
 Start calls the existing guarded `/api/learn` lesson for the selected active topic. It requires an actual cited chunk and commits a reading cursor only if that exact chunk is still owned, eligible for the topic, on a readable page, and at the document's current revision. The cursor moves Brief → Show → Try → Check → Done through an owner-scoped, revision-checked database transaction and idempotent request receipt. Show displays the generated explanation and the pinned source excerpt; reload restores the exact step, then may regenerate the explanation. Try is explicitly a **self-reflection**, not an answer evaluation. No mission action writes mastery, attempts, or readiness. A replaced/denied source cannot advance or replay its old excerpt; Restart requires a fresh cited Learn lesson.
