@@ -1509,16 +1509,16 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .coachChat .coachEmpty p { font-size: .92rem; }
 .coachChat .studentBubble {
   align-self: flex-end; max-width: 78%; margin: 6px 0 0; padding: 8px 14px; border: 0; border-radius: 19px 19px 5px 19px;
-  font-size: 1rem; line-height: 1.32; letter-spacing: -.01em;
+  font-size: 17px; font-weight: 400; line-height: 1.5; letter-spacing: 0;
   color: var(--chat-on); background-color: var(--chat-key); background-image: none; box-shadow: none;
 }
 .coachChat .answerBubble {
   align-self: flex-start; width: auto; max-width: 82%; margin: 6px 0 0; padding: 8px 14px 9px;
   border: 0; border-radius: 19px 19px 19px 5px; background: #e9e9eb; box-shadow: none;
 }
-.coachChat .answerKicker { display: flex; align-items: center; gap: 6px; font-size: .58rem; letter-spacing: .08em; color: #5f6675; }
+.coachChat .answerKicker { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; letter-spacing: .01em; line-height: 1.3; color: #5f6675; }
 .coachChat .answerKicker .studigoMascot { width: 18px !important; height: 18px !important; }
-.coachChat .answerText, .coachChat .answerBubble p { margin: 4px 0 2px; font-size: 1rem; line-height: 1.34; letter-spacing: -.01em; color: var(--ink); }
+.coachChat .answerText, .coachChat .answerBubble p, .coachChat .lessonText { margin: 4px 0 2px; font-family: var(--sans); font-size: 17px; font-weight: 400; line-height: 1.5; letter-spacing: 0; color: var(--ink); }
 .coachChat .answerBubble[data-state="insufficient"] { background: #fdeede; }
 .chatChips { display: flex; gap: 7px; overflow-x: auto; padding: 6px 12px 4px; scrollbar-width: none; }
 .chatChips::-webkit-scrollbar { display: none; }
@@ -1536,7 +1536,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .chatComposer[data-accent="learn"] input { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in oklab, var(--teal) 22%, transparent); }
 .chatComposer input {
   width: 100%; min-height: 38px; padding: 0 46px 0 16px; border: 1px solid rgba(20, 27, 45, .2); border-radius: 20px; outline: 0;
-  background: var(--white); color: var(--ink); font: inherit; font-size: 1rem; box-sizing: border-box;
+  background: var(--white); color: var(--ink); font: inherit; font-size: 17px; box-sizing: border-box;
 }
 .chatComposer input::placeholder { color: #9aa0ad; }
 .chatComposer input:focus-visible { border-color: rgba(20, 27, 45, .35); }
@@ -1551,7 +1551,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 700px) {
   /* No window inside the phone screen: the conversation fills the page. */
   .coachChat { height: min(72vh, 600px); min-height: 380px; margin-inline: -14px; border-radius: 0; box-shadow: 0 -1px 0 var(--hairline-strong), 0 1px 0 var(--hairline-strong); }
-  .chatComposer input { font-size: 16px; }
   /* Sheets sit above the bottom tab bar instead of sliding under it. */
   .coachChat .coachSettings.mobileOpen,
   .coachChat .coachSkillSheet {
@@ -1602,8 +1601,22 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .lessonText { max-width: 64ch; font-size: 1.02rem; line-height: 1.6; color: var(--ink); }
 .lessonText ul, .lessonText ol { gap: .45em; line-height: 1.5; }
-.coachChat .answerText .richText p { margin: 0 0 .5em; }
-.coachChat .answerText .richText h4 { font-size: .72rem; }
+.coachChat .answerText .richText p,
+.coachChat .answerText .richText li { margin-bottom: .75em; font-size: 17px; line-height: 1.5; letter-spacing: 0; }
+.coachChat .answerText .richText li > ul,
+.coachChat .answerText .richText li > ol { font-size: 17px; line-height: 1.5; color: var(--ink); }
+.coachChat .answerText .richText h1,
+.coachChat .answerText .richText h2,
+.coachChat .answerText .richText h3,
+.coachChat .answerText .richText h4 {
+  font-family: var(--sans); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink); border: 0; padding: 0;
+}
+.coachChat .answerText .richText h1 { font-size: 24px; line-height: 1.25; }
+.coachChat .answerText .richText h2 { font-size: 20px; line-height: 1.3; }
+.coachChat .answerText .richText h3,
+.coachChat .answerText .richText h4 { font-size: 17px; line-height: 1.4; }
+.coachChat .answerText .richText code { font-size: 14px; }
+.coachChat .answerText .richCite { font-size: 13px; }
 .coachChat .answerBubble .answerText + .sourceStack { margin-top: 12px; }
 @media (min-width: 701px) {
   .coachMode { gap: 16px; }
@@ -3361,12 +3374,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   height: var(--strip-h);
   min-height: 0;
   max-height: var(--strip-h);
-}
-.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .lessonText,
-.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .answerText,
-.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .answerBubble p {
-  font-size: 1.16rem;
-  transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
 }
 .learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
 .learnMissionHead h2 { margin: 4px 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.15; }
