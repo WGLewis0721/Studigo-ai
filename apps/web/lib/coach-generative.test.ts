@@ -704,7 +704,7 @@ test("support: repeated help gives a hint, a stronger hint, then the answer", as
   assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 3);
   const revealed = await run("Give me a hint");
   assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 5);
-  assert.equal((saved.at(-1) as Pending).question, pending(initialSpec).question);
+  assert.equal((saved.at(-1) as Pending).question, "What happens when two north poles meet?");
   assert.match(revealed.done.answer.text, /Same ends push apart/);
   assert.deepEqual(kinds, ["hint", "hint", "worked_example"]);
 });

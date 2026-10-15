@@ -104,6 +104,9 @@ type SheetChapter = {
   title?: string;
   facts?: Array<{ text: string } | string>;
   terms?: Array<{ term: string; definition: string }>;
+  examples?: Array<{ text?: string }>;
+  practice?: Array<{ prompt?: string }>;
+  answers?: Array<{ text?: string }>;
 };
 
 type SheetSection = { title: string; bullets: string[] };
@@ -181,6 +184,9 @@ function layoutFromChapters(title: string, chapters: SheetChapter[]): SheetPage[
   const vocabulary: SheetVocab[] = [];
   for (const chapter of chapters) {
     const facts = (chapter.facts ?? []).map(factText).filter(Boolean);
+    const examples = (chapter.examples ?? []).map((item) => item.text?.trim() ?? "").filter(Boolean);
+    const prompts = (chapter.practice ?? []).map((item) => item.prompt?.trim() ?? "").filter(Boolean);
+    const answers = (chapter.answers ?? []).map((item) => item.text?.trim() ?? "").filter(Boolean);
     const terms = (chapter.terms ?? []).flatMap((term) => {
       const name = term.term?.trim() ?? "";
       const definition = term.definition?.trim() ?? "";
@@ -188,11 +194,12 @@ function layoutFromChapters(title: string, chapters: SheetChapter[]): SheetPage[
       return [{ term: name, definition }];
     });
     const corpus = [...facts, ...terms.flatMap((term) => [term.term, term.definition])].join("\n");
-    const bullets = facts.filter((fact) => contained(corpus, fact));
+    const bullets = [...facts, ...examples, ...prompts].filter((line) => contained([...facts, ...examples, ...prompts].join("\n"), line));
     const chapterTerms = terms.filter((term) => contained(corpus, term.term) && contained(corpus, term.definition));
     const sectionTitle = chapter.title?.trim() || title;
     if (chapter.title?.trim() || bullets.length) sections.push({ title: sectionTitle, bullets });
     vocabulary.push(...chapterTerms);
+    if (answers.length) sections.push({ title: "Answer key", bullets: answers });
   }
   return [{ sections, vocabulary }];
 }
