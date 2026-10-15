@@ -32,8 +32,8 @@ These are visual references, not golden assertions about server-side behavior. P
 ## Gate before redesign agents
 
 - [ ] Golden PR CI / required checks green.
-- [ ] Golden preview deployment READY and public routes render.
-- [ ] Golden PR merged; production deployment READY at resulting SHA.
+- [ ] Golden Vercel status success. A documentation-only ignored build may have a CANCELED deployment object; confirm the ignored-build-step reason rather than treating it as a READY preview.
+- [ ] Golden PR merged; existing production deployment remains READY at application baseline SHA `62715fd`, with the canonical alias and public routes rendering. The documentation-only merge may intentionally skip a new deployment.
 - [ ] Rollback branch created at and read back as exact golden SHA.
 - [ ] No application-code delta in golden PR.
 - [ ] Captures and this rollback note present in the merged tree.
