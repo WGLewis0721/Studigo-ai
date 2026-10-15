@@ -28,10 +28,9 @@ export type StudyGuidePdfInput = {
 export type GuidePageFormat = "letter" | "a4";
 
 const MARGIN = 54;
-const BODY = 12.5;
-const BODY_LEADING = 19;
-const HEADING = 22;
 const TITLE = 24;
+const TEAL = rgb(0.05, 0.35, 0.38);
+const NEAR_BLACK = rgb(0.1, 0.1, 0.1);
 
 export function formatGuideDate(value: string | null | undefined): string | null {
   if (!value || /invalid date/i.test(value)) return null;
@@ -101,6 +100,117 @@ export function guideDownloadDecision(input: { room: { id: string } | null; edit
   return { status: 200 as const, pdf: true as const, edition: input.edition };
 }
 
+type SheetChapter = {
+  title?: string;
+  facts?: Array<{ text: string } | string>;
+  terms?: Array<{ term: string; definition: string }>;
+};
+
+type SheetSection = { title: string; bullets: string[] };
+type SheetVocab = { term: string; definition: string };
+type SheetPage = { sections: SheetSection[]; vocabulary: SheetVocab[] };
+
+const CLAUSE = /\b(?:is|are|was|were|am|be|been|being|has|have|had|do|does|did|can|could|will|would|shall|should|may|might|must|make|makes|made|enforce|enforces|enforced|review|reviews|reviewed|write|writes|wrote|help|helps|helped|include|includes|included|mean|means|meant|become|becomes|became|need|needs|needed|use|uses|used|show|shows|showed|keep|keeps|kept|give|gives|gave|take|takes|took|say|says|said|work|works|worked|serve|serves|served|represent|represents|represented|choose|chooses|chose|vote|votes|voted|pass|passes|passed|sign|signs|signed|interpret|interprets|interpreted|decide|decides|decided|protect|protects|protected|define|defines|defined|refer|refers|referred|consist|consists|consisted|contain|contains|contained|provide|provides|provided|allow|allows|allowed|require|requires|required|follow|follows|followed|describe|describes|described|explain|explains|explained|create|creates|created|control|controls|controlled|lead|leads|led|hold|holds|held|form|forms|formed|cover|covers|covered|let|lets|get|gets|got|come|comes|came|go|goes|went|know|knows|knew|think|thinks|thought|cause|causes|caused|produce|produces|produced|equal|equals|equaled|call|calls|called|live|lives|lived|elect|elects|elected|carry|carries|carried|count|counts|counted)\b/i;
+
+/** A clause is still a sentence when the worksheet left off the period. */
+function isSentence(line: string): boolean {
+  return /[.!?]/.test(line) || CLAUSE.test(line);
+}
+
+function vocabularyFromLine(line: string): SheetVocab | null {
+  const candidates = [" — ", " - "]
+    .map((sep) => ({ sep, index: line.indexOf(sep) }))
+    .filter((item) => item.index >= 0)
+    .sort((a, b) => a.index - b.index);
+  const found = candidates[0];
+  if (!found) return null;
+  const term = line.slice(0, found.index).trim();
+  const definition = line.slice(found.index + found.sep.length).trim();
+  if (!term || !definition || term.length >= 40) return null;
+  if (!line.includes(term) || !line.includes(definition)) return null;
+  return { term, definition };
+}
+
+function startsSection(line: string): boolean {
+  if (line.length >= 60) return false;
+  if (line.includes(" — ") || line.includes(" - ")) return false;
+  if (isSentence(line)) return false;
+  return true;
+}
+
+function factText(fact: { text: string } | string): string {
+  const text = typeof fact === "string" ? fact : fact?.text;
+  return typeof text === "string" ? text.trim() : "";
+}
+
+function contained(source: string, text: string): boolean {
+  return text.length > 0 && source.includes(text);
+}
+
+function layoutFromLines(title: string, lines: string[]): SheetPage[] {
+  const sourceLines = lines.map((line) => line.trim()).filter(Boolean);
+  const source = sourceLines.join("\n");
+  const sections: SheetSection[] = [];
+  const vocabulary: SheetVocab[] = [];
+  let current: SheetSection | null = null;
+
+  for (const line of sourceLines) {
+    const vocab = vocabularyFromLine(line);
+    if (vocab) {
+      if (contained(source, vocab.term) && contained(source, vocab.definition)) vocabulary.push(vocab);
+      continue;
+    }
+    if (startsSection(line)) {
+      current = { title: line, bullets: [] };
+      sections.push(current);
+      continue;
+    }
+    if (!current) {
+      current = { title, bullets: [] };
+      sections.push(current);
+    }
+    if (contained(source, line)) current.bullets.push(line);
+  }
+
+  const kept = sections.filter((section) => section.bullets.length > 0 || contained(source, section.title));
+  return [{ sections: kept, vocabulary: vocabulary.filter((item) => contained(source, item.term) && contained(source, item.definition)) }];
+}
+
+function layoutFromChapters(title: string, chapters: SheetChapter[]): SheetPage[] {
+  const sections: SheetSection[] = [];
+  const vocabulary: SheetVocab[] = [];
+  for (const chapter of chapters) {
+    const facts = (chapter.facts ?? []).map(factText).filter(Boolean);
+    const terms = (chapter.terms ?? []).flatMap((term) => {
+      const name = term.term?.trim() ?? "";
+      const definition = term.definition?.trim() ?? "";
+      if (!name || !definition) return [];
+      return [{ term: name, definition }];
+    });
+    const corpus = [...facts, ...terms.flatMap((term) => [term.term, term.definition])].join("\n");
+    const bullets = facts.filter((fact) => contained(corpus, fact));
+    const chapterTerms = terms.filter((term) => contained(corpus, term.term) && contained(corpus, term.definition));
+    const sectionTitle = chapter.title?.trim() || title;
+    if (chapter.title?.trim() || bullets.length) sections.push({ title: sectionTitle, bullets });
+    vocabulary.push(...chapterTerms);
+  }
+  return [{ sections, vocabulary }];
+}
+
+/** Pure study-sheet layout. Every bullet and vocabulary string is copied from the source. */
+export function layoutStudySheet(input: {
+  title: string;
+  subject?: string | null;
+  lines: string[];
+  chapters?: SheetChapter[];
+}): { header: string; pages: SheetPage[] } {
+  const header = `${(input.subject?.trim() || "STUDY").toUpperCase()} / STUDY MATERIALS`;
+  const pages = input.chapters?.length
+    ? layoutFromChapters(input.title, input.chapters)
+    : layoutFromLines(input.title, input.lines ?? []);
+  return { header, pages: pages.length ? pages : [{ sections: [], vocabulary: [] }] };
+}
+
 function pageBox(format: GuidePageFormat) {
   return format === "a4" ? { width: 595.28, height: 841.89 } : { width: 612, height: 792 };
 }
@@ -129,26 +239,55 @@ type Draw = {
   width: number;
   height: number;
   pageNumber: number;
+  header: string;
 };
 
-function newPage(draw: Draw) {
-  draw.page.drawText(String(draw.pageNumber), {
-    x: draw.width / 2 - 6,
+const BOTTOM = 56;
+
+function stampPageNumber(draw: Draw) {
+  const label = `Page ${draw.pageNumber}`;
+  const width = draw.font.widthOfTextAtSize(label, 10);
+  draw.page.drawText(label, {
+    x: (draw.width - width) / 2,
     y: 28,
     size: 10,
     font: draw.font,
-    color: rgb(0.2, 0.2, 0.2)
+    color: rgb(0.25, 0.25, 0.25)
   });
+}
+
+function paintRunningHeader(draw: Draw) {
+  const baseline = draw.height - 40;
+  draw.page.drawText(draw.header, {
+    x: MARGIN,
+    y: baseline,
+    size: 9,
+    font: draw.font,
+    color: rgb(0.2, 0.27, 0.29)
+  });
+  draw.page.drawLine({
+    start: { x: MARGIN, y: baseline - 8 },
+    end: { x: draw.width - MARGIN, y: baseline - 8 },
+    thickness: 0.8,
+    color: TEAL
+  });
+  draw.y = baseline - 28;
+}
+
+function nextPage(draw: Draw) {
+  stampPageNumber(draw);
   draw.page = draw.doc.addPage([draw.width, draw.height]);
   draw.pageNumber += 1;
-  draw.y = draw.height - MARGIN;
+  paintRunningHeader(draw);
 }
 
 function ensure(draw: Draw, needed: number) {
-  if (draw.y - needed < MARGIN) newPage(draw);
+  if (draw.y - needed < BOTTOM) nextPage(draw);
 }
 
-function writeLines(draw: Draw, lines: string[], size: number, leading: number, indent = 0) {
+function drawWrapped(draw: Draw, text: string, size: number, leading: number, color: ReturnType<typeof rgb>, indent = 0) {
+  const width = Math.max(draw.width - MARGIN * 2 - indent, 40);
+  const lines = wrap(draw.font, text, size, width);
   for (const line of lines) {
     ensure(draw, leading);
     draw.page.drawText(line, {
@@ -156,79 +295,81 @@ function writeLines(draw: Draw, lines: string[], size: number, leading: number, 
       y: draw.y - size,
       size,
       font: draw.font,
-      color: rgb(0, 0, 0)
+      color
     });
     draw.y -= leading;
   }
 }
 
-function writeParagraph(draw: Draw, text: string, size = BODY, leading = BODY_LEADING, indent = 0) {
-  const width = draw.width - MARGIN * 2 - indent;
-  writeLines(draw, wrap(draw.font, text, size, width), size, leading, indent);
-}
-
-function writeTable(draw: Draw, rows: string[][]) {
-  const columns = Math.max(...rows.map((row) => row.length), 1);
-  const tableWidth = draw.width - MARGIN * 2;
-  const columnWidth = tableWidth / columns;
-  for (const row of rows) {
-    const wrapped = row.map((cell) => wrap(draw.font, cell, 11, columnWidth - 8));
-    const height = Math.max(...wrapped.map((lines) => lines.length), 1) * 16 + 8;
-    ensure(draw, height);
-    const top = draw.y;
-    draw.page.drawRectangle({
-      x: MARGIN,
-      y: top - height,
-      width: tableWidth,
-      height,
-      borderColor: rgb(0.35, 0.35, 0.35),
-      borderWidth: 0.6,
-      color: rgb(1, 1, 1)
-    });
-    wrapped.forEach((lines, index) => {
-      lines.forEach((line, lineIndex) => {
-        draw.page.drawText(line, {
-          x: MARGIN + columnWidth * index + 4,
-          y: top - 16 - lineIndex * 16,
-          size: 11,
+function drawVocabulary(draw: Draw, term: string, definition: string) {
+  const size = 12;
+  const leading = 16;
+  const gap = 16;
+  const contentWidth = draw.width - MARGIN * 2;
+  const termWidth = draw.font.widthOfTextAtSize(term, size);
+  if (termWidth + gap + 100 <= contentWidth) {
+    const defWidth = contentWidth - termWidth - gap;
+    const defLines = wrap(draw.font, definition, size, defWidth);
+    for (let index = 0; index < defLines.length; index += 1) {
+      ensure(draw, leading);
+      if (index === 0) {
+        draw.page.drawText(term, {
+          x: MARGIN,
+          y: draw.y - size,
+          size,
           font: draw.font,
-          color: rgb(0, 0, 0)
+          color: TEAL
         });
+      }
+      draw.page.drawText(defLines[index] ?? "", {
+        x: MARGIN + termWidth + gap,
+        y: draw.y - size,
+        size,
+        font: draw.font,
+        color: NEAR_BLACK
       });
-    });
-    draw.y = top - height - 8;
+      draw.y -= leading;
+    }
+  } else {
+    drawWrapped(draw, term, size, leading, TEAL);
+    drawWrapped(draw, definition, size, leading, NEAR_BLACK, 12);
   }
+  draw.y -= 3;
 }
 
-function blocksFromEdition(content: StudyGuideContent, meta: { title: string; detail: string | null }) {
-  const blocks: Array<{ kind: "title" | "h2" | "body" | "term" | "example" | "table" | "source" | "break"; text: string; extra?: string }> = [];
-  blocks.push({ kind: "title", text: meta.title });
-  if (meta.detail) blocks.push({ kind: "body", text: meta.detail });
-  for (const chapter of content.chapters) {
-    blocks.push({ kind: "h2", text: chapter.title });
-    if (chapter.objective && chapter.objective !== chapter.title) blocks.push({ kind: "body", text: chapter.objective });
-    for (const fact of chapter.facts) {
-      if (fact.text.includes("|")) {
-        blocks.push({ kind: "table", text: fact.text });
-      } else {
-        blocks.push({ kind: "body", text: fact.text });
-      }
-      const source = fact.evidence.map((ref) => `p. ${ref.pageNumber}`).join(", ");
-      if (source) blocks.push({ kind: "source", text: `Source ${source}` });
+function drawSectionTitle(draw: Draw, text: string) {
+  ensure(draw, 36);
+  draw.y -= 8;
+  drawWrapped(draw, text, 16, 21, rgb(0.08, 0.12, 0.14));
+  draw.y -= 2;
+}
+
+function drawBullet(draw: Draw, text: string) {
+  const size = 12;
+  const leading = 16;
+  const indent = 16;
+  const rows = text.split(/\n/).map((row) => row.trim()).filter(Boolean);
+  const lines = (rows.length ? rows : [text]).flatMap((row) => wrap(draw.font, row, size, Math.max(draw.width - MARGIN * 2 - indent, 40)));
+  lines.forEach((line, index) => {
+    ensure(draw, leading);
+    if (index === 0) {
+      draw.page.drawText("•", {
+        x: MARGIN,
+        y: draw.y - size,
+        size,
+        font: draw.font,
+        color: TEAL
+      });
     }
-    for (const term of chapter.terms) blocks.push({ kind: "term", text: term.term, extra: term.definition });
-    for (const example of chapter.examples) blocks.push({ kind: "example", text: example.text });
-    if (chapter.practice.length) {
-      blocks.push({ kind: "h2", text: "Practice" });
-      chapter.practice.forEach((question, index) => blocks.push({ kind: "body", text: `${index + 1}. ${question.prompt}` }));
-    }
-  }
-  blocks.push({ kind: "break", text: "" });
-  blocks.push({ kind: "title", text: "Answer key" });
-  for (const chapter of content.chapters) {
-    chapter.answers.forEach((answer, index) => blocks.push({ kind: "body", text: `${index + 1}. ${answer.text}` }));
-  }
-  return blocks;
+    draw.page.drawText(line, {
+      x: MARGIN + indent,
+      y: draw.y - size,
+      size,
+      font: draw.font,
+      color: NEAR_BLACK
+    });
+    draw.y -= leading;
+  });
 }
 
 export async function buildEditionPdf(content: StudyGuideContent, options: {
@@ -237,44 +378,43 @@ export async function buildEditionPdf(content: StudyGuideContent, options: {
   courseName?: string | null;
   testDate?: string | null;
   page?: GuidePageFormat;
-} ): Promise<Uint8Array> {
+}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const font = await doc.embedFont(readFileSync(new URL("./fonts/DejaVuSans.ttf", import.meta.url)), { subset: true });
   const box = pageBox(options.page ?? "letter");
   const page = doc.addPage([box.width, box.height]);
-  const draw: Draw = { doc, font, page, y: box.height - MARGIN, width: box.width, height: box.height, pageNumber: 1 };
-  const date = formatGuideDate(options.testDate);
-  const detail = [options.subject, options.courseName, date ? `Test date: ${date}` : null, `Level ${content.level}`].filter(Boolean).join(" · ");
-  for (const block of blocksFromEdition(content, { title: options.title, detail: detail || null })) {
-    if (block.kind === "break") {
-      newPage(draw);
-      continue;
-    }
-    if (block.kind === "title") {
-      writeParagraph(draw, block.text, TITLE, 32);
-      draw.y -= 6;
-    } else if (block.kind === "h2") {
-      draw.y -= 8;
-      writeParagraph(draw, block.text, HEADING, 30);
-    } else if (block.kind === "term") {
-      writeParagraph(draw, block.text, 13, 18);
-      writeParagraph(draw, block.extra ?? "", BODY, BODY_LEADING, 12);
-    } else if (block.kind === "example") {
-      writeParagraph(draw, block.text, BODY, BODY_LEADING, 12);
-    } else if (block.kind === "table") {
-      writeTable(draw, block.text.split("\n").map((row) => row.split("|").map((cell) => cell.trim())).filter((row) => row.some(Boolean)));
-    } else if (block.kind === "source") {
-      writeParagraph(draw, block.text, 10, 14);
-      draw.y -= 6;
-    } else {
-      writeParagraph(draw, block.text, BODY, BODY_LEADING);
-      draw.y -= 4;
-    }
-  }
-  draw.page.drawText(String(draw.pageNumber), {
-    x: draw.width / 2 - 6, y: 28, size: 10, font, color: rgb(0.2, 0.2, 0.2)
+  const sheet = layoutStudySheet({
+    title: options.title,
+    subject: options.subject,
+    lines: [],
+    chapters: content.chapters
   });
+  const draw: Draw = {
+    doc,
+    font,
+    page,
+    y: box.height - MARGIN,
+    width: box.width,
+    height: box.height,
+    pageNumber: 1,
+    header: sheet.header
+  };
+  paintRunningHeader(draw);
+  if (options.title.trim()) {
+    drawWrapped(draw, options.title, TITLE, 30, rgb(0.07, 0.09, 0.1));
+    draw.y -= 6;
+  }
+  sheet.pages.forEach((sheetPage, index) => {
+    if (index > 0) nextPage(draw);
+    for (const item of sheetPage.vocabulary) drawVocabulary(draw, item.term, item.definition);
+    if (sheetPage.vocabulary.length && sheetPage.sections.length) draw.y -= 6;
+    for (const section of sheetPage.sections) {
+      if (section.title.trim()) drawSectionTitle(draw, section.title);
+      for (const bullet of section.bullets) drawBullet(draw, bullet);
+    }
+  });
+  stampPageNumber(draw);
   doc.setTitle(options.title);
   return doc.save();
 }

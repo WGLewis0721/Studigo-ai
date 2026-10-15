@@ -8,6 +8,8 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { RichText } from "./rich-text";
 import { learnOutcomeView, readLearnOutcome, type LearnOutcomeView } from "@/lib/learn-outcome-client";
 import { requestQuietAcknowledgement, type QuietAcknowledgement, type QuietPhase } from "@/lib/quiet-feedback";
+import { mathModelFromPrompt } from "@/lib/math-model";
+import { MathModelView } from "./math-model-view";
 
 /** One formative back-and-forth about a topic. Never scored. */
 type Check = {
@@ -44,7 +46,7 @@ export function keepIndependentSurfaces<L, O, C>(current: LearnSurfaces<L, O, C>
 
 /**
  * Phone lesson chrome: the cursor label, the reading, wrapping citations, and
- * Clear / Next. Citations and actions are siblings of the scroller so a full
+ * Clear / Previous / Next. Citations and actions are siblings of the scroller so a full
  * thread cannot clip them.
  */
 export function LessonMobileFrame({
@@ -56,6 +58,7 @@ export function LessonMobileFrame({
   status,
   onRetry,
   onClear,
+  onPrevious,
   onNext,
   actionsDisabled,
   threadRef,
@@ -70,6 +73,7 @@ export function LessonMobileFrame({
   status?: string | null;
   onRetry?: () => void;
   onClear: () => void;
+  onPrevious?: () => void;
   onNext: () => void;
   actionsDisabled?: boolean;
   threadRef: Ref<HTMLDivElement>;
@@ -89,6 +93,7 @@ export function LessonMobileFrame({
       <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={onScroll}>
         <div className="lessonReading" data-learn-surface={mode === "learn" ? "lesson" : "practice"} aria-label={`${modeName}, ${topicTitle}`}>
           {status ? <p className="lessonStatus" role="status">{status}</p> : null}
+          {text && mathModelFromPrompt(text) ? <MathModelView model={mathModelFromPrompt(text)!} /> : null}
           {text ? <RichText className="lessonText" text={text} /> : null}
           {onRetry ? <button className="ghostButton" type="button" onClick={onRetry} disabled={actionsDisabled}>Try again</button> : null}
         </div>
@@ -102,6 +107,7 @@ export function LessonMobileFrame({
       ) : null}
       <div className="lessonActions" data-lesson-actions role="group" aria-label={`${modeName} actions for ${topicTitle}`}>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Clear ${modeName} for ${topicTitle}`} onClick={onClear}>Clear</button>
+        <button className="ghostButton" type="button" disabled={actionsDisabled || !onPrevious} aria-label={`Previous ${nextName} for ${topicTitle}`} onClick={onPrevious}>Previous</button>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Next ${nextName} for ${topicTitle}`} onClick={onNext}>Next</button>
       </div>
     </>

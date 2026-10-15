@@ -3,8 +3,19 @@
 import "./app-home.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { createFirstRoomAction } from "@/lib/actions/rooms";
+import {
+  FIRST_RUN_STEPS,
+  SAMPLE,
+  SAMPLE_LABEL,
+  canLeaveMaterial,
+  nextFirstRunStep,
+  resumeFirstRun,
+  roomTitleFromGuess,
+  type FirstRunStep,
+  type SampleGoal
+} from "@/lib/first-run";
 import type { HomeNext } from "@/lib/home-next";
 import { ROOM_THEMES, saveRoomTheme, useRoomTheme, type RoomTheme } from "@/lib/room-theme";
 import { LEAP_KEY } from "@/components/companion/companion";
@@ -67,33 +78,67 @@ export function HomeHero({ next }: { next: HomeNext }) {
   );
 }
 
-const STEPS = 3;
+const FIRST_RUN_KEY = "studigo-first-run";
+
+const GOAL_LABEL: Record<SampleGoal, string> = {
+  understand: "Understand",
+  prepare: "Prepare for a test",
+  practice: "Practice"
+};
+
+function objectiveFor(goal: SampleGoal, topicTitle: string) {
+  const name = topicTitle.trim() || "this topic";
+  if (goal === "prepare") return `Prepare for a test on ${name}.`;
+  if (goal === "practice") return `Practice ${name}.`;
+  return `Understand ${name}.`;
+}
 
 /**
- * Home, with no rooms yet: Studigo walks a new learner through their first
- * Study Room. It asks for a name and, if they know it, a test date. Nothing else.
+ * Home, with no rooms yet. Order: sample or own file, correct subject and topic,
+ * pick a goal, answer one question, then optionally name and color the room.
  * `fixture` runs the flow without creating anything (local preview only).
  */
 export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const router = useRouter();
   const stage = useRef<StageHandle>(null);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<FirstRunStep>("material");
+  const [subject, setSubject] = useState<string>(SAMPLE.subject);
+  const [topic, setTopic] = useState<string>(SAMPLE.topic);
+  const [goal, setGoal] = useState<SampleGoal>(SAMPLE.goalChoices[0]);
+  const [response, setResponse] = useState("");
   const [title, setTitle] = useState("");
-  const [testDate, setTestDate] = useState("");
   const [theme, setTheme] = useState<RoomTheme>("teal");
-  const [did, setDid] = useState({ poke: false, pet: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const stepIndex = FIRST_RUN_STEPS.indexOf(step);
 
   useEffect(() => { stage.current?.react("wave", 1700); }, []);
-  // Each step starts at its heading, for keyboard and screen-reader users.
-  useEffect(() => { if (step > 1) headingRef.current?.focus({ preventScroll: true }); }, [step]);
+  useEffect(() => {
+    setStep(resumeFirstRun(window.localStorage.getItem(FIRST_RUN_KEY)));
+  }, []);
+  // Each later step starts at its heading, for keyboard and screen-reader users.
+  useEffect(() => { if (step !== "material") headingRef.current?.focus({ preventScroll: true }); }, [step]);
 
-  function next(event: FormEvent) {
-    event.preventDefault();
-    if (step === 1 && !title.trim()) return;
-    setStep((value) => Math.min(STEPS, value + 1));
+  function go(next: FirstRunStep) {
+    setStep(next);
+    try { window.localStorage.setItem(FIRST_RUN_KEY, next); } catch { /* storage is optional */ }
+  }
+  function back() {
+    if (stepIndex <= 0) return;
+    go(FIRST_RUN_STEPS[stepIndex - 1]);
+  }
+  function chooseSample() {
+    setSubject(SAMPLE.subject);
+    setTopic(SAMPLE.topic);
+    setGoal(SAMPLE.goalChoices[0]);
+    const next = nextFirstRunStep("material");
+    if (next) go(next);
+  }
+  function chooseOwn() {
+    if (!canLeaveMaterial("")) return;
+    const next = nextFirstRunStep("material");
+    if (next) go(next);
   }
   const swatches = useRef<Array<HTMLButtonElement | null>>([]);
   function pickTheme(id: RoomTheme) {
@@ -116,10 +161,13 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     if (fixture) { setError("Preview only: this would create the room and open it."); setBusy(false); return; }
     const data = new FormData();
     data.set("title", title.trim());
-    if (testDate) data.set("testDate", testDate);
+    data.set("subject", subject.trim());
+    data.set("topic", topic.trim());
+    data.set("objective", objectiveFor(goal, topic));
     try {
       const result = await createFirstRoomAction(data);
       if (!result.roomId) { setError(result.error ?? "The room could not be created. Try again."); setBusy(false); return; }
+      try { window.localStorage.removeItem(FIRST_RUN_KEY); } catch { /* storage is optional */ }
       saveRoomTheme(result.roomId, theme);
       announceLeap(button);
       void stage.current?.leapTo(button.getBoundingClientRect());
@@ -129,46 +177,93 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
       setBusy(false);
     }
   }
+  const previewTitle = title.trim() || roomTitleFromGuess(subject, topic);
 
   return (
     <section className="firstRoom" data-tone={theme} aria-label="Set up your first Study Room">
       <div className="stageScreen firstRoomStage">
-        <StudigoStage ref={stage} size={210} onTouch={(kind) => setDid((value) => ({ ...value, [kind]: true }))} />
+        <StudigoStage ref={stage} size={210} />
         <Sill />
       </div>
 
-      <form className="firstRoomBody" onSubmit={next}>
+      <form className="firstRoomBody" onSubmit={(event) => event.preventDefault()}>
         <div className="firstRoomBar">
-          {step > 1
-            ? <button type="button" className="firstRoomBack" onClick={() => setStep((value) => value - 1)} disabled={busy}><span aria-hidden="true">‹</span> Back</button>
+          {stepIndex > 0
+            ? <button type="button" className="firstRoomBack" onClick={back} disabled={busy}><span aria-hidden="true">‹</span> Back</button>
             : <span />}
-          <span className="firstRoomDots" role="img" aria-label={`Step ${step} of ${STEPS}`}>
-            {Array.from({ length: STEPS }, (_, index) => <i key={index} data-on={index + 1 === step || undefined} data-past={index + 1 < step || undefined} />)}
+          <span className="firstRoomDots" role="img" aria-label={`Step ${stepIndex + 1} of ${FIRST_RUN_STEPS.length}`}>
+            {FIRST_RUN_STEPS.map((item, index) => <i key={item} data-on={index === stepIndex || undefined} data-past={index < stepIndex || undefined} />)}
           </span>
         </div>
 
-        {step === 1 && (
+        {step === "material" && (
           <>
-            <span className="tinyLabel">HI, I&apos;M STUDIGO</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>What&apos;s your next test?</h1>
-            <p className="pageLede">Each Study Room holds one test&apos;s worth of material. I study with you, using your own class files.</p>
-            <label className="field">
-              <span>Room name</span>
-              <input name="title" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={160} placeholder="Biology Midterm" autoComplete="off" enterKeyHint="next" />
-            </label>
-            <label className="field">
-              <span>Test date <small>(if you know it)</small></span>
-              <input name="testDate" type="date" value={testDate} onChange={(event) => setTestDate(event.target.value)} />
-            </label>
-            <button className="buttonPrimary" type="submit" disabled={!title.trim()}>Next <span aria-hidden="true">→</span></button>
+            <span className="tinyLabel">HI, I'M STUDIGO</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Start with something to study.</h1>
+            <p className="pageLede">Each Study Room holds one set of material. Use a short sample, or add your own file later. A room name is not required.</p>
+            <span className="tinyLabel">{SAMPLE_LABEL}</span>
+            <button className="buttonPrimary" type="button" onClick={chooseSample}>Use the sample <span aria-hidden="true">→</span></button>
+            <button className="ghostButton" type="button" onClick={chooseOwn}>I'll add my own file</button>
           </>
         )}
 
-        {step === 2 && (
+        {step === "correction" && (
           <>
-            <span className="tinyLabel">STEP 2 OF {STEPS}</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Pick a color for this room.</h1>
-            <p className="pageLede">It tints the whole room, so you always know where you are.</p>
+            <span className="tinyLabel">{SAMPLE_LABEL}</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Does this look right?</h1>
+            <p className="pageLede">Subject and topic start filled in. Change them if you want. You can leave either one blank.</p>
+            <label className="field">
+              <span>Subject</span>
+              <input name="subject" value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={160} autoComplete="off" />
+            </label>
+            <label className="field">
+              <span>Topic</span>
+              <input name="topic" value={topic} onChange={(event) => setTopic(event.target.value)} maxLength={160} autoComplete="off" />
+            </label>
+            <button className="buttonPrimary" type="button" onClick={() => { const next = nextFirstRunStep("correction"); if (next) go(next); }}>Next <span aria-hidden="true">→</span></button>
+          </>
+        )}
+
+        {step === "goal" && (
+          <>
+            <span className="tinyLabel">STEP 3 OF {FIRST_RUN_STEPS.length}</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>What do you want from this room?</h1>
+            <p className="pageLede">Pick one. A test date is not required.</p>
+            <div role="radiogroup" aria-label="Goal">
+              {SAMPLE.goalChoices.map((choice) => (
+                <button key={choice} type="button" role="radio" className={goal === choice ? "buttonPrimary" : "ghostButton"} aria-checked={goal === choice} onClick={() => setGoal(choice)}>
+                  {GOAL_LABEL[choice]}
+                </button>
+              ))}
+            </div>
+            <button className="buttonPrimary" type="button" onClick={() => { const next = nextFirstRunStep("goal"); if (next) go(next); }}>Next <span aria-hidden="true">→</span></button>
+          </>
+        )}
+
+        {step === "lesson" && (
+          <>
+            <span className="tinyLabel">{SAMPLE_LABEL}</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Try one question.</h1>
+            <p className="pageLede">Any response continues. This does not change mastery.</p>
+            {SAMPLE.facts.map((fact) => <p className="hintText" key={fact}>{fact}</p>)}
+            <p><strong>{SAMPLE.question}</strong></p>
+            <label className="field">
+              <span>Your response</span>
+              <textarea name="response" value={response} onChange={(event) => setResponse(event.target.value)} rows={3} />
+            </label>
+            <button className="buttonPrimary" type="button" disabled={!response.trim()} onClick={() => { const next = nextFirstRunStep("lesson"); if (next && response.trim()) go(next); }}>Next <span aria-hidden="true">→</span></button>
+          </>
+        )}
+
+        {step === "optional" && (
+          <>
+            <span className="tinyLabel">OPTIONAL</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Name and color can wait.</h1>
+            <p className="pageLede">Skip this and the room still opens. Nothing here is required.</p>
+            <label className="field">
+              <span>Room name <small>(optional)</small></span>
+              <input name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} placeholder={previewTitle} autoComplete="off" />
+            </label>
             <div className="cdSwatches" role="radiogroup" aria-label="Room color" onKeyDown={onSwatchKey}>
               {ROOM_THEMES.map((item, index) => (
                 <button key={item.id} ref={(node) => { swatches.current[index] = node; }} type="button" role="radio" className="cdSwatch" data-tone={item.id} aria-checked={theme === item.id} tabIndex={theme === item.id ? 0 : -1} onClick={() => pickTheme(item.id)}>
@@ -178,23 +273,10 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
             </div>
             <div className="roomCard firstRoomPreview" data-tone={theme} aria-hidden="true">
               <span className="roomCardMeta">YOUR FIRST ROOM</span>
-              <strong>{title.trim() || "Your room"}</strong>
+              <strong>{previewTitle}</strong>
             </div>
-            <button className="buttonPrimary" type="submit">Next <span aria-hidden="true">→</span></button>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <span className="tinyLabel">STEP 3 OF {STEPS}</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>I&apos;ll keep you company.</h1>
-            <p className="pageLede">Try it now. I react to you.</p>
-            <ul className="firstRoomTry">
-              <li data-done={did.poke || undefined}><i aria-hidden="true">✓</i><div><b>Tap me</b><span>I&apos;m ticklish.</span></div></li>
-              <li data-done={did.pet || undefined}><i aria-hidden="true">✓</i><div><b>Pet me</b><span>Press and slide across me.</span></div></li>
-            </ul>
-            <p className="hintText">Next you add your study guide. I only teach from what you give me, and I show the page each answer came from.</p>
             {error && <p className="formError" role="alert">{error}</p>}
+            <button className="ghostButton" type="button" onClick={finish} disabled={busy}>Skip</button>
             <button className="buttonPrimary" type="button" onClick={finish} disabled={busy}>
               {busy ? "Creating your room…" : "Open my Study Room"} <span aria-hidden="true">→</span>
             </button>

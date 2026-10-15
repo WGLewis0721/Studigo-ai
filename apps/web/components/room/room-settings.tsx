@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
 import { RoomColorPicker } from "./room-color-picker";
 import { RoomCompanionSettings } from "@/components/companion/companion";
+import { readAccuracySetting, writeAccuracySetting, type AccuracySetting } from "@/lib/accuracy-bar";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -18,6 +19,8 @@ function SaveButton() {
 
 export function RoomSettings({ room, onClose, closing = false }: { room: StudyRoom; onClose: () => void; closing?: boolean }) {
   const [state, formAction] = useActionState<RoomFormState, FormData>(renameRoomAction, {});
+  const [accuracy, setAccuracy] = useState<AccuracySetting>("low");
+  useEffect(() => { setAccuracy(readAccuracySetting(room.id) ?? "low"); }, [room.id]);
 
   return (
     <section className="roomSettings" data-state={closing ? "closing" : "open"} role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
@@ -47,6 +50,24 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
               <option value="standard">Standard: the level of the material</option>
               <option value="deeper">Deeper: more precise, assumes the basics</option>
             </select>
+          </label>
+          <label className="field">
+            <span>How much of the guide an answer must cover <small>(this Study Room)</small></span>
+            <input
+              name="accuracy"
+              type="range"
+              min={0}
+              max={1}
+              step={1}
+              value={accuracy === "high" ? 1 : 0}
+              aria-valuetext={accuracy === "high" ? "High, about 80 to 95 percent" : "Low, about half is enough"}
+              onChange={(event) => {
+                const next: AccuracySetting = event.target.value === "1" ? "high" : "low";
+                setAccuracy(next);
+                writeAccuracySetting(room.id, next);
+              }}
+            />
+            <small>{accuracy === "high" ? "High: about 80–95% of the expected points. Wording does not have to match." : "Low: about half the expected points is enough. A first pass uses this unless you move the slider."}</small>
           </label>
           <label className="field">
             <span>Test date</span>
