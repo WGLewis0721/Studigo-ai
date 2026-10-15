@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
-import { sourceSentences, tapCheck } from "@/lib/learn-tap";
+import { operationHeaders } from "@/lib/ai-operation-client";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
 type Mission = { topic_id: string; document_id: string; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
@@ -14,34 +14,15 @@ const SAMPLES = {
     title: "Inherited and learned behavior",
     objective: "Explain which behaviors are inherited.",
     excerpt: "Some animal behaviors are inherited. Other behaviors are learned through experience.",
+    question: "Why does one animal behavior show up without being taught, while another has to be practiced?",
   },
   college: {
     title: "Net force and motion",
     objective: "Explain what a net force does to an object's motion.",
     excerpt: "A net force changes an object's motion. If the forces on an object are balanced, its velocity stays the same.",
+    question: "What happens to an object's motion when the forces on it are balanced, and why?",
   },
 } as const;
-
-function questionFrom(objective: string): string {
-  const text = objective.trim();
-  const colon = text.indexOf(":");
-  if (colon >= 24 && colon < text.length - 1) return text.slice(0, colon).trim();
-  return text;
-}
-function readingProgress(phase: Phase | "new"): number {
-  if (phase === "done") return 100;
-  if (phase === "check") return 72;
-  return 16;
-}
-
-function passageLines(objective: string, excerpt: string): { sentences: string[]; target: number } | null {
-  const checked = tapCheck(objective, excerpt);
-  if (checked) return checked;
-  const sentences = sourceSentences(excerpt);
-  if (sentences.length === 1) return { sentences, target: 0 };
-  const line = excerpt.trim();
-  return line ? { sentences: [line], target: 0 } : null;
-}
 
 export function LearnMission({ roomId, topics, selectedTopicId }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; onOpenMaterials: () => void;
@@ -50,19 +31,20 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tapped, setTapped] = useState<number | null>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
+  const [question, setQuestion] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [understood, setUnderstood] = useState(false);
+  const [asking, setAsking] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
+  const askedFor = useRef<string | null>(null);
   const startTried = useRef(false);
   const fixture = roomId === "fixture";
   const mission = snapshot?.mission ?? null;
-  const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
-  const objectiveSource = fixture
-    ? SAMPLES[sample].objective
-    : currentTopic?.objective || selectedTopic?.objective || currentTopic?.title || selectedTopic?.title || "";
-  const objectiveText = questionFrom(objectiveSource);
+  const topicId = fixture ? sample : mission?.topic_id ?? selectedTopic?.id ?? null;
 
   const reload = useCallback(async () => {
     if (roomId === "fixture") {
@@ -135,7 +117,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     setError(null);
     try {
       await post(mission, action, reflection, topicOverride);
-      if (action === "restart" || action === "start") setTapped(null);
     } catch (caught) {
       await reload();
       setError(caught instanceof Error ? caught.message : "Could not save this reading.");
@@ -163,56 +144,91 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   useEffect(() => {
     const thread = sectionRef.current?.closest(".chatThread");
     if (thread instanceof HTMLElement) thread.scrollTop = 0;
-  }, [mission?.phase, loading]);
+  }, [question, feedback]);
 
-  const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
-  const revealed = mission?.phase === "check" || mission?.phase === "done";
-  const miss = revealed && mission?.reflection === "review";
-  const progress = readingProgress(mission?.phase ?? "new");
-
-  async function submitCheck() {
-    if (!mission || !lines || tapped === null || revealed || inFlight.current) return;
-    const reflection: "ready" | "review" = tapped === lines.target ? "ready" : "review";
+  const ask = useCallback(async (id: string) => {
+    if (askedFor.current === id) return;
+    askedFor.current = id;
+    setAsking(true);
+    setError(null);
+    setFeedback(null);
+    setUnderstood(false);
+    setDraft("");
     if (fixture) {
-      setSnapshot((current) => current?.mission ? {
-        ...current,
-        mission: { ...current.mission, phase: "check", reflection, paused: false, revision: current.mission.revision + 1 },
-      } : current);
+      setQuestion(SAMPLES[id === "college" ? "college" : "elementary"].question);
+      setAsking(false);
       return;
     }
+    try {
+      const response = await fetch("/api/learn/check", {
+        method: "POST",
+        headers: operationHeaders(crypto.randomUUID()),
+        body: JSON.stringify({ roomId, topicId: id }),
+      });
+      const payload = await response.json().catch(() => null) as { question?: string; error?: string } | null;
+      if (!response.ok || !payload?.question) throw new Error(payload?.error || "Could not ask a question from your materials.");
+      setQuestion(payload.question);
+    } catch (caught) {
+      askedFor.current = null;
+      setQuestion(null);
+      setError(caught instanceof Error ? caught.message : "Could not ask a question from your materials.");
+    } finally {
+      setAsking(false);
+    }
+  }, [fixture, roomId]);
+
+  useEffect(() => {
+    if (!topicId || (!fixture && loading)) return;
+    void ask(topicId);
+  }, [ask, fixture, loading, topicId]);
+
+  async function submitAnswer() {
+    const answer = draft.trim();
+    if (!topicId || !question || !answer || asking || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setError(null);
+    if (fixture) {
+      const hit = /inherit|learn|practice|force|motion|balanced/i.test(answer);
+      setFeedback(hit
+        ? "That has the idea. You used what the material says, in your own words."
+        : "Not quite. Look at what the material says happens, and say that part in your own words.");
+      setUnderstood(hit);
+      if (!hit) setQuestion(SAMPLES[sample].question);
+      setDraft("");
+      inFlight.current = false;
+      setBusy(false);
+      return;
+    }
     try {
-      let current = mission;
-      if (current.paused) {
-        const resumed = await post(current, "resume");
-        if (!resumed.mission) throw new Error("Could not save this reading.");
-        current = resumed.mission;
-      }
-      while (current.phase === "brief" || current.phase === "show") {
-        const next = await post(current, "advance");
-        if (!next.mission) throw new Error("Could not save this reading.");
-        current = next.mission;
-      }
-      if (current.phase === "try") await post(current, "advance", reflection);
+      const response = await fetch("/api/learn/check", {
+        method: "POST",
+        headers: operationHeaders(crypto.randomUUID()),
+        body: JSON.stringify({ roomId, topicId, question, answer }),
+      });
+      const payload = await response.json().catch(() => null) as { feedback?: string; followUp?: string | null; understood?: boolean; error?: string } | null;
+      if (!response.ok || !payload?.feedback) throw new Error(payload?.error || "Could not check that answer.");
+      setFeedback(payload.feedback);
+      setUnderstood(Boolean(payload.understood));
+      if (!payload.understood && payload.followUp) setQuestion(payload.followUp);
+      setDraft("");
     } catch (caught) {
-      await reload();
-      setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+      setError(caught instanceof Error ? caught.message : "Could not check that answer.");
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
   }
 
-  const showPassage = Boolean(mission && snapshot?.sourceCurrent !== false && lines);
-  const waiting = showPassage && !revealed && tapped === null;
-  const explain = miss ? lines?.sentences[lines.target] ?? "" : "";
-
   async function continueReading() {
-    if (!mission || inFlight.current) return;
-    if (mission.phase !== "check" && mission.phase !== "done") {
-      void act("advance");
+    if (fixture) {
+      setSample((current) => current === "elementary" ? "college" : "elementary");
+      askedFor.current = null;
+      return;
+    }
+    if (!mission || inFlight.current) {
+      askedFor.current = null;
+      if (topicId) void ask(topicId);
       return;
     }
     inFlight.current = true;
@@ -222,53 +238,42 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       let current = mission;
       if (current.phase === "check") {
         const advanced = await post(current, "advance");
-        if (!advanced.mission) throw new Error("Could not save this reading.");
-        current = advanced.mission;
+        if (advanced.mission) current = advanced.mission;
       }
       const index = topics.findIndex((topic) => topic.id === current.topic_id);
       const next = topics[index + 1] ?? topics[0];
-      await post(current, "restart", null, next?.id ?? current.topic_id);
-      setTapped(null);
+      const nextId = next?.id ?? current.topic_id;
+      await post(current, "restart", null, nextId);
+      askedFor.current = null;
+      setQuestion(null);
+      setFeedback(null);
+      setUnderstood(false);
+      setDraft("");
+      await ask(nextId);
     } catch (caught) {
       await reload();
-      setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+      setError(caught instanceof Error ? caught.message : "Could not open the next question.");
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
   }
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Reading">
-    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
-    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Reading progress">
+  const progress = understood ? 100 : feedback ? 72 : question ? 40 : 16;
+
+  return <section ref={sectionRef} className="learnReading" aria-label="Lesson">
+    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { askedFor.current = null; setSample(key); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
+    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Lesson progress">
       <span style={{ width: `${progress}%` }} />
     </div>
-    {objectiveText && <h2 className="learnAsk">{objectiveText}</h2>}
     {error && <p className="formError" role="alert">{error}</p>}
-    {snapshot?.sourceCurrent === false ? <p role="status">This passage changed.</p> : showPassage && lines ? (
-      <div className="learnChoices" role="group" aria-label="Passage">
-        {lines.sentences.map((sentence, index) => {
-          const result = !revealed || !mission ? undefined
-            : mission.reflection === "ready"
-              ? (index === lines.target ? "hit" : undefined)
-              : mission.reflection === "review"
-                ? (tapped === index && index !== lines.target ? "miss" : index === lines.target ? "answer" : undefined)
-                : undefined;
-          const mark = result === "miss" ? "×" : result === "hit" || result === "answer" || tapped === index ? "✓" : "";
-          if (revealed) {
-            return <p key={sentence} className="learnChoice" data-result={result}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</p>;
-          }
-          return <button key={sentence} type="button" className="learnChoice" aria-pressed={tapped === index} onClick={() => setTapped(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</button>;
-        })}
-      </div>
-    ) : <p className="srOnly" role="status">{loading ? "Opening the passage." : "Choose a topic."}</p>}
-    {miss && explain ? <p className="learnSheet">{explain}</p> : null}
-    {revealed && <p className="srOnly">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
-    {(showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (mission?.phase !== "done" && waiting)} onClick={() => {
-      if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-      if (error && !mission) { startTried.current = false; void act("start"); return; }
-      if (revealed) continueReading();
-      else void submitCheck();
-    }}>{showPassage && !revealed ? "Check" : "Continue"}</button>}
+    {feedback && <p className="learnTeach" data-understood={understood ? "true" : "false"}>{feedback}</p>}
+    {question ? <h2 className="learnAsk">{question}</h2> : !error && <p className="learnAsk">Asking from your materials.</p>}
+    {!understood && <textarea className="learnAnswer" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="In your own words" rows={4} disabled={asking || busy || !question} />}
+    <button className="buttonPrimary learnGo" type="button" disabled={busy || asking || loading || (Boolean(question) && !understood && !draft.trim())} onClick={() => {
+      if (understood) void continueReading();
+      else if (!question && topicId) { askedFor.current = null; void ask(topicId); }
+      else void submitAnswer();
+    }}>{understood ? "Continue" : asking ? "Asking" : "Check"}</button>
   </section>;
 }
