@@ -81,7 +81,8 @@ export function RoomWorkspace({
   topics,
   readiness,
   initialMode,
-  evidence, planEvents, asOf
+  evidence, planEvents, asOf,
+  phase3Learn = false
 }: {
   room: StudyRoom;
   documents: StudyDocument[];
@@ -91,6 +92,7 @@ export function RoomWorkspace({
   evidence: PracticeEvidence[];
   planEvents: PlanEvent[];
   asOf: number;
+  phase3Learn?: boolean;
 }) {
   const router = useRouter();
   const coaching = useCoachPreferences(room);
@@ -242,6 +244,7 @@ export function RoomWorkspace({
             focusTopicId={focusTopicId}
             onClearFocus={() => setFocusTopicId(null)}
             onTopicsChanged={refresh}
+            phase3Learn={phase3Learn}
           />
         )}
         {mode === "quiz" && (
