@@ -9,6 +9,7 @@ The editable specimen is `/dev/phase3/system`; the connected synthetic journey i
 | Objective rail | Brief → Show → Try → Check | Current `aria-current="step"`, previous complete, upcoming muted | No fake completion on an unavailable step | `ui.tsx` `ObjectiveRail` |
 | Choice key | Radio label and large target | Arrow keys move focus and choice; selected uses filled radio and border | Submit key stays disabled until choice or reviewed example transcript | `ui.tsx` `ChoiceKeys`, `mission-preview.tsx` |
 | Evidence ticket | Title, page and fixture/source label | Opens source pane with close/Escape and trigger return in preview | Future missing/partial/stale sources need explicit unavailable and retry states; never fabricate a page | `ui.tsx` `EvidenceTicket` and `SourceSpotlight` |
+| Evidence recovery | Separate missing, partial and stale messages | Original/retry/material actions are adapter callbacks | Disabled in fixture without an actual endpoint/file; never fabricate a passage | `ui.tsx` `EvidenceRecovery`, system specimen |
 | Read aloud | Labeled button | Browser speech synthesis starts/stops example explanation | Device unsupported/error path needs production handling | `mission-preview.tsx` |
 | Voice review | Labeled example text box | Review/edit before using transcript in fixture | No mic access; production permission, silence and retry flows remain pending | `mission-preview.tsx` |
 
@@ -31,7 +32,7 @@ WCAG relative luminance calculation from the flat brand tokens, rounded to two d
 
 ## Source and state boundary
 
-The fixture content in `fixture.ts` is original synthetic copy. It is explicitly marked **DESIGN FIXTURE** in the card, ticket, pane, and sidebar. It demonstrates the physical source relationship without asserting an uploaded material or authorized citation. The production mapping requires a real `EvidenceRef`, a verified page/block, and honest missing, stale, OCR-uncertain or access-denied recovery. Nothing in this package writes Learn mastery or grades an answer.
+The fixture content in `fixture.ts` is original synthetic copy. It is explicitly marked **DESIGN FIXTURE** in the card, ticket, pane, and sidebar. It demonstrates the physical source relationship without asserting an uploaded material or authorized citation. The recovery cards show distinct missing, partial and stale copy, with inert actions until an integration owner supplies real callbacks. The production mapping requires a real `EvidenceRef`, a verified page/block, and OCR-uncertain or access-denied recovery as well. Nothing in this package writes Learn mastery or grades an answer.
 
 ## Reproduction and review
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ActionGlyph } from "./action-glyph";
-import { ChoiceKeys, EvidenceTicket, ModeSwitch, ObjectiveRail, Phase3Key, SourceSpotlight } from "./ui";
+import { ChoiceKeys, EvidenceRecovery, EvidenceTicket, ModeSwitch, ObjectiveRail, Phase3Key, SourceSpotlight } from "./ui";
 import { phase3Fixture } from "./fixture";
 import "./phase3.css";
 
@@ -46,6 +46,7 @@ export function SystemPreview() {
       <section className="p3System__section" aria-labelledby="controls"><h2 id="controls">Tactile controls and states</h2><p className="p3System__note">Hover, press, and keyboard focus are live. Disabled remains labeled and visible.</p><div className="p3System__keys"><Phase3Key tone="teal" icon={<ActionGlyph name="find" size={19}/>}>Find it</Phase3Key><Phase3Key tone="blueberry" icon={<ActionGlyph name="readAloud" size={19}/>}>Read to me</Phase3Key><Phase3Key tone="dandelion" icon={<ActionGlyph name="hint" size={19}/>}>Give me a hint</Phase3Key><Phase3Key tone="tangerine" icon={<ActionGlyph name="speak" size={19}/>}>Speak instead</Phase3Key><Phase3Key variant="quiet">Secondary action</Phase3Key><Phase3Key disabled>Waiting for answer</Phase3Key></div></section>
       <section className="p3System__section" aria-labelledby="progress"><h2 id="progress">Mode and progress</h2><ModeSwitch active={mode} onChange={setMode}/><ObjectiveRail current={1}/></section>
       <section className="p3System__section" aria-labelledby="evidence"><h2 id="evidence">Source, choice, response</h2><div className="p3System__two"><div><EvidenceTicket eyebrow="DESIGN FIXTURE" title={phase3Fixture.source.title} page={phase3Fixture.source.page} onClick={() => { sourceTrigger.current = document.activeElement as HTMLElement; setSourceOpen(true); }}/><p className="p3System__note">A citation opens a readable source pane; the lesson never invents a passage when material is absent.</p></div><ChoiceKeys choices={phase3Fixture.choices} selected={choice} onSelect={setChoice}/></div></section>
+      <section className="p3System__section" aria-labelledby="recovery"><h2 id="recovery">Evidence recovery</h2><p className="p3System__note">These are static fixture specimens. Their actions remain disabled because no original file, retry endpoint, or material picker exists in this preview.</p><div className="p3System__recovery"><EvidenceRecovery state="missing"/><EvidenceRecovery state="partial"/><EvidenceRecovery state="stale"/></div></section>
       <section className="p3System__section" aria-labelledby="glyphs"><h2 id="glyphs">Original action glyphs</h2><div className="p3System__icons">{icons.map(name => <div key={name}><ActionGlyph name={name} size={26}/><span>{name}</span></div>)}</div><p className="p3System__note">The existing mode glyphs stay in their current owner. These proposed glyphs use currentColor and are paired with words in controls.</p></section>
       <footer className="p3System__footer">Proposed visual system · No real learner material, grading, microphone capture, or mastery write.</footer>
     </div>
