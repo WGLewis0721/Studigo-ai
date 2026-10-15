@@ -1049,7 +1049,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         </LessonMobileFrame>
         <div className="chatDock">
           <button type="button" className="chatEraser" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Erase Learn chat" : "Erase Coach chat"} onClick={() => void startFresh()}>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M16.2 4.8 19.2 7.8 9.4 17.6H6.4v-3L16.2 4.8Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><path d="M13.2 7.8 16.2 10.8M5 20h14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g transform="rotate(-28 12 12)"><rect x="3.4" y="8.2" width="17.2" height="7.6" rx="1.6" fill="#F6B7C6" stroke="#1E2433" strokeWidth="1.35" /><rect x="12.1" y="8.2" width="3.2" height="7.6" fill="#F7F4EF" stroke="#1E2433" strokeWidth="1.15" /></g></svg>
           </button>
           <StudigoComposer
             variant="chat"
