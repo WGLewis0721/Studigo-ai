@@ -12,6 +12,7 @@ This folder contains the **proposed** art and interaction foundation for Studigo
 | `generated/` | One Higgsfield ambient visual source, reproducible WebP derivatives and full provenance. | Proposed decorative experiment only; not a runtime asset or source evidence. |
 | `PROGRESS.md` | Increment ledger against D1–D6, A–F and S0–S4. | Evidence-linked statuses; update with each review. |
 | `INVENTORY.md`, `COMPONENT_STATES.md` | Current-owner mapping, keep/adapt/create decisions, interaction states and token contrast calculations. | Handoff documentation; rendered acceptance pending. |
+| `ROOM_BY_ROOM_ROLLOUT.md` | Ordered placement across Home, shared shell, Materials, Learn, Coach, Practice, Progress, Plan and settings. | Implementation sequence; no production behavior claimed. |
 | `apps/web/components/phase3/` | Reusable UI primitives, original action glyph component and synthetic interactive fixture. | Development preview; no mission API, persistence, microphone capture or grading. |
 
 ## Reproduce
