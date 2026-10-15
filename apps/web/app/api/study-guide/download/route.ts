@@ -4,7 +4,7 @@ import { assertRoomAccess } from "@/lib/retrieval";
 import { currentBlockKeySet, filterGuideEditionExport, revisionStamp, selectCurrentBlocks } from "@/lib/source-freshness";
 import { buildPersistedEdition, type GuideEditionStore } from "@/lib/study-guide-content";
 import { buildEditionDocx, DOCX_MIME, guideFileFormat } from "@/lib/study-guide-docx";
-import { buildEditionPdf, editionIsRenderable, guideDownloadDecision } from "@/lib/study-guide-pdf";
+import { buildEditionPdf, editionIsRenderable, exportEditionFromLines, guideDownloadDecision } from "@/lib/study-guide-pdf";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import type { StudyGuideContent } from "@studigo/ai";
 
@@ -65,36 +65,56 @@ export async function GET(request: Request) {
     );
     if (edition) edition = filterGuideEditionExport(edition as StudyGuideContent, currentKeys);
     if (!editionIsRenderable(edition)) {
-      const service = createServiceSupabaseClient();
-      const store: GuideEditionStore = {
-        async get(key) {
-          const existing = await service.rpc("read_guide_edition", { p_owner: user.id, p_key: key });
-          return (existing.data ?? null) as StudyGuideContent | null;
-        },
-        async put(key, content) {
-          const saved = await service.rpc("publish_guide_edition", {
-            p_room: roomId,
-            p_owner: user.id,
-            p_key: key,
-            p_content: content
-          });
-          if (saved.error || !saved.data) throw new Error("Could not store the guide edition.");
-          return saved.data as StudyGuideContent;
-        }
-      };
-      const built = await buildPersistedEdition({
-        roomId,
-        level: "general",
-        topicIds: [],
-        blocks: sources.map((block) => ({
-          blockKey: block.blockKey,
-          pageNumber: block.pageNumber,
-          text: block.text,
-          kind: block.kind == null ? undefined : String(block.kind)
-        })),
-        store
-      });
-      if (built.status === "ready") edition = filterGuideEditionExport(built.content, currentKeys);
+      try {
+        const service = createServiceSupabaseClient();
+        const store: GuideEditionStore = {
+          async get(key) {
+            const existing = await service.rpc("read_guide_edition", { p_owner: user.id, p_key: key });
+            return (existing.data ?? null) as StudyGuideContent | null;
+          },
+          async put(key, content) {
+            const saved = await service.rpc("publish_guide_edition", {
+              p_room: roomId,
+              p_owner: user.id,
+              p_key: key,
+              p_content: content
+            });
+            if (saved.error || !saved.data) throw new Error("Could not store the guide edition.");
+            return saved.data as StudyGuideContent;
+          }
+        };
+        const built = await buildPersistedEdition({
+          roomId,
+          level: "general",
+          topicIds: [],
+          blocks: sources.map((block) => ({
+            blockKey: block.blockKey,
+            pageNumber: block.pageNumber,
+            text: block.text,
+            kind: block.kind == null ? undefined : String(block.kind)
+          })),
+          store
+        });
+        if (built.status === "ready") edition = filterGuideEditionExport(built.content, currentKeys) ?? built.content;
+      } catch {
+        edition = null;
+      }
+    }
+    if (!editionIsRenderable(edition)) {
+      let lines = (sources.length ? sources : currentBlocks).map((block) => ({
+        blockKey: block.blockKey,
+        pageNumber: block.pageNumber,
+        text: block.text
+      }));
+      if (!lines.length) {
+        const chunks = await supabase.from("document_chunks").select("id, content, page_number").eq("room_id", roomId);
+        lines = (chunks.data ?? []).map((chunk) => ({
+          blockKey: String(chunk.id),
+          pageNumber: chunk.page_number ?? 1,
+          text: String(chunk.content ?? "")
+        }));
+      }
+      edition = exportEditionFromLines(roomId, lines);
     }
   }
   const decision = guideDownloadDecision({ room, edition });

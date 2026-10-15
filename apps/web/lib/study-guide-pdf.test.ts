@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 import test from "node:test";
 import { PDFDocument } from "pdf-lib";
 import type { StudyGuideContent } from "@studigo/ai";
-import { buildEditionPdf, editionIsRenderable, formatGuideDate, guideDownloadDecision } from "./study-guide-pdf";
+import { buildEditionPdf, editionIsRenderable, exportEditionFromLines, formatGuideDate, guideDownloadDecision } from "./study-guide-pdf";
 
 const evidence = [{ blockKey: "guide", pageNumber: 1 }];
 const long = "The legislative branch makes laws and writes the statutes citizens must follow. ".repeat(40);
@@ -74,4 +74,19 @@ test("C18 a foreign room downloads no PDF bytes", () => {
   const missing = guideDownloadDecision({ room: { id: "room-1" }, edition: { version: 1, chapters: [] } });
   assert.equal(missing.status, 409);
   assert.equal(missing.pdf, false);
+});
+
+test("a ready worksheet of short lines is still a downloadable guide", () => {
+  const exported = exportEditionFromLines("room-1", [
+    { blockKey: "h", pageNumber: 5, text: "Homophones" },
+    { blockKey: "a", pageNumber: 5, text: "Words such as instant, happy, and hyper" },
+    { blockKey: "b", pageNumber: 6, text: "Spellings for the /u/ sound" }
+  ]);
+  const decision = guideDownloadDecision({ room: { id: "room-1" }, edition: exported });
+  assert.equal(decision.pdf, true);
+  if (decision.pdf) {
+    assert.equal(decision.edition.chapters.length, 2);
+    assert.equal(decision.edition.chapters[0].facts.length, 2);
+  }
+  assert.equal(editionIsRenderable(exported), true);
 });

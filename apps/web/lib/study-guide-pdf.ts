@@ -53,6 +53,48 @@ export function editionIsRenderable(value: unknown): value is StudyGuideContent 
   });
 }
 
+/** A printable copy of the ready file. Short worksheet lines stay in the guide. */
+export function exportEditionFromLines(
+  roomId: string,
+  lines: Array<{ blockKey: string; pageNumber: number; text: string }>
+): StudyGuideContent | null {
+  const pages = new Map<number, Array<{ blockKey: string; pageNumber: number; text: string }>>();
+  for (const line of lines) {
+    const text = line.text.replace(/\s+/g, " ").trim();
+    if (text.length < 2) continue;
+    const pageNumber = line.pageNumber > 0 ? line.pageNumber : 1;
+    const page = pages.get(pageNumber) ?? [];
+    page.push({ blockKey: line.blockKey, pageNumber, text });
+    pages.set(pageNumber, page);
+  }
+  const chapters = [...pages.entries()].sort((a, b) => a[0] - b[0]).map(([pageNumber, page]) => ({
+    id: `page-${pageNumber}`,
+    title: `Page ${pageNumber}`,
+    objective: "",
+    objectiveEvidence: [] as Array<{ blockKey: string; pageNumber: number }>,
+    facts: page.map((line, index) => ({
+      id: `p${pageNumber}-f${index + 1}`,
+      text: line.text,
+      evidence: [{ blockKey: line.blockKey, pageNumber }]
+    })),
+    terms: [],
+    examples: [],
+    practice: [],
+    answers: []
+  }));
+  if (!chapters.length) return null;
+  return {
+    version: 1,
+    schemaVersion: 1,
+    promptVersion: 1,
+    level: "general",
+    roomId,
+    topicIds: [],
+    sourceSnapshot: "source-export",
+    chapters
+  };
+}
+
 export function guideDownloadDecision(input: { room: { id: string } | null; edition: unknown }) {
   if (!input.room) return { status: 404 as const, code: "room_not_found", pdf: false as const };
   if (!editionIsRenderable(input.edition)) return { status: 409 as const, code: "no_valid_edition", pdf: false as const };
