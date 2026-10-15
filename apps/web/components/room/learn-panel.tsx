@@ -84,6 +84,7 @@ export function LessonMobileFrame({
   const nextName = mode === "learn" ? "lesson" : "topic";
   return (
     <>
+      <div className="lessonStage">
       {mode === "learn" && label ? (
         <p className="lessonPosition" data-lesson-label>
           <span className="lessonPositionIndex">{label}</span>
@@ -106,6 +107,7 @@ export function LessonMobileFrame({
           <CitationChips citations={citations} />
         </div>
       ) : null}
+      </div>
       <div className="lessonActions" data-lesson-actions role="group" aria-label={`${modeName} actions for ${topicTitle}`}>
         <button className="ghostButton" type="button" disabled={actionsDisabled} aria-label={`Clear ${modeName} for ${topicTitle}`} onClick={onClear}>Clear</button>
         <button className="ghostButton" type="button" disabled={actionsDisabled || !onPrevious} aria-label={`Previous ${nextName} for ${topicTitle}`} onClick={onPrevious}>Previous</button>
