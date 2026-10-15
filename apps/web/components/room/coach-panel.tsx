@@ -27,7 +27,9 @@ import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
 import type { LearnOutcome } from "@/lib/learn-outcome";
 import { readGauge } from "@/lib/accuracy-bar";
 import { mathModelFromPrompt } from "@/lib/math-model";
+import { comboForDisplay } from "@/lib/math-combo";
 import { MathModelView } from "./math-model-view";
+import { MathComboView } from "./math-combo-view";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean; outcome?: LearnOutcome };
@@ -954,7 +956,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
               <p className="coachEmptyStyle"><b>{active.label}:</b> {active.expect}</p>
               <div className="starterList">
                 <button type="button" disabled={busy || restoring} onClick={() => void coach(selectedTopics.length > 1 ? `Coach me across these selected topics: ${selectedTopics.map((topic) => topic.title).join(", ")}.` : `Coach me through: ${selectedTopic.title}. ${selectedTopic.objective ?? "Start with a quick diagnostic."}`)}>{selectedTopics.length > 1 ? `Coach me across ${selectedTopics.length} topics` : `Coach me on ${selectedTopic.title}`}</button>
-                <button type="button" disabled={busy || restoring} onClick={() => void coach("Show me one worked example, then give me a similar problem to try.")}>Show me an example</button>
+                <button type="button" disabled={busy || restoring} onClick={() => void coach("Show me an example")}>Show me an example</button>
               </div>
             </div>
           ) : cursorLesson || showingOverview ? null : (
@@ -968,12 +970,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           if (message.role === "user") return <div className="studentBubble" key={message.id}>{message.content}</div>;
           const outcomeView = message.outcome && learnOutcomeView(message.outcome);
           const priorQuestion = messages.slice(0, index).reverse().find((turn) => turn.role === "user")?.content;
-          const model = mathModelFromPrompt(message.content) ?? (priorQuestion ? mathModelFromPrompt(priorQuestion) : null);
+          const combo = comboForDisplay(message.content);
+          const model = combo ? null : mathModelFromPrompt(message.content) ?? (priorQuestion ? mathModelFromPrompt(priorQuestion) : null);
           return (
             <div className="answerBubble" key={message.id} data-mode={message.mode ?? "coach"} data-state={coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming })}>
               <span className="answerKicker"><StudigoMascot state={message.streaming ? "thinking" : "sources"} size={28} mark />{answerLabel(message)}</span>
+              {combo ? <MathComboView combo={combo.combo} /> : null}
               {model ? <MathModelView model={model} /> : null}
-              <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>
+              {combo ? (combo.prompt ? <div className="answerText">{combo.prompt}</div> : null) : <div className="answerText"><RichText text={message.content} />{message.streaming && <span className="caret" aria-hidden="true" />}</div>}
               {message.citations && <div className="lessonCitations"><CitationChips citations={message.citations} /></div>}
               {outcomeView && message.outcome?.kind === "partial_coverage" && <p className="formNotice" role="status">{outcomeView.message}</p>}
               {outcomeView?.action === "materials" && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Open Materials</button>}
