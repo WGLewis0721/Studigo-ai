@@ -1,158 +1,162 @@
-/* Learn reading fills the chat pane. The strip above the orange rail stays. */
-.coachChat:has(.learnMission) .lessonPosition,
-.coachChat:has(.learnMission) .lessonReading,
-.coachChat:has(.learnMission) .lessonActions,
-.coachChat:has(.learnMission) .lessonCitations,
-.coachChat:has(.learnMission) .chatChips,
-.coachChat:has(.learnMission) .coachRest,
-.coachChat:has(.learnMission) > .coachActiveStyle,
-.coachChat:has(.learnMission) .threadEnd,
-.coachChat:has(.learnMission) .chatDock,
-.roomDevice:has(.coachChat):has(.learnMission) .chatDock,
-.roomDevice:has(.coachChat):has(.learnMission) .chatEraser,
-.roomDevice:has(.coachChat):has(.learnMission) .coachPhoneNav .coachNavStep {
-  display: none;
+/* The reading is the page under the orange rail. It is not the chat. */
+@media (max-width: 700px) {
+  .roomDevice:has(.learnReading) {
+    position: fixed;
+    inset: 0;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .roomDevice:has(.learnReading) > .roomWorkspace {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .roomDevice:has(.learnReading) .modeSurface {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 0 calc(var(--m-tabbar, 70px) + 14px + var(--m-safe-bottom, 0px));
+  }
+  .roomDevice:has(.learnReading) .modeSurface > .modeFrame { position: static; flex: none; }
+  .roomDevice:has(.learnReading) .modeSurface > .coachMode {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+  }
+}
+@media (min-width: 701px) {
+  .appShell:has(.learnReading) .modeSurface { display: flex; flex-direction: column; overflow: hidden; }
+  .appShell:has(.learnReading) .modeSurface > .coachMode {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
-.coachChat:has(.learnMission) .chatThread {
-  display: flex;
-  flex-direction: column;
+body:has(.learnReading) .cmp,
+body:has(.learnReading) .cmpTab { display: none; }
+
+.learnReading {
   flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
-}
-
-.roomWorkspace:has(.learnMission) .chatThread::after {
-  height: 0;
-}
-
-/* The row under the orange rail is a second navigation. It stays on Coach.
-   The companion window and its edge tab cover the passage, so they step aside. */
-.roomDevice:has(.learnMission) .mhChipBar,
-body:has(.learnMission) .cmp,
-body:has(.learnMission) .cmpTab {
-  display: none;
-}
-
-.coachChat .learnMission {
-  flex: 1 1 0;
-  min-height: 0;
-  height: auto;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  padding: 6px 4px 4px;
+  padding: 18px 16px 12px;
+  background: var(--th-pane, var(--snow));
 }
 
-.learnProgress {
+.learnBar {
   flex: none;
-  height: 10px;
+  height: 12px;
   border-radius: 999px;
   background: var(--snow-3);
   overflow: hidden;
 }
-
-.learnProgress > span {
+.learnBar > span {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--teal);
 }
 
-.learnQuestion {
+.learnAsk {
   flex: none;
-  margin: 2px 0 0;
+  margin: 0;
   font-family: var(--display);
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   line-height: 1.2;
   font-weight: 800;
 }
 
-.learnPassage {
-  flex: 1;
+.learnChoices {
+  flex: 1 1 0;
   min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
 }
 
-.learnLine {
-  position: relative;
-  display: block;
+.learnChoice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   width: 100%;
   margin: 0;
-  padding: 10px 36px 10px 12px;
+  padding: 12px 4px;
   border: 0;
   border-radius: 12px;
   background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: 17px;
-  line-height: 1.5;
+  line-height: 1.45;
   text-align: left;
 }
+button.learnChoice { cursor: pointer; }
 
-button.learnLine { cursor: pointer; }
-p.learnLine { cursor: default; }
-
-.learnLine[aria-pressed="true"] {
-  background: var(--teal-soft);
-  box-shadow: inset 4px 0 0 var(--teal);
-}
-
-.learnLine[data-result="hit"],
-.learnLine[data-result="answer"] {
-  background: var(--teal-soft);
-  box-shadow: inset 4px 0 0 var(--teal);
-}
-
-.learnLine[data-result="miss"] {
-  background: var(--berry-soft);
-  box-shadow: inset 4px 0 0 var(--berry);
-}
-
-.learnMark {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  width: 22px;
-  height: 22px;
-  margin-top: -11px;
-  border-radius: 50%;
-  background: var(--teal);
-  color: var(--ink);
-  font-size: 14px;
+.learnBox {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px var(--hairline, rgba(20, 27, 45, .18));
+  color: transparent;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 22px;
+  line-height: 28px;
   text-align: center;
 }
+.learnChoice[aria-pressed="true"] .learnBox {
+  background: var(--teal);
+  box-shadow: none;
+  color: white;
+}
+.learnChoice[data-result="hit"] .learnBox,
+.learnChoice[data-result="answer"] .learnBox {
+  background: var(--teal);
+  box-shadow: none;
+  color: white;
+}
+.learnChoice[data-result="miss"] .learnBox {
+  background: var(--berry);
+  box-shadow: none;
+  color: white;
+}
 
-.learnMarkMiss { background: var(--berry); color: white; }
-
-.learnExplain {
+.learnSheet {
   flex: none;
   max-height: 28%;
   overflow: auto;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--berry-soft);
   color: var(--ink);
   font-size: 17px;
-  line-height: 1.5;
+  line-height: 1.45;
 }
+.learnSheet p { margin: 0 0 8px; }
 
-.learnExplain p { margin: 0 0 8px; }
-
-.learnCheck {
+.learnGo {
   flex: none;
   width: 100%;
-  margin-top: auto;
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
+  min-height: 52px;
+  border-radius: 16px;
 }
-
-.learnCheck:disabled {
+.learnGo:disabled {
   opacity: 1;
   color: var(--muted);
   background: var(--snow-3);
@@ -161,13 +165,8 @@ p.learnLine { cursor: default; }
   cursor: default;
 }
 
-.coachChat .learnMissionChoices {
-  display: flex;
-  gap: 8px;
-  flex: none;
-}
-
-.coachChat .learnMissionChoices button {
+.learnSamples { display: flex; gap: 8px; flex: none; }
+.learnSamples button {
   min-height: 36px;
   padding: 0 10px;
   border: 0;
@@ -178,8 +177,4 @@ p.learnLine { cursor: default; }
   font-size: .82rem;
   cursor: pointer;
 }
-
-.coachChat .learnMissionChoices button[aria-pressed="true"] {
-  background: var(--teal-soft);
-  color: var(--teal-ink);
-}
+.learnSamples button[aria-pressed="true"] { background: var(--teal-soft); color: var(--teal-ink); }

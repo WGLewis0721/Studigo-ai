@@ -862,6 +862,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       </header>
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
+      {guidedLearn && view === "chat" ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} onOpenMaterials={onOpenMaterials} /> : <>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         <div className="coachPhoneNav" role="group" aria-label={chatMode === "learn" ? "Lesson navigation" : "Topic navigation"}>
           <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Previous lesson" : "Previous topic"} onClick={() => void goToPreviousTopic()}>
@@ -1088,6 +1089,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       }} onAllTopics={openTopicPicker} />
       </div>
       )}
+      </>}
     </div>
     </>
   );
