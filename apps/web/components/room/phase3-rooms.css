@@ -88,15 +88,19 @@
 .roomDevice[data-ui="phase3"] :is(.roomStudioAttempt, .roomStudioCards, .roomStudioTest, .weakAreasPanel, .studyPlanPanel, .cramSetup, .cramSession, .roomEvidence) button:focus-visible,
 .roomDevice[data-ui="phase3"] .roomSettings button:focus-visible { outline: 3px solid var(--blueberry-ink); outline-offset: 3px; }
 @media (max-width: 700px) {
-  .roomDevice[data-ui="phase3"] .roomStudioSetup .setupMain { padding: 24px 18px; }
-  .roomDevice[data-ui="phase3"] .roomStudioAttempt { padding: 22px 16px; }
+  .roomDevice[data-ui="phase3"] .roomSectionIntro { margin-bottom: 10px; }
+  .roomDevice[data-ui="phase3"] .roomSectionIntro h2 { margin: 2px 0 0; font-size: 1.28rem; }
+  .roomDevice[data-ui="phase3"] .roomSectionIntro p { display: none; }
+  .roomDevice[data-ui="phase3"] .roomStudioSetup .setupMain { padding: 16px 14px; }
+  .roomDevice[data-ui="phase3"] .roomStudioSetup .setupHeading h3 { font-size: 1.35rem; }
+  .roomDevice[data-ui="phase3"] .roomStudioAttempt { padding: 16px 14px; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceListBinary { grid-template-columns: 1fr; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButtons { grid-template-columns: 1fr; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButton { display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 48px; text-align: left; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButton::before { margin: 0; flex: none; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .roomStudioSubmit { width: 100%; }
   .roomDevice[data-ui="phase3"] .roomStudioTest .testSessionTop { display: grid; gap: 4px; }
-  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { align-items: start; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { align-items: start; min-height: 0; padding: 16px; }
   .roomDevice[data-ui="phase3"] .roomEvidence .weakSpots li { display: grid; }
   .roomDevice[data-ui="phase3"] .studyPlanPanel .planActionButtons { flex-wrap: wrap; }
 }

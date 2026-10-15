@@ -138,7 +138,13 @@
   [data-ui="phase3"] .learningPhaseFocus { flex: 1 1 45%; padding: 8px 10px; box-shadow: none; }
   [data-ui="phase3"] .learningPhaseFocus strong { font-size: .78rem; line-height: 1.2; }
   [data-ui="phase3"] .coachMode { gap: 12px; }
-  [data-ui="phase3"] .coachChat { margin-inline: -14px; height: min(72dvh, 700px); min-height: 440px; border-radius: 0; }
+  .appShell:has(.coachChat) [data-ui="phase3"] .coachChat,
+  [data-ui="phase3"] .coachChat {
+    margin-inline: -14px; flex: 1 1 auto; height: auto; min-height: 0; max-height: none; border-radius: 0;
+  }
+  [data-ui="phase3"] .learningTopicsIntro { padding: 12px 14px; border-radius: 16px; }
+  [data-ui="phase3"] .learningTopicsIntro h2, [data-ui="phase3"] .learningTopicsEmpty h2 { font-size: 1.28rem; }
+  [data-ui="phase3"] .learningTopicsIntro p { display: none; }
   [data-ui="phase3"] .lessonActions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px 10px; }
   [data-ui="phase3"] .lessonActions .ghostButton { min-width: 0; min-height: 44px; padding: 5px 3px; font-size: .72rem; }
   [data-ui="phase3"] .coachChat .chatThread { padding: 16px; }
