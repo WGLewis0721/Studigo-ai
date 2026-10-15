@@ -49,3 +49,15 @@ Study Concierge, next-action proposals, companion cosmetics, rewards, the 5 free
 | 5. Purchase | 5 coaching sessions and 5 new guide generations are free. A retry does not count twice. A session already started is never cut off. Downloading the same guide again is free. Existing files are never deleted for nonpayment. The pay screen is not shown to a child. | The owner defines what one session is, who pays, and whether $19.99 is real |
 
 Phase 5 stays blocked until those three decisions are written down. The daily spend cap stays in place either way. The Guided Learning outcome gates in [STUDIGO_V2_PHASE3_UX_OUTCOME_PLAN.md](./STUDIGO_V2_PHASE3_UX_OUTCOME_PLAN.md) are a separate contract and do not start until this first-run gate passes.
+
+## Current Coach and Learn corrections
+
+These are gaps in the Study Room that already exists. They are part of this plan. They are not the first-run flow, and they do not wait on the concierge or a purchase.
+
+| Correction | What the learner can do | Pass |
+| --- | --- | --- |
+| Previous | In Coach and in Learn, move back to the prior lesson as well as forward. | Previous restores that lesson. It does not erase the current answer or change mastery. Next still moves forward. |
+| Close the teaching-style sheet | Dismiss "How should Studigo coach you?" and "How should Studigo explain things?" without applying a change. | A visible Close, Escape, and a tap outside all dismiss it. An unapplied choice is discarded. |
+| Give me a hint | Ask for a hint again on the same question. | Each press in a row is a stronger hint. The third consecutive "Give me a hint" gives the answer. Any other action resets that count. A revealed answer is help, not a correct answer, and does not raise mastery. |
+| Show me an example | See the kind of answer Coach will accept for this question. | One worked example shows the shape and the level of understanding expected, then the same question returns. It does not reveal the pending answer, and it does not replace the question with a different problem. |
+| How correct is correct | Set, for the whole Study Room, how much of the guide an answer must cover. | A slider in room settings. Low: about half the expected points is enough (50% or better). High: about 80–95% of the expected points. Wording does not have to match the guide. The first time through a topic uses Low unless the learner moves the slider. |
