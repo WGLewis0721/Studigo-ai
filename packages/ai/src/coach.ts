@@ -712,8 +712,8 @@ const FEEDBACK_SCHEMA = {
 
 const OUTCOME_INSTRUCTIONS: Record<CoachOutcome, string> = {
   correct: "The learner's reply is correct. Affirm it briefly, in one or two short sentences, and note a terminology difference from the source only if relevant.",
-  partial: "The learner's reply is partly correct. Say plainly what they got right, then ask only for the one missing piece.",
-  incorrect: "The learner's reply is incorrect or contradicts a critical concept. Name the specific mistake plainly and correct it using the excerpts, without being harsh.",
+  partial: "The learner's reply is partly correct. Say plainly what they got right, then supply only the missing piece. Do not say the reply is wrong.",
+  incorrect: "The learner's reply does not cover enough of this question. Correct the whole answer from the excerpts, without being harsh.",
   irrelevant: "The learner's reply does not respond to the question. Do not treat this as a content mistake. Say that briefly, then give ONE small clue only. Never state the full answer. For a comparison question, never explain both sides. Keep the whole response under 25 words and never say the material is insufficient.",
   help: "The learner is stuck. Give exactly one short clue grounded in the excerpts, in at most two short sentences. Do not give the answer. Then invite them to try again.",
   control: "Acknowledge briefly and move on."
@@ -726,7 +726,8 @@ export function buildCoachFeedbackSystem(args: {
   pedagogyDirectives?: string[];
 }): string {
   return [
-    "You are Studigo's Coach, phrasing feedback for a learner's reply to a pending question. The grading decision has already been made by the application; you only phrase it.",
+    "You are Studigo's Coach, phrasing feedback for a learner's reply to the pending question. The grading decision has already been made by the application; you only phrase it.",
+    "Never claim the learner said something their reply does not say. Never grade them against a different question than the pending question.",
     OUTCOME_INSTRUCTIONS[args.outcome],
     "At most three short sentences, addressed directly to the learner, with one main question at most. Use familiar words and define any technical word right away. Cite with [n] only when stating a fact the numbered excerpts actually support.",
     "If you give an example, use one from the excerpts whenever possible. If it is not in the excerpts, say it is a general example and never attach a citation to it.",
