@@ -855,7 +855,21 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       </header>
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
-      <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>{contextControls}</div>
+      <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
+        <div className="coachPhoneNav" role="group" aria-label={chatMode === "learn" ? "Lesson navigation" : "Topic navigation"}>
+          <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Previous lesson" : "Previous topic"} onClick={() => void goToPreviousTopic()}>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}. Change` : `Learning: ${learnActive.label}. Change`}>
+            <span>{chatMode === "coach" ? "Coaching" : "Learning"}</span>
+            <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
+          </button>
+          <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Next lesson" : "Next topic"} onClick={() => void goToNextTopic()}>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </div>
+        {contextControls}
+      </div>
       {view === "topics" ? (
         <div className="coachTopicsView">
           {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}
@@ -1033,16 +1047,21 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         })}
         </>}
         </LessonMobileFrame>
-        <StudigoComposer
-          variant="chat"
-          accent={chatMode === "learn" ? "learn" : undefined}
-          placeholder={chatMode === "learn" ? "Ask about your materials" : "Answer, or message your coach"}
-          value={prompt}
-          onChange={(value) => setPrompts((current) => ({ ...current, [chatMode]: value }))}
-          onSubmit={() => void coach(prompt)}
-          disabled={busy || restoring}
-          ariaLabel={chatMode === "learn" ? `Message Learn about ${learnTopicTitle}` : `Message Coach about ${coachTopicTitle}`}
-        />
+        <div className="chatDock">
+          <button type="button" className="chatEraser" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Erase Learn chat" : "Erase Coach chat"} onClick={() => void startFresh()}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M16.2 4.8 19.2 7.8 9.4 17.6H6.4v-3L16.2 4.8Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><path d="M13.2 7.8 16.2 10.8M5 20h14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+          </button>
+          <StudigoComposer
+            variant="chat"
+            accent={chatMode === "learn" ? "learn" : undefined}
+            placeholder={chatMode === "learn" ? "Ask about your materials" : "Answer, or message your coach"}
+            value={prompt}
+            onChange={(value) => setPrompts((current) => ({ ...current, [chatMode]: value }))}
+            onSubmit={() => void coach(prompt)}
+            disabled={busy || restoring}
+            ariaLabel={chatMode === "learn" ? `Message Learn about ${learnTopicTitle}` : `Message Coach about ${coachTopicTitle}`}
+          />
+        </div>
       </section>
       </div>
       <CoachAside topics={topics} areas={areas} selectedTitle={selectedTopic.title} onSelect={(topic) => {
