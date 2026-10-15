@@ -1,9 +1,11 @@
 import { requireApiUser } from "@/lib/auth";
 import { loadReadingGuideEdition } from "@/lib/guide-reading";
 import { assertRoomAccess } from "@/lib/retrieval";
-import { currentBlockKeySet, filterGuideEditionExport, revisionStamp } from "@/lib/source-freshness";
+import { currentBlockKeySet, filterGuideEditionExport, revisionStamp, selectCurrentBlocks } from "@/lib/source-freshness";
+import { buildPersistedEdition, type GuideEditionStore } from "@/lib/study-guide-content";
 import { buildEditionDocx, DOCX_MIME, guideFileFormat } from "@/lib/study-guide-docx";
-import { buildEditionPdf, guideDownloadDecision } from "@/lib/study-guide-pdf";
+import { buildEditionPdf, editionIsRenderable, guideDownloadDecision } from "@/lib/study-guide-pdf";
+import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import type { StudyGuideContent } from "@studigo/ai";
 
 export const runtime = "nodejs";
@@ -36,23 +38,64 @@ export async function GET(request: Request) {
   const loaded = room ? await loadReadingGuideEdition(supabase, roomId) : { content: null, updateAvailable: false };
   if ("error" in loaded) return Response.json({ error: "Could not load this Study Room.", code: "no_valid_edition" }, { status: 409 });
   let edition: unknown = loaded.content;
-  if (room && edition) {
+  if (room) {
     const [{ data: blocks, error: blockError }, { data: documents, error: documentError }] = await Promise.all([
-      supabase.from("source_blocks").select("block_key, document_id, revision").eq("room_id", roomId),
+      supabase.from("source_blocks").select("block_key, page_number, normalized_text, kind, revision, document_id").eq("room_id", roomId),
       supabase.from("documents").select("id, active_revision").eq("room_id", roomId)
     ]);
     if (blockError || documentError) {
       return Response.json({ error: "Could not verify guide sources.", code: "source_unavailable" }, { status: 409 });
     }
+    const documentsWithRevision = (documents ?? []).map((document) => ({
+      id: String(document.id),
+      revision: revisionStamp(document.active_revision)
+    }));
+    const currentBlocks = (blocks ?? []).map((block) => ({
+      blockKey: String(block.block_key),
+      pageNumber: block.page_number ?? 0,
+      text: String(block.normalized_text ?? ""),
+      kind: block.kind,
+      documentId: String(block.document_id),
+      revision: revisionStamp(block.revision) ?? -1
+    }));
+    const sources = selectCurrentBlocks(documentsWithRevision, currentBlocks);
     const currentKeys = currentBlockKeySet(
-      (documents ?? []).map((document) => ({ id: String(document.id), revision: revisionStamp(document.active_revision) })),
-      (blocks ?? []).map((block) => ({
-        documentId: String(block.document_id),
-        revision: revisionStamp(block.revision) ?? -1,
-        blockKey: String(block.block_key)
-      }))
+      documentsWithRevision,
+      sources.map((block) => ({ documentId: block.documentId, revision: block.revision, blockKey: block.blockKey }))
     );
-    edition = filterGuideEditionExport(edition as StudyGuideContent, currentKeys);
+    if (edition) edition = filterGuideEditionExport(edition as StudyGuideContent, currentKeys);
+    if (!editionIsRenderable(edition)) {
+      const service = createServiceSupabaseClient();
+      const store: GuideEditionStore = {
+        async get(key) {
+          const existing = await service.rpc("read_guide_edition", { p_owner: user.id, p_key: key });
+          return (existing.data ?? null) as StudyGuideContent | null;
+        },
+        async put(key, content) {
+          const saved = await service.rpc("publish_guide_edition", {
+            p_room: roomId,
+            p_owner: user.id,
+            p_key: key,
+            p_content: content
+          });
+          if (saved.error || !saved.data) throw new Error("Could not store the guide edition.");
+          return saved.data as StudyGuideContent;
+        }
+      };
+      const built = await buildPersistedEdition({
+        roomId,
+        level: "general",
+        topicIds: [],
+        blocks: sources.map((block) => ({
+          blockKey: block.blockKey,
+          pageNumber: block.pageNumber,
+          text: block.text,
+          kind: block.kind == null ? undefined : String(block.kind)
+        })),
+        store
+      });
+      if (built.status === "ready") edition = filterGuideEditionExport(built.content, currentKeys);
+    }
   }
   const decision = guideDownloadDecision({ room, edition });
   if (!decision.pdf) {
