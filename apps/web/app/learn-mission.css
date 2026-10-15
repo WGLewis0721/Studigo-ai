@@ -1,0 +1,12 @@
+/* Guided Learn stays inside the existing chat pane. The step and the passage
+   scroll in the card; the old lesson title is not part of this surface. */
+.coachChat:has(.learnMission) .lessonReading:not(:has(*)) { display: none; }
+.coachChat:has(.learnMission) .chatThread { display: flex; flex-direction: column; }
+.coachChat .learnMission {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;
+}
+.coachChat .learnMissionHead,
+.coachChat .learnMissionSteps,
+.coachChat .learnMissionActions { flex: none; }
+.coachChat .learnMissionHead { position: static; }
+.coachChat .learnMissionCard { flex: 1; min-height: 0; overflow: auto; }
