@@ -11,6 +11,10 @@ import type { StudyGuideContent } from "@studigo/ai";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+function deny(error: string, code: string, status: number) {
+  return Response.json({ error, code }, { status, headers: { "Cache-Control": "private, no-store" } });
+}
+
 function filename(title: string, extension: "pdf" | "docx"): string {
   const slug = title
     .normalize("NFKD")
@@ -28,15 +32,15 @@ export async function GET(request: Request) {
   const roomId = url.searchParams.get("roomId")?.trim();
   const format = guideFileFormat(url.searchParams.get("format"));
   const page = url.searchParams.get("page") === "a4" ? "a4" : "letter";
-  if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
-  if (!format) return Response.json({ error: "format must be pdf or docx.", code: "bad_format" }, { status: 400 });
+  if (!roomId) return deny("roomId is required", "bad_request", 400);
+  if (!format) return deny("format must be pdf or docx.", "bad_format", 400);
 
   const room = await assertRoomAccess(supabase, roomId);
   const roomResult = room
     ? await supabase.from("study_rooms").select("title, subject, course_name, test_date").eq("id", roomId).maybeSingle()
     : { data: null, error: null };
   const loaded = room ? await loadReadingGuideEdition(supabase, roomId) : { content: null, updateAvailable: false };
-  if ("error" in loaded) return Response.json({ error: "Could not load this Study Room.", code: "no_valid_edition" }, { status: 409 });
+  if ("error" in loaded) return deny("Could not load this Study Room.", "no_valid_edition", 409);
   let edition: unknown = loaded.content;
   if (room) {
     const [{ data: blocks, error: blockError }, { data: documents, error: documentError }] = await Promise.all([
@@ -44,7 +48,7 @@ export async function GET(request: Request) {
       supabase.from("documents").select("id, active_revision").eq("room_id", roomId)
     ]);
     if (blockError || documentError) {
-      return Response.json({ error: "Could not verify guide sources.", code: "source_unavailable" }, { status: 409 });
+      return deny("Could not verify guide sources.", "source_unavailable", 409);
     }
     const documentsWithRevision = (documents ?? []).map((document) => ({
       id: String(document.id),
@@ -106,13 +110,50 @@ export async function GET(request: Request) {
         pageNumber: block.pageNumber,
         text: block.text
       }));
-      if (!lines.length) {
-        const chunks = await supabase.from("document_chunks").select("id, content, page_number").eq("room_id", roomId);
-        lines = (chunks.data ?? []).map((chunk) => ({
-          blockKey: String(chunk.id),
-          pageNumber: chunk.page_number ?? 1,
-          text: String(chunk.content ?? "")
-        }));
+      try {
+        const service = createServiceSupabaseClient();
+        if (!lines.some((line) => line.text.trim().length > 1)) {
+          const blockRead = await service
+            .from("source_blocks")
+            .select("block_key, page_number, normalized_text, raw_text")
+            .eq("room_id", roomId)
+            .eq("owner_id", user.id);
+          lines = (blockRead.data ?? []).map((block) => ({
+            blockKey: String(block.block_key),
+            pageNumber: block.page_number ?? 1,
+            text: String(block.normalized_text || block.raw_text || "")
+          }));
+        }
+        if (!lines.some((line) => line.text.trim().length > 1)) {
+          const chunks = await service
+            .from("document_chunks")
+            .select("id, content, page_number")
+            .eq("room_id", roomId)
+            .eq("owner_id", user.id);
+          lines = (chunks.data ?? []).map((chunk) => ({
+            blockKey: String(chunk.id),
+            pageNumber: chunk.page_number ?? 1,
+            text: String(chunk.content ?? "")
+          }));
+        }
+        if (!lines.some((line) => line.text.trim().length > 1)) {
+          const topics = await service
+            .from("topics")
+            .select("id, title, objective, key_terms")
+            .eq("room_id", roomId)
+            .eq("owner_id", user.id)
+            .eq("active", true);
+          lines = (topics.data ?? []).flatMap((topic) => {
+            const terms = Array.isArray(topic.key_terms) ? topic.key_terms.filter(Boolean).join(", ") : "";
+            return [
+              { blockKey: String(topic.id), pageNumber: 1, text: String(topic.title ?? "") },
+              { blockKey: `${topic.id}-objective`, pageNumber: 1, text: String(topic.objective ?? "") },
+              { blockKey: `${topic.id}-terms`, pageNumber: 1, text: terms }
+            ];
+          });
+        }
+      } catch {
+        lines = lines;
       }
       edition = exportEditionFromLines(roomId, lines);
     }
@@ -122,11 +163,11 @@ export async function GET(request: Request) {
     const error = decision.code === "room_not_found"
       ? "Study Room not found"
       : "No validated guide edition is ready to download.";
-    return Response.json({ error, code: decision.code }, { status: decision.status });
+    return deny(error, decision.code, decision.status);
   }
 
   if (roomResult.error || !roomResult.data) {
-    return Response.json({ error: "Could not load this Study Room.", code: "no_valid_edition" }, { status: 409 });
+    return deny("Could not load this Study Room.", "no_valid_edition", 409);
   }
 
   const file = format === "docx"

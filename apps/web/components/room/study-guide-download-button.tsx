@@ -22,7 +22,11 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf" }: { roomId: s
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(guideDownloadPath(roomId, format), { method: "GET" });
+      const path = guideDownloadPath(roomId, format);
+      const response = await fetch(`${path}${path.includes("?") ? "&" : "?"}ts=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store"
+      });
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(payload?.error || "Could not build the study guide.");
