@@ -96,6 +96,13 @@ body:has(.learnReading) .cmpTab { display: none; }
   font-weight: 800;
 }
 
+.learnLine {
+  margin: 0;
+  padding: 10px 0;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
 .learnChoices {
   flex: 1 1 0;
   min-height: 0;

@@ -30,8 +30,10 @@ function questionFrom(objective: string): string {
 }
 function readingProgress(phase: Phase | "new"): number {
   if (phase === "done") return 100;
-  if (phase === "check") return 72;
-  return 16;
+  if (phase === "check") return 80;
+  if (phase === "try") return 60;
+  if (phase === "show") return 40;
+  return 20;
 }
 
 function passageLines(objective: string, excerpt: string): { sentences: string[]; target: number } | null {
@@ -166,7 +168,8 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   }, [mission?.phase, loading]);
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
-  const revealed = mission?.phase === "check" || mission?.phase === "done";
+  const phase = mission?.phase ?? "brief";
+  const revealed = phase === "check" || phase === "done";
   const miss = revealed && mission?.reflection === "review";
   const progress = readingProgress(mission?.phase ?? "new");
 
@@ -206,7 +209,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   }
 
   const showPassage = Boolean(mission && snapshot?.sourceCurrent !== false && lines);
-  const waiting = showPassage && !revealed && tapped === null;
   const explain = miss ? lines?.sentences[lines.target] ?? "" : "";
 
   async function continueReading() {
@@ -238,14 +240,18 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     }
   }
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Reading">
+  return <section ref={sectionRef} className="learnReading" aria-label="Lesson">
     {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
-    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Reading progress">
+    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Lesson progress">
       <span style={{ width: `${progress}%` }} />
     </div>
     {objectiveText && <h2 className="learnAsk">{objectiveText}</h2>}
     {error && <p className="formError" role="alert">{error}</p>}
-    {snapshot?.sourceCurrent === false ? <p role="status">This passage changed.</p> : showPassage && lines ? (
+    {snapshot?.sourceCurrent === false ? <p role="status">This passage changed.</p> : phase === "show" && lines ? (
+      <div className="learnChoices">
+        {lines.sentences.map((sentence) => <p key={sentence} className="learnLine">{sentence}</p>)}
+      </div>
+    ) : (phase === "try" || revealed) && lines ? (
       <div className="learnChoices" role="group" aria-label="Passage">
         {lines.sentences.map((sentence, index) => {
           const result = !revealed || !mission ? undefined
@@ -261,14 +267,15 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
           return <button key={sentence} type="button" className="learnChoice" aria-pressed={tapped === index} onClick={() => setTapped(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</button>;
         })}
       </div>
-    ) : <p className="srOnly" role="status">{loading ? "Opening the passage." : "Choose a topic."}</p>}
+    ) : phase !== "brief" ? <p className="srOnly" role="status">{loading ? "Opening the lesson." : "Choose a topic."}</p> : null}
     {miss && explain ? <p className="learnSheet">{explain}</p> : null}
-    {revealed && <p className="srOnly">{miss ? "Not that sentence." : "That sentence is the one."}</p>}
-    {(showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (mission?.phase !== "done" && waiting)} onClick={() => {
+    {revealed && <p className="srOnly">{miss ? "Not that line." : "That line is the one."}</p>}
+    {(showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (phase === "try" && tapped === null)} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { startTried.current = false; void act("start"); return; }
-      if (revealed) continueReading();
-      else void submitCheck();
-    }}>{showPassage && !revealed ? "Check" : "Continue"}</button>}
+      if (phase === "try") void submitCheck();
+      else if (revealed) continueReading();
+      else void act("advance");
+    }}>{phase === "try" ? "Check" : phase === "show" ? "My turn" : "Continue"}</button>}
   </section>;
 }
