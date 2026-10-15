@@ -4047,21 +4047,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     box-shadow: inset 0 0 0 1px var(--th-line);
   }
   .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep {
-    display: grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0;
+    display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0;
     border: 0; border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer;
+    position: relative;
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep::before,
+  .roomDevice:has(.coachChat) .chatEraser::before {
+    content: ""; position: absolute; inset: -7px;
   }
   .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep:disabled { opacity: .4; cursor: default; }
   .roomDevice:has(.coachChat) .coachPhoneNav .coachActiveStyle {
-    display: inline-flex; margin: 0; height: 32px; max-width: none; min-width: 0; padding: 0 10px;
+    display: inline-flex; margin: 0; height: 30px; max-width: none; min-width: 0; padding: 0 10px;
     background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .12);
   }
   .roomDevice:has(.coachChat) .coachPhoneNav .coachActiveStyle strong { min-width: 0; }
   .coachChat > .coachActiveStyle, .coachChat .lessonActions { display: none; }
   .roomDevice:has(.coachChat) .chatDock { display: flex; align-items: center; gap: 8px; flex: none; padding-left: 8px; }
   .roomDevice:has(.coachChat) .chatEraser {
-    display: grid; place-items: center; flex: none; width: 36px; height: 36px; padding: 0;
-    border: 0; border-radius: 12px; background: var(--white); color: var(--ink); cursor: pointer;
-    box-shadow: inset 0 0 0 1px var(--th-line, var(--hairline));
+    display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0;
+    border: 0; border-radius: 50%; background: var(--white); color: var(--ink); cursor: pointer;
+    box-shadow: inset 0 0 0 1px var(--th-line, var(--hairline)); position: relative;
   }
   .roomDevice:has(.coachChat) .chatEraser:disabled { opacity: .4; cursor: default; }
   .roomDevice:has(.coachChat) .chatDock .chatComposer { flex: 1; min-width: 0; }
