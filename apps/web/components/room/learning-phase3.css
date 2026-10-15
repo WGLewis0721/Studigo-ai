@@ -160,3 +160,158 @@
 @media (prefers-reduced-motion: reduce) {
   [data-ui="phase3"] .coachMode button, [data-ui="phase3"] .learnMode button { transition: none; }
 }
+
+.lessonStage { display: contents; }
+
+/* Desktop: one matte reading page. The source sits beside the lesson, not in a
+   stretched bar, and the phone stack below 1100px is unchanged. */
+@media (min-width: 1100px) {
+  [data-ui="phase3"] .learningPhaseIntro { display: none; }
+
+  .roomDevice[data-ui="phase3"] .coachChat {
+    position: relative;
+    background: var(--white);
+    border-radius: 22px;
+  }
+  [data-ui="phase3"] .coachActiveStyle {
+    align-self: flex-start;
+    margin: 10px 18px 0;
+  }
+  [data-ui="phase3"] .lessonStage:has(.lessonCitations) {
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 22px;
+    padding: 8px 18px 0 8px;
+  }
+  [data-ui="phase3"] .lessonStage:has(.lessonCitations) .lessonPosition {
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 12px 0;
+    border: 0;
+    font-size: clamp(1.7rem, 2.2vw, 2.35rem);
+  }
+  [data-ui="phase3"] .lessonStage:has(.lessonCitations) .chatThread {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 8px 16px 20px;
+  }
+  [data-ui="phase3"] .lessonStage > .lessonCitations {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+    margin: 12px 0 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--teal-soft);
+  }
+  [data-ui="phase3"] .lessonStage > .lessonCitations::before {
+    content: "From your material";
+    display: block;
+    margin-bottom: 10px;
+    font: 800 .68rem/1.2 var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal-ink);
+  }
+  [data-ui="phase3"] .lessonReading[data-learn-surface="lesson"],
+  [data-ui="phase3"] .lessonReading[data-learn-surface="practice"] {
+    width: auto;
+    max-width: 68ch;
+    align-self: start;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  [data-ui="phase3"] .coachChat .answerBubble,
+  [data-ui="phase3"] .coachChat .answerBubble[data-mode="learn"] {
+    display: grid;
+    grid-template-columns: minmax(0, 68ch) minmax(220px, 280px);
+    column-gap: 28px;
+    align-items: start;
+    width: 100%;
+    max-width: none;
+    padding: 4px 8px 12px;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  [data-ui="phase3"] .coachChat .answerBubble:not(:has(.lessonCitations)) {
+    grid-template-columns: minmax(0, 68ch);
+  }
+  [data-ui="phase3"] .coachChat .answerBubble > :not(.lessonCitations) { grid-column: 1; }
+  [data-ui="phase3"] .coachChat .answerBubble[data-state="insufficient"] {
+    background: transparent;
+    box-shadow: inset 3px 0 0 var(--tangerine);
+    padding-left: 16px;
+  }
+  [data-ui="phase3"] .coachChat .answerBubble .answerKicker { grid-column: 1; }
+  [data-ui="phase3"] .coachChat .answerBubble .answerText,
+  [data-ui="phase3"] .lessonReading .lessonText {
+    grid-column: 1;
+    max-width: none;
+    font-size: 1.125rem;
+    line-height: 1.65;
+  }
+  [data-ui="phase3"] .answerBubble .lessonCitations {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: start;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--tangerine-soft);
+  }
+  [data-ui="phase3"] .coachChat[data-chat-mode="learn"] .answerBubble .lessonCitations { background: var(--teal-soft); }
+  [data-ui="phase3"] .answerBubble .lessonCitations::before {
+    content: "From your material";
+    display: block;
+    margin-bottom: 10px;
+    font: 800 .68rem/1.2 var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--tangerine-ink);
+  }
+  [data-ui="phase3"] .coachChat[data-chat-mode="learn"] .answerBubble .lessonCitations::before { color: var(--teal-ink); }
+  [data-ui="phase3"] .lessonStage > .lessonCitations .sourceStack,
+  [data-ui="phase3"] .answerBubble .lessonCitations .sourceStack { display: grid; gap: 8px; }
+  .roomDevice[data-ui="phase3"] .lessonStage > .lessonCitations .sourceChipLink,
+  .roomDevice[data-ui="phase3"] .answerBubble .lessonCitations .sourceChipLink {
+    flex: none;
+    width: 100%;
+    min-height: 64px;
+    border-radius: 14px;
+    background: var(--white);
+    box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1);
+  }
+  .roomDevice[data-ui="phase3"] .lessonActions {
+    justify-content: flex-end;
+    gap: 8px;
+    background: transparent;
+    border-top: 0;
+    padding: 8px 16px 4px;
+  }
+  .roomDevice[data-ui="phase3"] .lessonActions .ghostButton {
+    flex: 0 0 auto;
+    min-width: 112px;
+    background: transparent;
+  }
+  .roomDevice[data-ui="phase3"] .lessonActions .ghostButton:last-child {
+    min-width: 148px;
+    background: var(--teal);
+    color: var(--ink);
+    border-color: var(--teal);
+    box-shadow: inset 0 1px 0 #fff, 0 3px 0 var(--teal-ink);
+  }
+  [data-ui="phase3"] .chatChips { background: transparent; padding: 4px 16px 10px; }
+}
