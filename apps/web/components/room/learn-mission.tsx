@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
-import { sourceSentences, tapCheck } from "@/lib/learn-tap";
+import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
+import { StudigoMascot } from "@/components/studigo-mascot";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
 type Mission = { topic_id: string; document_id: string; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
@@ -45,14 +46,31 @@ function passageLines(objective: string, excerpt: string): { sentences: string[]
   return line ? { sentences: [line], target: 0 } : null;
 }
 
-export function LearnMission({ roomId, topics, selectedTopicId }: {
-  roomId: string; topics: Topic[]; selectedTopicId: string | null; onOpenMaterials: () => void;
+function beatHit(beat: MissionBeat, picked: number[]): boolean {
+  if (beat.kind === "choice") return picked[0] === beat.answer;
+  if (beat.kind === "blank") return beat.options[picked[0]] === beat.answer;
+  if (beat.kind === "boxes") return picked.length === beat.answers.length && beat.answers.every((index) => picked.includes(index));
+  return true;
+}
+
+function beatFix(beat: MissionBeat): string {
+  if (beat.kind === "choice") return beat.options[beat.answer] ?? "";
+  if (beat.kind === "blank") return beat.answer;
+  if (beat.kind === "boxes") return beat.answers.map((index) => beat.options[index]).filter(Boolean).join(" ");
+  return "";
+}
+
+export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard" }: {
+  roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery; onOpenMaterials: () => void;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tapped, setTapped] = useState<number | null>(null);
+  const [step, setStep] = useState(0);
+  const [picked, setPicked] = useState<number[]>([]);
+  const [shown, setShown] = useState(false);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
@@ -168,55 +186,45 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   }, [mission?.phase, loading]);
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
-  const phase = mission?.phase ?? "brief";
-  const revealed = phase === "check" || phase === "done";
-  const miss = revealed && mission?.reflection === "review";
-  const progress = readingProgress(mission?.phase ?? "new");
+  const beats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  const beat = beats[step];
+  const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
+  const progress = beats.length ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
-  async function submitCheck() {
-    if (!mission || !lines || tapped === null || revealed || inFlight.current) return;
-    const reflection: "ready" | "review" = tapped === lines.target ? "ready" : "review";
-    if (fixture) {
-      setSnapshot((current) => current?.mission ? {
-        ...current,
-        mission: { ...current.mission, phase: "check", reflection, paused: false, revision: current.mission.revision + 1 },
-      } : current);
-      return;
-    }
-    inFlight.current = true;
-    setBusy(true);
-    setError(null);
-    try {
-      let current = mission;
-      if (current.paused) {
-        const resumed = await post(current, "resume");
-        if (!resumed.mission) throw new Error("Could not save this reading.");
-        current = resumed.mission;
-      }
-      while (current.phase === "brief" || current.phase === "show") {
-        const next = await post(current, "advance");
-        if (!next.mission) throw new Error("Could not save this reading.");
-        current = next.mission;
-      }
-      if (current.phase === "try") await post(current, "advance", reflection);
-    } catch (caught) {
-      await reload();
-      setError(caught instanceof Error ? caught.message : "Could not save this reading.");
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
+  useEffect(() => {
+    setStep(0);
+    setPicked([]);
+    setShown(false);
+  }, [passageKey]);
+
+  function play(index: number) {
+    if (shown || !beat || beat.kind === "read") return;
+    setPicked((current) => {
+      if (beat.kind !== "boxes") return [index];
+      return current.includes(index) ? current.filter((item) => item !== index) : [...current, index];
+    });
   }
 
-  const showPassage = Boolean(mission && snapshot?.sourceCurrent !== false && lines);
-  const explain = miss ? lines?.sentences[lines.target] ?? "" : "";
-
-  async function continueReading() {
-    if (!mission || inFlight.current) return;
-    if (mission.phase !== "check" && mission.phase !== "done") {
-      void act("advance");
+  function advanceLevel() {
+    if (step < beats.length - 1) {
+      setStep(step + 1);
+      setPicked([]);
+      setShown(false);
       return;
     }
+    void nextLevel();
+  }
+
+  async function nextLevel() {
+    setStep(0);
+    setPicked([]);
+    setShown(false);
+    if (fixture) {
+      setSample((current) => current === "elementary" ? "college" : "elementary");
+      return;
+    }
+    if (!mission || inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setError(null);
@@ -224,58 +232,54 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       let current = mission;
       if (current.phase === "check") {
         const advanced = await post(current, "advance");
-        if (!advanced.mission) throw new Error("Could not save this reading.");
-        current = advanced.mission;
+        if (advanced.mission) current = advanced.mission;
       }
       const index = topics.findIndex((topic) => topic.id === current.topic_id);
       const next = topics[index + 1] ?? topics[0];
       await post(current, "restart", null, next?.id ?? current.topic_id);
-      setTapped(null);
     } catch (caught) {
       await reload();
-      setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+      setError(caught instanceof Error ? caught.message : "Could not open the next part.");
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
   }
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Lesson">
-    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setTapped(null); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
-    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Lesson progress">
+  const ready = Boolean(mission && snapshot?.sourceCurrent !== false && beat);
+
+  return <section ref={sectionRef} className="learnReading" aria-label="Level">
+    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setPicked([]); setShown(false); setStep(0); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
+    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
     </div>
-    {objectiveText && <h2 className="learnAsk">{objectiveText}</h2>}
     {error && <p className="formError" role="alert">{error}</p>}
-    {snapshot?.sourceCurrent === false ? <p role="status">This passage changed.</p> : phase === "show" && lines ? (
-      <div className="learnChoices">
-        {lines.sentences.map((sentence) => <p key={sentence} className="learnLine">{sentence}</p>)}
+    {snapshot?.sourceCurrent === false ? <p role="status">This part changed.</p> : beat ? (
+      <div className="learnTalk">
+        <StudigoMascot state={shown ? (hit ? "celebrate" : "explain") : beat.kind === "read" ? "explain" : "welcome"} size={64} />
+        <div className="learnTalkBody">
+          <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
+          {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
+          {beat.kind === "blank" && <p className="learnLine">{beat.before}<span className="learnGap">{picked.length ? beat.options[picked[0]] : "______"}</span>{beat.after}</p>}
+          {beat.kind === "blank" && <div className="learnWords">{beat.options.map((word, index) => <button key={word} type="button" className="learnWord" aria-pressed={picked[0] === index} onClick={() => play(index)}>{word}</button>)}</div>}
+          {(beat.kind === "choice" || beat.kind === "boxes") && <div className="learnChoices" role="group">
+            {beat.options.map((option, index) => {
+              const result = !shown ? undefined : beat.kind === "choice"
+                ? (index === beat.answer ? "hit" : picked[0] === index ? "miss" : undefined)
+                : beat.answers.includes(index) ? "hit" : picked.includes(index) ? "miss" : undefined;
+              const mark = result === "miss" ? "×" : result === "hit" || picked.includes(index) ? "✓" : "";
+              return <button key={option} type="button" className="learnChoice" aria-pressed={picked.includes(index)} data-result={result} onClick={() => play(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{option}</button>;
+            })}
+          </div>}
+        </div>
       </div>
-    ) : (phase === "try" || revealed) && lines ? (
-      <div className="learnChoices" role="group" aria-label="Passage">
-        {lines.sentences.map((sentence, index) => {
-          const result = !revealed || !mission ? undefined
-            : mission.reflection === "ready"
-              ? (index === lines.target ? "hit" : undefined)
-              : mission.reflection === "review"
-                ? (tapped === index && index !== lines.target ? "miss" : index === lines.target ? "answer" : undefined)
-                : undefined;
-          const mark = result === "miss" ? "×" : result === "hit" || result === "answer" || tapped === index ? "✓" : "";
-          if (revealed) {
-            return <p key={sentence} className="learnChoice" data-result={result}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</p>;
-          }
-          return <button key={sentence} type="button" className="learnChoice" aria-pressed={tapped === index} onClick={() => setTapped(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{sentence}</button>;
-        })}
-      </div>
-    ) : phase !== "brief" ? <p className="srOnly" role="status">{loading ? "Opening the lesson." : "Choose a topic."}</p> : null}
-    {miss && explain ? <p className="learnSheet">{explain}</p> : null}
-    {revealed && <p className="srOnly">{miss ? "Not that line." : "That line is the one."}</p>}
-    {(showPassage || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (phase === "try" && tapped === null)} onClick={() => {
+    ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
+    {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
+    {(ready || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (Boolean(beat && beat.kind !== "read" && !shown && picked.length === 0))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { startTried.current = false; void act("start"); return; }
-      if (phase === "try") void submitCheck();
-      else if (revealed) continueReading();
-      else void act("advance");
-    }}>{phase === "try" ? "Check" : phase === "show" ? "My turn" : "Continue"}</button>}
+      if (!beat || beat.kind === "read" || shown) advanceLevel();
+      else setShown(true);
+    }}>{!beat || beat.kind === "read" || shown ? "Continue" : "Check"}</button>}
   </section>;
 }

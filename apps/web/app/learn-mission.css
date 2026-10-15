@@ -96,6 +96,39 @@ body:has(.learnReading) .cmpTab { display: none; }
   font-weight: 800;
 }
 
+.learnTalk {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.learnTalkBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.learnGap {
+  padding: 0 6px;
+  border-bottom: 2px solid var(--ink);
+  font-weight: 800;
+}
+.learnWords { display: flex; flex-wrap: wrap; gap: 8px; }
+.learnWord {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--snow, white);
+  box-shadow: inset 0 0 0 1.5px var(--hairline, rgba(20, 27, 45, .18));
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.learnWord[aria-pressed="true"] { background: var(--teal); color: white; box-shadow: none; }
+
 .learnLine {
   margin: 0;
   padding: 10px 0;
