@@ -261,11 +261,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {
-    if (chatMode !== "learn" || view !== "chat") return;
+    if (chatMode !== "learn" || view !== "chat" || phase3Learn || roomId === "fixture") return;
     const topic = topics.find((item) => item.id === learnCursorId);
     if (!topic) return;
     void loadCursorLesson(topic, "open");
-  }, [chatMode, view, learnCursorId, topics, roomId]);
+  }, [chatMode, view, learnCursorId, topics, roomId, phase3Learn]);
 
   useEffect(() => {
     if (!focusTopicId) {

@@ -37,14 +37,15 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [understood, setUnderstood] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [pickedTopicId, setPickedTopicId] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
   const askedFor = useRef<string | null>(null);
-  const startTried = useRef(false);
+  const askGen = useRef(0);
   const fixture = roomId === "fixture";
   const mission = snapshot?.mission ?? null;
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
-  const topicId = fixture ? sample : mission?.topic_id ?? selectedTopic?.id ?? null;
+  const topicId = fixture ? sample : pickedTopicId ?? mission?.topic_id ?? selectedTopic?.id ?? null;
 
   const reload = useCallback(async () => {
     if (roomId === "fixture") {
@@ -127,14 +128,6 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   }
 
   useEffect(() => {
-    if (fixture || loading || mission || !selectedTopic || startTried.current) return;
-    startTried.current = true;
-    void act("start");
-    // Start once when Learn opens with no saved reading.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fixture, loading, mission, selectedTopic]);
-
-  useEffect(() => {
     if (fixture || !mission?.paused || inFlight.current) return;
     void act("resume");
     // A paused cursor still opens on the passage.
@@ -149,6 +142,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
   const ask = useCallback(async (id: string) => {
     if (askedFor.current === id) return;
     askedFor.current = id;
+    const gen = ++askGen.current;
     setAsking(true);
     setError(null);
     setFeedback(null);
@@ -160,20 +154,30 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       return;
     }
     try {
-      const response = await fetch("/api/learn/check", {
-        method: "POST",
-        headers: operationHeaders(crypto.randomUUID()),
-        body: JSON.stringify({ roomId, topicId: id }),
-      });
-      const payload = await response.json().catch(() => null) as { question?: string; error?: string } | null;
-      if (!response.ok || !payload?.question) throw new Error(payload?.error || "Could not ask a question from your materials.");
-      setQuestion(payload.question);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const response = await fetch("/api/learn/check", {
+          method: "POST",
+          headers: operationHeaders(crypto.randomUUID()),
+          body: JSON.stringify({ roomId, topicId: id }),
+        });
+        if (askGen.current !== gen) return;
+        const payload = await response.json().catch(() => null) as { question?: string; error?: string } | null;
+        if ((response.status === 429 || response.status === 503) && attempt < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 3000 + attempt * 2000));
+          if (askGen.current !== gen) return;
+          continue;
+        }
+        if (!response.ok || !payload?.question) throw new Error(payload?.error || "Could not ask a question from your materials.");
+        setQuestion(payload.question);
+        return;
+      }
     } catch (caught) {
+      if (askGen.current !== gen) return;
       askedFor.current = null;
       setQuestion(null);
       setError(caught instanceof Error ? caught.message : "Could not ask a question from your materials.");
     } finally {
-      setAsking(false);
+      if (askGen.current === gen) setAsking(false);
     }
   }, [fixture, roomId]);
 
@@ -227,8 +231,15 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       return;
     }
     if (!mission || inFlight.current) {
+      const index = topics.findIndex((topic) => topic.id === topicId);
+      const next = topics[index + 1] ?? topics[0];
       askedFor.current = null;
-      if (topicId) void ask(topicId);
+      setFeedback(null);
+      setUnderstood(false);
+      setDraft("");
+      setQuestion(null);
+      if (next) setPickedTopicId(next.id);
+      if (next) void ask(next.id);
       return;
     }
     inFlight.current = true;
@@ -243,7 +254,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
       const index = topics.findIndex((topic) => topic.id === current.topic_id);
       const next = topics[index + 1] ?? topics[0];
       const nextId = next?.id ?? current.topic_id;
-      await post(current, "restart", null, nextId);
+      setPickedTopicId(nextId);
       askedFor.current = null;
       setQuestion(null);
       setFeedback(null);
@@ -270,7 +281,7 @@ export function LearnMission({ roomId, topics, selectedTopicId }: {
     {feedback && <p className="learnTeach" data-understood={understood ? "true" : "false"}>{feedback}</p>}
     {question ? <h2 className="learnAsk">{question}</h2> : !error && <p className="learnAsk">Asking from your materials.</p>}
     {!understood && <textarea className="learnAnswer" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="In your own words" rows={4} disabled={asking || busy || !question} />}
-    <button className="buttonPrimary learnGo" type="button" disabled={busy || asking || loading || (Boolean(question) && !understood && !draft.trim())} onClick={() => {
+    <button className="buttonPrimary learnGo" type="button" disabled={busy || asking || loading || (!understood && !(error && !question) && !draft.trim())} onClick={() => {
       if (understood) void continueReading();
       else if (!question && topicId) { askedFor.current = null; void ask(topicId); }
       else void submitAnswer();
