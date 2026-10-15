@@ -57,4 +57,20 @@ Accepted interaction, not a visual-acceptance close of rooms A–F. From `fb0ecc
 - Learn stays on that same Coach frame. Phone controls stay full size. Flag-off Coach is unchanged.
 - Later rooms reuse the tuck on that same strip only. Titles, shelves, questions, and plans do not scale on hover.
 
+## Plan position — 2026-10-15
+
+The strip lock stands. The plan is not accepted. What is on `main`:
+
+| Room | On main | Still open |
+| --- | --- | --- |
+| 0 Hallway | Five groups, one foundation flag, strip tuck on every room | Four-width and focus proof |
+| 1 Materials | Original shelf, generated guide, source passage | Signed-in stale and denied proof |
+| 2 Learn mission | Code, migration file, and route are on `main`. The live lesson is unchanged. The synthetic fixture's Learn tab shows the reading steps inside the locked frame. A real room stays on the current lesson until `PHASE3_ROOM2_ROOM_IDS` includes it and the migration is applied. | Hosted migration, tap-answer check, hint, college fixture, zero-mastery proof |
+| 3 Home | No Start button. It must not offer a mission that is not ready. | Blocked on Room 2 |
+| 4 Coach | Locked at `fb0ecc2` plus the later strip measurement fix. Do not retune it. | None for proportions |
+| 5–7 Practice, Progress, Plan | Flagged skins. Strip only. Existing grading and planning untouched. | Grade, evidence, and handoff proof |
+| 8 Whole path | Not started | Everything in 8 |
+
+D1–D6, A–F, and S0–S4 stay open. A build is not acceptance.
+
 
