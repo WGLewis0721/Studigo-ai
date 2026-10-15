@@ -9,7 +9,8 @@ This slice starts from `main` at `89e1e94`. It changes the shared Study Room fra
 ## Visible change
 
 - The header names the current section above the room title and refines the existing room-color frame.
-- The five section controls use a quieter well and a more legible selected state. They keep their existing labels, glyphs, actions, and order.
+- On wide screens the five sections occupy a distinct navigation shelf below the room identity. Each tactile card pairs the existing label/glyph with a brief purpose; the selected card uses the room's approved key color. The destinations and order do not change.
+- On phones the existing bottom navigation remains, but the selected key is visibly colored. No new tab or teaching mode is added.
 - On wide screens the existing ready-source count becomes a button to Materials. It uses the real authorized document list passed to the room; it does not claim a verified passage or invent a new source endpoint. The current mobile layout hides that count in both states and retains the Materials tab.
 
 ## Review gate

@@ -58,14 +58,23 @@ const GROUPS: Array<{name:string;icon:GlyphName;tone:string;modes:Mode[]}> = [
   {name:"Materials",icon:"materials",tone:"materials",modes:["materials"]}
 ];
 
+const SECTION_DETAILS: Record<string, string> = {
+  Coach: "Ask & learn",
+  Practice: "Show what you know",
+  Progress: "See your evidence",
+  Plan: "Choose what's next",
+  Materials: "Your files & guides"
+};
+
 /** The five pages. Wide screens show it in the top bar beside the room title; phones get the bottom tab bar. */
-function SectionNav({ current, onSelect, className, navRef }: { current: string; onSelect: (mode: Mode) => void; className?: string; navRef?: RefObject<HTMLElement | null> }) {
+function SectionNav({ current, onSelect, className, navRef, phase3Frame = false }: { current: string; onSelect: (mode: Mode) => void; className?: string; navRef?: RefObject<HTMLElement | null>; phase3Frame?: boolean }) {
   return (
     <nav ref={navRef} className={className ? `studyGroups ${className}` : "studyGroups"} aria-label="Study Room sections">
       {GROUPS.map((group) => (
         <button key={group.name} type="button" data-tone={group.tone} aria-current={current === group.name ? "page" : undefined} onClick={() => onSelect(group.modes[0])}>
           <span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span>
           <span className="studyGroupLabel">{group.name}</span>
+          {phase3Frame && <span className="phase3GroupDetail" aria-hidden="true">{SECTION_DETAILS[group.name]}</span>}
         </button>
       ))}
     </nav>
@@ -181,7 +190,7 @@ export function RoomWorkspace({
             <strong title={room.title}>{room.title}</strong>
           </div>
         </div>
-        <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} />
+        <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} phase3Frame={phase3Frame} />
         <div className="topbarRight">
           {phase3Frame ? (
             <button className="sourceCount phase3MaterialsShortcut" type="button" onClick={() => navigate("materials")}
@@ -212,7 +221,7 @@ export function RoomWorkspace({
       </div>
 
       <div className="studyNavigation">
-        <SectionNav navRef={tabBarRef} current={currentGroup.name} onSelect={(next) => navigate(next)} />
+        <SectionNav navRef={tabBarRef} current={currentGroup.name} onSelect={(next) => navigate(next)} phase3Frame={phase3Frame} />
       </div>
 
       {!coachFramed && (
