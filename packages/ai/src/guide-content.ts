@@ -119,7 +119,9 @@ export function composeChapters(blocks: GuideSourceBlock[]): GuideChapter[] {
         practice.push({ id: questionId, prompt: `What is ${term}?`, answerId, evidence: cite(block) });
         continue;
       }
-      for (const sentence of sentences(block.text)) {
+      const extracted = sentences(block.text);
+      const usable = extracted.length ? extracted : (block.text.length > 12 ? [block.text] : []);
+      for (const sentence of usable) {
         if (!block.text.includes(sentence)) continue;
         if (/^for example\b/i.test(sentence)) {
           examples.push({ id: `example-${examples.length + 1}`, text: sentence, evidence: cite(block) });
@@ -141,11 +143,19 @@ export function composeChapters(blocks: GuideSourceBlock[]): GuideChapter[] {
         }
       }
     }
+    const cited = group.blocks.find((block) => group.evidence.some((ref) => ref.blockKey === block.blockKey)) ?? group.blocks[0];
+    const headingIsSource = Boolean(cited && cited.text.toLowerCase().includes(group.title.toLowerCase()));
+    const objective = headingIsSource
+      ? group.title
+      : (sentences(cited?.text ?? "")[0] ?? (cited && cited.text.length > 12 ? cited.text : ""));
+    const objectiveEvidence = cited && objective && cited.text.toLowerCase().includes(objective.toLowerCase())
+      ? cite(cited)
+      : group.evidence;
     return {
       id: `chapter-${index + 1}`,
-      title: group.title,
-      objective: group.title,
-      objectiveEvidence: group.evidence,
+      title: headingIsSource ? group.title : (objective || group.title),
+      objective,
+      objectiveEvidence,
       facts,
       terms,
       examples,
