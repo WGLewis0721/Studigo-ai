@@ -111,9 +111,15 @@
   .roomDevice[data-ui="phase3"] .studyNavigation { height: 0; }
   .roomDevice[data-ui="phase3"] .studyGroups button { min-height: 50px; }
   .roomDevice[data-ui="phase3"] .modeHead { min-height: 78px; padding: 10px 15px; }
+  .roomDevice[data-ui="phase3"]:has(.coachChat) .modeHead { min-height: 0; padding: 8px 14px; }
+  .roomDevice[data-ui="phase3"]:has(.coachChat) .mhTitle p { display: none; }
   .roomDevice[data-ui="phase3"] .mhTitle h2 { font-size: 1.38rem; }
+  .roomDevice[data-ui="phase3"]:has(.coachChat) .mhTitle h2 { font-size: 1.12rem; }
   .roomDevice[data-ui="phase3"] .mhTitle p { font-size: .72rem; }
-  .roomDevice[data-ui="phase3"] .materialsIntro { align-items: start; flex-direction: column; }
+  .roomDevice[data-ui="phase3"] .materialsIntro { align-items: start; flex-direction: column; gap: 8px; }
+  .roomDevice[data-ui="phase3"] .materialsIntro h2,
+  .roomDevice[data-ui="phase3"] .materialsLibraryTitle h2 { margin: 0; font-size: 1.28rem; }
+  .roomDevice[data-ui="phase3"] .materialsIntro p { display: none; }
   .roomDevice[data-ui="phase3"] .materialsReadout { display: flex; align-items: baseline; width: 100%; }
   .roomDevice[data-ui="phase3"] .materialsReadout strong { font-size: 1.5rem; }
   .roomDevice[data-ui="phase3"] .materialsGuide { grid-template-columns: minmax(0, 1fr); padding: 17px; }
