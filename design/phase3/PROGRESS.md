@@ -53,7 +53,7 @@ The visual foundation may ship as design source and isolated components. It is n
 | 2026-10-14 | Phase 2 continues in parallel. Avoid changing current production learning behavior on the visual-foundation branch. | Keep any working UI isolated/flagged and record exact dependencies on Phase 2. |
 | 2026-10-14 | Preview interaction audit: Pause originally reset immediately; overlays lacked a focus loop; radio choices lacked arrow keys. | Corrected in the design preview: component-local paused state, source/voice Tab loop and Escape return, radio arrow navigation. Durable resume and real microphone remain UX implementation work. |
 | 2026-10-14 | Synthetic source ticket originally said “FROM YOUR MATERIAL.” | Corrected to “DESIGN FIXTURE” in the preview. The public fixture remains synthetic. |
-| 2026-10-14 | Preview typecheck/build reported passing, but rendered screenshot QA remains blocked by browser availability. | Do not close A–F or D4/D5 without four-width captures and interactive inspection. |
+| 2026-10-14 | Preview typecheck/build passed, but rendered screenshot QA remains blocked by browser availability. Playwright is installed without Chromium; a browser install attempt returned an invalid 0 MiB CDN archive. | No captures or visual/clipping inspection were made. Use a browser-capable runner or preview deployment for four-width, 200% zoom, focus and reduced-motion acceptance; do not close A–F or D4/D5. |
 
 ## Increment log
 
