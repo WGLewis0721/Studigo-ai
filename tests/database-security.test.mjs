@@ -897,6 +897,56 @@ test('forced reindex row claim owns status and cooldown in one DB transition', a
   await assert.rejects(as('authenticated', A, () => db.query(sql, [doc, A, 900])), error => error.code === '42501');
 });
 
+test('Learn mission resumes the saved step and writes no mastery', async () => {
+  const room = id(1);
+  const topic = id(31);
+  const chunk = id(21);
+  const beforeMastery = await one('select mastery_score, status from topics where id=$1', [topic]);
+  const beforeAttempts = Number((await one('select count(*)::int as n from quiz_attempts where room_id=$1', [room])).n);
+  await assert.rejects(as('authenticated', A, () => db.query(
+    `select public.commit_learn_mission($1,$2,$3,$4,0,'start',null,$5)`,
+    [A, room, topic, id(8801), chunk]
+  )), error => error.code === '42501');
+  await as('service_role', null, async () => {
+    const started = (await one(
+      `select public.commit_learn_mission($1,$2,$3,$4,0,'start',null,$5) as d`,
+      [A, room, topic, id(8801), chunk]
+    )).d;
+    assert.equal(started.mission.phase, 'brief');
+    assert.equal(started.sourceCurrent, true);
+    assert.match(started.source.excerpt, /Photosynthesis/);
+    const replay = (await one(
+      `select public.commit_learn_mission($1,$2,$3,$4,0,'start',null,$5) as d`,
+      [A, room, topic, id(8801), chunk]
+    )).d;
+    assert.equal(replay.mission.phase, 'brief');
+    assert.equal(Number(replay.mission.revision), Number(started.mission.revision));
+    const shown = (await one(
+      `select public.commit_learn_mission($1,$2,$3,$4,$5,'advance',null,null) as d`,
+      [A, room, topic, id(8802), started.mission.revision]
+    )).d;
+    assert.equal(shown.mission.phase, 'show');
+    const paused = (await one(
+      `select public.commit_learn_mission($1,$2,$3,$4,$5,'pause',null,null) as d`,
+      [A, room, topic, id(8803), shown.mission.revision]
+    )).d;
+    assert.equal(paused.mission.paused, true);
+    const restored = (await one('select public.read_learn_mission($1,$2) as d', [A, room])).d;
+    assert.equal(restored.mission.phase, 'show');
+    assert.equal(restored.mission.paused, true);
+    assert.equal(Number(restored.mission.revision), Number(paused.mission.revision));
+    assert.equal(restored.source.documentName, 'chapter.pdf');
+  });
+  await assert.rejects(as('service_role', null, () => db.query(
+    'select public.read_learn_mission($1,$2)', [B, room]
+  )), error => error.code === '42501');
+  const afterMastery = await one('select mastery_score, status from topics where id=$1', [topic]);
+  const afterAttempts = Number((await one('select count(*)::int as n from quiz_attempts where room_id=$1', [room])).n);
+  assert.equal(afterMastery.mastery_score, beforeMastery.mastery_score);
+  assert.equal(afterMastery.status, beforeMastery.status);
+  assert.equal(afterAttempts, beforeAttempts);
+});
+
 test('AI admission prunes old windows and completed leases without touching current work', async () => {
   const oldLease = id(99731), newLease = id(99732);
   await as('service_role', null, async () => {
