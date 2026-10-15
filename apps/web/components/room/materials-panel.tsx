@@ -10,6 +10,8 @@ import { describeCorpus } from "@/lib/guide-lifecycle";
 import { visibleIngestStage } from "@/lib/ingest-jobs";
 import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
+import { EvidenceRecovery, EvidenceTicket, SourceSpotlight } from "../phase3/ui";
+import "../phase3/phase3.css";
 
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
@@ -98,8 +100,52 @@ export function MaterialsPanel({
   const queueKeyRef = useRef(0);
   const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
+  const [evidenceDocId, setEvidenceDocId] = useState<string | null>(null);
+  const [evidenceBusy, setEvidenceBusy] = useState<string | null>(null);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const [spotlight, setSpotlight] = useState(false);
+  const [evidence, setEvidence] = useState<null | {
+    kind: "ticket" | "recovery";
+    eyebrow?: string;
+    title: string;
+    page?: string;
+    passage?: string;
+    note?: string;
+    originalHref?: string | null;
+    state?: "missing" | "partial" | "stale" | "uncertain" | "denied";
+  }>(null);
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
   const readableCount = documents.filter((document) => document.status === "ready" || document.status === "partial").length;
+
+  async function inspect(document: StudyDocument) {
+    setEvidenceDocId(document.id);
+    setEvidenceError(null);
+    setSpotlight(false);
+    if (roomId === "fixture") {
+      setEvidence({
+        kind: "ticket",
+        eyebrow: "DESIGN FIXTURE",
+        title: document.name,
+        page: "Page 3",
+        passage: "Some animal behaviors are inherited. Other behaviors are learned through experience.",
+        note: "Synthetic preview. This passage is not from a file you uploaded.",
+        originalHref: null
+      });
+      return;
+    }
+    setEvidenceBusy(document.id);
+    try {
+      const response = await fetch(`/api/materials/evidence?documentId=${encodeURIComponent(document.id)}`, { cache: "no-store" });
+      const payload = await response.json().catch(() => null) as { view?: typeof evidence; error?: string } | null;
+      if (!response.ok || !payload?.view) throw new Error(payload?.error ?? "Could not check this file.");
+      setEvidence(payload.view);
+    } catch (caught) {
+      setEvidence(null);
+      setEvidenceError(caught instanceof Error ? caught.message : "Could not check this file.");
+    } finally {
+      setEvidenceBusy(null);
+    }
+  }
 
   const refreshStudyGuide = useCallback(async () => {
     if (!latestStudyGuide || refreshingGuide) return;
@@ -480,6 +526,10 @@ export function MaterialsPanel({
       {phase3Materials ? <div className="materialsLibraryTitle"><div><span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span><h2>On the shelf</h2></div><span>Original files &amp; Studigo guide</span></div> : <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>}
       <p className="setupLead">{describeCorpus(documents.map((document) => ({ id: document.id, revision: 0, status: document.status }))).notice}</p>
       {!phase3Materials && <GuidePreview roomId={roomId} />}
+      {phase3Materials && evidence?.kind === "ticket" && <div className="materialsEvidence"><EvidenceTicket eyebrow={evidence.eyebrow} title={evidence.title} page={evidence.page ?? "Location unavailable"} onClick={() => setSpotlight(true)} />{evidence.originalHref ? <a href={evidence.originalHref} target="_blank" rel="noreferrer">Open original</a> : null}</div>}
+      {phase3Materials && evidence?.kind === "recovery" && evidence.state && <EvidenceRecovery state={evidence.state} onOriginal={evidence.originalHref ? () => window.open(evidence.originalHref ?? "", "_blank", "noopener") : undefined} onRetry={() => { const chosen = documents.find((item) => item.id === evidenceDocId); if (chosen) void inspect(chosen); }} />}
+      {evidenceError && <p className="formError" role="alert">{evidenceError}</p>}
+      {phase3Materials && spotlight && evidence?.kind === "ticket" && evidence.passage && <SourceSpotlight title={evidence.title} page={evidence.page ?? "Location unavailable"} passage={evidence.passage} note={evidence.note ?? ""} onClose={() => setSpotlight(false)} />}
       <ul className="documentList">
         {documents.length === 0 && (
           <li className="emptyState">{phase3Materials ? "No original files yet. Add a study guide or other class material above to begin." : "Nothing here yet. The study guide is the best first upload."}</li>
@@ -510,6 +560,7 @@ export function MaterialsPanel({
                 Open
               </a>
               <a href={`/api/documents/download?documentId=${document.id}`} aria-label={`Download original file ${document.name}`}>Download</a>
+              {phase3Materials && <button type="button" disabled={evidenceBusy === document.id} onClick={() => void inspect(document)}>{evidenceBusy === document.id ? "Checking…" : "Find a passage"}</button>}
               {(document.status === "failed" ||
                 document.status === "partial" ||
                 document.status === "queued" ||
