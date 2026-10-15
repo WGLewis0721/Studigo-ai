@@ -17,6 +17,7 @@ import { StudigoComposer } from "./studigo-composer";
 import { ModeFrame } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { LearnPanel, LessonMobileFrame, keepIndependentSurfaces, lessonPositionLabel, retainSuccessfulLesson } from "./learn-panel";
+import { LearnMission } from "./learn-mission";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
@@ -248,6 +249,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const learnTopicTitle = topics.find((topic) => topic.id === learnCursorId)?.title ?? GENERAL_TOPIC.title;
   const learnLabel = lessonPositionLabel(cursors.learn, learnTopicIds.length);
   const showingOverview = chatMode === "learn" && learnView === "overview";
+  const guidedLearn = roomId === "fixture" && chatMode === "learn";
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {
@@ -959,8 +961,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           mode={chatMode}
           label={learnLabel}
           topicTitle={chatMode === "learn" ? learnTopicTitle : coachTopicTitle}
-          text={chatMode !== "learn" ? null : showingOverview ? (overviewDoc?.text ?? null) : (cursorLesson?.text ?? null)}
-          citations={chatMode === "learn" && !showingOverview ? (cursorLesson?.citations ?? []) : []}
+          text={guidedLearn || chatMode !== "learn" ? null : showingOverview ? (overviewDoc?.text ?? null) : (cursorLesson?.text ?? null)}
+          citations={!guidedLearn && chatMode === "learn" && !showingOverview ? (cursorLesson?.citations ?? []) : []}
           status={chatMode !== "learn" ? null : showingOverview
             ? (overviewPhase === "loading" ? "Opening the unit overview…" : overviewPhase === "error" ? "The overview could not refresh. The lesson and cursor were kept." : null)
             : (lessonPhase === "loading" && !cursorLesson ? "Reading your materials…" : lessonPhase === "loading" ? "Checking this lesson again…" : lessonPhase === "error" ? "This lesson could not refresh. The last lesson is still here." : null)}
@@ -986,6 +988,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             </>
           )}
         >
+        {guidedLearn ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} onOpenMaterials={onOpenMaterials} /> : <>
         {showingOverview && <button className="ghostButton" type="button" onClick={() => setLearnView("lesson")}>Show this lesson</button>}
         {messages.length === 0 ? (
           restoring ? (
@@ -1027,6 +1030,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             </div>
           );
         })}
+        </>}
         </LessonMobileFrame>
         <StudigoComposer
           variant="chat"
