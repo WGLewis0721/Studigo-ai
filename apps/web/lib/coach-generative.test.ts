@@ -684,7 +684,7 @@ test("support: a correct answer after a hint still carries the hint, so it can n
   assert.equal(after.issuedChallenge?.scaffoldUsed, 2);
 });
 
-test("support: repeated help climbs hint -> example -> choices instead of looping", async () => {
+test("support: repeated help gives a hint, a stronger hint, then the answer", async () => {
   const { supabase, saved } = recordingSupabase(pending(initialSpec));
   const kinds: string[] = [];
   const deps = {
@@ -692,9 +692,8 @@ test("support: repeated help climbs hint -> example -> choices instead of loopin
     renderCoachSupport: async (args: { support: string }) => {
       kinds.push(args.support);
       if (args.support === "hint") return "Think about the same ends.";
-      if (args.support === "example") return "Imagine two fridge magnets.";
-      if (args.support === "choice") return "A) Same ends push apart. B) Same ends pull together. Pick A or B.";
-      return "Same ends push apart. Which choice says that?";
+      if (args.support === "worked_example") return "Same ends push apart.";
+      return "A worked example.";
     }
   };
   const run = (question: string) => drainBoth(runCoachTurn({ supabase, roomId: "room-1", conversationId: "c", question, topics: [magnetTopic], deps }));
@@ -703,15 +702,11 @@ test("support: repeated help climbs hint -> example -> choices instead of loopin
   assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 2);
   await run("Give me a hint");
   assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 3);
-  await run("Give me a hint");
-  const choiceState = saved.at(-1) as Pending;
-  assert.equal(choiceState.issuedChallenge?.scaffoldUsed, 4);
-  assert.match(choiceState.question, /A\).*B\)/s);
-  assert.deepEqual(kinds, ["hint", "example", "choice"]);
-
-  const repeated = await run("What are the answer choices");
-  assert.match(repeated.done.answer.text, /^A\).*\nB\)/s);
-  assert.deepEqual(kinds, ["hint", "example", "choice"], "repeating choices must not call the model or RAG again");
+  const revealed = await run("Give me a hint");
+  assert.equal((saved.at(-1) as Pending).issuedChallenge?.scaffoldUsed, 5);
+  assert.equal((saved.at(-1) as Pending).question, "What happens when two north poles meet?");
+  assert.match(revealed.done.answer.text, /Same ends push apart/);
+  assert.deepEqual(kinds, ["hint", "hint", "worked_example"]);
 });
 
 test("support: unknown support stays unknown (null) and is never upgraded to a number", async () => {

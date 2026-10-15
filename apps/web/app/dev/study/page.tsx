@@ -3,9 +3,10 @@ import { RoomWorkspace } from '@/components/room/workspace';
 import { AppShell } from '@/components/app-shell';
 import type { Topic } from '@/lib/rooms';
 
-// Synthetic visual/Coach fixture for local development only.
+// Synthetic visual/Coach fixture for local development and flagged, protected previews.
 export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string}>}) {
-  if (process.env.NODE_ENV !== 'development') notFound();
+  const flaggedPreview = process.env.VERCEL_ENV === 'preview' && process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === '1';
+  if (process.env.NODE_ENV !== 'development' && !flaggedPreview) notFound();
   const {mode='coach',phone,bare,shell,rail}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');

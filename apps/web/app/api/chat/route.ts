@@ -13,6 +13,7 @@ import { classifyLearnOutcome, learnStreamDone, learnStreamError, type LearnOutc
 import { isUuid } from "@/lib/ids";
 import { surfaceForRequest, admitThread, type ConversationRow } from "@/lib/conversation-surface";
 import { writeStudyTrace } from "@/lib/study-trace";
+import { clampGauge } from "@/lib/accuracy-bar";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -30,6 +31,10 @@ type ChatRequest = {
   interactionId?: string;
   /** Optional learner-selected study scope. Server intersects with active room topics. */
   topicIds?: string[];
+  /** 50 (cold) to 100 (hot). How much of the idea counts as an answer. */
+  gauge?: number;
+  accuracy?: "low" | "high";
+  firstPass?: boolean;
 };
 
 /**
@@ -49,6 +54,8 @@ async function guardedPost(request: Request) {
     const outcome = classifyLearnOutcome({ documentStatuses: [], failure });
     return Response.json({ error: learnStreamError(outcome).error, outcome }, { status });
   };
+  const fromBody = typeof body?.gauge === "number" ? body.gauge : body?.accuracy === "high" ? 95 : body?.accuracy === "low" || body?.firstPass === true ? 50 : null;
+  const gauge = fromBody == null ? undefined : clampGauge(fromBody);
   const topicIds = Array.isArray(body?.topicIds)
     ? [...new Set(body.topicIds.filter((value): value is string => typeof value === "string"))]
     : [];
@@ -196,7 +203,7 @@ async function guardedPost(request: Request) {
       send({ type: "start", conversationId });
 
       try {
-        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal })) {
+        for await (const event of runStudigoEngine({ supabase, serviceSupabase: service, roomId, question, history, directives, mode, route, userId: user.id, interaction, conversationId, selectedTopicIds: topicIds, signal: abort.signal, gauge: mode === "coach" ? gauge : undefined })) {
           if (event.type === "delta") {
             send({ type: "delta", text: event.text });
             continue;

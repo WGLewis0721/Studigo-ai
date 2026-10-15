@@ -9,6 +9,7 @@ import { StudigoMascot } from "@/components/studigo-mascot";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoFigure } from "@/components/companion/figure";
+import "./phase3-rooms.css";
 
 const BLANK_MARKER = "____";
 
@@ -82,6 +83,7 @@ export function QuizPanel({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [confidenceDraft, setConfidenceDraft] = useState<1 | 2 | 3 | null>(null);
   const [written, setWritten] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
@@ -96,6 +98,7 @@ export function QuizPanel({
   const finished = questions.length > 0 && index >= questions.length;
   const usesChoices = current?.kind === "multiple_choice" || current?.kind === "true_false";
   const hasAnswer = usesChoices ? selected !== null : written.trim().length > 0;
+  const phase3 = process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 
   async function build() {
     const body = JSON.stringify({ roomId, topicId: topicId || null, count: 5 });
@@ -115,6 +118,7 @@ export function QuizPanel({
       setQuestions(payload.questions as Question[]);
       setIndex(0);
       setSelected(null);
+      setConfidenceDraft(null);
       setWritten("");
       setResult(null);
     } catch (buildError) {
@@ -165,6 +169,7 @@ export function QuizPanel({
     if (index + 1 >= questions.length) companion.event("setDone");
     setIndex((value) => value + 1);
     setSelected(null);
+    setConfidenceDraft(null);
     setWritten("");
     setResult(null);
   }
@@ -187,7 +192,7 @@ export function QuizPanel({
     const luckyGuesses = answered.filter((item) => item.confidence === 1 && item.isCorrect).length;
 
     return (
-      <div className="quizSetup">
+      <div className="quizSetup roomStudioSetup">
         <div className="setupMain">
         {finished && average !== null && (
           <div className="quizScoreCard">
@@ -231,10 +236,10 @@ export function QuizPanel({
         </HeaderChip>
 
         <div className="setupHeading">
-          <span className="tinyLabel">NEXT SET</span>
+          <span className="tinyLabel">PRACTICE STUDIO / INDEPENDENT RECALL</span>
           <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where you\u2019re weakest"}</h3>
         </div>
-        <p className="setupLead">{finished ? "Go again with a new set." : "Five questions, written only from your materials."}</p>
+        <p className="setupLead">{finished ? "Go again with a new set." : "Five questions from your materials. Your answers are checked only after you submit each one."}</p>
 
         {error && (
           <p className="formError" role="alert">
@@ -252,7 +257,7 @@ export function QuizPanel({
   }
 
   return (
-    <div className="quizMode">
+    <div className="quizMode roomStudioAttempt">
       <div className="quizProgress">
         <span className="tinyLabel">
           QUESTION {index + 1} OF {questions.length} · {KIND_LABELS[current.kind]}
@@ -269,11 +274,12 @@ export function QuizPanel({
           current.prompt
         )}
       </h2>
+      {phase3 && !result && <p className="roomStudioInstruction">{usesChoices ? "Choose one answer. You can change it until you submit." : "Write your answer, then choose how sure you feel before submitting."}</p>}
 
       {usesChoices && (
         <div
           className={`choiceList ${current.kind === "true_false" ? "choiceListBinary" : ""}`}
-          role="radiogroup"
+          role={phase3 ? "group" : "radiogroup"}
           aria-label="Answer choices"
         >
           {current.choices.map((choice, choiceIndex) => {
@@ -291,8 +297,9 @@ export function QuizPanel({
               <button
                 key={choice}
                 type="button"
-                role="radio"
-                aria-checked={selected === choiceIndex}
+                role={phase3 ? undefined : "radio"}
+                aria-checked={phase3 ? undefined : selected === choiceIndex}
+                aria-pressed={phase3 ? selected === choiceIndex : undefined}
                 className={`choiceItem ${state}`}
                 disabled={Boolean(result)}
                 onClick={() => setSelected(choiceIndex)}
@@ -388,22 +395,26 @@ export function QuizPanel({
             <span className="tinyLabel">
               {hasAnswer ? "HOW SURE ARE YOU?" : "ANSWER TO CONTINUE"}
             </span>
-            <div className="confidenceButtons">
+            <div className="confidenceButtons" role={phase3 ? "group" : undefined} aria-label={phase3 ? "How sure are you?" : undefined}>
               {CONFIDENCE_LEVELS.map((level) => (
                 <button
                   key={level.value}
                   type="button"
                   className={`confidenceButton confidence-${level.value}`}
                   disabled={grading || !hasAnswer}
-                  onClick={() => void submit(level.value)}
+                  aria-pressed={phase3 ? confidenceDraft === level.value : undefined}
+                  onClick={() => phase3 ? setConfidenceDraft(level.value) : void submit(level.value)}
                 >
                   <strong>{level.label}</strong>
                   <small>{level.hint}</small>
                 </button>
               ))}
             </div>
+            {phase3 && <button className="buttonPrimary roomStudioSubmit" type="button" disabled={grading || !hasAnswer || confidenceDraft === null} onClick={() => { if (confidenceDraft !== null) void submit(confidenceDraft); }}>
+              {grading ? "Checking your answer…" : "Submit answer"} <span aria-hidden="true">→</span>
+            </button>}
             <small className="hintText">
-              {grading ? "Checking…" : "Your answer is checked when you rate it."}
+              {grading ? "Checking…" : phase3 ? "Your selection is not graded until you press Submit answer." : "Your answer is checked when you rate it."}
             </small>
           </div>
         )}

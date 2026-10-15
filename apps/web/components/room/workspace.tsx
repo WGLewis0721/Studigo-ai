@@ -1,5 +1,7 @@
 "use client";
 
+import "./phase3-foundation.css";
+
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -41,6 +43,7 @@ const MODES = [
 ] as const;
 
 type Mode = (typeof MODES)[number]["id"];
+const foundationUi = process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 
 /** The header's switch has narrow segments, so a few modes use a shorter name there. */
 const headerName = (item: (typeof MODES)[number]) => ("short" in item ? item.short : item.name);
@@ -161,12 +164,12 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomDevice" data-shell={theme} data-tone={theme}>
+    <div className="roomDevice" data-shell={theme} data-tone={theme} data-ui={foundationUi ? "phase3" : undefined}>
     <div className="roomWorkspace" data-tone={mode} ref={workspaceRef}>
       <div className="topbarWrap">
       <header className="workspaceTopbar">
         <Link className="roomBackButton" href="/app" aria-label="All rooms">
-          <span aria-hidden="true">‹</span>
+          <span aria-hidden="true">{foundationUi ? "←" : "‹"}</span>
         </Link>
         <div className="workspaceTitle roomTitleBlock">
           <i className="roomGem roomGemLarge" data-tone={theme} aria-hidden="true" />
@@ -180,7 +183,7 @@ export function RoomWorkspace({
         </div>
         <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} />
         <div className="topbarRight">
-          <span className="sourceCount">
+          <span className="sourceCount" aria-label={`${readyDocuments.length} of ${documents.length} sources ready`}>
             {readyDocuments.length} of {documents.length}{" "}
             {documents.length === 1 ? "source" : "sources"} ready
           </span>

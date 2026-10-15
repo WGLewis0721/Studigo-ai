@@ -35,6 +35,6 @@ test("forced ingestion uses one atomic SQL claim without resetting an active wor
   assert.match(admissionSql, /claim_forced_studigo_reindex/);
   assert.match(admissionSql, /for update/);
   assert.match(admissionSql, /last_forced_reindex_at = v_now/);
-  assert.match(ingest, /document_chunks"\)\.delete\(\)\.eq\("document_id", document\.id\)/);
+  assert.match(ingest, /from\("source_blocks"\)\.delete\(\)\.eq\("document_id", document\.id\)/);
   assert.match(ingest, /buildTopicMap\(\{/);
 });

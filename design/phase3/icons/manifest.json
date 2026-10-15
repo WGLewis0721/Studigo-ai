@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "viewBox": "0 0 24 24",
+  "strokeWidth": 1.8,
+  "icons": {
+    "mission": { "title": "Mission", "shapes": ["<path d='M4 5.5h6.5c1.2 0 2.3.4 3.2 1.1V20c-.9-.7-2-1.1-3.2-1.1H4V5.5Z'/>", "<path d='M13.7 6.6c.9-.7 2-1.1 3.2-1.1H20v13.4h-3.1c-1.2 0-2.3.4-3.2 1.1'/>", "<path d='M7 9h3.5M7 12h3.5M16.7 9H18'/>" ] },
+    "coach": { "title": "Coach", "shapes": ["<path d='M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4.5 3v-3H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z'/>", "<path d='M7.5 11.5h9M7.5 14.5h5.5'/>" ] },
+    "practice": { "title": "Practice", "shapes": ["<path d='M4 19h16'/>", "<path d='M6.5 16v-3M12 16V9M17.5 16V5'/>", "<circle cx='6.5' cy='11' r='1'/><circle cx='12' cy='7' r='1'/><circle cx='17.5' cy='3' r='1'/>" ] },
+    "materials": { "title": "Materials", "shapes": ["<rect x='5' y='4' width='12' height='16' rx='2'/>", "<path d='M8 8h6M8 11h6M8 14h4M17 7h2a1 1 0 0 1 1 1v10a2 2 0 0 1-2 2h-2'/>" ] },
+    "find": { "title": "Find in source", "shapes": ["<path d='M3.5 5h6c1.2 0 2.2.4 3 1.1v11c-.8-.7-1.8-1.1-3-1.1h-6V5Z'/>", "<path d='M12.5 6.1c.8-.7 1.8-1.1 3-1.1h5v8'/>", "<path d='M12.5 6.1V17'/>", "<circle cx='17' cy='17' r='2.5'/><path d='m18.8 18.8 2.2 2.2'/>" ] },
+    "source": { "title": "Source citation", "shapes": ["<path d='M5 3.5h10l4 4V20H5V3.5Z'/>", "<path d='M15 3.5v4h4M8 11h8M8 14h7M8 17h4'/>", "<circle cx='19.5' cy='17.5' r='2.5'/>" ] },
+    "speak": { "title": "Speak answer", "shapes": ["<rect x='9' y='3.5' width='6' height='11' rx='3'/>", "<path d='M6 11.5a6 6 0 0 0 12 0M12 17.5V21M9 21h6'/>" ] },
+    "tap": { "title": "Tap answer", "shapes": ["<path d='M10 13V6.5a1.5 1.5 0 0 1 3 0V12l1.4-1.2a1.5 1.5 0 0 1 2.1.2l.7 1 1.1-.7a1.5 1.5 0 0 1 2.1.4l.4.6-1.4 6.3a4 4 0 0 1-3.9 3.1h-3.9a4 4 0 0 1-3.2-1.6l-3.3-4.5a1.5 1.5 0 0 1 2.3-1.9L10 16'/>", "<path d='M7 6a5 5 0 0 1 5-5M4 8a8 8 0 0 1 3-5'/>" ] },
+    "type": { "title": "Type answer", "shapes": ["<rect x='2.5' y='6' width='19' height='12' rx='2'/>", "<path d='M6 9h.01M9 9h.01M12 9h.01M15 9h.01M18 9h.01M6 12h.01M9 12h.01M12 12h.01M15 12h.01M18 12h.01M7 15h10'/>" ] },
+    "hint": { "title": "Hint", "shapes": ["<path d='M8 15.5c0-1.3-.5-2.1-1.3-3.1A6 6 0 1 1 17.3 12c-.9 1.1-1.3 2-1.3 3.5H8Z'/>", "<path d='M9 18h6M10 21h4M10 12.2l2 1.6 2-1.6'/>" ] },
+    "readAloud": { "title": "Read aloud", "shapes": ["<path d='M4 9h3l4-3v12l-4-3H4V9Z'/>", "<path d='M14 9a4 4 0 0 1 0 6M16.5 6.5a7.5 7.5 0 0 1 0 11'/>" ] },
+    "progress": { "title": "Objective progress", "shapes": ["<circle cx='5' cy='12' r='2'/><circle cx='12' cy='12' r='2'/><circle cx='19' cy='12' r='2'/>", "<path d='M7 12h3M14 12h3'/>", "<path d='m4.2 12 .6.6 1.1-1.2'/>" ] },
+    "check": { "title": "Check answer", "shapes": ["<circle cx='12' cy='12' r='9'/><path d='m8 12 2.5 2.5L16 9'/>" ] },
+    "original": { "title": "Original file", "shapes": ["<path d='M4 4h10l4 4v4M14 4v4h4M4 4v16h10'/>", "<path d='M13 16h7v5h-7zM15 18.5h3'/>" ] },
+    "return": { "title": "Return to lesson", "shapes": ["<path d='m10 5-6 7 6 7M4 12h11a5 5 0 0 1 0 10'/>"] },
+    "resume": { "title": "Resume lesson", "shapes": ["<path d='M6 5h9l4 4v10H6V5ZM15 5v4h4'/>", "<path d='m10 11 5 3-5 3v-6Z'/>" ] }
+  }
+}
