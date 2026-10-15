@@ -78,6 +78,7 @@ export function RoomWorkspace({
   topics,
   readiness,
   initialMode,
+  phase3Frame = false,
   evidence, planEvents, asOf
 }: {
   room: StudyRoom;
@@ -85,6 +86,7 @@ export function RoomWorkspace({
   topics: Topic[];
   readiness: RoomReadiness;
   initialMode?: string;
+  phase3Frame?: boolean;
   evidence: PracticeEvidence[];
   planEvents: PlanEvent[];
   asOf: number;
@@ -161,7 +163,7 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomDevice" data-shell={theme} data-tone={theme}>
+    <div className="roomDevice" data-shell={theme} data-tone={theme} data-phase3-frame={phase3Frame ? "on" : undefined}>
     <div className="roomWorkspace" data-tone={mode} ref={workspaceRef}>
       <div className="topbarWrap">
       <header className="workspaceTopbar">
@@ -171,6 +173,7 @@ export function RoomWorkspace({
         <div className="workspaceTitle roomTitleBlock">
           <i className="roomGem roomGemLarge" data-tone={theme} aria-hidden="true" />
           <div>
+            {phase3Frame && <span className="phase3RoomLocation">Study Room <span aria-hidden="true">/</span> {currentGroup.name}</span>}
             <span className="crumb">
               {[room.subject, room.course_name].filter(Boolean).join(" / ").toUpperCase() ||
                 "STUDY ROOM"}
@@ -180,10 +183,17 @@ export function RoomWorkspace({
         </div>
         <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} />
         <div className="topbarRight">
-          <span className="sourceCount">
-            {readyDocuments.length} of {documents.length}{" "}
-            {documents.length === 1 ? "source" : "sources"} ready
-          </span>
+          {phase3Frame ? (
+            <button className="sourceCount phase3MaterialsShortcut" type="button" onClick={() => navigate("materials")}
+              aria-label={`Open Materials. ${readyDocuments.length} of ${documents.length} ${documents.length === 1 ? "source" : "sources"} ready`}>
+              {readyDocuments.length} of {documents.length} {documents.length === 1 ? "source" : "sources"} ready
+            </button>
+          ) : (
+            <span className="sourceCount">
+              {readyDocuments.length} of {documents.length}{" "}
+              {documents.length === 1 ? "source" : "sources"} ready
+            </span>
+          )}
           <StudyGuideDownloadButton roomId={room.id} />
           <button
             className="iconButton"

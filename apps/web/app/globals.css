@@ -3954,3 +3954,53 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .lessonActions { display: flex; flex: none; position: relative; z-index: 4; overflow: visible; }
   .lessonPosition { display: flex; overflow: visible; }
 }
+
+/* Phase 3 Room 0: opt-in shared frame only. No panel or Coach selectors here. */
+.roomDevice[data-phase3-frame="on"] .workspaceTopbar {
+  background: color-mix(in oklab, var(--th-bar) 70%, white);
+  border-bottom: 1px solid var(--th-line);
+}
+.phase3RoomLocation {
+  display: block;
+  color: var(--ink-2);
+  font-size: .68rem;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.phase3RoomLocation span { color: var(--th-ink); margin-inline: .3em; }
+.roomDevice[data-phase3-frame="on"] .workspaceTitle strong { margin-top: 4px; }
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut {
+  border: 0;
+  min-height: 44px;
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut:hover { box-shadow: inset 0 0 0 1px var(--th-ink), var(--lift-1); }
+.roomDevice[data-phase3-frame="on"] .phase3MaterialsShortcut:focus-visible,
+.roomDevice[data-phase3-frame="on"] .studyGroups button:focus-visible {
+  outline: 3px solid var(--th-ink);
+  outline-offset: 3px;
+}
+.roomDevice[data-phase3-frame="on"] .studyGroups {
+  background: color-mix(in oklab, var(--th-bar) 45%, white);
+  box-shadow: inset 0 0 0 1px var(--th-line), inset 0 2px 5px rgba(20,27,45,.06);
+}
+.roomDevice[data-phase3-frame="on"] .studyGroups button[aria-current] {
+  background: white;
+  box-shadow: inset 0 0 0 1px var(--th-line), 0 3px 8px rgba(20,27,45,.12);
+}
+@media (max-width: 700px) {
+  .roomDevice[data-phase3-frame="on"] .phase3RoomLocation { font-size: .59rem; }
+  .roomDevice[data-phase3-frame="on"] .studyGroups {
+    background: color-mix(in oklab, var(--th-bar) 52%, white);
+    border-color: white;
+    box-shadow: 0 12px 30px rgba(20,27,45,.16), inset 0 0 0 1px var(--th-line);
+  }
+  .roomDevice[data-phase3-frame="on"] .studyGroups button[aria-current] {
+    color: var(--th-ink);
+    background: white;
+  }
+}

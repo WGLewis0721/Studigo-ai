@@ -38,6 +38,7 @@ export default async function RoomPage({
   return (
     <RoomWorkspace
       room={room}
+      phase3Frame={(process.env.PHASE3_ROOM0_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id)}
       documents={documents}
       topics={topics}
       readiness={readiness}
