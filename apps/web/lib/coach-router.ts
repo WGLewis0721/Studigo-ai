@@ -683,7 +683,23 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       const hintsAlreadyGiven = stored >= 3 ? 2 : stored >= 2 ? 1 : 0;
       const streak = hintStreak(hintsAlreadyGiven, "hint");
       const step = nextHint(streak);
-      if (step === "reveal") return yield* reveal(resolvedIntent);
+      if (step === "reveal") {
+        const support = await deps.renderCoachSupport({
+          support: "worked_example",
+          question: state.question,
+          expectedConcepts: state.expectedConcepts,
+          chunks,
+          routeGuidance: [...(routeGuidance ?? []), "State the answer to this question. Do not ask a different question."],
+          pedagogyDirectives
+        });
+        const text = `Answer: ${support}\n\nYour turn is still: ${state.question}`;
+        await record(supportEvents("revealed", SUPPORT_GIVEN.reveal, 0));
+        await commit(withSupport(state, SUPPORT_GIVEN.reveal));
+        const citations = citationsIn(text, chunks);
+        yield { type: "delta", text };
+        yield { type: "done", answer: { text, citations, grounded: citations.length > 0 } };
+        return { stateBefore: state.kind, turnIntent: resolvedIntent, semanticScore: null, outcome: "show_answer", stateAfter: "awaiting_answer" };
+      }
 
       const clueInstruction = step === "stronger"
         ? "Give a more direct clue that points closer to the answer. Do not state the complete answer. Do not give an example and do not ask a different question."
