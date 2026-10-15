@@ -87,30 +87,13 @@ body:has(.learnReading) .cmpTab { display: none; }
 
 .learnAsk {
   flex: none;
+  max-height: 22vh;
+  overflow: auto;
   margin: 0;
   font-family: var(--display);
-  font-size: 1.45rem;
+  font-size: 1.2rem;
   line-height: 1.25;
   font-weight: 800;
-}
-.learnGuide {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  font-size: 18px;
-  line-height: 1.5;
-}
-.learnGuide .richText p,
-.learnGuide .richText li {
-  margin: 0 0 12px;
-  font-size: 18px;
-  line-height: 1.5;
-}
-.learnSource {
-  flex: none;
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
 }
 
 .learnChoices {
