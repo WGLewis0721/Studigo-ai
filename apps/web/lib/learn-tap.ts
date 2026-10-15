@@ -1,9 +1,24 @@
-/** Formative "which sentence states this?" check. Both options come from the source. */
+/** Formative "which line states this?" check. Both options come from the source. */
+const LABEL = /^(who|where|what|when|why|job)\??$/i;
+
 export function sourceSentences(excerpt: string): string[] {
-  return excerpt
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 12);
+  const lines = excerpt
+    .split(/\n+/)
+    .flatMap((line) => line.split(/(?<=[.!?])\s+/))
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const merged: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (LABEL.test(line) && lines[index + 1]) {
+      const prompt = line.endsWith("?") ? line : `${line}?`;
+      merged.push(`${prompt} ${lines[index + 1]}`);
+      index += 1;
+      continue;
+    }
+    merged.push(line);
+  }
+  return merged.filter((line) => line.length > 12);
 }
 
 function words(value: string): string[] {
