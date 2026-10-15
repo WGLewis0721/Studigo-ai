@@ -3339,6 +3339,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .modeFrame {
   --strip-scale: 1;
+  width: 100%;
   transition: --strip-scale 560ms cubic-bezier(.22, .8, .2, 1);
 }
 .modeFrame[data-compact="true"] { --strip-scale: 0.6; }
@@ -3346,11 +3347,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .modeFrame[data-compact="true"]:has(.modeStrip:focus-within),
 .modeFrame[data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
 .modeFrame .modeStrip {
+  width: 100%;
   overflow: hidden;
   height: auto;
   height: calc(var(--strip-h) * var(--strip-scale));
 }
-.modeFrame .modeStrip .modeHead {
+.modeFrame[data-compact="true"] .modeStrip .modeHead {
   transform-origin: top left;
   transform: scale(var(--strip-scale));
   width: calc(100% / var(--strip-scale));
