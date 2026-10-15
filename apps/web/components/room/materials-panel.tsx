@@ -10,6 +10,7 @@ import { describeCorpus } from "@/lib/guide-lifecycle";
 import { visibleIngestStage } from "@/lib/ingest-jobs";
 import { createBoundedUploadQueue, enqueueUploadBatch } from "@/lib/materials-upload-queue";
 import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
+import type { StudyGuideContent } from "@studigo/ai";
 
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
@@ -73,11 +74,16 @@ function statusCopy(document: StudyDocument) {
 export function MaterialsPanel({
   roomId,
   documents,
-  onChanged
+  onChanged,
+  phase3Materials = false,
+  previewEdition
 }: {
   roomId: string;
   documents: StudyDocument[];
   onChanged: () => void;
+  phase3Materials?: boolean;
+  /** Synthetic dev fixture only; normal rooms load the owner-scoped edition. */
+  previewEdition?: StudyGuideContent;
 }) {
   const [sourceType, setSourceType] = useState<SourceType>("study_guide");
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -366,7 +372,7 @@ export function MaterialsPanel({
   };
 
   return (
-    <div className="materialsPanel">
+    <div className="materialsPanel" data-phase3-materials={phase3Materials ? "on" : undefined}>
       <HeaderMascot state="sources" />
       <HeaderChip>
         <ChipSelect
@@ -468,9 +474,10 @@ export function MaterialsPanel({
       </div>
 
       <div className="materialsLibrary">
+      {phase3Materials && <div className="materialsSectionIntro"><span className="tinyLabel">YOUR LIBRARY</span><h2>Original files</h2><p>These are the files you added. Open or download the original at any time; reading issues are shown on each file.</p></div>}
       <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>
       <p className="setupLead">{describeCorpus(documents.map((document) => ({ id: document.id, revision: 0, status: document.status }))).notice}</p>
-      <GuidePreview roomId={roomId} />
+      {!phase3Materials && <GuidePreview roomId={roomId} />}
       <ul className="documentList">
         {documents.length === 0 && (
           <li className="emptyState">Nothing here yet. The study guide is the best first upload.</li>
@@ -516,6 +523,10 @@ export function MaterialsPanel({
           </li>
         ))}
       </ul>
+      {phase3Materials && <section className="materialsGuideSection" aria-label="Studigo guide">
+        <div className="materialsSectionIntro"><span className="tinyLabel">MADE FROM YOUR SOURCES</span><h2>Studigo guide</h2><p>A generated reading edition, separate from your original files. Check cited passages against the source before relying on them.</p></div>
+        <GuidePreview roomId={roomId} edition={previewEdition} phase3Materials />
+      </section>}
       </div>
     </div>
   );

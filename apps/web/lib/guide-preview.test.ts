@@ -68,3 +68,14 @@ test("C17 compact preview links are keyboard reachable and do not generate", () 
   assert.match(html, />Print</);
   assert.match(html, /Download study guide/);
 });
+
+test("Room 1 citation inspection is opt-in and keeps the original guide unchanged when off", () => {
+  const before = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition }));
+  const flagged = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition, phase3Materials: true }));
+  assert.match(before, /<a href="\/api\/guides\/source\?roomId=room-1&amp;blockKey=laws"/);
+  assert.doesNotMatch(before, /materialsCitation/);
+  assert.match(flagged, /<button class="materialsCitation" type="button">Source, page 1<\/button>/);
+  assert.doesNotMatch(flagged, /<a href="\/api\/guides\/source/);
+  assert.match(flagged, /The legislative branch makes laws/);
+  assert.doesNotMatch(flagged, /Checked answer/);
+});
