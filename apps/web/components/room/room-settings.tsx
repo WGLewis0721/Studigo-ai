@@ -6,7 +6,7 @@ import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/ac
 import type { StudyRoom } from "@/lib/rooms";
 import { RoomColorPicker } from "./room-color-picker";
 import { RoomCompanionSettings } from "@/components/companion/companion";
-import { readAccuracySetting, writeAccuracySetting, type AccuracySetting } from "@/lib/accuracy-bar";
+import { gaugeLabel, readGauge, writeGauge } from "@/lib/accuracy-bar";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -19,8 +19,8 @@ function SaveButton() {
 
 export function RoomSettings({ room, onClose, closing = false }: { room: StudyRoom; onClose: () => void; closing?: boolean }) {
   const [state, formAction] = useActionState<RoomFormState, FormData>(renameRoomAction, {});
-  const [accuracy, setAccuracy] = useState<AccuracySetting>("low");
-  useEffect(() => { setAccuracy(readAccuracySetting(room.id) ?? "low"); }, [room.id]);
+  const [gauge, setGauge] = useState(50);
+  useEffect(() => { setGauge(readGauge(room.id)); }, [room.id]);
 
   return (
     <section className="roomSettings" data-state={closing ? "closing" : "open"} role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
@@ -51,24 +51,32 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
               <option value="deeper">Deeper: more precise, assumes the basics</option>
             </select>
           </label>
-          <label className="field">
-            <span>How much of the guide an answer must cover <small>(this Study Room)</small></span>
+          <div className="accuracyGauge">
+            <span>Answer temperature <small>(this Study Room)</small></span>
+            <div className="accuracyGaugeEnds"><span>Cold · 50%</span><strong>{gaugeLabel(gauge)}</strong><span>Hot · 100%</span></div>
             <input
-              name="accuracy"
+              name="gauge"
               type="range"
-              min={0}
-              max={1}
+              min={50}
+              max={100}
               step={1}
-              value={accuracy === "high" ? 1 : 0}
-              aria-valuetext={accuracy === "high" ? "High, about 80 to 95 percent" : "Low, about half is enough"}
+              value={gauge}
+              aria-valuemin={50}
+              aria-valuemax={100}
+              aria-valuenow={gauge}
+              aria-valuetext={gaugeLabel(gauge)}
               onChange={(event) => {
-                const next: AccuracySetting = event.target.value === "1" ? "high" : "low";
-                setAccuracy(next);
-                writeAccuracySetting(room.id, next);
+                const next = Number(event.target.value);
+                setGauge(next);
+                writeGauge(room.id, next);
               }}
             />
-            <small>{accuracy === "high" ? "High: about 80–95% of the expected points. Wording does not have to match." : "Low: about half the expected points is enough. A first pass uses this unless you move the slider."}</small>
-          </label>
+            <small>
+              {gauge >= 90
+                ? "Hot: the answer has to cover about 90–100% of the idea. Coach rejects an incomplete answer and corrects the whole thing. The words do not have to match."
+                : `Cold to warm: about ${gauge}% of the idea is enough. Coach accepts the part you got and fills in the rest. The words do not have to match.`}
+            </small>
+          </div>
           <label className="field">
             <span>Test date</span>
             <input

@@ -38,6 +38,8 @@ import { learningEventStore, type CoachEvidenceStore } from "@/lib/coach-evidenc
 import { commitAdaptiveCoachTurn,readCommittedCoachAnswer,hasIssuedCoachEncounter,readAcceptedEvaluation,acceptEvaluation, type AdaptiveCoachCommit } from './learning/atomic-coach';
 import { exampleTurn, hintStreak, nextHint } from "./coach-help";
 import { gradeMath, mathModelFromPrompt } from "./math-model";
+import { gaugeOutcome } from "./accuracy-bar";
+import { followUpQuestion } from "./coach-follow-up";
 import {
   buildCoachEvent,
   coachEventId,
@@ -275,8 +277,9 @@ type CoachTurnArgs = {
    *  Required for learning evidence; without it nothing is recorded. */
   interaction?: CoachInteraction;
   deps?: Partial<CoachRouterDeps>;
-  /** Coverage required for a correct mark. Omitted keeps the default bar. */
-  correctAt?: number;
+  /** 50 (cold) to 100 (hot). Omitted keeps the default bar. */
+  gauge?: number;
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
 };
 
 /** Atomic turns publish only their immutable committed reply. Old retries never
@@ -725,7 +728,31 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
     if (intent === "help_request") return yield* supportLearner(intent);
 
     let evaluation = atomic?await readAcceptedEvaluation(supabase,interaction!.id):null;
-    const math = mathModelFromPrompt(state.question);
+    const priorCoach = [...(args.history ?? [])].reverse().find((turn) => turn.role === "assistant")?.content ?? "";
+    const asked = followUpQuestion(state.question, priorCoach);
+    const math = mathModelFromPrompt(asked ?? state.question);
+    let followScore: number | null = null;
+    let feedbackQuestion = state.question;
+    let feedbackConcepts = state.expectedConcepts;
+    let feedbackEvaluated: Array<{ id: string; status: "demonstrated" | "partial" | "absent" | "contradicted" }> | null = null;
+    if (!evaluation && asked) {
+      const followConcepts = [{ id: "follow-up", description: `${asked} Accept any part the learner got. A missing part is partial, not a contradiction.`, weight: 1, critical: false }];
+      const follow = await deps.evaluateCoachAnswer({
+        question: asked,
+        expectedConcepts: followConcepts,
+        learnerResponse: question,
+        chunks
+      });
+      const softened = follow.concepts.map((concept) => concept.status === "contradicted" ? { ...concept, status: "partial" as const } : concept);
+      followScore = scoreConcepts(followConcepts, softened);
+      feedbackQuestion = asked;
+      feedbackConcepts = followConcepts;
+      feedbackEvaluated = softened;
+      evaluation = {
+        intent: "answer",
+        concepts: state.expectedConcepts.map((concept) => ({ id: concept.id, status: "absent" as const }))
+      };
+    }
     if (!evaluation && math) {
       const correct = gradeMath(math, question);
       evaluation = {
@@ -734,8 +761,8 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       };
     }
     evaluation ??= await deps.evaluateCoachAnswer({
-      question: state.question,
-      expectedConcepts: state.expectedConcepts,
+      question: feedbackQuestion,
+      expectedConcepts: feedbackConcepts,
       learnerResponse: question,
       chunks
     });
@@ -817,27 +844,31 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       };
     }
 
-    const mathScore = math && evaluation?.intent === "answer" ? (gradeMath(math, question) ? 1 : 0) : null;
-    const score = mathScore ?? scoreConcepts(state.expectedConcepts, evaluation.concepts);
+    const mathScore = math && evaluation?.intent === "answer" && followScore == null ? (gradeMath(math, question) ? 1 : 0) : null;
+    const score = followScore ?? mathScore ?? scoreConcepts(state.expectedConcepts, evaluation.concepts);
+    const criticalContradicted = !asked && state.expectedConcepts.some((concept) => concept.critical && evaluation.concepts.some((item) => item.id === concept.id && item.status === "contradicted"));
     const outcome =
       recordedOutcome ??
-      decideOutcome({
-        intent: effectiveIntent,
-        expectedConcepts: state.expectedConcepts,
-        evaluated: evaluation.concepts,
-        score,
-        correctAt: args.correctAt
-      });
+      (criticalContradicted
+        ? "incorrect"
+        : typeof args.gauge === "number"
+          ? gaugeOutcome(score, args.gauge)
+          : decideOutcome({
+              intent: effectiveIntent,
+              expectedConcepts: feedbackConcepts,
+              evaluated: evaluation.concepts,
+              score
+            }));
 
     // Commit order for an assessed answer: the attempt is recorded with the
     // support that existed BEFORE this reply, and before any feedback exists.
     const assessed = outcome === "correct" || outcome === "partial" || outcome === "incorrect";
-    if (scope && assessed) await record([event(scope, "attempt", outcome, scaffoldBefore, 0)]);
+    if (scope && assessed && !asked) await record([event(scope, "attempt", outcome, scaffoldBefore, 0)]);
 
     const feedback = await deps.generateCoachFeedback({
-      question: state.question,
-      expectedConcepts: state.expectedConcepts,
-      evaluated: evaluation.concepts,
+      question: feedbackQuestion,
+      expectedConcepts: feedbackConcepts,
+      evaluated: feedbackEvaluated ?? evaluation.concepts,
       learnerResponse: question,
       outcome,
       chunks,
@@ -880,9 +911,16 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
     // outcome, strictly after any attempt (base + 1 ms) and before it is shown.
     // An irrelevant reply is never an attempt: only its redirect clue is recorded.
     const support = feedbackSupport(outcome);
-    if (support > 0) {
+    const nextAsked = followUpQuestion(feedbackQuestion, feedback);
+    const moved = nextAsked ?? asked;
+    const pending = moved
+      ? { ...state, question: moved, expectedConcepts: [{ id: "follow-up", description: moved.slice(0, 280), weight: 1, critical: false }] }
+      : state;
+    if (!moved && support > 0) {
       await record(supportEvents(outcome === "incorrect" ? "revealed" : "help", support, assessed ? 1 : 0));
       await commit(withSupport(state, support));
+    } else if (moved) {
+      await commit(withSupport(pending, support));
     } else if (interaction) {
       await commit(state);
     }

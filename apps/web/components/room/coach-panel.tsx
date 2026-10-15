@@ -25,7 +25,7 @@ import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
 import type { LearnOutcome } from "@/lib/learn-outcome";
-import { readAccuracySetting } from "@/lib/accuracy-bar";
+import { readGauge } from "@/lib/accuracy-bar";
 import { mathModelFromPrompt } from "@/lib/math-model";
 import { MathModelView } from "./math-model-view";
 
@@ -547,12 +547,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         [{ name: "Current topics", instruction: scopeInstruction }],
         coaching.learnApplied
       );
-      const accuracy = readAccuracySetting(roomId);
-      const firstPass = scopedTopics.length > 0 && scopedTopics.every((topic) => Number(topic.mastery_score) === 0);
+      const gauge = readGauge(roomId);
       const body = isFixture
-        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives })
+        ? JSON.stringify({ question: text, topics: scopedTopics.length ? scopedTopics : topics, history: priorHistory, directives: fixtureDirectives, gauge })
         : replying === "coach"
-          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds, ...(accuracy ? { accuracy } : {}), ...(firstPass ? { firstPass: true } : {}) })
+          ? JSON.stringify({ roomId, question: text, mode: "coach", surface: "coach", interactionId, conversationId: submittedConversationId, topicIds: scopedTopicIds, gauge, history: priorHistory })
           : JSON.stringify({ roomId, question: text, surface: "learn", conversationId: submittedConversationId, topicIds: scopedTopicIds });
       const response = await fetch(endpoint, { method: "POST", headers: operationHeaders(interactionId), body });
       if (response.status === 202 || response.status === 409 || !response.ok || !response.body) {

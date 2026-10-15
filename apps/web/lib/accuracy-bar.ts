@@ -1,30 +1,51 @@
-/** How much of the guide an answer must cover before Coach calls it correct. */
-export type AccuracySetting = "low" | "high";
+/** How much of the idea an answer must cover. 50 is cold, 100 is hot. */
+export type AccuracyGauge = number;
 
 const KEY = (roomId: string) => `studigo-accuracy:${roomId}`;
 
-/** Low is half the expected points. High is the middle of 80–95%. */
-export function requiredCoverage(setting: AccuracySetting | null, firstPass: boolean): number {
-  if (setting === "high") return 0.9;
-  if (setting === "low" || firstPass) return 0.5;
-  return 0.85;
+export function clampGauge(value: number): number {
+  if (!Number.isFinite(value)) return 50;
+  return Math.min(100, Math.max(50, Math.round(value)));
 }
 
-/** Coverage only. The words do not have to match the guide. */
-export function passesCoverage(score: number, required: number): boolean {
-  return score >= required;
+/** 50% at cold, 100% at hot. */
+export function requiredCoverage(gauge: number): number {
+  return clampGauge(gauge) / 100;
 }
 
-export function readAccuracySetting(roomId: string): AccuracySetting | null {
-  if (typeof window === "undefined") return null;
+/**
+ * Cold accepts a partial idea and leaves the rest for Coach to fill in.
+ * Hot rejects anything under the mark and asks for the whole answer.
+ * Wording never has to match.
+ */
+export function gaugeOutcome(score: number, gauge: number): "correct" | "partial" | "incorrect" {
+  const required = requiredCoverage(gauge);
+  if (score >= required && score >= 0.9) return "correct";
+  if (score >= required) return "partial";
+  if (required >= 0.9) return "incorrect";
+  if (score >= required - 0.2) return "partial";
+  return "incorrect";
+}
+
+export function gaugeLabel(gauge: number): string {
+  const percent = clampGauge(gauge);
+  const name = percent < 70 ? "Cold" : percent < 90 ? "Warm" : "Hot";
+  return `${name} · ${percent}%`;
+}
+
+export function readGauge(roomId: string): number {
+  if (typeof window === "undefined") return 50;
   try {
     const value = window.localStorage.getItem(KEY(roomId));
-    return value === "low" || value === "high" ? value : null;
+    if (value === "low") return 50;
+    if (value === "high") return 95;
+    if (value == null) return 50;
+    return clampGauge(Number(value));
   } catch {
-    return null;
+    return 50;
   }
 }
 
-export function writeAccuracySetting(roomId: string, setting: AccuracySetting) {
-  window.localStorage.setItem(KEY(roomId), setting);
+export function writeGauge(roomId: string, gauge: number) {
+  window.localStorage.setItem(KEY(roomId), String(clampGauge(gauge)));
 }
