@@ -40,6 +40,7 @@ export default async function RoomPage({
       room={room}
       phase3Frame={(process.env.PHASE3_ROOM0_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id)}
       phase3Materials={(process.env.PHASE3_ROOM1_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id)}
+      phase3Learn={(process.env.PHASE3_ROOM2_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id)}
       documents={documents}
       topics={topics}
       readiness={readiness}

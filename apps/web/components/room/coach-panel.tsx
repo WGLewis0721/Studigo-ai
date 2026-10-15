@@ -28,6 +28,7 @@ import type { LearnOutcome } from "@/lib/learn-outcome";
 import { readGauge } from "@/lib/accuracy-bar";
 import { mathModelFromPrompt } from "@/lib/math-model";
 import { MathModelView } from "./math-model-view";
+import { LearnMission } from "./learn-mission";
 
 type ChatMode = "coach" | "learn";
 type Message = { id: string; role: "user" | "assistant"; content: string; mode?: ChatMode; /** Fixed product copy, not a model answer: never sent back as history. */ kind?: "guide"; citations?: Citation[]; grounded?: boolean; streaming?: boolean; outcome?: LearnOutcome };
@@ -72,7 +73,7 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false }: {
   roomId: string;
   coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
@@ -84,6 +85,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   focusTopicId: string | null;
   onClearFocus: () => void;
   onTopicsChanged: () => void;
+  phase3Learn?: boolean;
 }) {
   const [draft, setDraft] = useState(coaching.applied);
   const [learnDraft, setLearnDraft] = useState<LearnPreferences>(coaching.learnApplied);
@@ -218,11 +220,11 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {
-    if (chatMode !== "learn" || view !== "chat") return;
+    if (phase3Learn || chatMode !== "learn" || view !== "chat") return;
     const topic = topics.find((item) => item.id === learnCursorId);
     if (!topic) return;
     void loadCursorLesson(topic, "open");
-  }, [chatMode, view, learnCursorId, topics, roomId]);
+  }, [phase3Learn, chatMode, view, learnCursorId, topics, roomId]);
 
   useEffect(() => {
     if (!focusTopicId) {
@@ -922,6 +924,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
           </button>
         )}
+        {phase3Learn && chatMode === "learn" ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} onOpenMaterials={onOpenMaterials} /> : <>
         <LessonMobileFrame
           mode={chatMode}
           label={learnLabel}
@@ -999,6 +1002,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           disabled={busy || restoring}
           ariaLabel={chatMode === "learn" ? `Message Learn about ${learnTopicTitle}` : `Message Coach about ${coachTopicTitle}`}
         />
+        </>}
       </section>
       </div>
       <CoachAside topics={topics} areas={areas} selectedTitle={selectedTopic.title} onSelect={(topic) => {

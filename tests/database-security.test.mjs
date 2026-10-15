@@ -921,3 +921,57 @@ test('AI admission prunes old windows and completed leases without touching curr
     assert.equal(ttl.seconds, 600, 'lease must outlast five-minute Vercel execution');
   });
 });
+
+test('Learn mission resumes an exact step, dedupes requests, and never writes mastery', async () => {
+  const room=id(501), doc=id(502), chunk=id(503), topic=id(504);
+  await db.query('insert into study_rooms(id,owner_id,title) values($1,$2,$3)',[room,A,'Mission fixture']);
+  await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status)
+    values($1,$2,$3,'source.pdf','application/pdf',20,$4,'ready')`,[doc,room,A,`${A}/${room}/source.pdf`]);
+  await db.query(`insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content,page_number)
+    values($1,$2,$3,$4,0,'Branches of government have distinct powers.',2)`,[chunk,doc,room,A]);
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective,source_document_ids)
+    values($1,$2,$3,'Government','Compare three branches',array[$4::uuid])`,[topic,room,A,doc]);
+  const commit='select public.commit_learn_mission($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::bigint,$6::text,$7::text,$8::uuid) as result';
+  await as('service_role', null, async () => {
+    await assert.rejects(db.query(commit,[B,room,topic,id(510),0,'start',null,chunk]),e=>e.code==='42501');
+    await assert.rejects(db.query(commit,[A,room,topic,id(520),0,'start',null,id(22)]),e=>e.code==='22023');
+    const start=(await one(commit,[A,room,topic,id(511),0,'start',null,chunk])).result;
+    assert.equal(start.mission.phase,'brief');
+    assert.equal(start.sourceCurrent,true);
+    assert.equal((await one(commit,[A,room,topic,id(511),0,'start',null,chunk])).result.mission.revision,0);
+    await assert.rejects(db.query(commit,[A,room,topic,id(511),0,'advance',null,null]),e=>e.code==='23505');
+    const show=(await one(commit,[A,room,topic,id(512),0,'advance',null,null])).result;
+    assert.equal(show.mission.phase,'show');
+    assert.equal(show.mission.revision,1);
+    await assert.rejects(db.query(commit,[A,room,topic,id(513),0,'advance',null,null]),e=>e.code==='40001');
+    const tryStep=(await one(commit,[A,room,topic,id(514),1,'advance',null,null])).result;
+    await assert.rejects(db.query(commit,[A,room,topic,id(515),2,'advance',null,null]),e=>e.code==='22023');
+    const check=(await one(commit,[A,room,topic,id(516),2,'advance','review',null])).result;
+    assert.equal(check.mission.phase,'check');
+    assert.equal(check.mission.reflection,'review');
+    const done=(await one(commit,[A,room,topic,id(517),3,'advance',null,null])).result;
+    assert.equal(done.mission.phase,'done');
+    assert.equal(Number((await one('select mastery_score from topics where id=$1',[topic])).mastery_score),0);
+    assert.equal((await one('select count(*)::integer as n from learning_events where room_id=$1',[room])).n,0);
+    await db.query('update documents set active_revision=active_revision+1 where id=$1',[doc]);
+    assert.equal((await one('select public.read_learn_mission($1::uuid,$2::uuid) as result',[A,room])).result.sourceCurrent,false);
+    const replay=(await one(commit,[A,room,topic,id(517),3,'advance',null,null])).result;
+    assert.equal(replay.sourceCurrent,false, 'a receipt cannot replay a stale passage');
+    assert.equal(replay.source,null);
+    await assert.rejects(db.query(commit,[A,room,topic,id(518),4,'back',null,null]),e=>e.code==='40001');
+    await db.query(`insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content,page_number,revision)
+      values($1,$2,$3,$4,0,'A revised passage about three branches.',2,2)`,[id(505),doc,room,A]);
+    const restarted=(await one(commit,[A,room,topic,id(521),4,'restart',null,id(505)])).result;
+    assert.equal(restarted.sourceCurrent,true);
+    assert.equal(restarted.mission.phase,'brief');
+    assert.equal(restarted.mission.reflection,null);
+  });
+  await as('authenticated',A,async()=>{
+    assert.equal((await one('select count(*)::integer as n from learn_mission_cursors where room_id=$1',[room])).n,1);
+    await assert.rejects(db.query('update learn_mission_cursors set phase=$1 where room_id=$2',['done',room]),e=>e.code==='42501');
+    await assert.rejects(db.query(commit,[A,room,topic,id(519),4,'back',null,null]),e=>e.code==='42501');
+  });
+  await as('authenticated',B,async()=>{
+    assert.equal((await one('select count(*)::integer as n from learn_mission_cursors where room_id=$1',[room])).n,0);
+  });
+});

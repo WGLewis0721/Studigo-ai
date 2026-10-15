@@ -90,6 +90,7 @@ export function RoomWorkspace({
   initialMode,
   phase3Frame = false,
   phase3Materials = false,
+  phase3Learn = false,
   materialsPreviewEdition,
   evidence, planEvents, asOf
 }: {
@@ -100,6 +101,7 @@ export function RoomWorkspace({
   initialMode?: string;
   phase3Frame?: boolean;
   phase3Materials?: boolean;
+  phase3Learn?: boolean;
   materialsPreviewEdition?: StudyGuideContent;
   evidence: PracticeEvidence[];
   planEvents: PlanEvent[];
@@ -253,6 +255,7 @@ export function RoomWorkspace({
         {mode === "coach" && (
           <CoachPanel
             coaching={coaching}
+            phase3Learn={phase3Learn}
             roomId={room.id}
             readyCount={readyDocuments.length}
             topics={topics}
