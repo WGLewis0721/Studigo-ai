@@ -6,6 +6,7 @@ import { StudigoMascot } from '@/components/studigo-mascot';
 import { ChipSelect, HeaderChip, HeaderMascot } from './mode-header';
 import { TopicReadout } from './topic-readout';
 import type { Topic } from '@/lib/rooms';
+import './phase3-rooms.css';
 type Answer={selectedChoice:number|null;response:string};
 type Question={id:string;kind:'multiple_choice'|'short_answer';prompt:string;choices:string[];topic_id:string};
 type Review=Question&{score:number;is_correct:boolean;feedback:string;explanation:string;expected_answer:string|null;correct_choice:number|null;citations:Citation[];response:string|null;selected_choice:number|null};
@@ -50,7 +51,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
   }
   const answered=(q:Question)=>q.kind==='multiple_choice'?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
   const completed=questions.filter(answered).length;const current=questions[index];
-  if(active?.result) return <section className="testResults">
+  if(active?.result) return <section className="testResults roomStudioResults">
     <HeaderMascot state={active.result.score>=80?'celebrate':'explain'}/>
     <p className="setupLead">{active.result.score>=80?'A strong rehearsal. Review each miss below.':'Now you know where to focus.'}</p>
     <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
@@ -59,10 +60,10 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {q.kind==='multiple_choice'?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {q.kind==='multiple_choice'?q.choices[q.correct_choice??0]:q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><CitationChips citations={q.citations??[]}/></details>)}
     <button className="buttonPrimary" onClick={()=>{setActive(null);setQuestions([]);}}>Back to practice tests →</button>
   </section>;
-  if(active&&current) return <section className="testSession">
-    <div className="testSessionTop"><div><span className="tinyLabel">PRACTICE TEST / NO ANSWERS UNTIL SUBMISSION</span><h2>Question {index+1} of {questions.length}</h2></div><span role="status">{completed}/{questions.length} answered · {saveState}</span></div>
+  if(active&&current) return <section className="testSession roomStudioTest">
+    <div className="testSessionTop"><div><span className="tinyLabel">INDEPENDENT REHEARSAL / ANSWERS AFTER SUBMISSION</span><h2>Question {index+1} of {questions.length}</h2></div><span role="status">{completed}/{questions.length} answered · {saveState}</span></div>
     <nav className="testQuestionNav" aria-label="Test questions">{questions.map((q,i)=><button key={q.id} disabled={busy} aria-current={i===index?'step':undefined} className={answered(q)?'answered':''} aria-label={`Question ${i+1}${answered(q)?', answered':', unanswered'}`} onClick={()=>setIndex(i)}>{i+1}</button>)}</nav>
-    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':'MULTIPLE CHOICE'}</span><h3>{current.prompt}</h3>
+    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':'MULTIPLE CHOICE'}</span><h3>{current.prompt}</h3><p className="roomStudioInstruction">This is a draft until you submit the full test. You can revisit any question.</p>
       {current.kind==='multiple_choice'?<fieldset disabled={busy}><legend className="srOnly">Choose one answer</legend>{current.choices.map((choice,i)=><label key={i} className="testChoice"><input type="radio" name={current.id} checked={answers[current.id]?.selectedChoice===i} onChange={()=>change(current.id,{selectedChoice:i,response:''})}/><span>{choice}</span></label>)}</fieldset>:
       <textarea aria-label="Your answer" rows={5} maxLength={4000} disabled={busy} value={answers[current.id]?.response??''} placeholder="Explain the idea in your own words…" onChange={e=>change(current.id,{selectedChoice:null,response:e.target.value})}/>}
     </div>
@@ -71,10 +72,10 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     <button className="buttonQuiet" disabled={busy} onClick={()=>setConfirmSubmit(true)}>Review and submit entire test</button>
     {confirmSubmit&&<div className="testSubmitReview" role="region" aria-label="Submit full test"><h3>Ready to submit?</h3><p>{questions.length-completed?`${questions.length-completed} unanswered questions will count as zero.`:'Every question has an answer.'} Submission is final for this test.</p><button disabled={busy} onClick={()=>setConfirmSubmit(false)}>Keep working</button><button className="buttonPrimary" disabled={busy} onClick={()=>void submit()}>{busy?'Grading the full test…':'Submit all answers'}</button></div>}
   </section>;
-  return <section className="practiceTestSetup">
+  return <section className="practiceTestSetup roomStudioSetup">
     <div className="setupMain">
     <HeaderChip><ChipSelect label={`${count} questions`} ariaLabel="Number of test questions" value={String(count)} onChange={v=>setCount(Number(v))} disabled={busy}>{[6,10,15,20].map(n=><option key={n} value={n}>{n} questions</option>)}</ChipSelect></HeaderChip>
-    <div className="setupHeading"><span className="tinyLabel">NEXT TEST</span><h3>{count} questions</h3></div>
+    <div className="setupHeading"><span className="tinyLabel">PRACTICE STUDIO / FULL REHEARSAL</span><h3>{count} questions</h3></div>
     <p className="setupLead">A full test, graded when you submit.</p>
     <p className="hintText">Covers up to {Math.min(count,topicCount)} of {topicCount} current topics. Choose more questions to cover a larger scope.</p>
     <button className="buttonPrimary" disabled={busy||topicCount<2} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>

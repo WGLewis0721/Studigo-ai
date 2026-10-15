@@ -7,10 +7,11 @@ import { buildHomeNext, pickFocusRoom } from "@/lib/home-next";
 import { rankWeakAreas } from "@/lib/study-planning";
 import type { Topic } from "@/lib/rooms";
 
-// Synthetic fixture for the app's Home and first-run setup. Local development only.
+// Synthetic fixture for the app's Home and first-run setup; enabled on flagged, protected previews.
 // ?first=1 shows the first-run setup; nothing is created.
 export default async function HomeFixture({ searchParams }: { searchParams: Promise<{ first?: string }> }) {
-  if (process.env.NODE_ENV !== "development") notFound();
+  const flaggedPreview = process.env.VERCEL_ENV === "preview" && process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
+  if (process.env.NODE_ENV !== "development" && !flaggedPreview) notFound();
   const { first } = await searchParams;
   const now = Date.now();
   const inDays = (days: number) => new Date(now + days * 86_400_000).toISOString();

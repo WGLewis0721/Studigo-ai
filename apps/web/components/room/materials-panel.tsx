@@ -13,6 +13,7 @@ import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 
 const ACCEPT =
   ".pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp";
+const phase3Materials = process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 
 async function readUploadReply(response: Response, fallback: string): Promise<Record<string, any>> {
   const payload = await response.json().catch(() => null) as Record<string, any> | null;
@@ -98,6 +99,7 @@ export function MaterialsPanel({
   const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
+  const readableCount = documents.filter((document) => document.status === "ready" || document.status === "partial").length;
 
   const refreshStudyGuide = useCallback(async () => {
     if (!latestStudyGuide || refreshingGuide) return;
@@ -383,7 +385,14 @@ export function MaterialsPanel({
         </ChipSelect>
       </HeaderChip>
       <div className="materialsIntake">
-      <p className="setupLead">Set the file type above, then add your files.</p>
+      {phase3Materials ? <div className="materialsIntro">
+        <div>
+          <span className="tinyLabel">YOUR SOURCE LIBRARY</span>
+          <h2>Start with the real material.</h2>
+          <p>Choose the file type above, then add a class file. Studigo reads what it can and tells you when something needs attention.</p>
+        </div>
+        <div className="materialsReadout" role="status"><strong>{readableCount}</strong><span>of {documents.length} files readable</span></div>
+      </div> : <p className="setupLead">Set the file type above, then add your files.</p>}
 
       {latestStudyGuide && (
         <div className="studyGuideRefresh">
@@ -417,7 +426,7 @@ export function MaterialsPanel({
           void uploadFiles([...event.dataTransfer.files]);
         }}
       >
-        <strong>Drop files here</strong>
+        {phase3Materials ? <><span className="dropzoneGlyph" aria-hidden="true">＋</span><strong>Bring your materials in.</strong><span className="dropzoneHint">Drop files here, or choose them from your device.</span></> : <strong>Drop files here</strong>}
         <small>PDF, DOCX, PPTX, TXT, Markdown, or a photo of a handout · up to 50 MB</small>
         <button className="buttonPrimary" type="button" onClick={() => inputRef.current?.click()}>
           Choose files <span aria-hidden="true">→</span>
@@ -468,12 +477,12 @@ export function MaterialsPanel({
       </div>
 
       <div className="materialsLibrary">
-      <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>
+      {phase3Materials ? <div className="materialsLibraryTitle"><div><span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span><h2>On the shelf</h2></div><span>Original files &amp; Studigo guide</span></div> : <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>}
       <p className="setupLead">{describeCorpus(documents.map((document) => ({ id: document.id, revision: 0, status: document.status }))).notice}</p>
-      <GuidePreview roomId={roomId} />
+      {!phase3Materials && <GuidePreview roomId={roomId} />}
       <ul className="documentList">
         {documents.length === 0 && (
-          <li className="emptyState">Nothing here yet. The study guide is the best first upload.</li>
+          <li className="emptyState">{phase3Materials ? "No original files yet. Add a study guide or other class material above to begin." : "Nothing here yet. The study guide is the best first upload."}</li>
         )}
 
         {documents.map((document) => (
@@ -493,14 +502,14 @@ export function MaterialsPanel({
               </small>
             </div>
             <div className="documentActions">
-              <a
+              <a aria-label={`Open original file ${document.name}`}
                 href={`/api/documents/download?documentId=${document.id}&inline=1`}
                 target="_blank"
                 rel="noreferrer"
               >
                 Open
               </a>
-              <a href={`/api/documents/download?documentId=${document.id}`}>Download</a>
+              <a href={`/api/documents/download?documentId=${document.id}`} aria-label={`Download original file ${document.name}`}>Download</a>
               {(document.status === "failed" ||
                 document.status === "partial" ||
                 document.status === "queued" ||
@@ -516,6 +525,7 @@ export function MaterialsPanel({
           </li>
         ))}
       </ul>
+      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials /></div>}
       </div>
     </div>
   );

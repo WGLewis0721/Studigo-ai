@@ -86,12 +86,13 @@ export function LessonMobileFrame({
     <>
       {mode === "learn" && label ? (
         <p className="lessonPosition" data-lesson-label>
-          {label}
+          <span className="lessonPositionIndex">{label}</span>
           <span className="lessonPositionTopic">{topicTitle}</span>
         </p>
       ) : null}
       <div className="chatThread" role="log" aria-live="polite" aria-label="Messages" ref={threadRef} onScroll={onScroll}>
         <div className="lessonReading" data-learn-surface={mode === "learn" ? "lesson" : "practice"} aria-label={`${modeName}, ${topicTitle}`}>
+          {mode === "learn" && text && <span className="learningPhaseEyebrow">FROM THIS STUDY ROOM</span>}
           {status ? <p className="lessonStatus" role="status">{status}</p> : null}
           {text && mathModelFromPrompt(text) ? <MathModelView model={mathModelFromPrompt(text)!} /> : null}
           {text ? <RichText className="lessonText" text={text} /> : null}
@@ -436,7 +437,9 @@ export function LearnPanel({
 
   if (!topics.length) {
     return (
-      <div className="modeEmpty">
+      <div className="modeEmpty learningTopicsEmpty">
+        <span className="learningPhaseEyebrow">YOUR LEARNING MAP</span>
+        <h2>Start with what you have.</h2>
         <p>Upload a teacher study guide and Studigo reads what it says you need to know. With only notes and textbook pages, it can build the map from those instead.</p>
         {error && (
           <p className="formError" role="alert">
@@ -462,9 +465,14 @@ export function LearnPanel({
 
   return (
     <div className="learnMode">
+      <div className="learningTopicsIntro">
+        <span className="learningPhaseEyebrow">YOUR LEARNING MAP / {String(topics.length).padStart(2, "0")} {topics.length === 1 ? "TOPIC" : "TOPICS"}</span>
+        <h2>Choose a thread to follow.</h2>
+        <p>Open a topic for a source-based lesson. Adjust the map if your guide missed something.</p>
+      </div>
       {cursorLabel && (
         <p className="lessonPosition" data-lesson-label>
-          {cursorLabel}
+          <span className="lessonPositionIndex">{cursorLabel}</span>
           <span className="lessonPositionTopic">{lessonCursor?.title}</span>
         </p>
       )}
@@ -523,7 +531,8 @@ export function LearnPanel({
                 </span>
                 <span className="topicMeta">
                   {topic.priority >= 90 && <b className="priorityTag">ON THE TEST</b>}
-                  <span className="masteryPill">{Math.round(topic.mastery_score)}%</span>
+                  <span className="masteryPill">{topic.last_practiced_at ? `${Math.round(topic.mastery_score)}% practiced` : "Not practiced"}</span>
+                  <span className="learningTopicArrow" aria-hidden="true">{isOpen ? "−" : "+"}</span>
                 </span>
               </button>
 
@@ -586,6 +595,7 @@ export function LearnPanel({
 
                   {lesson && (
                     <>
+                      <span className="learningPhaseEyebrow">YOUR MATERIALS / LESSON</span>
                       {lesson.notice && (
                         <div className="formNotice" role="status">
                           <strong>{lesson.notice.title}</strong>

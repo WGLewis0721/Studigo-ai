@@ -1,5 +1,7 @@
 "use client";
 
+import "./learning-phase3.css";
+
 import { COACH_MODE_OPTIONS, describeCoaching, directivesForTurn, sameCoachPreferences } from "@/lib/coach-preferences";
 import { operationHeaders } from "@/lib/ai-operation-client";
 import type { useCoachPreferences } from "./use-coach-preferences";
@@ -822,6 +824,14 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>{contextControls}</div>
+      {view !== "topics" && <div className="learningPhaseIntro" data-surface={chatMode}>
+        <div>
+          <span className="learningPhaseEyebrow">{chatMode === "learn" ? "01 / READ & EXPLORE" : "02 / WORK IT THROUGH"}</span>
+          <h2>{chatMode === "learn" ? "Make sense of it." : "Put it to work."}</h2>
+          <p>{chatMode === "learn" ? "A lesson from your room materials, with sources you can open. Ask what you need before moving on." : "Try an idea, show your thinking, and work through the next step with Coach."}</p>
+        </div>
+        <div className="learningPhaseFocus"><span>IN FOCUS</span><strong>{chatMode === "learn" ? learnTopicTitle : coachTopicTitle}</strong><small>{chatMode === "learn" ? learnLabel ?? "Choose a topic" : `${coachTopicIds.length} ${coachTopicIds.length === 1 ? "topic" : "topics"} selected`}</small></div>
+      </div>}
       {view === "topics" ? (
         <div className="coachTopicsView">
           {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}

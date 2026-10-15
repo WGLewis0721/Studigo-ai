@@ -8,6 +8,7 @@ import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { StudigoFigure } from "@/components/companion/figure";
+import "./phase3-rooms.css";
 
 type Card = {
   id: string;
@@ -199,11 +200,11 @@ export function CardsPanel({
     );
   }
 
-  if (loading) return <p className="hintText">Loading your deck…</p>;
+  if (loading) return <div className="roomStudioState" role="status"><span className="tinyLabel">PRACTICE STUDIO / CARDS</span><h3>Finding cards due now…</h3><p>Your review schedule is loading.</p></div>;
 
   if (!cards.length || done) {
     return (
-      <div className="quizSetup">
+      <div className="quizSetup roomStudioSetup">
         <div className="setupMain">
         {done && (
           <div className="quizScoreCard">
@@ -232,7 +233,7 @@ export function CardsPanel({
         </HeaderChip>
 
         <div className="setupHeading">
-          <span className="tinyLabel">NEXT DECK</span>
+          <span className="tinyLabel">PRACTICE STUDIO / SPACED REVIEW</span>
           <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Everything in this room"}</h3>
         </div>
         <p className="setupLead">{done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."}</p>
@@ -253,10 +254,11 @@ export function CardsPanel({
   }
 
   return (
-    <div className="cardsMode">
+    <div className="cardsMode roomStudioCards">
       <span className="tinyLabel">
-        CARD {index + 1} OF {cards.length} DUE
+        PRACTICE STUDIO / CARD {index + 1} OF {cards.length} DUE
       </span>
+      <p className="roomStudioInstruction">Recall the answer first. Flip to check it, then rate how it went to schedule your next review.</p>
 
       {editing ? (
         <div className="cardEditor">

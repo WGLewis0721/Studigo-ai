@@ -3,10 +3,11 @@
 import type { Calibration, WeakArea } from "@/lib/study-planning";
 import type { RoomReadiness, Topic } from "@/lib/rooms";
 import { HeaderMascot } from "./mode-header";
+import "./phase3-rooms.css";
 
 function ReadinessRing({ value, practiced }: { value: number; practiced: boolean }) {
   return (
-    <div className="progressRing" aria-label={`${value} percent test ready`}>
+    <div className="progressRing" aria-label={practiced ? `${value} percent estimated readiness based on practice` : "Readiness not measured yet"}>
       <svg viewBox="0 0 120 120" aria-hidden="true">
         <circle className="ringTrack" cx="60" cy="60" r="49" />
         <circle
@@ -56,11 +57,12 @@ export function MasteryPanel({
   const count = (state: string) => tiles.filter((tile) => tile.state === state).length;
 
   return (
-    <div className="masteryMode">
+    <div className="masteryMode roomEvidence">
       <div className="masteryHero">
         <HeaderMascot state="explain" />
         <div className="masteryHeroText">
-          <span className="tinyLabel">READINESS</span>
+          <span className="tinyLabel">PROGRESS ROOM / EARNED EVIDENCE</span>
+          <h2>{practiced ? "What your practice shows" : "Your evidence starts with practice"}</h2>
           <p>
             {!topics.length
               ? "Build a topic map first."
@@ -68,13 +70,14 @@ export function MasteryPanel({
                 ? "Practice a topic to start measuring."
                 : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`}
           </p>
+          <small>Lesson steps and reading do not change this estimate. Saved practice responses do.</small>
         </div>
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
       </div>
 
       {weakest.length > 0 && (
         <section className="weakSpots">
-          <span className="tinyLabel">PRACTICE THIS NEXT</span>
+          <span className="tinyLabel">YOUR NEXT USEFUL ACTION</span>
           <ul>
             {weakest.map((area) => (
               <li key={area.topic.id}>
@@ -86,7 +89,7 @@ export function MasteryPanel({
                   <small>{area.reasons.slice(0, 2).join(" ")}</small>
                 </div>
                 <button type="button" onClick={() => onPractice(area.topic.id)}>
-                  Practice →
+                  Practice {area.topic.title} →
                 </button>
               </li>
             ))}
@@ -126,7 +129,7 @@ export function MasteryPanel({
             ))}
           </ul>
         ) : (
-          <p className="mdEmpty">Upload a study guide so Studigo knows what to measure you against.</p>
+          <p className="mdEmpty">Add a study guide to create the topic map. Once you practice, this view will show earned evidence separately from lesson progress.</p>
         )}
       </section>
 

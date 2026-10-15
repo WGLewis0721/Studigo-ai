@@ -1,0 +1,141 @@
+/* Phase 3 Learn / Coach interior. The hallway owns the rollout switch. */
+.learningPhaseIntro, .learningTopicsIntro, .learningTopicsEmpty > .learningPhaseEyebrow,
+.learningTopicsEmpty > h2, .learningPhaseEyebrow, .learningTopicArrow { display: none; }
+
+[data-ui="phase3"] .learningPhaseEyebrow {
+  display: block; font: 800 .69rem/1.4 var(--mono); letter-spacing: .11em; color: var(--teal-ink);
+}
+[data-ui="phase3"] .learningPhaseIntro {
+  display: flex; justify-content: space-between; align-items: end; gap: 24px;
+  padding: clamp(20px, 3vw, 34px); border-radius: 28px;
+  background: linear-gradient(125deg, var(--teal-soft), #f0faf9 60%, var(--white));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 27%, white), var(--lift-1);
+}
+[data-ui="phase3"] .learningPhaseIntro[data-surface="coach"] {
+  background: linear-gradient(125deg, var(--tangerine-soft), #fff8ef 60%, var(--white));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tangerine) 28%, white), var(--lift-1);
+}
+[data-ui="phase3"] .learningPhaseIntro[data-surface="coach"] .learningPhaseEyebrow { color: var(--tangerine-ink); }
+[data-ui="phase3"] .learningPhaseIntro h2, [data-ui="phase3"] .learningTopicsIntro h2,
+[data-ui="phase3"] .learningTopicsEmpty h2 {
+  margin: 8px 0 6px; font: 800 clamp(1.75rem, 3vw, 2.65rem)/1.05 var(--display); letter-spacing: -.045em;
+}
+[data-ui="phase3"] .learningPhaseIntro p, [data-ui="phase3"] .learningTopicsIntro p {
+  margin: 0; max-width: 48ch; color: var(--ink-2); line-height: 1.5;
+}
+[data-ui="phase3"] .learningPhaseFocus {
+  display: grid; gap: 3px; flex: 0 0 min(32%, 250px); min-width: 0; padding: 15px 18px;
+  border-radius: 17px; background: var(--white); box-shadow: var(--edge), var(--lift-1);
+}
+[data-ui="phase3"] .learningPhaseFocus span { font: 700 .66rem var(--mono); letter-spacing: .1em; color: var(--muted); }
+[data-ui="phase3"] .learningPhaseFocus strong { overflow-wrap: anywhere; font: 800 1.1rem/1.2 var(--display); }
+[data-ui="phase3"] .learningPhaseFocus small { color: var(--muted); }
+
+[data-ui="phase3"] .coachMode { max-width: none; gap: 18px; }
+[data-ui="phase3"] .coachBody { gap: 20px; }
+[data-ui="phase3"] .coachChat {
+  height: clamp(580px, 70vh, 850px); border-radius: 28px;
+  border: 1px solid var(--hairline-strong); box-shadow: var(--edge), var(--lift-2);
+}
+[data-ui="phase3"] .coachChat .chatThread { gap: 12px; padding: clamp(18px, 3vw, 34px); }
+[data-ui="phase3"] .coachChat .studentBubble {
+  max-width: min(75%, 490px); padding: 13px 18px; border-radius: 18px 18px 5px 18px;
+  color: var(--white); background: var(--graphite-2); line-height: 1.5;
+}
+[data-ui="phase3"] .coachChat .answerBubble {
+  max-width: min(91%, 740px); padding: 20px 23px; border-radius: 20px 20px 20px 6px;
+  background: var(--snow); box-shadow: inset 0 0 0 1px var(--hairline);
+}
+[data-ui="phase3"] .coachChat .answerBubble[data-mode="learn"] { background: var(--white); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 35%, white), var(--lift-1); }
+[data-ui="phase3"] .coachChat .answerBubble[data-state="insufficient"] { background: var(--tangerine-soft); }
+[data-ui="phase3"] .coachChat .answerKicker { gap: 10px; font: 800 .68rem var(--mono); letter-spacing: .08em; color: var(--tangerine-ink); }
+[data-ui="phase3"] .coachChat .answerBubble[data-mode="learn"] .answerKicker { color: var(--teal-ink); }
+[data-ui="phase3"] .coachChat .answerText, [data-ui="phase3"] .coachChat .answerBubble p { font-size: 1rem; line-height: 1.6; }
+[data-ui="phase3"] .coachChat .coachEmpty {
+  width: min(100%, 580px); max-width: none; margin: auto; padding: 32px; text-align: center;
+  border-radius: 22px; background: var(--snow); box-shadow: inset 0 0 0 1px var(--hairline);
+}
+[data-ui="phase3"] .coachChat .coachEmpty strong { font: 800 1.8rem var(--display); letter-spacing: -.035em; }
+[data-ui="phase3"] .coachChat .coachEmpty p { line-height: 1.55; }
+[data-ui="phase3"] .coachChat .starterList { justify-content: center; }
+[data-ui="phase3"] .coachChat .starterList button, [data-ui="phase3"] .chatChips button {
+  min-height: 43px; padding-inline: 16px; border: 1px solid var(--hairline-strong); border-radius: 13px;
+  background: var(--white); color: var(--ink); font-weight: 750;
+}
+[data-ui="phase3"] .chatChips { gap: 9px; padding: 14px 18px; background: var(--snow); }
+[data-ui="phase3"] .chatChips button:hover:not(:disabled) { border-color: var(--tone); background: var(--tone-soft); }
+[data-ui="phase3"] .lessonPosition {
+  align-items: center; gap: 12px; padding: 14px 0 18px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--hairline); font: 800 clamp(1.25rem, 2.4vw, 1.8rem)/1.2 var(--display);
+}
+[data-ui="phase3"] .lessonPositionIndex {
+  flex: none; padding: 8px 10px; border-radius: 9px; background: var(--teal-soft);
+  color: var(--teal-ink); font: 700 .71rem var(--mono);
+}
+[data-ui="phase3"] .lessonReading[data-learn-surface="lesson"] {
+  width: min(100%, 760px); align-self: center; padding: clamp(20px, 4vw, 38px);
+  border-radius: 22px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1);
+}
+[data-ui="phase3"] .lessonReading .lessonText { max-width: 70ch; margin-top: 16px; font-size: clamp(1.04rem, 1.3vw, 1.14rem); line-height: 1.75; }
+[data-ui="phase3"] .lessonCitations { padding: 14px 20px 12px; border-top: 1px solid var(--hairline); background: var(--white); }
+[data-ui="phase3"] .lessonActions { padding: 12px 20px; background: var(--white); }
+[data-ui="phase3"] .lessonActions .ghostButton { border-radius: 12px; }
+[data-ui="phase3"] .lessonActions .ghostButton:last-child { background: var(--teal); color: var(--ink); border-color: var(--teal); }
+[data-ui="phase3"] .chatComposer { padding: 14px 20px 20px; border-top: 1px solid var(--hairline); }
+[data-ui="phase3"] .chatComposer input { min-height: 52px; border-radius: 14px; background: var(--snow); }
+[data-ui="phase3"] .chatSend { width: 36px; height: 36px; right: 8px; border-radius: 11px; }
+
+[data-ui="phase3"] .learningTopicsIntro { display: block; padding: 24px clamp(20px, 3vw, 34px); border-radius: 24px; background: var(--teal-soft); }
+[data-ui="phase3"] .learnMode { max-width: none; gap: 18px; }
+[data-ui="phase3"] .learnHeader { align-items: center; padding: 4px 2px; }
+[data-ui="phase3"] .topicList { gap: 12px; counter-reset: topics; }
+[data-ui="phase3"] .topicItem { border-radius: 20px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1); overflow: hidden; }
+[data-ui="phase3"] .topicItemOpen { box-shadow: inset 0 0 0 2px var(--teal), var(--lift-2); }
+[data-ui="phase3"] .topicHead { min-height: 90px; padding: 18px 22px; gap: 17px; }
+[data-ui="phase3"] .topicMarker { width: 48px; height: 48px; border-radius: 14px; font: 800 1rem var(--mono); }
+[data-ui="phase3"] .topicCopy strong { font: 800 clamp(1.05rem, 1.5vw, 1.25rem)/1.25 var(--display); }
+[data-ui="phase3"] .topicCopy small { margin-top: 5px; color: var(--ink-2); }
+[data-ui="phase3"] .topicMeta { flex-wrap: wrap; justify-content: end; }
+[data-ui="phase3"] .masteryPill { font-size: .75rem; white-space: nowrap; }
+[data-ui="phase3"] .learningTopicArrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--teal-soft); color: var(--teal-ink); font-size: 1.2rem; }
+[data-ui="phase3"] .topicBody { padding: 12px clamp(20px, 5vw, 80px) 30px; gap: 20px; border-top: 1px solid var(--hairline); }
+[data-ui="phase3"] .topicBody > .lessonText { max-width: 70ch; padding: clamp(20px, 3vw, 32px); border-radius: 18px; background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline); line-height: 1.75; }
+[data-ui="phase3"] .topicBody .lessonCitations { padding: 0; border: 0; }
+[data-ui="phase3"] .socraticCheck { border-radius: 20px; padding: clamp(20px, 3vw, 30px); }
+[data-ui="phase3"] .learningTopicsEmpty { padding: clamp(24px, 5vw, 48px); border-radius: 24px; background: var(--teal-soft); }
+[data-ui="phase3"] .learningTopicsEmpty > .learningPhaseEyebrow, [data-ui="phase3"] .learningTopicsEmpty > h2 { display: block; }
+
+[data-ui="phase3"] .coachAside { gap: 14px; }
+[data-ui="phase3"] .coachAside .asideCard { border-radius: 22px; padding: 22px; box-shadow: inset 0 0 0 1px var(--hairline-strong), var(--lift-1); }
+[data-ui="phase3"] .coachAside .asideCard:first-child { background: linear-gradient(150deg, var(--white), var(--teal-soft)); }
+[data-ui="phase3"] .coachAside .asideCard h3 { font-size: 1.4rem; line-height: 1.18; }
+[data-ui="phase3"] .coachAside .asideMeter { margin-top: 20px; }
+[data-ui="phase3"] .coachAside .asideList button { border-radius: 12px; }
+
+[data-ui="phase3"] .coachMode button:focus-visible, [data-ui="phase3"] .learnMode button:focus-visible {
+  outline: 3px solid var(--blueberry-ink); outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  [data-ui="phase3"] .learningPhaseIntro { align-items: center; flex-direction: row; padding: 10px 14px; gap: 10px; border-radius: 0; }
+  [data-ui="phase3"] .learningPhaseIntro h2 { margin: 2px 0 0; font-size: 1.15rem; }
+  [data-ui="phase3"] .learningPhaseIntro p, [data-ui="phase3"] .learningPhaseFocus span, [data-ui="phase3"] .learningPhaseFocus small { display: none; }
+  [data-ui="phase3"] .learningPhaseEyebrow { font-size: .55rem; }
+  [data-ui="phase3"] .learningPhaseFocus { flex: 1 1 45%; padding: 8px 10px; box-shadow: none; }
+  [data-ui="phase3"] .learningPhaseFocus strong { font-size: .78rem; line-height: 1.2; }
+  [data-ui="phase3"] .coachMode { gap: 12px; }
+  [data-ui="phase3"] .coachChat { margin-inline: -14px; height: min(72dvh, 700px); min-height: 440px; border-radius: 0; }
+  [data-ui="phase3"] .lessonActions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px 10px; }
+  [data-ui="phase3"] .lessonActions .ghostButton { min-width: 0; min-height: 44px; padding: 5px 3px; font-size: .72rem; }
+  [data-ui="phase3"] .coachChat .chatThread { padding: 16px; }
+  [data-ui="phase3"] .coachChat .answerBubble { max-width: 94%; padding: 16px; }
+  [data-ui="phase3"] .coachChat .coachEmpty { padding: 20px; }
+  [data-ui="phase3"] .lessonReading[data-learn-surface="lesson"] { padding: 20px; }
+  [data-ui="phase3"] .lessonPosition { font-size: 1.17rem; padding: 12px 0; }
+  [data-ui="phase3"] .topicHead { padding: 14px; gap: 10px; }
+  [data-ui="phase3"] .topicMarker { flex: 0 0 38px; width: 38px; height: 38px; }
+  [data-ui="phase3"] .topicMeta { gap: 5px; }
+  [data-ui="phase3"] .topicBody { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-ui="phase3"] .coachMode button, [data-ui="phase3"] .learnMode button { transition: none; }
+}

@@ -23,6 +23,7 @@ import { StudigoStage, type StageHandle } from "@/components/companion/stage";
 
 /** Fired when a room is opened from Home, so Studigo can leap toward it. */
 export const LEAP_EVENT = "studigo:leap";
+const foundationUi = process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 type LeapDetail = { left: number; top: number; width: number; height: number };
 
 /** Call from anything on Home that opens a room. He lands in his window on the other side. */
@@ -49,19 +50,19 @@ export function HomeHero({ next }: { next: HomeNext }) {
   }, []);
 
   return (
-    <section className="homeHero" data-tone={theme} aria-labelledby="home-title">
+    <section className="homeHero" data-tone={theme} data-ui={foundationUi ? "phase3" : undefined} aria-labelledby="home-title">
       <div className="stageScreen homeStage">
         <StudigoStage ref={stage} size={184} />
         <Sill />
       </div>
       <div className="homeSay">
-        <span className="tinyLabel">UP NEXT</span>
+        <span className="tinyLabel">{foundationUi ? "YOUR STUDY SPACE / NEXT STEP" : "UP NEXT"}</span>
         <h1 className="pageTitle" id="home-title">{next.title} is up next.</h1>
         <p className="pageLede">{next.line}</p>
       </div>
       <div className="nextUp">
         <div className="nextUpText">
-          <span className="tinyLabel">NEXT UP · {next.title.toUpperCase()}</span>
+          <span className="tinyLabel">{foundationUi ? "01 / " : "NEXT UP · "}{next.title.toUpperCase()}</span>
           <h2>{next.heading}</h2>
           <p>{next.note}</p>
           {next.progress && <p className="nextUpProgress">{next.progress}</p>}
@@ -71,7 +72,7 @@ export function HomeHero({ next }: { next: HomeNext }) {
           href={`/app/rooms/${next.roomId}?mode=${next.mode}`}
           onClick={(event: MouseEvent<HTMLAnchorElement>) => announceLeap(event.currentTarget)}
         >
-          Continue <span aria-hidden="true">→</span>
+          {foundationUi ? "Open this room" : "Continue"} <span aria-hidden="true">{foundationUi ? "↗" : "→"}</span>
         </Link>
       </div>
     </section>
@@ -180,7 +181,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const previewTitle = title.trim() || roomTitleFromGuess(subject, topic);
 
   return (
-    <section className="firstRoom" data-tone={theme} aria-label="Set up your first Study Room">
+    <section className="firstRoom" data-tone={theme} data-ui={foundationUi ? "phase3" : undefined} aria-label="Set up your first Study Room">
       <div className="stageScreen firstRoomStage">
         <StudigoStage ref={stage} size={210} />
         <Sill />
