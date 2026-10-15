@@ -22,6 +22,8 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
+      - name: PDF text tool for the study-guide check
+        run: python3 -m pip install --disable-pip-version-check pymupdf
       - name: Test
         run: pnpm test
       - name: Test offline advisory ML evaluation
