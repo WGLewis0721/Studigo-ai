@@ -1,5 +1,7 @@
 # Studigo Design System — Personal Learning Device (V2)
 
+> **Official visual source of truth:** [Studigo Official Brand Board](brand/STUDIGO_OFFICIAL_BRAND_BOARD.png), approved 2026-10-14. This document supplies the detailed implementation rules and token definitions. Keep both aligned when visual direction changes.
+
 > Supersedes **WebForge V1** ("living study field guide"). V1's product rules —
 > product before marketing, tangible citations, spatial mastery, a subordinate
 > companion, recognizable provider sign-in — carry forward unchanged. Its
