@@ -123,17 +123,28 @@ export function ModeFrame({ tone, children, compact, frameRef }: { tone: string;
   const [stripHeight, setStripHeight] = useState<number | null>(null);
   const [stripOpen, setStripOpen] = useState(false);
   const [ownCompact, setOwnCompact] = useState(false);
+  const toneSeen = useRef(tone);
+  if (compact === undefined && toneSeen.current !== tone) {
+    toneSeen.current = tone;
+    setOwnCompact(false);
+    setStripOpen(false);
+    setStripHeight(null);
+  }
   const tucked = compact ?? ownCompact;
   useLayoutEffect(() => {
-    if (tucked || !stripRef.current) return;
-    setStripHeight(stripRef.current.offsetHeight);
-  }, [tone, tucked]);
+    const head = stripRef.current?.querySelector<HTMLElement>(".modeHead");
+    const frame = stripRef.current?.parentElement;
+    if (!head || !frame || tucked || stripHeight != null) return;
+    frame.style.transition = "none";
+    frame.style.removeProperty("--strip-h");
+    const natural = head.offsetHeight;
+    frame.style.transition = "";
+    if (natural > 0) setStripHeight(natural);
+  }, [tone, tucked, stripHeight]);
   useEffect(() => {
     if (compact !== undefined) return;
     const frame = stripRef.current?.parentElement;
     if (!frame) return;
-    setOwnCompact(false);
-    setStripOpen(false);
     let settled = false;
     const settle = () => {
       if (settled) return;
