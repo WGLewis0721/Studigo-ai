@@ -11,6 +11,7 @@ This folder contains the **proposed** art and interaction foundation for Studigo
 | `typography/TYPOGRAPHY_DECISION.md` | MyFonts exploration and approved font-stack decision. | Existing Bricolage/Figtree/JetBrains remain current; commercial candidates are not bundled. |
 | `generated/` | One Higgsfield ambient visual source, reproducible WebP derivatives and full provenance. | Proposed decorative experiment only; not a runtime asset or source evidence. |
 | `PROGRESS.md` | Increment ledger against D1–D6, A–F and S0–S4. | Evidence-linked statuses; update with each review. |
+| `INVENTORY.md`, `COMPONENT_STATES.md` | Current-owner mapping, keep/adapt/create decisions, interaction states and token contrast calculations. | Handoff documentation; rendered acceptance pending. |
 | `apps/web/components/phase3/` | Reusable UI primitives, original action glyph component and synthetic interactive fixture. | Development preview; no mission API, persistence, microphone capture or grading. |
 
 ## Reproduce
@@ -23,7 +24,7 @@ corepack pnpm --filter @studigo/web typecheck
 corepack pnpm --filter @studigo/web dev
 ```
 
-The local preview route is `/dev/phase3` and returns 404 outside development. It uses a **synthetic passage** declared in `apps/web/components/phase3/fixture.ts`. All controls are visual/interaction fixtures. No private files, model calls or mastery writes occur. “Pause” retains the step in the component until reload; durable resume belongs to the implementation plan. The voice review sheet contains editable example text and does not access a microphone.
+The local preview routes are `/dev/phase3` (connected journey) and `/dev/phase3/system` (editable component specimen); both return 404 outside development. They use a **synthetic passage** declared in `apps/web/components/phase3/fixture.ts`. All controls are visual/interaction fixtures. No private files, model calls or mastery writes occur. “Pause” retains the step in the component until reload; durable resume belongs to the implementation plan. The voice review sheet contains editable example text and does not access a microphone.
 
 ## Asset use and approval
 
