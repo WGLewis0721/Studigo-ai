@@ -37,6 +37,7 @@ import type { ChallengeRequest, ChallengeSpec, LearningEvent, LearningRoute } fr
 import { learningEventStore, type CoachEvidenceStore } from "@/lib/coach-evidence-store";
 import { commitAdaptiveCoachTurn,readCommittedCoachAnswer,hasIssuedCoachEncounter,readAcceptedEvaluation,acceptEvaluation, type AdaptiveCoachCommit } from './learning/atomic-coach';
 import { exampleTurn, hintStreak, nextHint } from "./coach-help";
+import { comboFromQuestion, formatCombo } from "./math-combo";
 import { gradeMath, mathModelFromPrompt } from "./math-model";
 import { gaugeOutcome } from "./accuracy-bar";
 import { followUpQuestion } from "./coach-follow-up";
@@ -623,9 +624,20 @@ async function* runCoachTurnImpl(args:CoachTurnArgs,hooks?:{
       };
     }
 
-    // "Show me an example": the shape of an acceptable answer, then the same
-    // pending question. The question itself is not replaced.
+    // "Show me an example": arithmetic plays as a combo. Anything else keeps
+    // the answer shape, then the same pending question.
     if (intent === "example") {
+      const combo = comboFromQuestion(state.question, {
+        hideLast: scaffoldBefore !== null && scaffoldBefore >= SUPPORT_GIVEN.example
+      });
+      if (combo) {
+        await record(supportEvents("help", SUPPORT_GIVEN.example, 0));
+        await commit(withSupport(state, SUPPORT_GIVEN.example));
+        const text = formatCombo(combo, state.question);
+        yield { type: "delta", text };
+        yield { type: "done", answer: { text, citations: [], grounded: false } };
+        return { stateBefore: state.kind, turnIntent: intent, semanticScore: null, outcome: "example", stateAfter: "awaiting_answer" };
+      }
       const support = await deps.renderCoachSupport({
         support: "example",
         question: state.question,

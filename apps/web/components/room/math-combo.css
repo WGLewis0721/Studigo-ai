@@ -1,0 +1,14 @@
+.mathCombo { display: grid; gap: 10px; margin-bottom: 8px; }
+.mathComboPic { width: 100%; height: auto; }
+.mathComboCols { display: grid; gap: 8px; }
+.mathComboCols:not(.one) { grid-template-columns: 1fr 1fr; }
+.mathComboCol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mathComboTitle { font-size: 12px; font-weight: 700; }
+.mathComboStep { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 8px 10px; border-radius: 12px; background: var(--snow, #fff); opacity: 0.35; }
+.mathComboStep.on { opacity: 1; box-shadow: 0 0 0 1px var(--tone, #3c7cff); }
+.mathComboStep span { grid-column: 1; font-variant-numeric: tabular-nums; }
+.mathComboStep strong { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-size: 20px; }
+.mathComboStep em { grid-column: 1; font-style: normal; font-size: 12px; opacity: 0.7; }
+.mathComboNext { justify-self: start; }
+.mathComboPlace { border-collapse: collapse; width: max-content; }
+.mathComboPlace th, .mathComboPlace td { border: 1px solid currentColor; min-width: 36px; text-align: center; padding: 4px 6px; }
