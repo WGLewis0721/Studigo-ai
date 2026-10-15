@@ -3413,6 +3413,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .coachMode[data-work="grown"] .coachRest,
   .coachMode[data-work="grown"] .coachBody { --rest-scale: 1; --aside-scale: 1; }
 }
+@property --room-chrome {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@media (min-width: 701px) {
+  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading) {
+    --room-chrome: 0.6;
+    zoom: var(--room-chrome);
+    transition: --room-chrome 420ms cubic-bezier(.22, .8, .2, 1);
+  }
+  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading):hover,
+  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading):focus-within,
+  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading)[data-open="true"] {
+    --room-chrome: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modeSurface[data-room-tuck="true"] :is(.materialsIntro, .roomSectionIntro, .setupHeading) { transition: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .modeFrame[data-tone="coach"] { transition: none; }
   .modeFrame[data-tone="coach"] + .coachMode .lessonText,
