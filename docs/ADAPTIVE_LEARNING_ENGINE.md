@@ -1,5 +1,7 @@
 # Studigo Adaptive Learning Engine — Technical & Infrastructure Companion
 
+> **Status: design companion.** Production progression code is `packages/learning`. This file is not the execution queue. Release status is `docs/ROADMAP.md`.
+
 This document is the technical companion to `docs/ROADMAP.md` for the planned adaptive-learning game engine.
 
 It exists to keep implementation disciplined.
@@ -25,7 +27,7 @@ The engineering goal is not to recreate those games. It is to reuse the system-d
 The source/reference map for those game patterns, learning-science foundations,
 OpenAI/RAG infrastructure and iOS implementation is
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
-The staged implementation handoff is the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md).
+The staged implementation handoff is [`archive/IMPLEMENTATION.md`](archive/IMPLEMENTATION.md).
 
 ### V3 execution direction
 

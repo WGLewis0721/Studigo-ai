@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Sol Phase 1 foundation audit
 
 Scope: sequential GPT 6.1 Sol low pass, 2026-10-02 UTC. Implementation foundation only; Claude retains UI/UX ownership. PR #59 and downloadable-study-guide P0 acceptance remain prerequisites. This pass neither deploys nor closes those gates.

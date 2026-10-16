@@ -4,7 +4,7 @@ First Metroidvania slice of the Moon Road prototypes. Multiplication is how you 
 
 - **Golden image** (tag `golden/poc-ix-moon-keep`); frozen. Beta test URL: https://wglewis0721.github.io/Studigo-ai/prototypes/moon-road/dist/poc-ix/
 - Route: `dist/poc-ix/` → open `/poc-ix/`. ↺ (header or Pause) restarts the run after a confirm.
-- Design spec: `docs/superpowers/specs/2026-09-29-poc-ix-moon-keep-design.md`. Plan: `docs/superpowers/plans/2026-09-29-poc-ix-moon-keep.md`.
+- Design spec: `docs/archive/superpowers/specs/2026-09-29-poc-ix-moon-keep-design.md`. Plan: `docs/archive/superpowers/plans/2026-09-29-poc-ix-moon-keep.md`.
 - Additive: `/poc-vii/`, `/poc-viii/`, `/journey/`, `/adventure/` and the Core Clash root files are unchanged. The finale opens the original Core Clash through `../poc-vii/boss.html`.
 
 ## Rules

@@ -1,6 +1,8 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](../../README.md).
+
 # POC IX — Moon Keep (first Metroidvania slice)
 
-Status: approved direction 2026-09-29 (William). Additive experiment under `prototypes/moon-road/`.
+Status: approved direction 2026-09-29 (William). The experiment shipped as a frozen route under `prototypes/moon-road/dist/poc-ix/`. POC XI is the golden game.
 
 ## Goal
 

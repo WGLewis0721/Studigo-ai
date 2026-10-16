@@ -1,0 +1,55 @@
+# Agent context exclusions. Keep .claudeignore in sync with this file.
+# These paths stay in git. This file only keeps coding agents from reading them.
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+.turbo/
+coverage/
+target/
+.vercel/
+.local-beta/
+**/.local-beta/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+
+# Media, archives, and fonts
+*.zip
+*.mp4
+*.wav
+*.mp3
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.ttf
+*.woff
+*.woff2
+*.xlsx
+
+# Brand, voice, cursor art, and design media
+assets/
+design/companion-demo/assets/
+design/launch-film/public/
+design/studigo-homepage-directions.html
+docs/brand/
+docs/golden/
+
+# Moon Keep art, downloads, QA screenshots, and frozen builds.
+# The current golden route, prototypes/moon-road/dist/poc-xi/, stays visible
+# except for its images (covered by *.png).
+prototypes/moon-road/art-source/
+prototypes/moon-road/downloads/
+prototypes/moon-road/dist/adventure/
+prototypes/moon-road/dist/journey/
+prototypes/moon-road/dist/poc-vii/
+prototypes/moon-road/dist/poc-vii-level/
+prototypes/moon-road/dist/poc-viii/
+prototypes/moon-road/dist/poc-ix/
+prototypes/moon-road/dist/poc-x/
+prototypes/moon-road/dist/assets/
+prototypes/moon-road/dist/vendor/

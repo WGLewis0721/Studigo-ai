@@ -136,7 +136,7 @@ Product decisions:
 - permit Python/FastAPI/LangChain/ML where measured quality/maintainability gains
   justify the extra service boundary.
 
-The staged Phase 1/2/3 plan in the root [`IMPLEMENTATION.md`](../IMPLEMENTATION.md)
+The staged Phase 1/2/3 plan in [`archive/IMPLEMENTATION.md`](archive/IMPLEMENTATION.md)
 has been executed for the web beta. Preserve its contracts and use its remaining
 acceptance gates; do not treat it as unstarted work. Native Expo delivery,
 durable-session linkage, reviewed RAG/performance evidence and release compliance
@@ -146,7 +146,7 @@ Research/reference map:
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
 
 Learner-facing finish plan:
-[`V3_LEARNER_UI_FINISH_PLAN.md`](V3_LEARNER_UI_FINISH_PLAN.md), including
+[`archive/V3_LEARNER_UI_FINISH_PLAN.md`](archive/V3_LEARNER_UI_FINISH_PLAN.md), including
 the persistent Coach/Learn regression fix and final companion frame/safe-face
 polish before native parity.
 
@@ -506,8 +506,8 @@ next action independently of generation while Coach uses generative AI to delive
 that action naturally.
 ## Active investigation — Coach practice-set generation
 
-Tracked in [`../PROBLEM_STATEMENT.md`](../PROBLEM_STATEMENT.md) and
-[`../ATTEMPTED_FIXES.md`](../ATTEMPTED_FIXES.md).
+Tracked in [`archive/PROBLEM_STATEMENT.md`](archive/PROBLEM_STATEMENT.md) and
+[`archive/ATTEMPTED_FIXES.md`](archive/ATTEMPTED_FIXES.md).
 
 A Coach request for *N* practice questions must return *N* distinct,
 source-grounded questions rather than narrating the learner's selected

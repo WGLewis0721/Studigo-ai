@@ -19,7 +19,7 @@ Students create a **Study Room**, upload teacher study guides, textbook chapters
 
 ## Engineering start here
 
-For engineers, reviewers, and coding agents, start with [`ENGINEERING.md`](ENGINEERING.md). It explains the AI/software authority boundary, why the main technologies were selected, the end-to-end data path, where each responsibility lives in the codebase, and which deeper contract to open next.
+For engineers, reviewers, and coding agents, start with [`AGENTS.md`](AGENTS.md), then [`ENGINEERING.md`](ENGINEERING.md). It explains the AI/software authority boundary, why the main technologies were selected, the end-to-end data path, where each responsibility lives in the codebase, and which deeper contract to open next.
 
 The canonical execution plan is [`implementation/ENGINEERING_PLAN.md`](implementation/ENGINEERING_PLAN.md). Security readiness and public-launch blockers are maintained under [`implementation/security-readiness/`](implementation/security-readiness/).
 
@@ -120,8 +120,8 @@ The temporary anonymous-app and production fixture bypasses used during earlier
 Coach debugging have been removed. `/app` requires authentication again, and
 `/dev/study` plus `/api/dev/coach` are development-only.
 
-- Problem, scope, and root causes: [`PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md)
-- Chronological change log and reversion checklist: [`ATTEMPTED_FIXES.md`](ATTEMPTED_FIXES.md)
+- Problem, scope, and root causes: [`docs/archive/PROBLEM_STATEMENT.md`](docs/archive/PROBLEM_STATEMENT.md)
+- Chronological change log and reversion checklist: [`docs/archive/ATTEMPTED_FIXES.md`](docs/archive/ATTEMPTED_FIXES.md)
 
 ## Authentication direction
 
@@ -180,10 +180,12 @@ The fixture is development-only and uses synthetic study material. To run the fu
 Prerequisites: Node 22, pnpm, a Supabase project, and an OpenAI API key for backend/AI features. The current homepage can render without Supabase/OpenAI configuration.
 
 ```bash
-pnpm install
-cp .env.example .env.local
+pnpm install --frozen-lockfile
+cp .env.example apps/web/.env.local
 pnpm dev
 ```
+
+Next.js loads `.env*` from `apps/web`, not the repository root. The template stays at `.env.example`. Never commit `apps/web/.env.local`.
 
 Apply the migrations in order before using the app:
 

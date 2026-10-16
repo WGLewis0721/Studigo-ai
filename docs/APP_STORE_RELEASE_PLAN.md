@@ -180,7 +180,7 @@ contract as the web product:
 - native retry/resume cannot double-record learning evidence;
 - model/provider failure cannot silently advance mastery.
 
-The staged build/audit plan is in the root `IMPLEMENTATION.md`.
+The staged build/audit plan is in `docs/archive/IMPLEMENTATION.md`.
 
 ## 1.0 exit condition
 
