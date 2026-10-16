@@ -323,8 +323,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         </div>
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
-    {helpUsed && beat && mission?.phase !== "done" && <p className="learnAssistanceNote" role="status">Hint used · This response is practice, not independent mastery.</p>}
-    {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
+    {shown && beat && beat.kind !== "read" && <div className="learnAnswerFeedback"
+      role="status" aria-live="polite"
+      data-outcome={helpUsed ? "assisted" : hit ? "correct" : "incorrect"}>
+      <strong>{helpUsed ? "Here's some help" : hit ? "Correct! You got it." : "Not quite. Let's review."}</strong>
+      <span>{helpUsed
+        ? `The source supports: ${beatFix(beat)}. This was a guided answer, not independent mastery.`
+        : hit
+          ? `That's supported by your study guide${snapshot?.source?.pageNumber ? `, page ${snapshot.source.pageNumber}` : ""}. Ready for the next activity.`
+          : `The correct answer is: ${beatFix(beat)}. You can review the source, then try the next activity.`}</span>
+    </div>}
     {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
       aria-label="Find the original source for this lesson"
       onClose={() => { setSourceOpen(false); sourceButtonRef.current?.focus(); }}>
@@ -365,7 +373,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         if (error && !mission) { void act("start"); return; }
         if (!beat || beat.kind === "read" || shown) advanceLevel();
         else setShown(true);
-      }}>{!beat || beat.kind === "read" || shown ? "Continue →" : "Check →"}</button>
+      }}>{beat?.kind === "read" ? "Start question →"
+        : shown ? mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
+        : "Check answer →"}</button>
     </div>}
   </section>;
 }
