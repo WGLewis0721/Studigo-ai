@@ -17,6 +17,18 @@
   font-family: var(--sans);
 }
 .materialsSourceDialog::backdrop { background: rgb(18 27 39 / .45); }
+.roomDevice[data-ui="phase3"] :is(.guideActions > button, .guideReading section > button, .materialsSourceDialog button) {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: var(--edge), var(--lift-1);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
 .roomDevice[data-ui="phase3"] .materialsSourceDialog .materialsSourceTop {
   position: sticky;
   top: -24px;

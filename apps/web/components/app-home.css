@@ -103,6 +103,7 @@
 :is(.homeHero, .firstRoom)[data-ui="phase3"] :is(button, a) { white-space: normal; }
 .pageWrap:has(.homeHero[data-ui="phase3"]) .roomsGrid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
 .pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel, .createRoomPanel .field, .createRoomPanel input) { min-width: 0; max-width: 100%; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] .stg { max-width: 100%; }
 @media (max-width: 850px) {
   .homeHero[data-ui="phase3"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "say" "next"; min-height: 0; }
   .homeHero[data-ui="phase3"] .homeStage { height: 200px; max-width: 100%; }
@@ -114,4 +115,10 @@
   .homeHero[data-ui="phase3"] { padding: 18px; border-radius: 24px; gap: 18px; }
   .homeHero[data-ui="phase3"] .nextUp { grid-template-columns: minmax(0, 1fr); padding: 20px; }
   .firstRoom[data-ui="phase3"] { padding: 20px; border-radius: 22px; }
+}
+@media (max-width: 780px) {
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) { grid-template-columns: minmax(0, 1fr); }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .appRail { min-width: 0; }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .railScroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .railItem { width: auto; min-width: 44px; padding-inline: 6px; white-space: normal; }
 }

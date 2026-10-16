@@ -33,7 +33,7 @@
 .roomDevice[data-ui="phase3"] .topbarNav button { min-height: 44px; padding-inline: clamp(10px, 1.2vw, 18px); border-radius: 14px; }
 .roomDevice[data-ui="phase3"] .topbarNav button[aria-current] { background: var(--ink); color: var(--white); box-shadow: 0 4px 12px rgba(20,27,45,.15); }
 .roomDevice[data-ui="phase3"] .topbarNav button[aria-current]::before { background: var(--tone); box-shadow: none; }
-.roomDevice[data-ui="phase3"] .sourceCount { min-height: 44px; padding: 6px 10px; border: 0; border-radius: 10px; font-size: .72rem; cursor: pointer; }
+.roomDevice[data-ui="phase3"] .sourceCount { display: inline-flex; min-height: 44px; padding: 6px 10px; border: 0; border-radius: 10px; font-size: .72rem; cursor: pointer; }
 .roomDevice[data-ui="phase3"] .sourceCount:hover { background: var(--teal-soft); color: var(--teal-ink); }
 .roomDevice[data-ui="phase3"] .modeFrame { background: var(--white); }
 .roomDevice[data-ui="phase3"] .modeHead,
