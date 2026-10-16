@@ -24,12 +24,20 @@ export function SpeechAnswerControl({ onUse, disabled = false }: {
   disabled?: boolean;
 }) {
   const recognition = useRef<DeviceRecognizer | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   useEffect(() => () => { recognition.current?.abort(); recognition.current = null; }, []);
+  // Native top-layer dialog avoids getting clipped beneath the scrolling
+  // lesson canvas on narrow devices; Escape cancels safely without submitting.
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (open && dialog && !dialog.open) dialog.showModal();
+  }, [open]);
   function start() {
     if (!acknowledged || disabled) return;
     recognition.current?.abort();
@@ -67,15 +75,16 @@ export function SpeechAnswerControl({ onUse, disabled = false }: {
     }
   }
   function stop() { recognition.current?.stop(); setListening(false); }
-  function dismiss() { recognition.current?.abort(); recognition.current = null; setListening(false); setOpen(false); setStatus(null); }
+  function dismiss() { recognition.current?.abort(); recognition.current = null; setListening(false); dialogRef.current?.close(); setOpen(false); setStatus(null); triggerRef.current?.focus(); }
   return <div className="voiceAnswerControl">
-    <button type="button" className="voiceMicButton" disabled={disabled}
-      aria-label="Speak a draft answer" aria-expanded={open} onClick={() => { setOpen((was) => !was); if (open) stop(); }}>
+    <button ref={triggerRef} type="button" className="voiceMicButton" disabled={disabled}
+      aria-label="Speak a draft answer" aria-expanded={open} onClick={() => { if (open) dismiss(); else setOpen(true); }}>
       <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
         <rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>
       </svg>
     </button>
-    {open && <div className="voiceAnswerReview" role="group" aria-label="Voice response draft">
+    {open && <dialog ref={dialogRef} className="voiceAnswerReview" aria-label="Voice response draft"
+      onCancel={(event) => { event.preventDefault(); dismiss(); }} onClose={() => { if (open) dismiss(); }}>
       <strong>Speak an answer</strong>
       <label className="voiceConsent"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
         <span>Your browser's speech service may process audio. Studigo does not store the recording. Only enable with appropriate consent.</span>
@@ -94,6 +103,6 @@ export function SpeechAnswerControl({ onUse, disabled = false }: {
         }}>Use transcript in answer field</button>
         <p className="voiceReviewNote">This fills your answer. It does not submit or grade anything.</p>
       </>}
-    </div>}
+    </dialog>}
   </div>;
 }
