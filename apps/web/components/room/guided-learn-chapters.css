@@ -499,33 +499,6 @@
 /* Phase 3: action-glyph toolbar, based on official Studigo personal device keys.
    All icon-only controls have real names/titles; painted glyphs are decorative.
    No changes to the mission/revision engine. */
-.learnReading .learnMissionNav {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: flex-end;
-  width: 100%;
-  min-height: 52px;
-  padding: 4px 8px;
-  margin: 0;
-  background: var(--white);
-  border: 1px solid var(--th-line, #dbe5e9);
-  border-radius: 15px;
-  box-shadow: var(--edge), var(--lift-1);
-}
-.learnReading .learnMissionNav .learnNavJournal {
-  display: grid;
-  place-items: center;
-  flex: 0 0 46px;
-  width: 46px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  margin: 0;
-  color: var(--tone-ink, #087e78);
-  border-radius: 12px;
-}
 .learnControlGlyph {
   display: block;
   width: 25px;
@@ -544,6 +517,10 @@
   padding: 0;
   line-height: 1;
 }
+.learnReading .learnActionDock .learnDockJournal {
+  color: var(--tone-ink, #087e78);
+}
+
 .learnReading .learnActionDock .learnGo {
   flex: 1 1 auto;
   min-width: 60px;
@@ -565,16 +542,11 @@
   display: grid; place-items: center;
   font: 800 16px/1 var(--sans);
 }
-.learnReading .learnMissionNav button:focus-visible,
 .learnReading .learnActionDock button:focus-visible {
   outline: 3px solid var(--tone-ink, #087e78);
   outline-offset: 2px;
 }
 @media (max-width: 700px) {
-  .roomDevice:has(.learnReading) .learnReading .learnMissionNav {
-    min-height: 48px; padding: 2px 6px;
-    border-radius: 12px;
-  }
   .roomDevice:has(.learnReading) .learnReading .learnActionDock .learnIconKey {
     flex: 0 0 44px;
     width: 44px;
