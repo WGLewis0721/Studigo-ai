@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import "./guided-learn-chapters.css";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { StudigoMascot } from "@/components/studigo-mascot";
@@ -13,9 +14,9 @@ type Action = "start" | "restart" | "advance" | "back" | "pause" | "resume";
 
 const SAMPLES = {
   elementary: {
-    title: "Inherited and learned behavior",
-    objective: "Explain which behaviors are inherited.",
-    excerpt: "Some animal behaviors are inherited. Other behaviors are learned through experience.",
+    title: "Three branches of government",
+    objective: "Which branch makes the laws?",
+    excerpt: "The legislative branch makes laws. The executive branch carries out laws. The judicial branch interprets laws.",
   },
   college: {
     title: "Net force and motion",
