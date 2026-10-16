@@ -39,7 +39,7 @@ test("a level reads, then plays a choice, a blank, and checkboxes", () => {
   const choice = beats[1];
   assert.equal(choice.kind, "choice");
   if (choice.kind !== "choice") return;
-  assert.match(choice.prompt, /Which line in your guide helps explain/);
+  assert.match(choice.prompt, /Which statement from your guide explains/);
   assert.equal(choice.options[choice.answer], sentences[0]);
   const blank = beats[2];
   assert.equal(blank.kind, "blank");
@@ -57,7 +57,7 @@ test("deeper delivery changes the prompt, not the source line", () => {
   const choice = deeper.find((beat) => beat.kind === "choice");
   assert.equal(choice?.kind, "choice");
   if (choice?.kind !== "choice") return;
-  assert.match(choice.prompt, /Which line in your guide helps explain/);
+  assert.match(choice.prompt, /Which statement from your guide explains/);
   assert.equal(choice.options[choice.answer], sentences[0]);
 });
 
