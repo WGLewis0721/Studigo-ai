@@ -438,6 +438,23 @@ try {
       await page.locator(".learnChoices .learnChoice").first().waitFor();
       assert.equal(await page.locator(".learnLessonLabel").count(), 1, "Resume must return to selected concept");
       missionCase.pausedResumeFixture = true;
+      const findIt = page.getByRole("button", { name: "Find it in my guide" });
+      await findIt.click();
+      const sourceSheet = page.locator(".learnSourceDialog[open]");
+      await sourceSheet.waitFor();
+      assert.ok(await sourceSheet.evaluate(el => el.matches(":modal")), "source spotlight must use native modal focus boundary");
+      assert.ok(await sourceSheet.getByText("The legislative branch makes laws", { exact: false }).isVisible());
+      missionCase.sourceScreenshot = path.join(output, `${viewport.name}-guided-learn-source-phase3.png`);
+      await page.screenshot({ path: missionCase.sourceScreenshot, animations: "disabled" });
+      await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
+      await sourceSheet.waitFor({ state: "hidden" });
+      assert.ok(await findIt.evaluate(el => document.activeElement === el), "spotlight must return keyboard focus to Find it");
+      const hint = page.getByRole("button", { name: "Give me a hint" });
+      await hint.click();
+      assert.ok(await page.getByText(/With help · not an independent answer/).isVisible());
+      missionCase.hintScreenshot = path.join(output, `${viewport.name}-guided-learn-hint-phase3.png`);
+      await page.screenshot({ path: missionCase.hintScreenshot, animations: "disabled" });
+
       missionCase.overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
       assert.ok(missionCase.overflow <= 2, "Guided Learn fixture must not overflow");
     } catch (error) {
