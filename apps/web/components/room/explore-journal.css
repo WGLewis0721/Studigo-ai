@@ -16,6 +16,10 @@
 .exploreJournalQuest:hover { border-color:var(--teal); }
 .exploreJournalQuestName { font-weight:750; overflow-wrap:anywhere; }
 .exploreJournalQuest small { font:650 12px/1.2 var(--sans); color:var(--ink-2); flex-shrink:0; }
+.exploreJournalQuickStart { display:none; }
+.exploreJournalQuickStart h3 { margin:0; font:800 clamp(21px,2.4vw,27px)/1.16 var(--display); letter-spacing:-.03em; overflow-wrap:anywhere; }
+.exploreJournalQuickStart > p { margin:0; color:var(--ink-2); line-height:1.45; overflow-wrap:anywhere; }
+.exploreJournalQuickStart .exploreJournalNotice { background:var(--dandelion-soft); padding:12px; border-radius:12px; color:var(--ink); }
 .exploreJournalDetail { padding:clamp(17px,2.8vw,30px); display:grid; align-content:start; gap:13px; }
 .exploreJournalDetail h3 { font:800 clamp(22px,2.4vw,29px)/1.16 var(--display); letter-spacing:-.03em; margin:0; overflow-wrap:anywhere; }
 .exploreJournalDetail p { margin:0; line-height:1.55; color:var(--ink-2); overflow-wrap:anywhere; }
@@ -31,6 +35,8 @@
 @media(max-width:700px) {
   .exploreJournal { padding:8px 4px 20px; }
   .exploreJournalLayout { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .exploreJournalQuickStart { display:grid; gap:10px; min-width:0; margin-bottom:12px; padding:18px; border:1px solid var(--hairline); border-radius:22px; background:var(--white); box-shadow:var(--edge),var(--lift-1); }
+  .exploreJournalDetail { display:none; }
   /* Keep visual and keyboard order aligned: chapter list, then quest detail. */
   .exploreJournalQuest { align-items:flex-start; flex-direction:column; gap:4px; }
   .exploreJournalActions button { width:100%; }
