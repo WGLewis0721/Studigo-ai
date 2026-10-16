@@ -140,3 +140,14 @@
   .learnHandoffActions { display:grid; grid-template-columns:minmax(0,1fr); }
   .learnHandoffActions button { width:100%; }
 }
+
+/* Fix original mission preview's desktop flex collapse: interactive choices
+   must always have real height rather than a flex-basis:0 child squeezed below
+   the read-aloud and optional voice toolbar. */
+@media (min-width:701px) {
+  .learnReading { overflow-y:auto; }
+  .learnReading .learnTalk { flex:0 0 auto; min-height:min-content; }
+  .learnReading .learnTalkBody { flex:1 1 auto; min-width:0; }
+  .learnReading .learnChoices { flex:0 0 auto; min-height:min-content; max-height: min(40vh, 420px); overflow-y:auto; }
+  .learnReading .learnGo { margin-top:auto; }
+}
