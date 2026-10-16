@@ -424,3 +424,157 @@
     grid-column: 2; grid-row: 1 / span 2;
   }
 }
+
+/* Signed-in Guided Learn: source reader is a bounded scroll region, never a
+   gigantic excerpt laid over the footer. Header, filename and actions remain
+   visible while long OCR text scrolls independently. */
+.learnSourceDialog[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: min(540px, calc(100vw - 32px));
+  height: min(760px, 86dvh);
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  padding: clamp(14px, 2vw, 22px);
+}
+.learnSourceDialog .learnSourceHeading,
+.learnSourceDialog .learnSourceMeta,
+.learnSourceDialog .learnSourceFooter {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.learnSourceDialog .learnSourceHeading { margin: 0; }
+.learnSourceDialog .learnSourceHeading h2 { line-height: 1.22; }
+.learnSourceDialog .learnSourceMeta {
+  margin: 0;
+  gap: 3px;
+  min-width: 0;
+}
+.learnSourceDialog .learnSourceMeta strong {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+.learnSourceDialog .learnSourceScroll {
+  flex: 1 1 auto;
+  min-height: 96px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border-radius: 14px;
+  outline-offset: -3px;
+}
+.learnSourceDialog .learnSourceQuote {
+  box-sizing: border-box;
+  min-height: 100%;
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  margin: 0;
+  padding: clamp(14px, 2vw, 20px);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.48;
+}
+.learnSourceDialog .learnSourceFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--th-line, #dae8e7);
+}
+.learnSourceDialog .learnSourceFooter .readAloudControl {
+  flex: 0 0 auto; margin: 0;
+}
+.learnSourceDialog .learnSourceNote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.learnSourceDialog .learnSourceButtons {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.learnSourceDialog .learnSourceButtons > * {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+.learnSourceDialog .learnSourceButtons .ghostButton {
+  width: auto;
+  min-height: 48px;
+  margin: 0;
+  border-radius: 13px;
+}
+.learnSourceDialog .learnSourceOriginal {
+  min-height: 48px;
+  border-radius: 13px;
+  text-align: center;
+  padding: 10px;
+  line-height: 1.3;
+}
+@media (max-width: 700px) {
+  .learnSourceDialog[open] {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: 100%;
+    height: min(88dvh, 850px);
+    max-height: calc(100dvh - 12px);
+    margin: 0;
+    padding: 16px 15px max(16px, env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+  }
+  .learnSourceDialog .learnSourceScroll { min-height: 80px; }
+  .learnSourceDialog .learnSourceButtons { flex-direction: column; gap: 7px; }
+  .learnSourceDialog .learnSourceButtons > * { flex: none; width: 100%; }
+  .learnSourceDialog .learnSourceNote { font-size: 11px; }
+}
+
+/* Feedback belongs directly with the student's response, not in an
+   off-screen global status bar or hidden solely in a colored checkbox. */
+.learnReading .learnAnswerFeedback {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--th-line, #cfe0df);
+  border-radius: 13px;
+  background: var(--snow-2, #f4fafb);
+  line-height: 1.35;
+  font-size: 15px;
+}
+.learnReading .learnAnswerFeedback.isCorrect {
+  background: #e5f8f0;
+  border-color: #82ceb4;
+  color: #124d3c;
+}
+.learnReading .learnAnswerFeedback.needsReview {
+  background: #fff6e8;
+  border-color: #e9c58e;
+  color: #6e440b;
+}
+.learnAnswerFeedback strong { font-size: clamp(15px, 1.3vw, 18px); }
+.learnAnswerFeedback p { margin: 0; font-size: inherit; overflow-wrap: anywhere; }
+.learnAnswerFeedback span { font-size: 12px; font-weight: 600; }
+.learnReading .learnSourceUnavailable {
+  display: grid; gap: 12px; align-content: center;
+  min-height: 180px; padding: 20px;
+  border: 1px solid var(--th-line, #dbe5e9);
+  border-radius: 18px; background: var(--white, white);
+}
+.learnReading .learnSourceUnavailable p { margin: 0; line-height: 1.5; }
+.learnReading .learnSourceUnavailable button { width: fit-content; min-height: 44px; }
+@media (min-width: 1200px) {
+  .learnReading .learnTalkBody:has(> .learnChoices) > .learnAnswerFeedback {
+    grid-column: 2; grid-row: 3;
+  }
+}
