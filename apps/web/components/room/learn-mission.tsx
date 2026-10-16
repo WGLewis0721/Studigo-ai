@@ -73,6 +73,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [tapped, setTapped] = useState<number | null>(null);
   const [picked, setPicked] = useState<number[]>([]);
   const [shown, setShown] = useState(false);
+  const [helpUsed, setHelpUsed] = useState(false);
+  const sourceDialogRef = useRef<HTMLDialogElement>(null);
+  const sourceButtonRef = useRef<HTMLButtonElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
@@ -185,6 +188,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   useEffect(() => {
     setPicked([]);
     setShown(false);
+    setHelpUsed(false);
   }, [passageKey, mission?.phase]);
 
   function play(index: number) {
@@ -198,7 +202,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   function advanceLevel() {
     if (!mission || mission.paused || mission.phase === "done") return;
     // The server advances the source-bound cursor. UI does not own progression.
-    void act("advance", formativeReflection(mission.phase, shown, hit));
+    void act("advance", formativeReflection(mission.phase, shown, hit && !helpUsed));
   }
 
   const missionPlan = buildLearningMissionPlan(topics.map((topic) => ({
@@ -217,6 +221,14 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }] : []);
   const lessonNumber = Math.max(1, topics.findIndex((topic) => topic.id === (mission?.topic_id ?? selectedTopicId)) + 1);
 
+  const openSource = () => {
+    if (!snapshot?.source || snapshot.sourceCurrent === false || !mission) return;
+    sourceDialogRef.current?.showModal();
+  };
+  const closeSource = () => {
+    sourceDialogRef.current?.close();
+    sourceButtonRef.current?.focus();
+  };
   const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
 
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
@@ -251,6 +263,13 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       <button className="ghostButton" type="button" disabled={busy} onClick={() => void act("pause")}>Pause</button>
     </div>}
     {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>Lesson {lessonNumber} of {topics.length} · {currentTopic?.title}</div>}
+    {ready && <div className="learnMissionActions" role="group" aria-label="Learning help">
+      <button type="button" ref={sourceButtonRef} onClick={openSource}>Find it in my guide</button>
+      {beat && beat.kind !== "read" && !shown && <button type="button" onClick={() => { setHelpUsed(true); setShown(true); }}>
+        Give me a hint
+      </button>}
+      {helpUsed && <span className="learnAssistanceNote">With help · not an independent answer</span>}
+    </div>}
     {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
     </div>}
@@ -276,7 +295,27 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
-    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0, shown, beat?.kind === "read"))} onClick={() => {
+    {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
+      aria-label="Find the original source for this lesson"
+      onClose={() => sourceButtonRef.current?.focus()}>
+      <div className="learnSourceHeading">
+        <div><span className="tinyLabel">FROM YOUR ORIGINAL MATERIAL</span><h2>Find it in your guide</h2></div>
+        <button type="button" className="learnSourceClose" aria-label="Close source" onClick={closeSource}>×</button>
+      </div>
+      {snapshot?.sourceCurrent === false ? <p role="status">The original source changed. Restart with current material.</p> : snapshot?.source ? <>
+        <div className="learnSourceMeta">
+          <strong>{snapshot.source.documentName}</strong>
+          <span>{snapshot.source.pageNumber ? `Page ${snapshot.source.pageNumber}` : "Page not available"}</span>
+        </div>
+        <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
+        <p className="learnSourceNote">Verified extracted text from this lesson's source. Exact word highlighting in the original PDF is not available.</p>
+        {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
+          href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}
+        {fixture && <p className="hintText">This is a synthetic review source. Original-file links are only enabled for authorized uploaded material.</p>}
+      </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
+      <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
+    </dialog>}
+    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { void act("start"); return; }
       if (!beat || beat.kind === "read" || shown) advanceLevel();
