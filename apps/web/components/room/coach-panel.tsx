@@ -1067,6 +1067,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           </button>
           <StudigoComposer
             variant="chat"
+            enableSpeech={phase3Learn}
             accent={chatMode === "learn" ? "learn" : undefined}
             placeholder={chatMode === "learn" ? "Ask about your materials" : "Answer, or message your coach"}
             value={prompt}
