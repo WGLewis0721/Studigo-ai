@@ -172,7 +172,7 @@ export function RoomWorkspace({
     setFocusTopicId(topicId);
     setMode(nextMode);
     if (nextMode === "cram") setCramStarted(true);
-    window.history.replaceState(null, "", `${window.location.pathname}?mode=${target}`);
+    window.history.replaceState(null, "", `${window.location.pathname}?mode=${target}${phase3Learn ? "&guided=1" : ""}`);
   }
   function startPlannedAction(action: StudyAction) { navigate(action.mode, action.topicId); }
 

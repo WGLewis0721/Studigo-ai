@@ -3,7 +3,7 @@ import { loadStudyEvidence } from "@/lib/study-evidence";
 import { requireUser } from "@/lib/auth";
 import { getRoom, getRoomReadiness, listDocuments, listTopics } from "@/lib/rooms";
 import { RoomWorkspace } from "@/components/room/workspace";
-import { phase3UiEnabledForRoom } from "@/lib/phase3-room-flag";
+import { phase3UiEnabledForRoom, guidedLearnCanaryEnabledForRoom } from "@/lib/phase3-room-flag";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +22,11 @@ export default async function RoomPage({
   searchParams
 }: {
   params: Promise<{ roomId: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; guided?: string }>;
 }) {
   await requireUser();
   const { roomId } = await params;
-  const { mode } = await searchParams;
+  const { mode, guided } = await searchParams;
 
   const room = await getRoom(roomId);
   const [documents, topics, readiness, studyEvidence] = await Promise.all([
@@ -36,9 +36,12 @@ export default async function RoomPage({
     loadStudyEvidence(roomId)
   ]);
 
-  // Phase 3 design lock: show the established Learn experience until the UI/UX release is accepted.
-  // Keep existing mission records and migrations for a separate, future Guided Learn rollout.
-  const phase3Learn = false;
+  // Controlled owner-only inspection of the merged Guided Learn release.
+  // Existing Learn remains default, and the mission API independently enforces
+  // this same room allowlist and source/receipt admission.
+  const phase3Learn = guidedLearnCanaryEnabledForRoom(
+    room.id, guided, process.env.PHASE3_ROOM2_ROOM_IDS
+  );
   const phase3FoundationUi = phase3UiEnabledForRoom(
     room.id,
     process.env.PHASE3_UI_ROOM_IDS,

@@ -9,3 +9,20 @@ export function phase3UiEnabledForRoom(roomId: string, roomIds: string | undefin
   if (!roomId) return false;
   return roomIds.split(",").some((candidate) => candidate.trim() === roomId);
 }
+
+
+/**
+ * Private Guided Learn inspection, explicitly requested by the learner.
+ *
+ * The URL parameter alone is not an entitlement: it requires a server-side
+ * room allowlist as well as the authenticated room owner check performed by
+ * the signed-in room page and mission API. Missing env fails closed.
+ * No global rollout and no synthetic fixture exposure.
+ */
+export function guidedLearnCanaryEnabledForRoom(
+  roomId: string,
+  optIn: string | undefined,
+  roomIds: string | undefined
+): boolean {
+  return optIn === "1" && phase3UiEnabledForRoom(roomId, roomIds, false);
+}
