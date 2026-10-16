@@ -331,10 +331,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           {integratedJourney && <p className="tinyLabel">{introduction ? "MEET YOUR QUEST · READ" : firstCheck ? "BEFORE EXPLORE · UNDERSTANDING CHECK" : "EXPLORE · GUIDED ACTIVITY"}</p>}
           {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
           <h2 className="learnAsk">{introduction ? currentTopic?.title ?? "From your study guide" : beat.kind === "read" ? beat.title : beat.prompt}</h2>
-          {beat.kind === "read" && <div className={introduction ? "learnSourceReading" : "learnLine"}>
-            {introduction && <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>}
+          {beat.kind === "read" && (introduction ? <div className="learnSourceReading">
+            <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
             <p className="learnLine">{reading}</p>
-          </div>}
+          </div> : <p className="learnLine">{beat.body}</p>)}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
             <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
             {beat.kind !== "read" && <div className="learnOptionalVoice">
