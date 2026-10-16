@@ -94,7 +94,36 @@ export function ExploreJournal({
       <h3>No guide topics yet</h3>
       <p>Prepare your study material before starting a learning quest.</p>
       <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Open Materials</button>
-    </div> : <div className="exploreJournalLayout">
+    </div> : <>
+      <div className="exploreJournalQuickStart">
+        <span className="tinyLabel">SELECTED QUEST</span>
+        <h3>{activeTopic?.title ?? "Choose a topic"}</h3>
+        <p>{activeTopic?.objective || "Learn about this topic using your uploaded study material."}</p>
+        <div className="exploreJournalEvidence">
+          {status === "source_changed" ? "Your source changed. Review Materials before continuing."
+            : isCurrent && sourceCurrent === true ? "Current lesson source verified"
+              : "Source evidence is checked when you begin"}
+        </div>
+        {blocked && <p className="exploreJournalNotice" role="status">
+          Your current quest is unfinished. Continue it first; switching now would replace its saved position.
+        </p>}
+        {status === "reading_complete" && <p className="exploreJournalNotice">
+          Guided reading complete. This is not evidence of independent mastery.
+        </p>}
+        {status === "reading_complete" && recommendedNext && isCurrent && (
+          <button type="button" className="ghostButton" onClick={() => setSelected(recommendedNext.id)}>
+            Next suggested quest: {recommendedNext.title} →
+          </button>
+        )}
+        <div className="exploreJournalActions">
+          {status === "source_changed" ? <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Open Materials</button>
+            : <button className="buttonPrimary" type="button" disabled={disabled || blocked || !activeTopic} onClick={() => void enter()}>
+              {disabled ? "Opening…" : isCurrent ? (cursor?.paused ? "Resume quest →" : status === "reading_complete" ? "View completion →" : "Continue quest →") : "Start quest →"}
+            </button>}
+          <button className="ghostButton" type="button" onClick={onOpenMaterials}>View materials</button>
+        </div>
+      </div>
+      <div className="exploreJournalLayout">
       <div className="exploreJournalChapters" aria-label="Chapters and quests">
         {chapters.map((chapter, index) => {
           const closed = collapsed.includes(chapter.id);
@@ -149,6 +178,6 @@ export function ExploreJournal({
           <button className="ghostButton" type="button" onClick={onOpenMaterials}>View materials</button>
         </div>
       </div>
-    </div>}
+    </div></>}
   </section>;
 }
