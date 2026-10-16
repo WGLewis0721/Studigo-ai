@@ -41,3 +41,19 @@
 
 - Phase 1/2: examined `workspace.tsx`, `coach-panel.tsx`, `learn-mission.tsx`, `rooms.ts`, `guide-preview.ts`, `guide-content.ts`, `api/guides/edition`, `api/learn/mission`, and `20261015010000_learn_mission_cursor.sql`; consulted Refero screens/flow and public quest pattern references.
 - Phase 3–7: record actual commit SHAs, CI, screenshots, authenticated access and missing evidence in PR; never substitute synthetic fixture success for a release gate.
+
+## 2026-10-16 integrated Learn / Explore UX revision (reviewer feedback)
+
+The existing preview showed a redundant fixture-only "FROM YOUR STUDY GUIDE" card above Original Learn and a binary Original Learn / Explore segmented control. Both are removed from the **new authorized canary journey**, not from unflagged production Learn.
+
+The intended single learner journey is:
+
+1. **Quest journal:** select a real topic from the authorized guide. No false chapter names or mastered statuses.
+2. **Studigo introduction:** a brief companion invitation ("Let's explore ...") followed by the **exact currently verified** source excerpt and document/page provenance. The excerpt is not a generated paraphrase. Source revision and eligibility remain enforced by `read_learn_mission`/`commit_learn_mission`.
+3. **Understanding check:** a single source-grounded `missionBeats` choice. Learners see correct/assisted feedback, not a grade or mastery award.
+4. **Explore:** only after the learner checks or requests help on that first question, the primary CTA changes to **Explore this lesson**. The existing durable `show → try → check` cursor transition opens the blank and supported-statement activities; no new quiz engine or second learning mode.
+5. **Handoff:** existing assisted completion and independent Coach/Practice links remain. A second quest cannot replace an unfinished room-wide cursor.
+
+Implementation notes: legacy synthetic `learn=mission` and ordinary production Learn are unchanged; explicit preview `learn=explore` and authorized Guided Learn canary use the integrated journey. Fixture-only lessons reuse `MATERIAL_NOTES` for science passages, labeled synthetic. Guided Learn still reads an individual source excerpt rather than all pages of a chapter. Multi-quest persistence and authenticated canary release gates remain **not complete**.
+
+Reviewer acceptance must prove at 320/390/820/1440: no redundant summary card or split toggle, real source text first, source-grounded initial check, Explore only after checked feedback, working journal return, all original Coach and Study Room navigation present, and zero source/grade integrity changes.
