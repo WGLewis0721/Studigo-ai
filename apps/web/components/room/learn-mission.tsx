@@ -5,6 +5,7 @@ import "./guided-learn-chapters.css";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
+import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
 import { SpeechAnswerControl } from "./speech-answer-control";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
@@ -91,6 +92,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
+  const invitationTitle = fixture ? SAMPLES[sample].title : selectedTopic?.title;
+  const invitationObjective = fixture ? SAMPLES[sample].objective : selectedTopic?.objective;
   const objectiveSource = fixture
     ? SAMPLES[sample].objective
     : currentTopic?.objective || selectedTopic?.objective || currentTopic?.title || selectedTopic?.title || "";
@@ -244,8 +247,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
-      <h2>{selectedTopic ? "Learn " + selectedTopic.title : "Start with your material"}</h2>
-      <p>{selectedTopic?.objective || "Choose a topic from your uploaded study guide. Studigo will show you one idea at a time."}</p>
+      <h2>{invitationTitle ? "Learn " + invitationTitle : "Start with your material"}</h2>
+      <p>{invitationObjective || "Choose a topic from your uploaded study guide. Studigo will show you one idea at a time."}</p>
       <div className="learnInvitationMeta">
         <span>{topics.length} {topics.length === 1 ? "topic" : "topics"} in your guide</span>
         <span>{fixture ? "Example material" : "Source checked before teaching"}</span>
@@ -301,7 +304,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     </div> : beat ? (
       <div className="learnTalk">
-
+        <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>
         <div className="learnTalkBody">
           <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
           {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
