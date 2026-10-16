@@ -495,3 +495,97 @@
 @media (max-width: 390px) {
   .learnReading .learnSourceReading { max-height: 30vh; }
 }
+
+/* Phase 3: action-glyph toolbar, based on official Studigo personal device keys.
+   All icon-only controls have real names/titles; painted glyphs are decorative.
+   No changes to the mission/revision engine. */
+.learnReading .learnMissionNav {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: 52px;
+  padding: 4px 8px;
+  margin: 0;
+  background: var(--white);
+  border: 1px solid var(--th-line, #dbe5e9);
+  border-radius: 15px;
+  box-shadow: var(--edge), var(--lift-1);
+}
+.learnReading .learnMissionNav .learnNavJournal {
+  display: grid;
+  place-items: center;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  color: var(--tone-ink, #087e78);
+  border-radius: 12px;
+}
+.learnControlGlyph {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: none;
+  pointer-events: none;
+}
+.learnReading .learnActionDock .learnIconKey {
+  display: grid;
+  place-items: center;
+  flex: 0 0 50px;
+  width: 50px;
+  min-width: 50px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  line-height: 1;
+}
+.learnReading .learnActionDock .learnGo {
+  flex: 1 1 auto;
+  min-width: 60px;
+}
+.learnReading .learnActionDock .learnGoIconOnly {
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+}
+.learnReading .learnActionDock .learnGoIconOnly .learnControlGlyph {
+  width: 31px;
+  height: 31px;
+  stroke-width: 2.25px;
+}
+.learnReading .learnActionDock .learnHelpGlyph {
+  width: 23px; height: 23px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font: 800 16px/1 var(--sans);
+}
+.learnReading .learnMissionNav button:focus-visible,
+.learnReading .learnActionDock button:focus-visible {
+  outline: 3px solid var(--tone-ink, #087e78);
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  .roomDevice:has(.learnReading) .learnReading .learnMissionNav {
+    min-height: 48px; padding: 2px 6px;
+    border-radius: 12px;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnActionDock .learnIconKey {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnActionDock .learnGo {
+    flex: 1 1 auto;
+    min-width: 48px;
+    width: auto;
+  }
+}
