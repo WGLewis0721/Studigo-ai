@@ -842,9 +842,26 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     </div>
   );
 
+  // Same navigation actions in either placement; responsive CSS exposes only
+  // one instance. The wide header copy lives outside ModeFrame's 60% tuck.
+  const topicNavigation = (placement: "header" | "lower") => (
+  <div className={`coachPhoneNav ${placement === "header" ? "coachHeaderNav" : "coachLowerNav"}`} role="group" aria-label={chatMode === "learn" ? "Lesson navigation" : "Topic navigation"}>
+  <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Previous lesson" : "Previous topic"} onClick={() => void goToPreviousTopic()}>
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  </button>
+  <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}. Change` : `Learning: ${learnActive.label}. Change`}>
+  <span>{chatMode === "coach" ? "Coaching" : "Learning"}</span>
+  <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
+  </button>
+  <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Next lesson" : "Next topic"} onClick={() => void goToNextTopic()}>
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  </button>
+  </div>
+  );
+
   return (
     <>
-    <ModeFrame tone="coach" compact={chromeCompact} frameRef={frameRef}>
+    <ModeFrame tone="coach" compact={chromeCompact} frameRef={frameRef} accessory={topicNavigation("header")}>
       <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         <button type="button" className="chatMascot" aria-label={chatMode === "coach" ? "Coach settings" : "Learn settings"} aria-expanded={personalizeOpen} aria-controls="coach-personalization" title={chatMode === "coach" ? "Coach settings" : "Learn settings"} onClick={() => { if (personalizeOpen) setPersonalizeOpen(false); else openSetup(); }}>
           <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
@@ -864,18 +881,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
       {guidedLearn && view === "chat" ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} /> : <>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
-        <div className="coachPhoneNav" role="group" aria-label={chatMode === "learn" ? "Lesson navigation" : "Topic navigation"}>
-          <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Previous lesson" : "Previous topic"} onClick={() => void goToPreviousTopic()}>
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-          <button type="button" className="coachActiveStyle" onClick={openSetup} aria-label={chatMode === "coach" ? `Coaching: ${active.label}. Change` : `Learning: ${learnActive.label}. Change`}>
-            <span>{chatMode === "coach" ? "Coaching" : "Learning"}</span>
-            <strong>{chatMode === "coach" ? active.label : learnActive.label}</strong>
-          </button>
-          <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Next lesson" : "Next topic"} onClick={() => void goToNextTopic()}>
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-        </div>
+        {topicNavigation("lower")}
         {contextControls}
       </div>
       {view === "topics" ? (

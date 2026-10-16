@@ -118,7 +118,7 @@ export function StudigoRail({ tone }: { tone: string }) {
 }
 
 /** A page's header: its options row (children) with the Studigo rail beneath. */
-export function ModeFrame({ tone, children, compact, frameRef }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement> }) {
+export function ModeFrame({ tone, children, compact, frameRef, accessory }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement>; /** Optional controls outside the scaled/tucked heading. */ accessory?: ReactNode }) {
   const stripRef = useRef<HTMLDivElement>(null);
   const [stripHeight, setStripHeight] = useState<number | null>(null);
   const [stripOpen, setStripOpen] = useState(false);
@@ -190,6 +190,7 @@ export function ModeFrame({ tone, children, compact, frameRef }: { tone: string;
       <div className="modeStrip" ref={stripRef} data-open={stripOpen ? "true" : undefined} onClick={() => setStripOpen(true)} onMouseLeave={() => setStripOpen(false)}>
         {children}
       </div>
+      {accessory}
       <StudigoRail tone={tone} />
     </div>
   );

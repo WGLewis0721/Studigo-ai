@@ -92,7 +92,9 @@ test("C21 compact lesson flow keeps label, Clear, Next, and a wrapping citation"
   assert.match(css, /overflow-wrap: anywhere/);
   // Phone actions intentionally move from the legacy footer to the visible compact nav and composer dock.
   assert.match(css, /\.coachChat \.lessonActions \{ display: none; \}/);
-  assert.match(coachPanel, /className="coachPhoneNav"/);
+  assert.match(coachPanel, /coachPhoneNav.*coachHeaderNav.*coachLowerNav/);
+  assert.match(coachPanel, /accessory=\{topicNavigation\("header"\)\}/);
+  assert.match(coachPanel, /\{topicNavigation\("lower"\)\}/);
   assert.match(coachPanel, /className="chatEraser"/);
   assert.match(coachPanel, /"Previous lesson"/);
   assert.match(coachPanel, /"Next lesson"/);
