@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
 import { ExploreJournal } from "./explore-journal";
+import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
@@ -87,6 +88,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const inFlight = useRef(false);
 
   const fixture = roomId === "fixture";
+  // The original synthetic mission remains unchanged; preview and real
+  // canary use one Learn journey instead of competing Learn/Explore modes.
+  const integratedJourney = !fixture || previewJournal;
   const mission = snapshot?.mission ?? null;
   const { thinking: companionThinking } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
@@ -94,7 +98,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
   const invitationTitle = fixture ? SAMPLES[sample].title : selectedTopic?.title;
   const invitationObjective = fixture ? SAMPLES[sample].objective : selectedTopic?.objective;
-  const objectiveSource = fixture
+  const objectiveSource = fixture && !previewJournal
     ? SAMPLES[sample].objective
     : currentTopic?.objective || selectedTopic?.objective || currentTopic?.title || selectedTopic?.title || "";
   const objectiveText = questionFrom(objectiveSource);
@@ -132,6 +136,11 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         : action === "back"
           ? ({ brief: "brief", show: "brief", try: "show", check: "try", done: "check" } as const)[current?.phase ?? "brief"]
           : action === "restart" || action === "start" ? "brief" : current?.phase ?? "brief";
+      const previewTopic = previewJournal ? topics.find((topic) => topic.id === (topicOverride ?? current?.topic_id)) : null;
+      const note = previewTopic ? MATERIAL_NOTES[previewTopic.title] : null;
+      const previewSource = note && (action === "start" || action === "restart")
+        ? { documentName: "Synthetic fifth-grade science guide", pageNumber: 1, excerpt: `${note.summary} ${note.example}` }
+        : snapshot?.source ?? null;
       const next: Snapshot = {
         mission: {
           topic_id: previewJournal && topicOverride ? topicOverride : action === "restart" ? sample : current?.topic_id ?? sample,
@@ -142,7 +151,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           revision: (current?.revision ?? 0) + 1,
         },
         sourceCurrent: true,
-        source: snapshot?.source ?? null,
+        source: previewSource,
       };
       setSnapshot(next);
       return next;
@@ -248,6 +257,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     sourceButtonRef.current?.focus();
   };
   const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
+  const introduction = Boolean(integratedJourney && mission?.phase === "brief" && beat?.kind === "read");
+  const firstCheck = Boolean(integratedJourney && mission?.phase === "show" && beat?.kind === "choice");
+  // Use the exact retrieved current passage as the learning introduction.
+  const reading = introduction ? snapshot?.source?.excerpt ?? "" : beat?.kind === "read" ? beat.body : "";
 
   // Render the journal in the same Learn room. All teaching, answers and
   // revision-bound cursor updates still belong to the existing player/API.
@@ -312,13 +325,18 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         }}>Start lesson over</button>
       </div>
     </div> : beat ? (
-      <div className="learnTalk">
+      <div className="learnTalk" data-journey-stage={introduction ? "intro" : firstCheck ? "first-check" : integratedJourney ? "explore" : undefined}>
         <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>
         <div className="learnTalkBody">
-          <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
-          {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
+          {integratedJourney && <p className="tinyLabel">{introduction ? "MEET YOUR QUEST · READ" : firstCheck ? "BEFORE EXPLORE · UNDERSTANDING CHECK" : "EXPLORE · GUIDED ACTIVITY"}</p>}
+          {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
+          <h2 className="learnAsk">{introduction ? currentTopic?.title ?? "From your study guide" : beat.kind === "read" ? beat.title : beat.prompt}</h2>
+          {beat.kind === "read" && <div className={introduction ? "learnSourceReading" : "learnLine"}>
+            {introduction && <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>}
+            <p className="learnLine">{reading}</p>
+          </div>}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
-            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? beat.body : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label="Hear this teaching step" />
+            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
             {beat.kind !== "read" && <div className="learnOptionalVoice">
               <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
               <span className="learnVoiceExplanation">Speak an answer draft</span>
@@ -396,8 +414,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         if (error && !mission) { void act("start"); return; }
         if (!beat || beat.kind === "read" || shown) advanceLevel();
         else setShown(true);
-      }}>{beat?.kind === "read" ? "Start question →"
-        : shown ? mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
+      }}>{introduction ? "Check what I understood →"
+        : beat?.kind === "read" ? "Start question →"
+        : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
         : "Check answer →"}</button>
     </div>}
   </section>;
