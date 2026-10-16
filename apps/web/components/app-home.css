@@ -103,6 +103,9 @@
 :is(.homeHero, .firstRoom)[data-ui="phase3"] :is(button, a) { white-space: normal; }
 .pageWrap:has(.homeHero[data-ui="phase3"]) .roomsGrid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
 .pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel, .createRoomPanel .field, .createRoomPanel input) { min-width: 0; max-width: 100%; }
+.pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel .stackedForm, .createRoomPanel .field) { grid-template-columns: minmax(0, 1fr); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .createRoomPanel .fieldRow { min-width: 0; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .createRoomPanel .buttonPrimary { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 :is(.homeHero, .firstRoom)[data-ui="phase3"] .stg { max-width: 100%; }
 @media (max-width: 850px) {
   .homeHero[data-ui="phase3"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "say" "next"; min-height: 0; }
