@@ -395,7 +395,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
-    {((mission && (mission.paused || mission.phase === "done" || ready || snapshot?.sourceCurrent === false)) || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
+    {((mission && (ready || snapshot?.sourceCurrent === false || ((!fixture || previewJournal) && (mission.paused || mission.phase === "done")))) || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
       {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || mission.phase === "brief"}
         onClick={() => void act("back")} aria-label="Previous lesson step" title="Previous step">
         <MissionControlIcon name="back" />
