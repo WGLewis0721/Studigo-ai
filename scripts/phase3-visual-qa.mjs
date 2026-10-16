@@ -208,7 +208,7 @@ try {
             assert.deepEqual(navScale.buttonHeights, [phone ? 30 : 44, phone ? 30 : 44], "#172 arrows must use responsive 30/44px heights");
             assert.deepEqual(navScale.arrowSizes, [phone ? 16 : 20, phone ? 16 : 20], "#172 arrow glyphs must scale with viewport");
             assert.deepEqual(navScale.labels, ["Previous topic", "Next topic"], "#172 accessible previous/next navigation preserved");
-            assert.equal(navScale.trackHeight, phone ? 36 : 52, "#172 accessory rail must scale without enlarging the phone");
+            assert.equal(navScale.trackHeight, phone ? 36 : headerLayout ? 44 : 52, "#172 navigation must fit its phone, tablet or wide-header lane");
             assert.equal(navScale.styleHeight, phone ? 30 : 44, "#172 mode pill must match its chevrons");
             if (phone) assert.deepEqual(navScale.hitInsets, ["-7px", "-7px"], "#172 phone chevrons require 44px extended hitboxes");
             else assert.equal(navScale.duplicateVisible, 0, "#172 desktop must not duplicate Previous/Next beneath the chat");
