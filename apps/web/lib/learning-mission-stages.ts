@@ -5,7 +5,8 @@ export type LearnPhase = typeof LEARN_PHASES[number];
 export function lessonBeatIndex(phase: LearnPhase, numberOfBeats: number): number | null {
   if (phase === "done" || numberOfBeats < 1) return null;
   const index = LEARN_PHASES.indexOf(phase);
-  return Math.min(index, numberOfBeats - 1);
+  // Never replay the previous activity merely to satisfy a later persisted phase.
+  return index < numberOfBeats ? index : null;
 }
 export function formativeReflection(phase: LearnPhase, answerReviewed: boolean, correct: boolean): "ready" | "review" | null {
   if (phase !== "try") return null;
