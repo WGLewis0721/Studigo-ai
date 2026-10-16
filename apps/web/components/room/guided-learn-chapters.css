@@ -468,3 +468,30 @@
 .learnAnswerFeedback strong { display:block; margin-bottom:3px; font-size:17px; }
 .learnReading .learnChoice[data-result="hit"] { border-color:#13b9a5; background:#e7f8f4; }
 .learnReading .learnChoice[data-result="miss"] { border-color:#c97951; background:#fff0e7; }
+
+/* Learn → Explore: narrative is a single source-grounded teaching surface.
+   Uses established Learn teal, Study Room type, buttons and source affordances. */
+.learnReading .learnJourneyDialogue {
+  margin: 8px 0 12px;
+  max-width: 68ch;
+  color: var(--ink-2);
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.5;
+}
+.learnReading .learnSourceReading {
+  display: grid;
+  gap: 10px;
+  padding: clamp(12px, 1.8vw, 18px);
+  background: var(--teal-soft);
+  border: 1px solid color-mix(in oklab, var(--teal) 30%, transparent);
+  border-radius: var(--r-md);
+  max-height: min(39vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.learnReading .learnSourceReading p { margin: 0; }
+.learnReading .learnSourceReading .learnLine { white-space: pre-wrap; overflow-wrap: anywhere; }
+.learnReading [data-journey-stage="first-check"] .learnAsk { margin-top: 8px; }
+@media (max-width: 390px) {
+  .learnReading .learnSourceReading { max-height: 30vh; }
+}
