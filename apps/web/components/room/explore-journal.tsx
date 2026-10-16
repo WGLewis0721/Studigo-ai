@@ -98,6 +98,13 @@ export function ExploreJournal({
       <div className="exploreJournalQuickStart">
         <span className="tinyLabel">SELECTED QUEST</span>
         <h3>{activeTopic?.title ?? "Choose a topic"}</h3>
+        <div className="exploreJournalActions">
+          {status === "source_changed" ? <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Open Materials</button>
+            : <button className="buttonPrimary" type="button" disabled={disabled || blocked || !activeTopic} onClick={() => void enter()}>
+              {disabled ? "Opening…" : isCurrent ? (cursor?.paused ? "Resume quest →" : status === "reading_complete" ? "View completion →" : "Continue quest →") : "Start quest →"}
+            </button>}
+          <button className="ghostButton" type="button" onClick={onOpenMaterials}>View materials</button>
+        </div>
         <p>{activeTopic?.objective || "Learn about this topic using your uploaded study material."}</p>
         <div className="exploreJournalEvidence">
           {status === "source_changed" ? "Your source changed. Review Materials before continuing."
@@ -115,13 +122,7 @@ export function ExploreJournal({
             Next suggested quest: {recommendedNext.title} →
           </button>
         )}
-        <div className="exploreJournalActions">
-          {status === "source_changed" ? <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Open Materials</button>
-            : <button className="buttonPrimary" type="button" disabled={disabled || blocked || !activeTopic} onClick={() => void enter()}>
-              {disabled ? "Opening…" : isCurrent ? (cursor?.paused ? "Resume quest →" : status === "reading_complete" ? "View completion →" : "Continue quest →") : "Start quest →"}
-            </button>}
-          <button className="ghostButton" type="button" onClick={onOpenMaterials}>View materials</button>
-        </div>
+
       </div>
       <div className="exploreJournalLayout">
       <div className="exploreJournalChapters" aria-label="Chapters and quests">
