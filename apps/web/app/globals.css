@@ -4217,3 +4217,30 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (min-width: 701px) {
   .roomDevice:has(.coachChat) .coachChat > .coachActiveStyle { display: none; }
 }
+
+
+/* Coach/Learn wide-header navigation — move the #172/#206 chevrons into
+   the blank header lane, not a separate row under the orange rail.
+   ModeFrame renders this accessory beside (not inside) the scaled modeStrip,
+   preserving 44px targets even when the existing Coach header tucks to 60%.
+   Tablet and phone continue using the original lower accessory rail. */
+.roomDevice:has(.coachChat) .coachHeaderNav { display: none; }
+@media (min-width: 1101px) {
+  .roomDevice:has(.coachChat) .modeFrame:has(> .coachHeaderNav) {
+    position: relative;
+  }
+  .roomDevice:has(.coachChat) .modeFrame > .coachHeaderNav {
+    position: absolute; z-index: 3;
+    display: inline-flex; align-items: center; justify-content: center;
+    left: clamp(355px, 30%, 440px);
+    top: max(2px, calc((var(--strip-h, 82px) * var(--strip-scale) - 44px) / 2));
+    height: 44px; max-width: calc(100% - 520px); padding: 0 3px;
+    gap: 4px; border-radius: 999px;
+    background: color-mix(in oklab, var(--th-bar) 55%, var(--white));
+    box-shadow: inset 0 0 0 1px var(--th-line);
+  }
+  .roomDevice:has(.coachChat) .modeFrame > .coachHeaderNav .coachActiveStyle {
+    height: 40px; max-width: min(22vw, 260px);
+  }
+  .roomDevice:has(.coachChat) .coachMode > .mhChipBar { display: none; }
+}
