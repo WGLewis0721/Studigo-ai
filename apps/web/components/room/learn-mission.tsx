@@ -301,11 +301,11 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         onClick={() => void act("resume")}>Continue lesson →</button>
     </div>}
 
-    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
-      <span>Lesson {lessonNumber} of {topics.length}</span>
+    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`${integratedJourney ? "Quest" : "Lesson"} ${lessonNumber} of ${topics.length}`}>
+      <span>{integratedJourney ? "Quest" : "Lesson"} {lessonNumber} of {topics.length}</span>
       <span className="learnLessonTopic">{currentTopic?.title}</span>
     </div>}
-    {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
+    {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={integratedJourney ? "Guided lesson progress, not mastery" : "Level progress"}>
       <span style={{ width: `${progress}%` }} />
     </div>}
     {error && <p className="formError" role="alert">{error}</p>}
