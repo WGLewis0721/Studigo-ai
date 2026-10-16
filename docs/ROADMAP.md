@@ -5,6 +5,8 @@ priority has changed from proving the architecture to proving repeatable learner
 value.
 
 
+> **Planned visual/companion track:** [Studigo v2 Phase 4 — Living Companion](../implementation/PHASE4_LIVING_COMPANION_PLAN.md) has an approved two-location interaction direction and a detailed execution/acceptance contract. It is **not implemented or production-approved**. Its Study Room integration must follow verified Phase 3 completion and must not displace the security and learner-value gates below.
+
 ## Execution order
 
 The V3 web implementation has landed. Current `main` is the integrated adaptive
