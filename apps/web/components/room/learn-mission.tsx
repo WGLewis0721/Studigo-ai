@@ -6,9 +6,10 @@ import type { Topic } from "@/lib/rooms";
 import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
+import { lessonBeatIndex, formativeReflection, canAdvanceLesson } from "@/lib/learning-mission-stages";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
-type Mission = { topic_id: string; document_id: string; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
+type Mission = { topic_id: string; document_id: string; chunk_id?: string; source_revision?: number; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
 type Snapshot = { mission: Mission | null; sourceCurrent?: boolean; source?: { documentName: string; pageNumber: number | null; excerpt: string } | null };
 type Action = "start" | "restart" | "advance" | "back" | "pause" | "resume";
 
@@ -70,7 +71,6 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tapped, setTapped] = useState<number | null>(null);
-  const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<number[]>([]);
   const [shown, setShown] = useState(false);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
@@ -116,14 +116,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     if (fixture) {
       const nextPhase: Phase = action === "advance"
         ? ({ brief: "show", show: "try", try: "check", check: "done", done: "done" } as const)[current?.phase ?? "brief"]
-        : action === "restart" ? "brief" : current?.phase ?? "brief";
+        : action === "back"
+          ? ({ brief: "brief", show: "brief", try: "show", check: "try", done: "check" } as const)[current?.phase ?? "brief"]
+          : action === "restart" || action === "start" ? "brief" : current?.phase ?? "brief";
       const next: Snapshot = {
         mission: {
           topic_id: action === "restart" ? sample : current?.topic_id ?? sample,
           document_id: "source",
           phase: nextPhase,
           reflection: reflection ?? (action === "restart" ? null : current?.reflection ?? null),
-          paused: false,
+          paused: action === "pause" ? true : action === "resume" || action === "restart" || action === "start" ? false : (current?.paused ?? false),
           revision: (current?.revision ?? 0) + 1,
         },
         sourceCurrent: true,
@@ -174,16 +176,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
   const beats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
-  const beat = beats[step];
+  const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
+  const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
-  const progress = beats.length ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  const progress = beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
-    setStep(0);
     setPicked([]);
     setShown(false);
-  }, [passageKey]);
+  }, [passageKey, mission?.phase]);
 
   function play(index: number) {
     if (shown || !beat || beat.kind === "read") return;
@@ -194,43 +196,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }
 
   function advanceLevel() {
-    if (step < beats.length - 1) {
-      setStep(step + 1);
-      setPicked([]);
-      setShown(false);
-      return;
-    }
-    void nextLevel();
-  }
-
-  async function nextLevel() {
-    setStep(0);
-    setPicked([]);
-    setShown(false);
-    if (fixture) {
-      setSample((current) => current === "elementary" ? "college" : "elementary");
-      return;
-    }
-    if (!mission || inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setError(null);
-    try {
-      let current = mission;
-      if (current.phase === "check") {
-        const advanced = await post(current, "advance");
-        if (advanced.mission) current = advanced.mission;
-      }
-      const index = topics.findIndex((topic) => topic.id === current.topic_id);
-      const next = topics[index + 1] ?? topics[0];
-      await post(current, "restart", null, next?.id ?? current.topic_id);
-    } catch (caught) {
-      await reload();
-      setError(caught instanceof Error ? caught.message : "Could not open the next part.");
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
+    if (!mission || mission.paused || mission.phase === "done") return;
+    // The server advances the source-bound cursor. UI does not own progression.
+    void act("advance", formativeReflection(mission.phase, shown, hit));
   }
 
   const missionPlan = buildLearningMissionPlan(topics.map((topic) => ({
@@ -240,8 +208,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   })), mission && snapshot?.source && snapshot.sourceCurrent !== false ? [{
     topicId: mission.topic_id,
     documentId: mission.document_id,
-    chunkId: "current-authorized-reading",
-    revision: mission.revision,
+    chunkId: mission.chunk_id ?? "fixture-only-reading",
+    revision: mission.source_revision ?? 0,
     pageNumber: snapshot.source.pageNumber,
     documentName: snapshot.source.documentName,
     excerpt: snapshot.source.excerpt,
@@ -249,7 +217,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }] : []);
   const lessonNumber = Math.max(1, topics.findIndex((topic) => topic.id === (mission?.topic_id ?? selectedTopicId)) + 1);
 
-  const ready = Boolean(mission && snapshot?.sourceCurrent !== false && beat);
+  const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
 
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
     {!loading && !mission && <div className="learnInvitation">
@@ -278,12 +246,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         onClick={() => void act("resume")}>Continue lesson →</button>
     </div>}
 
+    {mission && !mission.paused && <div className="learnMissionControls" role="group" aria-label="Lesson controls">
+      <button className="ghostButton" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")}>← Back</button>
+      <button className="ghostButton" type="button" disabled={busy} onClick={() => void act("pause")}>Pause</button>
+    </div>}
     {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>Lesson {lessonNumber} of {topics.length} · {currentTopic?.title}</div>}
     {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
     </div>}
     {error && <p className="formError" role="alert">{error}</p>}
-    {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : beat ? (
+    {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation" role="status"><p className="tinyLabel">LEARNING CHECKPOINT COMPLETE</p><h2>You practiced this idea.</h2><p>Learning checkpoints do not award mastery. Try a separate independent Coach or Practice question when you are ready.</p></div> : beat ? (
       <div className="learnTalk">
         <StudigoMascot state={shown ? (hit ? "celebrate" : "explain") : beat.kind === "read" ? "explain" : "welcome"} size={64} />
         <div className="learnTalkBody">
@@ -304,7 +276,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
-    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (Boolean(beat && beat.kind !== "read" && !shown && picked.length === 0))} onClick={() => {
+    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0, shown, beat?.kind === "read"))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { void act("start"); return; }
       if (!beat || beat.kind === "read" || shown) advanceLevel();
