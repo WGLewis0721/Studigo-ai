@@ -315,7 +315,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
-    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0, shown, beat?.kind === "read"))} onClick={() => {
+    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { void act("start"); return; }
       if (!beat || beat.kind === "read" || shown) advanceLevel();
