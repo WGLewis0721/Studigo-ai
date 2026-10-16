@@ -49,7 +49,10 @@ try {
           await device.waitFor({ state: "attached", timeout: 45_000 });
           const attrs = await device.getAttribute("data-ui");
           assert.equal(attrs === "phase3", skin === "phase3", "visual gate does not match requested comparison");
-          await page.evaluate(() => document.fonts.ready);
+          await page.evaluate(async () => {
+            await document.fonts.ready;
+            await Promise.all([...document.images].filter(image => image.currentSrc && image.getClientRects().length > 0).map(image => image.decode()));
+          });
           const metrics = await page.evaluate(() => ({
             overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
             navButtons: [...document.querySelectorAll(".studyGroups button")].filter(el => el.getClientRects().length > 0).length,
@@ -129,11 +132,18 @@ try {
       await page.locator(".choiceItem").first().click();
       await page.getByRole("button", { name: "Confident", exact: false }).click();
       assert.equal(gradeCalls, 0, "answer/confidence selection must not submit");
-      await page.getByRole("button", { name: "Submit answer" }).click();
+      await page.locator(".roomStudioSubmit").click();
       await page.locator(".quizFeedback").waitFor();
       assert.equal(gradeCalls, 1, "explicit submit must grade once");
       interaction.syntheticQuiz = true;
       await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "domcontentloaded" });
+      const chooseFiles = page.getByRole("button", { name: "Choose files", exact: false });
+      if (await chooseFiles.isVisible()) {
+        assert.ok(await chooseFiles.evaluate(el => {
+          const box = el.getBoundingClientRect();
+          return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
+        }), "companion must not cover the Choose files hit target");
+      }
       const citation = page.locator("button.materialsCitation").first();
       await citation.click();
       const inspector = page.locator("dialog.materialsSourceDialog[open]");
@@ -165,7 +175,10 @@ try {
         const surface = page.locator(first ? ".firstRoom" : ".homeHero");
         await surface.waitFor();
         assert.equal(await surface.getAttribute("data-ui"), "phase3", "Home fixture requires NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1");
-        await page.evaluate(() => document.fonts.ready);
+        await page.evaluate(async () => {
+            await document.fonts.ready;
+            await Promise.all([...document.images].filter(image => image.currentSrc && image.getClientRects().length > 0).map(image => image.decode()));
+          });
         home.horizontalOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
         home.screenshot = path.join(output, `${viewport.name}-home${first ? "-first" : ""}-phase3.png`);
         await page.screenshot({ path: home.screenshot, fullPage: true, animations: "disabled" });
