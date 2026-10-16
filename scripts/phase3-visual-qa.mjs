@@ -647,7 +647,14 @@ try {
         assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "journal must use all and only real fixture topics");
         assert.equal(await page.locator('.exploreJournalQuest[aria-pressed="true"]').count(), 1, "one quest detail selection");
         await page.locator(".exploreJournalQuest").nth(1).click();
-        assert.match(await page.locator(".exploreJournalDetail h3").innerText(), /Inherited traits and environment/);
+        const selectedHeading = viewport.width <= 700 ? ".exploreJournalQuickStart h3" : ".exploreJournalDetail h3";
+        assert.match(await page.locator(selectedHeading).innerText(), /Inherited traits and environment/);
+        if (viewport.width <= 700) {
+          const action = page.getByRole("button", { name: /Start quest/ });
+          await action.scrollIntoViewIfNeeded();
+          const firstViewport = await action.boundingBox();
+          assert.ok(firstViewport && firstViewport.y < viewport.height, "selected quest must remain reachable on phone");
+        }
         const screenshot = `${viewport.name}-explore-${skin}.png`;
         await page.screenshot({ path: path.join(output, screenshot), animations: "disabled", fullPage: true });
         exploreCase.screenshot = screenshot;
