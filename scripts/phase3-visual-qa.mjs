@@ -429,7 +429,7 @@ try {
       await page.locator(".learnGo").click();
       await page.locator(".learnChoices .learnChoice").first().waitFor();
       assert.ok(!/Which one is it\?/.test(await page.locator(".learnAsk").innerText()), "source question cannot be generic");
-      assert.match(await page.locator(".learnAsk").innerText(), /Which line in your guide helps explain/);
+      assert.equal((await page.locator(".learnAsk").innerText()).trim(), "Which branch makes the laws?");
       await page.locator(".learnChoices .learnChoice").first().scrollIntoViewIfNeeded();
       const visibleChoice = await page.locator(".learnChoices .learnChoice").first().evaluate(el => {
         const rect = el.getBoundingClientRect();
