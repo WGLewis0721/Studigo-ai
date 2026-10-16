@@ -1,0 +1,90 @@
+# Studigo V2 Phase 2 — First Learning Victory
+
+**Status:** Proposed delivery contract, not evidence of shipped functionality  
+**Prepared:** 2026-10-14 America/Chicago  
+**Product outcome:** A new account goes from opening Studigo to one real learning result without typing a room name or picking a color first.
+
+This is the first implementation slice of the October 2026 product proposal (Discover, Personalize, Learn, Earn, Return). It does not replace the document-learning queue, and it does not start Phase 3 Guided Learning. Phase 3 stays behind this gate.
+
+## What is already on main
+
+Grounded Coach and Learn, the learning director, uploads, topics, a study-guide download, companion animation, and the daily AI spend cap. First run is still name, color, companion, then an empty room (`apps/web/components/app-home.tsx`). None of the proposal's new systems are built: no onboarding state machine, no Study Concierge, no free 5-and-5 allowance, no cosmetic inventory, no purchase path.
+
+## Done when all of these are true
+
+| Check | Pass |
+| --- | --- |
+| Required blank fields before the first lesson | 0 |
+| Path | Upload their file, or a sample that is labeled as a sample |
+| Studigo's guess | Subject and starting topic are shown and can be corrected |
+| Goal | One of: understand this, prepare for a test, practice what I know. No invented test date |
+| Lesson | One concept from that material, one question, one response |
+| Room they land in | Already has the source, the topic, and a guide they can open |
+| Sample path | Does not write fake mastery or claim it knows the learner |
+| Leave and come back | Resumes. It does not restart |
+| Untouched | Citations, room isolation, the learning director, and spend limits |
+
+## Build order
+
+Keep the companion animation in `FirstRoomSetup`. Replace the order.
+
+1. **Material.** Upload, or start the labeled sample. No required title.
+2. **Correction.** Show the inferred subject and starting topic. The learner can change them.
+3. **One lesson.** Teach one concept from that material and ask one question.
+4. **The room.** Open a room that already holds the source, the topic, and a guide they can open.
+5. **Optional.** Name and color only after the guide is visible. Each choice persists. Skipping them still finishes.
+
+A small server-side resume record is enough. Do not ship a product-facing state machine, a concierge, or a second learning engine. Reuse upload, topic extraction, the existing lesson check, and guide download.
+
+## Not in phase 2
+
+Study Concierge, next-action proposals, companion cosmetics, rewards, the 5 free sessions and 5 free guides, Stripe, and APEX.
+
+## Later phases, one outcome at a time
+
+| Phase | Outcome | Starts only when |
+| --- | --- | --- |
+| 3. Next action | Opening a room offers one next step — coach, practice, or the guide — from real topics and evidence. A weak guess asks instead of choosing. The server rejects any action for a room or topic the learner does not have. | Phase 2 is in production |
+| 4. Companion | A saved name and earned look show up next visit. Equipping anything does not change mastery. No streak loss, no sad companion, no disappearing rewards. | The owner approves reversing the current no-reward rule |
+| 5. Purchase | 5 coaching sessions and 5 new guide generations are free. A retry does not count twice. A session already started is never cut off. Downloading the same guide again is free. Existing files are never deleted for nonpayment. The pay screen is not shown to a child. | The owner defines what one session is, who pays, and whether $19.99 is real |
+
+Phase 5 stays blocked until those three decisions are written down. The daily spend cap stays in place either way. The Guided Learning outcome gates in [STUDIGO_V2_PHASE3_UX_OUTCOME_PLAN.md](./STUDIGO_V2_PHASE3_UX_OUTCOME_PLAN.md) are a separate contract and do not start until this first-run gate passes.
+
+## Current Coach and Learn corrections
+
+These are gaps in the Study Room that already exists. They are part of this plan. They are not the first-run flow, and they do not wait on the concierge or a purchase.
+
+| Correction | What the learner can do | Pass |
+| --- | --- | --- |
+| Previous | In Coach and in Learn, move back to the prior lesson as well as forward. | Previous restores that lesson. It does not erase the current answer or change mastery. Next still moves forward. |
+| Close the teaching-style sheet | Dismiss "How should Studigo coach you?" and "How should Studigo explain things?" without applying a change. | A visible Close, Escape, and a tap outside all dismiss it. An unapplied choice is discarded. |
+| Give me a hint | Ask for a hint again on the same question. | Each press in a row is a stronger hint. The third consecutive "Give me a hint" gives the answer. Any other action resets that count. A revealed answer is help, not a correct answer, and does not raise mastery. |
+| Show me an example | See the kind of answer Coach will accept for this question. | One worked example shows the shape and the level of understanding expected, then the same question returns. It does not reveal the pending answer, and it does not replace the question with a different problem. |
+| How correct is correct | Set, for the whole Study Room, how much of the guide an answer must cover. | A slider in room settings. Low: about half the expected points is enough (50% or better). High: about 80–95% of the expected points. Wording does not have to match the guide. The first time through a topic uses Low unless the learner moves the slider. |
+
+## A study sheet, not a text dump
+
+The download today is a plain PDF from `apps/web/lib/study-guide-pdf.ts`: a title, headings, and paragraphs. It is not the government study sheet. That sheet is the target.
+
+**Outcome.** From the learner's upload, Download produces a sheet they can study from: a running header, a title, vocabulary as a term set apart from its definition, and a study page of short labeled sections and bullets. Page numbers included. Every line comes from the upload. Studigo does not add a second textbook.
+
+| Check | Pass |
+| --- | --- |
+| Vocabulary | Each term is on its own line, visually distinct from the definition |
+| Study page | Section titles, then short bullets. Branches, who/where/job, and levels stay grouped |
+| Chrome | Running header and a page number |
+| Source | Nothing on the sheet that is not in the uploaded material |
+| Action | The same Download control. The original file stays separately named |
+
+## Math and arithmetic
+
+Words are not enough for math. When the material or the question is arithmetic or mathematics, Coach and Learn show the idea.
+
+**Outcome.** A picture is drawn by code from the known numbers: a number line, fraction bars, an area model, or a simple table. The learner sees at least two worked examples, the second with less help than the first. The answer is checked in code. The model may explain. It does not decide whether the answer is right, and it does not draw the picture.
+
+| Check | Pass |
+| --- | --- |
+| A fraction or arithmetic fixture | Shows a correct model and two examples |
+| Grade | Matches the computed answer. A wrong number is wrong |
+| Labels | Come from the problem. A label that is not in the problem is rejected |
+| Fallback | If a picture cannot be drawn, the steps still appear as text |
