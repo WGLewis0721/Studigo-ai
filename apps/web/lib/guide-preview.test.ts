@@ -68,3 +68,32 @@ test("C17 compact preview links are keyboard reachable and do not generate", () 
   assert.match(html, />Print</);
   assert.match(html, /Download study guide/);
 });
+
+
+test("Phase 3 guide exposes evidence for facts, terms, examples, and practice without revealing answers", () => {
+  const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition, phase3Materials: true }));
+  assert.equal((html.match(/class="materialsCitation"/g) ?? []).length, 7);
+  assert.equal((html.match(/aria-expanded="false"/g) ?? []).length, 7);
+  assert.match(html, /aria-controls=/);
+  assert.doesNotMatch(html, /Checked answer/);
+});
+
+test("Phase 3 answer reveal remains reversible and citations do not invent page zero", () => {
+  const withoutPage = structuredClone(edition);
+  withoutPage.chapters[0].facts[0].evidence[0].pageNumber = 0;
+  const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: withoutPage, phase3Materials: true, initialAnswersRevealed: true }));
+  assert.match(html, /Hide answers/);
+  assert.match(html, /Checked answer/);
+  assert.match(html, />Source passage<\/button>/);
+  assert.doesNotMatch(html, /Source, page 0/);
+  assert.equal((html.match(/class="materialsCitation"/g) ?? []).length, 9);
+});
+
+test("Guide preview distinguishes a pending load from a confirmed absent edition", () => {
+  const loading = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", phase3Materials: true }));
+  const absent = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: null, phase3Materials: true }));
+  assert.match(loading, /role="status"[^>]*>Loading your saved guide/);
+  assert.doesNotMatch(loading, /No generated guide yet/);
+  assert.match(absent, /No generated guide yet/);
+  assert.match(absent, /original files remain available/);
+});
