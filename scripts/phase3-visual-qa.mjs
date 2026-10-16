@@ -25,7 +25,7 @@ const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level
 
 await mkdir(output, { recursive: true });
 const sourceTree = () => execFileSync("git", ["rev-parse", "HEAD^{tree}"], { encoding: "utf8" }).trim();
-const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], failures: [] };
+const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], guidedLearn: [], failures: [] };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
@@ -408,6 +408,32 @@ try {
       console.error(`${viewport.name} interactions: ${interaction.error}`);
     }
     report.interactions.push(interaction);
+    // Guided Learn is intentionally paused for signed-in rooms. Capture its
+    // review-only fixture without activating any authenticated mission.
+    const missionCase = { viewport: viewport.name, url: `${origin}/dev/study?shell=1&ui=phase3&mode=learn&learn=mission`, screenshot: "", error: null };
+    try {
+      const res = await page.goto(missionCase.url, { waitUntil: "networkidle", timeout: 90_000 });
+      assert.equal(res?.status(), 200);
+      const start = page.getByRole("button", { name: /Start learning/ });
+      await start.waitFor();
+      const mission = page.locator(".learnInvitation");
+      await mission.waitFor();
+      missionCase.screenshot = path.join(output, `${viewport.name}-guided-learn-invitation-phase3.png`);
+      await page.screenshot({ path: missionCase.screenshot, animations: "disabled" });
+      assert.equal(await mission.getByRole("heading").count(), 1);
+      await start.click();
+      await page.locator(".learnLessonLabel").waitFor();
+      await page.locator(".learnAsk").waitFor();
+      missionCase.activeScreenshot = path.join(output, `${viewport.name}-guided-learn-first-step-phase3.png`);
+      await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
+      missionCase.overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+      assert.ok(missionCase.overflow <= 2, "Guided Learn fixture must not overflow");
+    } catch (error) {
+      missionCase.error = String(error);
+      report.failures.push({ ...missionCase });
+      console.error(`${viewport.name} Guided Learn: ${missionCase.error}`);
+    }
+    report.guidedLearn.push(missionCase);
     for (const first of [false, true]) {
       const home = { viewport: viewport.name, firstRun: first, screenshot: "", horizontalOverflow: null, zoomOverflow: null, reflowOverflow: null, error: null };
       try {

@@ -4,10 +4,10 @@ import { AppShell } from '@/components/app-shell';
 import type { Topic } from '@/lib/rooms';
 
 // Synthetic visual/Coach fixture for local development and flagged, protected previews.
-export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;ui?:string}>}) {
+export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;ui?:string;learn?:string}>}) {
   const flaggedPreview = process.env.VERCEL_ENV === 'preview' && process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === '1';
   if (process.env.NODE_ENV !== 'development' && !flaggedPreview) notFound();
-  const {mode='coach',phone,bare,shell,rail,ui}=await searchParams;
+  const {mode='coach',phone,bare,shell,rail,ui,learn}=await searchParams;
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1${ui ? `&ui=${encodeURIComponent(ui)}` : ''}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
   const topics:Topic[]=[
@@ -22,7 +22,7 @@ export default async function StudyFixture({searchParams}:{searchParams:Promise<
   ].map((t,i)=>({...t,room_id:'fixture',objective:`I can explain and apply ${t.title.toLowerCase()} using evidence from the study guide.`,key_terms:[],order_index:i,origin:'study_guide',learner_edited:false})) as Topic[];
   // Fixture-only reversible comparison; never permitted on authenticated room routes.
   const phase3FoundationUi = ui === 'phase3' ? true : ui === 'legacy' ? false : undefined;
-  const workspace=<RoomWorkspace phase3FoundationUi={phase3FoundationUi} initialMode={mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:'2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
+  const workspace=<RoomWorkspace phase3FoundationUi={phase3FoundationUi} phase3Learn={learn === "mission"} initialMode={learn === "mission" ? "learn" : mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:'2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
       topics={topics} documents={[{id:'source',room_id:'fixture',name:'2022–2023 Fifth Grade Science study guide.pdf',mime_type:'application/pdf',size_bytes:1000,source_type:'study_guide',status:'ready',error_message:null,page_count:12,page_label:'Page',ocr_page_count:0,chunk_count:24,created_at:new Date(now).toISOString()}]}
       readiness={{readiness:49,averageMastery:66,topicCount:4,practicedTopicCount:3,masteredCount:1,questionsAnswered:12,correctAnswers:8,cardsDue:6}}
       evidence={[0,0,100].map((score,i)=>({topic_id:'tornado',source:'quiz' as const,score,is_correct:score===100,created_at:`2026-09-08T12:0${i}:00Z`}))} planEvents={[]} asOf={now}/>;
