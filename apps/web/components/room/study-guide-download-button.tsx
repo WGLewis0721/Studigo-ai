@@ -11,7 +11,7 @@ import {
   type GuideExportFormat
 } from "@/lib/guide-share";
 
-export function StudyGuideDownloadButton({ roomId, format = "pdf" }: { roomId: string; format?: GuideExportFormat }) {
+export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel = false }: { roomId: string; format?: GuideExportFormat; compactLabel?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inFlight = useRef(false);
@@ -69,8 +69,8 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf" }: { roomId: s
 
   return (
     <span className="studyGuideDownload">
-      <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy}>
-        <span className="studyGuideDownloadLabel">{busy ? "Saving..." : format === "docx" ? "Word" : "Download study guide"}</span>
+      <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy} aria-label={`Download generated Studigo guide as ${format === "docx" ? "Word" : "PDF"}`}>
+        <span className="studyGuideDownloadLabel">{busy ? "Saving..." : compactLabel ? format === "docx" ? "Word" : "PDF" : format === "docx" ? "Word" : "Download study guide"}</span>
         <span className="studyGuideDownloadIcon" aria-hidden="true">↓</span>
       </button>
       {error && <small className="formError" role="alert">{error}</small>}
