@@ -151,3 +151,13 @@
   .learnReading .learnChoices { flex:0 0 auto; min-height:min-content; max-height: min(40vh, 420px); overflow-y:auto; }
   .learnReading .learnGo { margin-top:auto; }
 }
+
+/* The mission uses the canonical Studigo art (not another mascot controller).
+   The floating window is intentionally hidden on the mission surface so the
+   small lesson-side expression is its single stage presence. */
+.learnTeachingMascot { flex:0 0 44px; display:flex; align-items:flex-start; justify-content:center; }
+.learnTeachingMascot svg, .learnTeachingMascot img { max-width:100%; }
+@media (max-width:390px) {
+  .learnReading .learnTalk { gap:8px; }
+  .learnTeachingMascot { flex-basis:38px; }
+}
