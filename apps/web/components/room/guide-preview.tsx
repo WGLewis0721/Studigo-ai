@@ -143,8 +143,8 @@ export function GuidePreview({
       {updateAvailable && <p className="setupLead" role="status">Your sources have changed since this guide was saved. Check cited passages against the originals; this guide may be out of date.</p>}
       <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
         {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
-        <StudyGuideDownloadButton roomId={roomId} />
-        <StudyGuideDownloadButton roomId={roomId} format="docx" />
+        <StudyGuideDownloadButton roomId={roomId} compactLabel={phase3Materials} />
+        <StudyGuideDownloadButton roomId={roomId} format="docx" compactLabel={phase3Materials} />
         <button type="button" aria-label="Print generated Studigo guide" onClick={() => window.print()}>Print</button>
       </div>
       <pre className="guidePrintSheet" aria-hidden="true">{printText}</pre>
