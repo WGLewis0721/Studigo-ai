@@ -589,6 +589,34 @@ The queue starts at NOT STARTED. Dependency waits are represented by task IDs; m
 7. **Release evidence:** pin integration SHA, migration set/order, required flags/configuration and task evidence. Have focused domain review for source/topic migrations, RLS/privacy, semantic fidelity and document layout. No deployment claim based on source regexes, sample model responses, or preview build alone. Keep existing public-launch/security gate authoritative; this queue does not clear its unrelated blockers.
 8. **Production approval:** present the final release PR/#102 with concrete completed behavior, remaining blockers, rollout/rollback plan and verified environment. Obtain separate authorization before merging main, applying production migrations or enabling workloads. Rollback must preserve immutable sources/history and prevent stale executor publication; prefer disabling new workload flags and compatible readers over destructive rollback migrations. Integration completion is not production release approval.
 
+## H. Guided Learn segment (GL01–GL10)
+
+**Track:** Guided Learn, net-new. This segment does not replace C01–C24 and does not reopen completed C cards.  
+**Owner plan:** `docs/GUIDED_LEARN_PLAN.md` (GL01–GL10 and UX01–UX10).  
+**Code reconciliation:** `docs/GUIDED_LEARN_RECONCILIATION.md`. Read it before GL01. Several inputs the plan reuses are partial, and `docs/GUIDED_LEARN_ENGINEERING_PLAN.md` is an earlier conflicting note, not this queue.  
+**Integration target:** `guided-learn`. Branch each card from the latest accepted `guided-learn` head. Open the PR **into `guided-learn`**. Do not merge `main`, do not deploy production, and do not retarget this work at `integration/document-learning-reliability` (that branch is behind `main`).  
+**Flag:** `STUDIGO_GUIDED_LEARN` and `NEXT_PUBLIC_STUDIGO_GUIDED_LEARN`, both exact `1`, Preview only. Default off. The current Learn path stays mounted while the flag is off. See `docs/VERCEL_DEPLOYMENT.md`.  
+**Dispatch:** the section F rule still applies only to C01–C24. Choose the earliest NOT STARTED GL card whose dependencies below are accepted on `guided-learn`.
+
+UX01–UX10 are the UI companions in the owner plan. They are not a second queue. A GL card carries the UX ids in the last column. Static UX01 prototypes may land before GL01 behavior; later UX surfaces wait for the GL contract they render.
+
+| ID | Priority | Deliverable | Dependencies | UX | Status |
+|---|---|---|---|---|---|
+| GL01 | P0 | Versioned `LearningMissionPlan` from selected topics, source blocks, and an explicit missing-foundation outcome | Shared contracts in `packages/learning/src/mission.ts` | UX01 | BUILT, flag off |
+| GL02 | P0 | Deterministic mission director and pause/resume on the existing mission cursor | GL01 | UX02, UX03 | NOT STARTED |
+| GL03 | P0 | Mission player inside the current Coach \| Learn surface | GL02, flag | UX02, UX03 | NOT STARTED |
+| GL04 | P0 | Find it spotlight on the current source block or an honest page limit | GL01, GL03 | UX04 | NOT STARTED |
+| GL05 | P0 | Reviewed speech answers through the shared answer envelope and the existing admission guard | Answer envelope accepted; GL03 for Learn; Coach can start once the envelope is accepted | UX06 | NOT STARTED |
+| GL06 | P0 | Source-grounded choice and evidence answers, then ordering | GL03; envelope accepted | UX05 | NOT STARTED |
+| GL07 | P1 | On-demand read-aloud without a new paid model call | GL03 | UX07 | NOT STARTED |
+| GL08 | P1 | Companion reactions for mission stages, leaving graded celebrations in place | GL03 | UX08 | NOT STARTED |
+| GL09 | P1 | View, download, and print the original teacher file, labeled apart from the generated guide | Existing document download | UX09 | NOT STARTED |
+| GL10 | P1 | Coach/Practice handoff and the two-fixture evaluation | GL03, GL04, GL06 | UX09, UX10 | NOT STARTED |
+
+Critical path from the owner plan: GL01 → GL02 → GL03 → GL04/GL06 → GL10. GL05 waits on the answer envelope. GL07–GL09 wait on the player APIs. Wave 1 is the playable ungraded lesson. Do not hold it for read-aloud, companion polish, or original-file print.
+
+GL01 builder: `packages/learning/src/mission-plan.ts`. It returns a plan only when the Guided Learn flag is on. There is no prerequisite graph, so a supplied foundation is `unsupported_prerequisite` and is not cited as course evidence. The builder does not write mastery.
+
 ### Plan review and source notes
 
 Every card includes a working application gain, bounded file owners, explicit dependencies, observable completion, at most three relevant checks, commit/PR delivery and a stop condition. No card exists solely to research, write docs, benchmark or add tests. The two worker cards split admission from execution; C13 cannot enable alone. No arbitrary quality percentages, new agent ecosystem, native-client rewrite, payments, gaming or unrelated remediation were added.

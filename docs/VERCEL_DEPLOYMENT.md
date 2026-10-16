@@ -65,6 +65,28 @@ Security rules:
 - Never prefix either secret with `NEXT_PUBLIC_`.
 - Use the deployed Vercel URL for `NEXT_PUBLIC_APP_URL` until a custom domain exists.
 
+## Guided Learn preview flag
+
+Guided Learn is off unless both of these are the exact string `1`:
+
+```text
+STUDIGO_GUIDED_LEARN=1
+NEXT_PUBLIC_STUDIGO_GUIDED_LEARN=1
+```
+
+`STUDIGO_GUIDED_LEARN` is server-only. `NEXT_PUBLIC_STUDIGO_GUIDED_LEARN` is inlined into the client at build time, so changing it requires a new preview build.
+
+To turn the flag on for a Vercel preview of `guided-learn`:
+
+1. Open the Vercel project `studigo-ai` (team `gray-matter5`) → Settings → Environment Variables.
+2. Add both variables for the **Preview** environment only. Do not add them to Production.
+3. Redeploy the `guided-learn` branch. A push to that branch builds a preview; it does not deploy Production.
+4. Open the stable branch preview: `https://studigo-ai-git-guided-learn-gray-matter5.vercel.app`. Preview deployments use Vercel Deployment Protection, so the URL answers with the team sign-in page until a project member is signed in.
+
+The signed-in room shell exposes the result as `data-guided-learn="on"` only when both values are `1`. With either value unset, the attribute is `off` and Learn keeps the current lesson, chat, and topic scope. This foundation does not mount a new mission player when the flag is on. Later GL cards are what branch on it. Leave `PHASE3_ROOM2_ROOM_IDS` unset; that allowlist belongs to the paused Room 2 reading cursor, not this flag.
+
+The stable alias pattern for any branch is `https://studigo-ai-git-<branch>-gray-matter5.vercel.app`, with `/` in the branch name written as `-`. Each deployment also has its own `https://studigo-<id>-gray-matter5.vercel.app` URL. Production stays `https://studigo-ai.vercel.app` and follows `main` only.
+
 ## Verification checklist
 
 After Vercel reports `Ready`:

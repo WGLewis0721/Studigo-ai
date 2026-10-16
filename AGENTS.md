@@ -16,6 +16,7 @@ Then open only what the task requires:
 - deep runtime/data architecture → `docs/ARCHITECTURE.md`
 - hardening / broader planned engineering work → `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W)
 - document-learning reliability / readable guides → one assigned task card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`; do not load the whole queue. Create a branch per task from `integration/document-learning-reliability`, commit before the next assignment, and open the PR against integration. Maximum three individual validation checks per task, including failed/repeated checks; no manual broad suites. Do not merge main or deploy production without authorization.
+- Guided Learn (GL01–GL10 and UX01–UX10) → `docs/GUIDED_LEARN_PLAN.md`, then `docs/GUIDED_LEARN_RECONCILIATION.md`, then the GL segment of `STUDIGO_CODEX_EXECUTION_PLAN.md`. Branch from `guided-learn` and open the PR against `guided-learn`. Nothing on this track merges to `main`. `docs/GUIDED_LEARN_ENGINEERING_PLAN.md` is an earlier note and is not the queue.
 - security/public release → `implementation/security-readiness/`
 - release sequence → `docs/ROADMAP.md`
 
