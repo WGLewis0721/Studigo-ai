@@ -260,7 +260,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   />;
 
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
-    {!fixture && <button type="button" className="ghostButton exploreJournalReturn"
+    {(!fixture || previewJournal) && <button type="button" className="ghostButton exploreJournalReturn"
       onClick={() => setJournalOpen(true)}>← Quest journal</button>}
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
