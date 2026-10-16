@@ -561,3 +561,117 @@
     width: auto;
   }
 }
+
+/* Explore: the active source lesson fills the reclaimed quest-tracker lane.
+   Original Guided Learn's fixed fixture layout remains unchanged. */
+.learnReading:has(.learnJourneyProgress) {
+  gap: clamp(7px, .85vh, 11px);
+  padding: clamp(7px, 1vw, 12px);
+  min-height: 0;
+  overflow: hidden;
+}
+.learnReading .learnJourneyProgress {
+  display: block;
+  flex: none;
+  padding: 3px 2px 4px;
+  margin: 0;
+  min-width: 0;
+}
+.learnReading .learnBarAnimated {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  height: 13px;
+  margin: 0;
+  overflow: visible;
+  background: var(--snow-3);
+  border: 1px solid color-mix(in oklab, var(--ink) 7%, transparent);
+  border-radius: 999px;
+}
+.learnReading .learnBarAnimated .learnBarFill {
+  position: absolute;
+  inset: -1px auto -1px -1px;
+  width: 12%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--tangerine) 0%, var(--progress-heat, var(--tangerine)) 100%);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--progress-heat, var(--tangerine)) 35%, transparent),
+              inset 0 2px 2px rgba(255,255,255,.32);
+  transition: width 820ms cubic-bezier(.16,1,.3,1), background-color 680ms ease;
+}
+.learnReading .learnBarAnimated .learnBarFill::after {
+  content: "";
+  position: absolute;
+  inset: 1px 6px auto 6px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.46);
+  pointer-events: none;
+}
+.learnReading .learnProgressEmber {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--progress-heat, var(--tangerine));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--progress-heat, var(--tangerine)) 24%, transparent),
+              0 0 16px 5px color-mix(in oklab, var(--progress-heat, var(--tangerine)) 45%, transparent);
+  animation: learnEmberPulse 2.2s ease-in-out infinite;
+}
+.learnReading .learnProgressPlume {
+  position: absolute;
+  z-index: 3;
+  right: -20px;
+  bottom: -8px;
+  width: 45px;
+  height: 42px;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 42% 77%, var(--dandelion) 0 14%, var(--tangerine) 40%, transparent 75%);
+  clip-path: polygon(33% 100%, 10% 80%, 17% 52%, 8% 45%, 43% 8%, 54% 48%, 81% 15%, 76% 54%, 94% 73%, 58% 100%);
+  filter: drop-shadow(0 0 9px var(--tangerine));
+  animation: learnPlumeBurst 1.15s cubic-bezier(.15,.8,.25,1) both;
+}
+.learnReading .learnProgressPlume::after {
+  content: "";
+  position: absolute;
+  inset: 37% 33% 8% 32%;
+  border-radius: 50% 50% 30% 30%;
+  background: var(--dandelion);
+  filter: blur(1px);
+}
+.learnReading .learnTalk[data-journey-stage] {
+  padding: clamp(12px, 1.5vw, 20px);
+  gap: 0;
+}
+.learnReading .learnTalk[data-journey-stage] .learnTalkBody { gap: 10px; }
+.learnReading .learnTalk .learnSectionTitle {
+  font-family: var(--display);
+  font-size: clamp(21px, 2vw, 29px);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -.03em;
+  line-height: 1.2;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+.learnReading .learnTalk[data-journey-stage] .learnJourneyDialogue { margin: 0 0 5px; }
+@keyframes learnEmberPulse {
+  0%,100% { opacity: .82; box-shadow: 0 0 0 2px color-mix(in oklab, var(--progress-heat) 20%, transparent), 0 0 9px 3px color-mix(in oklab, var(--progress-heat) 26%, transparent); }
+  50% { opacity: 1; box-shadow: 0 0 0 6px color-mix(in oklab, var(--progress-heat) 20%, transparent), 0 0 20px 8px color-mix(in oklab, var(--progress-heat) 48%, transparent); }
+}
+@keyframes learnPlumeBurst {
+  0% { opacity: .3; transform: translate(-22px, 9px) scale(.45) rotate(-20deg); }
+  24% { opacity: 1; transform: translate(4px, -7px) scale(1.35) rotate(8deg); }
+  55% { opacity: .94; transform: translate(12px,-12px) scale(1.6) rotate(17deg); }
+  100% { opacity: 0; transform: translate(26px,-24px) scale(.75) rotate(22deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .learnReading .learnBarAnimated .learnBarFill { transition: none; }
+  .learnReading .learnProgressEmber { animation: none; }
+  .learnReading .learnProgressPlume { animation: none; display: none; }
+}
