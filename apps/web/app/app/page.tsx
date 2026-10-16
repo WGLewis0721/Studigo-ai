@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { getRoomReadiness, listRooms, listTopics } from "@/lib/rooms";
 import { loadStudyEvidence } from "@/lib/study-evidence";
 import { rankWeakAreas } from "@/lib/study-planning";
-import { buildHomeNext, missionDoor, pickFocusRoom, type HomeNext, type MissionPhase } from "@/lib/home-next";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { buildHomeNext, pickFocusRoom, type HomeNext } from "@/lib/home-next";
 import { CreateRoomForm } from "@/components/create-room-form";
 import { FirstRoomSetup, HomeHero } from "@/components/app-home";
 import { RoomCardLink } from "@/components/room-card-link";
@@ -21,29 +20,15 @@ function formatTestDate(value: string | null) {
   return `${days} day${days === 1 ? "" : "s"} to ${label}`;
 }
 
-/** What Home leads with, from the focus room's real state. If that cannot be read, Home still says which room is next. */
-async function loadMissionPhase(roomId: string): Promise<MissionPhase | null> {
-  const allowlisted = (process.env.PHASE3_ROOM2_ROOM_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean);
-  if (!allowlisted.includes(roomId)) return null;
-  try {
-    const supabase = await createServerSupabaseClient();
-    const { data, error } = await supabase.from("learn_mission_cursors").select("phase").eq("room_id", roomId).maybeSingle();
-    if (error || !data?.phase) return null;
-    return data.phase as MissionPhase;
-  } catch {
-    return null;
-  }
-}
-
+/** The next-up card remains a truthful room action while Guided Learn is paused. */
 async function loadNext(rooms: Awaited<ReturnType<typeof listRooms>>): Promise<HomeNext | null> {
   const now = Date.now();
   const room = pickFocusRoom(rooms, now);
   if (!room) return null;
   try {
-    const [topics, readiness, study, phase] = await Promise.all([listTopics(room.id), getRoomReadiness(room.id), loadStudyEvidence(room.id), loadMissionPhase(room.id)]);
+    const [topics, readiness, study] = await Promise.all([listTopics(room.id), getRoomReadiness(room.id), loadStudyEvidence(room.id)]);
     const next = buildHomeNext(room, rankWeakAreas(topics, study.evidence, study.asOf), readiness, now);
-    const door = missionDoor({ allowlisted: true, phase });
-    return door ? { ...next, door, mode: door.mode, note: door.note } : next;
+    return next;
   } catch {
     return buildHomeNext(room, [], { topicCount: 0, practicedTopicCount: 0, masteredCount: 0 }, now);
   }

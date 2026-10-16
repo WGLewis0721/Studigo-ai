@@ -35,7 +35,9 @@ export default async function RoomPage({
     loadStudyEvidence(roomId)
   ]);
 
-  const phase3Learn = (process.env.PHASE3_ROOM2_ROOM_IDS ?? "").split(",").map((id) => id.trim()).includes(room.id);
+  // Phase 3 design lock: show the established Learn experience until the UI/UX release is accepted.
+  // Keep existing mission records and migrations for a separate, future Guided Learn rollout.
+  const phase3Learn = false;
 
   return (
     <RoomWorkspace
