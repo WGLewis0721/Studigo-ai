@@ -96,7 +96,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | Concern | Start here | Purpose |
 | --- | --- | --- |
 | Product contract | `docs/PRODUCT.md` | What Studigo is allowed to be |
-| Guided Learn (proposed, flag off) | `docs/GUIDED_LEARN_PLAN.md` | Mission upgrade. Read `docs/GUIDED_LEARN_RECONCILIATION.md` before building. PRs target `guided-learn`, not main. |
+| Guided Learn (proposed, flag off) | `docs/GUIDED_LEARN_PLAN.md`, `packages/learning/src/mission-plan.ts` | Mission upgrade. GL01 builds a `LearningMissionPlan` only when the Guided Learn flag is on. Read `docs/GUIDED_LEARN_RECONCILIATION.md` before building. PRs target `guided-learn`, not main. |
 | Deep architecture | `docs/ARCHITECTURE.md` | Runtime/data boundaries and implementation details |
 | Engineering plan | `implementation/ENGINEERING_PLAN.md` | What must be built/hardened next and why |
 | Security readiness | `implementation/security-readiness/` | Reusable control matrix, audit, release gate |
@@ -123,6 +123,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | Change question/grading logic | `packages/ai/src/study.ts` | grader/question tests + semantic eval |
 | Change Coach behavior | `packages/ai/src/coach.ts` | Coach state, interaction IDs, learning-event path |
 | Change progression/scaffolding | `packages/learning/` | replay/determinism tests |
+| Change the Guided Learn mission blueprint | `packages/learning/src/mission-plan.ts` | flag off by default; Learn writes no mastery |
 | Change file ingestion | `packages/documents/`, `apps/web/lib/ingest.ts` | upload security, provenance, stale-source tests |
 | Change auth | `apps/web/lib/auth.ts`, middleware, Supabase config | RLS, OAuth/session tests |
 | Change DB state | `supabase/migrations/` | migration rollback, RLS, concurrent/retry behavior |

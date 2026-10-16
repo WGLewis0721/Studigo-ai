@@ -602,7 +602,7 @@ UX01–UX10 are the UI companions in the owner plan. They are not a second queue
 
 | ID | Priority | Deliverable | Dependencies | UX | Status |
 |---|---|---|---|---|---|
-| GL01 | P0 | Versioned `LearningMissionPlan` from selected topics, source blocks, and an explicit missing-foundation outcome | Shared contracts in `packages/learning/src/mission.ts` | UX01 | NOT STARTED |
+| GL01 | P0 | Versioned `LearningMissionPlan` from selected topics, source blocks, and an explicit missing-foundation outcome | Shared contracts in `packages/learning/src/mission.ts` | UX01 | BUILT, flag off |
 | GL02 | P0 | Deterministic mission director and pause/resume on the existing mission cursor | GL01 | UX02, UX03 | NOT STARTED |
 | GL03 | P0 | Mission player inside the current Coach \| Learn surface | GL02, flag | UX02, UX03 | NOT STARTED |
 | GL04 | P0 | Find it spotlight on the current source block or an honest page limit | GL01, GL03 | UX04 | NOT STARTED |
@@ -614,6 +614,8 @@ UX01–UX10 are the UI companions in the owner plan. They are not a second queue
 | GL10 | P1 | Coach/Practice handoff and the two-fixture evaluation | GL03, GL04, GL06 | UX09, UX10 | NOT STARTED |
 
 Critical path from the owner plan: GL01 → GL02 → GL03 → GL04/GL06 → GL10. GL05 waits on the answer envelope. GL07–GL09 wait on the player APIs. Wave 1 is the playable ungraded lesson. Do not hold it for read-aloud, companion polish, or original-file print.
+
+GL01 builder: `packages/learning/src/mission-plan.ts`. It returns a plan only when the Guided Learn flag is on. There is no prerequisite graph, so a supplied foundation is `unsupported_prerequisite` and is not cited as course evidence. The builder does not write mastery.
 
 ### Plan review and source notes
 

@@ -1,5 +1,6 @@
 /**
  * Guided Learn shared contracts. Types and closed vocabularies only.
+ * Plan construction is `buildLearningMissionPlan` in ./mission-plan.ts.
  * No director, persistence, provider call, or mastery write lives here.
  * Software later decides sequence. A model may only fill schema-validated text.
  */

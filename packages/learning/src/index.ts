@@ -5,3 +5,4 @@ export * from './director';
 export * from './session';
 export * from './preferences';
 export * from './mission';
+export * from './mission-plan';
