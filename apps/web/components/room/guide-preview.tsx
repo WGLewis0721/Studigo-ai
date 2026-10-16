@@ -30,12 +30,14 @@ export function GuidePreview({
   const sourcePanelId = useId();
   const sourceRequest = useRef(0);
   const sourceHeading = useRef<HTMLHeadingElement>(null);
+  const sourceDialog = useRef<HTMLDialogElement>(null);
   const sourceTrigger = useRef<HTMLButtonElement | null>(null);
 
   function closeSource() {
     sourceRequest.current += 1;
+    sourceDialog.current?.close();
     setSource(null);
-    sourceTrigger.current?.focus();
+    sourceTrigger.current?.focus({ preventScroll: true });
   }
 
   async function inspectSource(blockKey: string, pageNumber: number, trigger: HTMLButtonElement) {
@@ -56,7 +58,14 @@ export function GuidePreview({
     }
   }
 
-  useEffect(() => { if (source) sourceHeading.current?.focus(); }, [source?.blockKey]);
+  useEffect(() => {
+    if (!source) return;
+    const dialog = sourceDialog.current;
+    // Native top layer keeps the companion/navigation behind the sheet and
+    // supplies focus containment, including while a source request is pending.
+    if (dialog && !dialog.open) dialog.showModal();
+    sourceHeading.current?.focus({ preventScroll: true });
+  }, [source?.blockKey]);
 
   useEffect(() => {
     sourceRequest.current += 1;
@@ -139,8 +148,8 @@ export function GuidePreview({
         <button type="button" aria-label="Print generated Studigo guide" onClick={() => window.print()}>Print</button>
       </div>
       <pre className="guidePrintSheet" aria-hidden="true">{printText}</pre>
-      {phase3Materials && source && <aside id={sourcePanelId} className="materialsSourceSpotlight" aria-label="Source passage" onKeyDown={(event) => { if (event.key === "Escape") closeSource(); }}>
-        <div className="materialsSourceTop"><h3 ref={sourceHeading} tabIndex={-1}>Source passage{source.pageNumber > 0 ? ` · page ${source.pageNumber}` : ""}</h3><button type="button" onClick={closeSource}>Close</button></div>
+      {phase3Materials && source && <dialog ref={sourceDialog} id={sourcePanelId} className="materialsSourceSpotlight materialsSourceDialog" aria-labelledby={`${sourcePanelId}-title`} onCancel={(event) => { event.preventDefault(); closeSource(); }}>
+        <div className="materialsSourceTop"><h3 id={`${sourcePanelId}-title`} ref={sourceHeading} tabIndex={-1}>Source passage{source.pageNumber > 0 ? ` · page ${source.pageNumber}` : ""}</h3><button type="button" onClick={closeSource}>Close</button></div>
         {source.state === "loading" && <p role="status">Checking the current source…</p>}
         {source.state === "unavailable" && <><p role="status">This passage is unavailable or no longer current. Check the original files above. Studigo will not substitute a passage from another source.</p><button className="ghostButton" type="button" onClick={() => { if (sourceTrigger.current) void inspectSource(source.blockKey, source.pageNumber, sourceTrigger.current); }}>Check passage again</button></>}
         {source.state === "ready" && <>
@@ -148,7 +157,7 @@ export function GuidePreview({
           <blockquote>{source.text}</blockquote>
           {source.document?.id && <a href={`/api/documents/download?documentId=${encodeURIComponent(source.document.id)}&inline=1${source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? `&page=${source.pageNumber}` : ""}`} target="_blank" rel="noreferrer">Open original{source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? ` at page ${source.pageNumber}` : ""}</a>}
         </>}
-      </aside>}
+      </dialog>}
       {loaded.chapters.map((chapter) => (
         <section key={chapter.id}>
           <h3>{chapter.title}</h3>

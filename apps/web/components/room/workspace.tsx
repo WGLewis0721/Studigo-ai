@@ -1,6 +1,7 @@
 "use client";
 
 import "./phase3-foundation.css";
+import "./materials-source.css";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";

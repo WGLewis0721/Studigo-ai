@@ -1,0 +1,53 @@
+/* Verified source text has one modal surface: a phone sheet or a wide pane. */
+.roomDevice[data-ui="phase3"] dialog.materialsSourceDialog {
+  position: fixed;
+  inset: 24px 24px 24px auto;
+  width: min(480px, calc(100vw - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  margin: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--snow-3);
+  border-radius: 24px;
+  background: var(--snow-2);
+  color: var(--ink);
+  box-shadow: var(--lift-1);
+  font-family: var(--sans);
+}
+.materialsSourceDialog::backdrop { background: rgb(18 27 39 / .45); }
+.roomDevice[data-ui="phase3"] .materialsSourceDialog .materialsSourceTop {
+  position: sticky;
+  top: -24px;
+  z-index: 1;
+  margin: -24px -24px 20px;
+  padding: 20px 24px 12px;
+  background: var(--snow-2);
+  border-bottom: 1px solid var(--snow-3);
+}
+.roomDevice[data-ui="phase3"] .materialsSourceDialog :is(button, a) {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 12px;
+}
+.roomDevice[data-ui="phase3"] .materialsSourceDialog blockquote { margin-block: 18px; }
+@media (max-width: 700px) {
+  .roomDevice[data-ui="phase3"] dialog.materialsSourceDialog {
+    inset: auto 0 0;
+    width: 100%;
+    max-height: 82dvh;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    border-radius: 24px 24px 0 0;
+  }
+  .roomDevice[data-ui="phase3"] .materialsSourceDialog .materialsSourceTop {
+    top: -20px;
+    margin: -20px -20px 18px;
+    padding: 18px 20px 12px;
+  }
+}
+@media (forced-colors: active) {
+  .roomDevice[data-ui="phase3"] dialog.materialsSourceDialog { border: 2px solid CanvasText; }
+}
+@media print { .materialsSourceDialog { display: none !important; } }
