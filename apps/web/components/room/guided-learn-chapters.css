@@ -326,7 +326,9 @@
   .roomDevice:has(.learnReading) .learnReading {
     max-height: calc(100dvh - 145px - var(--m-tabbar, 78px) - var(--m-safe-bottom, 0px));
     overflow: hidden;
-    padding: 11px 11px 9px;
+    /* The action dock is fixed above the room tabs. Reserve its full lane
+       inside the scrolling lesson so no last answer is hidden behind it. */
+    padding: 11px 11px 76px;
     gap: 8px;
   }
   .roomDevice:has(.learnReading) .learnReading .learnTalk {
