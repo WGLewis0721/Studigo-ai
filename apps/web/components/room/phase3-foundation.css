@@ -118,6 +118,21 @@
   .roomDevice[data-ui="phase3"]:has(.coachChat) .mhTitle h2 { font-size: 1.12rem; }
   .roomDevice[data-ui="phase3"] .mhTitle p { font-size: .72rem; }
   .roomDevice[data-ui="phase3"] .materialsIntro { align-items: start; flex-direction: column; gap: 8px; }
+  /* The single Studigo companion floats at the right edge of the source intro.
+     Give the source title its own reading lane and place the source-status
+     readout beneath the companion rather than letting him cover either one.
+     Only the Phase 3 phone presentation changes; legacy and wide views stay put. */
+  .roomDevice[data-ui="phase3"] .materialsIntro > div:first-child {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 138px;
+    padding-inline-end: clamp(108px, 34vw, 140px);
+  }
+  .roomDevice[data-ui="phase3"] .materialsIntro h2 {
+    overflow-wrap: normal;
+    hyphens: auto;
+  }
   .roomDevice[data-ui="phase3"] .materialsIntro h2,
   .roomDevice[data-ui="phase3"] .materialsLibraryTitle h2 { margin: 0; font-size: 1.28rem; }
   .roomDevice[data-ui="phase3"] .materialsIntro p { display: none; }
