@@ -167,6 +167,11 @@ try {
             assert.equal(reading.clearDisplayed, true, "#174 clear bin must appear on phone, tablet and desktop");
             assert.equal(reading.clearSize, phone ? 30 : 44, "#174 clear bin must match compact/mobile or wide tap-target scale");
             assert.equal(reading.clearKeyboardFocusable, true, "#174 clear action must stay keyboard-accessible");
+            // With the bin in the composer, the old desktop Clear text button
+            // must not produce two identical destructive actions.
+            const oldClear = page.locator('.coachChat .lessonActions > button[aria-label^="Clear "]');
+            assert.equal(await oldClear.count(), 1, "historical Clear action should still exist for the legacy contract");
+            assert.equal(await oldClear.isVisible(), false, "avoid duplicated clear actions in both Coach and Learn layouts");
             entry.coachReading = reading;
           }
           const file = path.join(output, `${viewport.name}-${mode}-${skin}.png`);
