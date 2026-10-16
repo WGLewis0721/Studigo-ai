@@ -53,7 +53,7 @@ export function factualSourceLine(line: string): boolean {
   const value = line.trim();
   if (value.length < 27 || value.length > 280) return false;
   if (/^page\s+\d+\b/i.test(value) || /^[A-Z\s/]+$/.test(value)) return false;
-  return value.split(/\s+/).length >= 6;
+  return value.split(/\s+/).length >= 5;
 }
 function definedTerm(text: string): string | null {
   const match = text.match(/^([a-z][a-z\s-]{2,48})\s*(?:—|–|:|\bis\b|\bmeans\b)\s+\S/i);
