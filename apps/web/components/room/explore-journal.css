@@ -31,7 +31,7 @@
 @media(max-width:700px) {
   .exploreJournal { padding:8px 4px 20px; }
   .exploreJournalLayout { grid-template-columns:minmax(0,1fr); gap:12px; }
-  .exploreJournalDetail { order:-1; }
+  /* Keep visual and keyboard order aligned: chapter list, then quest detail. */
   .exploreJournalQuest { align-items:flex-start; flex-direction:column; gap:4px; }
   .exploreJournalActions button { width:100%; }
 }
