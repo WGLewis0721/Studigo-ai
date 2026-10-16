@@ -4046,6 +4046,52 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .lessonActions .ghostButton { flex: 1 1 8rem; min-width: 44px; min-height: max(44px, 2.75rem); }
 .coachPhoneNav, .chatEraser { display: none; }
 .chatDock { display: contents; }
+/* Coach / Learn retain the #174 clear-bin icon and #175 readable messaging
+   in every viewport. Desktop has room for a 44px visible clear action and
+   slightly larger reading type; phones keep the compact 17px / 30px design. */
+@media (min-width: 701px) {
+  .roomDevice .coachChat .studentBubble,
+  .roomDevice .coachChat .answerText,
+  .roomDevice .coachChat .answerBubble p,
+  .roomDevice .coachChat .lessonText,
+  .roomDevice .coachChat .answerText .richText p,
+  .roomDevice .coachChat .answerText .richText li,
+  .roomDevice .coachChat .answerText .richText li > ul,
+  .roomDevice .coachChat .answerText .richText li > ol {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .roomDevice .coachChat .answerText .richText h1 { font-size: 26px; line-height: 1.25; }
+  .roomDevice .coachChat .answerText .richText h2 { font-size: 22px; line-height: 1.3; }
+  .roomDevice .coachChat .answerText .richText h3,
+  .roomDevice .coachChat .answerText .richText h4 { font-size: 18px; line-height: 1.4; }
+  .roomDevice .coachChat .answerKicker { font-size: 14px; }
+  .roomDevice .chatComposer input { font-size: 18px; }
+  .roomDevice:has(.coachChat) .chatDock {
+    display: flex; align-items: center; gap: 8px; flex: none;
+    padding: 0 12px 8px; background: var(--th-bar);
+  }
+  .roomDevice:has(.coachChat) .chatDock .chatComposer { flex: 1; min-width: 0; padding: 8px 0 0; }
+  .roomDevice:has(.coachChat) .chatEraser {
+    display: grid; place-items: center; flex: none;
+    width: 44px; height: 44px; padding: 0;
+    border: 1px solid var(--th-line); border-radius: 12px;
+    background: var(--white); color: var(--ink); cursor: pointer;
+  }
+  .roomDevice:has(.coachChat) .chatEraser svg { width: 20px; height: 20px; }
+  /* The composer bin replaces the old desktop Clear text button;
+     Previous / Next remain in the lesson action row. */
+  .roomDevice:has(.coachChat) .lessonActions > button[aria-label^="Clear "] { display: none; }
+  .roomDevice:has(.coachChat) .chatEraser:disabled { opacity: .4; cursor: default; }
+}
+.roomDevice .chatEraser:focus-visible {
+  outline: 2px solid var(--th-ink, var(--ink)); outline-offset: 2px;
+}
+/* The older mobile .roomWorkspace input rule otherwise forces 16px and
+   silently undoes #175's Coach / Learn composer reading size. */
+@media (max-width: 700px) {
+  .roomDevice .chatComposer input { font-size: 17px; }
+}
 @media (max-width: 700px) {
   .roomDevice:has(.coachChat) .mhChipBar { align-items: center; }
   .roomDevice:has(.coachChat) .coachPhoneNav {
