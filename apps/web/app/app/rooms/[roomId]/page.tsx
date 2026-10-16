@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getRoom, getRoomReadiness, listDocuments, listTopics } from "@/lib/rooms";
 import { RoomWorkspace } from "@/components/room/workspace";
 import { phase3UiEnabledForRoom } from "@/lib/phase3-room-flag";
+import { guidedLearnEnabled } from "@/lib/guided-learn-flag";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,11 @@ export default async function RoomPage({
   // Phase 3 design lock: show the established Learn experience until the UI/UX release is accepted.
   // Keep existing mission records and migrations for a separate, future Guided Learn rollout.
   const phase3Learn = false;
+  // Both Guided Learn switches default off. The flag is passed through and does not select a surface.
+  const guidedLearn = guidedLearnEnabled(
+    process.env.STUDIGO_GUIDED_LEARN,
+    process.env.NEXT_PUBLIC_STUDIGO_GUIDED_LEARN
+  );
   const phase3FoundationUi = phase3UiEnabledForRoom(
     room.id,
     process.env.PHASE3_UI_ROOM_IDS,
@@ -53,6 +59,7 @@ export default async function RoomPage({
       readiness={readiness}
       initialMode={mode}
       phase3Learn={phase3Learn}
+      guidedLearn={guidedLearn}
       phase3FoundationUi={phase3FoundationUi}
       {...studyEvidence}
     />
