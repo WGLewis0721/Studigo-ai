@@ -47,27 +47,57 @@ function uniqueWords(words: string[]): string[] {
   return kept;
 }
 
+/** Headings, page labels and OCR fragments are valid source text but invalid
+ * practice choices. Never assert that a section heading answers a question. */
+export function factualSourceLine(line: string): boolean {
+  const value = line.trim();
+  if (value.length < 27 || value.length > 280) return false;
+  if (/^page\s+\d+\b/i.test(value) || /^[A-Z\s/]+$/.test(value)) return false;
+  return value.split(/\s+/).length >= 6;
+}
+function definedTerm(text: string): string | null {
+  const match = text.match(/^([a-z][a-z\s-]{2,48})\s*(?:—|–|:|\bis\b|\bmeans\b)\s+\S/i);
+  const term = match?.[1]?.trim();
+  return term && term.split(/\s+/).length <= 5 ? term.toLowerCase() : null;
+}
+function clearChoiceQuestion(objective: string, answer: string): string {
+  const term = definedTerm(answer);
+  if (term) return `Which line from your guide explains what ${term} means?`;
+  const subject = objective.trim().replace(/[.!?]+$/, "").slice(0, 100);
+  return subject
+    ? `Which line in your guide helps explain: ${subject}?`
+    : "Which source statement matches the idea you just read?";
+}
+
 /** A short tutorial from one passage. Facts stay the source lines. Level changes only the prompt. */
 export function missionBeats(objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
-  const title = objective.trim() || "This idea";
-  const safeTarget = sentences[target] ? target : 0;
-  const answer = sentences[safeTarget] ?? title;
-  const lead = level === "simpler" ? "Watch." : level === "deeper" ? "Notice this." : "Here it is.";
-  const beats: MissionBeat[] = [{ kind: "read", title: lead, body: answer }];
-  if (sentences.length < 2) return beats;
-
-  const distractors = sentences.filter((_, index) => index !== safeTarget);
+  const usable = sentences.filter(factualSourceLine);
+  // The mission database advances through four teaching phases. Never repeat
+  // a clamped activity when the excerpt lacks enough distinct source facts.
+  if (usable.length < 2) return [];
+  const answer = sentences[target] && factualSourceLine(sentences[target])
+    ? sentences[target] : usable[0];
+  const distractors = usable.filter((line) => line !== answer);
   const choicePool = distractors.slice(0, level === "simpler" ? 2 : 3);
-  const slot = safeTarget % (choicePool.length + 1);
+  const slot = usable.indexOf(answer) % (choicePool.length + 1);
   const options = [...choicePool];
   options.splice(slot, 0, answer);
-  beats.push({
-    kind: "choice",
-    prompt: level === "simpler" ? "Which one is it?" : level === "deeper" ? "Which line is the one?" : "Pick the right line.",
-    options,
-    answer: slot,
-  });
 
+  const readTitle = level === "simpler" ? "Read this source fact." :
+    level === "deeper" ? "Let's examine the evidence." : "First, read this fact.";
+  const beats: MissionBeat[] = [
+    { kind: "read", title: readTitle, body: answer },
+    {
+      kind: "choice",
+      prompt: clearChoiceQuestion(objective, answer),
+      options,
+      answer: slot,
+    },
+  ];
+
+  // Exactly one word is missing, and every option comes from the authorized
+  // excerpt. An alternate word from the same source statement is still
+  // source-derived when the distractor lines contain no suitable candidate.
   const words = contentWords(answer);
   const hole = (level === "deeper"
     ? [...words].sort((a, b) => b.length - a.length)[0]
@@ -75,37 +105,45 @@ export function missionBeats(objective: string, sentences: string[], target: num
       ? [...words].sort((a, b) => a.length - b.length)[0]
       : words[0]) ?? "";
   const at = hole ? answer.toLowerCase().indexOf(hole.toLowerCase()) : -1;
-  const extras = uniqueWords(distractors.flatMap(contentWords)).filter((word) => word.toLowerCase() !== hole.toLowerCase()).slice(0, level === "simpler" ? 1 : 2);
-  if (at >= 0 && extras.length) {
-    const wordSlot = safeTarget % (extras.length + 1);
-    const wordOptions = [...extras];
-    wordOptions.splice(wordSlot, 0, answer.slice(at, at + hole.length));
-    beats.push({
-      kind: "blank",
-      prompt: level === "simpler" ? "Tap the missing word." : level === "deeper" ? "Complete the line." : "Fill the gap.",
-      before: answer.slice(0, at),
-      after: answer.slice(at + hole.length),
-      answer: answer.slice(at, at + hole.length),
-      options: wordOptions,
-    });
-  }
+  const extras = uniqueWords([...distractors.flatMap(contentWords),
+    ...words.filter((word) => word.toLowerCase() !== hole.toLowerCase())])
+    .filter((word) => word.toLowerCase() !== hole.toLowerCase()).slice(0, level === "simpler" ? 1 : 2);
+  if (at < 0 || extras.length < 1) return [];
+  const wordSlot = usable.indexOf(answer) % (extras.length + 1);
+  const wordOptions = [...extras];
+  wordOptions.splice(wordSlot, 0, answer.slice(at, at + hole.length));
+  beats.push({
+    kind: "blank",
+    prompt: "Which word completes the sentence from your guide?",
+    before: answer.slice(0, at),
+    after: answer.slice(at + hole.length),
+    answer: answer.slice(at, at + hole.length),
+    options: wordOptions,
+  });
 
-  const boxOptions = sentences.slice(0, Math.min(sentences.length, level === "simpler" ? 3 : 4));
+  const boxOptions = usable.slice(0, Math.min(usable.length, level === "simpler" ? 3 : 4));
   let boxTarget = boxOptions.indexOf(answer);
   if (boxTarget < 0) {
     boxOptions[boxOptions.length - 1] = answer;
     boxTarget = boxOptions.length - 1;
   }
-  const wanted = new Set(contentWords(objective).map((word) => word.toLowerCase()));
+  const term = definedTerm(answer);
+  const wanted = term ? term.split(/\s+/) :
+    contentWords(objective).map((word) => word.toLowerCase());
   const hits = boxOptions
-    .map((line, index) => index === boxTarget || contentWords(line).some((word) => wanted.has(word.toLowerCase())))
+    .map((line, index) => index === boxTarget || (
+      wanted.length > 0 && wanted.every((word) =>
+        line.toLowerCase().includes(word.toLowerCase()))
+    ))
     .map((hit, index) => hit ? index : -1)
     .filter((index) => index >= 0);
   beats.push({
     kind: "boxes",
-    prompt: level === "simpler" ? "Tap every one that fits." : level === "deeper" ? "Mark every line that counts." : "Mark the ones that count.",
+    prompt: term
+      ? `Which lines in your guide describe ${term}?`
+      : "Which lines provide evidence for the fact you learned?",
     options: boxOptions,
-    answers: hits.length && hits.length < boxOptions.length ? hits : [boxTarget],
+    answers: hits,
   });
   return beats;
 }
@@ -116,11 +154,12 @@ function words(value: string): string[] {
 
 export function tapCheck(objective: string, excerpt: string): { sentences: string[]; target: number } | null {
   const sentences = sourceSentences(excerpt);
-  if (sentences.length < 2) return null;
+  if (sentences.filter(factualSourceLine).length < 2) return null;
   const wanted = words(objective);
   let target = 0;
   let best = -1;
   sentences.forEach((sentence, index) => {
+    if (!factualSourceLine(sentence)) return;
     const seen = words(sentence);
     const score = wanted.filter((word) => seen.some((token) => token === word || token.startsWith(word))).length;
     if (score > best) {
