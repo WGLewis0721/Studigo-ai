@@ -414,7 +414,12 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           if (error && !mission) { void act("start"); return; }
           if (beat?.kind === "boxes" && !shown) { setShown(true); return; }
           advanceLevel();
-        }}>{advanceLabel}</button>
+        }} aria-label={advanceLabel}>
+          <span className="learnActionWide">{advanceLabel}</span>
+          <span className="learnActionCompact" aria-hidden="true">
+            {!beat || beat.kind === "read" ? "Continue →" : shown ? "Next →" : beat.kind === "boxes" ? "Check →" : "Choose one"}
+          </span>
+        </button>
     </div>}
   </section>;
 }
