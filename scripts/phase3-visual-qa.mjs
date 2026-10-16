@@ -473,6 +473,13 @@ try {
         "Lesson buttons must not overlap each other");
       assert.ok(arrangement.dockScrollWidth <= arrangement.dockWidth + 2,
         "Lesson action dock must fit without hidden horizontal scrolling");
+      const labelVisibility = await page.locator(".learnGo").evaluate(button => {
+        const wide = button.querySelector(".learnActionWide");
+        const compact = button.querySelector(".learnActionCompact");
+        return [wide, compact].map(el => getComputedStyle(el).display !== "none");
+      });
+      assert.deepEqual(labelVisibility, viewport.width <= 1100 ? [false, true] : [true, false],
+        "Primary action displays exactly one responsive label rather than both");
       assert.ok(arrangement.stageBelowProgress && arrangement.stageAboveDock,
         "Instructional canvas must stay between progress and toolbar");
       assert.ok(arrangement.lessonHeight >= (viewport.width <= 700 ? 130 : 220),
