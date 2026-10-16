@@ -428,6 +428,8 @@ try {
       await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
       await page.locator(".learnGo").click();
       await page.locator(".learnChoices .learnChoice").first().waitFor();
+      assert.ok(!/Which one is it\?/.test(await page.locator(".learnAsk").innerText()), "source question cannot be generic");
+      assert.match(await page.locator(".learnAsk").innerText(), /Which line in your guide helps explain/);
       await page.locator(".learnChoices .learnChoice").first().scrollIntoViewIfNeeded();
       const visibleChoice = await page.locator(".learnChoices .learnChoice").first().evaluate(el => {
         const rect = el.getBoundingClientRect();
@@ -497,8 +499,35 @@ try {
         assert.ok(sourceHeight >= 440, "Wide source inspector should be a substantial reader, not a short popup");
         missionCase.sourceHeight = sourceHeight;
       }
+      const sourceGeometry = await sourceSheet.evaluate(el => {
+        const scroll = el.querySelector(".learnSourceScroll");
+        const footer = el.querySelector(".learnSourceFooter");
+        const quote = el.querySelector(".learnSourceQuote");
+        const buttons = [...el.querySelectorAll(".learnSourceButtons a, .learnSourceButtons button")];
+        if (!scroll || !footer || !quote) throw new Error("Expected independent passage and fixed footer");
+        const sr = scroll.getBoundingClientRect();
+        const fr = footer.getBoundingClientRect();
+        const er = el.getBoundingClientRect();
+        return {
+          scrollHeight: scroll.scrollHeight, visibleHeight: scroll.clientHeight,
+          noOverlap: sr.bottom <= fr.top + 1,
+          footerFits: fr.bottom <= er.bottom + 1,
+          actionsFit: buttons.every(btn => btn.getBoundingClientRect().bottom <= er.bottom + 1),
+          quoteWrapped: quote.scrollWidth <= sr.width + 2
+        };
+      });
+      assert.ok(sourceGeometry.scrollHeight > sourceGeometry.visibleHeight, "long source text must scroll separately");
+      assert.ok(sourceGeometry.noOverlap && sourceGeometry.footerFits && sourceGeometry.actionsFit,
+        "source text must never draw over modal footer");
+      assert.equal(sourceGeometry.quoteWrapped, true, "source OCR text should wrap within its column");
+      missionCase.sourceGeometry = sourceGeometry;
       missionCase.sourceScreenshot = path.join(output, `${viewport.name}-guided-learn-source-phase3.png`);
       await page.screenshot({ path: missionCase.sourceScreenshot, animations: "disabled" });
+      await sourceSheet.locator(".learnSourceScroll").evaluate(el => { el.scrollTop = el.scrollHeight; });
+      assert.ok(await sourceSheet.locator(".learnSourceButtons").isVisible(),
+        "footer must remain visible after scrolling long source text");
+      missionCase.sourceScrolledScreenshot = path.join(output, `${viewport.name}-guided-learn-source-scrolled-phase3.png`);
+      await page.screenshot({ path: missionCase.sourceScrolledScreenshot, animations: "disabled" });
       await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
       await sourceSheet.waitFor({ state: "hidden" });
       assert.ok(await findIt.evaluate(el => document.activeElement === el), "spotlight must return keyboard focus to Find it");
@@ -527,15 +556,22 @@ try {
       missionCase.voiceConsentPreview = true;
       // Complete a fixture mission through explicit formative actions.
       // This must not call a real grading endpoint or claim learner mastery.
-      await page.locator(".learnGo").click(); // hinted choice -> try
+      await page.locator(".learnGo").click(); // assisted choice -> try
       await page.locator(".learnWords .learnWord").first().waitFor();
-      await page.locator(".learnWords .learnWord").first().click();
-      await page.locator(".learnGo").click(); // Check word choice
-      await page.locator(".learnGo").click(); // Continue -> source evidence
+      await page.locator(".learnWords .learnWord").first().click(); // auto-check on one-word selection
+      const response = page.locator(".learnAnswerFeedback[role='status']");
+      await response.waitFor();
+      assert.match(await response.innerText(), /Correct!|Not quite/);
+      assert.match(await page.locator(".learnGo").innerText(), /Next activity/);
+      missionCase.answerFeedbackScreenshot = path.join(output, `${viewport.name}-guided-learn-answer-feedback-phase3.png`);
+      await page.screenshot({ path: missionCase.answerFeedbackScreenshot, animations: "disabled" });
+      await page.locator(".learnGo").click(); // one Next -> evidence multi-select stage
       await page.locator(".learnChoices .learnChoice").first().waitFor();
       await page.locator(".learnChoices .learnChoice").first().click();
-      await page.locator(".learnGo").click(); // Check evidence
-      await page.locator(".learnGo").click(); // Continue -> done
+      assert.match(await page.locator(".learnGo").innerText(), /Check answers/);
+      await page.locator(".learnGo").click(); // check multiple selections
+      assert.equal(await page.locator(".learnAnswerFeedback").count(), 1);
+      await page.locator(".learnGo").click(); // one Next -> done
       const end = page.locator(".learnHandoff");
       await end.waitFor();
       assert.ok(await end.getByText(/NO MASTERY AWARDED/).isVisible());
