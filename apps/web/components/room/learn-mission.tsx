@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
 import { ExploreJournal } from "./explore-journal";
+import { MissionControlIcon } from "./mission-control-icon";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
@@ -273,8 +274,12 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   />;
 
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
-    {(!fixture || previewJournal) && <button type="button" className="ghostButton exploreJournalReturn"
-      onClick={() => setJournalOpen(true)}>← Quest journal</button>}
+    {(!fixture || previewJournal) && <nav className="learnMissionNav" aria-label="Quest navigation">
+      <button type="button" className="ghostButton learnNavJournal"
+        aria-label="Quest journal" title="Quest journal" onClick={() => setJournalOpen(true)}>
+        <MissionControlIcon name="journal" />
+      </button>
+    </nav>}
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
       <h2>{invitationTitle ? "Learn " + invitationTitle : "Start with your material"}</h2>
@@ -397,27 +402,35 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
     {!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
-      {mission && <button className="ghostButton learnDockBack" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")} aria-label="Previous lesson step">
-        <span className="learnActionWide">← Back</span><span className="learnActionCompact" aria-hidden="true">←</span>
+      {mission && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || mission.phase === "brief"}
+        onClick={() => void act("back")} aria-label="Previous lesson step" title="Previous step">
+        <MissionControlIcon name="back" />
       </button>}
-      {mission && <button className="ghostButton learnDockPause" type="button" disabled={busy} onClick={() => void act("pause")} aria-label="Pause lesson">
-        <span className="learnActionWide">Pause</span><span className="learnActionCompact" aria-hidden="true">Ⅱ</span>
+      {mission && <button className="ghostButton learnDockPause learnIconKey" type="button" disabled={busy}
+        onClick={() => void act("pause")} aria-label="Pause lesson" title="Pause lesson">
+        <MissionControlIcon name="pause" />
       </button>}
-      {ready && <button type="button" className="ghostButton learnDockSource" ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide">
-        <span className="learnActionWide">Find it in my guide</span><span className="learnActionCompact" aria-hidden="true">⌕</span>
+      {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint learnIconKey"
+        onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint" title="Give me a hint">
+        <span className="learnHelpGlyph" aria-hidden="true">?</span>
       </button>}
-      {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint" onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint">
-        <span className="learnActionWide">Give me a hint</span><span className="learnActionCompact" aria-hidden="true">?</span>
+      <button className={introduction ? "buttonPrimary learnGo learnGoIconOnly" : "buttonPrimary learnGo"} type="button"
+        aria-label={introduction ? "Check what I understood" : undefined}
+        title={introduction ? "Check what I understood" : undefined}
+        disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))}
+        onClick={() => {
+          if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
+          if (error && !mission) { void act("start"); return; }
+          if (!beat || beat.kind === "read" || shown) advanceLevel();
+          else setShown(true);
+        }}>{introduction ? <MissionControlIcon name="check" />
+          : beat?.kind === "read" ? "Start question →"
+          : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
+          : "Check answer →"}</button>
+      {ready && <button type="button" className="ghostButton learnDockSource learnIconKey"
+        ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide" title="Find it in my guide">
+        <MissionControlIcon name="guide" />
       </button>}
-      <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
-        if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-        if (error && !mission) { void act("start"); return; }
-        if (!beat || beat.kind === "read" || shown) advanceLevel();
-        else setShown(true);
-      }}>{introduction ? "Check what I understood →"
-        : beat?.kind === "read" ? "Start question →"
-        : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
-        : "Check answer →"}</button>
     </div>}
   </section>;
 }
