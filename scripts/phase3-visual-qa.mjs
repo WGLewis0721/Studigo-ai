@@ -509,11 +509,16 @@ try {
         const original = dialog.querySelector(".learnSourceOriginal");
         const back = dialog.querySelector(".ghostButton");
         if (!quote || !back) throw new Error("Source dialog missing quote or exit");
+        const initialContent = quote.textContent;
+        quote.textContent = Array.from({length: 70}, () => initialContent).join("\n");
         const rect = dialog.getBoundingClientRect();
         const quoteBox = quote.getBoundingClientRect();
         const exitBox = back.getBoundingClientRect();
         const documentHeight = quote.scrollHeight;
+        const viewportHeight = quote.clientHeight;
+        quote.textContent = initialContent;
         return {
+          trulyScrollable: documentHeight > viewportHeight + 100,
           scrollableExcerpt: getComputedStyle(quote).overflowY === "auto",
           quoteInside: quoteBox.top >= rect.top && quoteBox.bottom <= exitBox.top + 1,
           exitInside: exitBox.bottom <= rect.bottom + 1,
@@ -521,7 +526,7 @@ try {
           originalInside: !original || original.getBoundingClientRect().bottom <= exitBox.top
         };
       });
-      assert.ok(clip.scrollableExcerpt && clip.quoteInside && clip.exitInside && clip.originalInside,
+      assert.ok(clip.trulyScrollable && clip.scrollableExcerpt && clip.quoteInside && clip.exitInside && clip.originalInside,
         "Source excerpt must scroll internally without overlapping Open original or Back to lesson");
       missionCase.sourceClip = clip;
       await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
