@@ -61,6 +61,9 @@ export function ExploreJournal({
   const blocked = Boolean(activeTopic && !canSwitchExploreQuest(activeTopic.id, cursor));
   const isCurrent = Boolean(activeTopic && cursor?.topic_id === activeTopic.id);
   const disabled = busy || working;
+  const recommendedNext = cursor?.phase === "done" ? [...topics]
+    .sort((a, b) => a.order_index - b.order_index || a.id.localeCompare(b.id))
+    .find((topic) => topic.order_index > (topics.find((item) => item.id === cursor.topic_id)?.order_index ?? Infinity)) ?? null : null;
 
   const enter = async () => {
     if (!activeTopic || disabled || blocked || status === "source_changed") return;
@@ -133,6 +136,11 @@ export function ExploreJournal({
         {status === "reading_complete" && <p className="exploreJournalNotice">
           Guided reading complete. This is not evidence of independent mastery.
         </p>}
+        {status === "reading_complete" && recommendedNext && isCurrent && (
+          <button type="button" className="ghostButton" onClick={() => setSelected(recommendedNext.id)}>
+            Next suggested quest: {recommendedNext.title} →
+          </button>
+        )}
         <div className="exploreJournalActions">
           {status === "source_changed" ? <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Open Materials</button>
             : <button className="buttonPrimary" type="button" disabled={disabled || blocked || !activeTopic} onClick={() => void enter()}>
