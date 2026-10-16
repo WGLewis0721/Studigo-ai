@@ -4079,6 +4079,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     background: var(--white); color: var(--ink); cursor: pointer;
   }
   .roomDevice:has(.coachChat) .chatEraser svg { width: 20px; height: 20px; }
+  /* The composer bin replaces the old desktop Clear text button;
+     Previous / Next remain in the lesson action row. */
+  .roomDevice:has(.coachChat) .lessonActions > button[aria-label^="Clear "] { display: none; }
   .roomDevice:has(.coachChat) .chatEraser:disabled { opacity: .4; cursor: default; }
 }
 .roomDevice .chatEraser:focus-visible {
