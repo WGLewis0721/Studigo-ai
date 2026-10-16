@@ -678,7 +678,12 @@ try {
         const journal = page.getByRole("button", { name: "Quest journal" });
         const check = page.getByRole("button", { name: "Check what I understood" });
         const guide = page.getByRole("button", { name: "Find it in my guide" });
-        assert.equal(await page.locator(".learnMissionNav").count(), 1, "journal must live in the top navigation");
+        assert.equal(await page.locator(".learnMissionNav").count(), 0, "moving the journal must remove the empty top navigation band");
+        assert.equal(await page.locator(".learnActionDock .learnDockJournal").count(), 1, "journal must be inside the bottom lesson toolbar");
+        assert.equal(await journal.evaluate((node) => node.previousElementSibling?.getAttribute("aria-label")), "Pause lesson",
+          "journal must immediately follow Pause in the bottom action bar");
+        assert.equal(await journal.evaluate((node) => node.nextElementSibling?.getAttribute("aria-label")), "Check what I understood",
+          "journal must sit before the orange primary action during the opening read");
         assert.equal(await journal.locator(".learnControlGlyph").count(), 1, "journal must use the clipboard glyph");
         assert.equal(await check.locator(".learnControlGlyph").count(), 1, "opening primary action must use a circled check");
         assert.equal(await guide.locator(".learnControlGlyph").count(), 1, "source control must use a notebook glyph");
@@ -702,7 +707,9 @@ try {
         await page.getByRole("button", { name: /Check answer/ }).click();
         await page.getByRole("button", { name: /Explore this lesson/ }).click();
         await page.getByText("EXPLORE · GUIDED ACTIVITY").waitFor();
-        await page.getByRole("button", { name: /Quest journal/ }).click();
+        await page.getByRole("button", { name: "Pause lesson" }).click();
+        await page.getByText(/PAUSED MISSION/).waitFor();
+        await page.getByRole("button", { name: "Quest journal" }).click();
         await page.getByRole("heading", { name: "Quest journal" }).waitFor();
         // The URL shared with reviewers must actually open Explore directly.
         // A Ready preview of /app alone does not establish this.
