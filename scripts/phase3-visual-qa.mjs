@@ -43,7 +43,7 @@ try {
         const url = `${origin}/dev/study?shell=1&mode=${encodeURIComponent(mode)}&ui=${skin}`;
         let entry = { viewport: viewport.name, mode, skin, url, screenshot: "", zoomScreenshot: "", horizontalOverflow: null, zoomOverflow: null, navButtons: null, keyboard: [], reducedMotion: null, error: null };
         try {
-          const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 });
+          const response = await page.goto(url, { waitUntil: "networkidle", timeout: 90_000 });
           assert.equal(response?.status(), 200, "synthetic fixture must return HTTP 200");
           const device = page.locator(".roomDevice");
           await device.waitFor({ state: "attached", timeout: 45_000 });
@@ -102,7 +102,7 @@ try {
     // Extra controls use the same synthetic room and never contact a learner API.
     const interaction = { viewport: viewport.name, settings: false, sourceShortcut: "hidden", syntheticQuiz: false, sourceInspector: false, error: null };
     try {
-      await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "networkidle" });
       const source = page.locator("button.sourceCount");
       if (await source.isVisible()) {
         await source.click();
@@ -127,7 +127,7 @@ try {
       let gradeCalls = 0;
       await page.route("**/api/quiz", route => route.fulfill({ json: { questions: [{ id: "synthetic-q1", kind: "multiple_choice", prompt: "Synthetic browser check: which action submits?", choices: ["Submit answer", "Choosing confidence"], difficulty: "easy", topic_id: null }] } }));
       await page.route("**/api/quiz/attempt", route => { gradeCalls++; return route.fulfill({ json: { isCorrect: true, score: 100, feedback: "Synthetic feedback only.", confidence: 3, correctChoice: 0, expectedAnswer: null, explanation: "", citations: [] } }); });
-      await page.goto(`${origin}/dev/study?shell=1&mode=quiz&ui=phase3`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${origin}/dev/study?shell=1&mode=quiz&ui=phase3`, { waitUntil: "networkidle" });
       await page.getByRole("button", { name: "Start quiz" }).click();
       await page.locator(".choiceItem").first().click();
       await page.getByRole("button", { name: "Confident", exact: false }).click();
@@ -136,7 +136,7 @@ try {
       await page.locator(".quizFeedback").waitFor();
       assert.equal(gradeCalls, 1, "explicit submit must grade once");
       interaction.syntheticQuiz = true;
-      await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "networkidle" });
       const chooseFiles = page.getByRole("button", { name: "Choose files", exact: false });
       if (await chooseFiles.isVisible()) {
         assert.ok(await chooseFiles.evaluate(el => {
@@ -171,7 +171,7 @@ try {
     for (const first of [false, true]) {
       const home = { viewport: viewport.name, firstRun: first, screenshot: "", horizontalOverflow: null, zoomOverflow: null, error: null };
       try {
-        await page.goto(`${origin}/dev/home${first ? "?first=1" : ""}`, { waitUntil: "domcontentloaded" });
+        await page.goto(`${origin}/dev/home${first ? "?first=1" : ""}`, { waitUntil: "networkidle" });
         const surface = page.locator(first ? ".firstRoom" : ".homeHero");
         await surface.waitFor();
         assert.equal(await surface.getAttribute("data-ui"), "phase3", "Home fixture requires NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1");
