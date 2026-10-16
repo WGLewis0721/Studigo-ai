@@ -562,13 +562,13 @@ try {
       const response = page.locator(".learnAnswerFeedback[role='status']");
       await response.waitFor();
       assert.match(await response.innerText(), /Correct!|Not quite/);
-      assert.match(await page.locator(".learnGo").innerText(), /Next activity/);
+      assert.match(await page.locator(".learnGo").getAttribute("aria-label"), /Next activity/);
       missionCase.answerFeedbackScreenshot = path.join(output, `${viewport.name}-guided-learn-answer-feedback-phase3.png`);
       await page.screenshot({ path: missionCase.answerFeedbackScreenshot, animations: "disabled" });
       await page.locator(".learnGo").click(); // one Next -> evidence multi-select stage
       await page.locator(".learnChoices .learnChoice").first().waitFor();
       await page.locator(".learnChoices .learnChoice").first().click();
-      assert.match(await page.locator(".learnGo").innerText(), /Check answers/);
+      assert.match(await page.locator(".learnGo").getAttribute("aria-label"), /Check answers/);
       await page.locator(".learnGo").click(); // check multiple selections
       assert.equal(await page.locator(".learnAnswerFeedback").count(), 1);
       await page.locator(".learnGo").click(); // one Next -> done
