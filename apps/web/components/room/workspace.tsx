@@ -26,6 +26,7 @@ import { useCollapsingTabBar } from "./use-collapsing-tab-bar";
 import type { MascotState } from "@/components/studigo-mascot";
 import { useCoachPreferences } from "./use-coach-preferences";
 import { CompanionContext, useCompanionWindow } from "@/components/companion/companion";
+import { guidedLearnSurfaceEnabled } from "@/lib/guided-learn-flag";
 
 // Each mode's id doubles as its color tone (see [data-tone] in globals.css):
 // Learn blueberry, Ask/Materials teal, Coach/Cram tangerine, Quiz dandelion,
@@ -84,6 +85,7 @@ export function RoomWorkspace({
   initialMode,
   evidence, planEvents, asOf,
   phase3Learn = false,
+  guidedLearn = false,
   phase3FoundationUi
 }: {
   room: StudyRoom;
@@ -95,6 +97,8 @@ export function RoomWorkspace({
   planEvents: PlanEvent[];
   asOf: number;
   phase3Learn?: boolean;
+  /** Server-and-client Guided Learn switch. Default off. Does not change the Learn surface. */
+  guidedLearn?: boolean;
   /** Optional server-scoped override; omitted by development fixtures. */
   phase3FoundationUi?: boolean;
 }) {
@@ -178,7 +182,13 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomDevice" data-shell={theme} data-tone={theme} data-ui={foundationEnabled ? "phase3" : undefined}>
+    <div
+      className="roomDevice"
+      data-shell={theme}
+      data-tone={theme}
+      data-ui={foundationEnabled ? "phase3" : undefined}
+      data-guided-learn={guidedLearnSurfaceEnabled(guidedLearn, process.env.NEXT_PUBLIC_STUDIGO_GUIDED_LEARN) ? "on" : "off"}
+    >
     <div className="roomWorkspace" data-tone={mode} ref={workspaceRef}>
       <div className="topbarWrap">
       <header className="workspaceTopbar">

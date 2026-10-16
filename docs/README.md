@@ -36,6 +36,7 @@ Moon Keep is a separate game prototype under `prototypes/moon-road/`. It is not 
 | SteadyGo animation, video, and reusable character-generation rules | [STEADYGO_ANIMATION_VIDEO_GUIDE.md](STEADYGO_ANIMATION_VIDEO_GUIDE.md) |
 | Coding handoff | Start with [ENGINEERING_PLAN.md](../implementation/ENGINEERING_PLAN.md), then use [AGENTS.md](../AGENTS.md) and task-specific specialist docs |
 | Deployment and user acceptance | [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md), [USER_TEST_CASES.md](USER_TEST_CASES.md) |
+| Guided Learn upgrade (proposed) | [GUIDED_LEARN_PLAN.md](GUIDED_LEARN_PLAN.md), [GUIDED_LEARN_RECONCILIATION.md](GUIDED_LEARN_RECONCILIATION.md). Integration branch `guided-learn`. Not a production path. |
 
 The root [IMPLEMENTATION.md](../IMPLEMENTATION.md), V3 finish plans,
 SOL review files, and the companion parity plan preserve executed design

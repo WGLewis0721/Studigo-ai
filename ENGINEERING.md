@@ -4,7 +4,7 @@
 >
 > Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
 >
-> Broader planned engineering work is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). For the document-learning reliability track, use one assigned card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`. Do not add competing plans, tours, or security checklists.
+> Broader planned engineering work is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). For the document-learning reliability track, use one assigned card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`. Guided Learn is a separate proposed track: `docs/GUIDED_LEARN_PLAN.md` and the GL segment of that same queue, integrated only on `guided-learn`. Do not add competing plans, tours, or security checklists.
 
 ## System in one sentence
 
@@ -96,6 +96,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | Concern | Start here | Purpose |
 | --- | --- | --- |
 | Product contract | `docs/PRODUCT.md` | What Studigo is allowed to be |
+| Guided Learn (proposed, flag off) | `docs/GUIDED_LEARN_PLAN.md` | Mission upgrade. Read `docs/GUIDED_LEARN_RECONCILIATION.md` before building. PRs target `guided-learn`, not main. |
 | Deep architecture | `docs/ARCHITECTURE.md` | Runtime/data boundaries and implementation details |
 | Engineering plan | `implementation/ENGINEERING_PLAN.md` | What must be built/hardened next and why |
 | Security readiness | `implementation/security-readiness/` | Reusable control matrix, audit, release gate |
