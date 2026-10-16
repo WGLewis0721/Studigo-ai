@@ -243,7 +243,7 @@ export function RoomWorkspace({
       <HeaderSlots.Provider value={slots}>
       <div ref={surfaceRef} className={coachFramed ? "modeSurface modeSurfaceFramed" : "modeSurface"} data-layout={coachFramed ? "lessons" : undefined}>
         {mode === "materials" && (
-          <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} />
+          <MaterialsPanel roomId={room.id} documents={documents} onChanged={refresh} phase3FoundationUi={foundationEnabled} />
         )}
         {mode === "coach" && (
           <CoachPanel
