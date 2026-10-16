@@ -69,6 +69,24 @@ try {
           assert.ok(metrics.reducedMotion, "reduced-motion media query must be active");
           assert.equal(metrics.longAnimations, 0, "reduced-motion must stop long-running CSS animations");
           assert.ok(metrics.navButtons >= 5, "all five Study Room sections must remain visible");
+          if (viewport.width <= 700 && mode === "materials" && skin === "phase3") {
+            // Overflow-only checks miss a floating mascot covering real source text.
+            const collisions = await page.evaluate(() => {
+              const mascot = document.querySelector(".cmp:not(.ghost)");
+              if (!(mascot instanceof HTMLElement) || mascot.getClientRects().length === 0) {
+                return ["companion window is missing"];
+              }
+              const windowBox = mascot.getBoundingClientRect();
+              return [".materialsIntro h2", ".materialsReadout"].flatMap(selector => {
+                const element = document.querySelector(selector);
+                if (!(element instanceof HTMLElement)) return [selector + " is missing"];
+                const rect = element.getBoundingClientRect();
+                return rect.left < windowBox.right && rect.right > windowBox.left &&
+                  rect.top < windowBox.bottom && rect.bottom > windowBox.top ? [selector] : [];
+              });
+            });
+            assert.deepEqual(collisions, [], "Materials title and readable-file status must remain clear of Studigo");
+          }
           const file = path.join(output, `${viewport.name}-${mode}-${skin}.png`);
           await page.screenshot({ path: file, fullPage: true, animations: "disabled", timeout: 30_000 });
           entry.screenshot = file;
