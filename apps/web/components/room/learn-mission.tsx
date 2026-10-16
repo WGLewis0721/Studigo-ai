@@ -65,8 +65,9 @@ function beatFix(beat: MissionBeat): string {
   return "";
 }
 
-export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials }: {
-  roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery; onOpenMaterials: () => void;
+export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials, onTryCoach, onTryPractice }: {
+  roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery;
+  onOpenMaterials: () => void; onTryCoach?: (topicId: string) => void; onTryPractice?: (topicId: string) => void;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -283,7 +284,22 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       <span style={{ width: `${progress}%` }} />
     </div>}
     {error && <p className="formError" role="alert">{error}</p>}
-    {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation" role="status"><p className="tinyLabel">LEARNING CHECKPOINT COMPLETE</p><h2>You practiced this idea.</h2><p>Learning checkpoints do not award mastery. Try a separate independent Coach or Practice question when you are ready.</p></div> : beat ? (
+    {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation learnHandoff" role="status">
+      <p className="tinyLabel">LEARNING CHECKPOINT COMPLETE · NO MASTERY AWARDED</p>
+      <h2>You practiced {currentTopic?.title || (fixture ? SAMPLES[sample].title : "this idea")}.</h2>
+      <p>Studigo helped you learn the idea. To find out what you know independently, try Coach or a Practice question.</p>
+      {mission.reflection && <p className="learnAssistanceNote">Last learning check: {mission.reflection === "ready" ? "Ready to try" : "Review suggested"} · Formative only</p>}
+      <div className="learnHandoffActions">
+        {onTryCoach && <button className="buttonPrimary" type="button"
+          onClick={() => onTryCoach(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Try with Coach →</button>}
+        {onTryPractice && <button className="ghostButton" type="button"
+          onClick={() => onTryPractice(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Practice independently</button>}
+        {snapshot?.sourceCurrent !== false && <button className="ghostButton" type="button" onClick={openSource}>Review source</button>}
+        <button className="ghostButton" type="button" onClick={() => {
+          if (window.confirm("Start this learning mission over? This will not change your mastery or graded attempts.")) void act("restart");
+        }}>Start lesson over</button>
+      </div>
+    </div> : beat ? (
       <div className="learnTalk">
 
         <div className="learnTalkBody">
