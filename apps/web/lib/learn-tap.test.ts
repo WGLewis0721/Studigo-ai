@@ -74,15 +74,15 @@ test("government guide uses an actual question, not a heading as its answer", ()
   const match = tapCheck("Our Government Vocabulary", page);
   assert.ok(match, "factual passage should supply grounded questions");
   assert.ok(match.sentences.every((line) => line.length >= 35));
-  assert.ok(match.sentences.every((line) => !/^page\\s*2|^government\\s*\\//i.test(line)));
+  assert.ok(match.sentences.every((line) => !line.toLowerCase().startsWith("page 2") && !line.toLowerCase().startsWith("government /")));
   const beats = missionBeats("Our Government Vocabulary", match.sentences, match.target);
   assert.equal(beats[1]?.kind, "choice");
   if (beats[1]?.kind === "choice") {
     assert.equal(beats[1].prompt, 'What does "primary source" mean?');
-    assert.ok(beats[1].options.every(line => line.split(/\\s+/).length >= 5));
+    assert.ok(beats[1].options.every(line => line.split(/\s+/).length >= 5));
     assert.ok(beats[1].options.every(line => line !== "Our Government Vocabulary"));
   }
 });
 test("does not manufacture a question from OCR title-only material", () => {
-  assert.equal(tapCheck("Vocabulary", "STUDY GUIDE\\nPage 2\\nContents\\nOur Vocabulary"), null);
+  assert.equal(tapCheck("Vocabulary", ["STUDY GUIDE", "Page 2", "Contents", "Our Vocabulary"].join("\n")), null);
 });
