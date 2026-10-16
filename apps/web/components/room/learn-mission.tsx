@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import "./guided-learn-chapters.css";
 import { ExploreJournal } from "./explore-journal";
 import { MissionControlIcon } from "./mission-control-icon";
@@ -322,7 +322,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           <div className="learnBar learnBarAnimated" role="progressbar" aria-valuemin={0} aria-valuemax={100}
             aria-valuenow={progress} aria-valuetext={`${progress}% through the guided lesson. This is not a mastery score.`}
             aria-label="Guided lesson progress, not mastery">
-            <div className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as React.CSSProperties}>
+            <div className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as CSSProperties}>
               <span className="learnProgressEmber" aria-hidden="true" />
               {plumeRevision > 0 && <span key={plumeRevision} className="learnProgressPlume" aria-hidden="true" />}
             </div>
