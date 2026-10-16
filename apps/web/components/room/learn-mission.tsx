@@ -20,7 +20,27 @@ const SAMPLES = {
   elementary: {
     title: "Three branches of government",
     objective: "Which branch makes the laws?",
-    excerpt: "The legislative branch makes laws. The executive branch carries out laws. The judicial branch interprets laws.",
+    excerpt: [
+      "GOVERNMENT / STUDY MATERIALS",
+      "Page 2",
+      "Our Government Vocabulary",
+      "The legislative branch makes laws for the United States.",
+      "The executive branch carries out laws and includes the president.",
+      "The judicial branch interprets laws and includes the Supreme Court.",
+      "The Constitution is the written plan for the government of the United States.",
+      "A primary source is a record from someone who witnessed an event.",
+      "A secondary source is an account by someone who was not there.",
+      "Congress has two parts: the Senate and the House of Representatives.",
+      "The Senate has one hundred members, two from each state.",
+      "The House of Representatives has members chosen by state populations.",
+      "The president works from the White House and helps enforce laws.",
+      "The Supreme Court reviews laws under the Constitution.",
+      "Citizens vote to select many of their representatives.",
+      "The government includes local, state, and national branches.",
+      "The executive branch carries out and enforces the laws of the country.",
+      "Judges in the judicial branch resolve cases under the laws.",
+      "The Constitution establishes the powers of the national government."
+    ].join("\n"),
   },
   college: {
     title: "Net force and motion",
@@ -194,6 +214,13 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
   const progress = beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
+  const reviewMessage = !shown || !beat || beat.kind === "read" ? null :
+    helpUsed ? "With help — this is practice, not a graded result." :
+    hit ? "Correct! That matches your study guide." :
+    "Not quite. Here is what your study guide says.";
+  const advanceLabel = !beat || beat.kind === "read" ? "Continue to question →" :
+    shown ? "Next activity →" : beat.kind === "boxes" ? "Check answers →" : "Choose an answer";
+
 
   useEffect(() => {
     setPicked([]);
@@ -208,6 +235,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       if (beat.kind !== "boxes") return [index];
       return current.includes(index) ? current.filter((item) => item !== index) : [...current, index];
     });
+    // Single-answer activities give feedback on selection. The learner then
+    // needs just one clearly labelled Next action, not two Continue clicks.
+    // Multi-select activities retain an explicit Check answers action.
+    if (beat.kind !== "boxes") setShown(true);
   }
 
   function advanceLevel() {
@@ -296,7 +327,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     </div> : beat ? (
       <div className="learnTalk">
-        <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>
+        <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? (hit ? "celebrate" : "explain") : beat.kind === "read" ? "explain" : "welcome"} size={48} /></div>
         <div className="learnTalkBody">
           <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
           {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
@@ -320,11 +351,21 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
               return <button key={option} type="button" className="learnChoice" aria-pressed={picked.includes(index)} data-result={result} onClick={() => play(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{option}</button>;
             })}
           </div>}
+          {reviewMessage && <div className={`learnAnswerFeedback ${hit && !helpUsed ? "isCorrect" : "needsReview"}`}
+            role="status" aria-live="polite" data-feedback={hit && !helpUsed ? "correct" : helpUsed ? "assisted" : "review"}>
+            <strong>{hit && !helpUsed ? "✓ " : "ⓘ "}{reviewMessage}</strong>
+            {(!hit || helpUsed) && <p>Source answer: {beatFix(beat)}</p>}
+            <span>Learning practice only · No mastery score changed</span>
+          </div>}
         </div>
       </div>
-    ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
+    ) : <div className="learnSourceUnavailable" role="status">
+      <strong>{loading ? "Opening your lesson…" : "This source needs more usable text."}</strong>
+      <p>{loading ? "Studigo is checking your original materials." : "The uploaded passage doesn't contain enough distinct facts for a reliable activity. We won't invent a question or repeat a lesson step."}</p>
+      {!loading && <button className="ghostButton" type="button" onClick={onOpenMaterials}>Review materials</button>}
+    </div>}
     {helpUsed && beat && mission?.phase !== "done" && <p className="learnAssistanceNote" role="status">Hint used · This response is practice, not independent mastery.</p>}
-    {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
+
     {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
       aria-label="Find the original source for this lesson"
       onClose={() => { setSourceOpen(false); sourceButtonRef.current?.focus(); }}>
@@ -337,15 +378,21 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           <strong>{snapshot.source.documentName}</strong>
           <span>{snapshot.source.pageNumber ? `Page ${snapshot.source.pageNumber}` : "Page not available"}</span>
         </div>
-        <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
-        {sourceOpen && <ReadAloudControl text={snapshot.source.excerpt} label="Hear the verified source excerpt" />}
-
-        <p className="learnSourceNote">Verified extracted text from this lesson's source. Exact word highlighting in the original PDF is not available.</p>
-        {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
-          href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}
-        {fixture && <p className="hintText">This is a synthetic review source. Original-file links are only enabled for authorized uploaded material.</p>}
+        <div className="learnSourceScroll" role="region" tabIndex={0}
+          aria-label="Scrollable source passage from your uploaded document">
+          <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
+        </div>
+        <div className="learnSourceFooter">
+          {sourceOpen && <ReadAloudControl text={snapshot.source.excerpt} label="Hear the verified source excerpt" />}
+          <p className="learnSourceNote">Extracted text from this source. Exact word highlighting in the original PDF isn't available.</p>
+          <div className="learnSourceButtons">
+            {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
+              href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}
+            {fixture && <p className="hintText">Example only: original files are accessible in authorized rooms.</p>}
+            <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
+          </div>
+        </div>
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
-      <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
     {!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
       {mission && <button className="ghostButton learnDockBack" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")} aria-label="Previous lesson step">
@@ -360,12 +407,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint" onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint">
         <span className="learnActionWide">Give me a hint</span><span className="learnActionCompact" aria-hidden="true">?</span>
       </button>}
-      <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
-        if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-        if (error && !mission) { void act("start"); return; }
-        if (!beat || beat.kind === "read" || shown) advanceLevel();
-        else setShown(true);
-      }}>{!beat || beat.kind === "read" || shown ? "Continue →" : "Check →"}</button>
+      <button className="buttonPrimary learnGo" type="button"
+        disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? (beat?.kind === "boxes" ? picked.length === 0 : true) : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))}
+        onClick={() => {
+          if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
+          if (error && !mission) { void act("start"); return; }
+          if (beat?.kind === "boxes" && !shown) { setShown(true); return; }
+          advanceLevel();
+        }} aria-label={advanceLabel}>
+          <span className="learnActionWide">{advanceLabel}</span>
+          <span className="learnActionCompact" aria-hidden="true">
+            {!beat || beat.kind === "read" ? "Continue →" : shown ? "Next →" : beat.kind === "boxes" ? "Check →" : "Choose one"}
+          </span>
+        </button>
     </div>}
   </section>;
 }
