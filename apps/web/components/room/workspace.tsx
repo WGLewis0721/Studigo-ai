@@ -253,6 +253,7 @@ export function RoomWorkspace({
             topics={topics}
             areas={areas}
             onOpenMaterials={() => setMode("materials")}
+            onOpenPractice={(topicId) => navigate("quiz", topicId)}
             view={coachView}
             onViewChange={setCoachView}
             focusTopicId={focusTopicId}

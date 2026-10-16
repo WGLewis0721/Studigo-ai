@@ -129,3 +129,35 @@
   .learnReading .voiceAnswerReview { right:auto; left:0; }
   .chatRow .voiceAnswerReview { right:-50px; }
 }
+
+.learnHandoff { gap:14px; }
+.learnHandoffActions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.learnHandoffActions .buttonPrimary, .learnHandoffActions .ghostButton {
+  min-height:48px; padding-inline:18px;
+}
+.learnHandoff .learnAssistanceNote { padding:8px 12px; border-radius:10px; background:var(--snow-2,#f4f6f9); }
+@media (max-width:700px) {
+  .learnHandoffActions { display:grid; grid-template-columns:minmax(0,1fr); }
+  .learnHandoffActions button { width:100%; }
+}
+
+/* Fix original mission preview's desktop flex collapse: interactive choices
+   must always have real height rather than a flex-basis:0 child squeezed below
+   the read-aloud and optional voice toolbar. */
+@media (min-width:701px) {
+  .learnReading { overflow-y:auto; }
+  .learnReading .learnTalk { flex:0 0 auto; min-height:min-content; }
+  .learnReading .learnTalkBody { flex:1 1 auto; min-width:0; }
+  .learnReading .learnChoices { flex:0 0 auto; min-height:min-content; max-height: min(40vh, 420px); overflow-y:auto; }
+  .learnReading .learnGo { margin-top:auto; }
+}
+
+/* The mission uses the canonical Studigo art (not another mascot controller).
+   The floating window is intentionally hidden on the mission surface so the
+   small lesson-side expression is its single stage presence. */
+.learnTeachingMascot { flex:0 0 44px; display:flex; align-items:flex-start; justify-content:center; }
+.learnTeachingMascot svg, .learnTeachingMascot img { max-width:100%; }
+@media (max-width:390px) {
+  .learnReading .learnTalk { gap:8px; }
+  .learnTeachingMascot { flex-basis:38px; }
+}
