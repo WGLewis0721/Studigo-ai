@@ -4155,3 +4155,65 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .lessonActions { display: flex; flex: none; position: relative; z-index: 4; overflow: visible; }
   .lessonPosition { display: flex; overflow: visible; }
 }
+
+/* PR #172: preserve its compact iMessage-sized accessory geometry on phones;
+   present the SAME topic/lesson chevrons at a full 44px on tablet/desktop.
+   This navigation sits outside .coachRest so Coach's 60% tuck never shrinks
+   its hit targets. The composer still owns the sole Clear action (#204). */
+@media (min-width: 701px) {
+  .roomDevice:has(.coachChat) .mhChipBar {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 10px; min-width: 0;
+    padding: 10px clamp(16px, 3vw, 32px) 2px;
+  }
+  /* Chat / Topics remains in the desktop header, not duplicated below it. */
+  .roomDevice:has(.coachChat) .mhChipBar > .coachTabs { display: none; }
+  .roomDevice:has(.coachChat) .coachPhoneNav {
+    display: inline-flex; align-items: center; gap: 4px;
+    height: 52px; max-width: 100%; min-width: 0; padding: 4px;
+    box-sizing: border-box; border-radius: 999px;
+    background: color-mix(in oklab, var(--th-bar) 55%, var(--white));
+    box-shadow: inset 0 0 0 1px var(--th-line);
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep {
+    display: grid; place-items: center; flex: none;
+    width: 44px; height: 44px; padding: 0;
+    border: 0; border-radius: 50%; background: transparent;
+    color: var(--ink); cursor: pointer;
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep svg {
+    width: 20px; height: 20px;
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep:disabled {
+    opacity: .4; cursor: default;
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachActiveStyle {
+    display: inline-flex; align-items: center; flex: 0 1 auto;
+    min-width: 0; max-width: min(28vw, 280px);
+    height: 44px; margin: 0; padding: 0 14px;
+    background: var(--white);
+    box-shadow: 0 1px 2px rgba(20, 27, 45, .12);
+  }
+  .roomDevice:has(.coachChat) .coachPhoneNav .coachActiveStyle strong { min-width: 0; }
+  /* Previous / Next moved into the accessory rail; avoid duplicates in
+     the scaled reading region. Clear stays next to the composer. */
+  .roomDevice:has(.coachChat) .coachChat .lessonActions { display: none; }
+}
+.roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep:focus-visible {
+  outline: 2px solid var(--th-ink, var(--ink)); outline-offset: 2px;
+}
+/* Tablet room width is narrower than desktop because of the sidebar.
+   Relocate Chat / Topics beside the arrow rail rather than letting them
+   overlap the Coach / Learn switch in the shared 82px header. */
+@media (min-width: 701px) and (max-width: 980px) {
+  .roomDevice:has(.coachChat) .modeHead .mhChipRow { display: none; }
+  .roomDevice:has(.coachChat) .mhChipBar {
+    justify-content: space-between; flex-wrap: wrap; row-gap: 8px;
+  }
+  .roomDevice:has(.coachChat) .mhChipBar > .coachTabs { display: inline-flex; }
+}
+/* The style picker is already available within the new arrow rail. Avoid
+   repeating its pill inside the lesson reading panel. */
+@media (min-width: 701px) {
+  .roomDevice:has(.coachChat) .coachChat > .coachActiveStyle { display: none; }
+}

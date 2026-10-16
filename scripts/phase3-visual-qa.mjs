@@ -172,6 +172,67 @@ try {
             const oldClear = page.locator('.coachChat .lessonActions > button[aria-label^="Clear "]');
             assert.equal(await oldClear.count(), 1, "historical Clear action should still exist for the legacy contract");
             assert.equal(await oldClear.isVisible(), false, "avoid duplicated clear actions in both Coach and Learn layouts");
+            // PR #172: desktop and tablet reuse the actual phone arrows.
+            // Phone visual affordances stay 30px with a 44px pseudo hitbox;
+            // tablet/desktop render physical 44px accessories outside the
+            // tuck/zoom region, with only one Previous/Next action pair.
+            const navigation = page.locator(".mhChipBar .coachPhoneNav");
+            assert.equal(await navigation.isVisible(), true, "#172 navigation must be visible in all responsive shells");
+            const navScale = await navigation.evaluate((element) => {
+              const steps = [...element.querySelectorAll(".coachNavStep")];
+              const styleButton = element.querySelector(".coachActiveStyle");
+              if (steps.length !== 2 || !(styleButton instanceof HTMLElement)) {
+                throw new Error("Expected previous/next chevrons and coaching style pill");
+              }
+              return {
+                width: element.getBoundingClientRect().width,
+                trackHeight: Math.round(element.getBoundingClientRect().height),
+                buttonWidths: steps.map(step => Math.round(step.getBoundingClientRect().width)),
+                buttonHeights: steps.map(step => Math.round(step.getBoundingClientRect().height)),
+                arrowSizes: steps.map(step => Math.round(step.querySelector("svg")?.getBoundingClientRect().width ?? 0)),
+                labels: steps.map(step => step.getAttribute("aria-label")),
+                hitInsets: steps.map(step => getComputedStyle(step, "::before").left),
+                styleHeight: Math.round(styleButton.getBoundingClientRect().height),
+                duplicateVisible: [...document.querySelectorAll(".coachChat .lessonActions button")].filter(el => el.getClientRects().length > 0).length
+              };
+            });
+            assert.deepEqual(navScale.buttonWidths, [phone ? 30 : 44, phone ? 30 : 44], "#172 arrows must use responsive 30/44px widths");
+            assert.deepEqual(navScale.buttonHeights, [phone ? 30 : 44, phone ? 30 : 44], "#172 arrows must use responsive 30/44px heights");
+            assert.deepEqual(navScale.arrowSizes, [phone ? 16 : 20, phone ? 16 : 20], "#172 arrow glyphs must scale with viewport");
+            assert.deepEqual(navScale.labels, ["Previous topic", "Next topic"], "#172 accessible previous/next navigation preserved");
+            assert.equal(navScale.trackHeight, phone ? 36 : 52, "#172 accessory rail must scale without enlarging the phone");
+            assert.equal(navScale.styleHeight, phone ? 30 : 44, "#172 mode pill must match its chevrons");
+            if (phone) assert.deepEqual(navScale.hitInsets, ["-7px", "-7px"], "#172 phone chevrons require 44px extended hitboxes");
+            else assert.equal(navScale.duplicateVisible, 0, "#172 desktop must not duplicate Previous/Next beneath the chat");
+            const roomChrome = await page.evaluate(() => {
+              const visible = el => el instanceof HTMLElement &&
+                getComputedStyle(el).display !== "none" &&
+                el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+              const modes = document.querySelector(".modeHead .chatModes");
+              const headerTabs = document.querySelector(".modeHead .mhChipRow .coachTabs");
+              const toolbarTabs = document.querySelector(".mhChipBar > .coachTabs");
+              const duplicateStyle = document.querySelector(".coachChat > .coachActiveStyle");
+              const overlaps = visible(modes) && visible(headerTabs) && (() => {
+                const a = modes.getBoundingClientRect(), b = headerTabs.getBoundingClientRect();
+                return a.left < b.right && a.right > b.left &&
+                  a.top < b.bottom && a.bottom > b.top;
+              })();
+              return {
+                headerTabsVisible: visible(headerTabs),
+                toolbarTabsVisible: visible(toolbarTabs),
+                duplicatedStyleVisible: visible(duplicateStyle),
+                headerOverlap: overlaps,
+              };
+            });
+            assert.equal(roomChrome.headerOverlap, false, "Coach/Learn switch must not overlap the Chat/Topics control");
+            assert.equal(Number(roomChrome.headerTabsVisible) + Number(roomChrome.toolbarTabsVisible), 1,
+              "Chat/Topics must appear exactly once across phone, tablet and desktop");
+            assert.equal(roomChrome.duplicatedStyleVisible, false, "Coaching style pill must not duplicate its accessory rail counterpart");
+            if (!phone && viewport.width <= 980) {
+              assert.equal(roomChrome.toolbarTabsVisible, true, "tablet Chat/Topics should move into the accessory rail");
+            }
+            entry.coachChrome = roomChrome;
+            entry.coachNavigation = navScale;
             entry.coachReading = reading;
           }
           const file = path.join(output, `${viewport.name}-${mode}-${skin}.png`);
