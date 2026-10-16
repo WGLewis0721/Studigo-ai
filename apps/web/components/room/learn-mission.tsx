@@ -64,9 +64,9 @@ function beatFix(beat: MissionBeat): string {
   return "";
 }
 
-export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials, onTryCoach, onTryPractice }: {
+export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials, onTryCoach, onTryPractice, previewJournal = false }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery;
-  onOpenMaterials: () => void; onTryCoach?: (topicId: string) => void; onTryPractice?: (topicId: string) => void;
+  previewJournal?: boolean; onOpenMaterials: () => void; onTryCoach?: (topicId: string) => void; onTryPractice?: (topicId: string) => void;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +79,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [spokenDraft, setSpokenDraft] = useState("");
   const [sourceOpen, setSourceOpen] = useState(false);
   // The original synthetic Guided Learn fixture stays pixel-for-pixel unchanged.
-  const [journalOpen, setJournalOpen] = useState(roomId !== "fixture");
+  const [journalOpen, setJournalOpen] = useState(roomId !== "fixture" || previewJournal);
   const sourceDialogRef = useRef<HTMLDialogElement>(null);
   const sourceButtonRef = useRef<HTMLButtonElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
@@ -134,7 +134,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           : action === "restart" || action === "start" ? "brief" : current?.phase ?? "brief";
       const next: Snapshot = {
         mission: {
-          topic_id: action === "restart" ? sample : current?.topic_id ?? sample,
+          topic_id: previewJournal && topicOverride ? topicOverride : action === "restart" ? sample : current?.topic_id ?? sample,
           document_id: "source",
           phase: nextPhase,
           reflection: reflection ?? (action === "restart" ? null : current?.reflection ?? null),
@@ -252,7 +252,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   // Render the journal in the same Learn room. All teaching, answers and
   // revision-bound cursor updates still belong to the existing player/API.
   if (journalOpen && !loading) return <ExploreJournal
-    roomId={roomId} topics={topics} cursor={mission} sourceCurrent={snapshot?.sourceCurrent}
+    roomId={roomId} fixture={fixture} topics={topics} cursor={mission} sourceCurrent={snapshot?.sourceCurrent}
     busy={busy} error={error} onOpenMaterials={onOpenMaterials}
     onStart={(topicId) => act(mission ? "restart" : "start", null, topicId)}
     onContinue={() => act("resume")}
