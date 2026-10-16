@@ -75,13 +75,14 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, requestedChat = { mode: "coach", nonce: 0 } }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, onOpenPractice, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, requestedChat = { mode: "coach", nonce: 0 } }: {
   roomId: string;
   coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
   topics: Topic[];
   areas?: WeakArea[];
   onOpenMaterials: () => void;
+  onOpenPractice?: (topicId: string) => void;
   view: CoachView;
   onViewChange: (view: CoachView) => void;
   focusTopicId: string | null;
@@ -879,7 +880,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       </header>
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
-      {guidedLearn && view === "chat" ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} /> : <>
+      {guidedLearn && view === "chat" ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} onTryCoach={(topicId) => { const topic = topics.find((candidate) => candidate.id === topicId); if (topic) coachTopic(topic); }} onTryPractice={onOpenPractice} /> : <>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         {topicNavigation("lower")}
         {contextControls}
@@ -1017,7 +1018,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
             </>
           )}
         >
-        {guidedLearn ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} /> : <>
+        {guidedLearn ? <LearnMission roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} onTryCoach={(topicId) => { const topic = topics.find((candidate) => candidate.id === topicId); if (topic) coachTopic(topic); }} onTryPractice={onOpenPractice} /> : <>
         {showingOverview && <button className="ghostButton" type="button" onClick={() => setLearnView("lesson")}>Show this lesson</button>}
         {messages.length === 0 ? (
           restoring ? (
