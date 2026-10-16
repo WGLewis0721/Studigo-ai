@@ -428,6 +428,18 @@ try {
       await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
       await page.locator(".learnGo").click();
       await page.locator(".learnChoices .learnChoice").first().waitFor();
+      const visibleChoice = await page.locator(".learnChoices .learnChoice").first().evaluate(el => {
+        const rect = el.getBoundingClientRect();
+        const dock = document.querySelector(".learnGo")?.getBoundingClientRect();
+        const box = el.closest(".learnChoices")?.getBoundingClientRect();
+        return { height: rect.height, boxHeight: box?.height ?? 0,
+          insideViewport: rect.top >= 0 && rect.bottom < innerHeight,
+          aboveAction: !dock || rect.bottom <= dock.top };
+      });
+      assert.ok(visibleChoice.height >= 44 && visibleChoice.boxHeight >= 44 &&
+        visibleChoice.insideViewport && visibleChoice.aboveAction,
+        "Lesson choices must visibly fit above the action dock, not collapse below the desktop stage");
+      missionCase.choiceVisible = visibleChoice;
       missionCase.actionScreenshot = path.join(output, `${viewport.name}-guided-learn-choose-phase3.png`);
       await page.screenshot({ path: missionCase.actionScreenshot, animations: "disabled" });
       await page.getByRole("button", { name: "Pause", exact: true }).click();
