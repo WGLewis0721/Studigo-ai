@@ -134,8 +134,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [learnScopeStatus, setLearnScopeStatus] = useState<string | null>(null);
   // Coach = practice and application with checking. Learn = facts from the materials, with sources.
   const [chatMode, setChatMode] = useState<ChatMode>(requestedChat.mode);
-  // Only present in the existing private Guided Learn canary. Keep original Learn available.
-  const [exploreSelected, setExploreSelected] = useState(true);
   const seenChatRequest = useRef(requestedChat.nonce);
   useEffect(() => {
     if (seenChatRequest.current === requestedChat.nonce) return;
@@ -261,7 +259,9 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const learnTopicTitle = topics.find((topic) => topic.id === learnCursorId)?.title ?? GENERAL_TOPIC.title;
   const learnLabel = lessonPositionLabel(cursors.learn, learnTopicIds.length);
   const showingOverview = chatMode === "learn" && learnView === "overview";
-  const guidedLearn = (roomId === "fixture" || phase3Learn) && exploreSelected && chatMode === "learn";
+  // One Learn journey in the authorized canary: source introduction → understanding check → Explore.
+  // The unflagged signed-in Learn surface remains unchanged on production.
+  const guidedLearn = (roomId === "fixture" || phase3Learn) && chatMode === "learn";
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
 
   useEffect(() => {
@@ -883,12 +883,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       </header>
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
-      {(roomId === "fixture" || phase3Learn) && chatMode === "learn" && view === "chat" && (
-        <div className="exploreLearnSwitch" role="group" aria-label="Learn experience">
-          <button type="button" aria-pressed={!exploreSelected} onClick={() => setExploreSelected(false)}>Original Learn</button>
-          <button type="button" aria-pressed={exploreSelected} onClick={() => setExploreSelected(true)}>Explore</button>
-        </div>
-      )}
       {guidedLearn && view === "chat" ? <LearnMission previewJournal={explorePreview} roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} onTryCoach={(topicId) => { const topic = topics.find((candidate) => candidate.id === topicId); if (topic) coachTopic(topic); }} onTryPractice={onOpenPractice} /> : <>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         {topicNavigation("lower")}
@@ -902,7 +896,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       ) : (
       <div className="coachBody">
       <div className="coachMain">
-      {readyCount > 0 && (() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
+      {chatMode === "coach" && readyCount > 0 && (() => { const material = MATERIAL_NOTES[selectedTopic.title]; return material ? <section className="coachMaterial" aria-label={`Study material for ${selectedTopic.title}`}><div><span className="tinyLabel">FROM YOUR STUDY GUIDE</span><h3>{selectedTopic.title}</h3><p>{material.summary}</p></div><div className="coachMaterialExample"><span>EXAMPLE</span><p>{material.example}</p><small>{material.source}</small></div></section> : null; })()}
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
       {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
       {skillPickerOpen && (
