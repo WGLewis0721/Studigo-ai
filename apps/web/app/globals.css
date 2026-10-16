@@ -4084,6 +4084,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice .chatEraser:focus-visible {
   outline: 2px solid var(--th-ink, var(--ink)); outline-offset: 2px;
 }
+/* The older mobile .roomWorkspace input rule otherwise forces 16px and
+   silently undoes #175's Coach / Learn composer reading size. */
+@media (max-width: 700px) {
+  .roomDevice .chatComposer input { font-size: 17px; }
+}
 @media (max-width: 700px) {
   .roomDevice:has(.coachChat) .mhChipBar { align-items: center; }
   .roomDevice:has(.coachChat) .coachPhoneNav {
