@@ -7,7 +7,7 @@ test("persisted phase deterministically restores exact activity after reload", (
   for (let index = 0; index < LEARN_PHASES.length; index += 1) {
     assert.equal(lessonBeatIndex(LEARN_PHASES[index],4),expected[index]);
   }
-  assert.equal(lessonBeatIndex("check",2),1);
+  assert.equal(lessonBeatIndex("check",2),null, "Sparse source must not repeat the same stage twice");
 });
 test("formative response cannot award mastery or force progression", () => {
   assert.equal(formativeReflection("try", true, true),"ready");
