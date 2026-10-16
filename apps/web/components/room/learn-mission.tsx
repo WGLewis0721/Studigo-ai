@@ -20,7 +20,27 @@ const SAMPLES = {
   elementary: {
     title: "Three branches of government",
     objective: "Which branch makes the laws?",
-    excerpt: "The legislative branch makes laws. The executive branch carries out laws. The judicial branch interprets laws.",
+    excerpt: [
+      "GOVERNMENT / STUDY MATERIALS",
+      "Page 2",
+      "Our Government Vocabulary",
+      "The legislative branch makes laws for the United States.",
+      "The executive branch carries out laws and includes the president.",
+      "The judicial branch interprets laws and includes the Supreme Court.",
+      "The Constitution is the written plan for the government of the United States.",
+      "A primary source is a record from someone who witnessed an event.",
+      "A secondary source is an account by someone who was not there.",
+      "Congress has two parts: the Senate and the House of Representatives.",
+      "The Senate has one hundred members, two from each state.",
+      "The House of Representatives has members chosen by state populations.",
+      "The president works from the White House and helps enforce laws.",
+      "The Supreme Court reviews laws under the Constitution.",
+      "Citizens vote to select many of their representatives.",
+      "The government includes local, state, and national branches.",
+      "The executive branch carries out and enforces the laws of the country.",
+      "Judges in the judicial branch resolve cases under the laws.",
+      "The Constitution establishes the powers of the national government."
+    ].join("\n"),
   },
   college: {
     title: "Net force and motion",
