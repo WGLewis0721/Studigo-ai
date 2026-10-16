@@ -83,6 +83,16 @@
 .roomDevice[data-ui="phase3"] .materialsGuideLabel strong { font: 800 1.45rem/1.12 var(--display); letter-spacing: -.03em; }
 .roomDevice[data-ui="phase3"] .materialsGuideLabel p { margin: 0; color: var(--ink-2); font-size: .85rem; line-height: 1.5; }
 .roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: 520px; overflow: auto; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
+.roomDevice[data-ui="phase3"] .materialsGuide .guideActions { align-items: center; }
+.roomDevice[data-ui="phase3"] .materialsGuide .studyGuideDownload .buttonQuiet {
+  min-height: 44px; width: auto; min-width: 70px; height: auto;
+  padding: 10px 12px; display: inline-flex; gap: 6px; justify-content: center;
+  align-items: center; border-radius: 12px; white-space: normal;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .studyGuideDownloadLabel {
+  position: static; width: auto; height: auto; margin: 0; padding: 0;
+  overflow: visible; clip: auto; white-space: normal;
+}
 .roomDevice[data-ui="phase3"] .materialsGuide .setupLead { align-self: center; margin: 0; }
 .roomDevice[data-ui="phase3"] .materialsSourceSpotlight { padding: 18px; border-radius: 16px; background: var(--snow-2); border: 1px solid var(--snow-3); overflow-wrap: anywhere; }
 .roomDevice[data-ui="phase3"] .materialsSourceTop { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
