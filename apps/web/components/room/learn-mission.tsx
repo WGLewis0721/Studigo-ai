@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
 type Mission = { topic_id: string; document_id: string; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
@@ -60,7 +61,7 @@ function beatFix(beat: MissionBeat): string {
   return "";
 }
 
-export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard" }: {
+export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery; onOpenMaterials: () => void;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -74,7 +75,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
-  const startTried = useRef(false);
+
   const fixture = roomId === "fixture";
   const mission = snapshot?.mission ?? null;
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
@@ -88,7 +89,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     if (roomId === "fixture") {
       const demo = SAMPLES[sample];
       setSnapshot({
-        mission: { topic_id: sample, document_id: "source", phase: "brief", reflection: null, paused: false, revision: 0 },
+        mission: null,
         sourceCurrent: true,
         source: { documentName: `${demo.title} - design fixture`, pageNumber: 2, excerpt: demo.excerpt },
       });
@@ -166,21 +167,6 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }
 
   useEffect(() => {
-    if (fixture || loading || mission || !selectedTopic || startTried.current) return;
-    startTried.current = true;
-    void act("start");
-    // Start once when Learn opens with no saved reading.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fixture, loading, mission, selectedTopic]);
-
-  useEffect(() => {
-    if (fixture || !mission?.paused || inFlight.current) return;
-    void act("resume");
-    // A paused cursor still opens on the passage.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission?.paused, mission?.revision]);
-
-  useEffect(() => {
     const thread = sectionRef.current?.closest(".chatThread");
     if (thread instanceof HTMLElement) thread.scrollTop = 0;
   }, [mission?.phase, loading]);
@@ -246,15 +232,57 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     }
   }
 
+  const missionPlan = buildLearningMissionPlan(topics.map((topic) => ({
+    id: topic.id,
+    title: topic.title,
+    objective: topic.objective
+  })), mission && snapshot?.source && snapshot.sourceCurrent !== false ? [{
+    topicId: mission.topic_id,
+    documentId: mission.document_id,
+    chunkId: "current-authorized-reading",
+    revision: mission.revision,
+    pageNumber: snapshot.source.pageNumber,
+    documentName: snapshot.source.documentName,
+    excerpt: snapshot.source.excerpt,
+    eligible: true
+  }] : []);
+  const lessonNumber = Math.max(1, topics.findIndex((topic) => topic.id === (mission?.topic_id ?? selectedTopicId)) + 1);
+
   const ready = Boolean(mission && snapshot?.sourceCurrent !== false && beat);
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Level">
-    {fixture && <div className="learnSamples">{(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) => <button key={key} type="button" aria-pressed={sample === key} onClick={() => { setSample(key); setPicked([]); setShown(false); setStep(0); }}>{key === "college" ? "College sample" : "Elementary sample"}</button>)}</div>}
-    <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
+  return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
+    {!loading && !mission && <div className="learnInvitation">
+      <p className="tinyLabel">YOUR LEARNING MISSION</p>
+      <h2>{selectedTopic ? "Learn " + selectedTopic.title : "Start with your material"}</h2>
+      <p>{selectedTopic?.objective || "Choose a topic from your uploaded study guide. Studigo will show you one idea at a time."}</p>
+      <div className="learnInvitationMeta">
+        <span>{topics.length} {topics.length === 1 ? "topic" : "topics"} in your guide</span>
+        <span>{fixture ? "Example material" : "Source checked before teaching"}</span>
+      </div>
+      {fixture && <div className="learnSamples" aria-label="Review subject examples">
+        {(Object.keys(SAMPLES) as (keyof typeof SAMPLES)[]).map((key) =>
+          <button key={key} type="button" aria-pressed={sample === key}
+            onClick={() => setSample(key)}>{key === "college" ? "College physics" : "Elementary science"}</button>)}
+      </div>}
+      <button className="buttonPrimary learnInvitationStart" type="button" disabled={busy || (!fixture && !selectedTopic)}
+        onClick={() => void act("start")}>Start learning →</button>
+      {!fixture && <button className="ghostButton" type="button" onClick={onOpenMaterials}>View original materials</button>}
+      {!fixture && missionPlan.sourceStatus === "missing" && <p className="hintText">Studigo will verify the exact source passage when you start. Unsupported topics cannot become cited lessons.</p>}
+    </div>}
+    {mission?.paused && <div className="learnInvitation" role="status">
+      <p className="tinyLabel">PAUSED MISSION · LESSON {lessonNumber} OF {topics.length}</p>
+      <h2>{currentTopic?.title || "Your saved lesson"}</h2>
+      <p>You're at {mission.phase}. Continue exactly where you stopped.</p>
+      <button className="buttonPrimary" type="button" disabled={busy}
+        onClick={() => void act("resume")}>Continue lesson →</button>
+    </div>}
+
+    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>Lesson {lessonNumber} of {topics.length} · {currentTopic?.title}</div>}
+    {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
     </div>
     {error && <p className="formError" role="alert">{error}</p>}
-    {snapshot?.sourceCurrent === false ? <p role="status">This part changed.</p> : beat ? (
+    {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : beat ? (
       <div className="learnTalk">
         <StudigoMascot state={shown ? (hit ? "celebrate" : "explain") : beat.kind === "read" ? "explain" : "welcome"} size={64} />
         <div className="learnTalkBody">
@@ -275,9 +303,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
-    {(ready || snapshot?.sourceCurrent === false || (error && !mission)) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (Boolean(beat && beat.kind !== "read" && !shown && picked.length === 0))} onClick={() => {
+    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || (Boolean(beat && beat.kind !== "read" && !shown && picked.length === 0))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-      if (error && !mission) { startTried.current = false; void act("start"); return; }
+      if (error && !mission) { void act("start"); return; }
       if (!beat || beat.kind === "read" || shown) advanceLevel();
       else setShown(true);
     }}>{!beat || beat.kind === "read" || shown ? "Continue" : "Check"}</button>}
