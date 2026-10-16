@@ -4229,10 +4229,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .roomDevice:has(.coachChat) .modeFrame:has(> .coachHeaderNav) {
     position: relative;
   }
+  /* Reserve an explicit mode-switch width so it cannot claim the navigator's lane. */
+  .roomDevice:has(.coachChat) .modeHead .chatModes[role="group"] {
+    flex: 0 0 280px; width: 280px;
+  }
   .roomDevice:has(.coachChat) .modeFrame > .coachHeaderNav {
     position: absolute; z-index: 3;
     display: inline-flex; align-items: center; justify-content: center;
-    left: clamp(355px, 30%, 440px);
+    left: clamp(390px, 30%, 470px);
     top: max(2px, calc((var(--strip-h, 82px) * var(--strip-scale) - 44px) / 2));
     height: 44px; max-width: calc(100% - 520px); padding: 0 3px;
     gap: 4px; border-radius: 999px;
