@@ -428,6 +428,7 @@ try {
       await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
       await page.locator(".learnGo").click();
       await page.locator(".learnChoices .learnChoice").first().waitFor();
+      await page.locator(".learnChoices .learnChoice").first().scrollIntoViewIfNeeded();
       const visibleChoice = await page.locator(".learnChoices .learnChoice").first().evaluate(el => {
         const rect = el.getBoundingClientRect();
         const dock = document.querySelector(".learnGo")?.getBoundingClientRect();
@@ -494,7 +495,8 @@ try {
       missionCase.completedScreenshot = path.join(output, `${viewport.name}-guided-learn-handoff-phase3.png`);
       await page.screenshot({ path: missionCase.completedScreenshot, animations: "disabled" });
       await end.getByRole("button", { name: "Practice independently" }).click();
-      await page.locator(".quizMode").waitFor();
+      await page.locator(".quizSetup").waitFor();
+      assert.ok(await page.getByRole("button", { name: "Start quiz" }).isVisible(), "Practice handoff must reach existing quiz setup, not silently start a graded attempt");
       missionCase.practiceHandoff = true;
       await page.goto(`${origin}/dev/study?shell=1&ui=phase3&mode=materials`, { waitUntil: "networkidle" });
       const original = page.locator(".documentRow").first();
