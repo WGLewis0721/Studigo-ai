@@ -426,6 +426,18 @@ try {
       await page.locator(".learnAsk").waitFor();
       missionCase.activeScreenshot = path.join(output, `${viewport.name}-guided-learn-first-step-phase3.png`);
       await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
+      await page.locator(".learnGo").click();
+      await page.locator(".learnChoices .learnChoice").first().waitFor();
+      missionCase.actionScreenshot = path.join(output, `${viewport.name}-guided-learn-choose-phase3.png`);
+      await page.screenshot({ path: missionCase.actionScreenshot, animations: "disabled" });
+      await page.getByRole("button", { name: "Pause", exact: true }).click();
+      await page.getByRole("button", { name: /Continue lesson/ }).waitFor();
+      missionCase.pausedScreenshot = path.join(output, `${viewport.name}-guided-learn-paused-phase3.png`);
+      await page.screenshot({ path: missionCase.pausedScreenshot, animations: "disabled" });
+      await page.getByRole("button", { name: /Continue lesson/ }).click();
+      await page.locator(".learnChoices .learnChoice").first().waitFor();
+      assert.equal(await page.locator(".learnLessonLabel").count(), 1, "Resume must return to selected concept");
+      missionCase.pausedResumeFixture = true;
       missionCase.overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
       assert.ok(missionCase.overflow <= 2, "Guided Learn fixture must not overflow");
     } catch (error) {
