@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { chromium } from "playwright";
 
 // Never use an authenticated room here: all specimens are public synthetic fixtures
@@ -13,7 +14,7 @@ const widths = [
   { name: "tablet-820", width: 820, height: 1180 },
   { name: "desktop-1440", width: 1440, height: 900 },
 ];
-const modes = ["coach", "materials", "quiz", "cards", "test", "mastery", "weak", "plan", "cram"];
+const modes = process.env.PHASE3_VISUAL_INTERACTIONS_ONLY === "1" ? [] : ["coach", "materials", "quiz", "cards", "test", "mastery", "weak", "plan", "cram"];
 const skins = ["legacy", "phase3"];
 const evidence = [{ blockKey: "synthetic-block", pageNumber: 1 }];
 const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level: "general", roomId: "fixture", topicIds: [], sourceSnapshot: "synthetic-browser-only", chapters: [{
@@ -23,15 +24,18 @@ const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level
 }] };
 
 await mkdir(output, { recursive: true });
-const report = { commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], failures: [] };
+const sourceTree = () => execFileSync("git", ["rev-parse", "HEAD^{tree}"], { encoding: "utf8" }).trim();
+const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], failures: [] };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
+  report.browserVersion = browser.version();
   for (const viewport of widths) {
     const context = await browser.newContext({
       viewport: { width: viewport.width, height: viewport.height },
       reducedMotion: "reduce",
       deviceScaleFactor: 1,
+      forcedColors: report.forcedColors,
     });
     // Synthetic responses are explicitly local browser fixtures; no grading,
     // source authorization, generation or learner persistence is exercised.
@@ -131,6 +135,7 @@ try {
       await page.getByRole("button", { name: "Start quiz" }).click();
       await page.locator(".choiceItem").first().click();
       await page.getByRole("button", { name: "Confident", exact: false }).click();
+      await page.screenshot({ path: path.join(output, `${viewport.name}-quiz-selection-phase3.png`), animations: "disabled" });
       assert.equal(gradeCalls, 0, "answer/confidence selection must not submit");
       await page.locator(".roomStudioSubmit").click();
       await page.locator(".quizFeedback").waitFor();
@@ -139,6 +144,7 @@ try {
       await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "networkidle" });
       const chooseFiles = page.getByRole("button", { name: "Choose files", exact: false });
       if (await chooseFiles.isVisible()) {
+        await chooseFiles.scrollIntoViewIfNeeded();
         assert.ok(await chooseFiles.evaluate(el => {
           const box = el.getBoundingClientRect();
           return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
@@ -152,7 +158,7 @@ try {
       await inspector.locator("blockquote").waitFor();
       const box = await inspector.boundingBox();
       if (viewport.width <= 700) assert.ok(Math.abs(box.y + box.height - viewport.height) <= 2, "phone source sheet must sit at viewport bottom");
-      else assert.ok(box.x >= viewport.width / 2, "wide source pane must sit on right");
+      else assert.ok(Math.abs(box.x + box.width - (viewport.width - 24)) <= 2, "wide source pane must align 24px from right");
       await page.screenshot({ path: path.join(output, `${viewport.name}-source-inspector-phase3.png`), animations: "disabled" });
       await page.keyboard.press("Escape");
       await inspector.waitFor({ state: "detached" });
@@ -169,7 +175,7 @@ try {
     }
     report.interactions.push(interaction);
     for (const first of [false, true]) {
-      const home = { viewport: viewport.name, firstRun: first, screenshot: "", horizontalOverflow: null, zoomOverflow: null, error: null };
+      const home = { viewport: viewport.name, firstRun: first, screenshot: "", horizontalOverflow: null, zoomOverflow: null, reflowOverflow: null, error: null };
       try {
         await page.goto(`${origin}/dev/home${first ? "?first=1" : ""}`, { waitUntil: "networkidle" });
         const surface = page.locator(first ? ".firstRoom" : ".homeHero");
@@ -186,6 +192,12 @@ try {
         await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
         home.zoomOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
         await page.screenshot({ path: home.screenshot.replace(".png", "-zoom200.png"), fullPage: true, animations: "disabled" });
+        await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+        await page.setViewportSize({ width: Math.floor(viewport.width / 2), height: Math.floor(viewport.height / 2) });
+        home.reflowOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        await page.screenshot({ path: home.screenshot.replace(".png", "-reflow200.png"), fullPage: true, animations: "disabled" });
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        assert.ok(home.reflowOverflow <= 2, `Home half-viewport reflow overflow ${home.reflowOverflow}px`);
         assert.ok(home.zoomOverflow <= 2, `Home 200% CSS zoom overflow ${home.zoomOverflow}px`);
       } catch (error) {
         home.error = String(error);
@@ -200,6 +212,8 @@ try {
   report.failures.push({ stage: "browser infrastructure", error: String(error) });
 } finally {
   await browser?.close();
+  report.sourceTreeAfter = sourceTree();
+  if (report.sourceTreeAfter !== report.sourceTreeBefore) report.failures.push({ stage: "source stability", error: "Source tree changed during browser evidence run; repeat against a frozen tree" });
   await writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
 }
 console.log(`Phase 3 synthetic comparison: ${report.cases.length} cases, ${report.failures.length} failures`);
