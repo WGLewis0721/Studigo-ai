@@ -64,9 +64,13 @@ function clearChoiceQuestion(objective: string, answer: string): string {
   const term = definedTerm(answer);
   if (term) return `Which line from your guide explains what ${term} means?`;
   const subject = objective.trim().replace(/[.!?]+$/, "").slice(0, 100);
-  return subject
-    ? `Which line in your guide helps explain: ${subject}?`
-    : "Which source statement matches the idea you just read?";
+  if (/^(who|what|when|where|why|which|how|does|do|can|is|are)\b/i.test(subject)) {
+    return `${subject}?`;
+  }
+  const phrase = subject.replace(/^(explain|describe|identify|understand|show|compare)\s+/i, "");
+  return phrase
+    ? `Which statement from your guide explains ${phrase.charAt(0).toLowerCase() + phrase.slice(1)}?`
+    : "Which statement is supported by the idea you just read?";
 }
 
 /** A short tutorial from one passage. Facts stay the source lines. Level changes only the prompt. */
