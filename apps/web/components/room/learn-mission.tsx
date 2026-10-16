@@ -281,7 +281,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>Lesson {lessonNumber} of {topics.length} · {currentTopic?.title}</div>}
     {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
-    </div>
+    </div>}
     {error && <p className="formError" role="alert">{error}</p>}
     {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : beat ? (
       <div className="learnTalk">
