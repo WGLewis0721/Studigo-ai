@@ -25,7 +25,7 @@ const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level
 
 await mkdir(output, { recursive: true });
 const sourceTree = () => execFileSync("git", ["rev-parse", "HEAD^{tree}"], { encoding: "utf8" }).trim();
-const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], guidedLearn: [], failures: [] };
+const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], guidedLearn: [], explore: [], failures: [] };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
@@ -636,6 +636,38 @@ try {
       }
       report.home.push(home);
     }
+
+    // Explore is an explicit synthetic fixture, not an authenticated learner
+    // or authorization test. Keep the legacy mission screenshots unchanged.
+    for (const skin of skins) {
+      const exploreCase = { viewport: viewport.name, skin, screenshot: "", horizontalOverflow: null, error: null };
+      try {
+        await page.goto(`${origin}/dev/study?shell=1&learn=explore&ui=${skin}`, { waitUntil: "networkidle" });
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "journal must use all and only real fixture topics");
+        assert.equal(await page.locator('.exploreJournalQuest[aria-pressed="true"]').count(), 1, "one quest detail selection");
+        await page.locator(".exploreJournalQuest").nth(1).click();
+        assert.match(await page.locator(".exploreJournalDetail h3").innerText(), /Inherited traits and environment/);
+        const screenshot = `${viewport.name}-explore-${skin}.png`;
+        await page.screenshot({ path: path.join(output, screenshot), animations: "disabled", fullPage: true });
+        exploreCase.screenshot = screenshot;
+        exploreCase.horizontalOverflow = await page.evaluate(() =>
+          Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        assert.equal(exploreCase.horizontalOverflow, 0, "Explore must not overflow the viewport");
+        await page.getByRole("button", { name: /Start quest/ }).click();
+        await page.getByRole("button", { name: /Quest journal/ }).click();
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        await page.getByRole("button", { name: "Original Learn", exact: true }).click();
+        assert.equal(await page.getByRole("button", { name: "Original Learn", exact: true }).getAttribute("aria-pressed"), "true");
+        await page.getByRole("button", { name: "Explore", exact: true }).click();
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+      } catch (error) {
+        exploreCase.error = String(error);
+        report.failures.push({ ...exploreCase });
+        console.error(`${viewport.name} Explore ${skin}: ${exploreCase.error}`);
+      }
+      report.explore.push(exploreCase);
+    }
     await context.close();
   }
 } catch (error) {
@@ -646,7 +678,7 @@ try {
   if (report.sourceTreeAfter !== report.sourceTreeBefore) report.failures.push({ stage: "source stability", error: "Source tree changed during browser evidence run; repeat against a frozen tree" });
   await writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
 }
-console.log(`Phase 3 synthetic comparison: ${report.cases.length} room cases, ${report.interactions.length} interaction groups, ${report.home.length} Home cases, ${report.failures.length} failures`);
+console.log(`Phase 3 synthetic comparison: ${report.cases.length} room cases, ${report.interactions.length} interaction groups, ${report.home.length} Home cases, ${report.explore.length} Explore cases, ${report.failures.length} failures`);
 if (report.failures.length) {
   for (const failure of report.failures) console.error(`${failure.viewport} ${failure.mode} ${failure.skin}: ${failure.error}`);
   process.exitCode = 1;
