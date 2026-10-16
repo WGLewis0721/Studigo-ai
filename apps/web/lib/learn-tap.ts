@@ -100,20 +100,17 @@ export function missionBeats(objective: string, sentences: string[], target: num
     });
   }
 
-  const boxOptions = sentences.slice(0, Math.min(sentences.length, level === "simpler" ? 3 : 4));
+  const boxOptions = [answer, ...distractors].slice(0, Math.min(distractors.length + 1, level === "simpler" ? 3 : 4));
   let boxTarget = boxOptions.indexOf(answer);
   if (boxTarget < 0) {
     boxOptions[boxOptions.length - 1] = answer;
     boxTarget = boxOptions.length - 1;
   }
-  const wanted = new Set(contentWords(objective).map((word) => word.toLowerCase()));
-  const hits = boxOptions
-    .map((line, index) => index === boxTarget || contentWords(line).some((word) => wanted.has(word.toLowerCase())))
-    .map((hit, index) => hit ? index : -1)
-    .filter((index) => index >= 0);
+  // Do not infer that a distractor is correct just because it shares topic words.
+  const hits = [boxTarget];
   beats.push({
     kind: "boxes",
-    prompt: level === "simpler" ? "Tap every one that fits." : level === "deeper" ? "Mark every line that counts." : "Mark the ones that count.",
+    prompt: "Which statement is supported by the passage you just studied?",
     options: boxOptions,
     answers: hits.length && hits.length < boxOptions.length ? hits : [boxTarget],
   });
@@ -150,5 +147,8 @@ export function tapCheck(objective: string, excerpt: string): { sentences: strin
       target = index;
     }
   });
-  return { sentences, target };
+  // Never send extracted headings into the distractor or evidence pools.
+  // Cursor and quiz generation must both use the same filtered source subset.
+  return { sentences: candidates.map((candidate) => candidate.sentence),
+    target: candidates.findIndex((candidate) => candidate.index === target) };
 }
