@@ -32,7 +32,7 @@ These are two complementary sources of evidence: REA's static graph identifies n
 
 ## Minimum Studigo behavior contract — design proposal, NOT extracted code
 
-Keep only the following **13 core scalar channels** plus one categorical expression. These are an *adaptation* of Coucou properties, not a copy of the renderer:
+Keep only the following **13 core scalar channels** plus one categorical expression. These are an *adaptation* of Coucou properties, not a copy of the renderer. The approved Studigo dragon has no wings: the gesture channel means a forearm/paw movement:
 
 | Studigo channel | Coucou conceptual origin | Intended role |
 |---|---|---|
@@ -41,7 +41,7 @@ Keep only the following **13 core scalar channels** plus one categorical express
 | `eyeOpen` | `open`, `eyeOverride` | Blink/alertness, while `expression` chooses eyes/mouth style |
 | `bodyScaleX, bodyScaleY` | `sx,sy` | Squash/stretch and calm idle breathing |
 | `rootX, rootY` | `ox,oy` | Anticipation, bounce, recoil and recovery |
-| `wingGesture` | `hands` | Responsive gestures, including greeting and celebration |
+| `pawGesture` | `hands` | Studigo forearm/paw gestures, including greeting and celebration; do not add wings |
 | `softLagX, softLagY` | `physDx,physDy` | Spring lag applied to Studigo's frills, tail and clothing |
 
 Categorical output: `expression = neutral | curious | focused | joyful | supportive | sleepy`. Optional future channels: `mouthOpen` for speech, `tailPose` for a more detailed rig, `outfitBlend` for Earn/Play customization, and bounded particle effects. Do not port Coucou's hard-coded body colors, badge colors, upload `morph`, music dancing, notch geometry, or dizzy/slap motif.
@@ -83,7 +83,7 @@ The target is **Studigo the approved orange dragon**, not a Mochi derivative. On
 
 ## Phase 4 deliverables, deliberately small
 
-1. **P4-A — Character rig feasibility specimen:** a canonical Studigo layered rig showing smooth gaze, blink in all directions, head turning, single wing gesture and two secondary-motion parts. Compare sprite/CSS, Canvas 2D and a lightweight rig renderer with device performance measurements. Demonstrate 375px phone and desktop.
+1. **P4-A — Character rig feasibility specimen:** a canonical Studigo layered rig showing smooth gaze, blink in all directions, head turning, single paw gesture and two secondary-motion parts. Compare sprite/CSS, Canvas 2D and a lightweight rig renderer with device performance measurements. Demonstrate 375px phone and desktop.
 2. **P4-B — Pure behavior core:** typed signals, deterministic scheduler/state machine, spring/tween helpers, per-frame snapshot and test fixtures. Verify preemption, cooldowns, rest, frame-rate consistency, visibility/power pause and reduced motion.
 3. **P4-C — One renderer integration:** feature flag behind current companion host; preserve docking, seat, settings, keyboard hit targets and preference persistence. Device checks, focused screenshots and equivalent events on stage/window/seat.
 4. **P4-D — Learning-context polish:** listen/read/thinking/explain/encourage/celebrate gestures, using existing verified events. No changes to mastery, currency or study scoring. Real iPhone Safari acceptance and rollback proof.
