@@ -116,14 +116,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     if (fixture) {
       const nextPhase: Phase = action === "advance"
         ? ({ brief: "show", show: "try", try: "check", check: "done", done: "done" } as const)[current?.phase ?? "brief"]
-        : action === "restart" ? "brief" : current?.phase ?? "brief";
+        : action === "back"
+          ? ({ brief: "brief", show: "brief", try: "show", check: "try", done: "check" } as const)[current?.phase ?? "brief"]
+          : action === "restart" || action === "start" ? "brief" : current?.phase ?? "brief";
       const next: Snapshot = {
         mission: {
           topic_id: action === "restart" ? sample : current?.topic_id ?? sample,
           document_id: "source",
           phase: nextPhase,
           reflection: reflection ?? (action === "restart" ? null : current?.reflection ?? null),
-          paused: false,
+          paused: action === "pause" ? true : action === "resume" || action === "restart" || action === "start" ? false : (current?.paused ?? false),
           revision: (current?.revision ?? 0) + 1,
         },
         sourceCurrent: true,
