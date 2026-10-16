@@ -654,6 +654,16 @@ try {
           const firstViewport = await action.boundingBox();
           assert.ok(firstViewport && firstViewport.y < viewport.height, "selected quest must remain reachable on phone");
         }
+        // Selection can scroll a short phone list; capture from the journal's
+        // actual top, not with sticky room chrome frozen halfway through a full-page shot.
+        await page.locator(".exploreJournalHead").scrollIntoViewIfNeeded();
+        await page.evaluate(() => {
+          window.scrollTo(0, 0);
+          for (const selector of [".appMain", ".coachMode", ".chatThread"]) {
+            const node = document.querySelector(selector);
+            if (node instanceof HTMLElement) node.scrollTop = 0;
+          }
+        });
         const screenshot = `${viewport.name}-explore-${skin}.png`;
         await page.screenshot({ path: path.join(output, screenshot), animations: "disabled", fullPage: true });
         exploreCase.screenshot = screenshot;
