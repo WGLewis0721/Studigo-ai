@@ -4240,7 +4240,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     box-shadow: inset 0 0 0 1px var(--th-line);
   }
   .roomDevice:has(.coachChat) .modeFrame > .coachHeaderNav .coachActiveStyle {
-    height: 40px; max-width: min(22vw, 260px);
+    height: 44px; max-width: min(22vw, 260px);
   }
   .roomDevice:has(.coachChat) .coachMode > .mhChipBar { display: none; }
 }
