@@ -95,6 +95,69 @@ try {
             });
             assert.deepEqual(collisions, [], "Materials title and readable-file status must remain clear of Studigo");
           }
+          if (mode === "coach") {
+            // Lock in the Coach/Learn reading contract from PR #175 and the phone
+            // clear control from PR #174. CSS probes run inside the actual room
+            // shell, then are removed before screenshots or interaction checks.
+            const reading = await page.evaluate(() => {
+              const chat = document.querySelector(".coachChat");
+              const composer = chat?.querySelector(".chatComposer input");
+              const clear = chat?.querySelector(".chatEraser");
+              if (!(chat instanceof HTMLElement) || !composer || !clear) throw new Error("Coach chat, composer, or clear control missing");
+              const probe = document.createElement("div");
+              probe.setAttribute("aria-hidden", "true");
+              probe.innerHTML = '<div class="studentBubble">Question</div><div class="answerBubble"><span class="answerKicker">Studigo</span><div class="answerText"><div class="richText"><p>Answer</p><ul><li>One item</li></ul><h1>Heading one</h1><h2>Heading two</h2><h3>Heading three</h3><h4>Heading four</h4></div></div></div><div class="lessonText">Lesson</div>';
+              chat.append(probe);
+              const samples = {};
+              try {
+                for (const [name, selector] of Object.entries({
+                  learner: ".studentBubble",
+                  answer: ".answerText",
+                  paragraph: ".answerText .richText p",
+                  listItem: ".answerText .richText li",
+                  lesson: ".lessonText",
+                  kicker: ".answerKicker",
+                  h1: ".answerText .richText h1",
+                  h2: ".answerText .richText h2",
+                  h3: ".answerText .richText h3",
+                  h4: ".answerText .richText h4"
+                })) {
+                  const el = probe.querySelector(selector);
+                  if (!el) throw new Error("Typography probe missing " + selector);
+                  const css = getComputedStyle(el);
+                  samples[name] = { fontSize: css.fontSize, lineHeight: css.lineHeight, fontWeight: css.fontWeight };
+                }
+              } finally {
+                probe.remove();
+              }
+              const inputStyle = getComputedStyle(composer);
+              const buttonStyle = getComputedStyle(clear);
+              const svg = clear.querySelector("svg");
+              return {
+                samples,
+                composerFontSize: inputStyle.fontSize,
+                clearName: clear.getAttribute("aria-label"),
+                clearDisplayed: buttonStyle.display !== "none",
+                clearPaths: svg?.querySelectorAll("path").length ?? 0,
+                clearRects: svg?.querySelectorAll("rect").length ?? 0
+              };
+            });
+            for (const name of ["learner", "answer", "paragraph", "listItem", "lesson", "h3", "h4"]) {
+              assert.equal(reading.samples[name].fontSize, "17px", `#175 ${skin} ${viewport.name} ${name} must read at 17px`);
+            }
+            for (const name of ["learner", "answer", "paragraph", "listItem", "lesson"]) {
+              assert.equal(reading.samples[name].lineHeight, "25.5px", `#175 ${skin} ${viewport.name} ${name} must use 1.5 line-height`);
+              assert.equal(reading.samples[name].fontWeight, "400", `#175 ${skin} ${viewport.name} ${name} must have normal reading weight`);
+            }
+            for (const [name, size] of Object.entries({ kicker: "13px", h1: "24px", h2: "20px" })) {
+              assert.equal(reading.samples[name].fontSize, size, `#175 ${skin} ${viewport.name} ${name} scale`);
+            }
+            assert.equal(reading.composerFontSize, "17px", "#175 Coach/Learn composer must match reading text");
+            assert.equal(reading.clearName, "Clear Coach chat", "#174 must retain the accessible Clear control");
+            assert.ok(reading.clearPaths >= 4 && reading.clearRects === 0, "#174 phone control must use the bin glyph, not the old eraser");
+            assert.equal(reading.clearDisplayed, viewport.width <= 700, "#174 clear control must remain phone-only");
+            entry.coachReading = reading;
+          }
           const file = path.join(output, `${viewport.name}-${mode}-${skin}.png`);
           await page.screenshot({ path: file, fullPage: true, animations: "disabled", timeout: 30_000 });
           entry.screenshot = file;
