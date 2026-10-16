@@ -1,0 +1,7 @@
+# Phase 3 visual evidence runner
+
+Run `node scripts/phase3-visual-qa.mjs` against a local development server (`pnpm --filter @studigo/web dev --hostname 127.0.0.1 -p 3000`). Override `PHASE3_VISUAL_BASE_URL`, `PHASE3_VISUAL_DIR` or `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when needed. Chromium must be installed (`pnpm exec playwright install chromium`). The matching GitHub Actions workflow installs it and uploads the report even on failures.
+
+The runner captures the **same-commit** synthetic Study Room in legacy and Phase 3 shells across Coach, Materials, Quiz, Flashcards, Practice test, Mastery, Weak areas, Plan and Cram at 320, 390, 820 and 1440 pixels. It produces 72 regular images, 72 enlarged images and `report.json`, checks the selected shell, visible navigation, horizontal overflow, 200% CSS zoom overflow, reduced-motion media query and running CSS animations, plus Tab/Shift+Tab focus visibility and Enter activation of all five sections.
+
+CSS zoom is an automated enlarged-layout check, not a browser text-only zoom claim. Keyboard assertions cover section navigation, not every interaction or full focus order. The fixture uses synthetic evidence, is restricted to development/flagged previews, and cannot establish authenticated learner acceptance, source ownership, real file access, grading, voice, screen-reader fidelity, high-contrast or native-device success. Review screenshots from the exact PR SHA before accepting visual fidelity. No credentials, learner screenshots, production data or secrets are captured.
