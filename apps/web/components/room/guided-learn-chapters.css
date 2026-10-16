@@ -382,3 +382,45 @@
   border-radius: 20px;
 }
 .voiceAnswerReview::backdrop { background: rgba(17, 30, 50, .44); }
+
+/* Final density pass: phones previously reserved the Study Room bottom tabs
+   twice (once on modeSurface, again on coachMode). Reclaim the second reserve
+   and keep the dock's own safety lane so lesson choices extend almost to it. */
+@media (max-width:700px) {
+  .roomDevice:has(.learnReading) .modeSurface > .coachMode {
+    padding-bottom: calc(20px + var(--m-safe-bottom, 0px));
+  }
+  .roomDevice:has(.learnReading) .learnReading {
+    padding-bottom: 50px;
+  }
+}
+@media (min-width: 701px) {
+  /* Larger, easier targets fill the broad lesson canvas instead of leaving
+     three tiny answers stranded against its top edge. */
+  .learnReading .learnChoices {
+    grid-auto-rows: minmax(clamp(68px, 8vh, 96px), auto);
+    gap: 13px;
+  }
+  .learnReading .learnTalkBody { justify-content: center; }
+}
+/* Large monitors: task/instructions sit left; generous interactive choices
+   take the right. This uses existing content, not new filler copy or UI. */
+@media (min-width:1200px) {
+  .learnReading .learnTalkBody:has(> .learnChoices) {
+    display: grid;
+    grid-template-columns: minmax(240px, .85fr) minmax(380px, 1.3fr);
+    grid-template-rows: auto auto;
+    gap: 12px clamp(20px, 3vw, 38px);
+    align-content: center;
+    min-height: 100%;
+  }
+  .learnReading .learnTalkBody:has(> .learnChoices) > .learnAsk {
+    grid-column: 1; grid-row: 1; align-self: end;
+  }
+  .learnReading .learnTalkBody:has(> .learnChoices) > .learnLessonAudio {
+    grid-column: 1; grid-row: 2; align-self: start;
+  }
+  .learnReading .learnTalkBody:has(> .learnChoices) > .learnChoices {
+    grid-column: 2; grid-row: 1 / span 2;
+  }
+}
