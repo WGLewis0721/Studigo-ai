@@ -2,6 +2,8 @@
    It is mounted only within the private Guided Learn canary. */
 .exploreJournal { width:100%; max-width:1000px; margin:0 auto; padding:clamp(12px,2vw,24px); color:var(--ink); }
 .exploreJournalHead { margin-bottom:18px; }
+/* Explore is Learn: keep its source-teal action inside the unchanged Coach shell. */
+.roomDevice .exploreJournal .buttonPrimary { --key:var(--teal); --key-on:var(--ink); }
 .exploreJournalHead h2 { margin:4px 0 8px; font:800 clamp(25px,3vw,34px)/1.16 var(--display); letter-spacing:-.03em; }
 .exploreJournalHead p:last-child { margin:0; max-width:65ch; color:var(--ink-2); line-height:1.5; }
 .exploreJournalLayout { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:16px; align-items:start; }
