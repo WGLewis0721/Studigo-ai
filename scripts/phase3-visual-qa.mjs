@@ -137,6 +137,13 @@ try {
       await page.getByRole("button", { name: "Confident", exact: false }).click();
       await page.screenshot({ path: path.join(output, `${viewport.name}-quiz-selection-phase3.png`), animations: "disabled" });
       assert.equal(gradeCalls, 0, "answer/confidence selection must not submit");
+      if (report.forcedColors === "active") {
+        const selectedConfidence = page.locator('.confidenceButton[aria-pressed="true"]');
+        assert.ok(await selectedConfidence.evaluate(el => {
+          const style = getComputedStyle(el);
+          return style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) >= 2;
+        }), "forced-colors confidence selection must remain visible");
+      }
       await page.locator(".roomStudioSubmit").click();
       await page.locator(".quizFeedback").waitFor();
       assert.equal(gradeCalls, 1, "explicit submit must grade once");
@@ -220,7 +227,7 @@ try {
   if (report.sourceTreeAfter !== report.sourceTreeBefore) report.failures.push({ stage: "source stability", error: "Source tree changed during browser evidence run; repeat against a frozen tree" });
   await writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
 }
-console.log(`Phase 3 synthetic comparison: ${report.cases.length} cases, ${report.failures.length} failures`);
+console.log(`Phase 3 synthetic comparison: ${report.cases.length} room cases, ${report.interactions.length} interaction groups, ${report.home.length} Home cases, ${report.failures.length} failures`);
 if (report.failures.length) {
   for (const failure of report.failures) console.error(`${failure.viewport} ${failure.mode} ${failure.skin}: ${failure.error}`);
   process.exitCode = 1;
