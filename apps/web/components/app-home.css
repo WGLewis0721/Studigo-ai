@@ -81,11 +81,15 @@
 .homeHero[data-ui="phase3"] .homeSay .pageTitle { max-width: 16ch; font-size: clamp(2.8rem, 5vw, 5.2rem); line-height: .98; letter-spacing: -.07em; }
 .homeHero[data-ui="phase3"] .homeSay .pageLede { max-width: 52ch; font-size: 1.12rem; line-height: 1.5; }
 .homeHero[data-ui="phase3"] .nextUp {
+  container: home-action / inline-size;
   max-width: 730px; padding: 24px 26px; border-radius: 22px;
   background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline), 0 14px 35px rgba(20,27,45,.08);
 }
 .homeHero[data-ui="phase3"] .nextUp h2 { font-size: clamp(1.35rem, 2vw, 2rem); }
-.homeHero[data-ui="phase3"] .nextUp .buttonPrimary { min-height: 52px; }
+.homeHero[data-ui="phase3"] .nextUp .buttonPrimary { min-height: 52px; min-width: 0; max-width: 100%; }
+@container home-action (max-width: 420px) {
+  .homeHero[data-ui="phase3"] .nextUp > * { grid-column: 1 / -1; }
+}
 .firstRoom[data-ui="phase3"] {
   max-width: 1250px; margin: 0 auto; grid-template-columns: minmax(240px, .85fr) minmax(0, 1fr);
   gap: clamp(30px, 7vw, 112px); padding: clamp(24px, 4vw, 58px);
