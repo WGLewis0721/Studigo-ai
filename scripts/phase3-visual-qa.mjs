@@ -511,12 +511,19 @@ try {
       assert.ok(await hear.first().isVisible(), "Read aloud must be learner-initiated and visible");
       const mic = page.getByRole("button", { name: "Speak a draft answer" }).first();
       await mic.click();
+      const transcriptDialog = page.locator("dialog.voiceAnswerReview[open]");
+      await transcriptDialog.waitFor();
+      assert.ok(await transcriptDialog.evaluate(el => el.matches(":modal")),
+        "Voice transcript review must be in the native modal top layer, outside scrolling lesson clipping");
       const record = page.getByRole("button", { name: "Start speaking" }).first();
       assert.equal(await record.isDisabled(), true, "No microphone request without explicit acknowledgement");
       assert.ok(await page.getByText(/browser's speech service may process audio/).first().isVisible());
       missionCase.voiceScreenshot = path.join(output, `${viewport.name}-guided-learn-voice-consent-phase3.png`);
       await page.screenshot({ path: missionCase.voiceScreenshot, animations: "disabled" });
-      await page.getByRole("button", { name: "Close", exact: true }).last().click();
+      await transcriptDialog.getByRole("button", { name: "Close", exact: true }).click();
+      await transcriptDialog.waitFor({ state: "detached" });
+      assert.ok(await mic.evaluate(el => document.activeElement === el),
+        "Closing transcript review must restore microphone trigger keyboard focus");
       missionCase.voiceConsentPreview = true;
       // Complete a fixture mission through explicit formative actions.
       // This must not call a real grading endpoint or claim learner mastery.
