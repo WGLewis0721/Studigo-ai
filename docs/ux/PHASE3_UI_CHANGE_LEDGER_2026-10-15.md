@@ -74,3 +74,10 @@ The strip lock stands. The plan is not accepted. What is on `main`:
 D1–D6, A–F, and S0–S4 stay open. A build is not acceptance.
 
 
+
+## Phase 3 room-scoped visual rollout — 2026-10-15 continuation
+
+- After the Guided Learn UI pause (#191), server-rendered signed-in Study Rooms can override the global UI switch with `PHASE3_UI_ROOM_IDS` (comma-separated exact room UUIDs). **Unset**: preserve the existing `NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI` behavior; **empty value**: all signed-in rooms use the legacy visual frame; **specific IDs**: Phase 3 frame only in those rooms. This is presentation-only and does not grant document, grading, lesson or mastery authority.
+- The existing `/dev/study` synthetic fixture keeps its independent global preview default, so an internal test page cannot inadvertently change authenticated rooms. Home still uses its existing global styling flag; room-specific gating is for the Study Room shell only.
+- The `phase3FoundationUi` prop controls the same `data-ui=phase3` shell attribute and back-button treatment. All five navigation groups, Coach geometry/tuck and server data contracts are unchanged. Guided Learn stays paused.
+- Automated pure-unit gates cover absent/empty/specific/wildcard allowlists and exact-ID matching. **Not accepted yet:** same-commit flag-on/off rendered captures on signed-in phone and wide views, keyboard/200% zoom, and production flag verification. Do not mark D1–D6 / A–F accepted based solely on this improvement.

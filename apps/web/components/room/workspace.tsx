@@ -82,7 +82,8 @@ export function RoomWorkspace({
   readiness,
   initialMode,
   evidence, planEvents, asOf,
-  phase3Learn = false
+  phase3Learn = false,
+  phase3FoundationUi
 }: {
   room: StudyRoom;
   documents: StudyDocument[];
@@ -93,9 +94,12 @@ export function RoomWorkspace({
   planEvents: PlanEvent[];
   asOf: number;
   phase3Learn?: boolean;
+  /** Optional server-scoped override; omitted by development fixtures. */
+  phase3FoundationUi?: boolean;
 }) {
   const router = useRouter();
   const coaching = useCoachPreferences(room);
+  const foundationEnabled = phase3FoundationUi ?? foundationUi;
   const readyDocuments = documents.filter((document) => document.status === "ready" || document.status === "partial");
   const defaultMode: Mode = readyDocuments.length ? "coach" : "materials";
   const [mode, setMode] = useState<Mode>(
@@ -173,12 +177,12 @@ export function RoomWorkspace({
 
 
   return (
-    <div className="roomDevice" data-shell={theme} data-tone={theme} data-ui={foundationUi ? "phase3" : undefined}>
+    <div className="roomDevice" data-shell={theme} data-tone={theme} data-ui={foundationEnabled ? "phase3" : undefined}>
     <div className="roomWorkspace" data-tone={mode} ref={workspaceRef}>
       <div className="topbarWrap">
       <header className="workspaceTopbar">
         <Link className="roomBackButton" href="/app" aria-label="All rooms">
-          <span aria-hidden="true">{foundationUi ? "←" : "‹"}</span>
+          <span aria-hidden="true">{foundationEnabled ? "←" : "‹"}</span>
         </Link>
         <div className="workspaceTitle roomTitleBlock">
           <i className="roomGem roomGemLarge" data-tone={theme} aria-hidden="true" />
