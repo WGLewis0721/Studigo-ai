@@ -14,8 +14,9 @@ export function MissionControlIcon({ name }: { name: MissionControlName }) {
       <path d="M9 10h6M9 14h6M9 18h4.2" />
     </>,
     guide: <>
-      <path d="M4 4.6h7.3c1.4 0 2.5.55 3 1.35.5-.8 1.6-1.35 3-1.35H20v15h-2.7c-1.6 0-2.5.4-3 1.25-.5-.85-1.4-1.25-3-1.25H4z" />
-      <path d="M14.3 6v14.5M7 9h4.2M7 12.5h4.2M17 9h.01M17 12.5h.01" />
+      <rect x="5.2" y="3" width="15" height="18" rx="2" />
+      <path d="M9.2 3.5v17M12.5 8h4.7M12.5 12h4.7M12.5 16h3.2" />
+      <path d="M3.5 7.5h3.1M3.5 12h3.1M3.5 16.5h3.1" />
     </>,
     back: <path d="m14.5 5-7 7 7 7M7.5 12H21" />,
     pause: <><path d="M9 5v14M15 5v14" /></>,
