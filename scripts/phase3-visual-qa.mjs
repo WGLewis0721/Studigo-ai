@@ -428,6 +428,10 @@ try {
       await page.screenshot({ path: missionCase.activeScreenshot, animations: "disabled" });
       await page.locator(".learnGo").click();
       await page.locator(".learnChoices .learnChoice").first().waitFor();
+      const firstQuestion = await page.locator(".learnAsk").innerText();
+      assert.ok(firstQuestion.includes("?"), "The first guided activity must ask an explicit question");
+      assert.doesNotMatch(firstQuestion, /^which one is it\??$/i,
+        "Guided Learn cannot present the old generic question");
       await page.locator(".learnChoices .learnChoice").first().scrollIntoViewIfNeeded();
       const visibleChoice = await page.locator(".learnChoices .learnChoice").first().evaluate(el => {
         const rect = el.getBoundingClientRect();
@@ -499,12 +503,38 @@ try {
       }
       missionCase.sourceScreenshot = path.join(output, `${viewport.name}-guided-learn-source-phase3.png`);
       await page.screenshot({ path: missionCase.sourceScreenshot, animations: "disabled" });
+      // A long real OCR extraction must remain within the source viewport.
+      const clip = await sourceSheet.evaluate(dialog => {
+        const quote = dialog.querySelector(".learnSourceQuote");
+        const original = dialog.querySelector(".learnSourceOriginal");
+        const back = dialog.querySelector(".ghostButton");
+        if (!quote || !back) throw new Error("Source dialog missing quote or exit");
+        const initialContent = quote.textContent;
+        quote.textContent = Array.from({length: 70}, () => initialContent).join("\n");
+        const rect = dialog.getBoundingClientRect();
+        const quoteBox = quote.getBoundingClientRect();
+        const exitBox = back.getBoundingClientRect();
+        const documentHeight = quote.scrollHeight;
+        const viewportHeight = quote.clientHeight;
+        quote.textContent = initialContent;
+        return {
+          trulyScrollable: documentHeight > viewportHeight + 100,
+          scrollableExcerpt: getComputedStyle(quote).overflowY === "auto",
+          quoteInside: quoteBox.top >= rect.top && quoteBox.bottom <= exitBox.top + 1,
+          exitInside: exitBox.bottom <= rect.bottom + 1,
+          sourceHeight: documentHeight,
+          originalInside: !original || original.getBoundingClientRect().bottom <= exitBox.top
+        };
+      });
+      assert.ok(clip.trulyScrollable && clip.scrollableExcerpt && clip.quoteInside && clip.exitInside && clip.originalInside,
+        "Source excerpt must scroll internally without overlapping Open original or Back to lesson");
+      missionCase.sourceClip = clip;
       await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
       await sourceSheet.waitFor({ state: "hidden" });
       assert.ok(await findIt.evaluate(el => document.activeElement === el), "spotlight must return keyboard focus to Find it");
       const hint = page.getByRole("button", { name: "Give me a hint" });
       await hint.click();
-      assert.ok(await page.getByText(/Hint used · This response is practice, not independent mastery/).isVisible());
+      assert.ok(await page.locator(".learnAnswerFeedback[data-outcome=\"assisted\"]").getByText(/guided answer, not independent mastery/).isVisible());
       missionCase.hintScreenshot = path.join(output, `${viewport.name}-guided-learn-hint-phase3.png`);
       await page.screenshot({ path: missionCase.hintScreenshot, animations: "disabled" });
       const hear = page.getByRole("button", { name: "Read to me", exact: true });
@@ -535,6 +565,13 @@ try {
       await page.locator(".learnChoices .learnChoice").first().waitFor();
       await page.locator(".learnChoices .learnChoice").first().click();
       await page.locator(".learnGo").click(); // Check evidence
+      const feedback = page.locator(".learnAnswerFeedback");
+      await feedback.waitFor();
+      assert.ok(await feedback.getByRole("strong").count() === 0 || await feedback.locator("strong").count() === 1);
+      const feedbackText = await feedback.innerText();
+      assert.match(feedbackText, /Correct|Not quite|Here's some help/);
+      assert.ok(await page.getByRole("button", { name: /Finish lesson|Next activity/ }).isVisible(),
+        "After feedback the next action must be named, never another ambiguous Continue");
       await page.locator(".learnGo").click(); // Continue -> done
       const end = page.locator(".learnHandoff");
       await end.waitFor();

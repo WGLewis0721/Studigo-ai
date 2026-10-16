@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
 import type { Topic } from "@/lib/rooms";
-import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
+import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -44,12 +44,9 @@ function readingProgress(phase: Phase | "new"): number {
 }
 
 function passageLines(objective: string, excerpt: string): { sentences: string[]; target: number } | null {
-  const checked = tapCheck(objective, excerpt);
-  if (checked) return checked;
-  const sentences = sourceSentences(excerpt);
-  if (sentences.length === 1) return { sentences, target: 0 };
-  const line = excerpt.trim();
-  return line ? { sentences: [line], target: 0 } : null;
+  // Do not convert a failed extraction into one enormous pretend lesson.
+  // One usable line also cannot support distinct source-grounded alternatives.
+  return tapCheck(objective, excerpt);
 }
 
 function beatHit(beat: MissionBeat, picked: number[]): boolean {
@@ -188,7 +185,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }, [mission?.phase, loading]);
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
-  const beats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  const proposedBeats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  // Backend uses four fixed formative phases. A shorter question set must not
+  // silently replay the preceding activity (and force duplicate Continue).
+  const beats = proposedBeats.length === 4 ? proposedBeats : [];
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
@@ -322,9 +322,23 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           </div>}
         </div>
       </div>
-    ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
-    {helpUsed && beat && mission?.phase !== "done" && <p className="learnAssistanceNote" role="status">Hint used · This response is practice, not independent mastery.</p>}
-    {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
+    ) : mission && !loading ? <div className="learnInvitation learnSourceInsufficient" role="status">
+      <p className="tinyLabel">SOURCE NEEDS REVIEW</p>
+      <h2>Not enough clear text for a trustworthy question.</h2>
+      <p>This excerpt does not contain two distinct statements Studigo can safely compare. Your original material is still available; the lesson won't repeat the same passage as fake activities.</p>
+      <button className="ghostButton" type="button" onClick={openSource}>Review the source passage</button>
+      <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Choose another source</button>
+    </div> : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
+    {shown && beat && beat.kind !== "read" && <div className="learnAnswerFeedback"
+      role="status" aria-live="polite"
+      data-outcome={helpUsed ? "assisted" : hit ? "correct" : "incorrect"}>
+      <strong>{helpUsed ? "Here's some help" : hit ? "Correct! You got it." : "Not quite. Let's review."}</strong>
+      <span>{helpUsed
+        ? `The source supports: ${beatFix(beat)}. This was a guided answer, not independent mastery.`
+        : hit
+          ? `That's supported by your study guide${snapshot?.source?.pageNumber ? `, page ${snapshot.source.pageNumber}` : ""}. Ready for the next activity.`
+          : `The correct answer is: ${beatFix(beat)}. You can review the source, then try the next activity.`}</span>
+    </div>}
     {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
       aria-label="Find the original source for this lesson"
       onClose={() => { setSourceOpen(false); sourceButtonRef.current?.focus(); }}>
@@ -365,7 +379,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         if (error && !mission) { void act("start"); return; }
         if (!beat || beat.kind === "read" || shown) advanceLevel();
         else setShown(true);
-      }}>{!beat || beat.kind === "read" || shown ? "Continue →" : "Check →"}</button>
+      }}>{beat?.kind === "read" ? "Start question →"
+        : shown ? mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
+        : "Check answer →"}</button>
     </div>}
   </section>;
 }

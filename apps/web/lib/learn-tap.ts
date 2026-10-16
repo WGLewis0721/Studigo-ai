@@ -56,14 +56,24 @@ export function missionBeats(objective: string, sentences: string[], target: num
   const beats: MissionBeat[] = [{ kind: "read", title: lead, body: answer }];
   if (sentences.length < 2) return beats;
 
-  const distractors = sentences.filter((_, index) => index !== safeTarget);
+  // The extraction contains page titles and headings as well as facts.
+  // A heading is not a reasonable competing answer to a definition question.
+  const distractors = sentences.filter((sentence, index) =>
+    index !== safeTarget && sentence.split(/\s+/).length >= 5 && sentence.length >= 30
+  );
+  const concept = answer.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[—–:]\s+.{12,}$/)?.[1]?.trim();
+  const question = concept
+    ? `What does "${concept}" mean?`
+    : /^\s*(who|what|which|where|when|why|how)\b/i.test(objective)
+      ? objective.trim().replace(/[.]+$/, "?")
+      : `Which statement from your guide explains "${objective.trim() || "this concept"}"?`;
   const choicePool = distractors.slice(0, level === "simpler" ? 2 : 3);
   const slot = safeTarget % (choicePool.length + 1);
   const options = [...choicePool];
   options.splice(slot, 0, answer);
   beats.push({
     kind: "choice",
-    prompt: level === "simpler" ? "Which one is it?" : level === "deeper" ? "Which line is the one?" : "Pick the right line.",
+    prompt: question,
     options,
     answer: slot,
   });
@@ -90,20 +100,17 @@ export function missionBeats(objective: string, sentences: string[], target: num
     });
   }
 
-  const boxOptions = sentences.slice(0, Math.min(sentences.length, level === "simpler" ? 3 : 4));
+  const boxOptions = [answer, ...distractors].slice(0, Math.min(distractors.length + 1, level === "simpler" ? 3 : 4));
   let boxTarget = boxOptions.indexOf(answer);
   if (boxTarget < 0) {
     boxOptions[boxOptions.length - 1] = answer;
     boxTarget = boxOptions.length - 1;
   }
-  const wanted = new Set(contentWords(objective).map((word) => word.toLowerCase()));
-  const hits = boxOptions
-    .map((line, index) => index === boxTarget || contentWords(line).some((word) => wanted.has(word.toLowerCase())))
-    .map((hit, index) => hit ? index : -1)
-    .filter((index) => index >= 0);
+  // Do not infer that a distractor is correct just because it shares topic words.
+  const hits = [boxTarget];
   beats.push({
     kind: "boxes",
-    prompt: level === "simpler" ? "Tap every one that fits." : level === "deeper" ? "Mark every line that counts." : "Mark the ones that count.",
+    prompt: "Which statement is supported by the passage you just studied?",
     options: boxOptions,
     answers: hits.length && hits.length < boxOptions.length ? hits : [boxTarget],
   });
@@ -118,15 +125,30 @@ export function tapCheck(objective: string, excerpt: string): { sentences: strin
   const sentences = sourceSentences(excerpt);
   if (sentences.length < 2) return null;
   const wanted = words(objective);
+  // Prefer meaningful explanatory passages over long OCR headers or contents
+  // lines. If the objective is a generic chapter title, choose a real factual
+  // sentence, not the matching title itself.
+  const eligible = sentences.map((sentence, index) => ({ sentence, index }))
+    .filter(({ sentence }) => sentence.length >= 27 &&
+      sentence.split(/\s+/).length >= 5 &&
+      !/^(page\s*\d+|government\s*\/|study materials)/i.test(sentence));
+  if (eligible.length < 2) return null;
+  const candidates = eligible.map(({ sentence, index }) => ({ sentence, index }));
   let target = 0;
   let best = -1;
-  sentences.forEach((sentence, index) => {
+  candidates.forEach(({ sentence, index }) => {
     const seen = words(sentence);
     const score = wanted.filter((word) => seen.some((token) => token === word || token.startsWith(word))).length;
-    if (score > best) {
-      best = score;
+    const isDefinition = /[—–:]\s+[a-z]/i.test(sentence);
+    const isStatement = /[.!?]$/.test(sentence);
+    const quality = score * 10 + (isDefinition ? 3 : 0) + (isStatement ? 1 : 0);
+    if (quality > best) {
+      best = quality;
       target = index;
     }
   });
-  return { sentences, target };
+  // Never send extracted headings into the distractor or evidence pools.
+  // Cursor and quiz generation must both use the same filtered source subset.
+  return { sentences: candidates.map((candidate) => candidate.sentence),
+    target: candidates.findIndex((candidate) => candidate.index === target) };
 }
