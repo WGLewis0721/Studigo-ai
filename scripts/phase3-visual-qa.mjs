@@ -191,6 +191,10 @@ try {
         assert.ok(home.horizontalOverflow <= 2, `Home overflow ${home.horizontalOverflow}px`);
         await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
         home.zoomOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        home.zoomOverflowNodes = await page.evaluate(() => [...document.querySelectorAll("body *")].map(el => {
+          const box = el.getBoundingClientRect();
+          return { tag: el.tagName, className: typeof el.className === "string" ? el.className : "", text: (el.textContent ?? "").trim().slice(0, 70), left: box.left, right: box.right, width: box.width };
+        }).filter(box => box.width > 0 && (box.left < -1 || box.right > innerWidth + 1)).slice(0, 40));
         await page.screenshot({ path: home.screenshot.replace(".png", "-zoom200.png"), fullPage: true, animations: "disabled" });
         await page.evaluate(() => { document.documentElement.style.zoom = ""; });
         await page.setViewportSize({ width: Math.floor(viewport.width / 2), height: Math.floor(viewport.height / 2) });
