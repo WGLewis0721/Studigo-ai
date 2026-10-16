@@ -441,9 +441,44 @@ try {
         visibleChoice.insideViewport && visibleChoice.aboveAction,
         "Lesson choices must visibly fit above the action dock, not collapse below the desktop stage");
       missionCase.choiceVisible = visibleChoice;
+      const arrangement = await page.evaluate(() => {
+        const region = document.querySelector(".learnReading");
+        const stage = region?.querySelector(".learnTalk");
+        const dock = region?.querySelector(".learnActionDock");
+        if (!(region instanceof HTMLElement) || !(stage instanceof HTMLElement) ||
+            !(dock instanceof HTMLElement)) throw new Error("Guided Learn canvas or single action dock missing");
+        const bounds = dock.getBoundingClientRect();
+        const actions = [...dock.querySelectorAll("button")].filter(button => button.getBoundingClientRect().width > 0)
+          .map(button => {
+            const r = button.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height, centerY: r.y + r.height / 2,
+              label: button.getAttribute("aria-label") || button.textContent?.trim() };
+          });
+        const lesson = stage.getBoundingClientRect();
+        const container = region.getBoundingClientRect();
+        return { actions, dockTop: bounds.top, dockBottom: bounds.bottom,
+          dockWidth: dock.clientWidth, dockScrollWidth: dock.scrollWidth,
+          lessonHeight: lesson.height, containerHeight: container.height,
+          stageBelowProgress: lesson.top > region.querySelector(".learnBar").getBoundingClientRect().top,
+          stageAboveDock: lesson.bottom <= bounds.top + 1 };
+      });
+      assert.equal(arrangement.actions.length, 5, "Back, Pause, Find it, Hint and Check must share one action dock");
+      assert.ok(arrangement.actions.every(a => a.width >= 43 && a.height >= 43),
+        "Every lesson action must retain an accessible physical target");
+      assert.ok(arrangement.actions.every(a => Math.abs(a.centerY - arrangement.actions[0].centerY) <= 2),
+        "All lesson buttons must be aligned on a single horizontal line");
+      assert.ok(arrangement.actions.every((a,i) => i === 0 || a.x >= arrangement.actions[i-1].x + arrangement.actions[i-1].width - 2),
+        "Lesson buttons must not overlap each other");
+      assert.ok(arrangement.dockScrollWidth <= arrangement.dockWidth + 2,
+        "Lesson action dock must fit without hidden horizontal scrolling");
+      assert.ok(arrangement.stageBelowProgress && arrangement.stageAboveDock,
+        "Instructional canvas must stay between progress and toolbar");
+      assert.ok(arrangement.lessonHeight >= (viewport.width <= 700 ? 130 : 220),
+        "Instructional canvas must occupy meaningful space rather than collapse");
+      missionCase.arrangement = arrangement;
       missionCase.actionScreenshot = path.join(output, `${viewport.name}-guided-learn-choose-phase3.png`);
       await page.screenshot({ path: missionCase.actionScreenshot, animations: "disabled" });
-      await page.getByRole("button", { name: "Pause", exact: true }).click();
+      await page.getByRole("button", { name: "Pause lesson", exact: true }).click();
       await page.getByRole("button", { name: /Continue lesson/ }).waitFor();
       missionCase.pausedScreenshot = path.join(output, `${viewport.name}-guided-learn-paused-phase3.png`);
       await page.screenshot({ path: missionCase.pausedScreenshot, animations: "disabled" });
@@ -457,6 +492,11 @@ try {
       await sourceSheet.waitFor();
       assert.ok(await sourceSheet.evaluate(el => el.matches(":modal")), "source spotlight must use native modal focus boundary");
       assert.ok(await sourceSheet.getByText("The legislative branch makes laws", { exact: false }).isVisible());
+      if (viewport.width > 700) {
+        const sourceHeight = await sourceSheet.evaluate(el => el.getBoundingClientRect().height);
+        assert.ok(sourceHeight >= 440, "Wide source inspector should be a substantial reader, not a short popup");
+        missionCase.sourceHeight = sourceHeight;
+      }
       missionCase.sourceScreenshot = path.join(output, `${viewport.name}-guided-learn-source-phase3.png`);
       await page.screenshot({ path: missionCase.sourceScreenshot, animations: "disabled" });
       await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
@@ -464,19 +504,26 @@ try {
       assert.ok(await findIt.evaluate(el => document.activeElement === el), "spotlight must return keyboard focus to Find it");
       const hint = page.getByRole("button", { name: "Give me a hint" });
       await hint.click();
-      assert.ok(await page.getByText(/With help · not an independent answer/).isVisible());
+      assert.ok(await page.getByText(/Hint used · This response is practice, not independent mastery/).isVisible());
       missionCase.hintScreenshot = path.join(output, `${viewport.name}-guided-learn-hint-phase3.png`);
       await page.screenshot({ path: missionCase.hintScreenshot, animations: "disabled" });
       const hear = page.getByRole("button", { name: "Read to me", exact: true });
       assert.ok(await hear.first().isVisible(), "Read aloud must be learner-initiated and visible");
       const mic = page.getByRole("button", { name: "Speak a draft answer" }).first();
       await mic.click();
+      const transcriptDialog = page.locator("dialog.voiceAnswerReview[open]");
+      await transcriptDialog.waitFor();
+      assert.ok(await transcriptDialog.evaluate(el => el.matches(":modal")),
+        "Voice transcript review must be in the native modal top layer, outside scrolling lesson clipping");
       const record = page.getByRole("button", { name: "Start speaking" }).first();
       assert.equal(await record.isDisabled(), true, "No microphone request without explicit acknowledgement");
       assert.ok(await page.getByText(/browser's speech service may process audio/).first().isVisible());
       missionCase.voiceScreenshot = path.join(output, `${viewport.name}-guided-learn-voice-consent-phase3.png`);
       await page.screenshot({ path: missionCase.voiceScreenshot, animations: "disabled" });
-      await page.getByRole("button", { name: "Close", exact: true }).last().click();
+      await transcriptDialog.getByRole("button", { name: "Close", exact: true }).click();
+      await transcriptDialog.waitFor({ state: "detached" });
+      assert.ok(await mic.evaluate(el => document.activeElement === el),
+        "Closing transcript review must restore microphone trigger keyboard focus");
       missionCase.voiceConsentPreview = true;
       // Complete a fixture mission through explicit formative actions.
       // This must not call a real grading endpoint or claim learner mastery.

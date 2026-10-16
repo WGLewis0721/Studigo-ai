@@ -271,17 +271,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         onClick={() => void act("resume")}>Continue lesson →</button>
     </div>}
 
-    {mission && !mission.paused && <div className="learnMissionControls" role="group" aria-label="Lesson controls">
-      <button className="ghostButton" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")}>← Back</button>
-      <button className="ghostButton" type="button" disabled={busy} onClick={() => void act("pause")}>Pause</button>
-    </div>}
-    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>Lesson {lessonNumber} of {topics.length} · {currentTopic?.title}</div>}
-    {ready && <div className="learnMissionActions" role="group" aria-label="Learning help">
-      <button type="button" ref={sourceButtonRef} onClick={openSource}>Find it in my guide</button>
-      {beat && beat.kind !== "read" && !shown && <button type="button" onClick={() => { setHelpUsed(true); setShown(true); }}>
-        Give me a hint
-      </button>}
-      {helpUsed && <span className="learnAssistanceNote">With help · not an independent answer</span>}
+    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
+      <span>Lesson {lessonNumber} of {topics.length}</span>
+      <span className="learnLessonTopic">{currentTopic?.title}</span>
     </div>}
     {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
       <span style={{ width: `${progress}%` }} />
@@ -308,12 +300,14 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         <div className="learnTalkBody">
           <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
           {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
-          <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? beat.body : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label="Hear this teaching step" />
-          {beat.kind !== "read" && <div className="learnOptionalVoice">
-            <span>Prefer to speak? Your transcript is a draft, not a graded answer.</span>
-            <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
-            {spokenDraft && <p role="status">Spoken draft: {spokenDraft} · Choose an answer to check against the source.</p>}
-          </div>}
+          <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
+            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? beat.body : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label="Hear this teaching step" />
+            {beat.kind !== "read" && <div className="learnOptionalVoice">
+              <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
+              <span className="learnVoiceExplanation">Speak an answer draft</span>
+            </div>}
+          </div>
+          {spokenDraft && beat.kind !== "read" && <p className="learnSpokenDraft" role="status">Spoken draft: {spokenDraft} · Select an answer to check.</p>}
 
           {beat.kind === "blank" && <p className="learnLine">{beat.before}<span className="learnGap">{picked.length ? beat.options[picked[0]] : "______"}</span>{beat.after}</p>}
           {beat.kind === "blank" && <div className="learnWords">{beat.options.map((word, index) => <button key={word} type="button" className="learnWord" aria-pressed={picked[0] === index} onClick={() => play(index)}>{word}</button>)}</div>}
@@ -329,6 +323,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         </div>
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
+    {helpUsed && beat && mission?.phase !== "done" && <p className="learnAssistanceNote" role="status">Hint used · This response is practice, not independent mastery.</p>}
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
     {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
       aria-label="Find the original source for this lesson"
@@ -352,11 +347,25 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
-    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
-      if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-      if (error && !mission) { void act("start"); return; }
-      if (!beat || beat.kind === "read" || shown) advanceLevel();
-      else setShown(true);
-    }}>{!beat || beat.kind === "read" || shown ? "Continue" : "Check"}</button>}
+    {!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
+      {mission && <button className="ghostButton learnDockBack" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")} aria-label="Previous lesson step">
+        <span className="learnActionWide">← Back</span><span className="learnActionCompact" aria-hidden="true">←</span>
+      </button>}
+      {mission && <button className="ghostButton learnDockPause" type="button" disabled={busy} onClick={() => void act("pause")} aria-label="Pause lesson">
+        <span className="learnActionWide">Pause</span><span className="learnActionCompact" aria-hidden="true">Ⅱ</span>
+      </button>}
+      {ready && <button type="button" className="ghostButton learnDockSource" ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide">
+        <span className="learnActionWide">Find it in my guide</span><span className="learnActionCompact" aria-hidden="true">⌕</span>
+      </button>}
+      {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint" onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint">
+        <span className="learnActionWide">Give me a hint</span><span className="learnActionCompact" aria-hidden="true">?</span>
+      </button>}
+      <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
+        if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
+        if (error && !mission) { void act("start"); return; }
+        if (!beat || beat.kind === "read" || shown) advanceLevel();
+        else setShown(true);
+      }}>{!beat || beat.kind === "read" || shown ? "Continue →" : "Check →"}</button>
+    </div>}
   </section>;
 }
