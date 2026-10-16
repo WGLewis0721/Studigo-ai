@@ -173,5 +173,5 @@
 }
 @media (forced-colors: active) {
   .roomDevice[data-ui="phase3"] :is(.choiceItem, .testChoice, .ratingButton, .mdTile, .timeChoices button) { border: 1px solid ButtonText; }
-  .roomDevice[data-ui="phase3"] :is(.choiceSelected, .testChoice:has(input:checked), .timeChoices button[aria-pressed="true"]) { outline: 3px solid Highlight; outline-offset: 2px; }
+  .roomDevice[data-ui="phase3"] :is(.choiceSelected, .testChoice:has(input:checked), .confidenceButton[aria-pressed="true"], .timeChoices button[aria-pressed="true"]) { outline: 3px solid Highlight; outline-offset: 2px; }
 }
