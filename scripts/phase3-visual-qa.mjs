@@ -139,23 +139,34 @@ try {
                 clearName: clear.getAttribute("aria-label"),
                 clearDisplayed: buttonStyle.display !== "none",
                 clearPaths: svg?.querySelectorAll("path").length ?? 0,
-                clearRects: svg?.querySelectorAll("rect").length ?? 0
+                clearRects: svg?.querySelectorAll("rect").length ?? 0,
+                clearSize: Math.round(clear.getBoundingClientRect().width),
+                clearKeyboardFocusable: clear.tabIndex >= 0
               };
             });
+            const phone = viewport.width <= 700;
+            const readingSize = phone ? "17px" : "18px";
+            const readingLine = phone ? "25.5px" : "27px";
             for (const name of ["learner", "answer", "paragraph", "listItem", "lesson", "h3", "h4"]) {
-              assert.equal(reading.samples[name].fontSize, "17px", `#175 ${skin} ${viewport.name} ${name} must read at 17px`);
+              assert.equal(reading.samples[name].fontSize, readingSize, `#175 responsive ${skin} ${viewport.name} ${name} reading scale`);
             }
             for (const name of ["learner", "answer", "paragraph", "listItem", "lesson"]) {
-              assert.equal(reading.samples[name].lineHeight, "25.5px", `#175 ${skin} ${viewport.name} ${name} must use 1.5 line-height`);
+              assert.equal(reading.samples[name].lineHeight, readingLine, `#175 responsive ${skin} ${viewport.name} ${name} 1.5 leading`);
               assert.equal(reading.samples[name].fontWeight, "400", `#175 ${skin} ${viewport.name} ${name} must have normal reading weight`);
             }
-            for (const [name, size] of Object.entries({ kicker: "13px", h1: "24px", h2: "20px" })) {
-              assert.equal(reading.samples[name].fontSize, size, `#175 ${skin} ${viewport.name} ${name} scale`);
+            for (const [name, size] of Object.entries({
+              kicker: phone ? "13px" : "14px",
+              h1: phone ? "24px" : "26px",
+              h2: phone ? "20px" : "22px"
+            })) {
+              assert.equal(reading.samples[name].fontSize, size, `#175 responsive ${skin} ${viewport.name} ${name} scale`);
             }
-            assert.equal(reading.composerFontSize, "17px", "#175 Coach/Learn composer must match reading text");
+            assert.equal(reading.composerFontSize, readingSize, "#175 Coach/Learn composer must match reading text");
             assert.equal(reading.clearName, "Clear Coach chat", "#174 must retain the accessible Clear control");
-            assert.ok(reading.clearPaths >= 4 && reading.clearRects === 0, "#174 phone control must use the bin glyph, not the old eraser");
-            assert.equal(reading.clearDisplayed, viewport.width <= 700, "#174 clear control must remain phone-only");
+            assert.ok(reading.clearPaths >= 4 && reading.clearRects === 0, "#174 must use the bin glyph, not the old eraser");
+            assert.equal(reading.clearDisplayed, true, "#174 clear bin must appear on phone, tablet and desktop");
+            assert.equal(reading.clearSize, phone ? 30 : 44, "#174 clear bin must match compact/mobile or wide tap-target scale");
+            assert.equal(reading.clearKeyboardFocusable, true, "#174 clear action must stay keyboard-accessible");
             entry.coachReading = reading;
           }
           const file = path.join(output, `${viewport.name}-${mode}-${skin}.png`);
