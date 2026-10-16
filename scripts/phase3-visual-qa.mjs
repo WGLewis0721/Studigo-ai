@@ -534,7 +534,7 @@ try {
       assert.ok(await findIt.evaluate(el => document.activeElement === el), "spotlight must return keyboard focus to Find it");
       const hint = page.getByRole("button", { name: "Give me a hint" });
       await hint.click();
-      assert.ok(await page.getByText(/Hint used · This response is practice, not independent mastery/).isVisible());
+      assert.ok(await page.locator(".learnAnswerFeedback[data-outcome=\"assisted\"]").getByText(/guided answer, not independent mastery/).isVisible());
       missionCase.hintScreenshot = path.join(output, `${viewport.name}-guided-learn-hint-phase3.png`);
       await page.screenshot({ path: missionCase.hintScreenshot, animations: "disabled" });
       const hear = page.getByRole("button", { name: "Read to me", exact: true });
