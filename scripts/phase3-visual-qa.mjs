@@ -674,6 +674,26 @@ try {
         assert.equal(await page.locator(".coachMaterial").count(), 0, "redundant pre-lesson material card must be absent");
         await page.getByRole("button", { name: /Start quest/ }).click();
         await page.getByText("MEET YOUR QUEST · READ").waitFor();
+        // Icon-only treatment must remain discoverable to AT and fit phone widths.
+        const journal = page.getByRole("button", { name: "Quest journal" });
+        const check = page.getByRole("button", { name: "Check what I understood" });
+        const guide = page.getByRole("button", { name: "Find it in my guide" });
+        assert.equal(await page.locator(".learnMissionNav").count(), 1, "journal must live in the top navigation");
+        assert.equal(await journal.locator(".learnControlGlyph").count(), 1, "journal must use the clipboard glyph");
+        assert.equal(await check.locator(".learnControlGlyph").count(), 1, "opening primary action must use a circled check");
+        assert.equal(await guide.locator(".learnControlGlyph").count(), 1, "source control must use a notebook glyph");
+        assert.equal(await page.getByRole("button", { name: "Previous lesson step" }).locator(".learnControlGlyph").count(), 1, "back must use the arrow glyph");
+        assert.equal(await page.getByRole("button", { name: "Pause lesson" }).locator(".learnControlGlyph").count(), 1, "pause must use the pause glyph");
+        assert.equal(await guide.evaluate(node => node.previousElementSibling?.getAttribute("aria-label")), "Check what I understood",
+          "source notebook must immediately follow the primary check key");
+        for (const button of [journal, check, guide, page.getByRole("button", { name: "Pause lesson" })]) {
+          const box = await button.boundingBox();
+          assert.ok(box && box.width >= 44 && box.height >= 44, "icon keys must have at least 44px targets");
+        }
+        const iconShot = `${viewport.name}-learn-glyphs-${skin}.png`;
+        await page.screenshot({ path: path.join(output, iconShot), animations: "disabled", fullPage: true });
+        assert.equal(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)), 0,
+          "icon key dock must not cause horizontal overflow");
         const sourceReading = await page.locator(".learnSourceReading").innerText();
         assert.match(sourceReading, /Inherited traits come from parents through genes/, "opening dialogue must show source facts for selected quest");
         await page.getByRole("button", { name: /Check what I understood/ }).click();
