@@ -670,12 +670,19 @@ try {
         exploreCase.horizontalOverflow = await page.evaluate(() =>
           Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
         assert.equal(exploreCase.horizontalOverflow, 0, "Explore must not overflow the viewport");
+        assert.equal(await page.locator(".exploreLearnSwitch").count(), 0, "Learn and Explore are one guided journey, not separate modes");
+        assert.equal(await page.locator(".coachMaterial").count(), 0, "redundant pre-lesson material card must be absent");
         await page.getByRole("button", { name: /Start quest/ }).click();
+        await page.getByText("MEET YOUR QUEST · READ").waitFor();
+        const sourceReading = await page.locator(".learnSourceReading").innerText();
+        assert.match(sourceReading, /Inherited traits come from parents through genes/, "opening dialogue must show source facts for selected quest");
+        await page.getByRole("button", { name: /Check what I understood/ }).click();
+        await page.getByText("BEFORE EXPLORE · UNDERSTANDING CHECK").waitFor();
+        await page.locator(".learnChoice").first().click();
+        await page.getByRole("button", { name: /Check answer/ }).click();
+        await page.getByRole("button", { name: /Explore this lesson/ }).click();
+        await page.getByText("EXPLORE · GUIDED ACTIVITY").waitFor();
         await page.getByRole("button", { name: /Quest journal/ }).click();
-        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
-        await page.getByRole("button", { name: "Original Learn", exact: true }).click();
-        assert.equal(await page.getByRole("button", { name: "Original Learn", exact: true }).getAttribute("aria-pressed"), "true");
-        await page.getByRole("button", { name: "Explore", exact: true }).click();
         await page.getByRole("heading", { name: "Quest journal" }).waitFor();
         // The URL shared with reviewers must actually open Explore directly.
         // A Ready preview of /app alone does not establish this.
