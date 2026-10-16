@@ -465,6 +465,33 @@ try {
       await page.screenshot({ path: missionCase.voiceScreenshot, animations: "disabled" });
       await page.getByRole("button", { name: "Close", exact: true }).last().click();
       missionCase.voiceConsentPreview = true;
+      // Complete a fixture mission through explicit formative actions.
+      // This must not call a real grading endpoint or claim learner mastery.
+      await page.locator(".learnGo").click(); // hinted choice -> try
+      await page.locator(".learnWords .learnWord").first().waitFor();
+      await page.locator(".learnWords .learnWord").first().click();
+      await page.locator(".learnGo").click(); // Check word choice
+      await page.locator(".learnGo").click(); // Continue -> source evidence
+      await page.locator(".learnChoices .learnChoice").first().waitFor();
+      await page.locator(".learnChoices .learnChoice").first().click();
+      await page.locator(".learnGo").click(); // Check evidence
+      await page.locator(".learnGo").click(); // Continue -> done
+      const end = page.locator(".learnHandoff");
+      await end.waitFor();
+      assert.ok(await end.getByText(/NO MASTERY AWARDED/).isVisible());
+      missionCase.completedScreenshot = path.join(output, `${viewport.name}-guided-learn-handoff-phase3.png`);
+      await page.screenshot({ path: missionCase.completedScreenshot, animations: "disabled" });
+      await end.getByRole("button", { name: "Practice independently" }).click();
+      await page.locator(".quizMode").waitFor();
+      missionCase.practiceHandoff = true;
+      await page.goto(`${origin}/dev/study?shell=1&ui=phase3&mode=materials`, { waitUntil: "networkidle" });
+      const original = page.locator(".documentRow").first();
+      assert.equal(await original.getByRole("link", { name: /View original file/ }).count(), 1);
+      assert.equal(await original.getByRole("link", { name: /Download original file/ }).count(), 1);
+      assert.equal(await original.getByRole("link", { name: /Open original PDF .* to print/ }).count(), 1);
+      missionCase.originalScreenshot = path.join(output, `${viewport.name}-guided-learn-original-recovery-phase3.png`);
+      await page.screenshot({ path: missionCase.originalScreenshot, animations: "disabled" });
+
 
 
       missionCase.overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
