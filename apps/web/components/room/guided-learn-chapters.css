@@ -161,3 +161,201 @@
   .learnReading .learnTalk { gap:8px; }
   .learnTeachingMascot { flex-basis:38px; }
 }
+
+/* Chapter 02/03 visual acceptance: one purposeful teaching canvas, a single
+   horizontal action dock, no detached buttons or false blank vertical lanes.
+   Use existing Study Room tokens; never alter lesson state or answer semantics. */
+.learnReading:has(.learnLessonLabel) {
+  gap: clamp(8px, 1.1vh, 12px);
+  padding: clamp(12px, 1.6vw, 20px);
+  min-height: 0;
+  overflow: hidden;
+}
+.learnReading .learnLessonLabel {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 8px 14px; flex: none;
+  margin: 0; line-height: 1.3;
+}
+.learnReading .learnLessonTopic {
+  font-size: 13px; font-weight: 550;
+  color: var(--ink-2, #526078);
+}
+.learnReading .learnBar {
+  flex: none; height: 7px;
+}
+.learnReading .learnTalk {
+  display: flex;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: clamp(14px, 2vw, 24px);
+  gap: clamp(8px, 1.2vw, 15px);
+  background: var(--white, white);
+  border: 1px solid var(--th-line, #d6e4e6);
+  border-radius: 20px;
+  box-shadow: 0 3px 18px rgba(20, 40, 65, .045);
+}
+.learnReading .learnTalkBody {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: column;
+  align-items: stretch; gap: 12px;
+}
+.learnReading .learnAsk {
+  max-height: none; overflow: visible;
+  font-size: clamp(20px, 1.9vw, 26px);
+  line-height: 1.22;
+}
+.learnReading .learnLine {
+  padding: 2px 0; margin: 0;
+  font-size: clamp(17px, 1.5vw, 19px);
+}
+.learnReading .learnLessonAudio {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; min-width: 0;
+}
+.learnReading .learnLessonAudio .readAloudControl { margin: 0; }
+.learnReading .learnOptionalVoice {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 0; min-width: 0;
+}
+.learnReading .learnVoiceExplanation { font-size: 13px; line-height: 1.25; }
+.learnReading .learnChoices {
+  flex: 0 0 auto;
+  min-height: max-content;
+  max-height: none;
+  overflow: visible;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+}
+.learnReading .learnChoice {
+  min-height: 54px;
+  padding: 11px 14px;
+  border: 1px solid var(--th-line, #dbe6e9);
+  background: var(--snow-2, #f7fafb);
+  border-radius: 13px;
+  align-items: center;
+}
+.learnReading .learnChoice:hover:not(:disabled) { border-color: var(--teal, #13b9b2); }
+.learnReading .learnSpokenDraft {
+  background: var(--snow-2, #f5f8fb); border-radius: 11px;
+  padding: 10px 12px; margin: 0;
+  overflow-wrap: anywhere; line-height: 1.45;
+}
+.learnReading .learnAssistanceNote { flex: none; margin: 0; }
+.learnReading .learnActionDock {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  margin-top: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 31;
+  border: 1px solid var(--th-line, #dbe5e9);
+  border-radius: 16px;
+  background: var(--white, white);
+  box-shadow: 0 5px 20px rgba(22, 42, 63, .065);
+}
+.learnReading .learnActionDock button {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  border-radius: 12px;
+}
+.learnReading .learnActionDock .learnGo {
+  flex: 1 1 auto;
+  min-width: 100px;
+  position: static;
+  inset: auto;
+  height: 48px;
+  width: auto;
+  margin: 0;
+  z-index: 1;
+}
+.learnActionCompact { display: none; }
+.learnActionWide { display: inline; }
+/* 820px tablets have the sidebar and a narrower content column: the compact
+   text-free utilities preserve one line while each remains 44px+ reachable. */
+@media (max-width: 1100px) {
+  .learnReading .learnActionDock { gap: 5px; padding: 6px; }
+  .learnReading .learnActionDock .ghostButton {
+    display: grid; place-items: center; flex: 0 0 44px;
+    width: 44px; height: 44px;
+    min-height: 44px; padding: 0;
+    font-size: 22px;
+  }
+  .learnActionCompact { display: inline; }
+  .learnActionWide { display: none; }
+  .learnReading .learnActionDock .learnGo {
+    min-height: 44px; height: 44px;
+    min-width: 84px; padding: 0 8px; font-size: 14px;
+  }
+}
+@media (min-width: 701px) {
+  .learnReading:has(.learnLessonLabel) { overflow: hidden; }
+  .learnReading .learnTalk { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .learnReading .learnChoices { flex: none; overflow: visible; max-height: none; }
+  .learnReading .learnGo { margin-top: 0; }
+  .learnSourceDialog {
+    width: min(500px, calc(100vw - 48px));
+    min-height: min(570px, calc(100dvh - 180px));
+    max-height: calc(100dvh - 90px);
+    bottom: 24px; right: 24px;
+  }
+  .learnSourceDialog[open] {
+    display: flex; flex-direction: column;
+    gap: 12px;
+  }
+  .learnSourceDialog .learnSourceMeta { margin: 7px 0 0; }
+  .learnSourceDialog .learnSourceQuote { margin: 0; min-height: 125px; }
+  .learnSourceDialog .ghostButton { margin-top: auto; }
+}
+@media (max-width: 700px) {
+  .roomDevice:has(.learnReading) .learnReading {
+    max-height: calc(100dvh - 145px - var(--m-tabbar, 78px) - var(--m-safe-bottom, 0px));
+    overflow: hidden;
+    padding: 11px 11px 9px;
+    gap: 8px;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnTalk {
+    min-height: 0; flex: 1 1 auto; overflow-y: auto;
+    padding: 12px 10px; gap: 8px; border-radius: 16px;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnChoices {
+    flex: none; min-height: max-content; overflow: visible;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnChoice {
+    min-height: 51px; padding: 10px 9px;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnActionDock {
+    position: fixed;
+    bottom: calc(var(--m-tabbar, 78px) + 7px + var(--m-safe-bottom, 0px));
+    left: 8px; right: 8px; width: auto;
+    padding: 5px; gap: 4px;
+    border-radius: 13px;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnActionDock .ghostButton {
+    flex: 0 0 43px; width: 43px; height: 44px;
+    min-height: 44px; padding: 0;
+  }
+  .roomDevice:has(.learnReading) .learnReading .learnActionDock .learnGo {
+    position: static; inset: auto;
+    flex: 1 1 auto; min-width: 80px;
+    min-height: 44px; width: auto; height: 44px;
+    padding: 0 6px; z-index: 1;
+  }
+  .learnReading .learnVoiceExplanation { font-size: 12px; }
+  .learnReading .learnLessonAudio { gap: 7px; }
+}
