@@ -129,8 +129,8 @@ export function tapCheck(objective: string, excerpt: string): { sentences: strin
   // lines. If the objective is a generic chapter title, choose a real factual
   // sentence, not the matching title itself.
   const eligible = sentences.map((sentence, index) => ({ sentence, index }))
-    .filter(({ sentence }) => sentence.length >= 35 &&
-      sentence.split(/\s+/).length >= 7 &&
+    .filter(({ sentence }) => sentence.length >= 27 &&
+      sentence.split(/\s+/).length >= 5 &&
       !/^(page\s*\d+|government\s*\/|study materials)/i.test(sentence));
   if (eligible.length < 2) return null;
   const candidates = eligible.map(({ sentence, index }) => ({ sentence, index }));
