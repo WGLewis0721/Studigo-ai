@@ -1,0 +1,49 @@
+name: Phase 3 visual evidence
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/web/app/**"
+      - "apps/web/components/**"
+      - "apps/web/lib/phase3-room-flag*"
+      - ".github/workflows/phase3-visual-evidence.yml"
+      - "scripts/phase3-visual-qa.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-four-width:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install packages
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Start local synthetic fixture
+        run: |
+          NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1 pnpm --filter @studigo/web dev --hostname 127.0.0.1 -p 3000 >/tmp/studigo-phase3-dev.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl --fail --silent --output /dev/null 'http://127.0.0.1:3000/dev/study?mode=coach&ui=phase3'; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/studigo-phase3-dev.log
+          exit 1
+      - name: Capture legacy vs Phase 3 screenshots and overflow report
+        run: node scripts/phase3-visual-qa.mjs
+      - name: Upload evidence even when checks fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-visual-evidence
+          path: artifacts/phase3-visual
+          if-no-files-found: warn
+          retention-days: 14
