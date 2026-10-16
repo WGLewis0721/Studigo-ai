@@ -578,3 +578,13 @@
     grid-column: 2; grid-row: 3;
   }
 }
+
+/* The global .buttonPrimary span rule has higher specificity than the
+   generic responsive label selectors above. Explicitly scope primary labels
+   so only one is displayed; otherwise Continue appears twice and overflows. */
+.learnReading .learnActionDock .learnGo > .learnActionCompact { display: none; }
+.learnReading .learnActionDock .learnGo > .learnActionWide { display: inline-block; }
+@media (max-width: 1100px) {
+  .learnReading .learnActionDock .learnGo > .learnActionCompact { display: inline-block; }
+  .learnReading .learnActionDock .learnGo > .learnActionWide { display: none; }
+}
