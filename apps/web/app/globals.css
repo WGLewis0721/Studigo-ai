@@ -4202,3 +4202,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice:has(.coachChat) .coachPhoneNav .coachNavStep:focus-visible {
   outline: 2px solid var(--th-ink, var(--ink)); outline-offset: 2px;
 }
+/* Tablet room width is narrower than desktop because of the sidebar.
+   Relocate Chat / Topics beside the arrow rail rather than letting them
+   overlap the Coach / Learn switch in the shared 82px header. */
+@media (min-width: 701px) and (max-width: 980px) {
+  .roomDevice:has(.coachChat) .modeHead .mhChipRow { display: none; }
+  .roomDevice:has(.coachChat) .mhChipBar {
+    justify-content: space-between; flex-wrap: wrap; row-gap: 8px;
+  }
+  .roomDevice:has(.coachChat) .mhChipBar > .coachTabs { display: inline-flex; }
+}
+/* The style picker is already available within the new arrow rail. Avoid
+   repeating its pill inside the lesson reading panel. */
+@media (min-width: 701px) {
+  .roomDevice:has(.coachChat) .coachChat > .coachActiveStyle { display: none; }
+}
