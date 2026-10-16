@@ -74,12 +74,16 @@ function statusCopy(document: StudyDocument) {
 export function MaterialsPanel({
   roomId,
   documents,
-  onChanged
+  onChanged,
+  phase3FoundationUi = phase3Materials
 }: {
   roomId: string;
   documents: StudyDocument[];
   onChanged: () => void;
+  /** Server-selected room UI gate; undefined preserves standalone fixture behavior. */
+  phase3FoundationUi?: boolean;
 }) {
+  const phase3Materials = phase3FoundationUi;
   const [sourceType, setSourceType] = useState<SourceType>("study_guide");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [dragging, setDragging] = useState(false);
