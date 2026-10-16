@@ -294,7 +294,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           onClick={() => onTryCoach(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Try with Coach →</button>}
         {onTryPractice && <button className="ghostButton" type="button"
           onClick={() => onTryPractice(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Practice independently</button>}
-        {snapshot?.sourceCurrent !== false && <button className="ghostButton" type="button" onClick={openSource}>Review source</button>}
+        {snapshot?.source && <button className="ghostButton" type="button" onClick={openSource}>Review source</button>}
         <button className="ghostButton" type="button" onClick={() => {
           if (window.confirm("Start this learning mission over? This will not change your mastery or graded attempts.")) void act("restart");
         }}>Start lesson over</button>
