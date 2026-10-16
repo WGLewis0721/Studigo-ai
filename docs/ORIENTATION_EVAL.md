@@ -1,5 +1,7 @@
 # Orientation eval
 
+> Recorded check that ten lookup answers live in `AGENTS.md` and `ENGINEERING.md`. Setup commands and the live/parked map now also live in `AGENTS.md`. Do not add `docs/CODEMAP.md`.
+
 Scored against `AGENTS.md` and `ENGINEERING.md` only, after the lookup facts were added to `ENGINEERING.md`. This is not a second model session with a fresh context window. It is a check that those two files contain the answers.
 
 | # | Question | Answer in the two files | File |

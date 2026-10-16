@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Problem Statement — Coach "Give me N questions"
 
 ## Symptom (what the user reports)

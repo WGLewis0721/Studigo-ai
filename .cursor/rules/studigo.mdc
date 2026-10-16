@@ -1,0 +1,8 @@
+---
+description: Studigo agent entry point
+alwaysApply: true
+---
+
+Follow the repository root `AGENTS.md` before editing. It is the shared guide for this repo. Do not copy it into this rule.
+
+When the task sits inside one subproject, also read that directory's `AGENTS.md`.

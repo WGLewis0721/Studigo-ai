@@ -5,8 +5,8 @@
 Implementation branch: `codex/adaptive-local-beta`. Current main baseline: `2d63b0042f3577981bd41c7879a64661dfdfafd6`; PR #59 documentation baseline: `5375cc445670f27fee2a6199206efa53f01bf594`. PR #59 remains a prerequisite documentation change, not proof of completed implementation.
 
 The subsequent sequential Sol low/medium/xhigh passes are stacked on that beta.
-See [Phase 1 audit](SOL_PHASE1_AUDIT.md), [Phase 2 integration](SOL_PHASE2_INTEGRATION.md)
-and [Phase 3 review](SOL_PHASE3_REVIEW.md). Claude's latest main `c6ba6ad` was
+See [Phase 1 audit](archive/SOL_PHASE1_AUDIT.md), [Phase 2 integration](archive/SOL_PHASE2_INTEGRATION.md)
+and [Phase 3 review](archive/SOL_PHASE3_REVIEW.md). Claude's latest main `c6ba6ad` was
 merged into `codex/sol-phase3-review` at `b1f220b`; its companion/UI changes are preserved.
 
 PR #64 merged the engine passes into main at `aff4277`. Main then incorporated

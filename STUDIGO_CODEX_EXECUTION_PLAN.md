@@ -1,5 +1,7 @@
 # Studigo — Codex execution plan
 
+> **Status: track queue, not the cold start.** Prepared 2026-10-13 for `integration/document-learning-reliability`. Most cards below are marked done on that line. Open one assigned card. Do not load this file for ordinary work on `main`. Start at `AGENTS.md` and `ENGINEERING.md`. Broader backlog: `implementation/ENGINEERING_PLAN.md`. Index of historical plans: `docs/archive/README.md`.
+
 **Track:** document learning reliability and readable study guides.  
 **Prepared:** 2026-10-13 America/Chicago (2026-10-14 UTC).  
 **Repository:** [WGLewis0721/Studigo-ai](https://github.com/WGLewis0721/Studigo-ai).  

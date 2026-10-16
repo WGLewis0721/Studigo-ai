@@ -1,4 +1,5 @@
 # Copilot instructions
 
-Follow `AGENTS.md`. For the Core Clash game (`prototypes/moon-road`), read `CURRENT_GAME_HANDOFF.md`, `ART_HANDOFF.md` and `TOOLCHAIN.md` first.
-Runtime is Phaser 3.90.0 (vendored); never edit golden routes, add sibling POC routes. Never commit tool binaries or secrets.
+Follow the repository root `AGENTS.md`. It is the shared guide for Cursor, Claude Code, Codex, and Copilot. Do not copy it here.
+
+Game work is `prototypes/moon-road/` and starts at `prototypes/moon-road/AGENTS.md`.

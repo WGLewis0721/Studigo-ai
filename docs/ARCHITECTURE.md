@@ -208,7 +208,7 @@ flagged readers/writers: the shared source helper is also required by
 `STUDIGO_ADAPTIVE_SESSION`, independently of the durable-session route flag.
 `learning_sessions` stores durable plans, but session IDs are not yet atomically
 bound to Coach issuance, answer/skip or pending state. See
-[SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the remaining release gates.
+[archive/SOL_PHASE3_REVIEW.md](archive/SOL_PHASE3_REVIEW.md) for the remaining release gates.
 
 ## Retrieval
 
@@ -354,7 +354,7 @@ The OpenAI API key is a **server-side service secret only**. The Expo/iOS bundle
 calls Studigo's authenticated backend and must never contain, fetch, cache or
 persist the OpenAI service key.
 
-See the root `IMPLEMENTATION.md` and
+See `archive/IMPLEMENTATION.md` and
 [`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md`](ADAPTIVE_GAME_DIRECTOR_RESEARCH.md).
 
 ## Security rules

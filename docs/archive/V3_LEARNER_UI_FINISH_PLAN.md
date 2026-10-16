@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # V3 Learner-Facing Finish Plan
 
 **Scope:** finish the learner-facing V3 simplification on the existing web/PWA before carrying the same product contract into the native iOS/iPadOS client.
