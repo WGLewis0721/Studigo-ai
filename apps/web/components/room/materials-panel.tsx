@@ -74,18 +74,24 @@ function statusCopy(document: StudyDocument) {
 export function MaterialsPanel({
   roomId,
   documents,
-  onChanged
+  onChanged,
+  phase3FoundationUi = phase3Materials
 }: {
   roomId: string;
   documents: StudyDocument[];
   onChanged: () => void;
+  /** Server-selected room UI gate; undefined preserves standalone fixture behavior. */
+  phase3FoundationUi?: boolean;
 }) {
+  const phase3Materials = phase3FoundationUi;
   const [sourceType, setSourceType] = useState<SourceType>("study_guide");
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshingGuide, setRefreshingGuide] = useState(false);
   const [refreshStatus, setRefreshStatus] = useState<string | null>(null);
+  const [guideRevision, setGuideRevision] = useState(0);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(() => new Set());
   const [, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const gestures = useRef(createGestureBook());
@@ -99,11 +105,12 @@ export function MaterialsPanel({
   const clearDoneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(() => new Set());
   const latestStudyGuide = documents.find((document) => document.source_type === "study_guide") ?? null;
+  const sourceRevision = `${guideRevision}:${documents.map((document) => `${document.id}:${document.status}:${document.chunk_count}`).join("|")}`;
   const readableCount = documents.filter((document) => document.status === "ready" || document.status === "partial").length;
 
   const refreshStudyGuide = useCallback(async () => {
     if (!latestStudyGuide || refreshingGuide) return;
-    if (latestStudyGuide.status === "processing") {
+    if (["processing", "queued", "uploaded"].includes(latestStudyGuide.status)) {
       setError("That study guide is still being processed. Wait for it to finish first.");
       return;
     }
@@ -129,6 +136,7 @@ export function MaterialsPanel({
       if (response.status === 202 || response.status === 409 || !response.ok) {
         throw new Error(payload.error || "Could not refresh that study guide.");
       }
+      setGuideRevision((revision) => revision + 1);
       setRefreshStatus(
         `Refreshed ${latestStudyGuide.name}. Studigo rebuilt the source index and study topics from this file.`
       );
@@ -356,15 +364,23 @@ export function MaterialsPanel({
   };
 
   const remove = async (document: StudyDocument) => {
-    if (!window.confirm(`Remove “${document.name}” and everything Studigo learned from it?`)) {
-      return;
+    if (removingIds.has(document.id)) return;
+    if (!window.confirm(`Remove “${document.name}” and its source passages? Study content based on this file may need refreshing.`)) return;
+    setRemovingIds((current) => new Set(current).add(document.id));
+    setError(null);
+    try {
+      const response = await fetch(`/api/documents/${encodeURIComponent(document.id)}`, { method: "DELETE" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Could not remove that document.");
+      }
+      setGuideRevision((revision) => revision + 1);
+      startTransition(onChanged);
+    } catch (removeError) {
+      setError(removeError instanceof Error ? removeError.message : "Could not remove that document. Try again.");
+    } finally {
+      setRemovingIds((current) => { const next = new Set(current); next.delete(document.id); return next; });
     }
-    const response = await fetch(`/api/documents/${document.id}`, { method: "DELETE" });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      setError(payload.error || "Could not remove that document.");
-    }
-    startTransition(onChanged);
   };
 
   return (
@@ -405,7 +421,7 @@ export function MaterialsPanel({
           <button
             className="ghostButton"
             type="button"
-            disabled={refreshingGuide || latestStudyGuide.status === "processing"}
+            disabled={refreshingGuide || ["processing", "queued", "uploaded"].includes(latestStudyGuide.status)}
             onClick={() => void refreshStudyGuide()}
           >
             {refreshingGuide ? "Refreshing…" : "Refresh study guide"}
@@ -479,7 +495,7 @@ export function MaterialsPanel({
       <div className="materialsLibrary">
       {phase3Materials ? <div className="materialsLibraryTitle"><div><span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span><h2>On the shelf</h2></div><span>Original files &amp; Studigo guide</span></div> : <span className="tinyLabel libraryHeading">IN THIS ROOM · {documents.length} {documents.length === 1 ? "FILE" : "FILES"}</span>}
       <p className="setupLead">{describeCorpus(documents.map((document) => ({ id: document.id, revision: 0, status: document.status }))).notice}</p>
-      {!phase3Materials && <GuidePreview roomId={roomId} />}
+      {!phase3Materials && <GuidePreview roomId={roomId} sourceRevision={sourceRevision} />}
       <ul className="documentList">
         {documents.length === 0 && (
           <li className="emptyState">{phase3Materials ? "No original files yet. Add a study guide or other class material above to begin." : "Nothing here yet. The study guide is the best first upload."}</li>
@@ -502,12 +518,12 @@ export function MaterialsPanel({
               </small>
             </div>
             <div className="documentActions">
-              <a aria-label={`Open original file ${document.name}`}
+              <a aria-label={`Open original file ${document.name} in a new tab to view or print`}
                 href={`/api/documents/download?documentId=${document.id}&inline=1`}
                 target="_blank"
                 rel="noreferrer"
               >
-                Open
+                Open / print
               </a>
               <a href={`/api/documents/download?documentId=${document.id}`} aria-label={`Download original file ${document.name}`}>Download</a>
               {(document.status === "failed" ||
@@ -515,17 +531,17 @@ export function MaterialsPanel({
                 document.status === "queued" ||
                 document.status === "uploaded") && (
                 <button type="button" disabled={retryingIds.has(document.id)} onClick={() => retry(document)}>
-                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" || document.status === "partial" ? "Retry unread pages" : "Process now"}
+                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" || document.status === "partial" ? "Read file again" : "Process now"}
                 </button>
               )}
-              <button type="button" className="danger" onClick={() => void remove(document)}>
-                Remove
+              <button type="button" className="danger" disabled={removingIds.has(document.id)} aria-label={`Remove original file ${document.name}`} onClick={() => void remove(document)}>
+                {removingIds.has(document.id) ? "Removing…" : "Remove"}
               </button>
             </div>
           </li>
         ))}
       </ul>
-      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials /></div>}
+      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials sourceRevision={sourceRevision} /></div>}
       </div>
     </div>
   );

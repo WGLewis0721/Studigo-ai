@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, SLEEP_AFTER_MS, WINDOW,
-  chooseDock, clampScale, dirPose, dockFromDrop, idleStage, parsePrefs, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
+  chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, parsePrefs, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type Rect
 } from "./companion-logic";
 
@@ -181,4 +181,24 @@ test("he never changes mastery: nothing in the companion talks to the network or
       assert.ok(!source.includes(banned), `${file} must not contain ${banned}`);
     }
   }
+});
+
+
+test("Phase 3 control-safe docking never relies on scrolling a covered upload action clear", () => {
+  const phone: Area = { left: 20, right: 300, top: 170, bottom: 600, inRow: false };
+  const upload = { left: 30, right: 290, top: 500, bottom: 550 };
+  assert.equal(chooseDock("br", phone, [upload], true), "br");
+  assert.equal(controlSafeDock("br", phone, [upload]), "tr");
+  const corner = spot("br", phone);
+  assert.equal(controlSafeDock("br", phone, [{ left: corner.x - 6, right: corner.x - 2, top: corner.y, bottom: corner.y + 20 }]), "bl");
+});
+
+test("Phase 3 seats temporarily when all corners are blocked, then restores the saved dock when clear", () => {
+  const a = area();
+  const controls = (["br", "bl", "tr", "tl"] as const).map(dock => { const at = spot(dock, a); return under(at.x, at.y); });
+  assert.equal(controlSafeDock("bl", a, controls), null);
+  assert.equal(controlSafeDock("bl", a, []), "bl");
+  assert.equal(controlSafeDock("br", { ...a, right: a.left + WINDOW.w - 1 }, []), null);
+  assert.equal(controlSafeDock("br", { ...a, bottom: a.top + WINDOW.h - 1 }, []), null);
+  assert.equal(controlSafeDock("br", area(true), controls), "br", "Coach keeps its reserved composer geometry");
 });

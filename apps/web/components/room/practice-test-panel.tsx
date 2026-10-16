@@ -32,6 +32,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     catch(e){gestures.current.abort('practice-build');setError(e instanceof Error?e.message:'Could not build test.');}finally{operation.current=false;setBusy(false);}
   }
   function change(id:string,value:Answer) {
+    if(operation.current)return;
     const next={...answers,[id]:value};const version=++saveVersion.current;setAnswers(next);setSaveState('Saving…');
     // Serialize autosaves so an older response cannot overwrite a newer draft.
     saveChain.current=saveChain.current.catch(()=>{}).then(async()=>{
@@ -56,7 +57,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     <p className="setupLead">{active.result.score>=80?'A strong rehearsal. Review each miss below.':'Now you know where to focus.'}</p>
     <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
     <div className="testTopicResults">{active.result.topics.map(t=><div key={t.topic_id}><strong>{t.title}</strong><span>{t.score}% · {t.misses} missed / {t.questions}</span><button onClick={()=>onReviewTopic(t.topic_id)}>{t.misses?'Review concept':'Keep practicing'} →</button></div>)}</div>
-    <h3>Every answer, with its evidence.</h3>
+    <h3>Review your answers and sources.</h3>
     {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {q.kind==='multiple_choice'?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {q.kind==='multiple_choice'?q.choices[q.correct_choice??0]:q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><CitationChips citations={q.citations??[]}/></details>)}
     <button className="buttonPrimary" onClick={()=>{setActive(null);setQuestions([]);}}>Back to practice tests →</button>
   </section>;
@@ -69,6 +70,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     </div>
     {error&&<p role="alert" className="formError">{error}</p>}
     <div className="testSessionActions"><button disabled={index===0||busy} onClick={()=>setIndex(i=>i-1)}>← Previous</button>{index<questions.length-1?<button className="buttonPrimary" disabled={busy} onClick={()=>setIndex(i=>i+1)}>Next question →</button>:<button className="buttonPrimary" disabled={busy} onClick={()=>setConfirmSubmit(true)}>Finish test →</button>}</div>
+    {saveState.startsWith('Draft not saved')&&<p className="formError" role="alert">{saveState} <button type="button" disabled={busy} onClick={()=>change(current.id,answers[current.id]??{selectedChoice:null,response:''})}>Retry saving draft</button></p>}
     <button className="buttonQuiet" disabled={busy} onClick={()=>setConfirmSubmit(true)}>Review and submit entire test</button>
     {confirmSubmit&&<div className="testSubmitReview" role="region" aria-label="Submit full test"><h3>Ready to submit?</h3><p>{questions.length-completed?`${questions.length-completed} unanswered questions will count as zero.`:'Every question has an answer.'} Submission is final for this test.</p><button disabled={busy} onClick={()=>setConfirmSubmit(false)}>Keep working</button><button className="buttonPrimary" disabled={busy} onClick={()=>void submit()}>{busy?'Grading the full test…':'Submit all answers'}</button></div>}
   </section>;

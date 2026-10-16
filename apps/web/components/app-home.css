@@ -81,11 +81,15 @@
 .homeHero[data-ui="phase3"] .homeSay .pageTitle { max-width: 16ch; font-size: clamp(2.8rem, 5vw, 5.2rem); line-height: .98; letter-spacing: -.07em; }
 .homeHero[data-ui="phase3"] .homeSay .pageLede { max-width: 52ch; font-size: 1.12rem; line-height: 1.5; }
 .homeHero[data-ui="phase3"] .nextUp {
+  container: home-action / inline-size;
   max-width: 730px; padding: 24px 26px; border-radius: 22px;
   background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline), 0 14px 35px rgba(20,27,45,.08);
 }
 .homeHero[data-ui="phase3"] .nextUp h2 { font-size: clamp(1.35rem, 2vw, 2rem); }
-.homeHero[data-ui="phase3"] .nextUp .buttonPrimary { min-height: 52px; }
+.homeHero[data-ui="phase3"] .nextUp .buttonPrimary { min-height: 52px; min-width: 0; max-width: 100%; }
+@container home-action (max-width: 420px) {
+  .homeHero[data-ui="phase3"] .nextUp > * { grid-column: 1 / -1; }
+}
 .firstRoom[data-ui="phase3"] {
   max-width: 1250px; margin: 0 auto; grid-template-columns: minmax(240px, .85fr) minmax(0, 1fr);
   gap: clamp(30px, 7vw, 112px); padding: clamp(24px, 4vw, 58px);
@@ -95,6 +99,18 @@
 .firstRoom[data-ui="phase3"] .firstRoomBody .pageTitle { font-size: clamp(2.4rem, 4vw, 4.3rem); line-height: 1.02; letter-spacing: -.055em; }
 .firstRoom[data-ui="phase3"] .firstRoomBody { gap: 18px; }
 .firstRoom[data-ui="phase3"] .firstRoomStage { max-width: 430px; }
+/* Enlarged text and narrow containers must shrink the grid's minimum track,
+   rather than widen the document or clip a room name/action. */
+:is(.homeHero, .firstRoom)[data-ui="phase3"] > *,
+.firstRoom[data-ui="phase3"] .firstRoomBody > * { min-width: 0; max-width: 100%; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] :is(h1, h2, p, .tinyLabel, button, a) { overflow-wrap: anywhere; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] :is(button, a) { white-space: normal; }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .roomsGrid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel, .createRoomPanel .field, .createRoomPanel input) { min-width: 0; max-width: 100%; }
+.pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel .stackedForm, .createRoomPanel .field) { grid-template-columns: minmax(0, 1fr); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .createRoomPanel .fieldRow { min-width: 0; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .createRoomPanel .buttonPrimary { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] .stg { max-width: 100%; }
 @media (max-width: 850px) {
   .homeHero[data-ui="phase3"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "say" "next"; min-height: 0; }
   .homeHero[data-ui="phase3"] .homeStage { height: 200px; max-width: 100%; }
@@ -106,4 +122,10 @@
   .homeHero[data-ui="phase3"] { padding: 18px; border-radius: 24px; gap: 18px; }
   .homeHero[data-ui="phase3"] .nextUp { grid-template-columns: minmax(0, 1fr); padding: 20px; }
   .firstRoom[data-ui="phase3"] { padding: 20px; border-radius: 22px; }
+}
+@media (max-width: 780px) {
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) { grid-template-columns: minmax(0, 1fr); }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .appRail { min-width: 0; }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .railScroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+  .appShell:has(:is(.homeHero, .firstRoom)[data-ui="phase3"]) .railItem { width: auto; min-width: 44px; padding-inline: 6px; white-space: normal; }
 }

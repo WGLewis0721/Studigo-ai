@@ -1,5 +1,5 @@
 import {
-  LINES, MAX_SCALE, MIN_SCALE, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
+  LINES, MAX_SCALE, MIN_SCALE, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
   roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
 } from "@/lib/companion-logic";
@@ -191,6 +191,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       tab.style.setProperty("--tx", `${right ? Math.min(page.right, window.innerWidth) - 20 : Math.max(page.left, 0)}px`);
       tab.style.setProperty("--ty", `${a.bottom - (a.inRow ? rowHeight() + 83 : 79)}px`);
     }
+    // Automatic seating is transient presentation, never a saved preference.
+    el.hidden = false; el.inert = false;
     if (rt.mode !== "window" || !a) {
       const seat = seatSpot();
       setXY(seat.x, seat.y);
@@ -198,7 +200,29 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       return;
     }
     const size = { w: W, h: H };
-    const dock = rt.drag ? rt.dock : chooseDock(rt.dock, a, controls(a), canScrollClear(), size);
+    const safeRoom = ws.closest('.roomDevice[data-ui="phase3"]') !== null && !a.inRow;
+    const targets = controls(a);
+    if (safeRoom) {
+      // An upload target and a reading surface need their whole area, including
+      // instructions and source text, rather than just the buttons inside them.
+      surface()?.querySelectorAll(".dropzone, .guideReading").forEach((node) => {
+        const rect = node.getBoundingClientRect();
+        if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
+      });
+    }
+    const dock = safeRoom && !rt.drag
+      ? controlSafeDock(rt.dock, a, targets, size)
+      : rt.drag ? rt.dock : chooseDock(rt.dock, a, targets, canScrollClear(), size);
+    if (dock === null) {
+      // No corner is free. Reveal the same header avatar and remove the floating
+      // window from hit testing and keyboard order immediately, without motion.
+      el.hidden = true; el.inert = true; bubble.hidden = true;
+      ws.dataset.seat = "occupied";
+      closeCard();
+      makeRoom(0, 0, 0, 0);
+      return;
+    }
+    ws.dataset.seat = "empty";
     if (!rt.drag) { const at = spot(dock, a, size); setXY(at.x, at.y); }
     el.dataset.side = dock[1];
     el.dataset.dock = dock;
@@ -562,6 +586,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   // He rides along whenever the page under him changes: a new page, the keyboard, a resize.
   window.addEventListener("resize", schedulePlace, { signal });
   window.addEventListener("scroll", schedulePlace, { signal, passive: true });
+  // Internal page scrollers do not bubble scroll events. Only the new non-chat
+  // collision policy needs to follow them; leave Coach's locked geometry alone.
+  ws.addEventListener("scroll", () => {
+    if (ws.closest('.roomDevice[data-ui="phase3"]') && !shown(ws.querySelector(".chatComposer"))) schedulePlace();
+  }, { signal, passive: true, capture: true });
   window.visualViewport?.addEventListener("resize", schedulePlace, { signal });
   window.visualViewport?.addEventListener("scroll", schedulePlace, { signal });
   ws.addEventListener("transitionend", (event) => { if (!inHost(event.target)) schedulePlace(); }, { signal });

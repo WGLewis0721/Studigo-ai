@@ -78,6 +78,26 @@ export function chooseDock(preferred: Dock, area: Area, controls: Rect[], canScr
   return order.find((dock) => !blocked(dock)) ?? preferred;
 }
 
+/**
+ * Phase 3 non-chat rooms keep every visible control clear even on scrollable
+ * pages. Null means there is no safe window position: use the existing header
+ * seat for now, without changing the learner's saved dock or seated preference.
+ * Chat keeps its reserved composer geometry through the existing dock policy.
+ */
+export function controlSafeDock(preferred: Dock, area: Area, controls: Rect[], size: Size = WINDOW): Dock | null {
+  if (area.inRow) return preferred;
+  if (area.right - area.left < size.w || area.bottom - area.top < size.h) return null;
+  const side = preferred[1], otherSide = side === "r" ? "l" : "r";
+  const row = preferred[0], otherRow = row === "b" ? "t" : "b";
+  const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
+  return order.find((dock) => {
+    const at = spot(dock, area, size);
+    return controls.every((rect) => overlap(at.x, at.y, {
+      left: rect.left - 8, right: rect.right + 8, top: rect.top - 8, bottom: rect.bottom + 8
+    }, size) === 0);
+  }) ?? null;
+}
+
 /** The corner nearest to where the learner let go of him. */
 export function dockFromDrop(centerX: number, centerY: number, area: Rect): Dock {
   return `${centerY > (area.top + area.bottom) / 2 ? "b" : "t"}${centerX > (area.left + area.right) / 2 ? "r" : "l"}` as Dock;
