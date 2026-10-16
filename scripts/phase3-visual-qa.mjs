@@ -677,6 +677,13 @@ try {
         assert.equal(await page.getByRole("button", { name: "Original Learn", exact: true }).getAttribute("aria-pressed"), "true");
         await page.getByRole("button", { name: "Explore", exact: true }).click();
         await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        // The URL shared with reviewers must actually open Explore directly.
+        // A Ready preview of /app alone does not establish this.
+        const shareLink = await page.goto(`${origin}/explore-preview`, { waitUntil: "networkidle" });
+        assert.equal(shareLink?.status(), 200, "reviewer Explore URL must serve the synthetic preview");
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        assert.ok(await page.getByText(/Synthetic Explore visual fixture/i).isVisible(), "preview must disclose synthetic content");
+        assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "direct preview must show the real fixture journal");
       } catch (error) {
         exploreCase.error = String(error);
         report.failures.push({ ...exploreCase });
