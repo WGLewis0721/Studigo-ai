@@ -648,7 +648,7 @@
   padding: clamp(12px, 1.5vw, 20px);
   gap: 0;
 }
-.learnReading .learnTalk[data-journey-stage] .learnTalkBody { gap: 10px; }
+.learnReading .learnTalk[data-journey-stage] .learnTalkBody { gap: 10px; justify-content: flex-start; }
 .learnReading .learnTalk .learnSectionTitle {
   font-family: var(--display);
   font-size: clamp(21px, 2vw, 29px);
