@@ -518,14 +518,18 @@ export function MaterialsPanel({
               </small>
             </div>
             <div className="documentActions">
-              <a aria-label={`Open original file ${document.name} in a new tab to view or print`}
-                href={`/api/documents/download?documentId=${document.id}&inline=1`}
+              <a aria-label={`View original file ${document.name}`}
+                href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
                 target="_blank"
-                rel="noreferrer"
-              >
-                Open / print
-              </a>
-              <a href={`/api/documents/download?documentId=${document.id}`} aria-label={`Download original file ${document.name}`}>Download</a>
+                rel="noopener noreferrer"
+              >View original</a>
+              <a href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}`}
+                aria-label={`Download original file ${document.name}`}>Download original</a>
+              {document.mime_type === "application/pdf" && <a
+                href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
+                target="_blank" rel="noopener noreferrer"
+                title="Opens the original PDF in a new tab; choose Print in your PDF viewer"
+                aria-label={`Open original PDF ${document.name} to print`}>Print original</a>}
               {(document.status === "failed" ||
                 document.status === "partial" ||
                 document.status === "queued" ||
