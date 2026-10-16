@@ -361,3 +361,24 @@
   .learnReading .learnVoiceExplanation { font-size: 12px; }
   .learnReading .learnLessonAudio { gap: 7px; }
 }
+
+/* The transcript review is an actual <dialog> top layer, not an absolutely
+   positioned popover clipped by lesson scrolling. Keyboard Escape and Close
+   preserve the existing no-auto-submit contract. */
+.voiceAnswerReview:not([open]) { display: none; }
+.voiceAnswerReview[open],
+.learnReading .voiceAnswerReview[open],
+.chatRow .voiceAnswerReview[open] {
+  display: grid;
+  position: fixed;
+  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: min(420px, calc(100vw - 28px));
+  max-width: calc(100vw - 28px);
+  max-height: min(520px, calc(100dvh - 32px));
+  margin: auto;
+  overflow-y: auto;
+  z-index: 100;
+  border-radius: 20px;
+}
+.voiceAnswerReview::backdrop { background: rgba(17, 30, 50, .44); }
