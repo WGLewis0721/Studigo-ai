@@ -5,9 +5,14 @@ import type { Topic } from '@/lib/rooms';
 
 // Synthetic visual/Coach fixture for local development and flagged, protected previews.
 export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;ui?:string;learn?:string}>}) {
-  const flaggedPreview = process.env.VERCEL_ENV === 'preview' && process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === '1';
-  if (process.env.NODE_ENV !== 'development' && !flaggedPreview) notFound();
   const {mode='coach',phone,bare,shell,rail,ui,learn}=await searchParams;
+  // Production stays closed. A branch preview can show *synthetic* Explore
+  // even when the global Phase 3 rollout flag is disabled for real rooms.
+  // The fixture uses hard-coded samples, never a learner's private room.
+  const flaggedPreview = process.env.VERCEL_ENV === 'preview'
+    && process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === '1';
+  const explorePreview = process.env.VERCEL_ENV === 'preview' && learn === 'explore';
+  if (process.env.NODE_ENV !== 'development' && !flaggedPreview && !explorePreview) notFound();
   if(phone) return <main style={{padding:16}}><p>Local visual fixture · 390px phone viewport</p><iframe title="Phone viewport" src={`/dev/study?mode=${encodeURIComponent(mode)}&bare=1${ui ? `&ui=${encodeURIComponent(ui)}` : ''}`} style={{width:390,height:850,border:'1px solid #172637'}}/></main>;
   const now=Date.parse('2026-09-12T12:00:00Z');
   const topics:Topic[]=[
