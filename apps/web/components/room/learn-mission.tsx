@@ -13,6 +13,7 @@ import { ReadAloudControl } from "./read-aloud-control";
 import { SpeechAnswerControl } from "./speech-answer-control";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
 import { lessonBeatIndex, formativeReflection, canAdvanceLesson } from "@/lib/learning-mission-stages";
+import { isForwardLearnAdvance, learnPhaseProgress, LEARN_PROGRESS_HEAT } from "@/lib/learn-progress-motion";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
 type Mission = { topic_id: string; document_id: string; chunk_id?: string; source_revision?: number; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
@@ -87,6 +88,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
+  const previousPhase = useRef<{ topicId: string; phase: Phase } | null>(null);
+  const [plumeRevision, setPlumeRevision] = useState(0);
 
   const fixture = roomId === "fixture";
   // The original synthetic mission remains unchanged; preview and real
@@ -207,7 +210,17 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
-  const progress = beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  // A saved phase, rather than a guessed grade or a local answer selection,
+  // is the source of truth for each substantial visible progress jump.
+  const progress = integratedJourney && mission ? learnPhaseProgress(mission.phase)
+    : beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  const phaseHeat = mission ? LEARN_PROGRESS_HEAT[mission.phase] : LEARN_PROGRESS_HEAT.brief;
+  useEffect(() => {
+    if (!integratedJourney || !mission) { previousPhase.current = null; return; }
+    const next = { topicId: mission.topic_id, phase: mission.phase };
+    if (isForwardLearnAdvance(previousPhase.current, next)) setPlumeRevision((old) => old + 1);
+    previousPhase.current = next;
+  }, [integratedJourney, mission?.topic_id, mission?.phase]);
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
@@ -300,13 +313,24 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         onClick={() => void act("resume")}>Continue lesson →</button>
     </div>}
 
-    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`${integratedJourney ? "Quest" : "Lesson"} ${lessonNumber} of ${topics.length}`}>
-      <span>{integratedJourney ? "Quest" : "Lesson"} {lessonNumber} of {topics.length}</span>
+    {mission && !mission.paused && !integratedJourney && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
+      <span>Lesson {lessonNumber} of {topics.length}</span>
       <span className="learnLessonTopic">{currentTopic?.title}</span>
     </div>}
-    {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={integratedJourney ? "Guided lesson progress, not mastery" : "Level progress"}>
-      <span style={{ width: `${progress}%` }} />
-    </div>}
+    {(mission && !mission.paused) && (integratedJourney
+      ? <div className="learnJourneyProgress" aria-label="Progress through this guided lesson">
+          <div className="learnBar learnBarAnimated" role="progressbar" aria-valuemin={0} aria-valuemax={100}
+            aria-valuenow={progress} aria-valuetext={`${progress}% through the guided lesson. This is not a mastery score.`}
+            aria-label="Guided lesson progress, not mastery">
+            <div className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as React.CSSProperties}>
+              <span className="learnProgressEmber" aria-hidden="true" />
+              {plumeRevision > 0 && <span key={plumeRevision} className="learnProgressPlume" aria-hidden="true" />}
+            </div>
+          </div>
+        </div>
+      : <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
+          <span style={{ width: `${progress}%` }} />
+        </div>)}
     {error && <p className="formError" role="alert">{error}</p>}
     {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation learnHandoff" role="status">
       <p className="tinyLabel">LEARNING CHECKPOINT COMPLETE · NO MASTERY AWARDED</p>
@@ -325,11 +349,11 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     </div> : beat ? (
       <div className="learnTalk" data-journey-stage={introduction ? "intro" : firstCheck ? "first-check" : integratedJourney ? "explore" : undefined}>
-        <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>
+        {!integratedJourney && <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>}
         <div className="learnTalkBody">
-          {integratedJourney && <p className="tinyLabel">{introduction ? "MEET YOUR QUEST · READ" : firstCheck ? "BEFORE EXPLORE · UNDERSTANDING CHECK" : "EXPLORE · GUIDED ACTIVITY"}</p>}
+          {integratedJourney && <h2 className="learnSectionTitle">{currentTopic?.title || (fixture ? SAMPLES[sample].title : "This section")}</h2>}
           {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
-          <h2 className="learnAsk">{introduction ? currentTopic?.title ?? "From your study guide" : beat.kind === "read" ? beat.title : beat.prompt}</h2>
+          {!introduction && <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>}
           {beat.kind === "read" && (introduction ? <div className="learnSourceReading">
             <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
             <p className="learnLine">{reading}</p>
