@@ -651,7 +651,6 @@ try {
         assert.match(await page.locator(selectedHeading).innerText(), /Inherited traits and environment/);
         if (viewport.width <= 700) {
           const action = page.getByRole("button", { name: /Start quest/ });
-          await action.scrollIntoViewIfNeeded();
           const firstViewport = await action.boundingBox();
           assert.ok(firstViewport && firstViewport.y < viewport.height, "selected quest must remain reachable on phone");
         }
