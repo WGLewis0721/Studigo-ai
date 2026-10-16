@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
 import type { Topic } from "@/lib/rooms";
-import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
+import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -44,12 +44,9 @@ function readingProgress(phase: Phase | "new"): number {
 }
 
 function passageLines(objective: string, excerpt: string): { sentences: string[]; target: number } | null {
-  const checked = tapCheck(objective, excerpt);
-  if (checked) return checked;
-  const sentences = sourceSentences(excerpt);
-  if (sentences.length === 1) return { sentences, target: 0 };
-  const line = excerpt.trim();
-  return line ? { sentences: [line], target: 0 } : null;
+  // Do not convert a failed extraction into one enormous pretend lesson.
+  // One usable line also cannot support distinct source-grounded alternatives.
+  return tapCheck(objective, excerpt);
 }
 
 function beatHit(beat: MissionBeat, picked: number[]): boolean {
@@ -322,7 +319,13 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           </div>}
         </div>
       </div>
-    ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
+    ) : mission && !loading ? <div className="learnInvitation learnSourceInsufficient" role="status">
+      <p className="tinyLabel">SOURCE NEEDS REVIEW</p>
+      <h2>Not enough clear text for a trustworthy question.</h2>
+      <p>This excerpt does not contain two distinct statements Studigo can safely compare. Your original material is still available; the lesson won't repeat the same passage as fake activities.</p>
+      <button className="ghostButton" type="button" onClick={openSource}>Review the source passage</button>
+      <button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Choose another source</button>
+    </div> : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
     {shown && beat && beat.kind !== "read" && <div className="learnAnswerFeedback"
       role="status" aria-live="polite"
       data-outcome={helpUsed ? "assisted" : hit ? "correct" : "incorrect"}>
