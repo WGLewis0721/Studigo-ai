@@ -176,7 +176,15 @@ try {
             // Phone visual affordances stay 30px with a 44px pseudo hitbox;
             // tablet/desktop render physical 44px accessories outside the
             // tuck/zoom region, with only one Previous/Next action pair.
-            const navigation = page.locator(".mhChipBar .coachPhoneNav");
+            const headerLayout = viewport.width >= 1101;
+            const navigation = page.locator(headerLayout
+              ? ".modeFrame > .coachHeaderNav"
+              : ".mhChipBar > .coachLowerNav");
+            const otherNavigation = page.locator(headerLayout
+              ? ".mhChipBar > .coachLowerNav"
+              : ".modeFrame > .coachHeaderNav");
+            assert.equal(await otherNavigation.isVisible(), false,
+              "only the active responsive navigation may be displayed");
             assert.equal(await navigation.isVisible(), true, "#172 navigation must be visible in all responsive shells");
             const navScale = await navigation.evaluate((element) => {
               const steps = [...element.querySelectorAll(".coachNavStep")];
@@ -232,6 +240,59 @@ try {
               assert.equal(roomChrome.toolbarTabsVisible, true, "tablet Chat/Topics should move into the accessory rail");
             }
             entry.coachChrome = roomChrome;
+            if (headerLayout) {
+              // The wide controls must be inside the green-marked whitespace
+              // of the header itself, above the Studigo rail. They must not
+              // enlarge the strip or shrink with Coach's 60% tuck.
+              const headerPlacement = await page.evaluate(() => {
+                const frame = document.querySelector(".modeFrame");
+                const nav = frame?.querySelector(":scope > .coachHeaderNav");
+                const rail = frame?.querySelector(".studigoRail");
+                const modes = frame?.querySelector(".modeHead .chatModes");
+                const tabs = frame?.querySelector(".modeHead .mhChipRow .coachTabs");
+                if (!(frame instanceof HTMLElement) || !(nav instanceof HTMLElement) ||
+                    !(rail instanceof HTMLElement) || !(modes instanceof HTMLElement)) {
+                  throw new Error("Wide Coach header navigation landmarks missing");
+                }
+                const navRect = nav.getBoundingClientRect();
+                const railRect = rail.getBoundingClientRect();
+                const modesRect = modes.getBoundingClientRect();
+                const tabsRect = tabs?.getBoundingClientRect();
+                return {
+                  navTop: navRect.top,
+                  navBottom: navRect.bottom,
+                  railTop: railRect.top,
+                  navLeft: navRect.left,
+                  modesRight: modesRect.right,
+                  navRight: navRect.right,
+                  tabsLeft: tabsRect?.left ?? Infinity,
+                  navHeight: Math.round(navRect.height)
+                };
+              });
+              assert.ok(headerPlacement.navBottom <= headerPlacement.railTop + 1,
+                "desktop navigation must sit above—not below—the orange Studigo rail");
+              assert.ok(headerPlacement.navLeft >= headerPlacement.modesRight + 6,
+                "desktop navigation must occupy the free space right of Coach/Learn");
+              assert.ok(headerPlacement.navRight <= headerPlacement.tabsLeft - 6,
+                "desktop navigation must not overlap Chat/Topics");
+              assert.equal(headerPlacement.navHeight, 44,
+                "desktop navigator must stay 44px tall within the header");
+              const tucked = await page.locator(".modeFrame").evaluate(frame => {
+                const before = frame.getAttribute("data-compact");
+                frame.setAttribute("data-compact", "true");
+                const nav = frame.querySelector(":scope > .coachHeaderNav");
+                const rail = frame.querySelector(".studigoRail");
+                const rect = nav?.getBoundingClientRect();
+                const railRect = rail?.getBoundingClientRect();
+                if (before === null) frame.removeAttribute("data-compact");
+                else frame.setAttribute("data-compact", before);
+                return {height: Math.round(rect?.height ?? 0), railOverlap: (rect?.bottom ?? Infinity) - (railRect?.top ?? -Infinity)};
+              });
+              assert.equal(tucked.height, 44, "Coach's header tuck must not scale down navigation targets");
+              assert.ok(tucked.railOverlap <= 1,
+                "tucked Coach navigation must stay above the orange rail");
+              entry.coachHeaderPlacement = headerPlacement;
+            }
             entry.coachNavigation = navScale;
             entry.coachReading = reading;
           }
