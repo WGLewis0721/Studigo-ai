@@ -196,10 +196,12 @@ export function RoomWorkspace({
         </div>
         <SectionNav className="topbarNav" current={currentGroup.name} onSelect={(next) => navigate(next)} />
         <div className="topbarRight">
-          <span className="sourceCount" aria-label={`${readyDocuments.length} of ${documents.length} sources ready`}>
+          {foundationEnabled ? <button type="button" className="sourceCount" onClick={() => navigate("materials")} aria-label={`Open Materials: ${readyDocuments.length} of ${documents.length} sources ready`}>
+            {readyDocuments.length} of {documents.length} {documents.length === 1 ? "source" : "sources"} ready
+          </button> : <span className="sourceCount" aria-label={`${readyDocuments.length} of ${documents.length} sources ready`}>
             {readyDocuments.length} of {documents.length}{" "}
             {documents.length === 1 ? "source" : "sources"} ready
-          </span>
+          </span>}
           <StudyGuideDownloadButton roomId={room.id} />
           <button
             className="iconButton"
@@ -261,6 +263,7 @@ export function RoomWorkspace({
         )}
         {mode === "quiz" && (
           <QuizPanel key={focusTopicId ?? "all"}
+            phase3Ui={foundationEnabled}
             roomId={room.id}
             topics={topics}
             hasMaterials={readyDocuments.length > 0}
@@ -291,7 +294,7 @@ export function RoomWorkspace({
         {mode === "weak" && <WeakAreasPanel areas={areas} onStudy={(next,id)=>navigate(next,id)}/>}
         {mode === "test" && <PracticeTestPanel roomId={room.id} topicCount={topics.length} topics={topics} onGraded={refresh} onReviewTopic={id=>navigate("learn",id)}/>}
         {mode === "plan" && <StudyPlanPanel roomId={room.id} days={plan} testDate={room.test_date} onStart={startPlannedAction} onChanged={refresh} onSetDate={()=>setSettingsOpen(true)}/>}
-        {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
+        {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel phase3Ui={foundationEnabled} roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
 
       </div>
       </HeaderSlots.Provider>

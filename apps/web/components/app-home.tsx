@@ -41,6 +41,7 @@ function Sill() {
 export function HomeHero({ next }: { next: HomeNext }) {
   const [theme] = useRoomTheme(next.roomId);
   const stage = useRef<StageHandle>(null);
+  const nextAction = next.mode === "materials" ? "Open Materials" : next.mode === "quiz" ? "Start a quiz" : next.mode === "cards" ? "Review flashcards" : "Open Learn";
 
   useEffect(() => {
     stage.current?.react("wave", 1700);
@@ -72,7 +73,7 @@ export function HomeHero({ next }: { next: HomeNext }) {
           href={`/app/rooms/${next.roomId}?mode=${next.mode}`}
           onClick={(event: MouseEvent<HTMLAnchorElement>) => announceLeap(event.currentTarget)}
         >
-          {next.door ? "Resume" : foundationUi ? "Open this room" : "Continue"} <span aria-hidden="true">{foundationUi && !next.door ? "↗" : "→"}</span>
+          {next.door ? "Resume" : foundationUi ? nextAction : "Continue"} <span aria-hidden="true">{foundationUi && !next.door ? "↗" : "→"}</span>
         </Link>
       </div>
     </section>

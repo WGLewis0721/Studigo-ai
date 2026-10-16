@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteRoomAction, renameRoomAction, type RoomFormState } from "@/lib/actions/rooms";
 import type { StudyRoom } from "@/lib/rooms";
@@ -21,10 +21,37 @@ function SaveButton() {
 export function RoomSettings({ room, onClose, closing = false }: { room: StudyRoom; onClose: () => void; closing?: boolean }) {
   const [state, formAction] = useActionState<RoomFormState, FormData>(renameRoomAction, {});
   const [gauge, setGauge] = useState(50);
+  const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => { setGauge(readGauge(room.id)); }, [room.id]);
+  useEffect(() => {
+    const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const controls = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
+    )).filter((element) => element.getClientRects().length > 0);
+    // Desktop hides the phone's Done button; focus the first visible control.
+    (controls()[0] ?? dialog).focus({ preventScroll: true });
+    function containFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      const items = controls();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!first) { event.preventDefault(); dialog?.focus(); return; }
+      if (!dialog?.contains(document.activeElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    }
+    document.addEventListener("keydown", containFocus);
+    return () => {
+      document.removeEventListener("keydown", containFocus);
+      if (invoker?.isConnected) invoker.focus({ preventScroll: true });
+    };
+  }, []);
 
   return (
-    <section className="roomSettings" data-state={closing ? "closing" : "open"} role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
+    <section ref={dialogRef} tabIndex={-1} className="roomSettings" data-state={closing ? "closing" : "open"} role="dialog" aria-modal="true" aria-labelledby="room-settings-title">
       <div className="roomSettingsHead">
         <div><span className="tinyLabel">YOUR LEARNING SPACE / CONTROLS</span><strong id="room-settings-title">Study Room settings</strong></div>
         <button type="button" onClick={onClose}>Done</button>
@@ -58,6 +85,7 @@ export function RoomSettings({ room, onClose, closing = false }: { room: StudyRo
             <div className="accuracyGaugeEnds"><span>Cold · 50%</span><strong>{gaugeLabel(gauge)}</strong><span>Hot · 100%</span></div>
             <input
               name="gauge"
+              aria-label="Answer temperature for this Study Room"
               type="range"
               min={50}
               max={100}
