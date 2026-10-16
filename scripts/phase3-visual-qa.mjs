@@ -673,7 +673,17 @@ try {
         assert.equal(await page.locator(".exploreLearnSwitch").count(), 0, "Learn and Explore are one guided journey, not separate modes");
         assert.equal(await page.locator(".coachMaterial").count(), 0, "redundant pre-lesson material card must be absent");
         await page.getByRole("button", { name: /Start quest/ }).click();
-        await page.getByText("MEET YOUR QUEST · READ").waitFor();
+        await page.locator('.learnTalk[data-journey-stage="intro"]').waitFor();
+        assert.equal(await page.locator(".learnLessonLabel").count(), 0, "the duplicate Quest 1 of N tracker must be removed");
+        assert.equal(await page.locator(".learnTeachingMascot").count(), 0, "the blank lesson-side mascot placeholder must not consume space");
+        assert.equal(await page.locator(".learnSectionTitle").innerText(), "Inherited traits and environment",
+          "the section title replaces the generic Meet Your Quest readout");
+        assert.equal(await page.locator(".learnAsk").count(), 0, "do not repeat the section heading on opening read");
+        const progressBar = page.getByRole("progressbar", { name: "Guided lesson progress, not mastery" });
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "12");
+        assert.ok((await page.locator(".learnBarFill").getAttribute("style"))?.includes("12%"));
+        const meterAppearance = await page.locator(".learnBarFill").evaluate((node) => getComputedStyle(node).backgroundImage);
+        assert.match(meterAppearance, /linear-gradient/, "use orange-to-green phase-specific gradient");
         // Icon-only treatment must remain discoverable to AT and fit phone widths.
         const journal = page.getByRole("button", { name: "Quest journal" });
         const check = page.getByRole("button", { name: "Check what I understood" });
@@ -702,11 +712,30 @@ try {
         const sourceReading = await page.locator(".learnSourceReading").innerText();
         assert.match(sourceReading, /Inherited traits come from parents through genes/, "opening dialogue must show source facts for selected quest");
         await page.getByRole("button", { name: /Check what I understood/ }).click();
-        await page.getByText("BEFORE EXPLORE · UNDERSTANDING CHECK").waitFor();
+        await page.locator('.learnTalk[data-journey-stage="first-check"]').waitFor();
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
+          "intro → comprehension must advance 22 percentage points");
+        const firstPlume = page.locator(".learnProgressPlume");
+        await firstPlume.waitFor();
+        assert.equal(await firstPlume.evaluate((node) => getComputedStyle(node).animationName), "learnPlumeBurst",
+          "each durable forward advance should trigger the flame plume");
+        const firstPlumeKey = await firstPlume.evaluate((node) => node.outerHTML);
+        assert.equal(await page.locator(".learnProgressEmber").count(), 1, "progress ember continuously illuminates the head");
         await page.locator(".learnChoice").first().click();
         await page.getByRole("button", { name: /Check answer/ }).click();
         await page.getByRole("button", { name: /Explore this lesson/ }).click();
-        await page.getByText("EXPLORE · GUIDED ACTIVITY").waitFor();
+        await page.locator('.learnTalk[data-journey-stage="explore"]').waitFor();
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "56",
+          "comprehension → Explore must advance another 22 percentage points");
+        await page.locator(".learnProgressPlume").waitFor();
+        const nextPlumeKey = await page.locator(".learnProgressPlume").evaluate((node) => node.outerHTML);
+        assert.equal(firstPlumeKey, nextPlumeKey, "each stage uses the same branded flare design");
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        assert.equal(await page.locator(".learnProgressEmber").evaluate((node) => getComputedStyle(node).animationName), "none",
+          "reduced motion suppresses continuous ember pulse");
+        assert.equal(await page.locator(".learnProgressPlume").evaluate((node) => getComputedStyle(node).display), "none",
+          "reduced motion suppresses plume");
+        await page.emulateMedia({ reducedMotion: "no-preference" });
         await page.getByRole("button", { name: "Pause lesson" }).click();
         await page.getByText(/PAUSED MISSION/).waitFor();
         await page.getByRole("button", { name: "Quest journal" }).click();
