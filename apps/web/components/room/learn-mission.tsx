@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
+import { ExploreJournal } from "./explore-journal";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
@@ -77,6 +78,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [helpUsed, setHelpUsed] = useState(false);
   const [spokenDraft, setSpokenDraft] = useState("");
   const [sourceOpen, setSourceOpen] = useState(false);
+  // The original synthetic Guided Learn fixture stays pixel-for-pixel unchanged.
+  const [journalOpen, setJournalOpen] = useState(roomId !== "fixture");
   const sourceDialogRef = useRef<HTMLDialogElement>(null);
   const sourceButtonRef = useRef<HTMLButtonElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
@@ -162,17 +165,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     return payload;
   }
 
-  async function act(action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string) {
-    if (inFlight.current) return;
+  async function act(action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string): Promise<boolean> {
+    if (inFlight.current) return false;
     inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
       await post(mission, action, reflection, topicOverride);
       if (action === "restart" || action === "start") setTapped(null);
+      return true;
     } catch (caught) {
       await reload();
       setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+      return false;
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -244,7 +249,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   };
   const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
 
+  // Render the journal in the same Learn room. All teaching, answers and
+  // revision-bound cursor updates still belong to the existing player/API.
+  if (journalOpen && !loading) return <ExploreJournal
+    roomId={roomId} topics={topics} cursor={mission} sourceCurrent={snapshot?.sourceCurrent}
+    busy={busy} error={error} onOpenMaterials={onOpenMaterials}
+    onStart={(topicId) => act(mission ? "restart" : "start", null, topicId)}
+    onContinue={() => act("resume")}
+    onOpenLesson={() => setJournalOpen(false)}
+  />;
+
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
+    {!fixture && <button type="button" className="ghostButton exploreJournalReturn"
+      onClick={() => setJournalOpen(true)}>← Quest journal</button>}
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
       <h2>{invitationTitle ? "Learn " + invitationTitle : "Start with your material"}</h2>
