@@ -7,6 +7,8 @@ import "./explore-journal.css";
 
 type Props = {
   roomId: string;
+  /** Synthetic visual fixture only. Never a real learner or persisted source. */
+  fixture?: boolean;
   topics: ExploreTopic[];
   cursor: ExploreCursor | null;
   sourceCurrent?: boolean;
@@ -23,7 +25,7 @@ type Props = {
  * but never reconstructs historical quest completion from topic mastery.
  */
 export function ExploreJournal({
-  roomId, topics, cursor, sourceCurrent, busy, error,
+  roomId, fixture = false, topics, cursor, sourceCurrent, busy, error,
   onStart, onContinue, onOpenLesson, onOpenMaterials
 }: Props) {
   const [guide, setGuide] = useState<ExploreGuide | null>(null);
@@ -36,6 +38,7 @@ export function ExploreJournal({
   }, [cursor?.topic_id]);
 
   useEffect(() => {
+    if (fixture) return;
     const controller = new AbortController();
     // This authorized API only returns the learner's actual persisted guide.
     // A stale edition is not authority for chapter-to-quest membership.
@@ -50,7 +53,7 @@ export function ExploreJournal({
       if (!controller.signal.aborted) setGuide(null);
     });
     return () => controller.abort();
-  }, [roomId]);
+  }, [roomId, fixture]);
 
   const chapters = useMemo(() => buildExploreChapters(topics, guide), [topics, guide]);
   const activeTopic = topics.find((topic) => topic.id === selected) ?? topics[0] ?? null;
@@ -75,6 +78,7 @@ export function ExploreJournal({
   };
 
   return <section className="exploreJournal" aria-label="Explore quest journal">
+    {fixture && <p className="learnMissionFixture">Synthetic Explore visual fixture · no saved progress or real source evidence.</p>}
     <header className="exploreJournalHead">
       <div>
         <p className="tinyLabel">LEARN · EXPLORE</p>
