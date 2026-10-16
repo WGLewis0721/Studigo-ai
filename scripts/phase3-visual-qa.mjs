@@ -15,8 +15,15 @@ const widths = [
 ];
 const modes = ["coach", "materials", "quiz", "cards", "test", "mastery", "weak", "plan", "cram"];
 const skins = ["legacy", "phase3"];
+const evidence = [{ blockKey: "synthetic-block", pageNumber: 1 }];
+const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level: "general", roomId: "fixture", topicIds: [], sourceSnapshot: "synthetic-browser-only", chapters: [{
+  id: "synthetic-chapter", title: "Synthetic science study guide", objective: "Explain inherited traits", objectiveEvidence: evidence,
+  facts: [{ id: "fact-1", text: "Inherited traits pass from parents to offspring.", evidence }], terms: [{ id: "term-1", term: "Trait", definition: "A characteristic of an organism.", evidence }],
+  examples: [], practice: [{ id: "q-1", prompt: "What is an inherited trait?", answerId: "a-1", evidence }], answers: [{ id: "a-1", questionId: "q-1", text: "A characteristic passed from parents to offspring.", evidence }]
+}] };
+
 await mkdir(output, { recursive: true });
-const report = { commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], failures: [] };
+const report = { commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], failures: [] };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
@@ -26,6 +33,10 @@ try {
       reducedMotion: "reduce",
       deviceScaleFactor: 1,
     });
+    // Synthetic responses are explicitly local browser fixtures; no grading,
+    // source authorization, generation or learner persistence is exercised.
+    await context.route("**/api/guides/edition?*", route => route.fulfill({ json: { edition: syntheticEdition, updateAvailable: false } }));
+    await context.route("**/api/guides/source?*", route => route.fulfill({ json: { blockKey: "synthetic-block", pageNumber: 1, text: "Synthetic source: inherited traits pass from parents to offspring.", document: { id: "source", name: "Synthetic source.pdf", mimeType: "application/pdf" } } }));
     const page = await context.newPage();
     for (const mode of modes) {
       for (const skin of skins) {
@@ -86,7 +97,7 @@ try {
       }
     }
     // Extra controls use the same synthetic room and never contact a learner API.
-    const interaction = { viewport: viewport.name, settings: false, sourceShortcut: "hidden", syntheticQuiz: false, error: null };
+    const interaction = { viewport: viewport.name, settings: false, sourceShortcut: "hidden", syntheticQuiz: false, sourceInspector: false, error: null };
     try {
       await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "domcontentloaded" });
       const source = page.locator("button.sourceCount");
@@ -122,12 +133,54 @@ try {
       await page.locator(".quizFeedback").waitFor();
       assert.equal(gradeCalls, 1, "explicit submit must grade once");
       interaction.syntheticQuiz = true;
+      await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "domcontentloaded" });
+      const citation = page.locator("button.materialsCitation").first();
+      await citation.click();
+      const inspector = page.locator("dialog.materialsSourceDialog[open]");
+      await inspector.waitFor();
+      assert.ok(await inspector.evaluate(el => el.matches(":modal")), "source inspector must use native modal top layer");
+      await inspector.locator("blockquote").waitFor();
+      const box = await inspector.boundingBox();
+      if (viewport.width <= 700) assert.ok(Math.abs(box.y + box.height - viewport.height) <= 2, "phone source sheet must sit at viewport bottom");
+      else assert.ok(box.x >= viewport.width / 2, "wide source pane must sit on right");
+      await page.screenshot({ path: path.join(output, `${viewport.name}-source-inspector-phase3.png`), animations: "disabled" });
+      await page.keyboard.press("Escape");
+      await inspector.waitFor({ state: "detached" });
+      assert.ok(await citation.evaluate(el => el === document.activeElement), "Escape must restore citation focus");
+      await citation.click();
+      await page.locator("dialog.materialsSourceDialog[open]").getByRole("button", { name: "Close", exact: true }).click();
+      assert.ok(await citation.evaluate(el => el === document.activeElement), "Close must restore citation focus");
+      interaction.sourceInspector = true;
+
     } catch (error) {
       interaction.error = String(error);
       report.failures.push({ ...interaction });
       console.error(`${viewport.name} interactions: ${interaction.error}`);
     }
     report.interactions.push(interaction);
+    for (const first of [false, true]) {
+      const home = { viewport: viewport.name, firstRun: first, screenshot: "", horizontalOverflow: null, zoomOverflow: null, error: null };
+      try {
+        await page.goto(`${origin}/dev/home${first ? "?first=1" : ""}`, { waitUntil: "domcontentloaded" });
+        const surface = page.locator(first ? ".firstRoom" : ".homeHero");
+        await surface.waitFor();
+        assert.equal(await surface.getAttribute("data-ui"), "phase3", "Home fixture requires NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1");
+        await page.evaluate(() => document.fonts.ready);
+        home.horizontalOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        home.screenshot = path.join(output, `${viewport.name}-home${first ? "-first" : ""}-phase3.png`);
+        await page.screenshot({ path: home.screenshot, fullPage: true, animations: "disabled" });
+        assert.ok(home.horizontalOverflow <= 2, `Home overflow ${home.horizontalOverflow}px`);
+        await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
+        home.zoomOverflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        await page.screenshot({ path: home.screenshot.replace(".png", "-zoom200.png"), fullPage: true, animations: "disabled" });
+        assert.ok(home.zoomOverflow <= 2, `Home 200% CSS zoom overflow ${home.zoomOverflow}px`);
+      } catch (error) {
+        home.error = String(error);
+        report.failures.push({ ...home });
+        console.error(`${viewport.name} Home: ${home.error}`);
+      }
+      report.home.push(home);
+    }
     await context.close();
   }
 } catch (error) {
