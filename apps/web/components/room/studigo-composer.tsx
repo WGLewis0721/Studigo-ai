@@ -1,6 +1,7 @@
 "use client";
 
 import { StudigoMascot } from "@/components/studigo-mascot";
+import { SpeechAnswerControl } from "./speech-answer-control";
 
 export function StudigoComposer({
   value,
@@ -12,7 +13,8 @@ export function StudigoComposer({
   ariaLabel = "Ask Studigo",
   variant = "default",
   placeholder = "Ask Studigo",
-  accent
+  accent,
+  enableSpeech = false
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -26,6 +28,8 @@ export function StudigoComposer({
   placeholder?: string;
   /** Chat variant only: "learn" tints the bar teal so the mode is visible at the input. */
   accent?: "learn";
+  /** Behind Guided Learn preview gate until youth voice/privacy acceptance. */
+  enableSpeech?: boolean;
 }) {
   const canSend = !disabled && Boolean(value.trim());
 
@@ -50,6 +54,7 @@ export function StudigoComposer({
           enterKeyHint="send"
           autoComplete="off"
         />
+        {enableSpeech && <SpeechAnswerControl disabled={disabled} onUse={onChange} />}
         <button className="chatSend" type="submit" aria-label="Send to Studigo" disabled={!canSend}>
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />

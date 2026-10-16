@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./guided-learn-chapters.css";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, sourceSentences, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
-import { StudigoMascot } from "@/components/studigo-mascot";
+import { useCompanion } from "@/components/companion/companion";
+import { ReadAloudControl } from "./read-aloud-control";
+import { SpeechAnswerControl } from "./speech-answer-control";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
 import { lessonBeatIndex, formativeReflection, canAdvanceLesson } from "@/lib/learning-mission-stages";
 
@@ -74,6 +76,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [picked, setPicked] = useState<number[]>([]);
   const [shown, setShown] = useState(false);
   const [helpUsed, setHelpUsed] = useState(false);
+  const [spokenDraft, setSpokenDraft] = useState("");
+  const [sourceOpen, setSourceOpen] = useState(false);
   const sourceDialogRef = useRef<HTMLDialogElement>(null);
   const sourceButtonRef = useRef<HTMLButtonElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
@@ -82,6 +86,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   const fixture = roomId === "fixture";
   const mission = snapshot?.mission ?? null;
+  const { thinking: companionThinking } = useCompanion();
+  useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
   const objectiveSource = fixture
@@ -189,6 +195,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     setPicked([]);
     setShown(false);
     setHelpUsed(false);
+    setSpokenDraft("");
   }, [passageKey, mission?.phase]);
 
   function play(index: number) {
@@ -223,10 +230,12 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   const openSource = () => {
     if (!snapshot?.source || snapshot.sourceCurrent === false || !mission) return;
+    setSourceOpen(true);
     sourceDialogRef.current?.showModal();
   };
   const closeSource = () => {
     sourceDialogRef.current?.close();
+    setSourceOpen(false);
     sourceButtonRef.current?.focus();
   };
   const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
@@ -276,10 +285,17 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     {error && <p className="formError" role="alert">{error}</p>}
     {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation" role="status"><p className="tinyLabel">LEARNING CHECKPOINT COMPLETE</p><h2>You practiced this idea.</h2><p>Learning checkpoints do not award mastery. Try a separate independent Coach or Practice question when you are ready.</p></div> : beat ? (
       <div className="learnTalk">
-        <StudigoMascot state={shown ? (hit ? "celebrate" : "explain") : beat.kind === "read" ? "explain" : "welcome"} size={64} />
+
         <div className="learnTalkBody">
           <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
           {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
+          <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? beat.body : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label="Hear this teaching step" />
+          {beat.kind !== "read" && <div className="learnOptionalVoice">
+            <span>Prefer to speak? Your transcript is a draft, not a graded answer.</span>
+            <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
+            {spokenDraft && <p role="status">Spoken draft: {spokenDraft} · Choose an answer to check against the source.</p>}
+          </div>}
+
           {beat.kind === "blank" && <p className="learnLine">{beat.before}<span className="learnGap">{picked.length ? beat.options[picked[0]] : "______"}</span>{beat.after}</p>}
           {beat.kind === "blank" && <div className="learnWords">{beat.options.map((word, index) => <button key={word} type="button" className="learnWord" aria-pressed={picked[0] === index} onClick={() => play(index)}>{word}</button>)}</div>}
           {(beat.kind === "choice" || beat.kind === "boxes") && <div className="learnChoices" role="group">
@@ -297,7 +313,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
     {mission && <dialog className="learnSourceDialog" ref={sourceDialogRef}
       aria-label="Find the original source for this lesson"
-      onClose={() => sourceButtonRef.current?.focus()}>
+      onClose={() => { setSourceOpen(false); sourceButtonRef.current?.focus(); }}>
       <div className="learnSourceHeading">
         <div><span className="tinyLabel">FROM YOUR ORIGINAL MATERIAL</span><h2>Find it in your guide</h2></div>
         <button type="button" className="learnSourceClose" aria-label="Close source" onClick={closeSource}>×</button>
@@ -308,6 +324,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           <span>{snapshot.source.pageNumber ? `Page ${snapshot.source.pageNumber}` : "Page not available"}</span>
         </div>
         <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
+        {sourceOpen && <ReadAloudControl text={snapshot.source.excerpt} label="Hear the verified source excerpt" />}
+
         <p className="learnSourceNote">Verified extracted text from this lesson's source. Exact word highlighting in the original PDF is not available.</p>
         {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
           href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}

@@ -454,6 +454,18 @@ try {
       assert.ok(await page.getByText(/With help · not an independent answer/).isVisible());
       missionCase.hintScreenshot = path.join(output, `${viewport.name}-guided-learn-hint-phase3.png`);
       await page.screenshot({ path: missionCase.hintScreenshot, animations: "disabled" });
+      const hear = page.getByRole("button", { name: "Read to me", exact: true });
+      assert.ok(await hear.first().isVisible(), "Read aloud must be learner-initiated and visible");
+      const mic = page.getByRole("button", { name: "Speak a draft answer" }).first();
+      await mic.click();
+      const record = page.getByRole("button", { name: "Start speaking" }).first();
+      assert.equal(await record.isDisabled(), true, "No microphone request without explicit acknowledgement");
+      assert.ok(await page.getByText(/browser's speech service may process audio/).first().isVisible());
+      missionCase.voiceScreenshot = path.join(output, `${viewport.name}-guided-learn-voice-consent-phase3.png`);
+      await page.screenshot({ path: missionCase.voiceScreenshot, animations: "disabled" });
+      await page.getByRole("button", { name: "Close", exact: true }).last().click();
+      missionCase.voiceConsentPreview = true;
+
 
       missionCase.overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
       assert.ok(missionCase.overflow <= 2, "Guided Learn fixture must not overflow");
