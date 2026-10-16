@@ -63,6 +63,10 @@ export const StudigoStage = forwardRef<StageHandle, {
     let press: { x: number; y: number; mode: "press" | "pet"; last: number } | null = null;
     const set = (name: StagePose) => {
       if (pose === name) return;
+      // Reactions can select a pose before the deferred preloader runs. Request
+      // that sprite immediately so the welcome never switches to an empty frame.
+      const selected = imgs.get(name);
+      if (selected && !selected.getAttribute("src")) selected.src = src(name);
       pose = name;
       imgs.forEach((img, key) => img.classList.toggle("on", key === name));
       if (node.dataset.pose === name) { node.dataset.pose = ""; void node.offsetWidth; }

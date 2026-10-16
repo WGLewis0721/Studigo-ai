@@ -95,6 +95,14 @@
 .firstRoom[data-ui="phase3"] .firstRoomBody .pageTitle { font-size: clamp(2.4rem, 4vw, 4.3rem); line-height: 1.02; letter-spacing: -.055em; }
 .firstRoom[data-ui="phase3"] .firstRoomBody { gap: 18px; }
 .firstRoom[data-ui="phase3"] .firstRoomStage { max-width: 430px; }
+/* Enlarged text and narrow containers must shrink the grid's minimum track,
+   rather than widen the document or clip a room name/action. */
+:is(.homeHero, .firstRoom)[data-ui="phase3"] > *,
+.firstRoom[data-ui="phase3"] .firstRoomBody > * { min-width: 0; max-width: 100%; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] :is(h1, h2, p, .tinyLabel, button, a) { overflow-wrap: anywhere; }
+:is(.homeHero, .firstRoom)[data-ui="phase3"] :is(button, a) { white-space: normal; }
+.pageWrap:has(.homeHero[data-ui="phase3"]) .roomsGrid { grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+.pageWrap:has(.homeHero[data-ui="phase3"]) :is(.createRoomPanel, .createRoomPanel .field, .createRoomPanel input) { min-width: 0; max-width: 100%; }
 @media (max-width: 850px) {
   .homeHero[data-ui="phase3"] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "say" "next"; min-height: 0; }
   .homeHero[data-ui="phase3"] .homeStage { height: 200px; max-width: 100%; }
