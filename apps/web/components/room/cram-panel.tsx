@@ -8,7 +8,7 @@ import { CardsPanel } from './cards-panel';
 import { StudigoMascot } from '@/components/studigo-mascot';
 import { INLINE_SLOTS, HeaderSlots } from './mode-header';
 import './phase3-rooms.css';
-export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:string;topics:Topic[];areas:WeakArea[];testDate:string|null;onChanged:()=>void}) {
+export function CramPanel({roomId,topics,areas,testDate,onChanged,phase3Ui}:{roomId:string;topics:Topic[];areas:WeakArea[];testDate:string|null;onChanged:()=>void;phase3Ui?:boolean}) {
   const [minutes,setMinutes]=useState(30);const [session,setSession]=useState<StudyAction[]|null>(null);const [index,setIndex]=useState(0);
   const [remaining,setRemaining]=useState(0);const [running,setRunning]=useState(false);const deadline=useRef(0);const [done,setDone]=useState(false);
   const preview=buildCramPlan(areas,topics,minutes,testDate);const step=session?.[index];
@@ -21,14 +21,14 @@ export function CramPanel({roomId,topics,areas,testDate,onChanged}:{roomId:strin
   function advance(){if(!session)return;if(index+1>=session.length){setDone(true);setRunning(false);onChanged();return;}const next=index+1;setIndex(next);setRemaining(session[next].minutes*60);deadline.current=Date.now()+session[next].minutes*60000;setRunning(true);}
   if(done) return <section className="modeEmpty"><StudigoMascot state="celebrate" size={80}/><span className="tinyLabel">FOCUSED SESSION COMPLETE</span><h2>You made time count.</h2><p>Only your saved quiz answers and card reviews changed mastery. Reading and completing the plan do not earn points.</p><button className="buttonPrimary" onClick={()=>{setSession(null);setDone(false);}}>Reassess my next session →</button></section>;
   if(session&&step) return <section className="cramSession">
-    <header className="cramTimerBar"><div><span className="tinyLabel">FOCUS / {index+1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong aria-label="Time remaining">{Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')}</strong><button onClick={()=>{if(!running){deadline.current=Date.now()+Math.max(remaining,60)*1000;setRemaining(v=>Math.max(v,60));}setRunning(v=>!v);}}>{running?'Pause':remaining===0?'Add one minute':'Resume'}</button></div></header>
+    <header className="cramTimerBar"><div><span className="tinyLabel">FOCUS / {index+1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong role="timer" aria-label="Time remaining">{Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')}</strong><button onClick={()=>{if(!running){deadline.current=Date.now()+Math.max(remaining,60)*1000;setRemaining(v=>Math.max(v,60));}setRunning(v=>!v);}}>{running?'Pause':remaining===0?'Add one minute':'Resume'}</button></div></header>
     <ol className="cramTrack">{session.map((s,i)=><li key={s.key} aria-current={i===index?'step':undefined}><span>{i+1}</span>{s.title}<small>{s.minutes} min</small></li>)}</ol>
     {!remaining&&<p className="formNotice" role="status">Time for the next step. Finish your current answer before moving on.</p>}
     <p className="hintText">{step.reason}</p>
     <HeaderSlots.Provider value={INLINE_SLOTS}>
     <div className="cramActivity" key={`${index}:${step.topicId}`}>
       {step.mode==='learn'&&<LearnPanel roomId={roomId} topics={topics.filter(t=>t.id===step.topicId)} hasMaterials onChanged={onChanged}/>}
-      {step.mode==='quiz'&&<QuizPanel roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onGraded={onChanged}/>}
+      {step.mode==='quiz'&&<QuizPanel phase3Ui={phase3Ui} roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onGraded={onChanged}/>}
       {step.mode==='cards'&&<CardsPanel roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onReviewed={onChanged}/>}
     </div>
     </HeaderSlots.Provider>

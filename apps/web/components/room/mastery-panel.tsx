@@ -21,7 +21,7 @@ function ReadinessRing({ value, practiced }: { value: number; practiced: boolean
       </svg>
       <div className="ringLabel">
         <strong>{practiced ? `${value}%` : "–"}</strong>
-        <span>ready</span>
+        <span>{practiced ? "estimate" : "not measured"}</span>
       </div>
     </div>
   );
@@ -70,7 +70,7 @@ export function MasteryPanel({
                 ? "Practice a topic to start measuring."
                 : `${readiness.correctAnswers} of ${readiness.questionsAnswered} practice answers right.`}
           </p>
-          <small>A Learn reading is not in these numbers. Only Coach and Practice results change mastery.</small>
+          <small>A Learn reading is not in these numbers. Coach and Practice provide learning evidence; this estimate is not a predicted test grade.</small>
         </div>
         <ReadinessRing value={readiness.readiness} practiced={practiced} />
       </div>
@@ -97,6 +97,8 @@ export function MasteryPanel({
         </section>
       )}
 
+      {!practiced && topics.length > 0 && <button type="button" className="buttonPrimary roomEvidenceStart" onClick={() => onPractice(topics[0].id)}>Practice {topics[0].title} <span aria-hidden="true">→</span></button>}
+
       <section className="masteryDeck" aria-labelledby="mastery-map-title">
         <div className="mdHead">
           <div>
@@ -121,7 +123,7 @@ export function MasteryPanel({
                   onClick={() => onPractice(topic.id)}
                   aria-label={`${topic.title}: ${label}. Practice this topic.`}
                 >
-                  {topic.priority >= 90 && <em className="mdPriority">ON THE TEST</em>}
+                  {topic.priority >= 90 && <em className="mdPriority">HIGH PRIORITY</em>}
                   <b>{topic.title}</b>
                   <small>{label}</small>
                 </button>

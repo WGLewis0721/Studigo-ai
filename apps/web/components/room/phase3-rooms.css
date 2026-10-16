@@ -104,3 +104,74 @@
   .roomDevice[data-ui="phase3"] .roomEvidence .weakSpots li { display: grid; }
   .roomDevice[data-ui="phase3"] .studyPlanPanel .planActionButtons { flex-wrap: wrap; }
 }
+
+/* Practice, evidence and planning use the established raised-key language.
+   Scope stays inside the opted-in room, including embedded Cram activities. */
+.roomDevice[data-ui="phase3"] :is(.roomStudioSetup, .roomStudioAttempt, .roomStudioCards, .roomStudioTest, .roomStudioResults, .roomEvidence, .weakAreasPanel, .studyPlanPanel, .cramSetup, .cramSession) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] :is(.choiceItem, .testChoice, .ratingButton, .timeChoices button) {
+  border: 1px solid var(--hairline-strong);
+  box-shadow: inset 0 1px 0 var(--white), 0 4px 0 var(--snow-3), 0 6px 12px -10px var(--ink);
+}
+.roomDevice[data-ui="phase3"] :is(.choiceSelected, .testChoice:has(input:checked), .timeChoices button[aria-pressed="true"]) {
+  background: var(--tone-soft);
+  border-color: var(--tone-ink);
+  box-shadow: inset 0 0 0 1px var(--tone-ink), 0 3px 0 var(--tone);
+}
+.roomDevice[data-ui="phase3"] .choiceCorrect { border-color: var(--kiwi-ink); }
+.roomDevice[data-ui="phase3"] .choiceWrong { border-color: var(--berry-ink); }
+.roomDevice[data-ui="phase3"] :is(.choiceItem, .testChoice) > span { min-width: 0; }
+.roomDevice[data-ui="phase3"] :is(.roomStudioAttempt, .roomStudioCards, .roomStudioTest) :is(input, textarea) { font-size: 1rem; }
+.roomDevice[data-ui="phase3"] .roomStudioCards .cardMetaRow { width: 100%; flex-wrap: wrap; gap: 12px; }
+.roomDevice[data-ui="phase3"] .roomStudioCards .cardEditLink { min-height: 44px; }
+.roomDevice[data-ui="phase3"] .roomStudioCards .flashcardSide { overflow-wrap: anywhere; }
+.roomDevice[data-ui="phase3"] .roomStudioCards .ratingRow { width: 100%; }
+.roomDevice[data-ui="phase3"] .roomStudioTest .testChoice:focus-within { outline: 3px solid var(--blueberry-ink); outline-offset: 3px; }
+.roomDevice[data-ui="phase3"] .roomStudioResults .testTopicResults > div { flex-wrap: wrap; }
+.roomDevice[data-ui="phase3"] .roomStudioResults .testTopicResults button { min-height: 44px; }
+.roomDevice[data-ui="phase3"] .roomEvidenceStart { justify-self: start; min-height: 48px; max-width: 100%; white-space: normal; text-align: left; }
+.roomDevice[data-ui="phase3"] .roomEvidence .ringLabel span { color: #e1e8de; }
+.roomDevice[data-ui="phase3"] .roomEvidence .weakSpots button { white-space: normal; text-align: left; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDayLabel { min-width: 0; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planActionButtons button:not(.buttonPrimary) {
+  padding: 10px 14px; border-radius: 12px; background: var(--snow-2);
+  text-decoration: none; box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+.roomDevice[data-ui="phase3"] .cramTrack { scroll-snap-type: x proximity; }
+.roomDevice[data-ui="phase3"] .cramTrack li { scroll-snap-align: start; }
+.roomDevice[data-ui="phase3"] .cramTrack li[aria-current] { background: var(--tangerine-soft); }
+.roomDevice[data-ui="phase3"] .cramClock button { min-height: 44px; }
+.roomDevice[data-ui="phase3"] .cramFooter .buttonPrimary { min-height: 48px; }
+@media (max-width: 700px) {
+  .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceItem { flex-wrap: wrap; gap: 10px; }
+  .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceItem > span { flex: 1 1 calc(100% - 70px); }
+  .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceVerdict { margin-left: 0; }
+  .roomDevice[data-ui="phase3"] .roomStudioCards .flashcardFace { padding: 24px 18px; }
+  .roomDevice[data-ui="phase3"] .roomStudioCards .ratingButton { min-width: 0; flex-basis: 100%; }
+  .roomDevice[data-ui="phase3"] .roomStudioTest .testChoice { flex-wrap: wrap; padding: 14px 12px; gap: 10px; }
+  .roomDevice[data-ui="phase3"] .roomStudioTest .testChoice > span { flex: 1 1 calc(100% - 40px); }
+  .roomDevice[data-ui="phase3"] .roomStudioTest .testSessionActions { flex-wrap: wrap; gap: 10px; }
+  .roomDevice[data-ui="phase3"] .roomStudioTest .testSubmitReview { padding: 18px 14px; }
+  .roomDevice[data-ui="phase3"] .roomStudioResults .testScore { flex-wrap: wrap; gap: 12px; padding: 22px 18px; }
+  .roomDevice[data-ui="phase3"] .roomStudioResults .testTopicResults span { margin-left: 0; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHeroText { min-width: 0; flex: 1 1 100%; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero h2 { font-size: 1.65rem; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .progressRing { width: 108px; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .statRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .roomDevice[data-ui="phase3"] .studyPlanPanel .planDay { grid-template-columns: minmax(0, 1fr); padding: 18px 14px; gap: 18px; }
+  .roomDevice[data-ui="phase3"] .studyPlanPanel .planDayActions article { padding-left: 12px; }
+  .roomDevice[data-ui="phase3"] .cramSession .cramActivity { padding: 14px 10px; }
+  .roomDevice[data-ui="phase3"] .cramSession .cramFooter { align-items: stretch; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roomDevice[data-ui="phase3"] .roomStudioCards .flashcardInner { transition: none; transform: none; }
+  .roomDevice[data-ui="phase3"] .roomStudioCards .flashcardFace { transform: none; }
+  .roomDevice[data-ui="phase3"] .roomStudioCards .flashcardFace[aria-hidden="true"] { visibility: hidden; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .ringValue { transition: none; }
+}
+@media (forced-colors: active) {
+  .roomDevice[data-ui="phase3"] :is(.choiceItem, .testChoice, .ratingButton, .mdTile, .timeChoices button) { border: 1px solid ButtonText; }
+  .roomDevice[data-ui="phase3"] :is(.choiceSelected, .testChoice:has(input:checked), .timeChoices button[aria-pressed="true"]) { outline: 3px solid Highlight; outline-offset: 2px; }
+}

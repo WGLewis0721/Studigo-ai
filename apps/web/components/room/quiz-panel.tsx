@@ -38,8 +38,8 @@ type Result = {
 type Answered = { score: number; confidence: number | null; isCorrect: boolean };
 
 /**
- * Rating the answer is the submit action, so the confidence signal costs the
- * learner no extra step and Studigo can tell a gap from a blind spot.
+ * Confidence is collected alongside an answer. Phase 3 uses a separate submit
+ * action; the legacy presentation keeps confidence-as-submit for rollback.
  */
 const CONFIDENCE_LEVELS = [
   { value: 1 as const, label: "Guessing", hint: "No real idea" },
@@ -71,13 +71,15 @@ export function QuizPanel({
   topics,
   hasMaterials,
   initialTopicId,
-  onGraded
+  onGraded,
+  phase3Ui
 }: {
   roomId: string;
   topics: Topic[];
   hasMaterials: boolean;
   initialTopicId: string | null;
   onGraded: () => void;
+  phase3Ui?: boolean;
 }) {
   const [topicId, setTopicId] = useState<string>(initialTopicId ?? "");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -98,7 +100,7 @@ export function QuizPanel({
   const finished = questions.length > 0 && index >= questions.length;
   const usesChoices = current?.kind === "multiple_choice" || current?.kind === "true_false";
   const hasAnswer = usesChoices ? selected !== null : written.trim().length > 0;
-  const phase3 = process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
+  const phase3 = phase3Ui ?? process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 
   async function build() {
     const body = JSON.stringify({ roomId, topicId: topicId || null, count: 5 });
@@ -301,7 +303,7 @@ export function QuizPanel({
                 aria-checked={phase3 ? undefined : selected === choiceIndex}
                 aria-pressed={phase3 ? selected === choiceIndex : undefined}
                 className={`choiceItem ${state}`}
-                disabled={Boolean(result)}
+                disabled={Boolean(result) || grading}
                 onClick={() => setSelected(choiceIndex)}
               >
                 <i>
@@ -335,18 +337,19 @@ export function QuizPanel({
           aria-label="Fill in the blank"
           maxLength={120}
           autoComplete="off"
-          disabled={Boolean(result)}
+          disabled={Boolean(result) || grading}
         />
       )}
 
       {current.kind === "short_answer" && (
         <textarea
           className="shortAnswer"
+          aria-label="Your answer"
           value={written}
           onChange={(event) => setWritten(event.target.value)}
           placeholder="Answer in a sentence or two…"
           rows={4}
-          disabled={Boolean(result)}
+          disabled={Boolean(result) || grading}
         />
       )}
 
@@ -357,7 +360,7 @@ export function QuizPanel({
       )}
 
       {result && (
-        <div className={`quizFeedback ${result.isCorrect ? "feedbackRight" : "feedbackWrong"}`}>
+        <div className={`quizFeedback ${result.isCorrect ? "feedbackRight" : "feedbackWrong"}`} role="status">
           <span className="answerKicker">
             {result.isCorrect ? "CORRECT" : "NOT QUITE"} · {result.score}%
           </span>
@@ -368,7 +371,7 @@ export function QuizPanel({
           )}
           {result.confidence === 1 && result.isCorrect && (
             <p className="blindSpotFlag">
-              You knew that one. You just didn't trust it yet.
+              A correct guess is a good start. Try this idea again to check your recall.
             </p>
           )}
           <p>{result.feedback}</p>

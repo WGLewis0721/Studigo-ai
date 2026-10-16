@@ -1,11 +1,10 @@
 "use client";
 import type { WeakArea } from '@/lib/study-planning';
-import { StudigoMascot } from '@/components/studigo-mascot';
 import { HeaderMascot } from './mode-header';
 import './phase3-rooms.css';
 export function WeakAreasPanel({areas,onStudy}:{areas:WeakArea[];onStudy:(mode:'learn'|'quiz'|'cards',topicId:string)=>void}) {
   return <section className="weakAreasPanel">
-    <div className="roomSectionIntro"><span className="tinyLabel">PROGRESS ROOM / FOCUS</span><h2>Start where it matters.</h2><p>These priorities come from your current topic and practice signals. Learn this opens an ungraded reading. Practice and cards are the attempts that count.</p></div>
+    <div className="roomSectionIntro"><span className="tinyLabel">PROGRESS ROOM / FOCUS</span><h2>Start where it matters.</h2><p>These priorities come from your current topic and practice signals. Learn this opens an ungraded reading. Quiz answers and card self-ratings provide different kinds of practice evidence.</p></div>
     <HeaderMascot state="explain"/>
     {!areas.length?<div className="modeEmpty"><h3>No weak areas to rank right now.</h3><p>If you have topics, keep recall fresh with a practice test. Otherwise, add a study guide first.</p></div>:
       <ol className="weakAreaList">{areas.map((area,index)=><li key={area.topic.id}>

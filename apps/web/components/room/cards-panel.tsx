@@ -57,6 +57,7 @@ export function CardsPanel({
 
   const loadDue = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch(`/api/flashcards?roomId=${roomId}${topicId ? `&topicId=${encodeURIComponent(topicId)}` : ""}`);
       const payload = await response.json();
@@ -244,6 +245,7 @@ export function CardsPanel({
           </p>
         )}
 
+        {error && <button className="ghostButton" type="button" onClick={() => void loadDue()} disabled={generating}>Retry loading due cards</button>}
         <button className="buttonPrimary" type="button" onClick={() => void generate()} disabled={generating}>
           {generating ? "Writing cards…" : "Add 10 cards"} <span aria-hidden="true">→</span>
         </button>
@@ -299,6 +301,7 @@ export function CardsPanel({
         <button
           className={`flashcard ${flipped ? "flashcardFlipped" : ""}`}
           type="button"
+          disabled={saving}
           onClick={() => setFlipped((value) => !value)}
         >
           <span className="srOnly">{flipped ? "Answer side. Press to show the question." : "Question side. Press to show the answer."}</span>
@@ -321,6 +324,7 @@ export function CardsPanel({
           <CitationChips citations={card.citations ?? []} />
           <button
             className="cardEditLink"
+            disabled={saving || reviewRef.current !== null}
             type="button"
             onClick={() => {
               setDraft({ front: card.front, back: card.back });
@@ -345,10 +349,10 @@ export function CardsPanel({
               key={rating.value}
               type="button"
               className={`ratingButton rating-${rating.value}`}
-              disabled={saving}
+              disabled={saving || (reviewRef.current !== null && reviewRef.current.rating !== rating.value)}
               onClick={() => void rate(rating.value)}
             >
-              <strong>{rating.label}</strong>
+              <strong>{saving && reviewRef.current?.rating === rating.value ? "Saving review…" : reviewRef.current?.rating === rating.value ? "Retry review" : rating.label}</strong>
               <small>{rating.hint}</small>
             </button>
           ))
