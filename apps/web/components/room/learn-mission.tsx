@@ -185,7 +185,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   }, [mission?.phase, loading]);
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
-  const beats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  const proposedBeats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  // Backend uses four fixed formative phases. A shorter question set must not
+  // silently replay the preceding activity (and force duplicate Continue).
+  const beats = proposedBeats.length === 4 ? proposedBeats : [];
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
