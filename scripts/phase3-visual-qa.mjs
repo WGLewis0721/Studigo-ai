@@ -204,6 +204,34 @@ try {
             assert.equal(navScale.styleHeight, phone ? 30 : 44, "#172 mode pill must match its chevrons");
             if (phone) assert.deepEqual(navScale.hitInsets, ["-7px", "-7px"], "#172 phone chevrons require 44px extended hitboxes");
             else assert.equal(navScale.duplicateVisible, 0, "#172 desktop must not duplicate Previous/Next beneath the chat");
+            const roomChrome = await page.evaluate(() => {
+              const visible = el => el instanceof HTMLElement &&
+                getComputedStyle(el).display !== "none" &&
+                el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+              const modes = document.querySelector(".modeHead .chatModes");
+              const headerTabs = document.querySelector(".modeHead .mhChipRow .coachTabs");
+              const toolbarTabs = document.querySelector(".mhChipBar > .coachTabs");
+              const duplicateStyle = document.querySelector(".coachChat > .coachActiveStyle");
+              const overlaps = visible(modes) && visible(headerTabs) && (() => {
+                const a = modes.getBoundingClientRect(), b = headerTabs.getBoundingClientRect();
+                return a.left < b.right && a.right > b.left &&
+                  a.top < b.bottom && a.bottom > b.top;
+              })();
+              return {
+                headerTabsVisible: visible(headerTabs),
+                toolbarTabsVisible: visible(toolbarTabs),
+                duplicatedStyleVisible: visible(duplicateStyle),
+                headerOverlap: overlaps,
+              };
+            });
+            assert.equal(roomChrome.headerOverlap, false, "Coach/Learn switch must not overlap the Chat/Topics control");
+            assert.equal(Number(roomChrome.headerTabsVisible) + Number(roomChrome.toolbarTabsVisible), 1,
+              "Chat/Topics must appear exactly once across phone, tablet and desktop");
+            assert.equal(roomChrome.duplicatedStyleVisible, false, "Coaching style pill must not duplicate its accessory rail counterpart");
+            if (!phone && viewport.width <= 980) {
+              assert.equal(roomChrome.toolbarTabsVisible, true, "tablet Chat/Topics should move into the accessory rail");
+            }
+            entry.coachChrome = roomChrome;
             entry.coachNavigation = navScale;
             entry.coachReading = reading;
           }
