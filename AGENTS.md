@@ -62,3 +62,11 @@ Optimize screens around that question.
 ## Game toolchain
 
 Core Clash / Moon Keep game work: see `prototypes/moon-road/TOOLCHAIN.md` for Pixelorama, LDtk, TexturePacker, Blender, Godot and the art pipeline.
+
+## Cursor Cloud specific instructions
+
+- Node is 22.x and pnpm is 10.0.0 (`packageManager` in the root `package.json`). Install with `pnpm install --frozen-lockfile`.
+- `pnpm test:ml` and the Moon Keep docs call `python`. This image has `python3` only until install links `/usr/local/bin/python` to it.
+- The study-guide check inside `pnpm test` imports `pymupdf` (same package CI installs). Use `python3 -m pip install --disable-pip-version-check --break-system-packages pymupdf` when system site-packages are not writable.
+- The no-secrets product loop is `pnpm beta`, then `http://localhost:3000/api/local-beta/open`. Use `localhost`, not `127.0.0.1`: the local beta rejects a host mismatch. It uses synthetic materials and SQLite under `apps/web/.local-beta/`. Supabase and OpenAI keys are only needed for the hosted Study Room path.
+- Checks that match `.github/workflows/ci.yml`: `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:ml`, `node --test "prototypes/moon-road/test/**/*.test.mjs"`, and `pnpm --filter @studigo/web build`.
