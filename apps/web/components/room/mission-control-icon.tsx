@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 /** Small inline action glyphs for the Guided Learn device controls.
  * One consistent 24px stroke family; no font glyphs, remote icons or new dependencies.
  * Icon is decorative: the owning button must provide its accessible name.
@@ -5,7 +7,7 @@
 export type MissionControlName = "journal" | "guide" | "back" | "pause" | "check";
 
 export function MissionControlIcon({ name }: { name: MissionControlName }) {
-  const paths: Record<MissionControlName, React.ReactNode> = {
+  const paths: Record<MissionControlName, ReactNode> = {
     journal: <>
       <rect x="5" y="4.5" width="14" height="17" rx="2.3" />
       <path d="M9.2 4.5V3.8A1.8 1.8 0 0 1 11 2h2a1.8 1.8 0 0 1 1.8 1.8v.7" />
