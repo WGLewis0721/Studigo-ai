@@ -177,7 +177,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
-  const progress = beats.length ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  const progress = beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
@@ -197,35 +197,6 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     if (!mission || mission.paused || mission.phase === "done") return;
     // The server advances the source-bound cursor. UI does not own progression.
     void act("advance", formativeReflection(mission.phase, shown, hit));
-  }
-
-  async function nextLevel() {
-    setPicked([]);
-    setShown(false);
-    if (fixture) {
-      setSample((current) => current === "elementary" ? "college" : "elementary");
-      return;
-    }
-    if (!mission || inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setError(null);
-    try {
-      let current = mission;
-      if (current.phase === "check") {
-        const advanced = await post(current, "advance");
-        if (advanced.mission) current = advanced.mission;
-      }
-      const index = topics.findIndex((topic) => topic.id === current.topic_id);
-      const next = topics[index + 1] ?? topics[0];
-      await post(current, "restart", null, next?.id ?? current.topic_id);
-    } catch (caught) {
-      await reload();
-      setError(caught instanceof Error ? caught.message : "Could not open the next part.");
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
   }
 
   const missionPlan = buildLearningMissionPlan(topics.map((topic) => ({
@@ -303,7 +274,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </div>
     ) : <p className="learnAsk">{loading ? "Opening this part." : "Choose a topic."}</p>}
     {shown && beat && beat.kind !== "read" && !hit ? <p className="learnSheet">{beatFix(beat)}</p> : null}
-    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0, shown, beat?.kind === "read")} onClick={() => {
+    {(!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission))) && <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0, shown, beat?.kind === "read"))} onClick={() => {
       if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
       if (error && !mission) { void act("start"); return; }
       if (!beat || beat.kind === "read" || shown) advanceLevel();
