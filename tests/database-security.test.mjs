@@ -898,9 +898,20 @@ test('forced reindex row claim owns status and cooldown in one DB transition', a
 });
 
 test('Learn mission resumes the saved step and writes no mastery', async () => {
-  const room = id(1);
-  const topic = id(31);
-  const chunk = id(21);
+  // Use a dedicated owned source: earlier topic-map and forced-reindex tests intentionally
+  // deactivate/mutate their shared fixture, which must not affect this security contract.
+  const room = id(1801);
+  const document = id(1811);
+  const chunk = id(1821);
+  const topic = id(1831);
+  await db.query('insert into study_rooms(id,owner_id,title) values($1,$2,$3)', [room, A, 'Mission security fixture']);
+  await db.query(`insert into documents(id,room_id,owner_id,name,mime_type,size_bytes,storage_path,status)
+    values($1,$2,$3,'chapter.pdf','application/pdf',10,$4,'ready')`,
+    [document, room, A, `${A}/${room}/chapter.pdf`]);
+  await db.query(`insert into document_chunks(id,document_id,room_id,owner_id,chunk_index,content,page_number)
+    values($1,$2,$3,$4,0,'Photosynthesis uses sunlight.',2)`, [chunk, document, room, A]);
+  await db.query(`insert into topics(id,room_id,owner_id,title,objective,source_document_ids)
+    values($1,$2,$3,'Photosynthesis','Explain photosynthesis',array[$4::uuid])`, [topic, room, A, document]);
   const beforeMastery = await one('select mastery_score, status from topics where id=$1', [topic]);
   const beforeAttempts = Number((await one('select count(*)::int as n from quiz_attempts where room_id=$1', [room])).n);
   await assert.rejects(as('authenticated', A, () => db.query(
