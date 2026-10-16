@@ -202,6 +202,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const size = { w: W, h: H };
     const safeRoom = ws.closest('.roomDevice[data-ui="phase3"]') !== null && !a.inRow;
     const targets = controls(a);
+    if (safeRoom) {
+      // An upload target and a reading surface need their whole area, including
+      // instructions and source text, rather than just the buttons inside them.
+      surface()?.querySelectorAll(".dropzone, .guideReading").forEach((node) => {
+        const rect = node.getBoundingClientRect();
+        if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
+      });
+    }
     const dock = safeRoom && !rt.drag
       ? controlSafeDock(rt.dock, a, targets, size)
       : rt.drag ? rt.dock : chooseDock(rt.dock, a, targets, canScrollClear(), size);
