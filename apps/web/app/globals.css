@@ -582,12 +582,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   scrollbar-width: none;
 }
 .studyGroups button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 0 16px;
   border: 0; border-radius: 12px; background: none; color: var(--ink-2);
   font-size: .9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
   transition: background .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .studyGroups button:hover { color: var(--ink); }
+/* V1 shared navigation: keep 44px-class targets and a visible focus ring on
+   desktop, tablet and the compact mobile dock. Never rely on icon color alone. */
+.roomWorkspace .studyGroups button:focus-visible,
+.roomWorkspace .modeHead .chatModes button:focus-visible {
+  outline: 3px solid var(--tone-ink);
+  outline-offset: -2px;
+}
 .studyGroups button[aria-current] {
   background: var(--white); color: var(--ink);
   box-shadow: var(--edge), 0 1px 2px rgba(20, 27, 45, .12), 0 4px 10px -4px rgba(20, 27, 45, .18);
@@ -1634,7 +1641,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   background: color-mix(in oklab, var(--ink) 6%, var(--white));
 }
 .chatModes button {
-  display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 6px 6px 7px; border: 0; border-radius: 13px; cursor: pointer;
+  display: grid; gap: 1px; justify-items: center; min-width: 0; min-height: 44px; padding: 6px 6px 7px; border: 0; border-radius: 13px; cursor: pointer;
   background: none; color: var(--ink-2); font: inherit; text-align: center;
 }
 .chatModes strong { font-family: var(--display); font-size: .95rem; font-weight: 800; letter-spacing: -.01em; }
@@ -1765,7 +1772,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .workspaceTopbar strong { font-size: 1.2rem; white-space: normal; }
   .topbarRight { width: 100%; justify-content: space-between; }
   .studyGroups { justify-self: stretch; }
-  .studyGroups button { flex: 1 0 auto; padding: 0 12px; min-height: 36px; font-size: .84rem; }
+  .studyGroups button { flex: 1 0 auto; padding: 0 12px; min-height: 44px; font-size: .84rem; }
   .studySubnav button { min-height: 42px; padding-right: 13px; font-size: .86rem; }
   .keycap { width: 28px; height: 28px; border-radius: 9px; }
 }
@@ -3226,7 +3233,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs,
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .studigoRail { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes small { display: none; }
-  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 40px; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 44px; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -3370,6 +3377,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   transform: scale(var(--strip-scale));
   width: calc(100% / var(--strip-scale));
 }
+/* The compact strip scales visually, but its *actual rendered* mode keys
+   retain a 44px reach target (44/.6 virtual px at maximum compaction). */
+.modeFrame[data-compact="true"] .modeStrip .modeHead .chatModes button {
+  min-height: calc(44px / var(--strip-scale));
+}
 .modeFrame[style*="--strip-h"] .modeStrip .modeHead {
   height: var(--strip-h);
   min-height: 0;
@@ -3482,7 +3494,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .workspaceTopbar { container: topbar / inline-size; justify-content: flex-start; gap: 14px 22px; }
   .workspaceTopbar .workspaceTitle { flex: 0 1 auto; min-width: 0; }
   .topbarNav { display: inline-flex; flex: none; }
-  .topbarNav button { min-height: 36px; padding: 0 14px; font-size: .88rem; }
+  .topbarNav button { min-height: 44px; padding: 0 14px; font-size: .88rem; }
   .topbarNav .studyGroupIcon { display: none; }
   .topbarRight { margin-left: auto; }
   /* The room's subject line stays on one line so the title keeps its row. */
@@ -3921,7 +3933,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     border-radius: calc(25px * var(--k));
   }
   .studyGroups:not(.topbarNav) button {
-    min-height: calc(56px * var(--k));
+    min-height: max(44px, calc(56px * var(--k)));
     gap: calc(4px * (1 - var(--tb, 0)));
     border-radius: calc(19px * var(--k));
   }

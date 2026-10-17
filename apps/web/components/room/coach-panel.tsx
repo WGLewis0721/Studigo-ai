@@ -872,11 +872,17 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
           <span className="chatMascotDot" aria-hidden="true" />
         </button>
         <div className="chatModes" role="group" aria-label="How Studigo helps">
-          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"} aria-label={`Coach, practice, ${coachTopicTitle}`} onClick={() => switchChatMode("coach")}>
-            <strong>Coach</strong><small>Practice and apply</small>
+          <button type="button" data-tone="coach" aria-pressed={chatMode === "coach"}
+            aria-label={`Coach, practice, ${coachTopicTitle}`} title="Coach"
+            aria-describedby="studigo-coach-mode-description"
+            onClick={() => switchChatMode("coach")}>
+            <strong>Coach</strong><small id="studigo-coach-mode-description">Practice and apply</small>
           </button>
-          <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"} aria-label={`Learn, ${learnLabel ?? "lesson"}, ${learnTopicTitle}`} onClick={() => switchChatMode("learn")}>
-            <strong>Learn</strong><small>Facts, with sources</small>
+          <button type="button" data-tone="ask" aria-pressed={chatMode === "learn"}
+            aria-label={`Learn, ${learnLabel ?? "lesson"}, ${learnTopicTitle}`} title="Learn"
+            aria-describedby="studigo-learn-mode-description"
+            onClick={() => switchChatMode("learn")}>
+            <strong>Learn</strong><small id="studigo-learn-mode-description">Facts, with sources</small>
           </button>
         </div>
         <div className="chatTopicRow mhChipRow">{contextControls}</div>

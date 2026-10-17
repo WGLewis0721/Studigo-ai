@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { createPortal } from "react-dom";
 import { StudigoMascot, type MascotState } from "@/components/studigo-mascot";
 
@@ -220,6 +220,7 @@ export function ModeHeader({
   chipRef: (node: HTMLDivElement | null) => void;
   chipBarRef: (node: HTMLDivElement | null) => void;
 }) {
+  const descriptionId = useId();
   return (
     <>
     <ModeFrame tone={frameTone}>
@@ -230,9 +231,12 @@ export function ModeHeader({
         {modes.length > 1 ? (
           <div className="chatModes" role="group" aria-label={`${groupName} modes`}>
             {modes.map((mode) => (
-              <button key={mode.id} type="button" data-tone={mode.id} aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
+              <button key={mode.id} type="button" data-tone={mode.id}
+                aria-label={mode.name} title={mode.name}
+                aria-describedby={`${descriptionId}-${mode.id}`}
+                aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
                 <strong>{mode.name}</strong>
-                <small>{mode.sub}</small>
+                <small id={`${descriptionId}-${mode.id}`}>{mode.sub}</small>
               </button>
             ))}
           </div>
