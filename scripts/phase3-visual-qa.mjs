@@ -110,7 +110,13 @@ try {
             const collisions = await page.evaluate(() => {
               const mascot = document.querySelector(".cmp:not(.ghost)");
               if (!(mascot instanceof HTMLElement) || mascot.getClientRects().length === 0) {
-                return ["companion window is missing"];
+                // When no corner avoids real source content, the existing
+                // companion policy seats him in the visible header avatar.
+                const room = document.querySelector(".roomWorkspace");
+                const seat = room instanceof HTMLElement && room.dataset.seat === "occupied";
+                const avatar = room?.querySelector(".modeHead .studigoMascot, .chatMascot .studigoMascot");
+                return seat && avatar instanceof HTMLElement && avatar.getClientRects().length > 0
+                  ? [] : ["companion neither docked nor safely seated"];
               }
               const windowBox = mascot.getBoundingClientRect();
               return [".materialsIntro h2", ".materialsReadout"].flatMap(selector => {
