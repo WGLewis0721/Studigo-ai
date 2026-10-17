@@ -67,7 +67,10 @@ function SectionNav({ current, onSelect, className, navRef }: { current: string;
   return (
     <nav ref={navRef} className={className ? `studyGroups ${className}` : "studyGroups"} aria-label="Study Room sections">
       {GROUPS.map((group) => (
-        <button key={group.name} type="button" data-tone={group.tone} aria-current={current === group.name ? "page" : undefined} onClick={() => onSelect(group.modes[0])}>
+        <button key={group.name} type="button" data-tone={group.tone}
+          aria-label={group.name} title={group.name}
+          aria-current={current === group.name ? "page" : undefined}
+          onClick={() => onSelect(group.modes[0])}>
           <span className="studyGroupIcon" aria-hidden="true"><ModeGlyph name={group.icon} size={24} /></span>
           <span className="studyGroupLabel">{group.name}</span>
         </button>
