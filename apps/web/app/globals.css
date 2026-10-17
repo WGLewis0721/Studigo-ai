@@ -582,12 +582,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   scrollbar-width: none;
 }
 .studyGroups button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
   border: 0; border-radius: 12px; background: none; color: var(--ink-2);
   font-size: .9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
   transition: background .2s ease, color .2s ease, box-shadow .2s ease;
 }
 .studyGroups button:hover { color: var(--ink); }
+/* V1 shared navigation: keep 44px-class targets and a visible focus ring on
+   desktop, tablet and the compact mobile dock. Never rely on icon color alone. */
+.roomWorkspace .studyGroups button:focus-visible,
+.roomWorkspace .modeHead .chatModes button:focus-visible {
+  outline: 3px solid var(--tone-ink);
+  outline-offset: -2px;
+}
 .studyGroups button[aria-current] {
   background: var(--white); color: var(--ink);
   box-shadow: var(--edge), 0 1px 2px rgba(20, 27, 45, .12), 0 4px 10px -4px rgba(20, 27, 45, .18);
@@ -1765,7 +1772,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .workspaceTopbar strong { font-size: 1.2rem; white-space: normal; }
   .topbarRight { width: 100%; justify-content: space-between; }
   .studyGroups { justify-self: stretch; }
-  .studyGroups button { flex: 1 0 auto; padding: 0 12px; min-height: 36px; font-size: .84rem; }
+  .studyGroups button { flex: 1 0 auto; padding: 0 12px; min-height: 44px; font-size: .84rem; }
   .studySubnav button { min-height: 42px; padding-right: 13px; font-size: .86rem; }
   .keycap { width: 28px; height: 28px; border-radius: 9px; }
 }
