@@ -57,8 +57,8 @@ try {
       assert.ok(scrollAfter.top >= 300, `Scroll did not advance: ${JSON.stringify(scrollAfter)}`);
       await page.waitForTimeout(350);
       const scrollDiagnostic = await page.evaluate(() => ({
-        state: document.querySelector(".studyGroups")?.getAttribute("data-state"),
-        progress: document.querySelector(".studyGroups")?.style.getPropertyValue("--tb"),
+        state: document.querySelector(".studyNavigation .studyGroups")?.getAttribute("data-state"),
+        progress: document.querySelector(".studyNavigation .studyGroups")?.style.getPropertyValue("--tb"),
         phone: matchMedia("(max-width: 700px)").matches,
         reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
         modals: [...document.querySelectorAll('[aria-modal="true"]')].map(node => node.className || node.tagName),
@@ -76,7 +76,7 @@ try {
         `Compact dock must have real 44px touch targets: ${JSON.stringify(targetSizes)}`);
 
       await nav.getByRole("button", { name: "Materials" }).focus();
-      await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-state") === "full");
+      await page.waitForFunction(() => document.querySelector(".studyNavigation .studyGroups")?.getAttribute("data-state") === "full");
 
       // Dialog/sheet scrolling never changes the underlying section dock.
       await page.evaluate(() => {
@@ -106,7 +106,7 @@ try {
         Object.defineProperty(vv, "height", { configurable: true, value: window.innerHeight - 240 });
         vv.dispatchEvent(new Event("resize"));
       });
-      await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-keyboard") === "open");
+      await page.waitForFunction(() => document.querySelector(".studyNavigation .studyGroups")?.getAttribute("data-keyboard") === "open");
       assert.equal(await nav.evaluate(el => getComputedStyle(el).visibility), "hidden",
         "software keyboard must not leave the dock over an editable field");
       await page.evaluate(() => {
@@ -117,7 +117,7 @@ try {
           vv.dispatchEvent(new Event("resize"));
         }
       });
-      await page.waitForFunction(() => !document.querySelector(".studyGroups")?.hasAttribute("data-keyboard"));
+      await page.waitForFunction(() => !document.querySelector(".studyNavigation .studyGroups")?.hasAttribute("data-keyboard"));
       assert.equal(await nav.evaluate(el => getComputedStyle(el).visibility), "visible",
         "dock returns after keyboard closes");
       console.log(`V1 tabbar: ${width}px scroll, focus, modal, keyboard-occlusion simulation PASS`);
@@ -142,7 +142,7 @@ try {
         surface.scrollTop = 580;
       });
       await page.waitForTimeout(240);
-      assert.equal(await page.locator(".studyGroups").getAttribute("data-state"), "full",
+      assert.equal(await page.locator(".studyNavigation .studyGroups").getAttribute("data-state"), "full",
         "reduced motion must keep the section bar full");
     } finally {
       await reduced.close();
