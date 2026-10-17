@@ -10,6 +10,7 @@ on:
       - "scripts/phase3-visual-qa.mjs"
       - "scripts/v1-mobile-tabbar-qa.mjs"
       - "scripts/v1-final-qa.mjs"
+      - "scripts/v1-webkit-smoke.mjs"
 
 permissions:
   contents: read
@@ -26,8 +27,8 @@ jobs:
           node-version: 22
       - name: Install packages
         run: pnpm install --frozen-lockfile
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Chromium and WebKit
+        run: pnpm exec playwright install --with-deps chromium webkit
       - name: Start local synthetic fixture
         run: |
           NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1 pnpm --filter @studigo/web dev --hostname 127.0.0.1 -p 3000 >/tmp/studigo-phase3-dev.log 2>&1 &
@@ -43,6 +44,8 @@ jobs:
         run: node scripts/v1-mobile-tabbar-qa.mjs
       - name: V1 — focus, empty states and four-width zoom/reflow
         run: node scripts/v1-final-qa.mjs
+      - name: V1 — WebKit engine phone/tablet keyboard focus and touch smoke
+        run: node scripts/v1-webkit-smoke.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
