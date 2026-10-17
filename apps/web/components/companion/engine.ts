@@ -134,6 +134,16 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const composer = ws.querySelector(".chatComposer");
     if (shown(composer)) {
       const c = composer.getBoundingClientRect();
+      const row = composer.querySelector(".chatRow");
+      const keys = Array.from(row?.querySelectorAll(".voiceAnswerControl, .chatSend") ?? []).filter(shown);
+      const keyWidth = keys.reduce((total, key) => total + key.getBoundingClientRect().width, 0);
+      const gap = row ? parseFloat(getComputedStyle(row).columnGap) || 0 : 0;
+      // Keep at least 120px for writing after reserving his window and keys.
+      // A crowded messenger gets a full-width lane; he sits above it instead
+      // of squeezing the input down to a few characters on a narrow phone.
+      if (c.width - W - 8 - keyWidth - keys.length * gap < 120) {
+        return { top: top + 8, bottom: Math.min(c.top - 8, floor), left: Math.max(s.left, 0) + 10, right: Math.min(s.right, window.innerWidth) - 10, inRow: false };
+      }
       return { top: top + 8, bottom: Math.min(c.bottom, floor) - 6, left: c.left + 6, right: c.right - 6, inRow: true };
     }
     let bottom = Math.min(s.bottom, floor) - 8;
@@ -229,7 +239,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     el.dataset.dock = dock;
     // The page makes room for him instead of being covered by him.
     const room = roomFor(dock, a, rowHeight(), size);
-    makeRoom(room.right, room.left, room.thread, room.page);
+    if (!a.inRow && shown(ws.querySelector(".chatComposer"))) {
+      // This is a chat window above the bar, so reserve scroll room in the
+      // thread rather than adding space to the surrounding page.
+      makeRoom(0, 0, dock[0] === "b" ? H + 8 : 0, 0);
+    } else makeRoom(room.right, room.left, room.thread, room.page);
   }
   let placeFrame = 0;
   const schedulePlace = () => { if (!placeFrame) placeFrame = window.requestAnimationFrame(() => { placeFrame = 0; place(); }); };
