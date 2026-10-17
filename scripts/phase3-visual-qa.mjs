@@ -69,6 +69,33 @@ try {
           assert.ok(metrics.reducedMotion, "reduced-motion media query must be active");
           assert.equal(metrics.longAnimations, 0, "reduced-motion must stop long-running CSS animations");
           assert.ok(metrics.navButtons >= 5, "all five Study Room sections must remain visible");
+          // Universal UX pillars: Fitts (reachable controls), Jakob (stable
+          // names), and WCAG's keyboard/name obligations. Test both visual
+          // skins because main must not regress when a theme is toggled.
+          const sectionKeys = await page.locator('.studyGroups button:visible').evaluateAll(nodes => nodes.map(node => {
+            const bounds = node.getBoundingClientRect();
+            return {
+              name: node.getAttribute('aria-label'),
+              title: node.getAttribute('title'),
+              selected: node.getAttribute('aria-current'),
+              width: bounds.width, height: bounds.height
+            };
+          }));
+          assert.deepEqual(sectionKeys.map(key => key.name), ["Coach", "Practice", "Progress", "Plan", "Materials"],
+            "all five visible navigation keys must have stable explicit accessible names");
+          assert.ok(sectionKeys.every(key => key.name === key.title),
+            "compact section keys must have a discoverable tooltip equivalent");
+          assert.ok(sectionKeys.every(key => key.width >= 44 && key.height >= 44),
+            "navigation targets must remain at least 44x44 CSS px at all breakpoints");
+          assert.equal(sectionKeys.filter(key => key.selected === "page").length, 1,
+            "only the active Study Room section is current");
+          const headerModes = await page.locator(".modeHead .chatModes button:visible").evaluateAll(nodes => nodes.map(node => ({
+            name: node.getAttribute('aria-label'),
+            title: node.getAttribute('title'),
+            height: node.getBoundingClientRect().height
+          })));
+          assert.ok(headerModes.every(key => key.name?.trim() && key.title === key.name && key.height >= 44),
+            "shared header mode keys must have names and 44px touch height");
           if (mode === "materials" && skin === "phase3") {
             const exports = page.locator(".materialsGuide .studyGuideDownload button");
             assert.equal(await exports.count(), 2, "generated guide must offer two distinct download formats");
