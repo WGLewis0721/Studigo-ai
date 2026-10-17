@@ -3377,6 +3377,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   transform: scale(var(--strip-scale));
   width: calc(100% / var(--strip-scale));
 }
+/* The compact strip scales visually, but its *actual rendered* mode keys
+   retain a 44px reach target (44/.6 virtual px at maximum compaction). */
+.modeFrame[data-compact="true"] .modeStrip .modeHead .chatModes button {
+  min-height: calc(44px / var(--strip-scale));
+}
 .modeFrame[style*="--strip-h"] .modeStrip .modeHead {
   height: var(--strip-h);
   min-height: 0;
@@ -3489,7 +3494,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .workspaceTopbar { container: topbar / inline-size; justify-content: flex-start; gap: 14px 22px; }
   .workspaceTopbar .workspaceTitle { flex: 0 1 auto; min-width: 0; }
   .topbarNav { display: inline-flex; flex: none; }
-  .topbarNav button { min-height: 36px; padding: 0 14px; font-size: .88rem; }
+  .topbarNav button { min-height: 44px; padding: 0 14px; font-size: .88rem; }
   .topbarNav .studyGroupIcon { display: none; }
   .topbarRight { margin-left: auto; }
   /* The room's subject line stays on one line so the title keeps its row. */
