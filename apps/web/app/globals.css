@@ -4260,3 +4260,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
   .roomDevice:has(.coachChat) .coachMode > .mhChipBar { display: none; }
 }
+
+/* V1: keep the existing five-section dock out of the software-keyboard's
+   usable viewport. The hook controls this local attribute; no global input
+   state or page styling is changed. It returns when the keyboard closes. */
+@media (max-width: 700px) {
+  .roomDevice .studyGroups[data-keyboard="open"] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
