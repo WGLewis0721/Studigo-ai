@@ -732,7 +732,7 @@ try {
           if (!flame || !tip) return false;
           const a = flame.getBoundingClientRect();
           const b = tip.getBoundingClientRect();
-          return Math.abs((a.left + a.width / 2) - b.right) < 24 && a.height >= 100;
+          return Math.abs((a.left + a.width / 2) - b.right) < 24 && a.height >= 68 && a.height <= 80 && a.width <= 68;
         }, null, { timeout: 2500 });
         // Capture the burst before opacity animates out, separate from the
         // static four-width lesson screenshots.
