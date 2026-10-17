@@ -22,15 +22,26 @@ try {
       await nav.waitFor();
       assert.equal(await nav.getAttribute("data-state"), "full", "mobile starts expanded");
       await page.evaluate(() => {
+        const surface = document.querySelector(".modeSurface");
+        if (!(surface instanceof HTMLElement)) throw new Error("Study Room scroll surface missing");
+        surface.style.setProperty("height", "400px", "important");
+        surface.style.setProperty("max-height", "400px", "important");
+        surface.style.setProperty("overflow-y", "auto", "important");
         const spacer = document.createElement("div");
         spacer.dataset.v1Fixture = "scroll";
         spacer.style.height = "2800px";
         spacer.style.pointerEvents = "none";
-        document.body.append(spacer);
-        window.scrollTo(0, 0);
+        surface.append(spacer);
+        surface.scrollTop = 1; // Register the scroll surface before measuring deltas.
       });
-      await page.evaluate(() => window.scrollTo(0, 330));
-      await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-state") === "compact");
+      await page.waitForTimeout(80);
+      await page.evaluate(() => {
+        const surface = document.querySelector(".modeSurface");
+        if (!(surface instanceof HTMLElement)) throw new Error("Scroll surface missing");
+        surface.scrollTop = 330;
+      });
+      await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-state") === "compact",
+        null, { timeout: 5000 });
       assert.equal(await nav.locator("button[aria-label]").count(), 5);
       const targetSizes = await nav.locator("button[aria-label]").evaluateAll(nodes => nodes.map(el => {
         const box = el.getBoundingClientRect();
@@ -49,7 +60,8 @@ try {
         dialog.setAttribute("aria-modal", "true");
         dialog.id = "v1-test-dialog";
         document.body.append(dialog);
-        window.scrollTo(0, 660);
+        const surface = document.querySelector(".modeSurface");
+        if (surface instanceof HTMLElement) surface.scrollTop = 660;
       });
       await page.waitForTimeout(260);
       assert.equal(await nav.getAttribute("data-state"), "full", "scroll with modal must not collapse the section dock");
@@ -94,10 +106,15 @@ try {
       const page = await reduced.newPage();
       await page.goto(`${origin}/dev/study?shell=1&mode=materials&ui=phase3`, { waitUntil: "networkidle", timeout: 90_000 });
       await page.evaluate(() => {
+        const surface = document.querySelector(".modeSurface");
+        if (!(surface instanceof HTMLElement)) throw new Error("Study Room scroll surface missing");
+        surface.style.setProperty("height", "400px", "important");
+        surface.style.setProperty("max-height", "400px", "important");
+        surface.style.setProperty("overflow-y", "auto", "important");
         const spacer = document.createElement("div");
         spacer.style.height = "2800px";
-        document.body.append(spacer);
-        window.scrollTo(0, 580);
+        surface.append(spacer);
+        surface.scrollTop = 580;
       });
       await page.waitForTimeout(240);
       assert.equal(await page.locator(".studyGroups").getAttribute("data-state"), "full",
