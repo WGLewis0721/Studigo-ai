@@ -518,7 +518,7 @@ export function MaterialsPanel({
               </div>
               <p className="documentStatusDetail">{statusCopy(document)}</p>
             </div>
-            <div className="documentActions" aria-label={`Actions for ${document.name}`}>
+            <div className="documentActions" role="group" aria-label={`Actions for ${document.name}`}>
               <a className="documentOpen" aria-label={`View original file ${document.name}`}
                 href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
                 target="_blank" rel="noopener noreferrer">View original</a>
