@@ -1,6 +1,6 @@
 # Studigo design inventory — reconciled 2026-10-17
 
-**Canonical inventory:** [ASSET_INVENTORY.json](ASSET_INVENTORY.json) (40 entries; stable IDs, verified GitHub paths, ref, status, use/decision).  
+**Canonical inventory:** [ASSET_INVENTORY.json](ASSET_INVENTORY.json) (39 entries; stable IDs, verified GitHub paths, ref, status, use/decision).  
 **Universal design standard:** [UX and web-design foundations](../docs/ux/FOUNDATIONAL_UX_PRINCIPLES.md).  
 **Identity:** [official V2 brand board](../docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png) → [brand governance](../docs/brand/README.md) → [Design System](../docs/DESIGN_SYSTEM.md) → production components and tokens.  
 **Next rollout:** [Cross-Device Visual Unification Plan](../docs/ux/STUDIGO_CROSS_DEVICE_VISUAL_UNIFICATION_PLAN.md).
