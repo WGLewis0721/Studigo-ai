@@ -34,6 +34,15 @@ Both Next.js route-loading boundaries now reuse `apps/web/components/room/room-l
 - Adds Playwright **Linux WebKit** phone/tablet smoke for navigation, keyboard focus and overflow; this is not a native Safari/VoiceOver pass.
 - See [line-by-line V1 after-action checklist](V1_AFTER_ACTION_REPORT_2026-10-17.md) for every code change, design source and UX law.
 
+## Owner-requested mobile corrections — pending feedback
+
+- [x] **Coach messenger control alignment (mobile):** keep the Clear, message input, optional speech, and Send controls in one horizontal row. Each control uses a consistent 44px tap target; the message input flexes into remaining width at 320px and 390px.
+- [x] **Fixed-size upper Coach/Learn tabs (mobile):** disable the existing 60%-scale tucked header on phones. Retain the original full-size visual hierarchy and prevent label shrink/flicker after chat begins. Desktop retains its existing behavior.
+- [x] Reuse the approved V2 `globals.css` colors, shapes, and existing `StudigoComposer`, `ModeFrame`, `SpeechAnswerControl` and glyphs. No artwork or duplicate UI components imported from `/design`; checked `design/README.md` and its canonical inventory before adjusting shipped components.
+- [ ] **Owner review on a real iPhone** for the two supplied screenshots (normal Coach and active message view). Per owner direction, keep automation lightweight; no extra full visual suite was added for this small polish pass.
+
+Principles: **Unity/repetition, visual balance, hierarchy, scale and contrast** (seven fundamentals); **Jakob's Law** (stable familiar tabs), **Fitts's Law** (consistent 44px actions) and **Hick's Law** (one orderly action row instead of vertically scattered competing controls). These are foundational quality checks, not permission to redesign Studigo's identity.
+
 ## Remaining manual acceptance — not auto-verified
 
 1. Real signed-in Study Room with a disposable source after the account reset, including Coach/Learn switch and settings focus return.
