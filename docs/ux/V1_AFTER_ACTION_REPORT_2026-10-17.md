@@ -51,6 +51,15 @@ The checklist records implemented code, **not** claims of independent human/devi
 
 Sources: [Foundational Studigo UX principles](FOUNDATIONAL_UX_PRINCIPLES.md), [Concrete CMS](https://www.concretecms.com/about/blog/web-design/7-fundamentals-of-web-design), [Jon Yablonski's official Laws of UX](https://lawsofux.com/), and the owner's [Laws of UX PDF](https://promptcraze.com/wp-content/uploads/2025/02/lawsofux.pdf).
 
+### Owner-requested mobile polish — implementation candidate (awaiting production verification)
+
+| Done | Change and code owner | What was reused from design sources | Pillars and UX laws applied | Evidence |
+|---|---|---|---|---|
+| [x] | **Align mobile Coach composer controls:** `apps/web/app/globals.css`, existing `StudigoComposer`, `SpeechAnswerControl` and Clear button | `design/README.md` and `design/ASSET_INVENTORY.json` identify the **existing shipped controls**. Used V2 color tokens and current icons; **no new assets copied from `/design`** | **Unity, balance, repetition, scale**; **Fitts's Law**: 44px Clear, speech and Send targets; **Hick's Law**: single simple horizontal action row | Source-level change; awaiting iPhone owner review |
+| [x] | **Prevent upper mode tabs shrinking on phones:** mobile `modeFrame` scale fixed at 100% | Reused existing `ModeFrame`, current Coach/Learn typography and Studio V2 visual identity; did not use unmerged Phase 3 header prototypes | **Hierarchy, scale, contrast**, **Jakob's Law**: mode labels remain familiar and readable; no jitter between states | Source-level change; awaiting iPhone owner review |
+
+**Manual review requested:** verify 320/390px Chat and active Coach conversation from the two user-supplied screenshots. Desktop keeps the original header behavior. This user-requested reduced-testing pass is *not* a substitute for hardware accessibility or authentication tests.
+
 ## 4. Acceptance checklist and what is not established
 
 - [x] V0 golden source branch frozen, Ready rollback deployment identified, visual fixture/public screenshot archive produced ([record](GOLDEN_BASELINE_V0_2026-10-17.md)).
