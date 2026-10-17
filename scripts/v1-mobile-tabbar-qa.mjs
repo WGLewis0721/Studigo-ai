@@ -107,7 +107,7 @@ try {
         vv.dispatchEvent(new Event("resize"));
       });
       await page.waitForFunction(() => document.querySelector(".studyNavigation .studyGroups")?.getAttribute("data-keyboard") === "open");
-      assert.equal(await nav.evaluate(el => getComputedStyle(el).visibility), "hidden",
+      assert.equal(await page.locator(".studyNavigation .studyGroups").evaluate(el => getComputedStyle(el).visibility), "hidden",
         "software keyboard must not leave the dock over an editable field");
       await page.evaluate(() => {
         document.getElementById("v1-test-field")?.blur();
@@ -118,7 +118,7 @@ try {
         }
       });
       await page.waitForFunction(() => !document.querySelector(".studyNavigation .studyGroups")?.hasAttribute("data-keyboard"));
-      assert.equal(await nav.evaluate(el => getComputedStyle(el).visibility), "visible",
+      assert.equal(await page.locator(".studyNavigation .studyGroups").evaluate(el => getComputedStyle(el).visibility), "visible",
         "dock returns after keyboard closes");
       console.log(`V1 tabbar: ${width}px scroll, focus, modal, keyboard-occlusion simulation PASS`);
     } finally {
