@@ -91,7 +91,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
   const previousPhase = useRef<{ topicId: string; phase: Phase } | null>(null);
-  const [plumeRevision, setPlumeRevision] = useState(0);
+  const [glowRevision, setGlowRevision] = useState(0);
 
   const fixture = roomId === "fixture";
   // The original synthetic mission remains unchanged; preview and real
@@ -220,7 +220,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   useEffect(() => {
     if (!integratedJourney || !mission) { previousPhase.current = null; return; }
     const next = { topicId: mission.topic_id, phase: mission.phase };
-    if (isForwardLearnAdvance(previousPhase.current, next)) setPlumeRevision((old) => old + 1);
+    if (isForwardLearnAdvance(previousPhase.current, next)) setGlowRevision((old) => old + 1);
     previousPhase.current = next;
   }, [integratedJourney, mission?.topic_id, mission?.phase]);
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
@@ -328,7 +328,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
               <span className="learnProgressEmber" aria-hidden="true" />
             </div>
           </div>
-          {plumeRevision > 0 && <LearnProgressGlow key={`${mission.topic_id}:${plumeRevision}`} targetRef={progressFillRef} />}
+          {glowRevision > 0 && <LearnProgressGlow key={`${mission.topic_id}:${glowRevision}`} targetRef={progressFillRef} />}
         </div>
       : <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
           <span style={{ width: `${progress}%` }} />
