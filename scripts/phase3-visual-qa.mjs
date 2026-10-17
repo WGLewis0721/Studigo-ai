@@ -195,7 +195,9 @@ try {
             })) {
               assert.equal(reading.samples[name].fontSize, size, `#175 responsive ${skin} ${viewport.name} ${name} scale`);
             }
-            assert.equal(reading.composerFontSize, readingSize, "#175 Coach/Learn composer must match reading text");
+            // The owner-requested messenger correction adopts the mobile input
+            // size at every width. Passage/answer reading scales stay above.
+            assert.equal(reading.composerFontSize, "17px", "Coach/Learn messenger must retain the shared mobile input size");
             assert.equal(reading.clearName, "Clear Coach chat", "#174 must retain the accessible Clear control");
             assert.ok(reading.clearPaths >= 4 && reading.clearRects === 0, "#174 must use the bin glyph, not the old eraser");
             assert.equal(reading.clearDisplayed, true, "#174 clear bin must appear on phone, tablet and desktop");

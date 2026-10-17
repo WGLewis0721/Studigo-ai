@@ -58,3 +58,14 @@ Principles: **Unity/repetition, visual balance, hierarchy, scale and contrast** 
 - No regression in Learn → Explore, source inspection, Coach/Practice, selected tab state or other room navigation.
 - Scope stays the shared UI only; no database work, student data reset or global rebrand.
 - Merge as a small V1 increment after full tests; proceed to remaining V1 slices separately.
+
+## Owner correction — desktop messenger parity (2026-10-17)
+
+The owner supplied a desktop Coach screenshot with the speech key wrapped below the input. The V1 mobile correction had been scoped inside a phone media query; V3 screenshots did not cover that speech-enabled desktop state. The mission already required visual unity. This was an implementation/review gap.
+
+- Adopt the approved mobile bar on every width: circular Clear, flexible capsule input, optional speech, Send; one 44px row, 8px vertical padding, matching typography and key shapes. Remove the competing desktop declarations. The empty Send key keeps its place.
+- A narrow chat now gives the writing field at least 120px before reserving horizontal companion space. The companion moves above a crowded bar, using the existing safe corner/header-seat behavior, without changing the learner's saved preference. Thread scroll room protects its final messages.
+- `scripts/messenger-unity-qa.mjs` checks ordinary and speech-enabled Coach at 320/390/820/1440, both presentation flags, empty/typed states, exact computed-style parity, keyboard order, speech consent/Escape and 200% CSS text reflow. It runs in the existing visual workflow. Screenshots are synthetic components, not private-source or real iOS/VoiceOver certification.
+- The existing design system and cross-device plan now state component-level parity explicitly. A screenshot artifact alone is not acceptance; the same component/state must be compared on phone and desktop.
+
+Local acceptance passed: 16 four-width mode/flag cases, 32 reviewed empty/typed captures (including phone/desktop comparison), 21 existing companion geometry tests, workspace typecheck, design/provider lint and web production build. Required CI and production release evidence are pending. V4's separate Progress/Plan PR remains outside this correction.

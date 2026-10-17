@@ -63,6 +63,8 @@ These are aids to comprehension, **not behavioral pressure tactics**. Do not pun
 
 **Automated rules:** no horizontal scroll or trapped overflow; no hidden action behind tabbar/notch/keyboard; 44px touch target on controls; measurable focus rings and contrast; no unintentionally duplicated CTAs; screenshots with thresholds plus human review of major differences (not only CI pixel diff). Ensure aria-live status updates avoid excessive speech during progress.
 
+**Shared-control parity:** compare the same component and state side by side at phone and desktop widths. Record its control order, shape, height, spacing, typography and enabled/disabled treatment; only the flexible content width and surrounding placement should adapt unless the design contract names a reason. Include optional controls such as speech, not just the default flag/empty state. A screenshot existing in an artifact is not proof that this comparison happened. The messenger regression checks the speech-enabled and ordinary Coach bars with both presentation flags at all four widths; Learn inherits the same shared composer rules.
+
 **Product rules:** preserve Learn. Earn. Play. Source-backed content is not rewritten in CSS; reading complete ≠ mastery; reward claims require real evidence; never send private student material to design/analytics tools. Games Moon Keep/Core Clash retain their own game UI while sharing mascot, identity, accessibility conventions and shell color.
 
 **Approval workflow:** keep PRs scoped by wave, require a signed-off side-by-side of *existing baseline vs new component* for phone and desktop, consolidate to stable source (no duplicated docs). Each wave's test and production acceptance evidence must accompany its PR.

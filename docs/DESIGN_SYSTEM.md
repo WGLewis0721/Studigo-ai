@@ -328,8 +328,12 @@ the app); "Start studying for free" goes to `/signup`.
   worksheets = dandelion, slides = grape, notes = kiwi, textbook = teal).
   Each has a text status (Ready / Reading / Queued / Needs attention).
 - **Ask/Coach**: graphite student bubbles, white answers with a teal
-  "from your materials" or tangerine "not in your materials" label, a capsule
-  composer with a round send key.
+  "from your materials" or tangerine "not in your materials" label. The docked
+  Coach/Learn messenger adopts the mobile bar at every width: circular Clear,
+  flexible capsule input, optional speech key, Send, all aligned in one 44px
+  row with 8px dock padding. Speech/Send retain the approved 14px key radius;
+  empty Send remains visible so typing does not shift the field. Tight layouts
+  place the companion above the bar rather than shrinking the writing space.
 - **Quiz / Practice test**: one native radio group on a matte white stage, shared through `AnswerChoices`; answers are keys with letter caps and visible focus. Arrow keys change the selection; choosing does not submit a full test. Quiz confidence retains the existing legacy submit behavior when the foundation flag is off;
   activity position is shown by `ActivityProgress`, separately from earned learning evidence;
   confidence keys carry a 1–3 bar meter; after grading, choices say
