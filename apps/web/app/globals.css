@@ -1641,7 +1641,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   background: color-mix(in oklab, var(--ink) 6%, var(--white));
 }
 .chatModes button {
-  display: grid; gap: 1px; justify-items: center; min-width: 0; padding: 6px 6px 7px; border: 0; border-radius: 13px; cursor: pointer;
+  display: grid; gap: 1px; justify-items: center; min-width: 0; min-height: 44px; padding: 6px 6px 7px; border: 0; border-radius: 13px; cursor: pointer;
   background: none; color: var(--ink-2); font: inherit; text-align: center;
 }
 .chatModes strong { font-family: var(--display); font-size: .95rem; font-weight: 800; letter-spacing: -.01em; }
@@ -3233,7 +3233,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .coachTabs,
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .studigoRail { display: none; }
   html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes small { display: none; }
-  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 40px; }
+  html[data-keyboard="open"] .roomDevice:has(.coachChat) .chatModes button { min-height: 44px; }
 }
 
 /* ---------------------------------------------------------------------------
