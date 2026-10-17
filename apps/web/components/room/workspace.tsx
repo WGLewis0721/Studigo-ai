@@ -178,7 +178,11 @@ export function RoomWorkspace({
     setFocusTopicId(topicId);
     setMode(nextMode);
     if (nextMode === "cram") setCramStarted(true);
-    window.history.replaceState(null, "", `${window.location.pathname}?mode=${target}${phase3Learn ? "&guided=1" : ""}`);
+    // Preserve legitimate room URL state without reviving the retired Guided Learn gate.
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("mode", target);
+    nextUrl.searchParams.delete("guided");
+    window.history.replaceState(window.history.state, "", `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
   }
   function startPlannedAction(action: StudyAction) { navigate(action.mode, action.topicId); }
 

@@ -4,8 +4,8 @@ import { AppShell } from '@/components/app-shell';
 import type { Topic } from '@/lib/rooms';
 
 // Synthetic visual/Coach fixture for local development and flagged, protected previews.
-export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;ui?:string;learn?:string}>}) {
-  const {mode='coach',phone,bare,shell,rail,ui,learn}=await searchParams;
+export default async function StudyFixture({searchParams}:{searchParams:Promise<{mode?:string;phone?:string;bare?:string;shell?:string;rail?:string;ui?:string;learn?:string;empty?:string}>}) {
+  const {mode='coach',phone,bare,shell,rail,ui,learn,empty}=await searchParams;
   // Production stays closed. A branch preview can show *synthetic* Explore
   // even when the global Phase 3 rollout flag is disabled for real rooms.
   // The fixture uses hard-coded samples, never a learner's private room.
@@ -27,9 +27,9 @@ export default async function StudyFixture({searchParams}:{searchParams:Promise<
   ].map((t,i)=>({...t,room_id:'fixture',objective:`I can explain and apply ${t.title.toLowerCase()} using evidence from the study guide.`,key_terms:[],order_index:i,origin:'study_guide',learner_edited:false})) as Topic[];
   // Fixture-only reversible comparison; never permitted on authenticated room routes.
   const phase3FoundationUi = ui === 'phase3' ? true : ui === 'legacy' ? false : undefined;
-  const workspace=<RoomWorkspace phase3FoundationUi={phase3FoundationUi} phase3Learn={learn === "mission" || learn === "explore"} explorePreview={learn === "explore"} initialMode={learn === "mission" || learn === "explore" ? "learn" : mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:'2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
-      topics={topics} documents={[{id:'source',room_id:'fixture',name:'2022–2023 Fifth Grade Science study guide.pdf',mime_type:'application/pdf',size_bytes:1000,source_type:'study_guide',status:'ready',error_message:null,page_count:12,page_label:'Page',ocr_page_count:0,chunk_count:24,created_at:new Date(now).toISOString()}]}
-      readiness={{readiness:49,averageMastery:66,topicCount:4,practicedTopicCount:3,masteredCount:1,questionsAnswered:12,correctAnswers:8,cardsDue:6}}
+  const workspace=<RoomWorkspace phase3FoundationUi={phase3FoundationUi} phase3Learn={learn === "mission" || learn === "explore"} explorePreview={learn === "explore"} initialMode={learn === "mission" || learn === "explore" ? "learn" : mode} room={{id:'fixture',title:'Fifth Grade Science · Year-at-a-Glance',subject:'Life, physical & earth science',course_name:'2022–2023 scope and sequence',test_date:empty === '1' ? null : '2026-09-18',explain_level:'standard',created_at:new Date(now).toISOString(),updated_at:new Date(now).toISOString()}}
+      topics={empty === '1' ? [] : topics} documents={empty === '1' ? [] : [{id:'source',room_id:'fixture',name:'2022–2023 Fifth Grade Science study guide.pdf',mime_type:'application/pdf',size_bytes:1000,source_type:'study_guide',status:'ready',error_message:null,page_count:12,page_label:'Page',ocr_page_count:0,chunk_count:24,created_at:new Date(now).toISOString()}]}
+      readiness={empty === '1' ? {readiness:0,averageMastery:0,topicCount:0,practicedTopicCount:0,masteredCount:0,questionsAnswered:0,correctAnswers:0,cardsDue:0} : {readiness:49,averageMastery:66,topicCount:4,practicedTopicCount:3,masteredCount:1,questionsAnswered:12,correctAnswers:8,cardsDue:6}}
       evidence={[0,0,100].map((score,i)=>({topic_id:'tornado',source:'quiz' as const,score,is_correct:score===100,created_at:`2026-09-08T12:0${i}:00Z`}))} planEvents={[]} asOf={now}/>;
   // ?bare=1 mounts the room inside the same shell as the signed-in app (no fixture chrome), for phone checks.
   // ?shell=1 mounts the room inside the real sidebar (with sample rooms); ?rail=collapsed starts it collapsed.

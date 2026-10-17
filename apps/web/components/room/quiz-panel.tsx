@@ -1,5 +1,6 @@
 "use client";
 
+import { StudyRoomEmptyState } from "./study-room-empty-state";
 import { TopicReadout } from "./topic-readout";
 import { useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
@@ -178,11 +179,13 @@ export function QuizPanel({
 
   if (!hasMaterials) {
     return (
-      <div className="modeEmpty">
+      <>
         <HeaderMascot state="sources" />
-        <h3>Nothing to quiz on yet.</h3>
-        <p>Add and process a document, then Studigo writes questions only from what&apos;s in it.</p>
-      </div>
+        <StudyRoomEmptyState
+          title="Nothing to quiz on yet."
+          description="Add and process a document, then Studigo can build source-grounded questions."
+        />
+      </>
     );
   }
 
