@@ -24,6 +24,10 @@ try {
       await page.evaluate(() => {
         const surface = document.querySelector(".modeSurface");
         if (!(surface instanceof HTMLElement)) throw new Error("Study Room scroll surface missing");
+        window.__v1ScrollEvents = [];
+        window.addEventListener("scroll", event => {
+          window.__v1ScrollEvents.push(event.target instanceof Element ? event.target.className : String(event.target));
+        }, { capture: true, passive: true });
         surface.style.setProperty("height", "400px", "important");
         surface.style.setProperty("max-height", "400px", "important");
         surface.style.setProperty("overflow-y", "auto", "important");
@@ -51,8 +55,18 @@ try {
         return { top: surface.scrollTop, max: surface.scrollHeight - surface.clientHeight };
       });
       assert.ok(scrollAfter.top >= 300, `Scroll did not advance: ${JSON.stringify(scrollAfter)}`);
-      await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-state") === "compact",
-        null, { timeout: 5000 });
+      await page.waitForTimeout(350);
+      const scrollDiagnostic = await page.evaluate(() => ({
+        state: document.querySelector(".studyGroups")?.getAttribute("data-state"),
+        progress: document.querySelector(".studyGroups")?.style.getPropertyValue("--tb"),
+        phone: matchMedia("(max-width: 700px)").matches,
+        reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
+        modals: [...document.querySelectorAll('[aria-modal="true"]')].map(node => node.className || node.tagName),
+        surfaceClass: document.querySelector(".modeSurface")?.className,
+        scrollEvents: window.__v1ScrollEvents,
+      }));
+      assert.equal(scrollDiagnostic.state, "compact",
+        `Study Room scroll did not compact dock: ${JSON.stringify({ scrollSetup, scrollAfter, ...scrollDiagnostic })}`);
       assert.equal(await nav.locator("button[aria-label]").count(), 5);
       const targetSizes = await nav.locator("button[aria-label]").evaluateAll(nodes => nodes.map(el => {
         const box = el.getBoundingClientRect();
