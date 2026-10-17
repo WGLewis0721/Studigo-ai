@@ -84,6 +84,7 @@ export function RoomWorkspace({
   initialMode,
   evidence, planEvents, asOf,
   phase3Learn = false,
+  explorePreview = false,
   phase3FoundationUi
 }: {
   room: StudyRoom;
@@ -95,6 +96,8 @@ export function RoomWorkspace({
   planEvents: PlanEvent[];
   asOf: number;
   phase3Learn?: boolean;
+  /** Synthetic journal preview only, never enabled on authenticated room routes. */
+  explorePreview?: boolean;
   /** Optional server-scoped override; omitted by development fixtures. */
   phase3FoundationUi?: boolean;
 }) {
@@ -260,6 +263,7 @@ export function RoomWorkspace({
             onClearFocus={() => setFocusTopicId(null)}
             onTopicsChanged={refresh}
             phase3Learn={phase3Learn}
+            explorePreview={explorePreview}
             requestedChat={requestedChat}
           />
         )}

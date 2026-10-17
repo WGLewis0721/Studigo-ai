@@ -25,7 +25,7 @@ const syntheticEdition = { version: 1, schemaVersion: 1, promptVersion: 1, level
 
 await mkdir(output, { recursive: true });
 const sourceTree = () => execFileSync("git", ["rev-parse", "HEAD^{tree}"], { encoding: "utf8" }).trim();
-const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], guidedLearn: [], failures: [] };
+const report = { sourceTreeBefore: sourceTree(), sourceTreeAfter: null, browserVersion: null, forcedColors: process.env.PHASE3_VISUAL_FORCED_COLORS ?? "none", commit: process.env.GITHUB_SHA ?? "local", origin, cases: [], interactions: [], home: [], guidedLearn: [], explore: [], failures: [] };
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
@@ -636,6 +636,169 @@ try {
       }
       report.home.push(home);
     }
+
+    // Explore is an explicit synthetic fixture, not an authenticated learner
+    // or authorization test. Keep the legacy mission screenshots unchanged.
+    for (const skin of skins) {
+      const exploreCase = { viewport: viewport.name, skin, screenshot: "", horizontalOverflow: null, error: null };
+      try {
+        // General UI fixtures default to reduced motion, by design.
+        // This Explore case must explicitly test the *normal* progress pulse
+        // before switching to reduce and proving the effect is suppressed.
+        await page.emulateMedia({ reducedMotion: "no-preference" });
+        await page.goto(`${origin}/dev/study?shell=1&learn=explore&ui=${skin}`, { waitUntil: "networkidle" });
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "journal must use all and only real fixture topics");
+        assert.equal(await page.locator('.exploreJournalQuest[aria-pressed="true"]').count(), 1, "one quest detail selection");
+        await page.locator(".exploreJournalQuest").nth(1).click();
+        const selectedHeading = viewport.width <= 700 ? ".exploreJournalQuickStart h3" : ".exploreJournalDetail h3";
+        assert.match(await page.locator(selectedHeading).innerText(), /Inherited traits and environment/);
+        if (viewport.width <= 700) {
+          const action = page.getByRole("button", { name: /Start quest/ });
+          const firstViewport = await action.boundingBox();
+          assert.ok(firstViewport && firstViewport.y < viewport.height, "selected quest must remain reachable on phone");
+        }
+        // Selection can scroll a short phone list; capture from the journal's
+        // actual top, not with sticky room chrome frozen halfway through a full-page shot.
+        await page.locator(".exploreJournalHead").scrollIntoViewIfNeeded();
+        await page.evaluate(() => {
+          window.scrollTo(0, 0);
+          for (const selector of [".appMain", ".coachMode", ".chatThread"]) {
+            const node = document.querySelector(selector);
+            if (node instanceof HTMLElement) node.scrollTop = 0;
+          }
+        });
+        const screenshot = `${viewport.name}-explore-${skin}.png`;
+        await page.screenshot({ path: path.join(output, screenshot), animations: "disabled", fullPage: true });
+        exploreCase.screenshot = screenshot;
+        exploreCase.horizontalOverflow = await page.evaluate(() =>
+          Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth));
+        assert.equal(exploreCase.horizontalOverflow, 0, "Explore must not overflow the viewport");
+        assert.equal(await page.locator(".exploreLearnSwitch").count(), 0, "Learn and Explore are one guided journey, not separate modes");
+        assert.equal(await page.locator(".coachMaterial").count(), 0, "redundant pre-lesson material card must be absent");
+        await page.getByRole("button", { name: /Start quest/ }).click();
+        await page.locator('.learnTalk[data-journey-stage="intro"]').waitFor();
+        assert.equal(await page.locator(".learnLessonLabel").count(), 0, "the duplicate Quest 1 of N tracker must be removed");
+        assert.equal(await page.locator(".learnTeachingMascot").count(), 0, "the blank lesson-side mascot placeholder must not consume space");
+        assert.equal(await page.locator(".learnSectionTitle").innerText(), "Inherited traits and environment",
+          "the section title replaces the generic Meet Your Quest readout");
+        assert.equal(await page.locator(".learnAsk").count(), 0, "do not repeat the section heading on opening read");
+        const progressBar = page.getByRole("progressbar", { name: "Guided lesson progress, not mastery" });
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "12");
+        assert.ok((await page.locator(".learnBarFill").getAttribute("style"))?.includes("12%"));
+        const meterAppearance = await page.locator(".learnBarFill").evaluate((node) => getComputedStyle(node).backgroundImage);
+        assert.match(meterAppearance, /linear-gradient/, "use orange-to-green phase-specific gradient");
+        // Icon-only treatment must remain discoverable to AT and fit phone widths.
+        const journal = page.getByRole("button", { name: "Quest journal" });
+        const check = page.getByRole("button", { name: "Check what I understood" });
+        const guide = page.getByRole("button", { name: "Find it in my guide" });
+        assert.equal(await page.locator(".learnMissionNav").count(), 0, "moving the journal must remove the empty top navigation band");
+        assert.equal(await page.locator(".learnActionDock .learnDockJournal").count(), 1, "journal must be inside the bottom lesson toolbar");
+        assert.equal(await journal.evaluate((node) => node.previousElementSibling?.getAttribute("aria-label")), "Pause lesson",
+          "journal must immediately follow Pause in the bottom action bar");
+        assert.equal(await journal.evaluate((node) => node.nextElementSibling?.getAttribute("aria-label")), "Check what I understood",
+          "journal must sit before the orange primary action during the opening read");
+        assert.equal(await journal.locator(".learnControlGlyph").count(), 1, "journal must use the clipboard glyph");
+        assert.equal(await check.locator(".learnControlGlyph").count(), 1, "opening primary action must use a circled check");
+        assert.equal(await guide.locator(".learnControlGlyph").count(), 1, "source control must use a notebook glyph");
+        assert.equal(await page.getByRole("button", { name: "Previous lesson step" }).locator(".learnControlGlyph").count(), 1, "back must use the arrow glyph");
+        assert.equal(await page.getByRole("button", { name: "Pause lesson" }).locator(".learnControlGlyph").count(), 1, "pause must use the pause glyph");
+        assert.equal(await guide.evaluate(node => node.previousElementSibling?.getAttribute("aria-label")), "Check what I understood",
+          "source notebook must immediately follow the primary check key");
+        for (const button of [journal, check, guide, page.getByRole("button", { name: "Pause lesson" })]) {
+          const box = await button.boundingBox();
+          assert.ok(box && box.width >= 44 && box.height >= 44, "icon keys must have at least 44px targets");
+        }
+        const iconShot = `${viewport.name}-learn-glyphs-${skin}.png`;
+        await page.screenshot({ path: path.join(output, iconShot), animations: "disabled", fullPage: true });
+        assert.equal(await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)), 0,
+          "icon key dock must not cause horizontal overflow");
+        const sourceReading = await page.locator(".learnSourceReading").innerText();
+        assert.match(sourceReading, /Inherited traits come from parents through genes/, "opening dialogue must show source facts for selected quest");
+        await page.getByRole("button", { name: /Check what I understood/ }).click();
+        await page.locator('.learnTalk[data-journey-stage="first-check"]').waitFor();
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
+          "intro → comprehension must advance 22 percentage points");
+        const firstGlow = page.locator("body > .learnProgressGlowOverlay");
+        // The 1.15s one-shot pulse intentionally ends at opacity:0 but remains
+        // mounted. Playwright's 'visible' check fails once the burst has faded,
+        // even though the effect did run. Assert attachment, real keyframes,
+        // geometry and advance origin instead of polling for fleeting opacity.
+        await firstGlow.waitFor({ state: "attached" });
+        const burst = firstGlow.locator(".learnProgressGlowBurst");
+        assert.equal(await burst.evaluate((node) => getComputedStyle(node).animationName), "learnGlowGrowFade",
+          "forward progress triggers a brief grow-and-fade glow");
+        assert.equal(await firstGlow.locator("svg").count(), 0,
+          "the glow contains no flame art or SVG");
+        assert.equal(await firstGlow.evaluate((node) => getComputedStyle(node).position), "fixed",
+          "glow must be above clipped lesson containers");
+        assert.ok(Number(await firstGlow.evaluate((node) => getComputedStyle(node).zIndex)) >= 1000,
+          "glow must render over the lesson window");
+        const glowColorMatchesTip = await firstGlow.evaluate((node) => {
+          const glow = getComputedStyle(node).getPropertyValue("--learn-glow-color").trim();
+          const bar = document.querySelector(".learnBarFill");
+          return bar instanceof HTMLElement && glow === getComputedStyle(bar).getPropertyValue("--progress-heat").trim();
+        });
+        assert.ok(glowColorMatchesTip, "glow color must match the current stage gradient tip");
+        await page.waitForFunction(() => {
+          const glow = document.querySelector("body > .learnProgressGlowOverlay");
+          const tip = document.querySelector(".learnBarFill");
+          if (!(glow instanceof HTMLElement) || !(tip instanceof HTMLElement)) return false;
+          const a = glow.getBoundingClientRect();
+          const b = tip.getBoundingClientRect();
+          return Math.abs((a.left + a.width / 2) - b.right) < 18
+            && Math.abs((a.top + a.height / 2) - (b.top + b.height / 2)) < 7
+            && a.height <= 32 && a.width <= 32;
+        }, null, { timeout: 2200 });
+        // Sample the real browser CSS animation at a deterministic peak for
+        // evidence screenshots; not an alternate or mocked visual effect.
+        const visibleFrame = await burst.evaluate((element) => {
+          const anim = element.getAnimations().find((item) =>
+            item instanceof CSSAnimation && item.animationName === "learnGlowGrowFade");
+          if (!anim) return false;
+          anim.pause();
+          anim.currentTime = 440;
+          return getComputedStyle(element).opacity !== "0";
+        });
+        assert.ok(visibleFrame, "the actual glow keyframes must illuminate at the peak");
+        const glowShot = `${viewport.name}-learn-glow-${skin}.png`;
+        await page.screenshot({ path: path.join(output, glowShot), animations: "allow" });
+        assert.equal(await page.locator(".learnProgressEmber").count(), 1, "meter tip remains illuminated");
+        await page.locator(".learnChoice").first().click();
+        await page.getByRole("button", { name: /Check answer/ }).click();
+        await page.getByRole("button", { name: /Explore this lesson/ }).click();
+        await page.locator('.learnTalk[data-journey-stage="explore"]').waitFor();
+        assert.equal(await progressBar.getAttribute("aria-valuenow"), "56",
+          "comprehension to Explore advances another 22 points");
+        await page.locator("body > .learnProgressGlowOverlay").waitFor({ state: "attached" });
+        assert.equal(await page.locator(".learnProgressGlowBurst").evaluate((node) => getComputedStyle(node).animationName),
+          "learnGlowGrowFade", "each forward step replays the compact glow");
+        await page.emulateMedia({ reducedMotion: "reduce" });
+        assert.equal(await page.locator(".learnProgressEmber").evaluate((node) => getComputedStyle(node).animationName), "none",
+          "reduced motion suppresses the continuous ember pulse");
+        assert.equal(await page.locator("body > .learnProgressGlowOverlay").evaluate((node) => getComputedStyle(node).display), "none",
+          "reduced motion suppresses the glow burst");
+        await page.emulateMedia({ reducedMotion: "no-preference" });
+        await page.getByRole("button", { name: "Pause lesson" }).click();
+        await page.getByText(/PAUSED MISSION/).waitFor();
+        await page.getByRole("button", { name: "Quest journal" }).click();
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        // The URL shared with reviewers must actually open Explore directly.
+        // A Ready preview of /app alone does not establish this.
+        const shareLink = await page.goto(`${origin}/explore-preview`, { waitUntil: "networkidle" });
+        assert.equal(shareLink?.status(), 200, "reviewer Explore URL must serve the synthetic preview");
+        await page.getByRole("heading", { name: "Quest journal" }).waitFor();
+        assert.ok(await page.getByText(/Synthetic Explore visual fixture/i).isVisible(), "preview must disclose synthetic content");
+        assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "direct preview must show the real fixture journal");
+      } catch (error) {
+        exploreCase.error = String(error);
+        report.failures.push({ ...exploreCase });
+        console.error(`${viewport.name} Explore ${skin}: ${exploreCase.error}`);
+      } finally {
+        await page.emulateMedia({ reducedMotion: "reduce" });
+      }
+      report.explore.push(exploreCase);
+    }
     await context.close();
   }
 } catch (error) {
@@ -646,7 +809,7 @@ try {
   if (report.sourceTreeAfter !== report.sourceTreeBefore) report.failures.push({ stage: "source stability", error: "Source tree changed during browser evidence run; repeat against a frozen tree" });
   await writeFile(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", "utf8");
 }
-console.log(`Phase 3 synthetic comparison: ${report.cases.length} room cases, ${report.interactions.length} interaction groups, ${report.home.length} Home cases, ${report.failures.length} failures`);
+console.log(`Phase 3 synthetic comparison: ${report.cases.length} room cases, ${report.interactions.length} interaction groups, ${report.home.length} Home cases, ${report.explore.length} Explore cases, ${report.failures.length} failures`);
 if (report.failures.length) {
   for (const failure of report.failures) console.error(`${failure.viewport} ${failure.mode} ${failure.skin}: ${failure.error}`);
   process.exitCode = 1;

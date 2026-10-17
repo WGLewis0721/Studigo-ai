@@ -1,7 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import "./guided-learn-chapters.css";
+import { ExploreJournal } from "./explore-journal";
+import { MissionControlIcon } from "./mission-control-icon";
+import { LearnProgressGlow } from "./learn-progress-glow";
+import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
@@ -10,6 +14,7 @@ import { ReadAloudControl } from "./read-aloud-control";
 import { SpeechAnswerControl } from "./speech-answer-control";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
 import { lessonBeatIndex, formativeReflection, canAdvanceLesson } from "@/lib/learning-mission-stages";
+import { isForwardLearnAdvance, learnPhaseProgress, LEARN_PROGRESS_HEAT } from "@/lib/learn-progress-motion";
 
 type Phase = "brief" | "show" | "try" | "check" | "done";
 type Mission = { topic_id: string; document_id: string; chunk_id?: string; source_revision?: number; phase: Phase; reflection: "ready" | "review" | null; paused: boolean; revision: number };
@@ -63,9 +68,9 @@ function beatFix(beat: MissionBeat): string {
   return "";
 }
 
-export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials, onTryCoach, onTryPractice }: {
+export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "standard", onOpenMaterials, onTryCoach, onTryPractice, previewJournal = false }: {
   roomId: string; topics: Topic[]; selectedTopicId: string | null; explainLevel?: ExplainDelivery;
-  onOpenMaterials: () => void; onTryCoach?: (topicId: string) => void; onTryPractice?: (topicId: string) => void;
+  previewJournal?: boolean; onOpenMaterials: () => void; onTryCoach?: (topicId: string) => void; onTryPractice?: (topicId: string) => void;
 }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,13 +82,21 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [helpUsed, setHelpUsed] = useState(false);
   const [spokenDraft, setSpokenDraft] = useState("");
   const [sourceOpen, setSourceOpen] = useState(false);
+  // The original synthetic Guided Learn fixture stays pixel-for-pixel unchanged.
+  const [journalOpen, setJournalOpen] = useState(roomId !== "fixture" || previewJournal);
   const sourceDialogRef = useRef<HTMLDialogElement>(null);
   const sourceButtonRef = useRef<HTMLButtonElement>(null);
+  const progressFillRef = useRef<HTMLDivElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
+  const previousPhase = useRef<{ topicId: string; phase: Phase } | null>(null);
+  const [glowRevision, setGlowRevision] = useState(0);
 
   const fixture = roomId === "fixture";
+  // The original synthetic mission remains unchanged; preview and real
+  // canary use one Learn journey instead of competing Learn/Explore modes.
+  const integratedJourney = !fixture || previewJournal;
   const mission = snapshot?.mission ?? null;
   const { thinking: companionThinking } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
@@ -91,7 +104,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
   const invitationTitle = fixture ? SAMPLES[sample].title : selectedTopic?.title;
   const invitationObjective = fixture ? SAMPLES[sample].objective : selectedTopic?.objective;
-  const objectiveSource = fixture
+  const objectiveSource = fixture && !previewJournal
     ? SAMPLES[sample].objective
     : currentTopic?.objective || selectedTopic?.objective || currentTopic?.title || selectedTopic?.title || "";
   const objectiveText = questionFrom(objectiveSource);
@@ -129,9 +142,14 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         : action === "back"
           ? ({ brief: "brief", show: "brief", try: "show", check: "try", done: "check" } as const)[current?.phase ?? "brief"]
           : action === "restart" || action === "start" ? "brief" : current?.phase ?? "brief";
+      const previewTopic = previewJournal ? topics.find((topic) => topic.id === (topicOverride ?? current?.topic_id)) : null;
+      const note = previewTopic ? MATERIAL_NOTES[previewTopic.title] : null;
+      const previewSource = note && (action === "start" || action === "restart")
+        ? { documentName: "Synthetic fifth-grade science guide", pageNumber: 1, excerpt: `${note.summary} ${note.example}` }
+        : snapshot?.source ?? null;
       const next: Snapshot = {
         mission: {
-          topic_id: action === "restart" ? sample : current?.topic_id ?? sample,
+          topic_id: previewJournal && topicOverride ? topicOverride : action === "restart" ? sample : current?.topic_id ?? sample,
           document_id: "source",
           phase: nextPhase,
           reflection: reflection ?? (action === "restart" ? null : current?.reflection ?? null),
@@ -139,7 +157,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           revision: (current?.revision ?? 0) + 1,
         },
         sourceCurrent: true,
-        source: snapshot?.source ?? null,
+        source: previewSource,
       };
       setSnapshot(next);
       return next;
@@ -162,17 +180,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     return payload;
   }
 
-  async function act(action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string) {
-    if (inFlight.current) return;
+  async function act(action: Action, reflection: "ready" | "review" | null = null, topicOverride?: string): Promise<boolean> {
+    if (inFlight.current) return false;
     inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
       await post(mission, action, reflection, topicOverride);
       if (action === "restart" || action === "start") setTapped(null);
+      return true;
     } catch (caught) {
       await reload();
       setError(caught instanceof Error ? caught.message : "Could not save this reading.");
+      return false;
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -192,7 +212,17 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const beat = step === null ? undefined : beats[step];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
-  const progress = beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  // A saved phase, rather than a guessed grade or a local answer selection,
+  // is the source of truth for each substantial visible progress jump.
+  const progress = integratedJourney && mission ? learnPhaseProgress(mission.phase)
+    : beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
+  const phaseHeat = mission ? LEARN_PROGRESS_HEAT[mission.phase] : LEARN_PROGRESS_HEAT.brief;
+  useEffect(() => {
+    if (!integratedJourney || !mission) { previousPhase.current = null; return; }
+    const next = { topicId: mission.topic_id, phase: mission.phase };
+    if (isForwardLearnAdvance(previousPhase.current, next)) setGlowRevision((old) => old + 1);
+    previousPhase.current = next;
+  }, [integratedJourney, mission?.topic_id, mission?.phase]);
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
@@ -243,6 +273,20 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     sourceButtonRef.current?.focus();
   };
   const ready = Boolean(mission && !mission.paused && snapshot?.sourceCurrent !== false && beat);
+  const introduction = Boolean(integratedJourney && mission?.phase === "brief" && beat?.kind === "read");
+  const firstCheck = Boolean(integratedJourney && mission?.phase === "show" && beat?.kind === "choice");
+  // Use the exact retrieved current passage as the learning introduction.
+  const reading = introduction ? snapshot?.source?.excerpt ?? "" : beat?.kind === "read" ? beat.body : "";
+
+  // Render the journal in the same Learn room. All teaching, answers and
+  // revision-bound cursor updates still belong to the existing player/API.
+  if (journalOpen && !loading) return <ExploreJournal
+    roomId={roomId} fixture={fixture} topics={topics} cursor={mission} sourceCurrent={snapshot?.sourceCurrent}
+    busy={busy} error={error} onOpenMaterials={onOpenMaterials}
+    onStart={(topicId) => act(mission ? "restart" : "start", null, topicId)}
+    onContinue={() => act("resume")}
+    onOpenLesson={() => setJournalOpen(false)}
+  />;
 
   return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
     {!loading && !mission && <div className="learnInvitation">
@@ -271,13 +315,24 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         onClick={() => void act("resume")}>Continue lesson →</button>
     </div>}
 
-    {mission && !mission.paused && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
+    {mission && !mission.paused && !integratedJourney && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
       <span>Lesson {lessonNumber} of {topics.length}</span>
       <span className="learnLessonTopic">{currentTopic?.title}</span>
     </div>}
-    {(mission && !mission.paused) && <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
-      <span style={{ width: `${progress}%` }} />
-    </div>}
+    {(mission && !mission.paused) && (integratedJourney
+      ? <div className="learnJourneyProgress" aria-label="Progress through this guided lesson">
+          <div className="learnBar learnBarAnimated" role="progressbar" aria-valuemin={0} aria-valuemax={100}
+            aria-valuenow={progress} aria-valuetext={`${progress}% through the guided lesson. This is not a mastery score.`}
+            aria-label="Guided lesson progress, not mastery">
+            <div ref={progressFillRef} className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as CSSProperties}>
+              <span className="learnProgressEmber" aria-hidden="true" />
+            </div>
+          </div>
+          {glowRevision > 0 && <LearnProgressGlow key={`${mission.topic_id}:${glowRevision}`} targetRef={progressFillRef} />}
+        </div>
+      : <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
+          <span style={{ width: `${progress}%` }} />
+        </div>)}
     {error && <p className="formError" role="alert">{error}</p>}
     {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation learnHandoff" role="status">
       <p className="tinyLabel">LEARNING CHECKPOINT COMPLETE · NO MASTERY AWARDED</p>
@@ -295,13 +350,18 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         }}>Start lesson over</button>
       </div>
     </div> : beat ? (
-      <div className="learnTalk">
-        <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>
+      <div className="learnTalk" data-journey-stage={introduction ? "intro" : firstCheck ? "first-check" : integratedJourney ? "explore" : undefined}>
+        {!integratedJourney && <div className="learnTeachingMascot" aria-hidden="true"><StudigoMascot state={shown ? "explain" : beat.kind === "read" ? "explain" : "welcome"} size={42} mark /></div>}
         <div className="learnTalkBody">
-          <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>
-          {beat.kind === "read" && <p className="learnLine">{beat.body}</p>}
+          {integratedJourney && <h2 className="learnSectionTitle">{currentTopic?.title || (fixture ? SAMPLES[sample].title : "This section")}</h2>}
+          {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
+          {!introduction && <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>}
+          {beat.kind === "read" && (introduction ? <div className="learnSourceReading">
+            <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
+            <p className="learnLine">{reading}</p>
+          </div> : <p className="learnLine">{beat.body}</p>)}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
-            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? beat.body : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label="Hear this teaching step" />
+            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
             {beat.kind !== "read" && <div className="learnOptionalVoice">
               <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
               <span className="learnVoiceExplanation">Speak an answer draft</span>
@@ -361,27 +421,41 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
-    {!mission?.paused && (ready || snapshot?.sourceCurrent === false || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
-      {mission && <button className="ghostButton learnDockBack" type="button" disabled={busy || mission.phase === "brief"} onClick={() => void act("back")} aria-label="Previous lesson step">
-        <span className="learnActionWide">← Back</span><span className="learnActionCompact" aria-hidden="true">←</span>
+    {((mission && (ready || snapshot?.sourceCurrent === false || ((!fixture || previewJournal) && (mission.paused || mission.phase === "done")))) || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
+      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || mission.phase === "brief"}
+        onClick={() => void act("back")} aria-label="Previous lesson step" title="Previous step">
+        <MissionControlIcon name="back" />
       </button>}
-      {mission && <button className="ghostButton learnDockPause" type="button" disabled={busy} onClick={() => void act("pause")} aria-label="Pause lesson">
-        <span className="learnActionWide">Pause</span><span className="learnActionCompact" aria-hidden="true">Ⅱ</span>
+      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockPause learnIconKey" type="button" disabled={busy}
+        onClick={() => void act("pause")} aria-label="Pause lesson" title="Pause lesson">
+        <MissionControlIcon name="pause" />
       </button>}
-      {ready && <button type="button" className="ghostButton learnDockSource" ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide">
-        <span className="learnActionWide">Find it in my guide</span><span className="learnActionCompact" aria-hidden="true">⌕</span>
+      {(!fixture || previewJournal) && <button type="button"
+        className="ghostButton learnDockJournal learnIconKey"
+        aria-label="Quest journal" title="Quest journal" onClick={() => setJournalOpen(true)}>
+        <MissionControlIcon name="journal" />
       </button>}
-      {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint" onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint">
-        <span className="learnActionWide">Give me a hint</span><span className="learnActionCompact" aria-hidden="true">?</span>
+      {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint learnIconKey"
+        onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint" title="Give me a hint">
+        <span className="learnHelpGlyph" aria-hidden="true">?</span>
       </button>}
-      <button className="buttonPrimary learnGo" type="button" disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))} onClick={() => {
-        if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
-        if (error && !mission) { void act("start"); return; }
-        if (!beat || beat.kind === "read" || shown) advanceLevel();
-        else setShown(true);
-      }}>{beat?.kind === "read" ? "Start question →"
-        : shown ? mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
-        : "Check answer →"}</button>
+      {!mission?.paused && mission?.phase !== "done" && <button className={introduction ? "buttonPrimary learnGo learnGoIconOnly" : "buttonPrimary learnGo"} type="button"
+        aria-label={introduction ? "Check what I understood" : undefined}
+        title={introduction ? "Check what I understood" : undefined}
+        disabled={busy || loading || !mission || (beat?.kind !== "read" && !shown ? picked.length === 0 : !canAdvanceLesson(mission.phase, mission.paused, picked.length > 0 || helpUsed, shown, beat?.kind === "read"))}
+        onClick={() => {
+          if (snapshot?.sourceCurrent === false) { void act("restart"); return; }
+          if (error && !mission) { void act("start"); return; }
+          if (!beat || beat.kind === "read" || shown) advanceLevel();
+          else setShown(true);
+        }}>{introduction ? <MissionControlIcon name="check" />
+          : beat?.kind === "read" ? "Start question →"
+          : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
+          : "Check answer →"}</button>}
+      {ready && <button type="button" className="ghostButton learnDockSource learnIconKey"
+        ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide" title="Find it in my guide">
+        <MissionControlIcon name="guide" />
+      </button>}
     </div>}
   </section>;
 }
