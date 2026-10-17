@@ -21,6 +21,9 @@ import { useEffect, type RefObject } from "react";
  * - The Coach chat is left alone. Its composer is docked to the bar, so a bar
  *   that changed height would shove the field around while you read.
  * - Switching pages, tapping the bar, or tabbing into it brings it back to full size.
+ * - Reduced-motion users keep the full-size bar rather than tracking scroll.
+ * - Keyboard-covered input fields hide the bar until the viewport clears.
+ * - Dialog/sheet scrolling must not collapse the primary navigation.
  *
  * It only runs on the phone layout, where the bar is fixed to the screen. On
  * wide screens the same links live in the top bar and nothing here applies.
@@ -42,12 +45,24 @@ export function useCollapsingTabBar(ref: RefObject<HTMLElement | null>, pageKey:
     const bar = ref.current;
     if (!bar) return;
     const phone = window.matchMedia(PHONE);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const viewport = window.visualViewport;
 
     let progress = 0;
     let direction: 1 | -1 = 1;
     let frame = 0;
     let settleTimer = 0;
     let lastTop = new WeakMap<Element, number>();
+    let keyboardTimer = 0;
+    let keyboardOpen = false;
+
+    const editableFocused = () => {
+      const node = document.activeElement;
+      if (!(node instanceof HTMLElement)) return false;
+      if (node.isContentEditable || node.matches("textarea, select")) return true;
+      if (!(node instanceof HTMLInputElement)) return false;
+      return !["button", "checkbox", "radio", "range", "file", "submit", "reset", "hidden"].includes(node.type);
+    };
 
     const paint = (state: BarState) => {
       frame = 0;
@@ -71,14 +86,14 @@ export function useCollapsingTabBar(ref: RefObject<HTMLElement | null>, pageKey:
     };
 
     const onScroll = (event: Event) => {
-      if (!phone.matches) return;
+      if (!phone.matches || reducedMotion.matches || keyboardOpen || document.querySelector('[aria-modal="true"]')) return;
       const target = event.target;
       const el =
         target === document || target === document.documentElement || target === document.body
           ? document.scrollingElement
           : target;
       if (!(el instanceof HTMLElement)) return;
-      if (bar.contains(el) || el.closest(".coachChat")) return;
+      if (bar.contains(el) || el.closest('.coachChat, [role="dialog"], .roomSettings, .coachSettings, .studyGroups')) return;
 
       const max = el.scrollHeight - el.clientHeight;
       if (max < MIN_SCROLLABLE) return;
@@ -99,7 +114,35 @@ export function useCollapsingTabBar(ref: RefObject<HTMLElement | null>, pageKey:
     };
 
     const expand = () => rest(0);
+    const updateKeyboard = () => {
+      // visualViewport shrinks under the iOS/Android software keyboard, but
+      // can also shrink for browser zoom. A focused text field and scale ≈ 1
+      // are both required before hiding a meaningful navigation affordance.
+      const layoutHeight = Math.max(window.innerHeight, document.documentElement.clientHeight);
+      const occlusion = viewport ? layoutHeight - viewport.height : 0;
+      const covered = phone.matches && editableFocused() &&
+        (viewport?.scale ?? 1) < 1.05 && occlusion > 120;
+      keyboardOpen = covered;
+      if (covered) {
+        rest(0);
+        bar.dataset.keyboard = "open";
+      } else {
+        delete bar.dataset.keyboard;
+      }
+    };
+    const onFocus = () => {
+      expand();
+      updateKeyboard();
+    };
+    const onBlur = () => {
+      window.clearTimeout(keyboardTimer);
+      keyboardTimer = window.setTimeout(updateKeyboard, 140);
+    };
+    const onReducedMotionChange = () => {
+      if (reducedMotion.matches) rest(0);
+    };
     const onPhoneChange = () => {
+      updateKeyboard();
       if (!phone.matches) {
         window.clearTimeout(settleTimer);
         if (frame) window.cancelAnimationFrame(frame);
@@ -113,17 +156,32 @@ export function useCollapsingTabBar(ref: RefObject<HTMLElement | null>, pageKey:
 
     // A new page has its own scroll positions, so forget the old ones and start full size.
     lastTop = new WeakMap();
+    if (document.scrollingElement) lastTop.set(document.scrollingElement, document.scrollingElement.scrollTop);
     if (phone.matches) rest(0);
+    updateKeyboard();
 
     window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     bar.addEventListener("click", expand);
     bar.addEventListener("focusin", expand);
+    document.addEventListener("focusin", onFocus);
+    document.addEventListener("focusout", onBlur);
+    viewport?.addEventListener("resize", updateKeyboard);
+    viewport?.addEventListener("scroll", updateKeyboard);
+    reducedMotion.addEventListener("change", onReducedMotionChange);
     phone.addEventListener("change", onPhoneChange);
     return () => {
       window.removeEventListener("scroll", onScroll, { capture: true });
       bar.removeEventListener("click", expand);
       bar.removeEventListener("focusin", expand);
+      document.removeEventListener("focusin", onFocus);
+      document.removeEventListener("focusout", onBlur);
+      viewport?.removeEventListener("resize", updateKeyboard);
+      viewport?.removeEventListener("scroll", updateKeyboard);
+      reducedMotion.removeEventListener("change", onReducedMotionChange);
       phone.removeEventListener("change", onPhoneChange);
+      window.clearTimeout(keyboardTimer);
+      keyboardOpen = false;
+      delete bar.dataset.keyboard;
       window.clearTimeout(settleTimer);
       if (frame) window.cancelAnimationFrame(frame);
       bar.style.removeProperty("--tb");

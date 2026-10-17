@@ -8,6 +8,7 @@ on:
       - "apps/web/lib/phase3-room-flag*"
       - ".github/workflows/phase3-visual-evidence.yml"
       - "scripts/phase3-visual-qa.mjs"
+      - "scripts/v1-mobile-tabbar-qa.mjs"
 
 permissions:
   contents: read
@@ -37,6 +38,8 @@ jobs:
           done
           cat /tmp/studigo-phase3-dev.log
           exit 1
+      - name: V1 mobile dock — scroll, modal, keyboard and reduced motion
+        run: node scripts/v1-mobile-tabbar-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
