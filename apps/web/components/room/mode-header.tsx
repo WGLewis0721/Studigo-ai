@@ -230,7 +230,9 @@ export function ModeHeader({
         {modes.length > 1 ? (
           <div className="chatModes" role="group" aria-label={`${groupName} modes`}>
             {modes.map((mode) => (
-              <button key={mode.id} type="button" data-tone={mode.id} aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
+              <button key={mode.id} type="button" data-tone={mode.id}
+                aria-label={mode.name} title={mode.name}
+                aria-pressed={mode.id === current} onClick={() => onSelect(mode.id)}>
                 <strong>{mode.name}</strong>
                 <small>{mode.sub}</small>
               </button>
