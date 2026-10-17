@@ -131,16 +131,22 @@ export function GuidePreview({
   const model = guidePreviewModel(loaded);
   const printText = guidePrintEdition(loaded, showAnswers);
   const sourceLinks = (refs: Array<{ blockKey: string; pageNumber: number }>) => refs.map((ref) => {
-    const label = ref.pageNumber > 0 ? `Source, page ${ref.pageNumber}` : "Source passage";
+    const label = ref.pageNumber > 0 ? `Check source · page ${ref.pageNumber}` : "Check source passage";
     return phase3Materials
       ? <button className="materialsCitation" type="button" key={ref.blockKey} aria-expanded={source?.blockKey === ref.blockKey} aria-controls={sourcePanelId} onClick={(event) => void inspectSource(ref.blockKey, ref.pageNumber, event.currentTarget)}>{label}</button>
       : <a key={ref.blockKey} href={evidenceHref(roomId, ref.blockKey)}>{label}</a>;
   });
   return (
     <article className="guideReading" aria-label="Study guide preview" style={{ overflowWrap: "anywhere", background: "#fff", maxWidth: phase3Materials ? undefined : 320 }}>
-      <p className="tinyLabel">Guide · {model.level} · version {model.version} · {model.sourceCount} sources</p>
+      <div className="materialsGuideProvenance">
+        <span className="tinyLabel">STUDIGO GUIDE · VERSION {model.version}</span>
+        <span className="materialsGuideEvidence">{model.sourceCount} {model.sourceCount === 1 ? "cited source" : "cited sources"} · {model.level}</span>
+      </div>
       <h2>{model.title}</h2>
-      {updateAvailable && <p className="setupLead" role="status">Your sources have changed since this guide was saved. Check cited passages against the originals; this guide may be out of date.</p>}
+      {updateAvailable && <p className="materialsGuideStale" role="status">
+        <strong>Source changes need review.</strong>{" "}
+        This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
+      </p>}
       <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
         {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
         <StudyGuideDownloadButton roomId={roomId} compactLabel={phase3Materials} />
@@ -153,7 +159,7 @@ export function GuidePreview({
         {source.state === "loading" && <p role="status">Checking the current source…</p>}
         {source.state === "unavailable" && <><p role="status">This passage is unavailable or no longer current. Check the original files above. Studigo will not substitute a passage from another source.</p><button className="ghostButton" type="button" onClick={() => { if (sourceTrigger.current) void inspectSource(source.blockKey, source.pageNumber, sourceTrigger.current); }}>Check passage again</button></>}
         {source.state === "ready" && <>
-          <p className="materialsSourceName">{source.document?.name ?? "Current source"}</p>
+          <p className="materialsSourceName"><span>Original source</span><strong>{source.document?.name ?? "Authorized source passage"}</strong></p>
           <blockquote>{source.text}</blockquote>
           {source.document?.id && <a href={`/api/documents/download?documentId=${encodeURIComponent(source.document.id)}&inline=1${source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? `&page=${source.pageNumber}` : ""}`} target="_blank" rel="noreferrer">Open original{source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? ` at page ${source.pageNumber}` : ""}</a>}
         </>}
