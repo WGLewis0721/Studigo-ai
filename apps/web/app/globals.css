@@ -582,7 +582,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   scrollbar-width: none;
 }
 .studyGroups button {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  display: inline-flex; align-items: center; gap: 8px; min-width: 44px; min-height: 44px; padding: 0 16px;
   border: 0; border-radius: 12px; background: none; color: var(--ink-2);
   font-size: .9rem; font-weight: 700; white-space: nowrap; cursor: pointer;
   transition: background .2s ease, color .2s ease, box-shadow .2s ease;
@@ -3928,7 +3928,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     border-radius: calc(25px * var(--k));
   }
   .studyGroups:not(.topbarNav) button {
-    min-height: calc(56px * var(--k));
+    min-height: max(44px, calc(56px * var(--k)));
     gap: calc(4px * (1 - var(--tb, 0)));
     border-radius: calc(19px * var(--k));
   }
