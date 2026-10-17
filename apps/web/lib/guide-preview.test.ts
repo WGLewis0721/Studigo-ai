@@ -5,6 +5,7 @@ import { createElement } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { GuidePreview } from "../components/room/guide-preview";
 import { guidePreviewModel } from "./guide-preview";
+import { guideFactExcerpt, guideOutlineHeading } from "./guide-outline";
 
 const longTerm = "Antidisestablishmentarianism-and-the-legislative-branch-definition-that-must-wrap";
 const edition: StudyGuideContent = {
@@ -97,4 +98,35 @@ test("Guide preview distinguishes a pending load from a confirmed absent edition
   assert.doesNotMatch(loading, /No generated guide yet/);
   assert.match(absent, /No generated guide yet/);
   assert.match(absent, /original files remain available/);
+});
+
+test("Materials outlines long OCR headings without replacing their original wording or citations", () => {
+  const long = "GOVERNMENT / STUDY MATERIALS Page 1 Our Government Vocabulary primary source — a record made by someone who was there secondary source — a later record made by someone else democracy — people vote to choose leaders";
+  const result = guideOutlineHeading(long, 0);
+  assert.equal(result.heading, "GOVERNMENT / STUDY MATERIALS");
+  assert.equal(result.oversized, true);
+  assert.deepEqual(guideOutlineHeading("Three Branches of Government", 0), { heading: "Three Branches of Government", oversized: false });
+  const noisy = structuredClone(edition);
+  noisy.chapters[0].title = long;
+  noisy.chapters[0].facts[0].text = "The legislative branch makes laws. ".repeat(12);
+  const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: noisy, phase3Materials: true }));
+  assert.match(html, /Your study outline/);
+  assert.match(html, /<h3>GOVERNMENT \/ STUDY MATERIALS<\/h3>/);
+  assert.match(html, /guideOutlinePoints/);
+  assert.match(html, /guideOutlineTerms/);
+  assert.match(html, /View original heading and source wording/);
+  assert.match(html, /secondary source/); // Verbatim preserved in expandable original.
+  assert.match(html, /Check source/);
+  assert.doesNotMatch(html, /<h2>GOVERNMENT/);
+  assert.doesNotMatch(html, /Checked answer/);
+});
+
+test("oversized source notes disclose exact wording rather than fabricating summaries", () => {
+  const text = "People can learn by asking questions and reviewing their class notes. ".repeat(6);
+  const summary = guideFactExcerpt(text, 175);
+  assert.equal(summary.long, true);
+  assert.ok(summary.excerpt.endsWith("…"));
+  assert.ok(text.startsWith(summary.excerpt.slice(0, -1)));
+  assert.equal(guideFactExcerpt("A short fact.").long, false);
+  assert.deepEqual(guideOutlineHeading("  A short heading  ", 2), { heading: "A short heading", oversized: false });
 });

@@ -19,6 +19,15 @@
 | Reuse existing upload/reindex operation, queue progression, error and confirmation: **no** synthetic percentage, XP, false mastery or invented processing status | `materials-panel.tsx` existing logic | Doherty threshold, trust, Tesler's Law |
 | Controls maintain 44px-class targets, readable filenames and keyboard focus, responsive two-column secondary option grid on mobile | `globals.css` | Fitts's Law, scale, repetition |
 
+## Owner visual feedback — 2026-10-17
+
+- Removed the **fixed 138px mobile Materials heading spacer** responsible for excess white space. The existing companion collision resolver still protects the title and readable-file status and seats Studigo in the header if necessary.
+- Replaced the **on-screen generated-guide word wall** with an outline: source-grounded section headings, key points as bullets, vocabulary as terms/definitions, optional examples and collapsed practice. If OCR placed a whole passage in the chapter title, it is not used as a giant heading; the original wording remains accessible through an explicit disclosure.
+- Oversized individual source notes show a *verbatim excerpt* with an expandable full note, not an AI-authored summary. Existing citations, original-file links, show/hide answers and saved guide state remain unchanged.
+- On iPhones the guide now follows the page's main scroll instead of creating a second 520px-tall internal scroll area.
+- **UX laws:** Hick's Law and chunking (progressive disclosure), proximity/common region (key points and term groups), hierarchy/scale (short headings and readable bullets), Jakob (existing source and practice actions), Fitts (existing tap targets). No new design assets or styles were imported from `/design`; reused approved tokens.
+- Only the browser presentation was changed; saved edition schema, guide generation, PDF/DOCX exports, learning logic and databases remain untouched. The owner will review the actual uploaded guide on mobile before V3.
+
 ## Intentional non-changes
 
 - No Supabase migrations, new upload endpoint, second document processor or new citations system.
