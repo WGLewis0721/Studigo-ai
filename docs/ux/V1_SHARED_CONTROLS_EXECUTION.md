@@ -1,6 +1,6 @@
 # Studigo V1 — Shared navigation and control consistency
 
-**Status:** PR #221 (shared keys, `511cb50`), PR #223 (unified loading, `a100e3d`) and PR #222 (mobile dock + Materials collision, `bb2f996`) **merged**. Full V1 remains in progress: hardware/mobile accessibility and remaining shared-state/header audits are pending.  
+**Status:** PRs #221 (shared keys), #223 (unified loading) and #222 (mobile dock/companion clearance) **shipped**. PR #225 contains the V1 final shared-state, error, focus, four-width, zoom and WebKit engine acceptance increment. V1 software completion is contingent on PR #225's CI + production Ready; real-device/VoiceOver and owner critique remain pending.  
 **Golden rollback:** [V0 frozen baseline](GOLDEN_BASELINE_V0_2026-10-17.md) (SHA `726b1e7`, Vercel deployment `dpl_aw3c2RDmDPkQYWZcsR28e8RC8Wdn`).  
 **Governing design law:** [Foundational UX Principles](FOUNDATIONAL_UX_PRINCIPLES.md) and [reconciled inventory](../../design/README.md). Preserve the approved Learn → Explore UI.
 
@@ -25,13 +25,23 @@ These outcomes address **Jakob's Law** (consistent vocabulary), **Fitts's Law** 
 
 Both Next.js route-loading boundaries now reuse `apps/web/components/room/room-loading-state.tsx`: the same official Studigo mascot, neutral reading surface, polite live status and indeterminate loading bar. The older plain-text room loading screen was removed without adding a new component library, completion claim or data-loading dependency. This is a reuse of existing approved app UI, not a new styling direction.
 
-## Remaining V1 slices (NOT implemented by these PRs)
+## Final V1 software candidate — PR #225
 
-1. Verify collapsing tabbar, software keyboard and safe-area inset behavior on actual iPhone Safari/iPadOS; browser simulation is now implemented but is not a device pass.
-2. Reconcile Coach/Learn switch and shared contextual controls, including all states and focus/return from modal/sheet actions.
-3. Audit responsive header/rail and companion placement for overlap and affordance across 320, 390, 820 and 1440; resolve actual failing cases, not speculative redesign.
-4. Normalize shared loading, empty, error and retry components, with clear system state, across Study Room sections without inventing new progress or completion.
-5. Test real authenticated flows, iOS VoiceOver and 200% zoom in a separate authorized verification environment before claiming complete V1.
+- Reuses the same existing `.modeEmpty` presentation and semantic labelled sections for Quiz, Cards, Weak Areas and Plan. No invented new challenge, progress or mastery behavior.
+- Fixes Next.js app error recovery: the framework supplies `reset()`, **not** the prior `retry()` prop. The error message no longer claims saved data is safe without proof.
+- Retires stale `guided=1` from normal Study Room navigation while keeping unrelated URL state intact.
+- Focused Chromium 320/390/820/1440 empty-state and settings focus-return tests, plus simulated 200% layout reflow on tablet/desktop.
+- Adds Playwright **Linux WebKit** phone/tablet smoke for navigation, keyboard focus and overflow; this is not a native Safari/VoiceOver pass.
+- See [line-by-line V1 after-action checklist](V1_AFTER_ACTION_REPORT_2026-10-17.md) for every code change, design source and UX law.
+
+## Remaining manual acceptance — not auto-verified
+
+1. Real signed-in Study Room with a disposable source after the account reset, including Coach/Learn switch and settings focus return.
+2. iPhone Safari software keyboard/notch/dynamic text and iPadOS portrait/landscape.
+3. VoiceOver complete keyboard/screen-reader reading order and 200% device text settings.
+4. Owner review/critique of the live build before beginning V2.
+
+
 
 ## Release conditions
 
