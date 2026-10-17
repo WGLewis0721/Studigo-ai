@@ -1,6 +1,6 @@
 # Studigo V1 — Shared navigation and control consistency
 
-**Status:** first implementation slice in review. **No completion claim for all of V1.**  
+**Status:** first shared-navigation slice shipped in PR #221 (main `511cb50`); second mobile-dock slice under review. **Full V1 is not complete.**  
 **Golden rollback:** [V0 frozen baseline](GOLDEN_BASELINE_V0_2026-10-17.md) (SHA `726b1e7`, Vercel deployment `dpl_aw3c2RDmDPkQYWZcsR28e8RC8Wdn`).  
 **Governing design law:** [Foundational UX Principles](FOUNDATIONAL_UX_PRINCIPLES.md) and [reconciled inventory](../../design/README.md). Preserve the approved Learn → Explore UI.
 
@@ -13,9 +13,17 @@
 
 These outcomes address **Jakob's Law** (consistent vocabulary), **Fitts's Law** (touch targets), **visual repetition/unity**, and keyboard/screen-reader accessibility. All changes are in existing production components, not proposed Phase 3 prototype files.
 
-## Subsequent V1 slices (NOT implemented here)
+## Second slice — mobile dock, keyboard and reduced motion (under review)
 
-1. Test stable reachability/collapsing tabbar with long scrolling, software keyboard, notches and Safari reduced motion. Keep one tabbar; remove only verified duplication.
+- `use-collapsing-tab-bar.ts` continues to own the *existing* navigation; no second dock or rewritten router.
+- Expand/keep full size for text-input focus, reduced-motion preference, and route changes. Scroll inside a modal/sheet cannot collapse the main navigation.
+- When VisualViewport reports an on-screen keyboard genuinely covering a focused editable field, hide only the floating mobile dock until the keyboard clears. Ignore pinch/zoom occlusion and desktop.
+- New Playwright synthetic browser test covers 320/390 scroll-to-compact, all five 44px targets, focus-to-expand, dialog isolation, simulated viewport/keyboard restoration and reduced-motion preference.
+- **Limits:** Chromium viewport simulation is not real Safari keyboard evidence. Hardware iOS/iPadOS, screen-reader/VoiceOver and 200% zoom acceptance remain open. No authenticated data was accessed.
+
+## Remaining V1 slices (NOT implemented by these PRs)
+
+1. Verify collapsing tabbar, software keyboard and safe-area inset behavior on actual iPhone Safari/iPadOS; browser simulation is now implemented but is not a device pass.
 2. Reconcile Coach/Learn switch and shared contextual controls, including all states and focus/return from modal/sheet actions.
 3. Audit responsive header/rail and companion placement for overlap and affordance across 320, 390, 820 and 1440; resolve actual failing cases, not speculative redesign.
 4. Normalize shared loading, empty, error and retry components, with clear system state, across Study Room sections without inventing new progress or completion.
