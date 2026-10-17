@@ -36,7 +36,7 @@ export function rankWeakAreas(topics: Topic[], evidence: PracticeEvidence[], now
     if (recallMisses) reasons.push(`${recallMisses} of the last ${cards.length} flashcard recalls missed (self-reported).`);
     if (topic.priority >= 90) reasons.push('High priority in the current study scope.');
     if (days !== null && days >= 3) reasons.push(`Last practiced ${days} days ago.`);
-    if (!unpracticed && Number(topic.mastery_score)<85) reasons.push(`${Math.round(Number(topic.mastery_score))}% earned mastery; more successful recall is needed.`);
+    if (!unpracticed && Number(topic.mastery_score)<85) reasons.push(`${Math.round(Number(topic.mastery_score))}% saved practice score; more successful recall is needed.`);
     const urgency = (100-Number(topic.mastery_score))*0.42 + topic.priority*0.18 + (unpracticed?18:0)
       + (quiz.length ? misses/quiz.length*22 : 0) + recallMisses*4 + Math.min(14,days??0)
       + Math.min(20,blindSpots*10);

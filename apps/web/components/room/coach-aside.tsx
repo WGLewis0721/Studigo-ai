@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { topicEvidenceLabel } from "@/lib/progress-view";
 import type { Topic } from "@/lib/rooms";
 import type { WeakArea } from "@/lib/study-planning";
 
@@ -51,7 +52,7 @@ export function CoachAside({
           <div className="asideMeterBar" aria-hidden="true">
             <span style={{ width: `${practiced ? Math.max(4, Math.min(100, score)) : 0}%` }} />
           </div>
-          <small>{practiced ? `${score}% · ${current.status === "mastered" ? "Strong" : "Needs work"}` : "Not practiced yet"}</small>
+          <small>{topicEvidenceLabel(current)}</small>
         </div>
         {terms.length > 0 && (
           <ul className="asideTerms" aria-label="Key terms">

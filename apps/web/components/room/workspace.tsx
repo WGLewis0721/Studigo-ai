@@ -295,6 +295,7 @@ export function RoomWorkspace({
         )}
         {mode === "mastery" && (
           <MasteryPanel
+            onOpenMaterials={()=>navigate("materials")}
             calibration={calibration}
             topics={topics}
             readiness={readiness}
@@ -306,7 +307,7 @@ export function RoomWorkspace({
         )}
         {mode === "weak" && <WeakAreasPanel areas={areas} onStudy={(next,id)=>navigate(next,id)}/>}
         {mode === "test" && <PracticeTestPanel roomId={room.id} topicCount={topics.length} topics={topics} onGraded={refresh} onReviewTopic={id=>navigate("learn",id)}/>}
-        {mode === "plan" && <StudyPlanPanel roomId={room.id} days={plan} testDate={room.test_date} onStart={startPlannedAction} onChanged={refresh} onSetDate={()=>setSettingsOpen(true)}/>}
+        {mode === "plan" && <StudyPlanPanel roomId={room.id} days={plan} testDate={room.test_date} hasTopics={topics.length>0} asOf={asOf} onOpenMaterials={()=>navigate("materials")} onStart={startPlannedAction} onChanged={refresh} onSetDate={()=>setSettingsOpen(true)}/>}
         {(mode === "cram" || cramStarted) && <div hidden={mode!=="cram"}><CramPanel phase3Ui={foundationEnabled} roomId={room.id} topics={topics} areas={areas} testDate={room.test_date} onChanged={refresh}/></div>}
 
       </div>

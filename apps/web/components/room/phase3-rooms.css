@@ -195,3 +195,26 @@
   .roomDevice[data-ui="phase3"] .coachChat :is(.coachSkillSheet, .coachSettings.mobileOpen) { max-height: min(80dvh, 640px); }
   .roomDevice[data-ui="phase3"] :is(.coachSkillSheet, .coachSettings.mobileOpen) button { min-height: 44px; }
 }
+
+/* V4: saved evidence and a compact, scannable daily plan. */
+.roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { min-height: 0; padding: clamp(20px, 3vw, 30px); gap: 24px; }
+.roomDevice[data-ui="phase3"] .roomEvidence .masteryHeroText h2 { font-size: clamp(1.5rem, 2.6vw, 2.25rem); }
+.evidenceGuide { padding: 16px 18px; border-radius: var(--r-lg); background: var(--white); box-shadow: inset 0 0 0 1px var(--hairline); }
+.evidenceGuide summary { min-height: 44px; display: list-item; align-content: center; font-weight: 700; cursor: pointer; }
+.evidenceGuide p { color: var(--ink-2); line-height: 1.55; }
+.statRow small { color: var(--muted); }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDay { display: block; padding: 0 20px; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDayLabel { display: list-item; padding: 16px 0; min-height: 44px; cursor: pointer; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDayLabel strong { font-size: 1.1rem; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDayLabel small { display: block; margin-top: 6px; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .planDayActions { padding: 0 0 16px; }
+.roomDevice[data-ui="phase3"] .studyPlanPanel .roomSectionIntro p { display: block; font-size: .9rem; }
+@media (max-width: 700px) {
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHeroText { width: 100%; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero h2 { font-size: 1.5rem; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .progressRing { width: 96px; justify-self: start; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .weakSpots { padding: 16px; }
+  .roomDevice[data-ui="phase3"] .roomEvidence .weakSpots li { gap: 10px; padding: 12px; }
+  .roomDevice[data-ui="phase3"] .studyPlanPanel .planDay { padding-inline: 14px; }
+}

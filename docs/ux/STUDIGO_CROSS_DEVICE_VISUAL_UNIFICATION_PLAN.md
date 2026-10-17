@@ -2,7 +2,7 @@
 
 > **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation and V0 golden capture are complete.** The owner has authorized sequential V3–V6 implementation; manual hardware acceptance remains separately tracked.
 
-**Status:** V0–V2 shipped; V3–V6 in owner-authorized implementation.
+**Status:** V0–V3 shipped; V4–V6 in owner-authorized implementation.
 **Baseline:** the accepted Learn → Explore journal, lesson window, compact bottom controls, source evidence and restrained progress glow from **PR #217**.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png`, shipped tokens in `apps/web/app/globals.css`, established room components, and the proposed design/phase3 asset inventory.  
 **Rollout rule:** PR #217 originally approved the plan only. The subsequent owner instruction authorizes V3 → V4 → V5 → V6 as separate tested releases; it does not authorize a rebrand or learning-engine rewrite.
@@ -99,8 +99,16 @@ External Refero lookup returned no matching reference; the explicit existing-pro
 - Native `AnswerChoices` consolidates Quiz and full-test choice rendering, written selected/correct/wrong states and keyboard arrow-key selection. `ActivityProgress` labels current position and completion without implying mastery.
 - Compact matte setup/assessment surfaces, responsive card/rating/confidence controls; one topic selector plus a read-only desktop scope summary. Cram reuses these same activities and its timer never submits work.
 - Coach sheets trap keyboard focus, close with Escape and restore focus. No question generation, requested counts, adaptive reducer, save/retry or grading API changes. A missing expected test choice now says unavailable rather than guessing choice A.
-- Local evidence: workspace typecheck, web production build, provider/design lint, 71 focused existing regressions; four-width synthetic interaction run passed 44 rendered states. Baseline `5338c51` phone/desktop screenshots were compared against the implementation. Final CI and production verification are pending at this commit.
+- Local evidence: workspace typecheck, web production build, provider/design lint, 71 focused existing regressions; four-width synthetic interaction run passed 44 rendered states. Baseline `5338c51` phone/desktop screenshots were compared against the implementation. Released in [PR #230](https://github.com/WGLewis0721/Studigo-ai/pull/230), head `504d836`, merge `0b69ae1`. All required CI, PostgreSQL contention, Chromium/WebKit and four-width visual gates passed ([run](https://github.com/WGLewis0721/Studigo-ai/actions/runs/39072197331), artifact `12115513451`). Production alias verified Ready on `dpl_DJE9gLrsTMqpszDvtzjPkcDpAVQL` at merge `0b69ae1`. Public Home/sign-up/login returned 200; `/dev/study` and `/dev/home` returned 404; unauthenticated source inspection returned 401. Production foundation flag is `1` and has no per-room override.
 - Automated evidence uses synthetic API responses and real components at DPR 1 with reduced motion. It proves client behavior, not actual hosted student persistence, VoiceOver or iOS hardware acceptance.
+
+### V4 — Progress & Plan
+
+- Progress ring now names **topic practice coverage** (saved practiced-topic count / current topic count), not predicted readiness. Quiz correctness is read from persisted `quiz_attempts` filtered to `source=quiz`; card self-ratings no longer inflate graded answer counts. Existing grading/mastery writes and RLS are unchanged.
+- Canonical topic views show actual evidence stages, review/check requirements and unavailable sources, never their compatibility index as a percentage. Legacy scores identify themselves as saved practice scores. Shared labels appear in Progress, topic summaries, Coach aside and Quiz scope.
+- “Where these numbers come from” explains the provenance and limits. Current topic labels and actions remain source-aware. An empty recommendation list cannot falsely claim everything is strong.
+- Today opens first; future plan days use native keyboard-accessible disclosures. Completion remains plan bookkeeping only, with saved/error notices. No-topic versus passed-test empty states point to the appropriate Materials/settings action; calendar dates render in UTC to retain the stored date.
+- 28 focused existing/new progress, planning, canonical projection and Home recommendation checks pass. Twenty rendered states and action-routing checks pass at 320/390/820/1440; phone/desktop screenshots inspected against `5338c51`. Companion now clears progress tiles and planning headings using the existing safe-dock/seat policy. Final release gates pending at this commit. No schema, assets, tracking or new dependency.
 
 ### Remaining acceptance evidence
 
