@@ -1,4 +1,5 @@
 "use client";
+import { StudyRoomEmptyState } from './study-room-empty-state';
 import { useRef, useState } from 'react';
 import type { PlanDay, StudyAction } from '@/lib/study-planning';
 import { ChipButton, HeaderChip } from './mode-header';
@@ -15,7 +16,7 @@ export function StudyPlanPanel({roomId,days,testDate,onStart,onChanged,onSetDate
     <div className="roomSectionIntro"><span className="tinyLabel">PLANNING ROOM / DAILY ACTIONS</span><h2>Make the next session count.</h2><p>Start opens that activity. Marking a plan done records the plan only, not a grade or mastery.</p></div>
     {notice&&<p className="formNotice" role="status">{notice}</p>}
     {error&&<p className="formError" role="alert">{error}</p>}
-    {!days.length&&<div className="modeEmpty"><h3>Nothing scheduled yet.</h3><p>Add a study guide and set an upcoming test date to plan your next sessions.</p><button className="buttonPrimary" type="button" onClick={onSetDate}>Set test date →</button></div>}
+    {!days.length&&<StudyRoomEmptyState title="Nothing scheduled yet." description="Add a study guide and set an upcoming test date to plan your next sessions."><button className="buttonPrimary" type="button" onClick={onSetDate}>Set test date →</button></StudyRoomEmptyState>}
     <div className="planTimeline">{days.map(day=><section key={day.date} className="planDay"><div className="planDayLabel"><strong>{day.label}</strong><small>{day.actions.reduce((sum,a)=>sum+a.minutes,0)} min planned</small></div><div className="planDayActions">{!day.actions.length&&<p>Planned work complete. Rest, or revisit a weak topic if you have time.</p>}{day.actions.map(a=><article key={a.key}><span className="tinyLabel">{a.mode==='test'?'PRACTICE TEST':a.mode.toUpperCase()} / {a.minutes} MIN</span><h3>{a.title}</h3><p>{a.reason}</p><div className="planActionButtons"><button type="button" className="buttonPrimary" aria-label={`Start ${a.title}`} onClick={()=>onStart(a)}>Start →</button><button type="button" disabled={saving!==null} aria-label={`Mark ${a.title} done`} onClick={()=>void mark(day.date,a.key,'completed')}>{saving===`${day.date}:${a.key}`?'Saving…':'Mark done'}</button><button type="button" disabled={saving!==null} aria-label={`Skip and replan ${a.title}`} onClick={()=>void mark(day.date,a.key,'skipped')}>Skip / replan</button></div></article>)}</div></section>)}</div>
     <p className="hintText">Checking off a plan never adds mastery. Only saved practice performance does. Dates use the Study Room's test-date calendar.</p>
   </section>;
