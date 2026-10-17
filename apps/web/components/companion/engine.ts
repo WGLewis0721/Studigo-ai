@@ -203,9 +203,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const safeRoom = ws.closest('.roomDevice[data-ui="phase3"]') !== null && !a.inRow;
     const targets = controls(a);
     if (safeRoom) {
-      // An upload target and a reading surface need their whole area, including
-      // instructions and source text, rather than just the buttons inside them.
-      surface()?.querySelectorAll(".dropzone, .guideReading").forEach((node) => {
+      // Source text and section headings matter as much as clickable controls.
+      // Keep the Materials title/status unobscured; if no safe corner remains,
+      // controlSafeDock automatically seats Studigo in his existing header avatar.
+      surface()?.querySelectorAll(".dropzone, .guideReading, .materialsIntro h2, .materialsReadout").forEach((node) => {
         const rect = node.getBoundingClientRect();
         if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
       });
