@@ -4279,3 +4279,79 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     pointer-events: none;
   }
 }
+
+/* V1 mobile polish — maintain the approved full-sized Coach/Learn tabs.
+   The desktop header may tuck, but on a phone shrinking labels makes the
+   most important navigation illegible. Keep the strip's geometry stable. */
+@media (max-width: 700px) {
+  .roomDevice .modeFrame,
+  .roomDevice .modeFrame[data-compact="true"] {
+    --strip-scale: 1;
+    transition: none;
+  }
+
+  /* One messenger toolbar: Clear | message | speech | Send.
+     Shared vertical alignment, real 44px controls, and a flexible input.
+     No change to desktop, keyboard handling, or speech consent behavior. */
+  .roomDevice:has(.coachChat) .chatDock {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .roomDevice:has(.coachChat) .chatEraser {
+    width: 44px;
+    height: 44px;
+    align-self: center;
+  }
+  .roomDevice:has(.coachChat) .chatDock .chatComposer {
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .chatRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .chatRow > input {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .voiceAnswerControl {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .voiceMicButton,
+  .roomDevice:has(.coachChat) .chatComposer .chatSend {
+    position: static;
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    margin: 0;
+    transform: none;
+    border-radius: 14px;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .chatSend:disabled {
+    opacity: .45;
+    transform: none;
+    pointer-events: none;
+  }
+  .roomDevice:has(.coachChat) .chatComposer .voiceMicButton:focus-visible,
+  .roomDevice:has(.coachChat) .chatComposer .chatSend:focus-visible {
+    outline: 2px solid var(--th-ink, var(--ink));
+    outline-offset: 2px;
+  }
+}
