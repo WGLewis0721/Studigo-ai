@@ -1,5 +1,6 @@
 "use client";
 
+import { StudyRoomEmptyState } from "./study-room-empty-state";
 import { TopicReadout } from "./topic-readout";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
@@ -193,11 +194,13 @@ export function CardsPanel({
 
   if (!hasMaterials) {
     return (
-      <div className="modeEmpty">
+      <>
         <HeaderMascot state="sources" />
-        <h3>Nothing to drill yet.</h3>
-        <p>Add and process a document first, then Studigo pulls the terms worth drilling.</p>
-      </div>
+        <StudyRoomEmptyState
+          title="Nothing to drill yet."
+          description="Add and process a document first, then Studigo can find terms to review."
+        />
+      </>
     );
   }
 
