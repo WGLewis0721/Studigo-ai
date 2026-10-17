@@ -715,11 +715,30 @@ try {
         await page.locator('.learnTalk[data-journey-stage="first-check"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
           "intro → comprehension must advance 22 percentage points");
-        const firstPlume = page.locator(".learnProgressPlume");
-        await firstPlume.waitFor();
-        assert.equal(await firstPlume.evaluate((node) => getComputedStyle(node).animationName), "learnPlumeBurst",
-          "each durable forward advance should trigger the flame plume");
-        const firstPlumeKey = await firstPlume.evaluate((node) => node.outerHTML);
+        const firstPlume = page.locator("body > .learnProgressPlume");
+        await firstPlume.waitFor({ state: "visible" });
+        const flameArtwork = firstPlume.locator(".learnProgressFlameArtwork");
+        assert.equal(await flameArtwork.evaluate((node) => getComputedStyle(node).animationName), "learnPlumeBurst",
+          "forward progress must trigger a recognizable SVG fire burst");
+        assert.equal(await firstPlume.locator(".learnFlameOuter, .learnFlameMiddle, .learnFlameInner").count(), 3,
+          "flame must have clear outer, middle and bright inner silhouettes");
+        assert.equal(await firstPlume.evaluate((node) => getComputedStyle(node).position), "fixed",
+          "flame should follow the meter in viewport space, not be clipped inside the lesson");
+        assert.ok(Number(await firstPlume.evaluate((node) => getComputedStyle(node).zIndex)) >= 1000,
+          "flame must be on a visibly elevated layer above the lesson cards");
+        await page.waitForFunction(() => {
+          const flame = document.querySelector("body > .learnProgressPlume");
+          const tip = document.querySelector(".learnBarFill");
+          if (!flame || !tip) return false;
+          const a = flame.getBoundingClientRect();
+          const b = tip.getBoundingClientRect();
+          return Math.abs((a.left + a.width / 2) - b.right) < 24 && a.height >= 100;
+        }, null, { timeout: 2500 });
+        // Capture the burst before opacity animates out, separate from the
+        // static four-width lesson screenshots.
+        const fireShot = `${viewport.name}-learn-flame-${skin}.png`;
+        await page.screenshot({ path: path.join(output, fireShot), animations: "allow" });
+        const firstFlameMarkup = await flameArtwork.evaluate((node) => node.innerHTML);
         assert.equal(await page.locator(".learnProgressEmber").count(), 1, "progress ember continuously illuminates the head");
         await page.locator(".learnChoice").first().click();
         await page.getByRole("button", { name: /Check answer/ }).click();
@@ -727,14 +746,14 @@ try {
         await page.locator('.learnTalk[data-journey-stage="explore"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "56",
           "comprehension → Explore must advance another 22 percentage points");
-        await page.locator(".learnProgressPlume").waitFor();
-        const nextPlumeKey = await page.locator(".learnProgressPlume").evaluate((node) => node.outerHTML);
-        assert.equal(firstPlumeKey, nextPlumeKey, "each stage uses the same branded flare design");
+        await page.locator("body > .learnProgressPlume").waitFor({ state: "visible" });
+        assert.equal(await page.locator(".learnProgressFlameArtwork").evaluate((node) => node.innerHTML),
+          firstFlameMarkup, "each stage uses the same branded flame artwork");
         await page.emulateMedia({ reducedMotion: "reduce" });
         assert.equal(await page.locator(".learnProgressEmber").evaluate((node) => getComputedStyle(node).animationName), "none",
           "reduced motion suppresses continuous ember pulse");
-        assert.equal(await page.locator(".learnProgressPlume").evaluate((node) => getComputedStyle(node).display), "none",
-          "reduced motion suppresses plume");
+        assert.equal(await page.locator("body > .learnProgressPlume").evaluate((node) => getComputedStyle(node).display), "none",
+          "reduced motion suppresses flame overlay");
         await page.emulateMedia({ reducedMotion: "no-preference" });
         await page.getByRole("button", { name: "Pause lesson" }).click();
         await page.getByText(/PAUSED MISSION/).waitFor();
