@@ -22,9 +22,10 @@ export function LearnFlamePlume({ targetRef }: { targetRef: RefObject<HTMLDivEle
       const rect = target.getBoundingClientRect();
       // Keep the plume over the progress tip even while the 820ms bar
       // transition is travelling, without rerendering the lesson 60fps.
-      const x = Math.min(Math.max(rect.right, 49), window.innerWidth - 49);
+      const inset = plume.offsetWidth / 2 + 8;
+      const x = Math.min(Math.max(rect.right, inset), window.innerWidth - inset);
       plume.style.left = `${x}px`;
-      plume.style.top = `${rect.top + rect.height / 2 - 70}px`;
+      plume.style.top = `${rect.top + rect.height / 2 - plume.offsetHeight + 10}px`;
       if (now - started < 1900) frame = requestAnimationFrame(follow);
     };
     frame = requestAnimationFrame(follow);
@@ -33,7 +34,7 @@ export function LearnFlamePlume({ targetRef }: { targetRef: RefObject<HTMLDivEle
 
   return createPortal(
     <div className="learnProgressPlume" ref={plumeRef} aria-hidden="true">
-      <svg className="learnProgressFlameArtwork" viewBox="0 0 104 124" width="104" height="124"
+      <svg className="learnProgressFlameArtwork" viewBox="0 0 104 124" width="60" height="72"
         focusable="false" aria-hidden="true">
         <defs>
           <linearGradient id="learnFlameOuter" x1="0" y1="1" x2=".75" y2="0">
