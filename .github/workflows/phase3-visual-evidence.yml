@@ -9,6 +9,7 @@ on:
       - ".github/workflows/phase3-visual-evidence.yml"
       - "scripts/phase3-visual-qa.mjs"
       - "scripts/v1-mobile-tabbar-qa.mjs"
+      - "scripts/v1-final-qa.mjs"
 
 permissions:
   contents: read
@@ -40,6 +41,8 @@ jobs:
           exit 1
       - name: V1 mobile dock — scroll, modal, keyboard and reduced motion
         run: node scripts/v1-mobile-tabbar-qa.mjs
+      - name: V1 — focus, empty states and four-width zoom/reflow
+        run: node scripts/v1-final-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
