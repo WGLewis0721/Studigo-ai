@@ -52,7 +52,8 @@ test("C17 preview matches the edition and hides the answer key", () => {
   assert.match(html, /vote helps choose representatives/);
   assert.doesNotMatch(html, /Checked answer/);
   assert.match(html, /Show answers/);
-  assert.match(html, /version 1/);
+  assert.match(html, /STUDIGO GUIDE · VERSION 1/);
+  assert.match(html, /6 cited sources/);
   assert.match(html, /general/);
 });
 
@@ -84,7 +85,7 @@ test("Phase 3 answer reveal remains reversible and citations do not invent page 
   const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: withoutPage, phase3Materials: true, initialAnswersRevealed: true }));
   assert.match(html, /Hide answers/);
   assert.match(html, /Checked answer/);
-  assert.match(html, />Source passage<\/button>/);
+  assert.match(html, />Check source passage<\/button>/);
   assert.doesNotMatch(html, /Source, page 0/);
   assert.equal((html.match(/class="materialsCitation"/g) ?? []).length, 9);
 });

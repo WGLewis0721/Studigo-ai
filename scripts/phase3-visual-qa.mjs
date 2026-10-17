@@ -619,6 +619,11 @@ try {
       await page.goto(`${origin}/dev/study?shell=1&ui=phase3&mode=materials`, { waitUntil: "networkidle" });
       const original = page.locator(".documentRow").first();
       assert.equal(await original.getByRole("link", { name: /View original file/ }).count(), 1);
+      // V2 keeps the original view action visible and groups secondary
+      // download/print/remove links behind the native keyboard-safe disclosure.
+      const more = original.locator("details.documentMore > summary");
+      assert.equal(await more.count(), 1);
+      await more.click();
       assert.equal(await original.getByRole("link", { name: /Download original file/ }).count(), 1);
       assert.equal(await original.getByRole("link", { name: /Open original PDF .* to print/ }).count(), 1);
       missionCase.originalScreenshot = path.join(output, `${viewport.name}-guided-learn-original-recovery-phase3.png`);
