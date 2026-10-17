@@ -199,7 +199,7 @@ try {
             assert.equal(reading.clearName, "Clear Coach chat", "#174 must retain the accessible Clear control");
             assert.ok(reading.clearPaths >= 4 && reading.clearRects === 0, "#174 must use the bin glyph, not the old eraser");
             assert.equal(reading.clearDisplayed, true, "#174 clear bin must appear on phone, tablet and desktop");
-            assert.equal(reading.clearSize, phone ? 30 : 44, "#174 clear bin must match compact/mobile or wide tap-target scale");
+            assert.equal(reading.clearSize, 44, "#174/V1 Clear must remain a 44px real touch target at every viewport");
             assert.equal(reading.clearKeyboardFocusable, true, "#174 clear action must stay keyboard-accessible");
             // With the bin in the composer, the old desktop Clear text button
             // must not produce two identical destructive actions.
