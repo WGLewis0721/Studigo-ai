@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
+import { guideOutlineHeading, guideFactExcerpt } from "@/lib/guide-outline";
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
@@ -142,7 +143,7 @@ export function GuidePreview({
         <span className="tinyLabel">STUDIGO GUIDE · VERSION {model.version}</span>
         <span className="materialsGuideEvidence">{model.sourceCount} {model.sourceCount === 1 ? "cited source" : "cited sources"} · {model.level}</span>
       </div>
-      <h2>{model.title}</h2>
+      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Your study outline" : model.title}</h2>
       {updateAvailable && <p className="materialsGuideStale" role="status">
         <strong>Source changes need review.</strong>{" "}
         This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
@@ -164,31 +165,100 @@ export function GuidePreview({
           {source.document?.id && <a href={`/api/documents/download?documentId=${encodeURIComponent(source.document.id)}&inline=1${source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? `&page=${source.pageNumber}` : ""}`} target="_blank" rel="noreferrer">Open original{source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? ` at page ${source.pageNumber}` : ""}</a>}
         </>}
       </dialog>}
-      {loaded.chapters.map((chapter) => (
+      {loaded.chapters.map((chapter, chapterIndex) => phase3Materials ? (
+        <section key={chapter.id} className="guideOutlineChapter" aria-label={guideOutlineHeading(chapter.title, chapterIndex).heading}>
+          <div className="guideOutlineChapterHeading">
+            <span className="tinyLabel">SECTION {chapterIndex + 1}</span>
+            <h3>{guideOutlineHeading(chapter.title, chapterIndex).heading}</h3>
+          </div>
+          {guideOutlineHeading(chapter.title, chapterIndex).oversized && (
+            <details className="guideOutlineOriginal">
+              <summary>View original heading and source wording</summary>
+              <p>{chapter.title}</p>
+              {sourceLinks(chapter.objectiveEvidence)}
+            </details>
+          )}
+          {chapter.facts.length > 0 && (
+            <div className="guideOutlineGroup">
+              <h4>Key points</h4>
+              <ul className="guideOutlinePoints">
+                {chapter.facts.map((fact) => {
+                  const note = guideFactExcerpt(fact.text);
+                  return (
+                    <li key={fact.id}>
+                      {note.long ? (
+                        <details className="guideOutlineLongNote">
+                          <summary>{note.excerpt}</summary>
+                          <p>{fact.text}</p>
+                        </details>
+                      ) : <span>{fact.text}</span>}
+                      {sourceLinks(fact.evidence)}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          {chapter.terms.length > 0 && (
+            <div className="guideOutlineGroup">
+              <h4>Vocabulary</h4>
+              <dl className="guideOutlineTerms">
+                {chapter.terms.map((term) => {
+                  const note = guideFactExcerpt(term.definition, 225);
+                  return (
+                    <div className="guideOutlineTerm" key={term.id}>
+                      <dt>{term.term}</dt>
+                      <dd>{note.long ? (
+                        <details className="guideOutlineLongNote">
+                          <summary>{note.excerpt}</summary>
+                          <p>{term.definition}</p>
+                        </details>
+                      ) : term.definition}
+                      {sourceLinks(term.evidence)}</dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </div>
+          )}
+          {chapter.examples.length > 0 && (
+            <div className="guideOutlineGroup">
+              <h4>Examples</h4>
+              <ul className="guideOutlinePoints">
+                {chapter.examples.map((example) => <li key={example.id}>
+                  {example.text} {sourceLinks(example.evidence)}
+                </li>)}
+              </ul>
+            </div>
+          )}
+          {chapter.practice.length > 0 && (
+            <details className="guideOutlinePractice">
+              <summary>Practice questions ({chapter.practice.length})</summary>
+              <ol>
+                {chapter.practice.map((question) => <li key={question.id}>{question.prompt} {sourceLinks(question.evidence)}</li>)}
+              </ol>
+              {showAnswers ? (
+                <><button type="button" onClick={() => setShowAnswers(false)}>Hide answers</button>
+                  <ol className="guideAnswerKey">
+                    {chapter.answers.map((answer) => <li key={answer.id}>{answer.text} {sourceLinks(answer.evidence)}</li>)}
+                  </ol></>
+              ) : <button type="button" onClick={() => setShowAnswers(true)}>Show answers</button>}
+            </details>
+          )}
+        </section>
+      ) : (
         <section key={chapter.id}>
           <h3>{chapter.title}</h3>
-          {chapter.facts.map((fact) => (
-            <p key={fact.id}>
-              {fact.text}{" "}
-              {sourceLinks(fact.evidence)}
-            </p>
-          ))}
-          {chapter.terms.map((term) => (
-            <p key={term.id}><strong>{term.term}.</strong> {term.definition} {sourceLinks(term.evidence)}</p>
-          ))}
+          {chapter.facts.map((fact) => <p key={fact.id}>{fact.text} {sourceLinks(fact.evidence)}</p>)}
+          {chapter.terms.map((term) => <p key={term.id}><strong>{term.term}.</strong> {term.definition} {sourceLinks(term.evidence)}</p>)}
           {chapter.examples.map((example) => <p key={example.id}>{example.text} {sourceLinks(example.evidence)}</p>)}
           <h4>Practice</h4>
-          <ol>
-            {chapter.practice.map((question) => <li key={question.id}>{question.prompt} {sourceLinks(question.evidence)}</li>)}
-          </ol>
+          <ol>{chapter.practice.map((question) => <li key={question.id}>{question.prompt} {sourceLinks(question.evidence)}</li>)}</ol>
           <h4>Answers</h4>
           {showAnswers ? (
-            <><button type="button" onClick={() => setShowAnswers(false)}>Hide answers</button><ol className="guideAnswerKey">
-              {chapter.answers.map((answer) => <li key={answer.id}>{answer.text} {sourceLinks(answer.evidence)}</li>)}
-            </ol></>
-          ) : (
-            <button type="button" onClick={() => setShowAnswers(true)}>Show answers</button>
-          )}
+            <><button type="button" onClick={() => setShowAnswers(false)}>Hide answers</button>
+              <ol className="guideAnswerKey">{chapter.answers.map((answer) => <li key={answer.id}>{answer.text} {sourceLinks(answer.evidence)}</li>)}</ol></>
+          ) : <button type="button" onClick={() => setShowAnswers(true)}>Show answers</button>}
         </section>
       ))}
     </article>
