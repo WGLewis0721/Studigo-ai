@@ -506,44 +506,50 @@ export function MaterialsPanel({
             key={document.id}
             className={`documentRow status-${document.status}`}
             data-source={document.source_type}
+            data-readiness={document.status === "ready" ? "ready" : document.status === "partial" ? "partial" : document.status === "failed" ? "failed" : "pending"}
           >
             <span className="documentBadge">{SOURCE_TYPE_LABELS[document.source_type]}</span>
             <div className="documentMeta">
-              <strong>{document.name}</strong>
-              <small>
-                <b className={`docStatus docStatus-${document.status}`}>
-                  {STATUS_LABELS[document.status]}
-                </b>
-                {formatSize(document.size_bytes)} · {statusCopy(document)}
-              </small>
+              <span className="documentOrigin">Original upload</span>
+              <strong title={document.name}>{document.name}</strong>
+              <div className="documentEvidence">
+                <b className={`docStatus docStatus-${document.status}`}>{STATUS_LABELS[document.status]}</b>
+                <span>{formatSize(document.size_bytes)}</span>
+              </div>
+              <p className="documentStatusDetail">{statusCopy(document)}</p>
             </div>
-            <div className="documentActions">
-              <a aria-label={`View original file ${document.name}`}
+            <div className="documentActions" aria-label={`Actions for ${document.name}`}>
+              <a className="documentOpen" aria-label={`View original file ${document.name}`}
                 href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >View original</a>
-              <a href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}`}
-                aria-label={`Download original file ${document.name}`}>Download original</a>
-              {document.mime_type === "application/pdf" && <a
-                href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
-                target="_blank" rel="noopener noreferrer"
-                title="Opens the original PDF in a new tab; choose Print in your PDF viewer"
-                aria-label={`Open original PDF ${document.name} to print`}>Print original</a>}
+                target="_blank" rel="noopener noreferrer">View original</a>
               {(document.status === "failed" ||
                 document.status === "partial" ||
                 document.status === "queued" ||
                 document.status === "uploaded") && (
                 <button type="button" disabled={retryingIds.has(document.id)} onClick={() => retry(document)}>
-                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" || document.status === "partial" ? "Read file again" : "Process now"}
+                  {retryingIds.has(document.id) ? "Processing…" : document.status === "failed" || document.status === "partial" ? "Read again" : "Process now"}
                 </button>
               )}
-              <button type="button" className="danger" disabled={removingIds.has(document.id)} aria-label={`Remove original file ${document.name}`} onClick={() => void remove(document)}>
-                {removingIds.has(document.id) ? "Removing…" : "Remove"}
-              </button>
+              <details className="documentMore">
+                <summary aria-label={`More actions for ${document.name}`}>More <span aria-hidden="true">⌄</span></summary>
+                <div className="documentMoreOptions">
+                  <a href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}`}
+                    aria-label={`Download original file ${document.name}`}>Download original</a>
+                  {document.mime_type === "application/pdf" && <a
+                    href={`/api/documents/download?documentId=${encodeURIComponent(document.id)}&inline=1`}
+                    target="_blank" rel="noopener noreferrer"
+                    title="Opens the original PDF in a new tab; choose Print in your PDF viewer"
+                    aria-label={`Open original PDF ${document.name} to print`}>Print original</a>}
+                  <button type="button" className="danger" disabled={removingIds.has(document.id)}
+                    aria-label={`Remove original file ${document.name}`} onClick={() => void remove(document)}>
+                    {removingIds.has(document.id) ? "Removing…" : "Remove file"}
+                  </button>
+                </div>
+              </details>
             </div>
           </li>
         ))}
+
       </ul>
       {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials sourceRevision={sourceRevision} /></div>}
       </div>
