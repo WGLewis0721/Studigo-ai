@@ -623,27 +623,6 @@
               0 0 16px 5px color-mix(in oklab, var(--progress-heat, var(--tangerine)) 45%, transparent);
   animation: learnEmberPulse 2.2s ease-in-out infinite;
 }
-.learnReading .learnProgressPlume {
-  position: absolute;
-  z-index: 3;
-  right: -20px;
-  bottom: -8px;
-  width: 45px;
-  height: 42px;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 42% 77%, var(--dandelion) 0 14%, var(--tangerine) 40%, transparent 75%);
-  clip-path: polygon(33% 100%, 10% 80%, 17% 52%, 8% 45%, 43% 8%, 54% 48%, 81% 15%, 76% 54%, 94% 73%, 58% 100%);
-  filter: drop-shadow(0 0 9px var(--tangerine));
-  animation: learnPlumeBurst 1.15s cubic-bezier(.15,.8,.25,1) both;
-}
-.learnReading .learnProgressPlume::after {
-  content: "";
-  position: absolute;
-  inset: 37% 33% 8% 32%;
-  border-radius: 50% 50% 30% 30%;
-  background: var(--dandelion);
-  filter: blur(1px);
-}
 .learnReading .learnTalk[data-journey-stage] {
   padding: clamp(12px, 1.5vw, 20px);
   gap: 0;
@@ -664,14 +643,50 @@
   0%,100% { opacity: .82; box-shadow: 0 0 0 2px color-mix(in oklab, var(--progress-heat) 20%, transparent), 0 0 9px 3px color-mix(in oklab, var(--progress-heat) 26%, transparent); }
   50% { opacity: 1; box-shadow: 0 0 0 6px color-mix(in oklab, var(--progress-heat) 20%, transparent), 0 0 20px 8px color-mix(in oklab, var(--progress-heat) 48%, transparent); }
 }
+/* Portal overlay follows the meter tip. Escapes overflow-hidden lesson
+   containers and local stacking contexts without intercepting clicks. */
+.learnProgressPlume {
+  position: fixed;
+  z-index: 9999;
+  transform: translateX(-50%);
+  display: block;
+  width: 104px;
+  height: 124px;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style;
+}
+.learnProgressFlameArtwork {
+  display: block;
+  width: 104px;
+  height: 124px;
+  overflow: visible;
+  transform-origin: 50% 82%;
+  animation: learnPlumeBurst 1.9s cubic-bezier(.18,.72,.29,1) both;
+  filter: drop-shadow(0 0 6px rgba(255,138,61,.75))
+          drop-shadow(0 0 18px rgba(255,178,47,.52));
+}
+.learnProgressFlameArtwork .learnFlameSpark {
+  transform-origin: center;
+  animation: learnFlameSparkDrift .48s ease-in-out infinite alternate;
+}
+.learnProgressFlameArtwork .learnFlameSparkB { animation-delay: -.2s; }
 @keyframes learnPlumeBurst {
-  0% { opacity: .3; transform: translate(-22px, 9px) scale(.45) rotate(-20deg); }
-  24% { opacity: 1; transform: translate(4px, -7px) scale(1.35) rotate(8deg); }
-  55% { opacity: .94; transform: translate(12px,-12px) scale(1.6) rotate(17deg); }
-  100% { opacity: 0; transform: translate(26px,-24px) scale(.75) rotate(22deg); }
+  0% { opacity: .25; transform: translateY(19px) scale(.48) rotate(-6deg); }
+  15% { opacity: 1; transform: translateY(3px) scale(1.09) rotate(3deg); }
+  32% { opacity: 1; transform: translateY(-6px) scale(1.32) rotate(-2deg); }
+  56% { opacity: 1; transform: translateY(-12px) scale(1.2) rotate(4deg); }
+  76% { opacity: .86; transform: translateY(-18px) scale(1.1) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(-32px) scale(.82) rotate(5deg); }
+}
+@keyframes learnFlameSparkDrift {
+  from { opacity: .65; transform: translateY(2px) scale(.9); }
+  to { opacity: 1; transform: translateY(-7px) scale(1.12); }
 }
 @media (prefers-reduced-motion: reduce) {
   .learnReading .learnBarAnimated .learnBarFill { transition: none; }
   .learnReading .learnProgressEmber { animation: none; }
-  .learnReading .learnProgressPlume { animation: none; display: none; }
+  .learnProgressPlume { display: none; }
+  .learnProgressFlameArtwork, .learnProgressFlameArtwork .learnFlameSpark { animation: none; }
 }
