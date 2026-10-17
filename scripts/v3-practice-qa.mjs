@@ -14,6 +14,14 @@ try {
   const shot=async name=>{
    await page.evaluate(async()=>{await document.fonts.ready;window.scrollTo(0,0);document.querySelector(".modeSurface")?.scrollTo(0,0);});
    assert.equal(await page.evaluate(()=>Math.max(0,document.documentElement.scrollWidth-document.documentElement.clientWidth)),0,`${name}: horizontal overflow at ${width}`);
+   const overlaps=await page.evaluate(async()=>{
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const host=document.querySelector('.cmp[data-state="window"]:not([hidden])');
+    if(!(host instanceof HTMLElement)||!host.getClientRects().length)return [];
+    const a=host.getBoundingClientRect();
+    return Array.from(document.querySelectorAll('.answerChoices:not(:disabled) .choiceItem')).filter(el=>{const b=el.getBoundingClientRect();return b.top<innerHeight&&b.bottom>0&&a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;}).map(el=>el.textContent);
+   });
+   assert.deepEqual(overlaps,[],`${name}: companion must clear entire native answer labels`);
    const file=`${output}/${width}-${name}.png`;await page.screenshot({path:file,fullPage:true,animations:'disabled'});report.cases.push({width,name,screenshot:file});
   };
   const go=mode=>page.goto(`${origin}/dev/study?shell=1&mode=${mode}&ui=phase3`,{waitUntil:'networkidle'});

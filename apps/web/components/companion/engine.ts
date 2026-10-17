@@ -150,7 +150,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   function controls(a: Area): Rect[] {
     const page = surface();
     if (!page) return [];
-    return Array.from(page.querySelectorAll("button:not(:disabled), input:not(:disabled), select, textarea, a[href]"))
+    return Array.from(page.querySelectorAll("button:not(:disabled), input:not(:disabled), label:has(input:not(:disabled)), select, textarea, a[href]"))
       .map((node) => node.getBoundingClientRect())
       .filter((r) => r.width > 0 && r.bottom > a.top && r.top < a.bottom);
   }
