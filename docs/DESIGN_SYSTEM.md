@@ -1,5 +1,7 @@
 # Studigo Design System — Personal Learning Device (V2)
 
+> **Foundation, independent of aesthetic direction:** [Foundational UX and web-design principles](ux/FOUNDATIONAL_UX_PRINCIPLES.md) are required on every surface and viewport. Unity, balance, hierarchy, contrast, emphasis, scale, repetition and relevant Laws of UX apply **even if colors, animation, art or brand expression change**. They are the structural foundation, not a mood board. Accessibility, privacy and grounded learning-state integrity are non-negotiable. [Reconciled asset inventory](../design/README.md) distinguishes shipped work from prototype branches.
+
 > **Official visual source of truth:** [Studigo Official Brand Board](brand/STUDIGO_OFFICIAL_BRAND_BOARD.png), approved 2026-10-14. This document supplies the detailed implementation rules and token definitions. Keep both aligned when visual direction changes.
 
 > Supersedes **WebForge V1** ("living study field guide"). V1's product rules —
