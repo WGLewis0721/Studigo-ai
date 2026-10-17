@@ -650,8 +650,8 @@
   z-index: 9999;
   transform: translateX(-50%);
   display: block;
-  width: 104px;
-  height: 124px;
+  width: 60px;
+  height: 72px;
   overflow: visible;
   pointer-events: none;
   user-select: none;
@@ -659,13 +659,13 @@
 }
 .learnProgressFlameArtwork {
   display: block;
-  width: 104px;
-  height: 124px;
+  width: 60px;
+  height: 72px;
   overflow: visible;
   transform-origin: 50% 82%;
-  animation: learnPlumeBurst 1.9s cubic-bezier(.18,.72,.29,1) both;
+  animation: learnPlumeBurst 1.55s cubic-bezier(.18,.72,.29,1) both;
   filter: drop-shadow(0 0 6px rgba(255,138,61,.75))
-          drop-shadow(0 0 18px rgba(255,178,47,.52));
+          drop-shadow(0 0 10px rgba(255,178,47,.52));
 }
 .learnProgressFlameArtwork .learnFlameSpark {
   transform-origin: center;
@@ -673,12 +673,12 @@
 }
 .learnProgressFlameArtwork .learnFlameSparkB { animation-delay: -.2s; }
 @keyframes learnPlumeBurst {
-  0% { opacity: .25; transform: translateY(19px) scale(.48) rotate(-6deg); }
-  15% { opacity: 1; transform: translateY(3px) scale(1.09) rotate(3deg); }
-  32% { opacity: 1; transform: translateY(-6px) scale(1.32) rotate(-2deg); }
-  56% { opacity: 1; transform: translateY(-12px) scale(1.2) rotate(4deg); }
-  76% { opacity: .86; transform: translateY(-18px) scale(1.1) rotate(-3deg); }
-  100% { opacity: 0; transform: translateY(-32px) scale(.82) rotate(5deg); }
+  0% { opacity: .25; transform: translateY(10px) scale(.64) rotate(-6deg); }
+  15% { opacity: 1; transform: translateY(2px) scale(1.02) rotate(3deg); }
+  32% { opacity: 1; transform: translateY(-4px) scale(1.12) rotate(-2deg); }
+  56% { opacity: 1; transform: translateY(-8px) scale(1.07) rotate(4deg); }
+  76% { opacity: .86; transform: translateY(-13px) scale(1.0) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(-21px) scale(.76) rotate(5deg); }
 }
 @keyframes learnFlameSparkDrift {
   from { opacity: .65; transform: translateY(2px) scale(.9); }
