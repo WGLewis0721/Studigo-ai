@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import "./guided-learn-chapters.css";
 import { ExploreJournal } from "./explore-journal";
 import { MissionControlIcon } from "./mission-control-icon";
+import { LearnFlamePlume } from "./learn-flame-plume";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
@@ -85,6 +86,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [journalOpen, setJournalOpen] = useState(roomId !== "fixture" || previewJournal);
   const sourceDialogRef = useRef<HTMLDialogElement>(null);
   const sourceButtonRef = useRef<HTMLButtonElement>(null);
+  const progressFillRef = useRef<HTMLDivElement>(null);
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
@@ -322,11 +324,11 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           <div className="learnBar learnBarAnimated" role="progressbar" aria-valuemin={0} aria-valuemax={100}
             aria-valuenow={progress} aria-valuetext={`${progress}% through the guided lesson. This is not a mastery score.`}
             aria-label="Guided lesson progress, not mastery">
-            <div className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as CSSProperties}>
+            <div ref={progressFillRef} className="learnBarFill" style={{ width: `${progress}%`, "--progress-heat": phaseHeat } as CSSProperties}>
               <span className="learnProgressEmber" aria-hidden="true" />
-              {plumeRevision > 0 && <span key={plumeRevision} className="learnProgressPlume" aria-hidden="true" />}
             </div>
           </div>
+          {plumeRevision > 0 && <LearnFlamePlume key={`${mission.topic_id}:${plumeRevision}`} targetRef={progressFillRef} />}
         </div>
       : <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
           <span style={{ width: `${progress}%` }} />
