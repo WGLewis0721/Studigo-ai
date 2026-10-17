@@ -642,6 +642,10 @@ try {
     for (const skin of skins) {
       const exploreCase = { viewport: viewport.name, skin, screenshot: "", horizontalOverflow: null, error: null };
       try {
+        // General UI fixtures default to reduced motion, by design.
+        // This Explore case must explicitly test the *normal* progress pulse
+        // before switching to reduce and proving the effect is suppressed.
+        await page.emulateMedia({ reducedMotion: "no-preference" });
         await page.goto(`${origin}/dev/study?shell=1&learn=explore&ui=${skin}`, { waitUntil: "networkidle" });
         await page.getByRole("heading", { name: "Quest journal" }).waitFor();
         assert.equal(await page.locator(".exploreJournalQuest").count(), 8, "journal must use all and only real fixture topics");
@@ -790,6 +794,8 @@ try {
         exploreCase.error = String(error);
         report.failures.push({ ...exploreCase });
         console.error(`${viewport.name} Explore ${skin}: ${exploreCase.error}`);
+      } finally {
+        await page.emulateMedia({ reducedMotion: "reduce" });
       }
       report.explore.push(exploreCase);
     }
