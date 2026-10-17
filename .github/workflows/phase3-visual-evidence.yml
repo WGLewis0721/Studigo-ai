@@ -11,6 +11,7 @@ on:
       - "scripts/v1-mobile-tabbar-qa.mjs"
       - "scripts/v1-final-qa.mjs"
       - "scripts/v1-webkit-smoke.mjs"
+      - "scripts/v3-practice-qa.mjs"
 
 permissions:
   contents: read
@@ -46,6 +47,8 @@ jobs:
         run: node scripts/v1-final-qa.mjs
       - name: V1 — WebKit engine phone/tablet keyboard focus and touch smoke
         run: node scripts/v1-webkit-smoke.mjs
+      - name: V3 — Coach and Practice interactions at four widths
+        run: node scripts/v3-practice-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
