@@ -1,4 +1,5 @@
 "use client";
+import { StudyRoomEmptyState } from './study-room-empty-state';
 import type { WeakArea } from '@/lib/study-planning';
 import { HeaderMascot } from './mode-header';
 import './phase3-rooms.css';
@@ -6,7 +7,7 @@ export function WeakAreasPanel({areas,onStudy}:{areas:WeakArea[];onStudy:(mode:'
   return <section className="weakAreasPanel">
     <div className="roomSectionIntro"><span className="tinyLabel">PROGRESS ROOM / FOCUS</span><h2>Start where it matters.</h2><p>These priorities come from your current topic and practice signals. Learn this opens an ungraded reading. Quiz answers and card self-ratings provide different kinds of practice evidence.</p></div>
     <HeaderMascot state="explain"/>
-    {!areas.length?<div className="modeEmpty"><h3>No weak areas to rank right now.</h3><p>If you have topics, keep recall fresh with a practice test. Otherwise, add a study guide first.</p></div>:
+    {!areas.length?<StudyRoomEmptyState title="No weak areas to rank right now." description="If you have topics, keep recall fresh with a practice test. Otherwise, add a study guide first." />:
       <ol className="weakAreaList">{areas.map((area,index)=><li key={area.topic.id}>
         <span className="priorityNumber">{String(index+1).padStart(2,'0')}</span>
         <div className="weakAreaBody"><span className="tinyLabel">{area.label}</span><h3>{area.topic.title}</h3><ul>{area.reasons.map(reason=><li key={reason}>{reason}</li>)}</ul></div>
