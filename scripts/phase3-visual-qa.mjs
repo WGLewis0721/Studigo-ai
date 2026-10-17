@@ -92,10 +92,11 @@ try {
           const headerModes = await page.locator(".modeHead .chatModes button:visible").evaluateAll(nodes => nodes.map(node => ({
             name: node.getAttribute('aria-label'),
             title: node.getAttribute('title'),
+            description: document.getElementById(node.getAttribute('aria-describedby') ?? '')?.textContent?.trim(),
             height: node.getBoundingClientRect().height
           })));
-          assert.ok(headerModes.every(key => key.name?.trim() && key.title === key.name && key.height >= 44),
-            "shared header mode keys must have names and 44px touch height");
+          assert.ok(headerModes.every(key => key.name?.trim() && key.title === key.name && key.height >= 44 && key.description),
+            "shared header modes need a name, readable context description and 44px touch height");
           if (mode === "materials" && skin === "phase3") {
             const exports = page.locator(".materialsGuide .studyGuideDownload button");
             assert.equal(await exports.count(), 2, "generated guide must offer two distinct download formats");
