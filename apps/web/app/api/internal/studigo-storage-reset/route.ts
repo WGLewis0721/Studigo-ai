@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -28,7 +26,12 @@ export async function GET(req: Request) {
   const target = new URL(functionUrl);
   target.searchParams.set("action", action!);
   target.searchParams.set("nonce", nonce);
-  const response = NextResponse.redirect(target, 307);
-  response.headers.set("Cache-Control", "no-store");
-  return response;
+  // Fetch server-to-server; do not expose the nonce in a redirect URL.
+  // This temporary preview route is removed after the one-time reset.
+  const upstream = await fetch(target, { method: "GET", cache: "no-store", signal: AbortSignal.timeout(20000) });
+  const result = await upstream.text();
+  return new Response(result, {
+    status: upstream.status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+  });
 }
