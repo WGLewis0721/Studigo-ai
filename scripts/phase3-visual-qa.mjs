@@ -716,7 +716,11 @@ try {
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
           "intro → comprehension must advance 22 percentage points");
         const firstGlow = page.locator("body > .learnProgressGlowOverlay");
-        await firstGlow.waitFor({ state: "visible" });
+        // The 1.15s one-shot pulse intentionally ends at opacity:0 but remains
+        // mounted. Playwright's 'visible' check fails once the burst has faded,
+        // even though the effect did run. Assert attachment, real keyframes,
+        // geometry and advance origin instead of polling for fleeting opacity.
+        await firstGlow.waitFor({ state: "attached" });
         const burst = firstGlow.locator(".learnProgressGlowBurst");
         assert.equal(await burst.evaluate((node) => getComputedStyle(node).animationName), "learnGlowGrowFade",
           "forward progress triggers a brief grow-and-fade glow");
@@ -742,8 +746,19 @@ try {
             && Math.abs((a.top + a.height / 2) - (b.top + b.height / 2)) < 7
             && a.height <= 32 && a.width <= 32;
         }, null, { timeout: 2200 });
+        // Sample the real browser CSS animation at a deterministic peak for
+        // evidence screenshots; not an alternate or mocked visual effect.
+        const visibleFrame = await burst.evaluate((element) => {
+          const anim = element.getAnimations().find((item) =>
+            item instanceof CSSAnimation && item.animationName === "learnGlowGrowFade");
+          if (!anim) return false;
+          anim.pause();
+          anim.currentTime = 440;
+          return getComputedStyle(element).opacity !== "0";
+        });
+        assert.ok(visibleFrame, "the actual glow keyframes must illuminate at the peak");
         const glowShot = `${viewport.name}-learn-glow-${skin}.png`;
-        await page.screenshot({ path: path.join(output, glowShot), animations: "allow" });
+        await page.screenshot({ path: path.join(output, glowShot), animations: "disabled" });
         assert.equal(await page.locator(".learnProgressEmber").count(), 1, "meter tip remains illuminated");
         await page.locator(".learnChoice").first().click();
         await page.getByRole("button", { name: /Check answer/ }).click();
@@ -751,7 +766,7 @@ try {
         await page.locator('.learnTalk[data-journey-stage="explore"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "56",
           "comprehension to Explore advances another 22 points");
-        await page.locator("body > .learnProgressGlowOverlay").waitFor({ state: "visible" });
+        await page.locator("body > .learnProgressGlowOverlay").waitFor({ state: "attached" });
         assert.equal(await page.locator(".learnProgressGlowBurst").evaluate((node) => getComputedStyle(node).animationName),
           "learnGlowGrowFade", "each forward step replays the compact glow");
         await page.emulateMedia({ reducedMotion: "reduce" });
