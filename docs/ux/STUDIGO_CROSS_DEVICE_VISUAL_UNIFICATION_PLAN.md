@@ -1,5 +1,7 @@
 # Studigo — Cross-device visual consistency program
 
+> **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation is complete; V0 visual evidence and responsive defect capture remain pending.** No visual redesign is authorized by this documentation pass.
+
 **Status:** approved direction / **planning only** for work outside PR #217's Learn surface.  
 **Baseline:** the accepted Learn → Explore journal, lesson window, compact bottom controls, source evidence and restrained progress glow from **PR #217**.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png`, shipped tokens in `apps/web/app/globals.css`, established room components, and the proposed design/phase3 asset inventory.  

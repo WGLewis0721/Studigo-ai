@@ -1,5 +1,7 @@
 # Studigo brand
 
+The [universal design and UX principles](../ux/FOUNDATIONAL_UX_PRINCIPLES.md) govern clarity, cognitive load, reachability and accessibility **regardless of brand styling**. This board defines *Studigo's visual identity*, not exceptions to those rules. The [reconciled inventory](../../design/README.md) separates canonical/shipped assets from unmerged Phase 3 candidates and retired V1 artboards.
+
 ## Official visual reference
 
 [Brand foundation](./STUDIGO_OFFICIAL_BRAND_BOARD.png) is the current visual source of truth for Studigo's identity. It reflects the live site, V2 design system, implemented CSS tokens, and public companion asset. The 2026-10-15 revision incorporates marked feedback: retain the palette, type, tactile surfaces, action language, and source evidence; avoid substitute character art and an invented app icon.

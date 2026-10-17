@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-10-17",
+  "mainBaseline": "00257395fe876c1c373c2365e7ccbdc784d0b889",
+  "purpose": "Reconciled identity, source assets, shipping components, prototype references and pending candidates. Design and UX principles apply to all states and devices regardless of artwork.",
+  "statuses": {
+    "canonical": "Authoritative identity/design specification on main.",
+    "shipped": "Active production component or deployed asset on main.",
+    "production-source": "Source for built/deployed art or derivative.",
+    "prototype-with-shipped-source": "Mixed directory; shipped source and unshipped interaction fixture require separation.",
+    "reference": "Useful design illustration/research, not a shipped behavior contract.",
+    "historical": "Retained old/alternative design; not current visual authority.",
+    "marketing-source": "Campaign asset source, not production app controls.",
+    "proposed": "Design handoff on an unmerged branch, requires review.",
+    "candidate": "Reusable source that overlaps with shipped UI, no auto-merge.",
+    "exploratory": "Unapproved generated/concept art requiring provenance/licensing/approval.",
+    "invalid": "Broken or placeholder source that must never be shipped."
+  },
+  "entries": [
+    {
+      "id": "official-brand-board",
+      "path": "docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png",
+      "ref": "main",
+      "status": "canonical",
+      "role": "Visual identity reference. Source of truth for approved Studigo V2 brand.",
+      "decision": "keep"
+    },
+    {
+      "id": "design-system",
+      "path": "docs/DESIGN_SYSTEM.md",
+      "ref": "main",
+      "status": "canonical",
+      "role": "Visual tokens, accessibility, responsive behavior and materials.",
+      "decision": "keep"
+    },
+    {
+      "id": "brand-governance",
+      "path": "docs/brand/README.md",
+      "ref": "main",
+      "status": "canonical",
+      "role": "Brand approval hierarchy and caveats.",
+      "decision": "keep"
+    },
+    {
+      "id": "guiding-learning-application",
+      "path": "docs/brand/STUDIGO_GUIDED_LEARNING_BRAND_APPLICATION.png",
+      "ref": "main",
+      "status": "reference",
+      "role": "Illustrated Phase 3 guidance, not a screenshot or authoritative behavior.",
+      "decision": "consult"
+    },
+    {
+      "id": "phase3-generated-concept-board",
+      "path": "docs/brand/STUDIGO_V2_PHASE3_VISUAL_BRAND_BOARD.jpg",
+      "ref": "main",
+      "status": "exploratory",
+      "role": "Generated art-direction sheet; not an approved wordmark or mascot.",
+      "decision": "do-not-import-directly"
+    },
+    {
+      "id": "mascot-bible",
+      "path": "docs/brand/mascot/reference",
+      "ref": "main",
+      "status": "canonical",
+      "role": "Character identity, expressions, proportions and approved poses.",
+      "decision": "keep"
+    },
+    {
+      "id": "mascot-rules",
+      "path": "docs/brand/mascot/README.md",
+      "ref": "main",
+      "status": "canonical",
+      "role": "Character usage and sprite provenance.",
+      "decision": "keep"
+    },
+    {
+      "id": "runtime-mascot",
+      "path": "apps/web/public/mascot",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Live mascot art, tracking frames, companion poses and source images.",
+      "decision": "keep"
+    },
+    {
+      "id": "companion-behavior",
+      "path": "apps/web/components/companion",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Live mascot state and interaction logic.",
+      "decision": "keep"
+    },
+    {
+      "id": "web-icons",
+      "path": "apps/web/public/icons",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Installed web/app icon raster derivatives of canonical mascot.",
+      "decision": "keep"
+    },
+    {
+      "id": "app-icon",
+      "path": "apps/web/app/icon.png",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Production app icon.",
+      "decision": "keep"
+    },
+    {
+      "id": "mode-glyphs",
+      "path": "apps/web/components/mode-glyph.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "20px line icons for mode navigation; retain labeled affordances.",
+      "decision": "keep"
+    },
+    {
+      "id": "learn-action-glyphs",
+      "path": "apps/web/components/room/mission-control-icon.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "24px learn journal/guide/back/pause/check SVG line glyphs.",
+      "decision": "keep"
+    },
+    {
+      "id": "learn-progress-effect",
+      "path": "apps/web/components/room/learn-progress-glow.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Approved compact color-matched lesson progress burst, grounded in persisted state.",
+      "decision": "keep"
+    },
+    {
+      "id": "learn-source-ui",
+      "path": "apps/web/components/room/learn-mission.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Production Learn source reading and formative progression.",
+      "decision": "keep"
+    },
+    {
+      "id": "explore-journal-ui",
+      "path": "apps/web/components/room/explore-journal.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Production quest journal; source/mission-grounded navigation.",
+      "decision": "keep"
+    },
+    {
+      "id": "room-shell",
+      "path": "apps/web/components/room/workspace.tsx",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Production five-section room navigation, responsive layout and content routing.",
+      "decision": "keep"
+    },
+    {
+      "id": "css-tokens",
+      "path": "apps/web/app/globals.css",
+      "ref": "main",
+      "status": "shipped",
+      "role": "Actual CSS token values and shared implementation; inspect before any palette change.",
+      "decision": "keep"
+    },
+    {
+      "id": "companion-art-source",
+      "path": "design/companion-demo/assets",
+      "ref": "main",
+      "status": "production-source",
+      "role": "Editable animation/sprite source for built live mascot derivatives.",
+      "decision": "keep-source"
+    },
+    {
+      "id": "companion-build",
+      "path": "design/companion-demo/build_public_demo.py",
+      "ref": "main",
+      "status": "production-source",
+      "role": "Rebuilds public companion assets and public interactive demo.",
+      "decision": "keep-source"
+    },
+    {
+      "id": "companion-demo",
+      "path": "design/companion-demo",
+      "ref": "main",
+      "status": "prototype-with-shipped-source",
+      "role": "Concept screens alongside production-source art; HTML interaction fixtures are not the live app.",
+      "decision": "separate-fixtures-from-source"
+    },
+    {
+      "id": "homepage-direction-document",
+      "path": "design/studigo-homepage-directions.html",
+      "ref": "main",
+      "status": "historical",
+      "role": "Earlier homepage exploration; do not treat large inline HTML as the current implementation.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "homepage-artboards",
+      "path": "design/canvas.json",
+      "ref": "main",
+      "status": "historical",
+      "role": "V1 canvas contains superseded paper palette/Fraunces/Nunito direction.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "homepage-main-artboard",
+      "path": "design/Main.dc.html",
+      "ref": "main",
+      "status": "historical",
+      "role": "V1 alternate homepage desktop composition; not current brand authority.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "homepage-mobile-artboard",
+      "path": "design/MainMobile.dc.html",
+      "ref": "main",
+      "status": "historical",
+      "role": "V1 alternate homepage mobile composition; not current brand authority.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "homepage-broadsheet-artboard",
+      "path": "design/EditorialBroadsheet.dc.html",
+      "ref": "main",
+      "status": "historical",
+      "role": "Rejected/alternative homepage direction.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "homepage-deskworld-artboard",
+      "path": "design/DeskWorld.dc.html",
+      "ref": "main",
+      "status": "historical",
+      "role": "Rejected/alternative homepage direction.",
+      "decision": "archive-reference"
+    },
+    {
+      "id": "launch-film",
+      "path": "design/launch-film",
+      "ref": "main",
+      "status": "marketing-source",
+      "role": "Remotion/storyboard sources; not app UI components.",
+      "decision": "retain-separate"
+    },
+    {
+      "id": "tracking-and-voice-source",
+      "path": "assets",
+      "ref": "main",
+      "status": "production-source",
+      "role": "Working tracking and voice source assets; verify individual rights before promotion.",
+      "decision": "keep-source"
+    },
+    {
+      "id": "phase3-spec",
+      "path": "design/phase3/README.md",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "proposed",
+      "role": "Historical design prototype handoff; selectively reconcile only.",
+      "decision": "do-not-merge-wholesale"
+    },
+    {
+      "id": "phase3-inventory",
+      "path": "design/phase3/INVENTORY.md",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "proposed",
+      "role": "Pre-PR-217 inventory, stale where Learn shipped. Preserve as prior snapshot.",
+      "decision": "consult"
+    },
+    {
+      "id": "phase3-glyph-sources",
+      "path": "design/phase3/icons/manifest.json",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "candidate",
+      "role": "16 original proposed 24px SVG glyph definitions; overlaps with shipped mode and Learn glyphs.",
+      "decision": "compare-selectively"
+    },
+    {
+      "id": "phase3-glyph-exports",
+      "path": "design/phase3/icons/svg",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "candidate",
+      "role": "16 generated source SVG icons; do not replace current icons wholesale.",
+      "decision": "compare-selectively"
+    },
+    {
+      "id": "phase3-ui-components",
+      "path": "apps/web/components/phase3",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "candidate",
+      "role": "Seven fixture/prototype presentation components; some duplicate shipped room UI.",
+      "decision": "compare-selectively"
+    },
+    {
+      "id": "phase3-generated-plate",
+      "path": "design/phase3/generated/ambient-snow-teal-source.png",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "exploratory",
+      "role": "Higgsfield generated decoration only; rights/contrast and composition review required.",
+      "decision": "not-shipped"
+    },
+    {
+      "id": "phase3-wordmark",
+      "path": "design/phase3/brand/studigo-wordmark.svg",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "exploratory",
+      "role": "Unapproved stylized logo/wordmark; not a replacement for text identity.",
+      "decision": "not-shipped"
+    },
+    {
+      "id": "phase3-invalid-logo",
+      "path": "design/phase3/brand/studigo-logo-0147.svg",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "invalid",
+      "role": "20-byte literal shell expansion '$(cat /tmp/logo.svg)', not an SVG.",
+      "decision": "do-not-use"
+    },
+    {
+      "id": "phase3-design-reference-ledger",
+      "path": "design/phase3/research/REFERO_21ST_REFERENCE_LEDGER.md",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "reference",
+      "role": "External visual inspirations; not licenses or directly importable code.",
+      "decision": "consult"
+    },
+    {
+      "id": "phase3-type-notes",
+      "path": "design/phase3/typography/TYPOGRAPHY_DECISION.md",
+      "ref": "feature/phase3-ui-foundation",
+      "status": "reference",
+      "role": "Commercial font exploration. Approved Bricolage/Figtree/JetBrains stack remains authoritative.",
+      "decision": "consult"
+    }
+  ]
+}

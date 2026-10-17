@@ -10,7 +10,7 @@
     "dev": "pnpm --filter @studigo/web dev",
     "build": "pnpm -r build",
     "build:web": "pnpm --filter @studigo/web build",
-    "lint": "node scripts/check-ai-boundary.mjs && node scripts/check-engineering-paths.mjs",
+    "lint": "node scripts/check-ai-boundary.mjs && node scripts/check-engineering-paths.mjs && node scripts/check-design-inventory.mjs",
     "typecheck": "pnpm -r typecheck",
     "desktop:dev": "pnpm --filter @studigo/desktop tauri dev",
     "desktop:build": "pnpm --filter @studigo/desktop tauri build",
