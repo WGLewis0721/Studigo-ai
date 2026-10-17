@@ -30,16 +30,27 @@ try {
         const spacer = document.createElement("div");
         spacer.dataset.v1Fixture = "scroll";
         spacer.style.height = "2800px";
+        spacer.style.minHeight = "2800px";
+        spacer.style.flex = "0 0 2800px";
         spacer.style.pointerEvents = "none";
         surface.append(spacer);
         surface.scrollTop = 1; // Register the scroll surface before measuring deltas.
       });
+      const scrollSetup = await page.evaluate(() => {
+        const surface = document.querySelector(".modeSurface");
+        if (!(surface instanceof HTMLElement)) throw new Error("Scroll surface missing");
+        return { top: surface.scrollTop, max: surface.scrollHeight - surface.clientHeight, overflow: getComputedStyle(surface).overflowY };
+      });
+      assert.ok(scrollSetup.max >= 300 && scrollSetup.top >= 1,
+        `Fixture failed to provide a scrollable Study Room surface: ${JSON.stringify(scrollSetup)}`);
       await page.waitForTimeout(80);
-      await page.evaluate(() => {
+      const scrollAfter = await page.evaluate(() => {
         const surface = document.querySelector(".modeSurface");
         if (!(surface instanceof HTMLElement)) throw new Error("Scroll surface missing");
         surface.scrollTop = 330;
+        return { top: surface.scrollTop, max: surface.scrollHeight - surface.clientHeight };
       });
+      assert.ok(scrollAfter.top >= 300, `Scroll did not advance: ${JSON.stringify(scrollAfter)}`);
       await page.waitForFunction(() => document.querySelector(".studyGroups")?.getAttribute("data-state") === "compact",
         null, { timeout: 5000 });
       assert.equal(await nav.locator("button[aria-label]").count(), 5);
