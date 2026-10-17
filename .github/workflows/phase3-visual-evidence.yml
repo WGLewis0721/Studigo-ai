@@ -38,10 +38,10 @@ jobs:
           done
           cat /tmp/studigo-phase3-dev.log
           exit 1
-      - name: Capture legacy vs Phase 3 screenshots and overflow report
-        run: node scripts/phase3-visual-qa.mjs
       - name: V1 mobile dock — scroll, modal, keyboard and reduced motion
         run: node scripts/v1-mobile-tabbar-qa.mjs
+      - name: Capture legacy vs Phase 3 screenshots and overflow report
+        run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
         if: github.event_name == 'pull_request' && github.head_ref == 'chore/v0-golden-baseline-20261017'
         run: node scripts/capture-golden-public.mjs
