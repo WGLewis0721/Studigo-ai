@@ -715,45 +715,50 @@ try {
         await page.locator('.learnTalk[data-journey-stage="first-check"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
           "intro → comprehension must advance 22 percentage points");
-        const firstPlume = page.locator("body > .learnProgressPlume");
-        await firstPlume.waitFor({ state: "visible" });
-        const flameArtwork = firstPlume.locator(".learnProgressFlameArtwork");
-        assert.equal(await flameArtwork.evaluate((node) => getComputedStyle(node).animationName), "learnPlumeBurst",
-          "forward progress must trigger a recognizable SVG fire burst");
-        assert.equal(await firstPlume.locator(".learnFlameOuter, .learnFlameMiddle, .learnFlameInner").count(), 3,
-          "flame must have clear outer, middle and bright inner silhouettes");
-        assert.equal(await firstPlume.evaluate((node) => getComputedStyle(node).position), "fixed",
-          "flame should follow the meter in viewport space, not be clipped inside the lesson");
-        assert.ok(Number(await firstPlume.evaluate((node) => getComputedStyle(node).zIndex)) >= 1000,
-          "flame must be on a visibly elevated layer above the lesson cards");
+        const firstGlow = page.locator("body > .learnProgressGlowOverlay");
+        await firstGlow.waitFor({ state: "visible" });
+        const burst = firstGlow.locator(".learnProgressGlowBurst");
+        assert.equal(await burst.evaluate((node) => getComputedStyle(node).animationName), "learnGlowGrowFade",
+          "forward progress triggers a brief grow-and-fade glow");
+        assert.equal(await firstGlow.locator("svg").count(), 0,
+          "the glow contains no flame art or SVG");
+        assert.equal(await firstGlow.evaluate((node) => getComputedStyle(node).position), "fixed",
+          "glow must be above clipped lesson containers");
+        assert.ok(Number(await firstGlow.evaluate((node) => getComputedStyle(node).zIndex)) >= 1000,
+          "glow must render over the lesson window");
+        const glowColorMatchesTip = await firstGlow.evaluate((node) => {
+          const glow = getComputedStyle(node).getPropertyValue("--learn-glow-color").trim();
+          const bar = document.querySelector(".learnBarFill");
+          return bar instanceof HTMLElement && glow === getComputedStyle(bar).getPropertyValue("--progress-heat").trim();
+        });
+        assert.ok(glowColorMatchesTip, "glow color must match the current stage gradient tip");
         await page.waitForFunction(() => {
-          const flame = document.querySelector("body > .learnProgressPlume");
+          const glow = document.querySelector("body > .learnProgressGlowOverlay");
           const tip = document.querySelector(".learnBarFill");
-          if (!flame || !tip) return false;
-          const a = flame.getBoundingClientRect();
+          if (!(glow instanceof HTMLElement) || !(tip instanceof HTMLElement)) return false;
+          const a = glow.getBoundingClientRect();
           const b = tip.getBoundingClientRect();
-          return Math.abs((a.left + a.width / 2) - b.right) < 24 && a.height >= 68 && a.height <= 80 && a.width <= 68;
-        }, null, { timeout: 2500 });
-        // Capture the burst before opacity animates out, separate from the
-        // static four-width lesson screenshots.
-        const fireShot = `${viewport.name}-learn-flame-${skin}.png`;
-        await page.screenshot({ path: path.join(output, fireShot), animations: "allow" });
-        const firstFlameMarkup = await flameArtwork.evaluate((node) => node.innerHTML);
-        assert.equal(await page.locator(".learnProgressEmber").count(), 1, "progress ember continuously illuminates the head");
+          return Math.abs((a.left + a.width / 2) - b.right) < 18
+            && Math.abs((a.top + a.height / 2) - (b.top + b.height / 2)) < 7
+            && a.height <= 32 && a.width <= 32;
+        }, null, { timeout: 2200 });
+        const glowShot = `${viewport.name}-learn-glow-${skin}.png`;
+        await page.screenshot({ path: path.join(output, glowShot), animations: "allow" });
+        assert.equal(await page.locator(".learnProgressEmber").count(), 1, "meter tip remains illuminated");
         await page.locator(".learnChoice").first().click();
         await page.getByRole("button", { name: /Check answer/ }).click();
         await page.getByRole("button", { name: /Explore this lesson/ }).click();
         await page.locator('.learnTalk[data-journey-stage="explore"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "56",
-          "comprehension → Explore must advance another 22 percentage points");
-        await page.locator("body > .learnProgressPlume").waitFor({ state: "visible" });
-        assert.equal(await page.locator(".learnProgressFlameArtwork").evaluate((node) => node.innerHTML),
-          firstFlameMarkup, "each stage uses the same branded flame artwork");
+          "comprehension to Explore advances another 22 points");
+        await page.locator("body > .learnProgressGlowOverlay").waitFor({ state: "visible" });
+        assert.equal(await page.locator(".learnProgressGlowBurst").evaluate((node) => getComputedStyle(node).animationName),
+          "learnGlowGrowFade", "each forward step replays the compact glow");
         await page.emulateMedia({ reducedMotion: "reduce" });
         assert.equal(await page.locator(".learnProgressEmber").evaluate((node) => getComputedStyle(node).animationName), "none",
-          "reduced motion suppresses continuous ember pulse");
-        assert.equal(await page.locator("body > .learnProgressPlume").evaluate((node) => getComputedStyle(node).display), "none",
-          "reduced motion suppresses flame overlay");
+          "reduced motion suppresses the continuous ember pulse");
+        assert.equal(await page.locator("body > .learnProgressGlowOverlay").evaluate((node) => getComputedStyle(node).display), "none",
+          "reduced motion suppresses the glow burst");
         await page.emulateMedia({ reducedMotion: "no-preference" });
         await page.getByRole("button", { name: "Pause lesson" }).click();
         await page.getByText(/PAUSED MISSION/).waitFor();
