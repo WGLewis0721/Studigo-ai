@@ -758,7 +758,7 @@ try {
         });
         assert.ok(visibleFrame, "the actual glow keyframes must illuminate at the peak");
         const glowShot = `${viewport.name}-learn-glow-${skin}.png`;
-        await page.screenshot({ path: path.join(output, glowShot), animations: "disabled" });
+        await page.screenshot({ path: path.join(output, glowShot), animations: "allow" });
         assert.equal(await page.locator(".learnProgressEmber").count(), 1, "meter tip remains illuminated");
         await page.locator(".learnChoice").first().click();
         await page.getByRole("button", { name: /Check answer/ }).click();
