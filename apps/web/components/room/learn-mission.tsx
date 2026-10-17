@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import "./guided-learn-chapters.css";
 import { ExploreJournal } from "./explore-journal";
 import { MissionControlIcon } from "./mission-control-icon";
-import { LearnFlamePlume } from "./learn-flame-plume";
+import { LearnProgressGlow } from "./learn-progress-glow";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
@@ -328,7 +328,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
               <span className="learnProgressEmber" aria-hidden="true" />
             </div>
           </div>
-          {plumeRevision > 0 && <LearnFlamePlume key={`${mission.topic_id}:${plumeRevision}`} targetRef={progressFillRef} />}
+          {plumeRevision > 0 && <LearnProgressGlow key={`${mission.topic_id}:${plumeRevision}`} targetRef={progressFillRef} />}
         </div>
       : <div className="learnBar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label="Level progress">
           <span style={{ width: `${progress}%` }} />
