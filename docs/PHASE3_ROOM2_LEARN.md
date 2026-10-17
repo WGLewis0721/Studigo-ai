@@ -1,4 +1,6 @@
-# Phase 3 · Room 2 guided Learn reading
+# Phase 3 · Room 2 guided Learn reading (historical)
+
+> Superseded by the production Learn → Explore default rollout. The former `PHASE3_ROOM2_ROOM_IDS` canary and `?guided=1` opt-in were retired for the signed-in Learn screen. This document describes early acceptance and is retained as historical implementation evidence. **No learner data wipe is necessary.**
 
 The signed-in room page reads `PHASE3_ROOM2_ROOM_IDS`. A listed room opens Learn as one column under the orange rail, in place of the chat. The mission walks the existing cursor without naming the steps. Briefing is the objective and Continue. Demonstration is the passage and My turn. The learner then taps a line. Check stays off until a line is selected. A hit is marked on that line. A miss marks the line and then shows the correct line. Continue moves on. One unlabeled progress bar. No typing, no ask box, no second navigation. The strip between the nav and the orange divider does not change. Mastery does not change. Every other room keeps the current lesson. The synthetic fixture (`roomId === "fixture"`, `/dev/study`) shows the same mission without saving it.
 

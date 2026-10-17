@@ -1,7 +1,7 @@
 # Studigo Explore — seven-phase execution ledger
 
-**Status:** implementation on isolated branch; default authenticated Learn remains unchanged.  
-**Baseline:** `main` at `b677a2c29b6dfd1d4532d989cfca4f613a8ae581` (2026-10-16).  
+**Status:** PR #217 merged; a separate production-default release retires the private room opt-in. This is the original seven-phase execution ledger, not a new rollout gate.  
+**Historical baseline:** `main` at `b677a2c29b6dfd1d4532d989cfca4f613a8ae581` (2026-10-16). Current signed-in Learn is default-on in the subsequent release.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/README.md`, live room components, and `design/phase3/` on `feature/phase3-ui-foundation`. Do not merge historical prototype assets wholesale.
 
 ## Reference lock
