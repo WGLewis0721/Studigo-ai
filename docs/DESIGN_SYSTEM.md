@@ -330,7 +330,8 @@ the app); "Start studying for free" goes to `/signup`.
 - **Ask/Coach**: graphite student bubbles, white answers with a teal
   "from your materials" or tangerine "not in your materials" label, a capsule
   composer with a round send key.
-- **Quiz**: one question on a white stage; answers are keys with letter caps;
+- **Quiz / Practice test**: one native radio group on a matte white stage, shared through `AnswerChoices`; answers are keys with letter caps and visible focus. Arrow keys change the selection; choosing does not submit a full test. Quiz confidence retains the existing legacy submit behavior when the foundation flag is off;
+  activity position is shown by `ActivityProgress`, separately from earned learning evidence;
   confidence keys carry a 1–3 bar meter; after grading, choices say
   "✓ Correct answer" / "✕ Your answer" in text.
 - **Flashcards**: a card with a deck beneath it and a real flip.

@@ -1,5 +1,7 @@
 "use client";
 
+import { AnswerChoices } from "./answer-choices";
+import { ActivityProgress } from "./activity-progress";
 import { StudyRoomEmptyState } from "./study-room-empty-state";
 import { TopicReadout } from "./topic-readout";
 import { useRef, useState, useTransition } from "react";
@@ -234,7 +236,7 @@ export function QuizPanel({
             <option value="">Where I&apos;m weakest</option>
             {topics.map((topic) => (
               <option key={topic.id} value={topic.id}>
-                {topic.title} · {Math.round(topic.mastery_score)}%
+                {topic.title} · {topic.last_practiced_at ? `${Math.round(topic.mastery_score)}%` : "Not practiced"}
               </option>
             ))}
           </ChipSelect>
@@ -256,21 +258,15 @@ export function QuizPanel({
           {loading ? "Writing questions…" : "Start quiz"} <span aria-hidden="true">→</span>
         </button>
         </div>
-        <TopicReadout topics={topics} selectedId={topicId} onSelect={setTopicId} heading="TOPICS AND MASTERY" allLabel="Where I'm weakest" allHint="Studigo picks" />
+        <TopicReadout topics={topics} heading="TOPICS AND PRACTICE" />
       </div>
     );
   }
 
   return (
     <div className="quizMode roomStudioAttempt">
-      <div className="quizProgress">
-        <span className="tinyLabel">
-          QUESTION {index + 1} OF {questions.length} · {KIND_LABELS[current.kind]}
-        </span>
-        <div className="quizBar">
-          <i style={{ width: `${(index / questions.length) * 100}%` }} />
-        </div>
-      </div>
+      <ActivityProgress current={index + 1} total={questions.length} label="Question" />
+      <span className="tinyLabel">{KIND_LABELS[current.kind]}</span>
 
       <h2 className="quizPrompt">
         {current.kind === "fill_blank" ? (
@@ -281,55 +277,8 @@ export function QuizPanel({
       </h2>
       {phase3 && !result && <p className="roomStudioInstruction">{usesChoices ? "Choose one answer. You can change it until you submit." : "Write your answer, then choose how sure you feel before submitting."}</p>}
 
-      {usesChoices && (
-        <div
-          className={`choiceList ${current.kind === "true_false" ? "choiceListBinary" : ""}`}
-          role={phase3 ? "group" : "radiogroup"}
-          aria-label="Answer choices"
-        >
-          {current.choices.map((choice, choiceIndex) => {
-            const state = !result
-              ? selected === choiceIndex
-                ? "choiceSelected"
-                : ""
-              : choiceIndex === result.correctChoice
-                ? "choiceCorrect"
-                : choiceIndex === selected
-                  ? "choiceWrong"
-                  : "";
-
-            return (
-              <button
-                key={choice}
-                type="button"
-                role={phase3 ? undefined : "radio"}
-                aria-checked={phase3 ? undefined : selected === choiceIndex}
-                aria-pressed={phase3 ? selected === choiceIndex : undefined}
-                className={`choiceItem ${state}`}
-                disabled={Boolean(result) || grading}
-                onClick={() => setSelected(choiceIndex)}
-              >
-                <i>
-                  {current.kind === "true_false"
-                    ? choiceIndex === 0
-                      ? "T"
-                      : "F"
-                    : String.fromCharCode(65 + choiceIndex)}
-                </i>
-                <span>{choice}</span>
-                {result && choiceIndex === result.correctChoice && (
-                  <b className="choiceVerdict">
-                    {choiceIndex === selected ? "✓ Your answer" : "✓ Correct answer"}
-                  </b>
-                )}
-                {result && choiceIndex === selected && choiceIndex !== result.correctChoice && (
-                  <b className="choiceVerdict">✕ Your answer</b>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {usesChoices && <AnswerChoices choices={current.choices} selected={selected} onSelect={setSelected}
+        disabled={Boolean(result) || grading} result={result} binary={current.kind === "true_false"} />}
 
       {current.kind === "fill_blank" && (
         <input

@@ -1,5 +1,6 @@
 "use client";
 
+import { ActivityProgress } from "./activity-progress";
 import { StudyRoomEmptyState } from "./study-room-empty-state";
 import { TopicReadout } from "./topic-readout";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -253,16 +254,14 @@ export function CardsPanel({
           {generating ? "Writing cards…" : "Add 10 cards"} <span aria-hidden="true">→</span>
         </button>
         </div>
-        <TopicReadout topics={topics} selectedId={topicId} onSelect={setTopicId} heading="TOPICS AND MASTERY" allLabel="Everything in this room" allHint="All topics" />
+        <TopicReadout topics={topics} heading="TOPICS AND PRACTICE" />
       </div>
     );
   }
 
   return (
     <div className="cardsMode roomStudioCards">
-      <span className="tinyLabel">
-        PRACTICE STUDIO / CARD {index + 1} OF {cards.length} DUE
-      </span>
+      <ActivityProgress current={index+1} total={cards.length} label="Card"/>
       <p className="roomStudioInstruction">Recall the answer first. Flip to check it, then rate how it went to schedule your next review.</p>
 
       {editing ? (
@@ -304,6 +303,7 @@ export function CardsPanel({
         <button
           className={`flashcard ${flipped ? "flashcardFlipped" : ""}`}
           type="button"
+          aria-pressed={flipped}
           disabled={saving}
           onClick={() => setFlipped((value) => !value)}
         >

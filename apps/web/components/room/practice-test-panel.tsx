@@ -1,4 +1,6 @@
 "use client";
+import { AnswerChoices } from "./answer-choices";
+import { ActivityProgress } from "./activity-progress";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createGestureBook, operationHeaders } from '@/lib/ai-operation-client';
 import { CitationChips, type Citation } from './citations';
@@ -58,14 +60,15 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
     <div className="testTopicResults">{active.result.topics.map(t=><div key={t.topic_id}><strong>{t.title}</strong><span>{t.score}% · {t.misses} missed / {t.questions}</span><button onClick={()=>onReviewTopic(t.topic_id)}>{t.misses?'Review concept':'Keep practicing'} →</button></div>)}</div>
     <h3>Review your answers and sources.</h3>
-    {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {q.kind==='multiple_choice'?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {q.kind==='multiple_choice'?q.choices[q.correct_choice??0]:q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><CitationChips citations={q.citations??[]}/></details>)}
+    {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {q.kind==='multiple_choice'?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {q.kind==='multiple_choice'?(q.correct_choice===null?'Not available':q.choices[q.correct_choice]??'Not available'):q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><CitationChips citations={q.citations??[]}/></details>)}
     <button className="buttonPrimary" onClick={()=>{setActive(null);setQuestions([]);}}>Back to practice tests →</button>
   </section>;
   if(active&&current) return <section className="testSession roomStudioTest">
     <div className="testSessionTop"><div><span className="tinyLabel">INDEPENDENT REHEARSAL / ANSWERS AFTER SUBMISSION</span><h2>Question {index+1} of {questions.length}</h2></div><span role="status">{completed}/{questions.length} answered · {saveState}</span></div>
+    <ActivityProgress current={index+1} total={questions.length} completed={completed} label="Question"/>
     <nav className="testQuestionNav" aria-label="Test questions">{questions.map((q,i)=><button key={q.id} disabled={busy} aria-current={i===index?'step':undefined} className={answered(q)?'answered':''} aria-label={`Question ${i+1}${answered(q)?', answered':', unanswered'}`} onClick={()=>setIndex(i)}>{i+1}</button>)}</nav>
     <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':'MULTIPLE CHOICE'}</span><h3>{current.prompt}</h3><p className="roomStudioInstruction">This is a draft until you submit the full test. You can revisit any question.</p>
-      {current.kind==='multiple_choice'?<fieldset disabled={busy}><legend className="srOnly">Choose one answer</legend>{current.choices.map((choice,i)=><label key={i} className="testChoice"><input type="radio" name={current.id} checked={answers[current.id]?.selectedChoice===i} onChange={()=>change(current.id,{selectedChoice:i,response:''})}/><span>{choice}</span></label>)}</fieldset>:
+      {current.kind==='multiple_choice'?<AnswerChoices choices={current.choices} selected={answers[current.id]?.selectedChoice??null} disabled={busy} onSelect={i=>change(current.id,{selectedChoice:i,response:''})}/>:
       <textarea aria-label="Your answer" rows={5} maxLength={4000} disabled={busy} value={answers[current.id]?.response??''} placeholder="Explain the idea in your own words…" onChange={e=>change(current.id,{selectedChoice:null,response:e.target.value})}/>}
     </div>
     {error&&<p role="alert" className="formError">{error}</p>}

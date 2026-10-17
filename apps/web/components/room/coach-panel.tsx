@@ -156,6 +156,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const scrollPositions = useRef<ModeState<number>>({ coach: 0, learn: 0 });
   const [personalizeOpen, setPersonalizeOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  const topicSheetRef = useRef<HTMLElement>(null);
+  const settingsSheetRef = useRef<HTMLElement>(null);
   const [chromeCompact, setChromeCompact] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   useFitViewport(view === "chat");
@@ -300,7 +302,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   }, [focusTopicId, topics, chatMode]);
 
   const openSetup = () => {
-    (document.activeElement as HTMLElement | null)?.blur();
     setSkillPickerOpen(false);
     setDraft(coaching.applied);
     setLearnDraft(coaching.learnApplied);
@@ -308,7 +309,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   };
 
   const openTopicPicker = () => {
-    (document.activeElement as HTMLElement | null)?.blur();
     setPersonalizeOpen(false);
     setTopicDraftIds(activeTopicIds.length ? activeTopicIds : topics[0] ? [topics[0].id] : []);
     setSkillPickerOpen(true);
@@ -377,15 +377,36 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   }, [modalOpen]);
 
   useEffect(() => {
-    if (!personalizeOpen) return;
+    if (!modalOpen) return;
+    const dialog = skillPickerOpen ? topicSheetRef.current : settingsSheetRef.current;
+    const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog) return;
+    const controls = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]'
+    )).filter(element => element.getClientRects().length > 0);
+    (controls()[0] ?? dialog).focus({ preventScroll: true });
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      closeTeachingStyleSheet();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (skillPickerOpen) setSkillPickerOpen(false);
+        else closeTeachingStyleSheet();
+      }
+      if (event.key !== "Tab") return;
+      const items = controls();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!first) { event.preventDefault(); dialog.focus(); return; }
+      if (!dialog.contains(document.activeElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [personalizeOpen, coaching.applied, coaching.learnApplied]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      if (invoker?.isConnected) invoker.focus({ preventScroll: true });
+    };
+  }, [modalOpen, skillPickerOpen]);
 
   useEffect(() => {
     if (!storedThreads) return;
@@ -906,7 +927,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       <section className="coachChat" data-chat-mode={chatMode} aria-label="Conversation with Studigo">
       {skillPickerOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close skill picker" onClick={() => setSkillPickerOpen(false)} />}
       {skillPickerOpen && (
-        <section className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
+        <section ref={topicSheetRef} tabIndex={-1} className="coachSkillSheet" role="dialog" aria-modal="true" aria-labelledby="coach-skill-sheet-title">
           <div className="coachSettingsSheetHead">
             <div><span className="tinyLabel">{chatMode === "coach" ? "COACH TOPIC SCOPE" : "LEARN TOPIC SCOPE"}</span><strong id="coach-skill-sheet-title">Choose one or more topics</strong></div>
             <button type="button" onClick={() => setSkillPickerOpen(false)}>Cancel</button>
@@ -939,6 +960,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
       )}
       {personalizeOpen && <button className="coachSetupBackdrop" type="button" aria-label="Close Coach personalization" onClick={closeTeachingStyleSheet} />}
       <section
+        ref={settingsSheetRef}
+        tabIndex={-1}
         id="coach-personalization"
         className={personalizeOpen ? "coachSettings mobileOpen" : "coachSettings"}
         aria-label={chatMode === "coach" ? "Personalize coaching" : "Personalize learning"}

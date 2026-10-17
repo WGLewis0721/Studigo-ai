@@ -1,11 +1,11 @@
 # Studigo — Cross-device visual consistency program
 
-> **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation is complete; V0 visual evidence and responsive defect capture remain pending.** No visual redesign is authorized by this documentation pass.
+> **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation and V0 golden capture are complete.** The owner has authorized sequential V3–V6 implementation; manual hardware acceptance remains separately tracked.
 
-**Status:** approved direction / **planning only** for work outside PR #217's Learn surface.  
+**Status:** V0–V2 shipped; V3–V6 in owner-authorized implementation.
 **Baseline:** the accepted Learn → Explore journal, lesson window, compact bottom controls, source evidence and restrained progress glow from **PR #217**.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png`, shipped tokens in `apps/web/app/globals.css`, established room components, and the proposed design/phase3 asset inventory.  
-**Rollout rule:** merging PR #217 approves the *plan*, **not** redesigns of Coach, Practice, Materials, Progress, Plan, Home, settings or companion in this PR.
+**Rollout rule:** PR #217 originally approved the plan only. The subsequent owner instruction authorizes V3 → V4 → V5 → V6 as separate tested releases; it does not authorize a rebrand or learning-engine rewrite.
 
 ## Outcome, not a rebrand
 
@@ -43,7 +43,7 @@ These are aids to comprehension, **not behavioral pressure tactics**. Do not pun
 
 ## Delivery waves — separate small PRs after #217
 
-**Current delivery ledger (2026-10-17):** V0 golden capture is complete (#220); V1 has three verified implementation increments (#221, #223, #222) documented in [V1 execution](V1_SHARED_CONTROLS_EXECUTION.md). V1 is **not closed** until responsive headers, real iPhone/iPad keyboard + VoiceOver, 200% zoom, remaining empty/error states and authenticated flows meet the original gates. V2 has not started.
+**Current delivery ledger (2026-10-17):** V0 golden capture is complete (#220). V1 shipped in #221, #223, #222, #225, #226 and #227; software evidence is in [V1 execution](V1_SHARED_CONTROLS_EXECUTION.md) and [after-action record](V1_AFTER_ACTION_REPORT_2026-10-17.md). V2 shipped in #228 and owner-feedback correction #229 ([execution](V2_MATERIALS_EXECUTION.md)); current baseline is `5338c51`, Ready deployment `dpl_EKMudsAQpVZDXyJZG1AzGSG6sEvG`. These are implementation releases, not a claim of real iPhone/iPad/VoiceOver certification. The owner's V3–V6 mission supersedes historical critique hold statements.
 
 | Wave | Areas, owner and tangible outcome | Acceptance gate |
 |---|---|---|
@@ -78,3 +78,30 @@ These are aids to comprehension, **not behavioral pressure tactics**. Do not pun
 This file is a **plan committed in PR #217**, not authorization to redesign unrelated screens. The subsequent **Learn default release** replaces the old canary: signed-in owned Study Rooms now enter Learn → Explore with no `?guided=1` parameter and without `PHASE3_ROOM2_ROOM_IDS`. The authenticated mission API still enforces the room owner, source revision, eligible evidence, and idempotent mission receipts through the existing database RPCs. Synthetic `/explore-preview` remains development/Preview only. No learner-data reset or schema migration is required; if rollback is needed, promote the last verified Ready production deployment. The single room-wide cursor persists: **do not claim independent per-quest resumes are complete**.
 
 **References:** [Concrete CMS](https://www.concretecms.com/about/blog/web-design/7-fundamentals-of-web-design); [Laws of UX book](https://promptcraze.com/wp-content/uploads/2025/02/lawsofux.pdf); [author's law definitions](https://lawsofux.com/); [O'Reilly chapter contents](https://www.oreilly.com/library/view/laws-of-ux/9781098146955/); [W3C summary](https://www.w3.org/DesignIssues/Yablonski/Summary.html); [Studigo design authority](../DESIGN_SYSTEM.md); [Phase 3 proposed reference inventory](https://github.com/WGLewis0721/Studigo-ai/blob/feature/phase3-ui-foundation/design/phase3/INVENTORY.md).
+
+
+## V3–V6 execution and release record
+
+### Reference lock and decision ledger
+
+| Decision | Source and preserved role | Applied principle |
+|---|---|---|
+| Snow/matte task stages, existing mode colors and tactile 44px keys | Accepted Learn → Explore, `docs/DESIGN_SYSTEM.md`, shipped `globals.css`; color remains navigation/selection, not a substitute for written feedback | Unity, contrast, repetition |
+| One answer control shared by Quiz/full test; native radio keyboard behavior | Existing Quiz letter keys plus full-test radio semantics; no grader or API change | Jakob, Fitts, common region |
+| Compact setup and three parallel confidence/rating keys | Existing Learn economy of attention and approved control geometry | Hierarchy, balance, Hick |
+| Coach topic/personalization sheets contain focus and restore their invoker | Existing Room Settings keyboard convention | Familiar navigation and accessible state |
+| Existing mascot sprites, fonts, icons and evidence tickets only | Canonical design inventory; no new external design assets | Brand continuity and source privacy |
+
+External Refero lookup returned no matching reference; the explicit existing-product build target and bundled focus/touch craft rules were used. No learner material was sent to a design service.
+
+### V3 — Coach & Practice
+
+- Native `AnswerChoices` consolidates Quiz and full-test choice rendering, written selected/correct/wrong states and keyboard arrow-key selection. `ActivityProgress` labels current position and completion without implying mastery.
+- Compact matte setup/assessment surfaces, responsive card/rating/confidence controls; one topic selector plus a read-only desktop scope summary. Cram reuses these same activities and its timer never submits work.
+- Coach sheets trap keyboard focus, close with Escape and restore focus. No question generation, requested counts, adaptive reducer, save/retry or grading API changes. A missing expected test choice now says unavailable rather than guessing choice A.
+- Local evidence: workspace typecheck, web production build, provider/design lint, 71 focused existing regressions; four-width synthetic interaction run passed 44 rendered states. Baseline `5338c51` phone/desktop screenshots were compared against the implementation. Final CI and production verification are pending at this commit.
+- Automated evidence uses synthetic API responses and real components at DPR 1 with reduced motion. It proves client behavior, not actual hosted student persistence, VoiceOver or iOS hardware acceptance.
+
+### Remaining acceptance evidence
+
+Real signed-in private-source flow, real-device iPhone/iPad Safari keyboard/safe areas, VoiceOver, and hardware text enlargement require an available authorized session/device. Never substitute synthetic fixture screenshots for these checks. Production public access and fixture denial are verified independently at release.
