@@ -4261,6 +4261,15 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .roomDevice:has(.coachChat) .coachMode > .mhChipBar { display: none; }
 }
 
+/* The 320px phone cannot fit five 44px hit boxes if the fully compact
+   dock also loses 29% of its width. Preserve the 390px approved geometry;
+   use a wider compact footprint on narrow iPhones only. */
+@media (max-width: 360px) {
+  .roomDevice .studyGroups:not(.topbarNav) {
+    margin-inline: calc(6% * var(--tb, 0));
+  }
+}
+
 /* V1: keep the existing five-section dock out of the software-keyboard's
    usable viewport. The hook controls this local attribute; no global input
    state or page styling is changed. It returns when the keyboard closes. */
