@@ -47,6 +47,12 @@ export function PublicDemoBridge() {
         flex: none; height: 0; min-height: 0; padding: 0; margin: 0;
         gap: 0; border: 0; overflow: visible;
       }
+      /* The shared mobile .modeFrame has a sticky top offset. Coach disables
+         it when .coachChat exists, but Explore has no chat element, so the
+         frame gets pushed 56px down. Match Coach's in-flow header behavior. */
+      .roomDevice:has(.exploreJournal) .modeSurfaceFramed > .modeFrame {
+        position: static; top: auto;
+      }
       .roomDevice:has(.exploreJournal) .modeSurfaceFramed > .coachMode {
         padding-top: 0;
       }
