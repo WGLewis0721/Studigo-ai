@@ -433,7 +433,7 @@ try {
       await page.route("**/api/learn", route => {
         noteCalls++;
         return route.fulfill({ json: {
-          explanation: "### THE IDEA\\n- Traits are passed from parents to offspring.\\n### WHY IT MATTERS\\n- Inherited traits help explain family resemblance.",
+          explanation: "### THE IDEA\n- Traits are passed from parents to offspring.\n### WHY IT MATTERS\n- Inherited traits help explain family resemblance.",
           citations: [{ documentId: "source", documentName: "Synthetic source.pdf", pageNumber: 1 }]
         } });
       });
@@ -453,7 +453,7 @@ try {
       const sourceChip = answer.locator("a.sourceChipLink");
       assert.equal(await sourceChip.count(), 1, "AI citation must open the authorized original");
       assert.match(await sourceChip.getAttribute("href") ?? "", /\/api\/documents\/download\?documentId=source/);
-      assert.ok(await source.isVisible());
+      assert.ok(await sourceChip.isVisible());
       assert.equal(await page.locator(".guideLearnCard").count(), 0, "no duplicate OCR section after explaining");
       await topic.selectOption("variation-survival");
       assert.ok(await explain.isVisible(), "selecting another topic restores Explain action");
