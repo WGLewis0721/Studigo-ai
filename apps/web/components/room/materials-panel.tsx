@@ -553,7 +553,7 @@ export function MaterialsPanel({
         ))}
 
       </ul>
-      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials topics={topics} sourceRevision={sourceRevision} /></div>}
+      {phase3Materials && <section className="materialsGuide" aria-label="Study notes from your materials"><GuidePreview roomId={roomId} phase3Materials topics={topics} sourceRevision={sourceRevision} /></section>}
       </div>
     </div>
   );
