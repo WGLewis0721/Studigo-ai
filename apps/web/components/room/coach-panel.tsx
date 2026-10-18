@@ -158,40 +158,10 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
   const topicSheetRef = useRef<HTMLElement>(null);
   const settingsSheetRef = useRef<HTMLElement>(null);
-  const [chromeCompact, setChromeCompact] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
   useFitViewport(view === "chat");
   const { thinking: companionThinking } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
-  useEffect(() => {
-    const surface = frameRef.current?.parentElement;
-    if (!surface) return;
-    let settled = false;
-    const settle = () => {
-      if (settled) return;
-      settled = true;
-      setChromeCompact(true);
-    };
-    const wait = window.setTimeout(settle, 500 + Math.random() * 1500);
-    const onPoint = () => settle();
-    const onInput = (event: Event) => {
-      if (event.target instanceof Node && surface.contains(event.target)) settle();
-    };
-    surface.addEventListener("pointermove", onPoint);
-    surface.addEventListener("pointerdown", onPoint);
-    surface.addEventListener("wheel", onPoint, { passive: true });
-    surface.addEventListener("keydown", onInput);
-    surface.addEventListener("input", onInput);
-    return () => {
-      settled = true;
-      window.clearTimeout(wait);
-      surface.removeEventListener("pointermove", onPoint);
-      surface.removeEventListener("pointerdown", onPoint);
-      surface.removeEventListener("wheel", onPoint);
-      surface.removeEventListener("keydown", onInput);
-      surface.removeEventListener("input", onInput);
-    };
-  }, []);
   const modalOpen = personalizeOpen || skillPickerOpen;
   const conversationId = useRef<string | null>(null);
   const askConversationId = useRef<string | null>(null);
@@ -868,7 +838,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
   );
 
   // Same navigation actions in either placement; responsive CSS exposes only
-  // one instance. The wide header copy lives outside ModeFrame's 60% tuck.
+  // one instance. The wide header keeps stable 44px controls while it is open.
   const topicNavigation = (placement: "header" | "lower") => (
   <div className={`coachPhoneNav ${placement === "header" ? "coachHeaderNav" : "coachLowerNav"}`} role="group" aria-label={chatMode === "learn" ? "Lesson navigation" : "Topic navigation"}>
   <button type="button" className="coachNavStep" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Previous lesson" : "Previous topic"} onClick={() => void goToPreviousTopic()}>
@@ -886,7 +856,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
 
   return (
     <>
-    <ModeFrame tone="coach" compact={chromeCompact} frameRef={frameRef} accessory={topicNavigation("header")}>
+    <ModeFrame tone="coach" frameRef={frameRef} accessory={topicNavigation("header")}>
       <header className="modeHead" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         <button type="button" className="chatMascot" aria-label={chatMode === "coach" ? "Coach settings" : "Learn settings"} aria-expanded={personalizeOpen} aria-controls="coach-personalization" title={chatMode === "coach" ? "Coach settings" : "Learn settings"} onClick={() => { if (personalizeOpen) setPersonalizeOpen(false); else openSetup(); }}>
           <StudigoMascot state={busy ? "thinking" : "welcome"} size={38} mark />
@@ -909,7 +879,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         <div className="chatTopicRow mhChipRow">{contextControls}</div>
       </header>
     </ModeFrame>
-    <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"} data-work={chromeCompact ? "grown" : undefined}>
+    <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
       {guidedLearn && view === "chat" ? <LearnMission previewJournal={explorePreview} roomId={roomId} topics={topics} selectedTopicId={learnCursorId} explainLevel={coaching.applied.explainLevel} onOpenMaterials={onOpenMaterials} onTryCoach={(topicId) => { const topic = topics.find((candidate) => candidate.id === topicId); if (topic) coachTopic(topic); }} onTryPractice={onOpenPractice} /> : <>
       <div className="mhChipBar" data-tone={chatMode === "learn" ? "ask" : "coach"}>
         {topicNavigation("lower")}
