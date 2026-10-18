@@ -110,6 +110,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const [subject, setSubject] = useState<string>(SAMPLE.subject);
   const [topic, setTopic] = useState<string>(SAMPLE.topic);
   const [goal, setGoal] = useState<SampleGoal>(SAMPLE.goalChoices[0]);
+  const goalButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const [response, setResponse] = useState("");
   const [title, setTitle] = useState("");
   const [theme, setTheme] = useState<RoomTheme>("teal");
@@ -150,6 +151,21 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     const next = nextFirstRunStep("material");
     if (next) go(next);
   }
+  function onGoalKey(event: KeyboardEvent<HTMLDivElement>) {
+    const choices = SAMPLE.goalChoices;
+    const at = choices.indexOf(goal);
+    const direction = ["ArrowRight", "ArrowDown"].includes(event.key) ? 1
+      : ["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 0;
+    let next = at;
+    if (direction) next = (at + direction + choices.length) % choices.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = choices.length - 1;
+    else return;
+    event.preventDefault();
+    setGoal(choices[next]);
+    goalButtons.current[next]?.focus();
+  }
+
   function chooseOwn() {
     if (!canLeaveMaterial("")) return;
     // An uploaded study guide has not been read. Never give this path the
@@ -254,9 +270,9 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
             <span className="tinyLabel">STEP 3 OF {FIRST_RUN_STEPS.length}</span>
             <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>What do you want from this room?</h1>
             <p className="pageLede">Pick one. A test date is not required.</p>
-            <div role="radiogroup" aria-label="Goal">
+            <div role="radiogroup" aria-label="Goal" onKeyDown={onGoalKey}>
               {SAMPLE.goalChoices.map((choice) => (
-                <button key={choice} type="button" role="radio" className={goal === choice ? "buttonPrimary" : "ghostButton"} aria-checked={goal === choice} onClick={() => setGoal(choice)}>
+                <button key={choice} ref={(node) => { goalButtons.current[SAMPLE.goalChoices.indexOf(choice)] = node; }} type="button" role="radio" tabIndex={goal === choice ? 0 : -1} className={goal === choice ? "buttonPrimary" : "ghostButton"} aria-checked={goal === choice} onClick={() => setGoal(choice)}>
                   {GOAL_LABEL[choice]}
                 </button>
               ))}
