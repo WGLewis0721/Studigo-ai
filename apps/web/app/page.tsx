@@ -11,12 +11,12 @@ import { StudigoWaitlist } from "@/components/home/waitlist";
 import "./waitlist.css";
 
 export const metadata: Metadata = {
-  title: "Studigo: the study companion built from your class",
+  title: "Studigo: He's on your team",
   description:
-    "Drop in the study guide, slides and notes you were given. Studigo turns them into a Study Room that teaches you, quizzes you, and shows the page behind every answer.",
+    "Bring your notes, slides, or study guide from class. Studigo helps you figure out the hard parts and practice what you've learned.",
   openGraph: {
-    title: "Studigo: the study companion built from your class",
-    description: "Give it your class. Get a study companion that teaches, quizzes, and shows the page behind every answer.",
+    title: "Studigo: He's on your team",
+    description: "Your study buddy. Let's learn together with Studigo.",
     type: "website"
   }
 };
@@ -142,6 +142,7 @@ export default function HomePage() {
   // The first two poses the intro needs; the rest load with the page script.
   preload("/mascot/companion/full/leap.webp", { as: "image" });
   preload("/mascot/companion/full/wave.webp", { as: "image" });
+  preload("/brand/studigo-official-wordmark.svg", { as: "image" });
 
   return (
     <div className="home" data-tone="tangerine">
@@ -153,7 +154,6 @@ export default function HomePage() {
       <script dangerouslySetInnerHTML={{ __html: INTRO_GUARD }} />
 
       <header className="nav">
-        <a className="wordmark" href="#top" aria-label="Studigo home"><StudigoWordmark className="brandWordmark" /></a>
         <nav className="navLinks" aria-label="Primary navigation">
           <a href="#meet">Meet Studigo</a>
           <a href="#modes">Modes</a>
@@ -169,15 +169,15 @@ export default function HomePage() {
         <section className="hero" id="top" data-room="teal">
           <div className="wrap heroGrid">
             <div className="heroCopy">
-              <span className="eyebrow rv"><i aria-hidden="true" />The study companion built from your class</span>
-              <h1 className="heroTitle">
-                <span className="rv" style={delay(80)}>Give it your class.</span>
-                <span className="rv" style={delay(170)}>Get a study <em>companion.</em></span>
-              </h1>
+              <span className="eyebrow rv"><i aria-hidden="true" />Your study buddy</span>
+              <div className="heroLogo rv" style={delay(80)}>
+                <StudigoWordmark className="heroWordmark" />
+              </div>
+              <h1 className="heroTitle rv" style={delay(170)}>He&apos;s on your team.</h1>
+              <p className="heroInvite rv" style={delay(220)}>Let&apos;s learn together.</p>
               <p className="lede rv" style={delay(280)}>
-                Drop in the study guide, slides and notes you were actually given. Studigo turns them into
-                your own Study Room. It teaches you, quizzes you, keeps track of what you know, and shows
-                the exact page behind every answer.
+                Bring your notes, slides, or study guide from class. Studigo helps you figure out
+                the hard parts and practice what you&apos;ve learned.
               </p>
               <div className="heroActions rv" style={delay(370)}>
                 <Link className="buttonPrimary heroCta" href="/signup">Start studying for free <span aria-hidden="true">→</span></Link>
@@ -197,7 +197,7 @@ export default function HomePage() {
                   </dd>
                 </div>
                 <div><dt>WORKS FROM</dt><dd>Your study guide, slides, notes and textbook</dd></div>
-                <div><dt>COMPANION</dt><dd>Studigo. He comes with every room.</dd></div>
+                <div><dt>STUDY BUDDY</dt><dd>Studigo. He joins every Study Room.</dd></div>
               </dl>
             </div>
 

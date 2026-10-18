@@ -50,14 +50,7 @@ html:has(.home) { scroll-behavior: smooth; }
   box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), 0 12px 30px -18px rgba(20, 27, 45, .4);
   transition: transform .4s var(--ease-out), opacity .3s ease;
 }
-.home .wordmark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 1.3rem; letter-spacing: -.04em; }
-
-.home .wordmark .brandWordmark { width: 162px; height: auto; }
-@media (max-width: 480px) {
-  .home .wordmark .brandWordmark { width: 128px; }
-}
-
-.home .wmLed { width: 10px; height: 10px; border-radius: 50%; background: var(--tangerine); box-shadow: 0 0 0 3px color-mix(in oklab, var(--tangerine) 28%, transparent), 0 0 12px var(--tangerine); }
+/* The official wordmark belongs in the hero, not in the nav. */
 .home .navLinks { display: flex; gap: 4px; margin-left: auto; }
 .home .navLinks a, .home .navSign { padding: 9px 13px; border-radius: 12px; text-decoration: none; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
 .home .navLinks a:hover, .home .navSign:hover { background: var(--snow-2); color: var(--ink); }
@@ -70,10 +63,17 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .heroGrid { display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(0, .78fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
 .home .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: .74rem; font-weight: 600; letter-spacing: .06em; color: var(--ink-2); }
 .home .eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--tangerine); box-shadow: 0 0 0 3px color-mix(in oklab, var(--tangerine) 25%, transparent); }
-.home .heroTitle { margin: 22px 0 0 !important; font-size: clamp(2.7rem, 5.05vw, 4.7rem); line-height: .96; letter-spacing: -.05em !important; }
-.home .heroTitle span { display: block; }
-.home .heroTitle em { font-style: normal; color: var(--tangerine-ink); background: linear-gradient(transparent 68%, color-mix(in oklab, var(--tangerine) 34%, transparent) 68% 92%, transparent 92%); padding: 0 .06em; margin: 0 -.06em; }
-.home .lede { margin: 26px 0 0; max-width: 50ch; color: var(--ink-2); font-size: 1.14rem; line-height: 1.6; }
+/* One official logo, then a friendly invitation. Keep the phone column untouched. */
+.home .heroLogo { margin-top: 18px; width: min(100%, 660px); }
+.home .heroWordmark { display: block; width: 100%; height: auto; }
+.home .heroTitle { margin: 10px 0 0 !important; font-size: clamp(2.5rem, 4.45vw, 4.3rem); line-height: 1.04; letter-spacing: -.055em !important; }
+.home .heroInvite {
+  display: table; margin: 6px 0 0; max-width: 100%;
+  font-family: var(--display); font-size: clamp(1.8rem, 3.4vw, 2.8rem); font-weight: 800;
+  line-height: 1.1; letter-spacing: -.04em; color: #46539a;
+  background: linear-gradient(transparent 80%, color-mix(in oklab, var(--tangerine) 34%, transparent) 80% 96%, transparent 96%);
+}
+.home .lede { margin: 20px 0 0; max-width: 50ch; color: var(--ink-2); font-size: 1.14rem; line-height: 1.6; }
 .home .heroActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 30px; }
 .home .heroCta { min-height: 56px; padding: 0 26px; border-radius: 17px; font-size: 1.04rem; }
 /* The spec table: the page reads a little like a product catalogue. */
@@ -337,8 +337,9 @@ html:has(.home) { scroll-behavior: smooth; }
 
 /* ---------- small screens: the same page, recomposed ---------- */
 @media (max-width: 960px) {
-  .home .navLinks, .home .navSign { display: none; }
-  .home .nav { padding-left: 16px; }
+  .home .navSign { display: none; }
+  .home .navLinks a:not(:first-child) { display: none; }
+  .home .nav { padding-left: 12px; }
   .home .navCta { margin-left: auto; }
   .home .hero { padding-top: 104px; }
   .home .heroGrid, .home .meetGrid, .home .modesGrid, .home .sourcesGrid, .home .masteryGrid, .home .faqGrid, .home .ctaGrid { grid-template-columns: minmax(0, 1fr); }
