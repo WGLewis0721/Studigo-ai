@@ -3409,6 +3409,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
   .modeCollapseToggle > span:first-child { font-size: 1.15rem; line-height: 1; }
   .modeFrame[data-collapsed="true"] .modeCollapseToggle {
+    bottom: 42px;
     transform: translateY(42px);
     border: 2px solid var(--tone-key);
     border-top: 0;
