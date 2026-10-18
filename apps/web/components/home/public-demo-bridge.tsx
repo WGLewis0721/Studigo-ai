@@ -47,7 +47,9 @@ export function PublicDemoBridge() {
         flex: none; height: 0; min-height: 0; padding: 0; margin: 0;
         gap: 0; border: 0; overflow: visible;
       }
-      .roomDevice .modeSurfaceFramed > .modeFrame {
+      /* Quiz and Cards render ModeHeader directly under the workspace;
+         Coach and Explore render it inside the framed mode surface. */
+      .roomDevice .modeFrame {
         position: static; top: auto; flex: none;
       }
       .roomDevice .modeSurfaceFramed > .coachMode {
