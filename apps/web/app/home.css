@@ -42,6 +42,13 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .keycap { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: var(--tone-on); background-color: var(--tone-key); background-image: var(--gloss); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(0, 0, 0, .14), 0 6px 14px -6px var(--tone-glow); }
 .home .keycap svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
+/* UX foundations: accessible keyboard entry, visible focus, predictable anchor targets. */
+.home .homeSkipLink { position: fixed; top: -100px; left: 18px; z-index: 100; padding: 12px 16px; min-height: 44px; border-radius: 12px; background: var(--white); font-weight: 700; box-shadow: var(--lift-2); }
+.home .homeSkipLink:focus-visible { top: 12px; }
+.home :is(a, button, summary):focus-visible { outline: 3px solid var(--blueberry-ink); outline-offset: 3px; }
+.home :is(section[id], main[id]) { scroll-margin-top: 104px; }
+.home .faqList summary { min-height: 48px; }
+
 /* ---------- nav: a frosted capsule ---------- */
 .home .nav {
   position: fixed; top: 14px; left: 50%; z-index: 60; width: min(1160px, calc(100% - 28px)); transform: translateX(-50%);
@@ -52,7 +59,7 @@ html:has(.home) { scroll-behavior: smooth; }
 }
 /* The official wordmark belongs in the hero, not in the nav. */
 .home .navLinks { display: flex; gap: 4px; margin-left: auto; }
-.home .navLinks a, .home .navSign { padding: 9px 13px; border-radius: 12px; text-decoration: none; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
+.home .navLinks a, .home .navSign { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 13px; border-radius: 12px; text-decoration: none; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
 .home .navLinks a:hover, .home .navSign:hover { background: var(--snow-2); color: var(--ink); }
 .home .navCta { min-height: 42px; padding: 0 18px; font-size: .9rem; }
 
@@ -82,7 +89,7 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .spec dt { font-family: var(--mono); font-size: .68rem; font-weight: 600; letter-spacing: .1em; color: var(--muted); }
 .home .spec dd { margin: 0; font-size: .95rem; font-weight: 600; color: var(--ink-2); }
 .home .shells { display: flex; flex-wrap: wrap; gap: 6px; }
-.home .shells button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; cursor: pointer; background: var(--white); font-size: .8rem; font-weight: 700; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--hairline-strong); transition: box-shadow .2s ease, transform .2s var(--ease-spring); }
+.home .shells button { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 12px 0 8px; border: 0; border-radius: 999px; cursor: pointer; background: var(--white); font-size: .8rem; font-weight: 700; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--hairline-strong); transition: box-shadow .2s ease, transform .2s var(--ease-spring); }
 .home .shells i { width: 16px; height: 16px; border-radius: 6px; background-color: var(--tone); background-image: var(--gloss); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 0 rgba(0, 0, 0, .15); }
 .home .shells button[aria-checked="true"] { color: var(--ink); box-shadow: inset 0 0 0 2px var(--tone), 0 6px 14px -8px var(--tone-glow); transform: translateY(-1px); }
 
@@ -139,30 +146,37 @@ html:has(.home) { scroll-behavior: smooth; }
 /* ---------- modes: the device stays put, the room changes color ---------- */
 .home .modesGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 96px); align-items: start; }
 .home .modeSteps { list-style: none; margin: 0; padding: 0; }
-.home .modeStep { display: grid; align-content: center; min-height: 68vh; padding: 24px 0; border-top: 1px solid var(--hairline); opacity: .32; transition: opacity .4s ease; }
+.home .modeStep { display: grid; align-content: center; min-height: 68vh; padding: 24px 0; border-top: 1px solid var(--hairline); opacity: .82; transition: opacity .4s ease; }
 .home .modeStep.on { opacity: 1; }
 .home .modeNum { font-family: var(--mono); font-size: .74rem; font-weight: 600; letter-spacing: .1em; color: var(--tone-ink); }
-.home .modeStep h3 { margin: 10px 0 8px !important; font-size: clamp(2.4rem, 5vw, 4.2rem); line-height: .96; }
-.home .modeStep.on h3 { color: var(--tone-ink); }
-.home .modeText p { margin: 0; max-width: 24ch; color: var(--ink-2); font-size: 1.3rem; line-height: 1.35; font-weight: 500; }
+.home .modeName { display: block; margin: 10px 0 8px; font-family: var(--display); font-weight: 800; letter-spacing: -.04em; font-size: clamp(2.4rem, 5vw, 4.2rem); line-height: .96; }
+.home .modeStep.on .modeName { color: var(--tone-ink); }
+.home .modeDescription { display: block; margin: 0; max-width: 24ch; color: var(--ink-2); font-size: 1.3rem; line-height: 1.35; font-weight: 500; }
 .home .modesGrid.pinned .modeStep .modeScreen { display: none; }
-.home .modeStage { position: sticky; top: calc(50vh - 290px); display: none; }
+.home .modeStage { position: sticky; top: max(96px, calc(50vh - 260px)); display: none; }
 .home .modesGrid.pinned .modeStage { display: block; }
 .home .modeDevice {
-  --th-line: color-mix(in oklab, var(--teal) 34%, white);
-  width: min(380px, 100%); margin-inline: auto; padding: 10px; border-radius: 44px; background: var(--teal);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 50px 70px -36px rgba(20, 27, 45, .5), 0 16px 24px -14px rgba(20, 27, 45, .3);
+  position: relative; isolation: isolate;
+  width: min(700px, 100%); margin-inline: auto; padding: 14px 14px 18px;
+  border: 7px solid #222938; border-radius: 36px; background: #161d2b;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3),
+    0 48px 70px -38px rgba(20,27,45,.44), 0 12px 22px -12px rgba(20,27,45,.28);
 }
-.home .mdBar { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 34px 34px 0 0; background: color-mix(in oklab, var(--teal) 20%, white); font-weight: 900; }
-.home .mdBar span { margin-left: auto; padding: 5px 12px; border-radius: 999px; background: var(--white); color: var(--tone-ink); font-family: var(--display); font-size: .86rem; font-weight: 800; box-shadow: inset 0 0 0 1.5px var(--tone); transition: color .3s ease, box-shadow .3s ease; }
-.home .mdRail { display: flex; align-items: center; justify-content: center; gap: 12px; height: 26px; background-color: var(--tone-key); color: var(--tone-on); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .38), inset 0 -1px 0 rgba(20, 27, 45, .14); transition: background-color .35s ease, color .35s ease; }
-.home .mdHost { height: 380px; overflow: hidden; padding: 18px 16px; background: color-mix(in oklab, var(--teal) 8%, white); }
-.home .mdChin { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 20px; border-radius: 0 0 34px 34px; background: color-mix(in oklab, var(--teal) 20%, white); color: var(--ink-2); }
-.home .mdChin .railLed { background: var(--tone-key); box-shadow: 0 0 8px var(--tone); }
-.home .mdGrille { margin-left: auto; width: 54px; height: 10px; border-radius: 6px; background: repeating-linear-gradient(90deg, rgba(20, 27, 45, .28) 0 3px, transparent 3px 7px); }
-.home .modeScreen, .home .mdHost > .modeScreenCopy { display: grid; gap: 10px; align-content: start; }
-.home .mdHost > .modeScreenCopy { animation: screenIn .45s var(--ease-out) backwards; }
-@keyframes screenIn { from { opacity: 0; transform: translateY(14px); } }
+.home .modeTabletScreen {
+  display: block; width: 100%; aspect-ratio: 4 / 3;
+  min-height: 0; border: 0; border-radius: 18px; background: var(--snow);
+  color-scheme: light;
+}
+.home .modeTabletCamera {
+  position: absolute; top: 50%; left: 4px; transform: translateY(-50%);
+  width: 3px; height: 3px; border-radius: 50%; background: #5e6d83;
+}
+.home .modeTabletHome { display: none; }
+.home .modeStageCaption { margin: 14px auto 0; max-width: 40ch; text-align: center; color: var(--ink-2); font-size: .86rem; }
+.home .modeChoose { display: block; width: 100%; padding: 8px; margin: -8px; border: 0; border-radius: 14px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.home .modeChoose:focus-visible { outline-offset: 7px; }
+.home .modeChoose[aria-pressed="true"] .modeName { color: var(--tone-ink); }
+.home .modeScreen { display: grid; gap: 10px; align-content: start; }
 .home .modeStep .modeScreen { margin-top: 26px; padding: 18px 16px; border-radius: 26px; background: color-mix(in oklab, var(--teal) 8%, white); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 34%, white); max-width: 420px; }
 .home .msBubble { max-width: 88%; padding: 9px 14px 10px; border-radius: 19px 19px 19px 5px; background: var(--white); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--teal) 34%, white); font-size: 1rem; line-height: 1.34; }
 .home .msBubble p { margin: 4px 0 0; }
@@ -353,8 +367,12 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .loop .keycap { grid-row: 1 / span 3; }
   .home .loopNum { margin-top: 0; }
   .home .meetScreen { max-width: 440px; border-radius: 44px; justify-self: center; width: 100%; }
-  .home .modeStep { min-height: 0; opacity: 1; padding: 34px 0; }
-  .home .modeText p { max-width: none; font-size: 1.12rem; }
+  .home .modeStep { min-height: 0; opacity: 1; padding: 14px 0; }
+  .home .modesGrid.pinned .modeStage { position: relative; top: auto; }
+  .home .modeDevice { max-width: 700px; border-radius: 25px; padding: 9px; border-width: 5px; }
+  .home .modeTabletScreen { border-radius: 14px; }
+  .home .modeChoose { min-height: 60px; }
+  .home .modeDescription { max-width: none; font-size: 1.12rem; }
   .home .sources, .home .cta { border-radius: 30px; }
   .home .sourceBay { padding: 12px; border-radius: 24px; }
   .home .sourceBay li { grid-template-columns: 30px minmax(0, 1fr); gap: 2px 12px; }

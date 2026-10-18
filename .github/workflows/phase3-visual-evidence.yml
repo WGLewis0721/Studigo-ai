@@ -8,6 +8,7 @@ on:
       - "apps/web/lib/phase3-room-flag*"
       - ".github/workflows/phase3-visual-evidence.yml"
       - "scripts/phase3-visual-qa.mjs"
+      - "scripts/home-marketing-qa.mjs"
       - "scripts/v1-mobile-tabbar-qa.mjs"
       - "scripts/v1-final-qa.mjs"
       - "scripts/v1-webkit-smoke.mjs"
@@ -61,6 +62,8 @@ jobs:
         run: node scripts/messenger-unity-qa.mjs
       - name: Desktop mode drawer — idle, page colors and bounce
         run: node scripts/desktop-mode-drawer-qa.mjs
+      - name: Homepage — live Explore component and iPad demo at four widths
+        run: node scripts/home-marketing-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages

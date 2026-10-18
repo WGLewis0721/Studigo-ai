@@ -31,23 +31,23 @@ const delay = (ms: number) => ({ ["--d" as string]: `${ms}ms` }) as CSSPropertie
 const shells = ["teal", "blueberry", "grape", "kiwi", "berry"];
 
 const loop: Array<{ n: string; glyph: GlyphName; tone: string; title: string; copy: string }> = [
-  { n: "01", glyph: "materials", tone: "teal", title: "Your material", copy: "Study guide, slides, notes, textbook." },
-  { n: "02", glyph: "plan", tone: "blueberry", title: "Your Study Room", copy: "One place per test, in its own color." },
-  { n: "03", glyph: "coach", tone: "tangerine", title: "It teaches and quizzes", copy: "Coach, Learn, Quiz, Flashcards." },
-  { n: "04", glyph: "mastery", tone: "kiwi", title: "It tracks what you know", copy: "From real answers, not clicks." },
-  { n: "05", glyph: "ask", tone: "grape", title: "It shows its sources", copy: "Every answer links to the page." }
+  { n: "01", glyph: "materials", tone: "teal", title: "Bring your materials", copy: "Study guides, slides, worksheets, or notes." },
+  { n: "02", glyph: "plan", tone: "blueberry", title: "Make a Study Room", copy: "Keep everything for one test together." },
+  { n: "03", glyph: "coach", tone: "tangerine", title: "Learn and practice", copy: "Get help, explore topics, and test yourself." },
+  { n: "04", glyph: "mastery", tone: "kiwi", title: "See what sticks", copy: "Your answers show what needs more practice." },
+  { n: "05", glyph: "ask", tone: "grape", title: "Check the source", copy: "Go back to the page behind an answer." }
 ];
 
 const traits = [
   { k: "A", title: "He watches", copy: "Tap anywhere and he looks there." },
-  { k: "B", title: "He reads along", copy: "Start typing and he peers into the answer field." },
-  { k: "C", title: "He reacts", copy: "Get one right and he bursts out of his window. Miss one and he tells you to try the next." },
-  { k: "D", title: "He gets out of the way", copy: "Drag him to another corner, or send him back to his seat." }
+  { k: "B", title: "He reads along", copy: "When you type, he looks over at your answer." },
+  { k: "C", title: "He cheers you on", copy: "Get an answer right and he celebrates. Miss one and he nudges you to keep going." },
+  { k: "D", title: "He makes room", copy: "Move him to another corner or send him back to his seat." }
 ];
 
 const modes: Array<{ n: string; tone: string; name: string; line: string; screen: ReactNode }> = [
   {
-    n: "01", tone: "coach", name: "Coach", line: "A tutor that waits for your answer.",
+    n: "01", tone: "coach", name: "Coach", line: "Work through a question with a little help.",
     screen: (
       <>
         <div className="msBubble msCoach"><span className="msKicker">COACH · PRACTICE</span><p>Ice melts into water. Is that a <strong>physical</strong> change or a <strong>chemical</strong> change?</p></div>
@@ -57,7 +57,7 @@ const modes: Array<{ n: string; tone: string; name: string; line: string; screen
     )
   },
   {
-    n: "02", tone: "ask", name: "Learn", line: "The guide, walked in the right order.",
+    n: "02", tone: "ask", name: "Learn", line: "Pick an Explore quest and take it one idea at a time.",
     screen: (
       <div className="msBubble msCoach msWide">
         <span className="msKicker">LEARN · FROM YOUR MATERIALS</span>
@@ -69,7 +69,7 @@ const modes: Array<{ n: string; tone: string; name: string; line: string; screen
     )
   },
   {
-    n: "03", tone: "quiz", name: "Quiz", line: "Say how sure you are. Then find out.",
+    n: "03", tone: "quiz", name: "Quiz", line: "Check your answers and how sure you are.",
     screen: (
       <>
         <p className="msPrompt">Which change of state happens when a liquid turns into a gas?</p>
@@ -81,7 +81,7 @@ const modes: Array<{ n: string; tone: string; name: string; line: string; screen
     )
   },
   {
-    n: "04", tone: "cards", name: "Flashcards", line: "Cards that come back right before you forget.",
+    n: "04", tone: "cards", name: "Flashcards", line: "Review the terms you need to remember.",
     screen: (
       <>
         <div className="msCard"><small>FRONT</small><strong>Evaporation</strong><small>Tap to flip</small></div>
@@ -92,12 +92,12 @@ const modes: Array<{ n: string; tone: string; name: string; line: string; screen
 ];
 
 const sources = [
-  { rank: "01", type: "study_guide", name: "Teacher study guide", note: "Sets the scope. Always wins." },
-  { rank: "02", type: "teacher_material", name: "Teacher handouts", note: "The class's own explanations." },
-  { rank: "03", type: "presentation", name: "Slides", note: "What was actually taught." },
+  { rank: "01", type: "study_guide", name: "Teacher study guide", note: "Tells Studigo what to cover." },
+  { rank: "02", type: "teacher_material", name: "Teacher handouts", note: "What your teacher explained." },
+  { rank: "03", type: "presentation", name: "Slides", note: "The lessons from class." },
   { rank: "04", type: "worksheet", name: "Worksheets", note: "The kind of questions to expect." },
-  { rank: "05", type: "student_notes", name: "Your notes", note: "Your words, kept." },
-  { rank: "06", type: "textbook", name: "Textbook", note: "Explains, never expands the test." }
+  { rank: "05", type: "student_notes", name: "Your notes", note: "The parts you wrote down." },
+  { rank: "06", type: "textbook", name: "Textbook", note: "Helps explain the topic." }
 ];
 
 const tiles = [
@@ -153,6 +153,7 @@ export default function HomePage() {
       </div>
       <script dangerouslySetInnerHTML={{ __html: INTRO_GUARD }} />
 
+      <a className="homeSkipLink" href="#home-main">Skip to content</a>
       <header className="nav">
         <nav className="navLinks" aria-label="Primary navigation">
           <a href="#meet">Meet Studigo</a>
@@ -165,7 +166,7 @@ export default function HomePage() {
         <Link className="buttonPrimary navCta" href="/signup">Start free</Link>
       </header>
 
-      <main>
+      <main id="home-main">
         <section className="hero" id="top" data-room="teal">
           <div className="wrap heroGrid">
             <div className="heroCopy">
@@ -204,10 +205,10 @@ export default function HomePage() {
             <div className="heroProduct rv" style={delay(200)}>
               <div className="plinth" aria-hidden="true" />
               <div className="phoneFrame" id="homePhoneFrame">
-                <iframe id="homePhone" src="/demo/index.html?embed" title="Interactive Studigo demo: a Science Study Room with Studigo in his window" loading="eager" />
+                <iframe id="homePhone" src="/demo/room?mode=learn" title="Interactive Studigo Explore demo using the real Study Room interface with example classroom material" loading="eager" />
               </div>
               <span className="float floatGuide" aria-hidden="true"><small>STUDY GUIDE · SETS THE SCOPE</small><strong>Science study guide.pdf</strong></span>
-              <span className="float floatCite" aria-hidden="true"><i>1</i>Cited · page 2</span>
+              <span className="float floatCite" aria-hidden="true"><i>1</i>Example lesson</span>
               <span className="float floatLive"><b aria-hidden="true" />Try it. Tap around.</span>
             </div>
           </div>
@@ -231,10 +232,10 @@ export default function HomePage() {
             <MeetPortrait />
             <div className="meetCopy">
               <span className="kicker rv">02 / MEET STUDIGO</span>
-              <h2 className="rv" style={delay(60)} id="meet-title">He studies with you.</h2>
+              <h2 className="rv" style={delay(60)} id="meet-title">You've got a study buddy.</h2>
               <p className="secLede rv" style={delay(120)}>
-                Studigo lives in a small window inside your Study Room. He is not a chat avatar. He pays
-                attention to what you are doing.
+                Studigo has his own little spot in your Study Room. He looks over when you tap,
+                follows along while you work, and cheers when you get something right.
               </p>
               <ul className="traits">
                 {traits.map((trait, index) => (
@@ -255,25 +256,34 @@ export default function HomePage() {
         <section className="sec modes" id="modes" data-guide="center" data-say="Same pages. Four ways in." aria-labelledby="modes-title">
           <div className="wrap">
             <div className="secHead">
-              <span className="kicker rv">03 / ONE ROOM, EVERY WAY TO STUDY</span>
-              <h2 className="rv" style={delay(60)} id="modes-title">Every mode has its own color. They all read the same pages.</h2>
+              <span className="kicker rv">03 / ONE ROOM, FOUR WAYS TO STUDY</span>
+              <h2 className="rv" style={delay(60)} id="modes-title">Four ways to study. One set of class notes.</h2>
+              <p className="secLede rv" style={delay(120)}>Coach, Explore, Quiz, and Flashcards all work from the materials you bring.</p>
             </div>
             <div className="modesGrid">
               <ol className="modeSteps">
                 {modes.map((mode) => (
                   <li key={mode.n} className="modeStep" data-tone={mode.tone} data-mode={mode.name}>
-                    <div className="modeText"><span className="modeNum">{mode.n}</span><h3>{mode.name}</h3><p>{mode.line}</p></div>
+                    <button className="modeText modeChoose" type="button" aria-pressed={mode.n === "01"} aria-label={`Show ${mode.name} in the iPad demo`}>
+                      <span className="modeNum">{mode.n}</span><span className="modeName" role="heading" aria-level={3}>{mode.name}</span><span className="modeDescription">{mode.line}</span>
+                    </button>
                     <div className="modeScreen">{mode.screen}</div>
                   </li>
                 ))}
               </ol>
-              <div className="modeStage" aria-hidden="true">
+              <div className="modeStage">
                 <div className="modeDevice" id="homeModeDevice" data-tone="coach">
-                  <div className="mdBar"><i className="roomGem" data-tone="teal" /><b>Science</b><span id="homeModeName">Coach</span></div>
-                  <div className="mdRail"><span className="railLed" /><span className="railBrand">studigo</span></div>
-                  <div className="mdHost" id="homeModeHost" />
-                  <div className="mdChin"><span className="railLed" /><span className="railBrand">studigo</span><span className="mdGrille" /></div>
+                  <span className="modeTabletCamera" aria-hidden="true" />
+                  <iframe
+                    id="homeModeIframe"
+                    className="modeTabletScreen"
+                    src="/demo/room?mode=coach"
+                    title="Interactive iPad Study Room demo. Choose a mode to see the actual Studigo interface."
+                    loading="lazy"
+                  />
+                  <span className="modeTabletHome" aria-hidden="true" />
                 </div>
+                <p className="modeStageCaption">Try the sample Study Room. No account or uploads needed.</p>
               </div>
             </div>
           </div>
@@ -283,11 +293,10 @@ export default function HomePage() {
           <div className="wrap sourcesGrid">
             <div className="fieldCopy">
               <span className="kicker rv">04 / SOURCES</span>
-              <h2 className="rv" style={delay(60)} id="sources-title">Feed it the real stuff.</h2>
+              <h2 className="rv" style={delay(60)} id="sources-title">Start with what your teacher gave you.</h2>
               <p className="rv" style={delay(120)}>
-                Studigo doesn&apos;t guess what your test covers. It reads what your teacher handed out,
-                ranks it, and keeps the study guide in charge. The textbook can explain, but it
-                can&apos;t quietly add chapters.
+                Your teacher&apos;s study guide sets what to cover. Handouts, slides, and notes
+                help explain the ideas. A textbook can help too, but it doesn&apos;t add new test topics.
               </p>
               <ul className="promises rv" style={delay(180)}>
                 <li>Private to your account</li>
@@ -311,11 +320,11 @@ export default function HomePage() {
           <div className="wrap masteryGrid">
             <div className="fieldCopy">
               <span className="kicker rv">05 / MASTERY</span>
-              <h2 className="rv" style={delay(60)} id="mastery-title">It knows what you know. Not how long you stared.</h2>
+              <h2 className="rv" style={delay(60)} id="mastery-title">See what you&apos;ve learned. And what needs work.</h2>
               <p className="rv" style={delay(120)}>
-                Mastery moves only with saved quiz answers and flashcard recall. Unpracticed topics
-                count as zero, and confident-but-wrong answers get flagged as blind spots, so the
-                number means something the night before.
+                Your quiz answers and flashcard reviews show what you&apos;ve practiced.
+                Topics you haven&apos;t tried stay unpracticed. If you felt sure but got
+                an answer wrong, Studigo marks it as something to revisit.
               </p>
               <dl className="legend rv" style={delay(180)}>
                 <div><dt><i className="lg-mastered" />Strong</dt><dd>Answered right, more than once</dd></div>
@@ -347,7 +356,7 @@ export default function HomePage() {
           <div className="wrap">
             <div className="secHead">
               <span className="kicker rv">06 / RECEIPTS</span>
-              <h2 className="rv" style={delay(60)} id="evidence-title">Every answer comes with the page it came from.</h2>
+              <h2 className="rv" style={delay(60)} id="evidence-title">See where the answer came from.</h2>
             </div>
             <div className="evGrid" aria-hidden="true">
               <div className="evCard rv">
@@ -376,9 +385,9 @@ export default function HomePage() {
           <div className="wrap grownGrid">
             <div>
               <span className="kicker rv">07 / FOR THE GROWN-UPS</span>
-              <h2 className="rv" style={delay(60)} id="parents-title">Built so the studying stays theirs.</h2>
+              <h2 className="rv" style={delay(60)} id="parents-title">Their work. Their progress.</h2>
               <p className="secLede rv" style={delay(120)}>
-                Parent or teacher? Here is what Studigo does with your student, and what it leaves alone.
+                Studigo helps students do the thinking themselves. Here is what he handles and what stays in their hands.
               </p>
             </div>
             <ul className="grownSheet rv" style={delay(120)}>
@@ -398,10 +407,10 @@ export default function HomePage() {
           <div className="wrap faqGrid">
             <div>
               <span className="kicker rv">08 / THE IMPORTANT BIT</span>
-              <h2 className="rv" style={delay(60)} id="faq-title">Your class material stays the point.</h2>
+              <h2 className="rv" style={delay(60)} id="faq-title">Your class comes first.</h2>
               <p className="secLede rv" style={delay(120)}>
-                Studigo is designed to help you work from the files you upload, not replace your teacher
-                or quietly expand the assignment.
+                Studigo works from the files you bring. He doesn&apos;t replace your teacher
+                or add topics that aren&apos;t in your study guide.
               </p>
             </div>
             <div className="faqList">
@@ -420,10 +429,9 @@ export default function HomePage() {
         <section className="colorField cta" id="start" data-tone="tangerine" data-guide="cta" aria-labelledby="cta-title">
           <div className="wrap ctaGrid">
             <div>
-              <h2 className="rv" id="cta-title">Tonight&apos;s chapter, already read.</h2>
+              <h2 className="rv" id="cta-title">Ready for the next chapter?</h2>
               <p className="rv" style={delay(80)}>
-                Start a room with the guide you were handed. Ask it the thing you&apos;re stuck on and see
-                where the answer comes from.
+                Bring your study guide, ask about the tricky parts, and see the page behind each answer.
               </p>
               <Link className="buttonPrimary ctaKey rv" style={delay(160)} href="/signup">Start studying for free <span aria-hidden="true">→</span></Link>
             </div>
@@ -435,7 +443,7 @@ export default function HomePage() {
       <footer className="wrap foot">
         <a className="wordmark" href="#top"><span className="wmLed" aria-hidden="true" />Studigo</a>
         <p>Study from your material. Know where every answer came from.</p>
-        <span className="footMeta">AI STUDY COMPANION</span>
+        <span className="footMeta">YOUR STUDY BUDDY</span>
       </footer>
 
       {/* Studigo on the page: he leaps out of the phone when you scroll and reacts to each section. */}
