@@ -58,6 +58,33 @@ jobs:
             fi
             echo "::endgroup::"
           done
+      - name: Trace math rule and input-upload candidate with REA
+        shell: bash
+        run: |
+          set -uo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          for (const item of [
+            {name:'mathsteps',seed:{kind:'string',value:'ADD_POLYNOMIAL_TERMS'}},
+            {name:'formuladecoder-client',seed:{kind:'string',value:'REACT_APP_API_URL'}}
+          ]) {
+            const application=JSON.parse(readFileSync(`/tmp/rea-evidence/${item.name}.json`,'utf8'));
+            writeFileSync(`/tmp/rea-evidence/${item.name}-trace-input.json`,JSON.stringify({application,seed:item.seed,direction:'both'}));
+          }
+          NODE
+          for name in mathsteps formuladecoder-client; do
+            echo "::group::REA feature trace $name"
+            if timeout 60 npx --yes rea-agents@6.7.0 trace-application-feature "/tmp/rea-evidence/$name-trace-input.json" --json > "/tmp/rea-evidence/$name-trace.json" 2> "/tmp/rea-evidence/$name-trace.stderr"; then
+              echo "REA_TRACE_OK=$name"
+              jq -c '{operation,confidence,authority,normalized_result,limitations}' "/tmp/rea-evidence/$name-trace.json" | head -c 14000
+              echo
+            else
+              echo "REA_TRACE_FAILED=$name"
+              head -c 1800 "/tmp/rea-evidence/$name-trace.stderr"
+              echo
+            fi
+            echo "::endgroup::"
+          done
       - name: Store inspectable REA evidence
         if: always()
         uses: actions/upload-artifact@v4
