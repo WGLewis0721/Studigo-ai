@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { StudigoMascot } from "@/components/studigo-mascot";
+import { StudigoWordmark } from "@/components/studigo-wordmark";
 import { RAIL_COLLAPSED, RAIL_COOKIE } from "@/lib/rail";
 import { RoomRail } from "./room-rail";
 
@@ -39,8 +39,7 @@ export function AppShell({
       <aside className="appRail" id="app-rail">
         <div className="railHead">
           <Link className="miniWordmark" href="/app" aria-label="Studigo home">
-            <StudigoMascot size={36} mark />
-            <span className="wordmarkText">Studigo</span>
+            <StudigoWordmark className="brandWordmark" />
           </Link>
           <button
             className="railToggle"

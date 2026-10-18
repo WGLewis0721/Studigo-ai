@@ -168,6 +168,19 @@ p { text-wrap: pretty; }
 }
 .miniWordmark { display: inline-flex; text-decoration: none; }
 
+/* The official lockup is an actual scalable asset, not a font approximation. */
+.brandWordmark { display: block; width: 154px; max-width: 100%; height: auto; }
+.authCard > .wordmark .brandWordmark { width: 180px; }
+.appRail .miniWordmark .brandWordmark { width: 148px; }
+@media (max-width: 780px) {
+  .appRail .miniWordmark { padding: 0; }
+  .appRail .miniWordmark .brandWordmark { width: 112px; }
+}
+@media (max-width: 390px) {
+  .appRail .miniWordmark .brandWordmark { width: 96px; }
+}
+
+
 /* ---------------------------------------------------------------------------
    Keys (buttons). Molded, tactile, one clear primary per view.
    --------------------------------------------------------------------------- */
