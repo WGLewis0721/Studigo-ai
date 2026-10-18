@@ -23,7 +23,7 @@
     max-height: 100%;
     overflow: hidden;
   }
-  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface {
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface:not(:has(.coachChat)) {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
