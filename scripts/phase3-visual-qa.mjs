@@ -377,7 +377,7 @@ try {
     try {
       await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "networkidle" });
       const source = page.locator("button.sourceCount");
-      if (await sourceChip.isVisible()) {
+      if (await source.isVisible()) {
         await source.click();
         await page.locator('.studyGroups button[aria-current="page"]').filter({ hasText: "Materials" }).first().waitFor();
         interaction.sourceShortcut = "passed";
