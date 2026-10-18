@@ -1,6 +1,6 @@
 # Studigo V6 — Cross-device integration and release evidence
 
-**Status:** Release candidate. Never infer real signed-in/iOS hardware/VoiceOver acceptance from anonymous synthetic browser screenshots.
+**Status:** Engineering release shipped via PR #252, Ready production merge `a9d204f`. Actual signed-in/iOS hardware/VoiceOver acceptance remains OPEN; anonymous fixture screenshots are not certification.
 
 ## Immutable approved baseline
 
@@ -38,11 +38,11 @@
 
 ## Required release and rollback checklist
 
-- [ ] CI typecheck, tests, production build, provider/design lint
-- [ ] PostgreSQL/security contention and AI admission checks
-- [ ] V1–V6 Chromium + WebKit interactive tests at 320/390/820/1440
+- [x] CI typecheck, tests, production build, provider/design lint
+- [x] PostgreSQL/security contention and AI admission checks
+- [x] V1–V6 Chromium + WebKit synthetic interactive tests at 320/390/820/1440
 - [ ] Side-by-side baseline vs final screenshots reviewed for major component changes, with no open P0/P1 defect
-- [ ] Merge exact passing V6 head after V5 into `main` and verify matching Vercel Ready production alias
+- [x] Merge [PR #252](https://github.com/WGLewis0721/Studigo-ai/pull/252) after V5 #251, exact merge `a9d204f`; Vercel Ready deployment `dpl_EKwW8teAxhAmJGqNrDQWrVUUmboM` verified on production alias
 - [ ] Real signed-in new/returning account flow with authorized PDF, source citations, grading, persistence, permissions, errors
 - [ ] Real iPhone/iPadOS Safari portrait/landscape keyboard safe areas, 200% text/zoom, VoiceOver, reduced motion
 - [ ] Exercise rollback on a safe preview or maintenance window; **do not promote the golden deployment in healthy production just to claim a rehearsal**

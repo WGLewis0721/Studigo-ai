@@ -2,7 +2,7 @@
 
 > **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation and V0 golden capture are complete.** The owner has authorized sequential V3–V6 implementation; manual hardware acceptance remains separately tracked.
 
-**Status:** V0–V4 shipped and Ready; V5 in implementation; V6 pending.
+**Status:** V0–V6 software implementation shipped and Ready. V5/V6 real signed-in / hardware / VoiceOver acceptance remains OPEN; see wave records.
 **Baseline:** the accepted Learn → Explore journal, lesson window, compact bottom controls, source evidence and restrained progress glow from **PR #217**.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png`, shipped tokens in `apps/web/app/globals.css`, established room components, and the proposed design/phase3 asset inventory.  
 **Rollout rule:** PR #217 originally approved the plan only. The subsequent owner instruction authorizes V3 → V4 → V5 → V6 as separate tested releases; it does not authorize a rebrand or learning-engine rewrite.
@@ -125,6 +125,15 @@ External Refero lookup returned no matching reference; the explicit existing-pro
 - **Accessibility**: goal choices use arrow/Home/End navigation and roving focus. The app rail, RoomSettings dialog, native auth flows and canonical Studigo companion stay unchanged.
 - **Verification**: browser regression at 320/390/820/1440, sample/own first run, keyboard goal choice, progressive form, overflow, plus current CI/build/security and inherited V1/V4 companion checks. Real authorized room upload, hardware safe area, VoiceOver remain owner gates.
 - Details and outstanding acceptance are in [V5 execution](V5_HOME_ONBOARDING_EXECUTION.md). **Do not call V5 released until PR merge and Ready production are verified.**
+
+### V5/V6 engineering release (2026-10-18)
+
+- New golden production source `daeaa67` is pinned at `golden/pre-v5-v6-2026-10-18-daeaa67`, Vercel Ready `dpl_AcPtnhTyyYoSjWVJvn3NEFbrZnkb`. Snapshot screenshots: [workflow 39126602974](https://github.com/WGLewis0721/Studigo-ai/actions/runs/39126602974), artifact `12135449939`. Original V0 golden preserved.
+- V5 closure [PR #251](https://github.com/WGLewis0721/Studigo-ai/pull/251) merged `f842baf`: four-width real-component anonymous room shell, settings dialog, return focus, local room color and public auth entry parity. Earlier V5 onboarding PR #235 remains shipped.
+- V6 integration [PR #252](https://github.com/WGLewis0721/Studigo-ai/pull/252) merged `a9d204f`: nine-mode four-width component parity, intentionally different navigation placement, 44px controls, source/room continuity, Plan actions, synthetic 200% text reflow, and removal of unused CoachAside / superseded CSS.
+- V5/V6 original pull-request CI, security and responsive visual gates were green before merge. Production alias verified **Ready** on exact `a9d204f960a70fff470d57668874f5179d91259b`, deployment `dpl_EKwW8teAxhAmJGqNrDQWrVUUmboM`.
+- **Not certified:** real authorized account creation/sign-in, owned PDF/OCR/index/cited first explanation, saved grade/plan/source revision through actual backend, physical iPhone/iPad Safari keyboard and safe areas, 200% OS font/VoiceOver, cross-browser companion customization sync. Do not equate synthetic fixture verification with these.
+- Golden deployment promotion is documented but has **not been rehearsed** in production. Production code rollback does not restore learner database state.
 
 ### Remaining acceptance evidence
 
