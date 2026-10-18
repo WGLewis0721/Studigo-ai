@@ -57,3 +57,9 @@ export function roomTitleFromGuess(subject: string, topic: string): string {
 export function sampleMastery(): 0 {
   return SAMPLE.mastery;
 }
+
+/** Sample practice opens the room; an unuploaded private source starts at Materials. */
+export function roomEntryForFirstRun(roomId: string, path: "sample" | "own"): string {
+  const base = `/app/rooms/${encodeURIComponent(roomId)}`;
+  return path === "own" ? `${base}?mode=materials` : base;
+}

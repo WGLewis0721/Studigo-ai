@@ -2,7 +2,7 @@
 
 > **Required foundation:** [Seven fundamentals and Laws of UX](FOUNDATIONAL_UX_PRINCIPLES.md) are Studigo-wide pillars, **independent of theme or artistic direction**, and are not an optional list of style references. Every screen and breakpoint is assessed against them. [Design/asset inventory reconciliation](../../design/README.md) records what is canonical, already shipped, historical, proposed or invalid. **Inventory reconciliation and V0 golden capture are complete.** The owner has authorized sequential V3–V6 implementation; manual hardware acceptance remains separately tracked.
 
-**Status:** V0–V3 shipped; V4 integration tested, awaiting merge and production verification; V5–V6 authorized.
+**Status:** V0–V4 shipped and Ready; V5 in implementation; V6 pending.
 **Baseline:** the accepted Learn → Explore journal, lesson window, compact bottom controls, source evidence and restrained progress glow from **PR #217**.  
 **Design authority:** `docs/DESIGN_SYSTEM.md`, `docs/brand/STUDIGO_OFFICIAL_BRAND_BOARD.png`, shipped tokens in `apps/web/app/globals.css`, established room components, and the proposed design/phase3 asset inventory.  
 **Rollout rule:** PR #217 originally approved the plan only. The subsequent owner instruction authorizes V3 → V4 → V5 → V6 as separate tested releases; it does not authorize a rebrand or learning-engine rewrite.
@@ -111,6 +111,20 @@ External Refero lookup returned no matching reference; the explicit existing-pro
 - “Where these numbers come from” explains the provenance and limits. Current topic labels and actions remain source-aware. An empty recommendation list cannot falsely claim everything is strong.
 - Today opens first; future plan days use native keyboard-accessible disclosures. Completion remains plan bookkeeping only, with saved/error notices. No-topic versus passed-test empty states point to the appropriate Materials/settings action; calendar dates render in UTC to retain the stored date.
 - 28 focused existing/new progress, planning, canonical projection and Home recommendation checks pass. Twenty rendered states and action-routing checks pass at 320/390/820/1440; phone/desktop screenshots inspected against `5338c51`. Companion now clears progress tiles and planning headings using the existing safe-dock/seat policy. Final release gates pending at this commit. No schema, assets, tracking or new dependency.
+
+### V4 integration and release
+
+- Original V4 [PR #231](https://github.com/WGLewis0721/Studigo-ai/pull/231) was not mergeable after desktop unity. Its functional changes were reconciled onto the current baseline in [PR #234](https://github.com/WGLewis0721/Studigo-ai/pull/234); the removed Coach information sidebar was intentionally not restored.
+- V4 CI, PostgreSQL contention, Chromium/WebKit and the four-width visual suite including V4 source/plan action checks all passed. Merge `6d4ae86e1760c06ad9820ab52ad177465566f991` was verified on production `studigo-ai.vercel.app`, Ready Vercel deployment `dpl_7CgHQvnDxKxEQ56JGaEhkjpo5L5d`. No new migration, permissions or altered grading.
+- Real owned-source, physical iOS/iPadOS, VoiceOver and owner visual acceptance remain unverified.
+
+### V5 — Home, rooms, onboarding, settings and companion
+
+- **First entry**: distinguish the labeled civics sample from **my own file**. The own-file path starts with empty optional subject/topic, never borrows sample explanations or requires a fictitious sample answer, and opens the created room at Materials. Goal and room color keep their existing components; no mastery award is implied.
+- **Home / rooms**: returning learners get a prefilled room name and native, keyboard-accessible disclosure for optional subject/test/class details. Preserve existing HomeHero resume recommendation, actual room source counts, room colors and stage companion.
+- **Accessibility**: goal choices use arrow/Home/End navigation and roving focus. The app rail, RoomSettings dialog, native auth flows and canonical Studigo companion stay unchanged.
+- **Verification**: browser regression at 320/390/820/1440, sample/own first run, keyboard goal choice, progressive form, overflow, plus current CI/build/security and inherited V1/V4 companion checks. Real authorized room upload, hardware safe area, VoiceOver remain owner gates.
+- Details and outstanding acceptance are in [V5 execution](V5_HOME_ONBOARDING_EXECUTION.md). **Do not call V5 released until PR merge and Ready production are verified.**
 
 ### Remaining acceptance evidence
 
