@@ -84,6 +84,32 @@
 .roomDevice[data-ui="phase3"] .materialsGuideLabel p { margin: 0; color: var(--ink-2); font-size: .85rem; line-height: 1.5; }
 .roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: none; overflow: visible; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
 
+/* The intake is taller than the desktop viewport when a source guide exists.
+   A sticky container taller than the scroller makes Choose files unreachable
+   after scrollIntoViewIfNeeded. Let the whole Materials page scroll normally. */
+@media (min-width: 701px) {
+  .roomDevice[data-ui="phase3"] .materialsIntake {
+    position: static;
+  }
+}
+/* At standard desktop widths a two-column card within a two-column library
+   compresses the Learn notes to a narrow strip. Keep one reading column. */
+.roomDevice[data-ui="phase3"] .materialsGuide {
+  grid-template-columns: minmax(0, 1fr);
+}
+.roomDevice[data-ui="phase3"] .materialsGuideLabel {
+  min-width: 0;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading,
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .guideOutlineTitle {
+  overflow-wrap: anywhere;
+  text-wrap: wrap;
+}
+
 /* Study notes reuse the older Learn reading hierarchy: one clear lead,
    short headed ideas, source-cited bullets, and no nested reading scroll. */
 .roomDevice[data-ui="phase3"] .guideLearnCard {
