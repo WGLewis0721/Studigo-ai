@@ -265,7 +265,7 @@ export default function HomePage() {
                 {modes.map((mode) => (
                   <li key={mode.n} className="modeStep" data-tone={mode.tone} data-mode={mode.name}>
                     <button className="modeText modeChoose" type="button" aria-pressed={mode.n === "01"} aria-label={`Show ${mode.name} in the iPad demo`}>
-                      <span className="modeNum">{mode.n}</span><h3>{mode.name}</h3><p>{mode.line}</p>
+                      <span className="modeNum">{mode.n}</span><span className="modeName" role="heading" aria-level={3}>{mode.name}</span><span className="modeDescription">{mode.line}</span>
                     </button>
                     <div className="modeScreen">{mode.screen}</div>
                   </li>
