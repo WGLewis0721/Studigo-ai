@@ -11,6 +11,7 @@ import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
+import { SourceReading } from "./source-reading";
 import { SpeechAnswerControl } from "./speech-answer-control";
 import { buildLearningMissionPlan } from "@/lib/learning-mission-blueprint";
 import { lessonBeatIndex, formativeReflection, canAdvanceLesson } from "@/lib/learning-mission-stages";
@@ -357,8 +358,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
           {!introduction && <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>}
           {beat.kind === "read" && (introduction ? <div className="learnSourceReading">
-            <p className="tinyLabel">{snapshot?.source?.documentName ?? "SOURCE"}{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
-            <p className="learnLine">{reading}</p>
+            <p className="tinyLabel">FROM YOUR GUIDE{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
+            <SourceReading text={reading} topic={currentTopic?.title} />
           </div> : <p className="learnLine">{beat.body}</p>)}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
             <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
@@ -411,10 +412,15 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           <strong>{snapshot.source.documentName}</strong>
           <span>{snapshot.source.pageNumber ? `Page ${snapshot.source.pageNumber}` : "Page not available"}</span>
         </div>
-        <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
+        <div className="learnSourceBody">
+          <SourceReading text={snapshot.source.excerpt} />
+          <details className="learnSourceRaw">
+            <summary>View exact extracted text</summary>
+            <blockquote className="learnSourceQuote">{snapshot.source.excerpt}</blockquote>
+          </details>
+        </div>
         {sourceOpen && <ReadAloudControl text={snapshot.source.excerpt} label="Hear the verified source excerpt" />}
-
-        <p className="learnSourceNote">Verified extracted text from this lesson's source. Exact word highlighting in the original PDF is not available.</p>
+        <p className="learnSourceNote">Formatted from the verified text in your guide. Open the PDF for the original page layout.</p>
         {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
           href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}
         {fixture && <p className="hintText">This is a synthetic review source. Original-file links are only enabled for authorized uploaded material.</p>}
