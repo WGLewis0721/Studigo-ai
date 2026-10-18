@@ -17,6 +17,7 @@ on:
       - "scripts/v5-home-onboarding-qa.mjs"
       - "scripts/messenger-unity-qa.mjs"
       - "scripts/desktop-mode-drawer-qa.mjs"
+      - "scripts/capture-golden-2026-10-18-public.mjs"
 
 permissions:
   contents: read
@@ -69,6 +70,9 @@ jobs:
       - name: Capture production public golden pages
         if: github.event_name == 'pull_request' && github.head_ref == 'chore/v0-golden-baseline-20261017'
         run: node scripts/capture-golden-public.mjs
+      - name: Capture frozen 2026-10-18 production public pages
+        if: github.event_name == 'pull_request' && github.head_ref == 'chore/v5-v6-golden-capture-20261018'
+        run: node scripts/capture-golden-2026-10-18-public.mjs
       - name: Upload evidence even when checks fail
         if: always()
         uses: actions/upload-artifact@v4
@@ -76,4 +80,4 @@ jobs:
           name: phase3-visual-evidence
           path: artifacts/phase3-visual
           if-no-files-found: warn
-          retention-days: ${{ github.head_ref == 'chore/v0-golden-baseline-20261017' && 90 || 14 }}
+          retention-days: ${{ (github.head_ref == 'chore/v0-golden-baseline-20261017' || github.head_ref == 'chore/v5-v6-golden-capture-20261018') && 90 || 14 }}
