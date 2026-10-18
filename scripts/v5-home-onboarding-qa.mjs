@@ -35,7 +35,12 @@ try {
       assert.equal(await page.locator('input[name="topic"]').inputValue(), '', 'own-file path is not assigned the sample topic');
       await check('own-source');
       await page.getByRole('button', { name: /^Next/ }).click();
-      await page.getByRole('radio', { name: 'Practice' }).click();
+      const goals = page.getByRole('radiogroup', { name: 'Goal' });
+      await goals.getByRole('radio', { name: 'Understand' }).focus();
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await goals.getByRole('radio', { name: 'Prepare for a test' }).getAttribute('aria-checked'), 'true', 'keyboard changes goal');
+      await page.keyboard.press('ArrowRight');
+      assert.equal(await goals.getByRole('radio', { name: 'Practice' }).getAttribute('aria-checked'), 'true', 'focus and checked goal stay together');
       await page.getByRole('button', { name: /^Next/ }).click();
       await page.getByRole('heading', { name: 'Your first lesson starts with your file.' }).waitFor();
       assert.equal(await page.getByText('Who enforces the laws?').count(), 0, 'own-file path does not masquerade as a civics lesson');
