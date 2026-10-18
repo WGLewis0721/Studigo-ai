@@ -20,14 +20,38 @@ When a Study Room includes math, a student should be able to:
 
 ## Investigation method and evidence boundary
 
-This study follows the **Reverse Engineer Anything (REA)** investigation discipline: define an observable behavior, identify the input and output contracts, trace the available implementation, keep evidence tied to source locations, label inferences, and translate only the useful behavior into Studigo's current architecture.
+This study combines **real Reverse Engineer Anything (REA) 6.7.0 execution** with GitHub source inspection. REA reconstructs static JavaScript syntax relationships and observes externally loaded browser pages. It does **not** establish correctness of a math solver merely by parsing files; source inspection is still needed to explain particular algorithms.
 
-- REA project: https://github.com/morluto/rea
-- REA documentation: https://github.com/morluto/rea#how-rea-works
-- **What was actually done:** GitHub source/document inspection for the two open repositories; public product-page inspection for Chegg and Mathway; inspection of Studigo's existing engineering/product contracts and Coach code.
-- **What was not done:** No REA CLI/MCP instrumentation or binary analysis, browser-network capture, private-app access, proprietary solver decompilation, accuracy benchmark, or execution of external projects. The available local Node version (22.16.0) is below REA's documented 22.19+ Node 22 minimum. Consequently, this is an **REA-style evidence review**, not a claim that the REA tool was run.
-- **Evidence grades:** OBSERVED = present in inspected source or official public description; INFERRED = plausible architecture, not independently verified; PROPOSED = Studigo implementation choice.
-- No protected answers, proprietary source code, credentials, scraping, or bypass of paid access were used. This is behavioral and open-source comparison, not copying.
+- Official REA: https://github.com/morluto/rea (release [6.7.0](https://github.com/morluto/rea/releases/tag/rea-agents-6.7.0)).
+- **Executed GitHub Actions run:** https://github.com/WGLewis0721/Studigo-ai/actions/runs/39133636501 (Node 24, REA 6.7.0, Chrome 155).
+- **Evidence artifact:** https://github.com/WGLewis0721/Studigo-ai/actions/runs/39133636501/artifacts/12139445779 (contains raw REA Evidence JSON, views, attempted traces and browser captures; retained for 7 days by the workflow).
+- **Scope:** static REA inspection of `google/mathsteps` and the `client/` directory of `filipdomkc/FormulaDecoder`; separate GitHub source reading of FormulaDecoder's **Python backend**; unauthenticated public Chrome observation of Chegg and Mathway.
+- **Not performed:** dynamic execution of either reference solver, solution accuracy benchmarks, paid-site login, paywall circumvention, decompilation of proprietary solvers, or installation of REA in the production Studigo application. The local shell's Node 22.16 limitation was bypassed by running a temporary GitHub-hosted Node 24 research job.
+- **Evidence grades:** REA-OBSERVED = produced by a successful REA command with recorded limitations; SOURCE-OBSERVED = present in inspected open-source code; PUBLIC-CLAIM = described by a vendor, not independently validated; INFERRED = plausible but not verified; PROPOSED = Studigo engineering choice.
+
+### Real REA execution results
+
+| Target | Technique | Parsed JS | Recorded findings | Coverage / what it establishes |
+| --- | --- | ---: | ---: | --- |
+| `google/mathsteps` | `analyze-javascript-application` | 133 | 890 | **Partial application** coverage; static syntax only |
+| `FormulaDecoder/client` | `analyze-javascript-application` | 9 | 94 | **Complete application file** coverage; semantic relations still partial/unknown |
+| `mathsteps` step-rule seed | `trace-application-feature` with `ADD_POLYNOMIAL_TERMS` | — | 0 matching seeds | **No match** in selected graph; explicitly **not** proof the rule is absent |
+| `FormulaDecoder/client` API seed | `trace-application-feature` with `REACT_APP_API_URL` | — | 0 matching seeds | **No match** in selected graph; source-backed Axios invocation requires separate reading |
+| `www.mathway.com/Algebra` | `inspect-web-page` over Chrome CDP | — | — | Successfully observed **error page**, title `ERROR: The request could not be satisfied`; 31 DOM nodes, 2 scripts |
+| `www.chegg.com/study` | `inspect-web-page` over Chrome CDP | — | — | Successfully observed **error page**, same title; 31 DOM nodes, 2 scripts |
+
+The browser sessions reached error pages rather than the functioning products. Consequently, **REA did not uncover Chegg's or Mathway's solver architecture**, and there is no runtime evidence for how either product performs math. REA's browser collection was also attach-limited and policy-filtered; prior requests and console events are unavailable. The publicly described product features below remain **PUBLIC-CLAIM**, not REA-OBSERVED behavior.
+
+The raw static analysis reported **8,748 unresolved semantic facts** for mathsteps and **144** for the FormulaDecoder client; completeness and uncertainty are separate from the number of parsed files. The source-code findings below provide stronger, *narrower* evidence for the precise functions we care about.
+
+**Reproduce static runs** on Node 24 or another supported REA runtime, using operator-supplied copies of the two public repositories:
+
+```bash
+npx -y rea-agents@6.7.0 analyze-javascript-application /absolute/path/to/mathsteps --json > mathsteps-evidence.json
+npx -y rea-agents@6.7.0 analyze-javascript-application /absolute/path/to/FormulaDecoder/client --json > formuladecoder-client-evidence.json
+```
+
+These commands are read-only static analysis; do not claim they tested solutions or OCR accuracy. REA's own skill recommends ordinary source review rather than REA for complete source-repository architecture tasks; we used REA here explicitly to verify its available evidence and limitations as requested.
 
 ## Target 1: Google / mathsteps (open source)
 
@@ -69,7 +93,7 @@ Primary evidence:
 
 Official product: https://www.chegg.com/study
 
-**OBSERVED:** Chegg markets step-by-step solutions and expert-verified responses, alongside study/practice tools. Its public site describes a large bank of expert-verified solutions.
+**PUBLIC-CLAIM:** Chegg markets step-by-step solutions and expert-verified responses, alongside study/practice tools. Its public site describes a large bank of expert-verified solutions.
 
 **INFERRED, not established by source inspection:** A searchable content library with indexing and editorial/expert workflows is a reasonable explanation for its historically answer-centered user experience. Its internal retrieval design, verification pipeline, current AI components, schema, and economics are not publicly verified here.
 
@@ -79,7 +103,7 @@ Official product: https://www.chegg.com/study
 
 Official product: https://www.mathway.com/Algebra
 
-**OBSERVED:** Mathway accepts typed problems or photo input, allows math-subject selection, and displays step-by-step methods across several subjects. It advertises dedicated calculators. Mathway is linked from Chegg's public site.
+**PUBLIC-CLAIM:** Mathway accepts typed problems or photo input, allows math-subject selection, and displays step-by-step methods across several subjects. It advertises dedicated calculators. Mathway is linked from Chegg's public site.
 
 **INFERRED, not established by source inspection:** A structured parser plus subject-specific rule-based/symbolic solving and a step-presentation layer is one plausible implementation. Its exact algorithms, proprietary math engine, OCR architecture, and reliability cannot be confirmed by a public landing page.
 
@@ -182,11 +206,11 @@ Nothing below has been executed; these are release gates for the later implement
 
 ## Source register
 
-- **REA method:** https://github.com/morluto/rea — published analysis/evidence workflow and runtime prerequisites (methodology only).
+- **REA execution:** https://github.com/morluto/rea — real v6.7.0 static-analysis/trace/CDP commands recorded in https://github.com/WGLewis0721/Studigo-ai/actions/runs/39133636501; see above for partial coverage and the blocked public product pages.
 - **Open-source solver:** https://github.com/google/mathsteps and https://github.com/google/mathsteps/wiki/How-to-use-mathsteps — change types, AST-based transformations, archived repository; license https://github.com/google/mathsteps/blob/master/LICENSE.
 - **Open-source image pipeline:** https://github.com/filipdomkc/FormulaDecoder — README; server/main.py; server/utilityoop.py; server/requirements.txt (including unsafe eval risk).
-- **Chegg observed product:** https://www.chegg.com/study — public study/verified-answer descriptions only.
-- **Mathway observed product:** https://www.mathway.com/Algebra — typed/photo entry and visible step-by-step product claims only.
+- **Chegg publicly described product:** https://www.chegg.com/study — public study/verified-answer descriptions only.
+- **Mathway publicly described product:** https://www.mathway.com/Algebra — typed/photo entry and visible step-by-step product claims only.
 - **Studigo source of truth:** /AGENTS.md; /ENGINEERING.md; /docs/PRODUCT.md; /packages/ai/src/coach.ts; /packages/ai/src/coach-language.ts; /packages/ai/src/study.ts; /packages/learning/src/preferences.ts; /apps/web/lib/coach-director.ts; /apps/web/lib/coach-render.ts; /apps/web/lib/coach-preferences.ts; /apps/web/lib/explain-level.ts.
 
 **Bottom line:** Copy the *engineering pattern*, not the products: verified symbolic steps from mathsteps, explicit recognition/parsing separation from FormulaDecoder, question-specific explanations from Chegg, and progressive method display from Mathway. Keep Studigo's differentiation: Coach teaches **the student, on their materials, at a manageable pace**, with deterministic correctness and durable learning evidence.
