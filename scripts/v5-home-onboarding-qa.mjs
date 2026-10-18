@@ -49,6 +49,21 @@ try {
       await page.getByRole('heading', { name: 'Ready to add your file.' }).waitFor();
       await page.getByRole('button', { name: 'Open Materials' }).click();
       await page.getByRole('alert').filter({ hasText: 'Preview only' }).waitFor();
+      // The labeled sample still shows its actual facts and remains ungraded.
+      await page.goto(`${origin}/dev/home?first=1`, { waitUntil: 'networkidle' });
+      await page.evaluate(() => { localStorage.removeItem('studigo-first-run'); localStorage.removeItem('studigo-first-run-path'); });
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: /^Use the sample/ }).click();
+      assert.equal(await page.locator('input[name="subject"]').inputValue(), 'Community government');
+      assert.equal(await page.locator('input[name="topic"]').inputValue(), 'Three branches');
+      await page.getByRole('button', { name: /^Next/ }).click();
+      await page.getByRole('button', { name: /^Next/ }).click();
+      await page.getByRole('heading', { name: 'Try one question.' }).waitFor();
+      assert.equal(await page.getByText('Who enforces the laws?').count(), 1, 'labeled sample preserves its real question');
+      await page.locator('textarea[name="response"]').fill('The executive branch.');
+      await page.getByRole('button', { name: /^Next/ }).click();
+      await page.getByRole('heading', { name: 'Name and color can wait.' }).waitFor();
+      await check('sample-finish');
       // Returning rooms have one filled-in decision; optional input fields are disclosed.
       await page.goto(`${origin}/dev/home`, { waitUntil: 'networkidle' });
       const create = page.locator('.createRoomPanel');
