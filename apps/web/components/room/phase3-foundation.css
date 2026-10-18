@@ -113,12 +113,30 @@
 /* Study notes reuse the older Learn reading hierarchy: one clear lead,
    short headed ideas, source-cited bullets, and no nested reading scroll. */
 .roomDevice[data-ui="phase3"] .guideLearnCard {
-  padding: clamp(16px, 2vw, 24px);
+  width: 100%;
+  min-width: 0;
+  padding: clamp(12px, 2vw, 24px);
   border: 1px solid color-mix(in oklab, var(--teal) 26%, white);
   border-radius: var(--r-md);
   background: var(--white);
   box-shadow: var(--lift-1);
   gap: 18px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard :is(.guideLearnLead, .guideOutlineChapterHeading, .guideOutlineGroup, .guideOutlineTerms, .guideOutlinePoints, .guideOutlineTerm) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnLead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .materialsCitation {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlineChapterHeading h3 {
   color: var(--teal-ink);
