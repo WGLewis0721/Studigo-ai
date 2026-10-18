@@ -205,10 +205,10 @@ export default function HomePage() {
             <div className="heroProduct rv" style={delay(200)}>
               <div className="plinth" aria-hidden="true" />
               <div className="phoneFrame" id="homePhoneFrame">
-                <iframe id="homePhone" src="/demo/index.html?embed" title="Interactive Studigo demo: a Science Study Room with Studigo in his window" loading="eager" />
+                <iframe id="homePhone" src="/demo/room?mode=learn" title="Interactive Studigo Explore demo using the real Study Room interface with example classroom material" loading="eager" />
               </div>
               <span className="float floatGuide" aria-hidden="true"><small>STUDY GUIDE · SETS THE SCOPE</small><strong>Science study guide.pdf</strong></span>
-              <span className="float floatCite" aria-hidden="true"><i>1</i>Cited · page 2</span>
+              <span className="float floatCite" aria-hidden="true"><i>1</i>Example lesson</span>
               <span className="float floatLive"><b aria-hidden="true" />Try it. Tap around.</span>
             </div>
           </div>
