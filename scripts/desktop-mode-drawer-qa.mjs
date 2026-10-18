@@ -74,7 +74,7 @@ try {
       await page.screenshot({ path: `${output}/${width}-${mode}-open.png`, animations: "disabled" });
       if (mode === "materials") {
         const expanded = page.locator(".guideOutlineOriginal");
-        await expanded.locator("summary").click();
+        await expanded.locator(":scope > summary").click();
         assert.ok(await expanded.locator(".guideSourcePoint").count() > 1, "expanded OCR has separate readable points");
         assert.ok(await expanded.locator(".guideSourceSection").count() >= 2, "original pages and headings are structured");
         assert.equal(await expanded.locator(".guideSourceVerbatim pre").innerText(), raw, "exact OCR wording preserved");
