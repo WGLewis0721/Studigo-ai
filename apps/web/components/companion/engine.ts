@@ -74,7 +74,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     mode: "seat" as "seat" | "window", dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
     reactUntil: 0, reacting: false, gazeUntil: 0, gazing: false, typingUntil: 0, thinking: false, asleep: false, leaned: false,
     lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, pokeAt: 0, pokeCombo: 0,
-    press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false, pinchEndedAt: 0
+    press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false, pinchEndedAt: 0,
+    // Auto-seating is transient. The edge tab must still allow an explicit summon.
+    autoSeated: false, userSummoned: false
   };
   /** His current size: k is the scale, W and H the window in CSS pixels. */
   let k = 1, W: number = WINDOW.w, H: number = WINDOW.h;
@@ -193,17 +195,23 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     // His size follows the room he has: he shrinks to fit a tight spot and returns to the chosen size after.
     const fitted = fit(desired, a);
     if (fitted !== k) { k = fitted; ({ w: W, h: H } = sizeAt(k)); el.style.setProperty("--k", String(k)); }
-    const waiting = prefs.seated && a !== null;
-    tab.hidden = !waiting;
-    if (waiting) {
+    const positionSeatTab = () => {
+      // A safety retreat on a dense Progress surface is still a seat: unlike
+      // the saved seated preference, it must not strand Studigo offscreen.
+      const waiting = a !== null && (prefs.seated || rt.autoSeated);
+      tab.hidden = !waiting;
+      if (!waiting || !a) return;
       const page = surface()!.getBoundingClientRect(), right = rt.dock[1] === "r";
       tab.dataset.side = right ? "r" : "l";
       tab.style.setProperty("--tx", `${right ? Math.min(page.right, window.innerWidth) - 20 : Math.max(page.left, 0)}px`);
       tab.style.setProperty("--ty", `${a.bottom - (a.inRow ? rowHeight() + 83 : 79)}px`);
-    }
+    };
+    positionSeatTab();
     // Automatic seating is transient presentation, never a saved preference.
     el.hidden = false; el.inert = false;
     if (rt.mode !== "window" || !a) {
+      rt.autoSeated = false;
+      positionSeatTab();
       const seat = seatSpot();
       setXY(seat.x, seat.y);
       makeRoom(0, 0, 0, 0);
@@ -221,18 +229,22 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
       });
     }
-    const dock = safeRoom && !rt.drag
+    const dock = safeRoom && !rt.drag && !rt.userSummoned
       ? controlSafeDock(rt.dock, a, targets, size)
       : rt.drag ? rt.dock : chooseDock(rt.dock, a, targets, canScrollClear(), size);
     if (dock === null) {
-      // No corner is free. Reveal the same header avatar and remove the floating
-      // window from hit testing and keyboard order immediately, without motion.
+      // No safe corner. Temporarily seat him, but expose his normal edge tab
+      // even if the header has retracted: the learner can always summon him.
+      rt.autoSeated = true;
+      positionSeatTab();
       el.hidden = true; el.inert = true; bubble.hidden = true;
       ws.dataset.seat = "occupied";
       closeCard();
       makeRoom(0, 0, 0, 0);
       return;
     }
+    rt.autoSeated = false;
+    positionSeatTab();
     ws.dataset.seat = "empty";
     if (!rt.drag) { const at = spot(dock, a, size); setXY(at.x, at.y); }
     el.dataset.side = dock[1];
@@ -489,8 +501,17 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     place(); void el.offsetWidth; el.classList.remove("noMove");
     later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); }, reduced ? 0 : 520);
   }
-  host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => { changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true }); }, { signal });
-  tab.addEventListener("click", () => { changePrefs({ seated: false }); sync(); }, { signal });
+  host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => {
+    rt.userSummoned = false;
+    changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true });
+  }, { signal });
+  tab.addEventListener("click", () => {
+    // Only an explicit learner request may relax the no-overlap fallback when
+    // every automatic corner is blocked. Drag/seat remain available afterward.
+    rt.userSummoned = rt.autoSeated;
+    rt.autoSeated = false;
+    changePrefs({ seated: false }); sync();
+  }, { signal });
 
   /* ---------- his menu ---------- */
   let card: HTMLElement | null = null;
@@ -670,10 +691,18 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       activity();
       rt.pose = ""; setPose(on ? "up" : "center");
     },
-    setTone(tone) { el.dataset.tone = tone; },
+    setTone(tone) {
+      if (el.dataset.tone !== tone) {
+        // Don't carry an explicit summon override into the next study page.
+        rt.userSummoned = false;
+        el.dataset.tone = tone;
+        schedulePlace();
+      }
+    },
     setPrefs(next) {
       if (dead) return;
       prefs = next;
+      if (next.seated) rt.userSummoned = false;
       if (!rt.drag) rt.dock = next.dock;
       if (!next.speech) bubble.hidden = true;
       if (!pinch && !resize) desired = next.scale;
