@@ -120,6 +120,22 @@ try {
   } else {
     assert.equal(await page.locator('.coachAside').count(), 0, 'the redundant desktop information rail stays removed');
     assert.equal(await page.getByRole('button', { name: 'Open Materials' }).count(), 1, 'one Materials shortcut sits by the messenger');
+    const composerHeight = await page.locator('.chatComposer .chatRow > input').evaluate((el) => el.getBoundingClientRect().height);
+    const clearHeight = await page.getByRole('button', { name: 'Clear Coach chat' }).evaluate((el) => el.getBoundingClientRect().height);
+    const sendHeight = await send.evaluate((el) => el.getBoundingClientRect().height);
+    assert.equal(composerHeight, 48, 'the desktop message field has a stable 48px height');
+    assert.equal(clearHeight, 44, 'Clear stays within 10% of the message field height');
+    assert.equal(sendHeight, 44, 'Send and Clear use the same 44px geometry');
+    await page.getByRole('button', { name: 'Collapse room controls' }).click();
+    await page.locator('.modeStrip').waitFor({ state: 'hidden' });
+    await page.getByRole('button', { name: 'Expand room controls' }).click();
+    await page.locator('.modeStrip').waitFor({ state: 'visible' });
+    await page.locator('.modeStrip').hover();
+    assert.equal(await page.locator('.modeStrip').getAttribute('hidden'), null, 'hover cannot tuck the header');
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.getByRole('button', { name: 'Open Materials' }).isVisible(), false, 'phone uses its Materials tab');
+    assert.equal(await page.getByRole('button', { name: 'Collapse room controls' }).isVisible(), false, 'phone header is not collapsible');
+    await page.setViewportSize({ width: 1280, height: 900 });
     await submit('Pending Coach question', 1);
     await push(0, { type: 'start', conversationId: 'coach-thread' });
     assert.equal(await send.isEnabled(), false, 'Coach send disabled while pending');
