@@ -41,6 +41,8 @@ try {
   const input = composer.getByRole('textbox', { name: 'Message Studigo' });
   const send = composer.getByRole('button', { name: 'Send to Studigo' });
   const choose = async (mode) => {
+    const showDrawer = page.getByRole('button', { name: 'Show controls' });
+    if (await showDrawer.count()) await showDrawer.click();
     await page.locator('.chatModes button').filter({ hasText: mode }).click();
     await page.locator('.coachChat').waitFor();
     assert.equal(await page.locator('.coachChat').getAttribute('data-chat-mode'), mode.toLowerCase());
@@ -126,15 +128,15 @@ try {
     assert.equal(composerHeight, 48, 'the desktop message field has a stable 48px height');
     assert.equal(clearHeight, 44, 'Clear stays within 10% of the message field height');
     assert.equal(sendHeight, 44, 'Send and Clear use the same 44px geometry');
-    await page.getByRole('button', { name: 'Collapse room controls' }).click();
-    await page.locator('.modeStrip').waitFor({ state: 'hidden' });
-    await page.getByRole('button', { name: 'Expand room controls' }).click();
-    await page.locator('.modeStrip').waitFor({ state: 'visible' });
-    await page.locator('.modeStrip').hover();
-    assert.equal(await page.locator('.modeStrip').getAttribute('hidden'), null, 'hover cannot tuck the header');
+    const drawer = page.locator('.modeFrame').first();
+    await page.waitForFunction(() => document.querySelector('.modeFrame')?.getAttribute('data-collapsed') === 'true', undefined, { timeout: 6500 });
+    assert.equal(await drawer.locator('.modeStrip').getAttribute('inert'), '', 'idle drawer cannot trap tab focus');
+    await page.getByRole('button', { name: 'Show controls' }).click();
+    assert.equal(await drawer.getAttribute('data-collapsed'), 'false', 'drawer can be reopened');
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.getByRole('button', { name: 'Open Materials' }).isVisible(), false, 'phone uses its Materials tab');
-    assert.equal(await page.getByRole('button', { name: 'Collapse room controls' }).isVisible(), false, 'phone header is not collapsible');
+    assert.equal(await drawer.getAttribute('data-collapsed'), 'false', 'phone header stays open');
+    assert.equal(await page.getByRole('button', { name: 'Hide controls' }).isVisible(), false, 'phone has no drawer toggle');
     await page.setViewportSize({ width: 1280, height: 900 });
     await submit('Pending Coach question', 1);
     await push(0, { type: 'start', conversationId: 'coach-thread' });
