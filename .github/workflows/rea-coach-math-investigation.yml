@@ -119,6 +119,9 @@ jobs:
                 echo "REA_WEB_OK=$name"
                 jq -c '{operation,confidence,authority,subject,normalized_result_keys:(.normalized_result|keys),limitations}' "/tmp/rea-evidence/$name-web.json" | head -c 7000
                 echo
+                echo "REA_WEB_OBSERVATIONS=$name:"
+                jq -c '{target:.normalized_result.target,metadata:.normalized_result.metadata,dom:(.normalized_result.dom|{node_count:(.nodes|length),frame_count:(.frames|length)}),script_count:(.normalized_result.scripts|length),resource_count:(.normalized_result.resources|length),network_keys:(.normalized_result.network|keys),completeness:.normalized_result.completeness}' "/tmp/rea-evidence/$name-web.json" | head -c 9000
+                echo
               else
                 echo "REA_WEB_FAILED=$name"
                 head -c 1600 "/tmp/rea-evidence/$name-web.stderr"
