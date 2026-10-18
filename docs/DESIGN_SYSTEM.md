@@ -339,8 +339,8 @@ the app); "Start studying for free" goes to `/signup`.
   confidence keys carry a 1–3 bar meter; after grading, choices say
   "✓ Correct answer" / "✕ Your answer" in text.
 - **Flashcards**: a card with a deck beneath it and a real flip.
-- **Mastery**: a dark readout (ring), stat wells, calibration, next practice,
-  and every topic as a **tile map** with a fill level.
+- **Progress**: a dark topic-coverage readout (practiced topics / current topics), stat wells, calibration, next practice and a topic tile map. Canonical stage labels are evidence, not percentages; legacy practice scores are labeled. Graded answer counts exclude self-rated flashcards. “Where these numbers come from” explains the persisted sources.
+- **Plan**: Today opens first; later days are native disclosures. Marking an action done records plan bookkeeping only. Start opens the existing learning activity.
 
 ### Authentication
 
