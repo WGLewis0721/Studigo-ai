@@ -358,34 +358,45 @@ function startHome(): () => void {
     tell({ type: "studigo:tone", tone: button.dataset.shell });
   }, { signal });
 
-  /** Modes: the device holds still while the room changes mode and color. */
-  const grid = find(".modesGrid"), device = find("#homeModeDevice"), host = find("#homeModeHost"), modeName = find("#homeModeName");
+  /** Keep a real, synthetic Study Room mounted in the iPad. Select modes
+   *  by scroll on wide screens or by a 44px+ button on narrow screens. */
+  const grid = find(".modesGrid"), device = find("#homeModeDevice");
+  const tablet = find<HTMLIFrameElement>("#homeModeIframe");
   const steps = Array.from(root.querySelectorAll<HTMLElement>(".modeStep"));
-  if (grid && device && host && modeName && steps.length) {
+  if (grid && device && tablet && steps.length) {
     let current: HTMLElement | null = null;
-    const show = (step: HTMLElement) => {
-      if (step === current) return;
-      current = step;
-      steps.forEach((item) => item.classList.toggle("on", item === step));
-      device.dataset.tone = step.dataset.tone;
-      modeName.textContent = step.dataset.mode ?? "";
-      const copy = document.createElement("div");
-      copy.className = "modeScreenCopy";
-      copy.dataset.tone = step.dataset.tone;
-      copy.innerHTML = step.querySelector(".modeScreen")?.innerHTML ?? "";
-      host.replaceChildren(copy);
+    const show = (step: HTMLElement, reveal = false) => {
+      if (step !== current) {
+        current = step;
+        steps.forEach((item) => {
+          const active = item === step;
+          item.classList.toggle("on", active);
+          item.querySelector(".modeChoose")?.setAttribute("aria-pressed", String(active));
+        });
+        device.dataset.tone = step.dataset.tone;
+        const mode = step.dataset.mode?.toLowerCase();
+        if (mode && ["coach", "learn", "quiz", "flashcards"].includes(mode)) {
+          const nextMode = mode === "flashcards" ? "cards" : mode;
+          const url = `/demo/room?mode=${nextMode}`;
+          if (tablet.getAttribute("src") !== url) tablet.setAttribute("src", url);
+        }
+      }
+      if (reveal && narrow()) {
+        device.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "center" });
+      }
     };
-    const setup = () => {
-      const pinned = !narrow();
-      grid.classList.toggle("pinned", pinned);
-      if (pinned && !current) show(steps[0]);
-      if (!pinned) steps.forEach((item) => item.classList.add("on"));
-    };
-    setup();
-    window.addEventListener("resize", setup, { signal });
-    const stepWatch = new IntersectionObserver((entries) => entries.forEach((entry) => {
-      if (entry.isIntersecting && grid.classList.contains("pinned")) show(entry.target as HTMLElement);
-    }), { rootMargin: "-46% 0px -46% 0px" });
+    // The iframe remains available as a real, usable demo on every device.
+    grid.classList.add("pinned");
+    show(steps[0]);
+    steps.forEach((step) => {
+      step.querySelector(".modeChoose")?.addEventListener("click", () => show(step, true), { signal });
+    });
+    const stepWatch = new IntersectionObserver((entries) => {
+      if (narrow()) return;
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) show(entry.target as HTMLElement);
+      });
+    }, { rootMargin: "-46% 0px -46% 0px" });
     steps.forEach((step) => stepWatch.observe(step));
     observers.push(stepWatch);
   }
