@@ -87,7 +87,9 @@ try {
         assert.equal(response?.status(), 200, `/${path} returns public auth UI`);
         assert.equal(await page.getByLabel('Email').count(), 1);
         assert.equal(await page.getByLabel('Password').count(), 1);
-        assert.equal(await page.getByRole('button', { name: new RegExp('^' + submit) }).count(), 1);
+        const submitButton = page.locator('form.authForm button[type="submit"]');
+        assert.equal(await submitButton.count(), 1, 'one password form submit independent of optional provider buttons');
+        assert.match(await submitButton.innerText(), new RegExp('^' + submit));
         await inspect(page, width, 'auth-' + path);
       }
     } finally { await context.close(); }
