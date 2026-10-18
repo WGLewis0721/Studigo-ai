@@ -544,7 +544,7 @@
   .roomDevice[data-ui="phase3"] .materialsIntro { gap: 10px; }
   .roomDevice[data-ui="phase3"] .materialsReadout { display: flex; align-items: baseline; width: 100%; }
   .roomDevice[data-ui="phase3"] .materialsReadout strong { font-size: 1.5rem; }
-  .roomDevice[data-ui="phase3"] .materialsGuide { grid-template-columns: minmax(0, 1fr); padding: 17px; }
+  .roomDevice[data-ui="phase3"] .materialsGuide { grid-template-columns: minmax(0, 1fr); padding: 0; }
   /* Avoid a scroll-in-scroll reading pane on iPhone. */
   .roomDevice[data-ui="phase3"] .materialsGuide .guideReading { max-height: none; overflow: visible; }
   .roomDevice[data-ui="phase3"] .materialsLibraryTitle > span { display: none; }
