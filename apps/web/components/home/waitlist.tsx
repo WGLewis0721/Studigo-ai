@@ -46,8 +46,8 @@ export function StudigoWaitlist() {
       <div className="wrap studigoWaitlistGrid">
         <div className="studigoWaitlistCopy">
           <span className="kicker">THE IPHONE &amp; IPAD BETA</span>
-          <h2 id="studigo-waitlist-title">Your class material, <em>in your pocket.</em></h2>
-          <p>Bring the guide, slides, and notes you were actually given. Studigo turns them into a Study Room that teaches, quizzes, and shows the page behind an answer.</p>
+          <h2 id="studigo-waitlist-title">Studigo is coming to <em>iPhone and iPad.</em></h2>
+          <p>Study with Studigo wherever you go. Bring your class notes, work through tricky topics, and pick up where you left off.</p>
           <form onSubmit={submit} className="studigoWaitlistForm">
             <label htmlFor="studigo-beta-name">Your name</label>
             <input className="studigoWaitlistName" id="studigo-beta-name" name="name" type="text" autoComplete="name" placeholder="Your name" maxLength={100} required disabled={state === "sending"} />
@@ -55,7 +55,7 @@ export function StudigoWaitlist() {
             <input className="studigoWaitlistTrap" name="website" type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <div className="studigoWaitlistFields"><input id="studigo-beta-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required disabled={state === "sending"} /><button className="buttonPrimary" type="submit" disabled={state === "sending"}>{state === "sending" ? "Joining…" : "Join the beta list"}</button></div>
             <label className="studigoWaitlistConsent"><input name="consent" type="checkbox" required disabled={state === "sending"} /> Email me about the Studigo beta and my invitation. If this is for a child, use a parent or guardian email.</label>
-            <p className="studigoWaitlistFeedback" role="status" aria-live="polite">{state === "success" ? "You're on the list. Watch your inbox for a beta invitation." : state === "error" ? "We couldn't add you yet. Please try again later." : "The web Study Room is already open. This list is for the iPhone and iPad beta."}</p>
+            <p className="studigoWaitlistFeedback" role="status" aria-live="polite">{state === "success" ? "You're on the list. We will email you when an invitation is ready." : state === "error" ? "We couldn't add you yet. Please try again later." : "The web Study Room is already open. This list is for the iPhone and iPad beta."}</p>
           </form>
         </div>
       </div>
