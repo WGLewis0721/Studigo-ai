@@ -38,22 +38,19 @@ export function PublicDemoBridge() {
        The regular app and developer fixtures still show them. */
     .roomDevice .learnMissionFixture { display: none !important; }
     .roomDevice .modeSurface:has(.exploreJournal) { padding-top: 10px; }
-    /* Explore uses LearnMission instead of Coach's chat element. The mobile
-       Study Room normally removes the spacer with :has(.coachChat), so Learn
-       retained an empty navigation/padding band between its two headers.
-       Scope the fix to marketing's real, synthetic Explore instance only. */
+    /* Public demos mount the real RoomWorkspace without the signed-in shell.
+       Learn, Quiz and Cards do not contain .coachChat, so they otherwise retain
+       the mobile sticky-header offset and an empty band under the toolbar.
+       Keep this override here: never change signed-in Study Rooms. */
     @media (max-width: 700px) {
-      .roomDevice:has(.exploreJournal) .studyNavigation {
+      .roomDevice .studyNavigation {
         flex: none; height: 0; min-height: 0; padding: 0; margin: 0;
         gap: 0; border: 0; overflow: visible;
       }
-      /* The shared mobile .modeFrame has a sticky top offset. Coach disables
-         it when .coachChat exists, but Explore has no chat element, so the
-         frame gets pushed 56px down. Match Coach's in-flow header behavior. */
-      .roomDevice:has(.exploreJournal) .modeSurfaceFramed > .modeFrame {
-        position: static; top: auto;
+      .roomDevice .modeSurfaceFramed > .modeFrame {
+        position: static; top: auto; flex: none;
       }
-      .roomDevice:has(.exploreJournal) .modeSurfaceFramed > .coachMode {
+      .roomDevice .modeSurfaceFramed > .coachMode {
         padding-top: 0;
       }
     }
