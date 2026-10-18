@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
 import type { WeakArea } from "@/lib/study-planning";
 
@@ -22,8 +22,6 @@ export function CoachAside({
   onSelect: (topic: Topic) => void;
   onAllTopics: () => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const overviewId = useId();
   const current = topics.find((topic) => topic.title === selectedTitle);
   if (!current) return null;
 
@@ -31,20 +29,20 @@ export function CoachAside({
   const score = Math.round(Number(current.mastery_score));
   const next = areas.filter((area) => area.topic.id !== current.id).slice(0, 4);
   const terms = (current.key_terms ?? []).slice(0, 8);
+  const ref = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
+
   return (
-    <aside className="coachAside" aria-label="Topic overview" data-collapsed={collapsed ? "true" : undefined}>
-      <button
-        className="coachAsideToggle"
-        type="button"
-        aria-expanded={!collapsed}
-        aria-controls={overviewId}
-        aria-label={collapsed ? "Expand topic overview" : "Collapse topic overview"}
-        title={collapsed ? "Expand topic overview" : "Collapse topic overview"}
-        onClick={() => setCollapsed((value) => !value)}
-      >
-        <span aria-hidden="true">{collapsed ? "‹" : "›"}</span>
-      </button>
-      <div className="coachAsideScale" id={overviewId} hidden={collapsed}>
+    <aside className="coachAside" aria-label="Topic overview" ref={ref} data-open={open ? "true" : undefined} onClick={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <div className="coachAsideScale">
       <section className="asideCard">
         <span className="tinyLabel">CURRENT TOPIC</span>
         <h3>{current.title}</h3>
