@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
+import { createContext, useContext, useEffect, useId, useState, type ReactNode, type Ref } from "react";
 import { createPortal } from "react-dom";
 import { StudigoMascot, type MascotState } from "@/components/studigo-mascot";
 
@@ -117,81 +117,33 @@ export function StudigoRail({ tone }: { tone: string }) {
   );
 }
 
-/** A page's header: its options row (children) with the Studigo rail beneath. */
-export function ModeFrame({ tone, children, compact, frameRef, accessory }: { tone: string; children: ReactNode; compact?: boolean; frameRef?: Ref<HTMLDivElement>; /** Optional controls outside the scaled/tucked heading. */ accessory?: ReactNode }) {
-  const stripRef = useRef<HTMLDivElement>(null);
-  const [stripHeight, setStripHeight] = useState<number | null>(null);
-  const [stripOpen, setStripOpen] = useState(false);
-  const [ownCompact, setOwnCompact] = useState(false);
-  const toneSeen = useRef(tone);
-  if (compact === undefined && toneSeen.current !== tone) {
-    toneSeen.current = tone;
-    setOwnCompact(false);
-    setStripOpen(false);
-    setStripHeight(null);
-  }
-  const tucked = compact ?? ownCompact;
-  useLayoutEffect(() => {
-    const head = stripRef.current?.querySelector<HTMLElement>(".modeHead");
-    const frame = stripRef.current?.parentElement;
-    if (!head || !frame || tucked || stripHeight != null) return;
-    frame.style.transition = "none";
-    frame.style.removeProperty("--strip-h");
-    const natural = head.offsetHeight;
-    frame.style.transition = "";
-    if (natural > 0) setStripHeight(natural);
-  }, [tone, tucked, stripHeight]);
-  useEffect(() => {
-    if (compact !== undefined) return;
-    const frame = stripRef.current?.parentElement;
-    if (!frame) return;
-    let settled = false;
-    const settle = () => {
-      if (settled) return;
-      settled = true;
-      setOwnCompact(true);
-    };
-    const wait = window.setTimeout(settle, 500 + Math.random() * 1500);
-    const onPoint = () => settle();
-    const onType = (event: Event) => {
-      if (event.target instanceof Node && frame.contains(event.target)) settle();
-    };
-    frame.addEventListener("pointermove", onPoint);
-    frame.addEventListener("pointerdown", onPoint);
-    frame.addEventListener("wheel", onPoint, { passive: true });
-    frame.addEventListener("keydown", onType);
-    frame.addEventListener("input", onType);
-    return () => {
-      settled = true;
-      window.clearTimeout(wait);
-      frame.removeEventListener("pointermove", onPoint);
-      frame.removeEventListener("pointerdown", onPoint);
-      frame.removeEventListener("wheel", onPoint);
-      frame.removeEventListener("keydown", onType);
-      frame.removeEventListener("input", onType);
-    };
-  }, [compact, tone]);
-  useEffect(() => {
-    if (!stripOpen) return;
-    const close = (event: PointerEvent) => {
-      if (stripRef.current && event.target instanceof Node && !stripRef.current.contains(event.target)) setStripOpen(false);
-    };
-    window.addEventListener("pointerdown", close);
-    return () => window.removeEventListener("pointerdown", close);
-  }, [stripOpen]);
+/** Explicit, reversible Study Room header collapse. No hover or idle resizing. */
+export function ModeFrame({ tone, children, frameRef, accessory }: { tone: string; children: ReactNode; frameRef?: Ref<HTMLDivElement>; accessory?: ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const controlsId = useId();
+
+  // Changing to another room section restores its visible controls.
+  useEffect(() => setCollapsed(false), [tone]);
+
   return (
-    <div
-      className="modeFrame"
-      data-tone={tone}
-      data-compact={tucked ? "true" : undefined}
-      ref={frameRef}
-      style={stripHeight ? { ["--strip-h" as string]: `${stripHeight}px` } : undefined}
-    >
-      <div className="modeStrip" ref={stripRef} data-open={stripOpen ? "true" : undefined} onClick={() => setStripOpen(true)} onMouseLeave={() => setStripOpen(false)}>
+    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : undefined} ref={frameRef}>
+      <div className="modeStrip" id={controlsId} hidden={collapsed}>
         {children}
       </div>
       {accessory}
       <StudigoRail tone={tone} />
+      <button
+        type="button"
+        className="modeCollapseToggle"
+        aria-controls={controlsId}
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? "Expand room controls" : "Collapse room controls"}
+        title={collapsed ? "Expand room controls" : "Collapse room controls"}
+        onClick={() => setCollapsed((value) => !value)}
+      >
+        <span aria-hidden="true">{collapsed ? "▾" : "▴"}</span>
+        <span className="modeCollapseText">{collapsed ? "Show controls" : "Hide controls"}</span>
+      </button>
     </div>
   );
 }
