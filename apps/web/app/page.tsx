@@ -263,18 +263,26 @@ export default function HomePage() {
               <ol className="modeSteps">
                 {modes.map((mode) => (
                   <li key={mode.n} className="modeStep" data-tone={mode.tone} data-mode={mode.name}>
-                    <div className="modeText"><span className="modeNum">{mode.n}</span><h3>{mode.name}</h3><p>{mode.line}</p></div>
+                    <button className="modeText modeChoose" type="button" aria-pressed={mode.n === "01"} aria-label={`Show ${mode.name} in the iPad demo`}>
+                      <span className="modeNum">{mode.n}</span><h3>{mode.name}</h3><p>{mode.line}</p>
+                    </button>
                     <div className="modeScreen">{mode.screen}</div>
                   </li>
                 ))}
               </ol>
-              <div className="modeStage" aria-hidden="true">
+              <div className="modeStage">
                 <div className="modeDevice" id="homeModeDevice" data-tone="coach">
-                  <div className="mdBar"><i className="roomGem" data-tone="teal" /><b>Science</b><span id="homeModeName">Coach</span></div>
-                  <div className="mdRail"><span className="railLed" /><span className="railBrand">studigo</span></div>
-                  <div className="mdHost" id="homeModeHost" />
-                  <div className="mdChin"><span className="railLed" /><span className="railBrand">studigo</span><span className="mdGrille" /></div>
+                  <span className="modeTabletCamera" aria-hidden="true" />
+                  <iframe
+                    id="homeModeIframe"
+                    className="modeTabletScreen"
+                    src="/demo/room?mode=coach"
+                    title="Interactive iPad Study Room demo. Choose a mode to see the actual Studigo interface."
+                    loading="lazy"
+                  />
+                  <span className="modeTabletHome" aria-hidden="true" />
                 </div>
+                <p className="modeStageCaption">Try the sample Study Room. No account or uploads needed.</p>
               </div>
             </div>
           </div>
