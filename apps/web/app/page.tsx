@@ -153,6 +153,7 @@ export default function HomePage() {
       </div>
       <script dangerouslySetInnerHTML={{ __html: INTRO_GUARD }} />
 
+      <a className="homeSkipLink" href="#home-main">Skip to content</a>
       <header className="nav">
         <nav className="navLinks" aria-label="Primary navigation">
           <a href="#meet">Meet Studigo</a>
@@ -165,7 +166,7 @@ export default function HomePage() {
         <Link className="buttonPrimary navCta" href="/signup">Start free</Link>
       </header>
 
-      <main>
+      <main id="home-main">
         <section className="hero" id="top" data-room="teal">
           <div className="wrap heroGrid">
             <div className="heroCopy">
