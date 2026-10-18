@@ -3368,6 +3368,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-on); outline-offset: -4px; }
   .modeCollapseToggle > span:first-child { font-size: 1.2rem; line-height: 1; }
   .modeFrame[data-collapsed="true"] > .coachHeaderNav { display: none; }
+  .modeFrame[data-collapsed="true"] + .coachMode > .mhChipBar { display: none; }
 }
 
 .learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
