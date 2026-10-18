@@ -5,7 +5,7 @@ import { createElement } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { GuidePreview } from "../components/room/guide-preview";
 import { guidePreviewModel } from "./guide-preview";
-import { guideFactExcerpt, guideOutlineHeading, guideSourceSegments } from "./guide-outline";
+import { guideFactExcerpt, guideOutlineHeading, guideSourceSegments, guideChapterNotes } from "./guide-outline";
 
 const longTerm = "Antidisestablishmentarianism-and-the-legislative-branch-definition-that-must-wrap";
 const edition: StudyGuideContent = {
@@ -103,15 +103,15 @@ test("Guide preview distinguishes a pending load from a confirmed absent edition
 test("Materials outlines long OCR headings without replacing their original wording or citations", () => {
   const long = "GOVERNMENT / STUDY MATERIALS Page 1 Our Government Vocabulary primary source — a record made by someone who was there secondary source — a later record made by someone else democracy — people vote to choose leaders";
   const result = guideOutlineHeading(long, 0);
-  assert.equal(result.heading, "GOVERNMENT / STUDY MATERIALS");
+  assert.equal(result.heading, "Our Government");
   assert.equal(result.oversized, true);
   assert.deepEqual(guideOutlineHeading("Three Branches of Government", 0), { heading: "Three Branches of Government", oversized: false });
   const noisy = structuredClone(edition);
   noisy.chapters[0].title = long;
   noisy.chapters[0].facts[0].text = "The legislative branch makes laws. ".repeat(12);
   const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: noisy, phase3Materials: true }));
-  assert.match(html, /Your study outline/);
-  assert.match(html, /<h3>GOVERNMENT \/ STUDY MATERIALS<\/h3>/);
+  assert.match(html, /Study notes from your materials/);
+  assert.match(html, /<h3>Our Government<\\/h3>/);
   assert.match(html, /guideOutlinePoints/);
   assert.match(html, /guideOutlineTerms/);
   assert.match(html, /View original heading and source wording/);
@@ -147,4 +147,60 @@ test("long OCR without recognized vocabulary wraps without inventing facts", () 
   assert.ok(segments.length >= 2);
   assert.equal(segments.join(""), raw);
   assert.ok(segments.every(segment => segment.length <= 240));
+});
+
+test("Materials renders historical Learn-style lead, idea, and why groups using only source-backed facts", () => {
+  const withWhy = structuredClone(edition);
+  withWhy.chapters[0].facts.push({
+    id: "fact-why",
+    text: "Voting helps citizens choose representatives.",
+    evidence: [{ blockKey: "vote", pageNumber: 2 }]
+  });
+  const notes = guideChapterNotes(withWhy.chapters[0]);
+  assert.equal(notes.lead?.text, "The legislative branch makes laws.");
+  assert.equal(notes.idea.length, 2);
+  assert.equal(notes.why.length, 1);
+  const html = renderToStaticMarkup(createElement(GuidePreview, {
+    roomId: "room-1", edition: withWhy, phase3Materials: true
+  }));
+  assert.match(html, /LEARN · FROM YOUR MATERIALS/);
+  assert.match(html, /The idea/);
+  assert.match(html, /Why it matters/);
+  assert.match(html, /Voting helps citizens/);
+  assert.match(html, /Check source/);
+});
+
+test("OCR word walls remain verbatim inspectable, never presented as a fabricated summary", () => {
+  const raw = "GOVERNMENT / STUDY MATERIALS Page 1 Our Government Vocabulary primary source — a person who was there secondary source — someone who was not there";
+  const noisy = structuredClone(edition);
+  noisy.chapters[0].facts = [{
+    id: "ocr-fact", text: raw, evidence: [{ blockKey: "ocr", pageNumber: 1 }]
+  }];
+  noisy.chapters[0].terms = [];
+  noisy.chapters[0].examples = [];
+  const notes = guideChapterNotes(noisy.chapters[0]);
+  assert.equal(notes.raw.length, 1);
+  assert.equal(notes.idea.length, 0);
+  assert.equal(notes.lead, null);
+  const html = renderToStaticMarkup(createElement(GuidePreview, {
+    roomId: "room-1", edition: noisy, phase3Materials: true
+  }));
+  assert.match(html, /Read unformatted source passage/);
+  assert.match(html, /no reliable short notes yet/);
+  assert.match(html, /secondary source/);
+  assert.doesNotMatch(html, /<li[^>]*>GOVERNMENT/);
+});
+
+test("Learn-style notes require an explicit gesture and show actual room topic names", () => {
+  const html = renderToStaticMarkup(createElement(GuidePreview, {
+    roomId: "room-1",
+    edition,
+    phase3Materials: true,
+    topics: [{ id: "branches", title: "Three Branches of Government" }]
+  }));
+  assert.match(html, /Understand a topic/);
+  assert.match(html, /Three Branches of Government<\\/option>/);
+  assert.match(html, /Explain with Studigo/);
+  assert.doesNotMatch(html, /Explaining…/);
+  assert.doesNotMatch(html, /\/api\/learn/);
 });
