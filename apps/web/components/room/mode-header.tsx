@@ -122,8 +122,14 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   const [collapsed, setCollapsed] = useState(false);
   const controlsId = useId();
 
-  // Changing to another room section restores its visible controls.
+  // Changing sections or moving to phone layout restores its full header.
   useEffect(() => setCollapsed(false), [tone]);
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 700px)");
+    const restoreOnPhone = () => { if (mobile.matches) setCollapsed(false); };
+    mobile.addEventListener("change", restoreOnPhone);
+    return () => mobile.removeEventListener("change", restoreOnPhone);
+  }, []);
 
   return (
     <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : undefined} ref={frameRef}>
