@@ -33,6 +33,12 @@ export function PublicDemoBridge() {
     window.parent.postMessage({ type: "studigo:ready" }, window.location.origin);
     return () => window.removeEventListener("message", handle);
   }, []);
-  return <style>{`body[data-home-borrowed] .roomWorkspace .cmp,
-    body[data-home-borrowed] .roomWorkspace .cmpTab { visibility: hidden !important; }`}</style>;
+  return <style>{`
+    /* Only the public, synthetic marketing demo hides its fixture diagnostics.
+       The regular app and developer fixtures still show them. */
+    .roomDevice .learnMissionFixture { display: none !important; }
+    .roomDevice .modeSurface:has(.exploreJournal) { padding-top: 10px; }
+    body[data-home-borrowed] .roomWorkspace .cmp,
+    body[data-home-borrowed] .roomWorkspace .cmpTab { visibility: hidden !important; }
+  `}</style>;
 }
