@@ -264,6 +264,105 @@
   }
 }
 
+/* Materials: one task, one reading surface. Source files remain above; we do
+   not render a second extractive/OCR lesson below the cited explanation. */
+.roomDevice[data-ui="phase3"] .materialsGuide {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReadingFocused {
+  width: 100%;
+  max-width: none;
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 2.2vw, 26px);
+  background: var(--white);
+  border: 1px solid var(--hairline);
+  border-radius: 18px;
+  box-shadow: var(--lift-1);
+  overflow: visible;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideOutlineTitle {
+  font-size: clamp(1.22rem, 1.9vw, 1.55rem);
+  line-height: 1.2;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .materialsGuideProvenance {
+  display: flex;
+  align-items: center;
+  gap: 8px 16px;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnOnDemand {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnIntro {
+  font-size: .91rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls {
+  align-items: end;
+  gap: 10px 12px;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls label {
+  flex: 0 0 100%;
+  margin-bottom: -7px;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls select {
+  flex: 1 1 230px;
+  font: inherit;
+  background: var(--snow-2);
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  white-space: normal;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnAnswer {
+  padding: 18px 0 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--snow-3);
+  border-radius: 0;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideExports {
+  border-top: 1px solid var(--snow-3);
+  padding-top: 4px;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideExports > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  width: fit-content;
+  color: var(--teal-ink);
+  font-size: .86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideExports > summary:focus-visible {
+  outline: 3px solid var(--blueberry);
+  outline-offset: 3px;
+}
+.roomDevice[data-ui="phase3"] .guideReadingFocused .guideExports .guideActions {
+  margin-top: 10px;
+}
+@media (max-width: 700px) {
+  .roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls select,
+  .roomDevice[data-ui="phase3"] .guideReadingFocused .guideLearnControls button {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
+
 /* Source-grounded outline instead of promoting entire OCR passages to headings.
    Chapter/fact text remains verbatim in optional disclosures. */
 .roomDevice[data-ui="phase3"] .materialsGuide .guideReading {
