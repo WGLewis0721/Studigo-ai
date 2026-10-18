@@ -118,7 +118,8 @@ try {
     assert.equal(await page.getByText('Coach-only failure', { exact: true }).count(), 1);
     console.log('PASS C01 check 1: two drafts, transcripts, late Learn stream, mode error, loading and scroll');
   } else {
-    const evidenceBefore = await page.locator('.coachAside .asideMeter small').innerText();
+    assert.equal(await page.locator('.coachAside').count(), 0, 'the redundant desktop information rail stays removed');
+    assert.equal(await page.getByRole('button', { name: 'Open Materials' }).count(), 1, 'one Materials shortcut sits by the messenger');
     await submit('Pending Coach question', 1);
     await push(0, { type: 'start', conversationId: 'coach-thread' });
     assert.equal(await send.isEnabled(), false, 'Coach send disabled while pending');
@@ -129,7 +130,6 @@ try {
     assert.equal(await send.isEnabled(), true, 'pending Coach must not disable Learn');
     assert.equal(await count(), 1, 'switch must not make another AI request');
     assert.equal(writes.length, writesBeforeSwitch, 'switch must not write evidence');
-    assert.equal(await page.locator('.coachAside .asideMeter small').innerText(), evidenceBefore);
     await push(0, { type: 'delta', text: 'COACH LATE RESULT' });
     await page.waitForTimeout(100);
     assert.equal(await thread.getByText('COACH LATE RESULT', { exact: false }).count(), 0);
@@ -138,7 +138,6 @@ try {
     await page.getByText('COACH LATE RESULT', { exact: false }).waitFor();
     assert.equal(await send.isEnabled(), false, 'Coach remains pending after return');
     await choose('Learn');
-    assert.equal(await page.locator('.coachAside .asideMeter small').innerText(), evidenceBefore);
     assert.equal(writes.length, writesBeforeSwitch);
     console.log('PASS C01 check 2: pending Coach switch makes no AI/evidence write; late Coach delta stays in Coach');
   }
