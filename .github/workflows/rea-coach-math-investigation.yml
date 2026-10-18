@@ -1,0 +1,68 @@
+name: REA Coach Math Research (temporary)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/rea-coach-math-investigation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rea-static-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Fetch only public reference source
+        run: |
+          git clone --depth 1 https://github.com/google/mathsteps.git /tmp/rea-mathsteps
+          git clone --depth 1 https://github.com/filipdomkc/FormulaDecoder.git /tmp/rea-formuladecoder
+          echo "mathsteps_sha=$(git -C /tmp/rea-mathsteps rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "formuladecoder_sha=$(git -C /tmp/rea-formuladecoder rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Execute real REA 6.7.0 CLI on JavaScript reference targets
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p /tmp/rea-evidence
+          node --version
+          for spec in "mathsteps:/tmp/rea-mathsteps" "formuladecoder-client:/tmp/rea-formuladecoder/client"; do
+            name="${spec%%:*}"
+            target="${spec#*:}"
+            echo "::group::REA $name"
+            echo "REA_TARGET=$name"
+            echo "REA_PATH=$target"
+            if timeout 240 npx --yes rea-agents@6.7.0 analyze-javascript-application "$target" --json > "/tmp/rea-evidence/$name.json" 2> "/tmp/rea-evidence/$name.stderr"; then
+              echo "REA_EXIT=0"
+              echo "REA_EVIDENCE_BYTES=$(wc -c < "/tmp/rea-evidence/$name.json")"
+              echo "REA_EVIDENCE_SHA256=$(sha256sum "/tmp/rea-evidence/$name.json" | awk '{print $1}')"
+              jq -r 'keys | "REA_KEYS=\(.)"' "/tmp/rea-evidence/$name.json" || true
+              jq -cn --slurpfile evidence "/tmp/rea-evidence/$name.json" '{source:{kind:"inline",evidence:$evidence[0]},view:{kind:"summary"}}' > "/tmp/rea-evidence/$name-view-input.json"
+              if timeout 45 npx --yes rea-agents@6.7.0 inspect-analysis-view "/tmp/rea-evidence/$name-view-input.json" --json > "/tmp/rea-evidence/$name-summary.json" 2> "/tmp/rea-evidence/$name-summary.stderr"; then
+                echo "REA_SUMMARY_RESULT:"
+                head -c 20000 "/tmp/rea-evidence/$name-summary.json"
+                echo
+              else
+                echo "REA_SUMMARY_FAILED:"
+                head -c 1400 "/tmp/rea-evidence/$name-summary.stderr"
+                echo
+              fi
+            else
+              echo "REA_FAILED=$?"
+              head -c 3500 "/tmp/rea-evidence/$name.stderr"
+              echo
+            fi
+            echo "::endgroup::"
+          done
+      - name: Store inspectable REA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coach-math-rea-6-7-0
+          path: /tmp/rea-evidence/*
+          if-no-files-found: warn
+          retention-days: 7
