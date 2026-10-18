@@ -339,9 +339,10 @@
   padding-top: 4px;
 }
 .roomDevice[data-ui="phase3"] .guideReadingFocused .guideExports > summary {
-  display: flex;
-  align-items: center;
+  display: list-item;
+  list-style-position: inside;
   min-height: 44px;
+  padding-block: 12px;
   width: fit-content;
   color: var(--teal-ink);
   font-size: .86rem;
