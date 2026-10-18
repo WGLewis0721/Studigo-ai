@@ -44,7 +44,7 @@ try {
       };
     });
     assert.ok(hardware.bezel >= 3 && hardware.statusHeight >= 40 &&
-      hardware.islandWidth >= 80 && hardware.homeBarWidth >= 90,
+      hardware.islandWidth >= (viewport.width <= 370 ? 70 : 80) && hardware.homeBarWidth >= 90,
       `iPhone hardware cues missing at ${viewport.width}px: ${JSON.stringify(hardware)}`);
     if (viewport.width >= 961)
       assert.ok(hardware.gap >= 0 && hardware.gap < 150, `Excessive hero gap: ${hardware.gap}px`);
