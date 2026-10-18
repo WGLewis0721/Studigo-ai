@@ -59,9 +59,9 @@ try {
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'hidden' });
       assert.ok(await open.evaluate(el => document.activeElement === el), 'closing settings restores invoker focus');
-      assert.equal(await page.locator('.roomWorkspace').getAttribute('data-tone'), 'grape', 'theme updates room chrome');
+      assert.equal(await page.locator('.roomDevice').getAttribute('data-shell'), 'grape', 'theme updates room chrome');
       await page.reload({ waitUntil: 'networkidle' });
-      assert.equal(await page.locator('.roomWorkspace').getAttribute('data-tone'), 'grape', 'room theme persists across refresh on this device');
+      assert.equal(await page.locator('.roomDevice').getAttribute('data-shell'), 'grape', 'room theme persists across refresh on this device');
       await inspect(page, width, 'settings-persisted');
 
       // Non-destructive responsive room picker state.
