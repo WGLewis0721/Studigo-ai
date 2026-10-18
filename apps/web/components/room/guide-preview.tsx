@@ -3,10 +3,29 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
-import { guideOutlineHeading, guideFactExcerpt } from "@/lib/guide-outline";
+import { guideOutlineHeading, guideFactExcerpt, guideSourceOutline } from "@/lib/guide-outline";
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
+
+/** Preserve complete source wording while displaying expanded OCR as an
+ * outline. This is a view transform, not a rewritten guide or evidence. */
+function GuideSourceOutline({ text }: { text: string }) {
+  const parts = guideSourceOutline(text);
+  return (
+    <div className="guideSourceOutline">
+      {parts.map((part, index) => part.kind === "heading" ? (
+        <h5 key={index} className="guideSourceSection">{part.text}</h5>
+      ) : (
+        <p key={index} className="guideSourcePoint"><span aria-hidden="true">•</span><span>{part.text}</span></p>
+      ))}
+      <details className="guideSourceVerbatim">
+        <summary>View unformatted original text</summary>
+        <pre>{text}</pre>
+      </details>
+    </div>
+  );
+}
 
 export function GuidePreview({
   roomId,
@@ -174,7 +193,7 @@ export function GuidePreview({
           {guideOutlineHeading(chapter.title, chapterIndex).oversized && (
             <details className="guideOutlineOriginal">
               <summary>View original heading and source wording</summary>
-              <p>{chapter.title}</p>
+              <GuideSourceOutline text={chapter.title} />
               {sourceLinks(chapter.objectiveEvidence)}
             </details>
           )}
@@ -189,7 +208,7 @@ export function GuidePreview({
                       {note.long ? (
                         <details className="guideOutlineLongNote">
                           <summary>{note.excerpt}</summary>
-                          <p>{fact.text}</p>
+                          <GuideSourceOutline text={fact.text} />
                         </details>
                       ) : <span>{fact.text}</span>}
                       {sourceLinks(fact.evidence)}
@@ -211,7 +230,7 @@ export function GuidePreview({
                       <dd>{note.long ? (
                         <details className="guideOutlineLongNote">
                           <summary>{note.excerpt}</summary>
-                          <p>{term.definition}</p>
+                          <GuideSourceOutline text={term.definition} />
                         </details>
                       ) : term.definition}
                       {sourceLinks(term.evidence)}</dd>
