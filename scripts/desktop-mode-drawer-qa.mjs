@@ -53,9 +53,14 @@ try {
       assert.ok(fit.shellBottom <= height + 2, `last row inside frame: ${JSON.stringify(fit)}`);
       assert.ok(fit.visibleHeight >= 150, "scrollable room has usable height");
       assert.equal(fit.overflow, 0, "no horizontal overflow");
-      if (fit.scrollHeight > fit.visibleHeight) {
-        await page.locator(".modeSurface").evaluate(el => { el.scrollTop = el.scrollHeight; });
-        const atBottom = await page.locator(".modeSurface").evaluate(el => el.scrollTop + el.clientHeight + 2 >= el.scrollHeight);
+      // Coach intentionally scrolls its conversation, never the outer mode surface.
+      // Materials and Plan must expose their final row through the page scroller.
+      if (mode !== "coach" && fit.scrollHeight > fit.visibleHeight) {
+        const surface = page.locator(".modeSurface");
+        const scroller = await surface.evaluate(el => getComputedStyle(el).overflowY);
+        assert.equal(scroller, "auto", "non-chat room content uses the scrollable screen");
+        await surface.evaluate(el => { el.scrollTo({ top: el.scrollHeight, behavior: "instant" }); });
+        const atBottom = await surface.evaluate(el => el.scrollTop + el.clientHeight + 2 >= el.scrollHeight);
         assert.equal(atBottom, true, "the last row is reachable by scrolling");
       }
 
