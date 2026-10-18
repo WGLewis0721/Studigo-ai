@@ -172,7 +172,7 @@ export async function getRoomReadiness(roomId: string): Promise<RoomReadiness> {
 
   const [topicsResult, attemptsResult, dueResult] = await Promise.all([
     supabase.from("topics").select("mastery_score, status, last_practiced_at").eq("room_id", roomId).eq("active", true),
-    supabase.from("quiz_attempts").select("is_correct").eq("room_id", roomId),
+    supabase.from("quiz_attempts").select("is_correct").eq("room_id", roomId).eq("source", "quiz"),
     supabase
       .from("flashcards")
       .select("id", { count: "exact", head: true })
