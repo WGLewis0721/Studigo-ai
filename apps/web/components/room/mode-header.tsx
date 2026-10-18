@@ -117,24 +117,69 @@ export function StudigoRail({ tone }: { tone: string }) {
   );
 }
 
-/** Explicit, reversible Study Room header collapse. No hover or idle resizing. */
+/**
+ * Desktop Study Room drawer: starts open and closes after three idle seconds.
+ * Pointer and keyboard interaction with the controls pauses dismissal. Phones
+ * keep their fixed, full-size mode controls and never enter this state.
+ */
 export function ModeFrame({ tone, children, frameRef, accessory }: { tone: string; children: ReactNode; frameRef?: Ref<HTMLDivElement>; accessory?: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [desktop, setDesktop] = useState(false);
+  const [activity, setActivity] = useState(0);
+  const [focused, setFocused] = useState(false);
+  const [hasMoved, setHasMoved] = useState(false);
   const controlsId = useId();
 
-  // Changing sections or moving to phone layout restores its full header.
-  useEffect(() => setCollapsed(false), [tone]);
   useEffect(() => {
     const mobile = window.matchMedia("(max-width: 700px)");
-    const restoreOnPhone = () => { if (mobile.matches) setCollapsed(false); };
-    mobile.addEventListener("change", restoreOnPhone);
-    return () => mobile.removeEventListener("change", restoreOnPhone);
+    const handleWidth = () => {
+      setDesktop(!mobile.matches);
+      if (mobile.matches) {
+        setCollapsed(false);
+        setFocused(false);
+      }
+    };
+    handleWidth();
+    mobile.addEventListener("change", handleWidth);
+    return () => mobile.removeEventListener("change", handleWidth);
   }, []);
 
+  // Switching pages makes its controls discoverable, then begins a fresh delay.
+  useEffect(() => {
+    setCollapsed(false);
+    setHasMoved(false);
+  }, [tone]);
+
+  useEffect(() => {
+    if (!desktop || collapsed || focused) return;
+    const timer = window.setTimeout(() => {
+      setHasMoved(true);
+      setCollapsed(true);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [desktop, collapsed, focused, activity, tone]);
+
+  function toggleDrawer() {
+    if (!desktop) return;
+    setHasMoved(true);
+    setCollapsed((closed) => !closed);
+  }
+
   return (
-    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : undefined} ref={frameRef}>
-      <div className="modeStrip" id={controlsId} hidden={collapsed}>
-        {children}
+    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : "false"} data-drawer-animated={hasMoved ? "true" : undefined} ref={frameRef}>
+      <div
+        className="modeStrip"
+        id={controlsId}
+        aria-hidden={collapsed || undefined}
+        inert={collapsed}
+        onPointerMove={() => setActivity((n) => n + 1)}
+        onPointerDown={() => setActivity((n) => n + 1)}
+        onFocusCapture={() => setFocused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
+        }}
+      >
+        <div className="modeStripInner">{children}</div>
       </div>
       {accessory}
       <StudigoRail tone={tone} />
@@ -143,9 +188,9 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         className="modeCollapseToggle"
         aria-controls={controlsId}
         aria-expanded={!collapsed}
-        aria-label={collapsed ? "Expand room controls" : "Collapse room controls"}
-        title={collapsed ? "Expand room controls" : "Collapse room controls"}
-        onClick={() => setCollapsed((value) => !value)}
+        aria-label={collapsed ? "Show controls" : "Hide controls"}
+        title={collapsed ? "Show controls" : "Hide controls"}
+        onClick={toggleDrawer}
       >
         <span aria-hidden="true">{collapsed ? "▾" : "▴"}</span>
         <span className="modeCollapseText">{collapsed ? "Show controls" : "Hide controls"}</span>
