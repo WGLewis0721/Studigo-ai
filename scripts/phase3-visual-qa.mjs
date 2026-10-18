@@ -791,6 +791,12 @@ try {
           "icon key dock must not cause horizontal overflow");
         const sourceReading = await page.locator(".learnSourceReading").innerText();
         assert.match(sourceReading, /Inherited traits come from parents through genes/, "opening dialogue must show source facts for selected quest");
+        assert.equal(await page.locator(".learnSourceReading .learnSourceFormatted").count(), 1,
+          "Explore lesson must use the shared semantic source reader");
+        assert.equal(await page.locator(".learnSourceReading .learnLine").count(), 0,
+          "the raw OCR paragraph must not be displayed as the main reading");
+        assert.ok(await page.locator(".learnSourceReading").evaluate(el => getComputedStyle(el).overflowY === "visible"),
+          "the note card must not introduce a second scrollbar");
         await page.getByRole("button", { name: /Check what I understood/ }).click();
         await page.locator('.learnTalk[data-journey-stage="first-check"]').waitFor();
         assert.equal(await progressBar.getAttribute("aria-valuenow"), "34",
