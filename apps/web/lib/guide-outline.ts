@@ -1,3 +1,5 @@
+import type { GuideChapter } from "@studigo/ai";
+
 /**
  * Presentation-only heading for source-grounded saved editions.
  * Some scans have their entire first OCR passage stored as chapter.title.
@@ -7,6 +9,13 @@
 export function guideOutlineHeading(raw: string, position: number) {
   const text = raw.replace(/\s+/g, " ").trim();
   if (text.length <= 100) return { heading: text || `Section ${position + 1}`, oversized: false };
+
+  // Prefer the learner-facing lesson title to an all-caps scan/file heading.
+  // This is an exact substring of the original OCR, not a generated subject.
+  const pageTitle = text.match(/\\bPage\\s+\\d+\\s+(.{3,72}?)\\s+(?:Vocabulary|Key\\s+Terms|Definitions)\\b/i)?.[1]?.trim();
+  if (pageTitle && !/\\bPage\\s+\\d+\\b/i.test(pageTitle)) {
+    return { heading: pageTitle, oversized: true };
+  }
 
   // OCR handouts often begin with a short document heading followed by
   // "Page N" and all the vocabulary on that page, without line breaks.
@@ -75,4 +84,37 @@ export function guideSourceSegments(raw: string, terms: string[]): string[] {
   }
   const starts = [0, ...boundaries.filter(i => i > 0)];
   return starts.map((pos, i) => raw.slice(pos, starts[i + 1] ?? raw.length)).filter(Boolean);
+}
+
+/**
+ * The old Learn reading was a short lead followed by headings and one fact per
+ * bullet. Materials uses the same content hierarchy without inventing teaching
+ * claims or running an AI model when the shelf opens.
+ *
+ * Saved OCR run-ons are NOT short facts. Preserve them in the source disclosure
+ * rather than presenting a truncated definition as a learner-facing key point.
+ */
+export function guideChapterNotes(chapter: GuideChapter) {
+  const longFacts = chapter.facts.filter((fact) =>
+    fact.text.length > 225 || /\\bPage\\s+\\d+\\b[\\s\\S]*\\bVocabulary\\b/i.test(fact.text)
+  );
+  const facts = chapter.facts.filter((fact) => !longFacts.includes(fact));
+  const whyPattern = /\\b(because|so that|as a result|therefore|allows?|enables?|helps?|matters|important)\\b/i;
+  const why = facts.filter((fact) => whyPattern.test(fact.text));
+  const other = facts.filter((fact) => !why.includes(fact));
+  const objective = chapter.objective.trim();
+  const objectiveIsReadable = objective.length > 0
+    && objective.length <= 170
+    && !/\\bPage\\s+\\d+\\b/i.test(objective)
+    && objective.toLowerCase() !== chapter.title.trim().toLowerCase();
+  const lead = objectiveIsReadable
+    ? { text: objective, evidence: chapter.objectiveEvidence }
+    : other[0] ?? why[0] ?? null;
+  return {
+    lead,
+    idea: facts.filter((fact) => fact !== lead && !why.includes(fact)),
+    why: why.filter((fact) => fact !== lead),
+    raw: longFacts,
+    needsSourceReview: !lead && !facts.length && !chapter.terms.length && !chapter.examples.length
+  };
 }
