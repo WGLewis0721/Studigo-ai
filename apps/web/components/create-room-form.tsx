@@ -19,26 +19,32 @@ export function CreateRoomForm() {
   return (
     <aside className="createRoomPanel">
       <span className="tinyLabel">NEW STUDY ROOM</span>
-      <h2>Start with what's next.</h2>
+      <h2>Start another room.</h2>
+      <p className="roomCreateIntro">Name it now; add study materials after opening it. Other details can wait.</p>
       <form className="stackedForm" action={formAction}>
         <label className="field">
           <span>Room name</span>
-          <input name="title" required maxLength={160} placeholder="Biology Midterm" />
+          <input name="title" required maxLength={160} defaultValue="My next Study Room" placeholder="Biology Midterm" />
         </label>
-        <div className="fieldRow">
+        <details className="roomCreateOptions">
+          <summary>Optional details <span aria-hidden="true">▾</span></summary>
+          <div className="roomCreateFields">
+          <div className="fieldRow">
+            <label className="field">
+              <span>Subject</span>
+              <input name="subject" maxLength={160} placeholder="Science" />
+            </label>
+            <label className="field">
+              <span>Test date</span>
+              <input name="testDate" type="date" />
+            </label>
+          </div>
           <label className="field">
-            <span>Subject</span>
-            <input name="subject" maxLength={160} placeholder="Science" />
+            <span>Class or teacher</span>
+            <input name="courseName" maxLength={160} placeholder="Period 3 · Ms. Alvarez" />
           </label>
-          <label className="field">
-            <span>Test date</span>
-            <input name="testDate" type="date" />
-          </label>
-        </div>
-        <label className="field">
-          <span>Class or teacher</span>
-          <input name="courseName" maxLength={160} placeholder="Period 3 · Ms. Alvarez" />
-        </label>
+          </div>
+        </details>
 
         {state.error && (
           <p className="formError" role="alert">
