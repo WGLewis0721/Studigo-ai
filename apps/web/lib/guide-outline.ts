@@ -35,3 +35,48 @@ export function guideFactExcerpt(raw: string, limit = 175) {
     long: true
   };
 }
+
+/**
+ * Presentation-only outline for source passages that lost their line breaks
+ * during OCR. Preserve every word in the same order; do not paraphrase,
+ * invent headings, or write this representation back into study evidence.
+ * Explicit page/section boundaries and punctuation win. Long unpunctuated
+ * blocks are split at whole-word boundaries strictly for legibility.
+ */
+export type GuideSourceOutlinePart = { kind: "heading" | "point"; text: string };
+
+export function guideSourceOutline(raw: string): GuideSourceOutlinePart[] {
+  const normalized = raw.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return [];
+  const withSections = normalized
+    .replace(/[ \t]+(Page\s+\d{1,3})\b/gi, "\n$1\n")
+    .replace(/[ \t]+(Vocabulary|Key Terms|Key Points|Key Ideas|Important Ideas|Definitions)\b/g, "\n$1\n");
+  const lines = withSections.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+  const result: GuideSourceOutlinePart[] = [];
+  for (const line of lines) {
+    if (/^(?:Page\s+\d{1,3}|Vocabulary|Key Terms|Key Points|Key Ideas|Important Ideas|Definitions)$/i.test(line)) {
+      result.push({ kind: "heading", text: line });
+      continue;
+    }
+    // Keep supplied punctuation, sentence order, and words. Do not invent periods.
+    const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z0-9])/g);
+    for (const sentence of sentences) {
+      if (sentence.length <= 175) {
+        result.push({ kind: "point", text: sentence });
+        continue;
+      }
+      const words = sentence.match(/\S+/g) ?? [];
+      let buffer = "";
+      for (const word of words) {
+        if (buffer && buffer.length + 1 + word.length > 165) {
+          result.push({ kind: "point", text: buffer });
+          buffer = word;
+        } else {
+          buffer = buffer ? `${buffer} ${word}` : word;
+        }
+      }
+      if (buffer) result.push({ kind: "point", text: buffer });
+    }
+  }
+  return result;
+}
