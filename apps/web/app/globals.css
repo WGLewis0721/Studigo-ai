@@ -3471,8 +3471,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 @media (prefers-reduced-motion: reduce) {
   .modeFrame, .modeFrame .modeStrip { transition: none; }
-  .modeFrame[data-drawer-animated] .modeStripInner,
-  .modeFrame[data-drawer-animated] .modeCollapseToggle { animation: none; }
+  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeStripInner,
+  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeStripInner,
+  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle,
+  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeCollapseToggle {
+    animation: none;
+  }
 }
 
 .learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
