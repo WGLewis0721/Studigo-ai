@@ -5,7 +5,7 @@ import { createElement } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { GuidePreview } from "../components/room/guide-preview";
 import { guidePreviewModel } from "./guide-preview";
-import { guideFactExcerpt, guideOutlineHeading } from "./guide-outline";
+import { guideFactExcerpt, guideOutlineHeading, guideSourceSegments } from "./guide-outline";
 
 const longTerm = "Antidisestablishmentarianism-and-the-legislative-branch-definition-that-must-wrap";
 const edition: StudyGuideContent = {
@@ -129,4 +129,22 @@ test("oversized source notes disclose exact wording rather than fabricating summ
   assert.ok(text.startsWith(summary.excerpt.slice(0, -1)));
   assert.equal(guideFactExcerpt("A short fact.").long, false);
   assert.deepEqual(guideOutlineHeading("  A short heading  ", 2), { heading: "A short heading", oversized: false });
+});
+
+test("OCR vocabulary outlines retain all original source wording in the original order", () => {
+  const raw = "GOVERNMENT / STUDY MATERIALS Page 1 Our Government Vocabulary primary source — a record made by a person who was there secondary source — a record created after the event democracy — a form of government";
+  const segments = guideSourceSegments(raw, ["primary source", "secondary source", "democracy"]);
+  assert.equal(segments.join(""), raw, "no source characters are dropped or rewritten");
+  assert.equal(segments.length, 4, "heading plus glossary definitions become readable separate blocks");
+  assert.match(segments[1], /^primary source —/);
+  assert.match(segments[2], /^secondary source —/);
+  assert.match(segments[3], /^democracy —/);
+});
+
+test("long OCR without recognized vocabulary wraps without inventing facts", () => {
+  const raw = ("facts in the original study material without reliable headings " ).repeat(20);
+  const segments = guideSourceSegments(raw, []);
+  assert.ok(segments.length >= 2);
+  assert.equal(segments.join(""), raw);
+  assert.ok(segments.every(segment => segment.length <= 240));
 });
