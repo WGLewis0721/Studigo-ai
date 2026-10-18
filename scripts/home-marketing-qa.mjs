@@ -104,6 +104,7 @@ try {
         physicalWidth: physical?.width ?? 0,
         physicalHeight: physical?.height ?? 0,
         virtualWidth: iframe?.contentWindow?.innerWidth ?? 0,
+        workspaceHeight: iframe?.contentDocument?.querySelector(".roomWorkspace")?.getBoundingClientRect().height ?? 0,
         bezelWidth: frame?.getBoundingClientRect().width ?? 0
       };
     });
@@ -111,6 +112,8 @@ try {
       `iPad remains too zoomed in at ${viewport.width}px: ${JSON.stringify(tablet)}`);
     assert.ok(Math.abs(tablet.physicalWidth / tablet.physicalHeight - 4/3) < .02,
       `iPad viewport is not 4:3: ${JSON.stringify(tablet)}`);
+    assert.ok(tablet.workspaceHeight >= 200,
+      `Scaled iPad room collapsed inside bare shell: ${JSON.stringify(tablet)}`);
     const geometry = await page.evaluate(() => ({
       overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
       optionTargets: [...document.querySelectorAll(".modeChoose")].map(node => Math.round(node.getBoundingClientRect().height)),
