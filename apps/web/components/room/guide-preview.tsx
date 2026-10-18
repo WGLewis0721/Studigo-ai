@@ -204,7 +204,7 @@ export function GuidePreview({
         <span className="tinyLabel">STUDIGO GUIDE · VERSION {model.version}</span>
         <span className="materialsGuideEvidence">{model.sourceCount} {model.sourceCount === 1 ? "cited source" : "cited sources"} · {model.level}</span>
       </div>
-      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Study notes from your materials" : model.title}</h2>
+      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Your study notes" : model.title}</h2>
       {updateAvailable && <p className="materialsGuideStale" role="status">
         <strong>Source changes need review.</strong>{" "}
         This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
