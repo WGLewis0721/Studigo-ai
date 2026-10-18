@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StudyFixture from "../../dev/study/page";
+import { PublicDemoBridge } from "@/components/home/public-demo-bridge";
 
 // Public, synthetic demonstration of the REAL RoomWorkspace and ExploreJournal.
 // The normal /dev/study and /explore-preview routes remain production-gated.
@@ -17,7 +18,9 @@ export default async function PublicRoomDemo({
 }) {
   const requested = (await searchParams).mode;
   const mode = requested === "learn" || requested === "quiz" || requested === "cards" ? requested : "coach";
-  return StudyFixture({
+  return <>
+    <PublicDemoBridge />
+    {await StudyFixture({
     publicDemo: true,
     searchParams: Promise.resolve({
       mode: mode === "learn" ? "coach" : mode,
@@ -25,5 +28,6 @@ export default async function PublicRoomDemo({
       bare: "1",
       ui: "phase3"
     })
-  });
+  })}
+  </>;
 }
