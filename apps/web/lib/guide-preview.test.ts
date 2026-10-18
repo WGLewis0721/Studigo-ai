@@ -5,7 +5,7 @@ import { createElement } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { GuidePreview } from "../components/room/guide-preview";
 import { guidePreviewModel } from "./guide-preview";
-import { guideFactExcerpt, guideOutlineHeading } from "./guide-outline";
+import { guideFactExcerpt, guideOutlineHeading, guideSourceOutline } from "./guide-outline";
 
 const longTerm = "Antidisestablishmentarianism-and-the-legislative-branch-definition-that-must-wrap";
 const edition: StudyGuideContent = {
@@ -129,4 +129,25 @@ test("oversized source notes disclose exact wording rather than fabricating summ
   assert.ok(text.startsWith(summary.excerpt.slice(0, -1)));
   assert.equal(guideFactExcerpt("A short fact.").long, false);
   assert.deepEqual(guideOutlineHeading("  A short heading  ", 2), { heading: "A short heading", oversized: false });
+});
+
+test("Expanded OCR headings form a readable outline without losing source words", () => {
+  const raw = "GOVERNMENT / STUDY MATERIALS Page 1 Our Government Vocabulary primary source — a record made by someone who was there secondary source — a later record made by someone else democracy — people vote to choose leaders";
+  const parts = guideSourceOutline(raw);
+  assert.ok(parts.some(part => part.kind === "heading" && part.text === "Page 1"));
+  assert.ok(parts.some(part => part.kind === "heading" && part.text === "Vocabulary"));
+  assert.ok(parts.filter(part => part.kind === "point").length >= 2);
+  assert.equal(parts.map(part => part.text).join(" ").replace(/\s+/g, " "), raw);
+  const expanded = structuredClone(edition);
+  expanded.chapters[0].title = raw;
+  expanded.chapters[0].facts[0].text = "An example from the source is repeated with punctuation. ".repeat(9);
+  const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: expanded, phase3Materials: true }));
+  assert.match(html, /class="guideSourceOutline"/);
+  assert.match(html, /class="guideSourceSection">Page 1/);
+  assert.match(html, /class="guideSourceSection">Vocabulary/);
+  assert.match(html, /class="guideSourcePoint"/);
+  assert.match(html, /View unformatted original text/);
+  assert.match(html, /secondary source/);
+  assert.match(html, /Check source/);
+  assert.doesNotMatch(html, /Checked answer/);
 });
