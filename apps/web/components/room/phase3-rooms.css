@@ -63,7 +63,7 @@
 .roomSectionIntro { max-width: 700px; margin-bottom: 22px; }
 .roomSectionIntro h2 { margin: 8px 0; font-family: var(--display); font-size: clamp(1.9rem, 3.3vw, 3rem); letter-spacing: -.035em; line-height: 1.08; }
 .roomSectionIntro p { color: var(--ink-2); margin: 0; line-height: 1.55; }
-.roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { border-radius: 30px; min-height: 235px; background: radial-gradient(circle at 90% 15%, #395b34 0%, transparent 37%), linear-gradient(125deg, var(--graphite), #263929); }
+.roomDevice[data-ui="phase3"] .roomEvidence .masteryHero { border-radius: 30px; background: radial-gradient(circle at 90% 15%, #395b34 0%, transparent 37%), linear-gradient(125deg, var(--graphite), #263929); }
 .roomDevice[data-ui="phase3"] .roomEvidence .masteryHeroText small { display: block; max-width: 55ch; margin-top: 12px; color: #d9e8d1; line-height: 1.45; }
 .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero .tinyLabel { color: #c5f594; }
 .roomDevice[data-ui="phase3"] .roomEvidence .weakSpots { padding: 22px; border-radius: 22px; background: var(--berry-soft); }
@@ -95,7 +95,6 @@
   .roomDevice[data-ui="phase3"] .roomStudioSetup .setupHeading h3 { font-size: 1.35rem; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt { padding: 16px 14px; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceListBinary { grid-template-columns: 1fr; }
-  .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButtons { grid-template-columns: 1fr; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButton { display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 48px; text-align: left; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .confidenceButton::before { margin: 0; flex: none; }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .roomStudioSubmit { width: 100%; }
@@ -149,7 +148,7 @@
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceItem > span { flex: 1 1 calc(100% - 70px); }
   .roomDevice[data-ui="phase3"] .roomStudioAttempt .choiceVerdict { margin-left: 0; }
   .roomDevice[data-ui="phase3"] .roomStudioCards .flashcardFace { padding: 24px 18px; }
-  .roomDevice[data-ui="phase3"] .roomStudioCards .ratingButton { min-width: 0; flex-basis: 100%; }
+  .roomDevice[data-ui="phase3"] .roomStudioCards .ratingButton { min-width: 0; }
   .roomDevice[data-ui="phase3"] .roomStudioTest .testChoice { flex-wrap: wrap; padding: 14px 12px; gap: 10px; }
   .roomDevice[data-ui="phase3"] .roomStudioTest .testChoice > span { flex: 1 1 calc(100% - 40px); }
   .roomDevice[data-ui="phase3"] .roomStudioTest .testSessionActions { flex-wrap: wrap; gap: 10px; }
@@ -160,7 +159,6 @@
   .roomDevice[data-ui="phase3"] .roomEvidence .masteryHero h2 { font-size: 1.65rem; }
   .roomDevice[data-ui="phase3"] .roomEvidence .progressRing { width: 108px; }
   .roomDevice[data-ui="phase3"] .roomEvidence .statRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .roomDevice[data-ui="phase3"] .studyPlanPanel .planDay { grid-template-columns: minmax(0, 1fr); padding: 18px 14px; gap: 18px; }
   .roomDevice[data-ui="phase3"] .studyPlanPanel .planDayActions article { padding-left: 12px; }
   .roomDevice[data-ui="phase3"] .cramSession .cramActivity { padding: 14px 10px; }
   .roomDevice[data-ui="phase3"] .cramSession .cramFooter { align-items: stretch; flex-direction: column; }
