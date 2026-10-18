@@ -35,6 +35,7 @@ try {
           await input.waitFor();
           await page.evaluate(() => document.fonts.ready);
           assert.equal(await mic.count(), voice ? 1 : 0);
+          assert.equal(await dock.locator('.chatMaterials').isVisible(), width >= 701, 'desktop has the Materials shortcut; phone uses its tab');
           assert.equal(await send.isDisabled(), true);
           const inspect = () => dock.evaluate(el => {
             const selectors = ['.chatEraser', '.chatRow > input', '.voiceMicButton', '.chatSend'];
@@ -52,10 +53,10 @@ try {
           await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
           const empty = await inspect();
           assert.equal(empty.overflow, 0, `page overflow: ${width}/${ui}/${mode}`);
-          assert.equal(empty.height, 60, `one 44px row plus 8px padding: ${width}/${ui}/${mode}`);
+          assert.equal(empty.height, 64, `one 48px input row plus 8px padding: ${width}/${ui}/${mode}`);
           for (const [i, c] of empty.controls.entries()) {
             assert.ok(c.h >= 43.95 && c.w >= 43.95, `44px control: ${JSON.stringify(c)}`);
-            assert.ok(Math.abs(c.y - empty.controls[0].y) < 1, `same baseline: ${JSON.stringify(empty)}`);
+            assert.ok(Math.abs((c.y + c.h / 2) - (empty.controls[0].y + empty.controls[0].h / 2)) < 1, `same vertical center: ${JSON.stringify(empty)}`);
             if (i) assert.ok(c.x >= empty.controls[i - 1].x + empty.controls[i - 1].w, 'controls must not overlap');
           }
           assert.ok(empty.controls.find(c => c.selector === '.chatRow > input').w >= 120, 'companion must preserve writing space');
