@@ -3350,25 +3350,115 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice .modeHead .coachTabs, .roomDevice .mhChipBar .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
 .roomDevice .modeHead .coachTabs button[aria-pressed="true"], .roomDevice .mhChipBar .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
 
-/* Desktop headers never shrink on arrival, hover, focus or typing.
-   A visible button on the shared Studigo rail collapses the complete options strip. */
+/* Study Room control drawer: wide screens only. Sliding the actual row
+   upward frees real height; the colored divider stays as the drawer handle.
+   Interactive content becomes inert while closed (managed in ModeFrame). */
 .modeFrame { width: 100%; position: relative; }
-.modeStrip[hidden] { display: none; }
 .modeCollapseToggle { display: none; }
+
 @media (min-width: 701px) {
-  .modeFrame > .studigoRail { height: 44px; }
-  .modeCollapseToggle {
-    position: absolute; z-index: 5; right: 12px; bottom: 0;
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    min-width: 44px; min-height: 44px; padding: 0 10px;
-    border: 0; border-radius: 12px; cursor: pointer;
-    color: var(--tone-on); background: transparent; font: inherit; font-weight: 750; font-size: .76rem;
+  .modeFrame {
+    transition: padding-bottom .56s cubic-bezier(.22,.8,.22,1);
   }
-  .modeCollapseToggle:hover { background: color-mix(in oklab, var(--tone-on) 12%, transparent); }
-  .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-on); outline-offset: -4px; }
-  .modeCollapseToggle > span:first-child { font-size: 1.2rem; line-height: 1; }
+  .modeFrame > .studigoRail { height: 44px; }
+  .modeFrame .modeStrip {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    transition: grid-template-rows .56s cubic-bezier(.22,.8,.22,1) .08s;
+  }
+  .modeFrame .modeStripInner { min-height: 0; overflow: hidden; }
+  .modeFrame[data-collapsed="true"] {
+    padding-bottom: 42px;
+  }
+  .modeFrame[data-collapsed="true"] .modeStrip {
+    grid-template-rows: minmax(0, 0fr);
+    pointer-events: none;
+  }
+  /* An upward preload/bounce precedes the inward slide. Outward travel
+     begins with a tiny upward recoil and settles with a soft overshoot. */
+  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeStripInner {
+    animation: modeDrawerIn .58s cubic-bezier(.22,.8,.22,1) both;
+  }
+  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeStripInner {
+    animation: modeDrawerOut .58s cubic-bezier(.22,.8,.22,1) both;
+  }
+  .modeCollapseToggle {
+    position: absolute;
+    z-index: 8;
+    right: clamp(12px, 2vw, 28px);
+    bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 118px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 2px solid color-mix(in oklab, var(--tone-on) 72%, transparent);
+    border-radius: 12px 12px 0 0;
+    background: var(--tone-key);
+    color: var(--tone-on);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+    font: inherit;
+    font-weight: 750;
+    font-size: .78rem;
+    cursor: pointer;
+  }
+  .modeCollapseToggle:hover { background: color-mix(in oklab, var(--tone-key) 85%, var(--tone-on)); }
+  .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
+  .modeCollapseToggle > span:first-child { font-size: 1.15rem; line-height: 1; }
+  .modeFrame[data-collapsed="true"] .modeCollapseToggle {
+    transform: translateY(42px);
+    border: 2px solid var(--tone-key);
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+    color: var(--tone-ink);
+    background: var(--tone-soft);
+    box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--tone-key) 24%, transparent);
+  }
+  .modeFrame[data-collapsed="true"] .modeCollapseToggle:hover {
+    background: color-mix(in oklab, var(--tone-soft) 75%, white);
+  }
+  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle {
+    animation: modeDrawerTabDown .58s cubic-bezier(.22,.8,.22,1) both;
+  }
+  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeCollapseToggle {
+    animation: modeDrawerTabUp .58s cubic-bezier(.22,.8,.22,1) both;
+  }
   .modeFrame[data-collapsed="true"] > .coachHeaderNav { display: none; }
-  .modeFrame[data-collapsed="true"] + .coachMode > .mhChipBar { display: none; }
+}
+@keyframes modeDrawerIn {
+  0% { transform: translateY(0); }
+  13% { transform: translateY(5px); }
+  25% { transform: translateY(1px); }
+  100% { transform: translateY(-100%); }
+}
+@keyframes modeDrawerOut {
+  0% { transform: translateY(-100%); }
+  13% { transform: translateY(-105%); }
+  25% { transform: translateY(-100%); }
+  81% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+@keyframes modeDrawerTabDown {
+  0% { transform: translateY(0); }
+  14% { transform: translateY(-3px); }
+  25% { transform: translateY(0); }
+  88% { transform: translateY(45px); }
+  100% { transform: translateY(42px); }
+}
+@keyframes modeDrawerTabUp {
+  0% { transform: translateY(42px); }
+  14% { transform: translateY(46px); }
+  25% { transform: translateY(42px); }
+  88% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modeFrame, .modeFrame .modeStrip { transition: none; }
+  .modeFrame[data-drawer-animated] .modeStripInner,
+  .modeFrame[data-drawer-animated] .modeCollapseToggle { animation: none; }
 }
 
 .learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
