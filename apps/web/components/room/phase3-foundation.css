@@ -82,7 +82,58 @@
 .roomDevice[data-ui="phase3"] .materialsGuideLabel { align-self: start; display: grid; gap: 10px; }
 .roomDevice[data-ui="phase3"] .materialsGuideLabel strong { font: 800 1.45rem/1.12 var(--display); letter-spacing: -.03em; }
 .roomDevice[data-ui="phase3"] .materialsGuideLabel p { margin: 0; color: var(--ink-2); font-size: .85rem; line-height: 1.5; }
-.roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: 520px; overflow: auto; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: none; overflow: visible; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
+
+/* Study notes reuse the older Learn reading hierarchy: one clear lead,
+   short headed ideas, source-cited bullets, and no nested reading scroll. */
+.roomDevice[data-ui="phase3"] .guideLearnCard {
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid color-mix(in oklab, var(--teal) 26%, white);
+  border-radius: var(--r-md);
+  background: var(--white);
+  box-shadow: var(--lift-1);
+  gap: 18px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlineChapterHeading h3 {
+  color: var(--teal-ink);
+  font-size: clamp(1.12rem, 1.8vw, 1.38rem);
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnKicker {
+  color: var(--teal-ink);
+  letter-spacing: .075em;
+  font-size: .68rem;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnLead {
+  color: var(--teal-ink);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.45;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlineGroup > h4 {
+  color: var(--teal-ink);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding-bottom: 7px;
+  border-bottom: 1px solid color-mix(in oklab, var(--teal) 22%, white);
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlinePoints {
+  gap: 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlinePoints li {
+  font-size: clamp(.95rem, 1.3vw, 1.05rem);
+  line-height: 1.55;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideNeedsReview {
+  color: var(--ink-2);
+  padding: 12px 14px;
+  border-left: 3px solid var(--teal);
+  background: var(--teal-soft);
+  border-radius: 8px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideRawNotes .guideSourceOutline + .guideSourceOutline {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
 
 /* Source-grounded outline instead of promoting entire OCR passages to headings.
    Chapter/fact text remains verbatim in optional disclosures. */
