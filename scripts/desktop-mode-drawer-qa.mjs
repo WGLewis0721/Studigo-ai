@@ -59,17 +59,20 @@ try {
         const surface = page.locator(".modeSurface");
         const scroller = await surface.evaluate(el => getComputedStyle(el).overflowY);
         assert.equal(scroller, "auto", "non-chat room content uses the scrollable screen");
-        await surface.evaluate(el => { el.scrollTop = el.scrollHeight; });
-        // Sticky headers and the drawer's layout transition can change height
-        // during the same frame, so inspect a settled scroll position.
-        await page.waitForTimeout(150);
-        const scroll = await surface.evaluate(el => ({
-          scrollTop: el.scrollTop, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,
-          overflowY: getComputedStyle(el).overflowY, scrollBehavior: getComputedStyle(el).scrollBehavior,
-          frameHeight: el.getBoundingClientRect().height
-        }));
-        console.log(`Viewport ${width} mode ${mode} bottom-scroll ${JSON.stringify(scroll)}`);
-        assert.ok(scroll.scrollTop + scroll.clientHeight + 2 >= scroll.scrollHeight,
+        // A saved guide loads after the initial fixture paint. Scroll after it
+        // settles, and re-apply if new content enlarges the scroller mid-frame.
+        if (mode === "materials") await page.locator(".guideReading .guideOutlineChapter").first().waitFor();
+        let scroll;
+        for (let attempt = 0; attempt < 6; attempt++) {
+          await surface.evaluate(el => { el.scrollTop = el.scrollHeight; });
+          await page.waitForTimeout(120);
+          scroll = await surface.evaluate(el => ({
+            scrollTop: el.scrollTop, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,
+            overflowY: getComputedStyle(el).overflowY
+          }));
+          if (scroll.scrollTop + scroll.clientHeight + 2 >= scroll.scrollHeight) break;
+        }
+        assert.ok(scroll && scroll.scrollTop + scroll.clientHeight + 2 >= scroll.scrollHeight,
           `last row is reachable: ${JSON.stringify({ width, height, mode, fit, scroll })}`);
       }
 
