@@ -72,6 +72,12 @@ try {
       assert.equal(tab.chevrons, 1, "handle includes a drawn direction arrow");
       assert.equal(tab.radius, "12px", "handle rounds outward like companion's tab");
       assert.equal(await toggle.getAttribute("aria-label"), "Show controls");
+      const tabMotion = await toggle.evaluate(el => ({
+        animation: getComputedStyle(el).animationName,
+        delay: getComputedStyle(el).animationDelay
+      }));
+      assert.equal(tabMotion.animation, "modeDrawerTabDown", "closed tab slides down from divider");
+      assert.equal(tabMotion.delay, "0.28s", "Show controls begins after the drawer starts retracting");
       assert.equal(await strip.locator(".modeStripInner").evaluate(el => getComputedStyle(el).animationName), "modeDrawerIn");
       await page.screenshot({ path: `${output}/${width}-${mode}-closed.png`, animations: "disabled" });
       await toggle.click();
