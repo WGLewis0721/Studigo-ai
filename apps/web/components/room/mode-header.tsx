@@ -174,7 +174,13 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         inert={collapsed}
         onPointerMove={() => setActivity((n) => n + 1)}
         onPointerDown={() => setActivity((n) => n + 1)}
-        onFocusCapture={() => setFocused(true)}
+        // Pointer-selected Coach/Practice tabs keep DOM focus after navigation,
+        // but should not suspend the idle drawer indefinitely. Only visible
+        // keyboard focus holds it open; pointer activity already resets 3s.
+        onFocusCapture={(event) => {
+          const target = event.target;
+          setFocused(target instanceof HTMLElement && target.matches(":focus-visible"));
+        }}
         onBlurCapture={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
         }}
