@@ -4387,3 +4387,44 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
   .materialsPanel .documentMore > summary span { transition: none; }
 }
+
+/* Study Room settings is a bounded, independently scrollable dialog.
+   Keep the final destructive action reachable on short desktop windows and
+   zoomed displays; do not allow the full panel to disappear beneath the app. */
+@media (min-width: 701px) {
+  .topbarWrap .roomSettings {
+    max-height: min(760px, calc(100dvh - 84px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--th-line, var(--hairline)) transparent;
+    padding-bottom: 24px;
+  }
+  .topbarWrap .roomSettings::-webkit-scrollbar { display: block; width: 8px; }
+  .topbarWrap .roomSettings::-webkit-scrollbar-thumb {
+    border-radius: 99px; background: var(--th-line, var(--hairline));
+  }
+  .topbarWrap .roomSettingsHead {
+    position: sticky; top: -18px; z-index: 4;
+    margin: -18px -22px 0; padding: 14px 22px;
+    background: var(--white); border-bottom: 1px solid var(--th-line, var(--hairline));
+  }
+}
+@media (min-width: 701px) and (max-height: 650px) {
+  .topbarWrap .roomSettings { max-height: calc(100dvh - 56px); }
+}
+.guideOutlineOriginal .guideSourceOutline,
+.guideOutlineLongNote .guideSourceOutline {
+  display: grid; gap: 12px; padding: 12px 0;
+  max-width: 68ch;
+}
+.guideSourceOutline > p {
+  margin: 0; padding: 10px 12px;
+  border-left: 3px solid var(--teal);
+  background: color-mix(in oklab, var(--teal) 5%, white);
+  border-radius: 0 9px 9px 0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

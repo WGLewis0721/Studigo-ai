@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
-import { guideOutlineHeading, guideFactExcerpt } from "@/lib/guide-outline";
+import { guideOutlineHeading, guideFactExcerpt, guideSourceSegments } from "@/lib/guide-outline";
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
@@ -174,7 +174,11 @@ export function GuidePreview({
           {guideOutlineHeading(chapter.title, chapterIndex).oversized && (
             <details className="guideOutlineOriginal">
               <summary>View original heading and source wording</summary>
-              <p>{chapter.title}</p>
+              <div className="guideSourceOutline" aria-label="Original source wording, organized into readable passages">
+                {guideSourceSegments(chapter.title, chapter.terms.map((term) => term.term)).map((passage, index) =>
+                  <p key={index}>{passage.trim()}</p>
+                )}
+              </div>
               {sourceLinks(chapter.objectiveEvidence)}
             </details>
           )}
@@ -189,7 +193,11 @@ export function GuidePreview({
                       {note.long ? (
                         <details className="guideOutlineLongNote">
                           <summary>{note.excerpt}</summary>
-                          <p>{fact.text}</p>
+                          <div className="guideSourceOutline" aria-label="Complete original fact">
+                            {guideSourceSegments(fact.text, chapter.terms.map((term) => term.term)).map((passage, index) =>
+                              <p key={index}>{passage.trim()}</p>
+                            )}
+                          </div>
                         </details>
                       ) : <span>{fact.text}</span>}
                       {sourceLinks(fact.evidence)}

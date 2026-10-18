@@ -35,3 +35,44 @@ export function guideFactExcerpt(raw: string, limit = 175) {
     long: true
   };
 }
+
+/**
+ * Display an OCR run-on as an ordered, verbatim outline. Term boundaries are
+ * derived only from the actual saved guide's glossary; do not invent subjects,
+ * summaries or replacements for text that is not supported by the source.
+ * Returning pieces in order preserves every original character.
+ */
+export function guideSourceSegments(raw: string, terms: string[]): string[] {
+  if (!raw.trim()) return [];
+  const sortedTerms = [...new Set(terms.map(t => t.trim()).filter(t => t.length >= 3))]
+    .sort((a, b) => b.length - a.length);
+  const locations: number[] = [];
+  for (const term of sortedTerms) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`(^|\\s)(${escaped})\\s+[—–:-]\\s+`, "gi");
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(raw))) {
+      const termStart = match.index + match[1].length;
+      if (termStart > 0) locations.push(termStart);
+    }
+  }
+  const boundaries = [...new Set(locations)].sort((a, b) => a - b);
+  if (boundaries.length === 0) {
+    // No glossary alignment: preserve all wording while breaking very long
+    // OCR blocks at existing whitespace into readable visual paragraphs.
+    const chunks: string[] = [];
+    for (const paragraph of raw.match(/[^\n]*\n?|[^\n]+/g) ?? []) {
+      let remaining = paragraph;
+      while (remaining.length > 240) {
+        const boundary = remaining.lastIndexOf(" ", 240);
+        const cut = boundary >= 120 ? boundary + 1 : 240;
+        chunks.push(remaining.slice(0, cut));
+        remaining = remaining.slice(cut);
+      }
+      if (remaining) chunks.push(remaining);
+    }
+    return chunks.filter(Boolean);
+  }
+  const starts = [0, ...boundaries.filter(i => i > 0)];
+  return starts.map((pos, i) => raw.slice(pos, starts[i + 1] ?? raw.length)).filter(Boolean);
+}
