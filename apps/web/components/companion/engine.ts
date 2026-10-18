@@ -216,7 +216,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       // Source text and section headings matter as much as clickable controls.
       // Keep the Materials title/status unobscured; if no safe corner remains,
       // controlSafeDock automatically seats Studigo in his existing header avatar.
-      surface()?.querySelectorAll(".dropzone, .guideReading, .materialsIntro h2, .materialsReadout").forEach((node) => {
+      surface()?.querySelectorAll(".dropzone, .guideReading, .materialsIntro h2, .materialsReadout, .roomSectionIntro, .masteryHero, .weakSpots li, .mdTile, .evidenceGuide").forEach((node) => {
         const rect = node.getBoundingClientRect();
         if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
       });
