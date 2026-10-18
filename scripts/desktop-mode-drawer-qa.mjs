@@ -120,6 +120,70 @@ try {
     );
   } finally { await focusContext.close(); }
 
+  // Pointer-driven subpage navigation must not leave a focused header button
+  // holding the drawer open indefinitely (Coach/Learn and Practice pages).
+  for (const [initialMode, selector, destination] of [
+    ["coach", '.modeHead .chatModes button[data-tone="ask"]', "learn"],
+    ["quiz", '.modeHead .chatModes button[data-tone="cards"]', "cards"],
+    ["quiz", '.modeHead .chatModes button[data-tone="test"]', "test"],
+    ["mastery", '.modeHead .chatModes button[data-tone="weak"]', "weak"]
+  ]) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    try {
+      const page = await context.newPage();
+      await page.goto(`${origin}/dev/study?shell=1&mode=${initialMode}&ui=phase3`, { waitUntil: "networkidle" });
+      const frame = page.locator(".modeFrame").first();
+      await page.locator(selector).click();
+      assert.equal(await frame.getAttribute("data-collapsed"), "false", "selected subpage initially exposes its controls");
+      await page.waitForFunction(
+        () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
+        undefined, { timeout: 6500 }
+      );
+      assert.equal(await frame.getByRole("button", { name: "Show controls" }).count(), 1,
+        `${initialMode} → ${destination}: pointer navigation must auto-collapse after three seconds`);
+      cases.push({ initialMode, destination, autoCollapsed: true });
+    } finally { await context.close(); }
+  }
+
+  // A dense Progress panel can temporarily leave no collision-safe corner.
+  // In that case the edge summon tab must remain reachable after auto-collapse.
+  // This test covers the real companion engine, not a mocked call-out action.
+  const companionContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  try {
+    const page = await companionContext.newPage();
+    await page.goto(`${origin}/dev/study?shell=1&mode=mastery&ui=phase3`, { waitUntil: "networkidle" });
+    const companionTab = page.getByRole("button", { name: "Bring Studigo back out" });
+    const frame = page.locator(".modeFrame").first();
+    await page.waitForFunction(
+      () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
+      undefined, { timeout: 6500 }
+    );
+    // Simulate a source-backed dense dashboard that occupies every safe corner.
+    await page.evaluate(() => {
+      const surface = document.querySelector(".modeSurface");
+      if (!surface) throw new Error("Progress fixture has no study surface");
+      const block = document.createElement("button");
+      block.id = "qa-dense-progress";
+      block.type = "button";
+      block.setAttribute("aria-label", "Synthetic occupied progress space");
+      block.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;opacity:0;pointer-events:none;";
+      surface.appendChild(block);
+    });
+    await companionTab.waitFor({ state: "visible", timeout: 5000 });
+    assert.equal(await page.locator(".cmp").getAttribute("inert"), "", "safety seating hides the floating companion");
+    await companionTab.click();
+    await page.waitForFunction(() => {
+      const companion = document.querySelector(".cmp");
+      return companion && !companion.hidden && !companion.inert && companion.getAttribute("data-state") === "window";
+    }, undefined, { timeout: 3500 });
+    assert.equal(await companionTab.isVisible(), false, "explicit summon restores the actual Studigo window");
+    // The room never carries a forced override into a different section.
+    await page.locator(".topbarNav button[aria-label='Coach']").click();
+    await page.waitForFunction(() => document.querySelector(".roomWorkspace")?.getAttribute("data-tone") === "coach");
+    assert.deepEqual(await page.locator(".cmpHost").count(), 1);
+    cases.push({ area: "Progress", autoSeated: true, summoned: true, switchedSafely: true });
+  } finally { await companionContext.close(); }
+
   // No drawer motion is imposed on phones or users requesting reduced motion.
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
   try {
