@@ -192,7 +192,10 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         title={collapsed ? "Show controls" : "Hide controls"}
         onClick={toggleDrawer}
       >
-        <span aria-hidden="true">{collapsed ? "▾" : "▴"}</span>
+        <span className="modeTabLed" aria-hidden="true" />
+        <svg className="modeTabChevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+          <path d={collapsed ? "m5 9 7 7 7-7" : "m5 15 7-7 7 7"} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         <span className="modeCollapseText">{collapsed ? "Show controls" : "Hide controls"}</span>
       </button>
     </div>
