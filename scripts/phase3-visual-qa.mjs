@@ -109,6 +109,7 @@ try {
             assert.match(await exports.nth(1).innerText(), /Word/i, "Word format must remain visible");
             assert.match(await exports.nth(0).getAttribute("aria-label") ?? "", /PDF/);
             assert.match(await exports.nth(1).getAttribute("aria-label") ?? "", /Word/);
+            await downloads.locator("summary").click(); // keep screenshot in its default uncluttered state
           }
           if (viewport.width <= 700 && mode === "materials" && skin === "phase3") {
             // Overflow-only checks miss a floating mascot covering real source text.
@@ -376,7 +377,7 @@ try {
     try {
       await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "networkidle" });
       const source = page.locator("button.sourceCount");
-      if (await source.isVisible()) {
+      if (await sourceChip.isVisible()) {
         await source.click();
         await page.locator('.studyGroups button[aria-current="page"]').filter({ hasText: "Materials" }).first().waitFor();
         interaction.sourceShortcut = "passed";
@@ -449,9 +450,9 @@ try {
       assert.match(await answer.innerText(), /WHY IT MATTERS/);
       assert.equal(await answer.locator("h4").count(), 2, "keep actual Learn heading formatting");
       assert.equal(await answer.locator("li").count(), 2, "keep readable Learn bullets");
-      const source = answer.locator("a.sourceChipLink");
-      assert.equal(await source.count(), 1, "AI citation must open the authorized original");
-      assert.match(await source.getAttribute("href") ?? "", /\/api\/documents\/download\?documentId=source/);
+      const sourceChip = answer.locator("a.sourceChipLink");
+      assert.equal(await sourceChip.count(), 1, "AI citation must open the authorized original");
+      assert.match(await sourceChip.getAttribute("href") ?? "", /\/api\/documents\/download\?documentId=source/);
       assert.ok(await source.isVisible());
       assert.equal(await page.locator(".guideLearnCard").count(), 0, "no duplicate OCR section after explaining");
       await topic.selectOption("variation-survival");
