@@ -82,7 +82,187 @@
 .roomDevice[data-ui="phase3"] .materialsGuideLabel { align-self: start; display: grid; gap: 10px; }
 .roomDevice[data-ui="phase3"] .materialsGuideLabel strong { font: 800 1.45rem/1.12 var(--display); letter-spacing: -.03em; }
 .roomDevice[data-ui="phase3"] .materialsGuideLabel p { margin: 0; color: var(--ink-2); font-size: .85rem; line-height: 1.5; }
-.roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: 520px; overflow: auto; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading { width: 100%; max-width: none; max-height: none; overflow: visible; border-radius: 16px; border: 1px solid var(--hairline); box-shadow: var(--lift-1); }
+
+/* The intake is taller than the desktop viewport when a source guide exists.
+   A sticky container taller than the scroller makes Choose files unreachable
+   after scrollIntoViewIfNeeded. Let the whole Materials page scroll normally. */
+@media (min-width: 701px) {
+  .roomDevice[data-ui="phase3"] .materialsIntake {
+    position: static;
+  }
+}
+/* At standard desktop widths a two-column card within a two-column library
+   compresses the Learn notes to a narrow strip. Keep one reading column. */
+.roomDevice[data-ui="phase3"] .materialsGuide {
+  grid-template-columns: minmax(0, 1fr);
+}
+.roomDevice[data-ui="phase3"] .materialsGuideLabel {
+  min-width: 0;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading,
+.roomDevice[data-ui="phase3"] .materialsGuide .guideReading > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.roomDevice[data-ui="phase3"] .materialsGuide .guideOutlineTitle {
+  overflow-wrap: anywhere;
+  text-wrap: wrap;
+}
+
+/* Study notes reuse the older Learn reading hierarchy: one clear lead,
+   short headed ideas, source-cited bullets, and no nested reading scroll. */
+.roomDevice[data-ui="phase3"] .guideLearnCard {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(12px, 2vw, 24px);
+  border: 1px solid color-mix(in oklab, var(--teal) 26%, white);
+  border-radius: var(--r-md);
+  background: var(--white);
+  box-shadow: var(--lift-1);
+  gap: 18px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard :is(.guideLearnLead, .guideOutlineChapterHeading, .guideOutlineGroup, .guideOutlineTerms, .guideOutlinePoints, .guideOutlineTerm) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnLead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .materialsCitation {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlineChapterHeading h3 {
+  color: var(--teal-ink);
+  font-size: clamp(1.12rem, 1.8vw, 1.38rem);
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnKicker {
+  color: var(--teal-ink);
+  letter-spacing: .075em;
+  font-size: .68rem;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideLearnLead {
+  color: var(--teal-ink);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.45;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlineGroup > h4 {
+  color: var(--teal-ink);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding-bottom: 7px;
+  border-bottom: 1px solid color-mix(in oklab, var(--teal) 22%, white);
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlinePoints {
+  gap: 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideOutlinePoints li {
+  font-size: clamp(.95rem, 1.3vw, 1.05rem);
+  line-height: 1.55;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideNeedsReview {
+  color: var(--ink-2);
+  padding: 12px 14px;
+  border-left: 3px solid var(--teal);
+  background: var(--teal-soft);
+  border-radius: 8px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnCard .guideRawNotes .guideSourceOutline + .guideSourceOutline {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* On-demand model-generated lesson reuses the exact Learn Markdown renderer,
+   but stays subordinate to the user's original, independently inspectable file. */
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand {
+  display: grid;
+  gap: 12px;
+  padding: clamp(16px, 2vw, 24px);
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in oklab, var(--teal) 32%, white);
+  background: var(--teal-soft);
+}
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand h3 {
+  margin: 0;
+  color: var(--teal-ink);
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+}
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand > p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls label {
+  color: var(--teal-ink);
+  font-size: .85rem;
+  font-weight: 800;
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 190px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--snow-3);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  color: var(--ink);
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls button {
+  min-height: 44px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer {
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--r-sm);
+  background: var(--white);
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .richText {
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .richText h4 {
+  color: var(--teal-ink);
+  font: 800 .83rem/1.4 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--snow-3);
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer :is(p, ul, ol) {
+  margin: 0;
+  line-height: 1.5;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .sourceStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .sourceChipLink {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 420px) {
+  .roomDevice[data-ui="phase3"] .guideLearnControls button {
+    width: 100%;
+  }
+}
 
 /* Source-grounded outline instead of promoting entire OCR passages to headings.
    Chapter/fact text remains verbatim in optional disclosures. */
