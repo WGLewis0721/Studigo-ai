@@ -31,12 +31,14 @@ try {
       const strip = frame.locator(".modeStrip");
       const toggle = frame.locator(".modeCollapseToggle");
       assert.equal(await frame.getAttribute("data-collapsed"), "false", "new desktop page begins expanded");
-      assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+      assert.equal(await toggle.count(), 0, "there is no Hide controls button, nor a Show controls button while expanded");
+      assert.equal(await frame.getByRole("button", { name: "Hide controls" }).count(), 0);
       await page.waitForFunction(
         () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
         undefined, { timeout: 6500 }
       );
-      await page.waitForTimeout(660);
+      await page.waitForTimeout(860);
+      assert.equal(await toggle.count(), 1, "Show controls is created only after the drawer closes");
       assert.equal(await toggle.getAttribute("aria-expanded"), "false");
       assert.equal(await strip.getAttribute("inert"), "", "closed drawer controls are removed from keyboard navigation");
       assert.equal(await strip.getAttribute("aria-hidden"), "true");
@@ -70,12 +72,19 @@ try {
       assert.equal(tab.chevrons, 1, "handle includes a drawn direction arrow");
       assert.equal(tab.radius, "12px", "handle rounds outward like companion's tab");
       assert.equal(await toggle.getAttribute("aria-label"), "Show controls");
+      const tabMotion = await toggle.evaluate(el => ({
+        animation: getComputedStyle(el).animationName,
+        delay: getComputedStyle(el).animationDelay
+      }));
+      assert.equal(tabMotion.animation, "modeDrawerTabDown", "closed tab slides down from divider");
+      assert.equal(tabMotion.delay, "0.28s", "Show controls begins after the drawer starts retracting");
       assert.equal(await strip.locator(".modeStripInner").evaluate(el => getComputedStyle(el).animationName), "modeDrawerIn");
       await page.screenshot({ path: `${output}/${width}-${mode}-closed.png`, animations: "disabled" });
       await toggle.click();
       assert.equal(await frame.getAttribute("data-collapsed"), "false");
       assert.equal(await strip.getAttribute("inert"), null);
-      assert.equal(await toggle.getAttribute("aria-label"), "Hide controls");
+      assert.equal(await toggle.count(), 0, "Show controls unmounts when the drawer opens; no Hide controls replacement");
+      assert.equal(await frame.getByRole("button", { name: "Hide controls" }).count(), 0);
       assert.equal(await strip.locator(".modeStripInner").evaluate(el => getComputedStyle(el).animationName), "modeDrawerOut");
       await page.waitForTimeout(700);
       const openHeight = await frame.evaluate(el => el.getBoundingClientRect().height);
@@ -118,7 +127,7 @@ try {
     await page.goto(`${origin}/dev/study?shell=1&mode=coach&ui=phase3`, { waitUntil: "networkidle" });
     await page.waitForTimeout(3300);
     assert.equal(await page.locator(".modeFrame").first().getAttribute("data-collapsed"), "false", "mobile does not auto-collapse");
-    assert.equal(await page.locator(".modeCollapseToggle").isVisible(), false, "mobile has no drawer button");
+    assert.equal(await page.locator(".modeCollapseToggle").count(), 0, "mobile has no drawer button");
     await page.setViewportSize({ width: 820, height: 700 });
     await page.waitForFunction(
       () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
@@ -130,7 +139,7 @@ try {
     );
     await page.setViewportSize({ width: 320, height: 700 });
     assert.equal(await page.locator(".modeFrame").first().getAttribute("data-collapsed"), "false", "phone size restores full header");
-    assert.equal(await page.locator(".modeCollapseToggle").isVisible(), false);
+    assert.equal(await page.locator(".modeCollapseToggle").count(), 0);
   } finally { await context.close(); }
 } finally {
   await writeFile(`${output}/report.json`, JSON.stringify({ cases, provenance: "Synthetic local fixture only" }, null, 2));

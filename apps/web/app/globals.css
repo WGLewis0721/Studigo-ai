@@ -3465,11 +3465,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     background: var(--tone-key);
     pointer-events: none;
   }
+  /* Draw the tab from within the divider as the controls retract.
+     It never renders while the drawer is open. */
   .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle {
-    animation: modeDrawerTabDown .58s cubic-bezier(.22,.8,.22,1) both;
-  }
-  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeCollapseToggle {
-    animation: modeDrawerTabUp .58s cubic-bezier(.22,.8,.22,1) both;
+    animation: modeDrawerTabDown .5s cubic-bezier(.22,.8,.22,1) .28s both;
   }
   .modeFrame[data-collapsed="true"] > .coachHeaderNav { display: none; }
 }
@@ -3487,25 +3486,17 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   100% { transform: translateY(0); }
 }
 @keyframes modeDrawerTabDown {
-  0% { transform: translateY(0); }
-  14% { transform: translateY(-3px); }
-  25% { transform: translateY(0); }
-  88% { transform: translateY(45px); }
-  100% { transform: translateY(42px); }
-}
-@keyframes modeDrawerTabUp {
-  0% { transform: translateY(42px); }
-  14% { transform: translateY(46px); }
-  25% { transform: translateY(42px); }
-  88% { transform: translateY(-2px); }
-  100% { transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(-5px); }
+  16% { opacity: .15; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(23px); }
+  80% { opacity: 1; transform: translateY(45px); }
+  100% { opacity: 1; transform: translateY(42px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .modeFrame, .modeFrame .modeStrip { transition: none; }
   .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeStripInner,
   .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeStripInner,
-  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle,
-  .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeCollapseToggle {
+  .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle {
     animation: none;
   }
 }
