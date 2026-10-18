@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { SOURCE_TYPES, SOURCE_TYPE_LABELS, assertUploadAllowed, resolveMimeType, coverageLimitation, type SourceType } from "@studigo/documents";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
-import type { StudyDocument } from "@/lib/rooms";
+import type { StudyDocument, Topic } from "@/lib/rooms";
 import { GuidePreview } from "./guide-preview";
 import { describeCorpus } from "@/lib/guide-lifecycle";
 import { visibleIngestStage } from "@/lib/ingest-jobs";
@@ -74,11 +74,13 @@ function statusCopy(document: StudyDocument) {
 export function MaterialsPanel({
   roomId,
   documents,
+  topics = [],
   onChanged,
   phase3FoundationUi = phase3Materials
 }: {
   roomId: string;
   documents: StudyDocument[];
+  topics?: Pick<Topic, "id" | "title">[];
   onChanged: () => void;
   /** Server-selected room UI gate; undefined preserves standalone fixture behavior. */
   phase3FoundationUi?: boolean;
@@ -551,7 +553,7 @@ export function MaterialsPanel({
         ))}
 
       </ul>
-      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials sourceRevision={sourceRevision} /></div>}
+      {phase3Materials && <div className="materialsGuide"><div className="materialsGuideLabel"><span className="tinyLabel">GENERATED FROM YOUR SOURCES</span><strong>Studigo guide</strong><p>A study aid, separate from your original files. Open a cited page to check the source.</p></div><GuidePreview roomId={roomId} phase3Materials topics={topics} sourceRevision={sourceRevision} /></div>}
       </div>
     </div>
   );
