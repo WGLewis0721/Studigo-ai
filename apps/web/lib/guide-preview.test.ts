@@ -110,7 +110,7 @@ test("Materials outlines long OCR headings without replacing their original word
   noisy.chapters[0].title = long;
   noisy.chapters[0].facts[0].text = "The legislative branch makes laws. ".repeat(12);
   const html = renderToStaticMarkup(createElement(GuidePreview, { roomId: "room-1", edition: noisy, phase3Materials: true }));
-  assert.match(html, /Study notes from your materials/);
+  assert.match(html, /Your study notes/);
   assert.match(html, /<h3>Our Government<\/h3>/);
   assert.match(html, /guideOutlinePoints/);
   assert.match(html, /guideOutlineTerms/);
