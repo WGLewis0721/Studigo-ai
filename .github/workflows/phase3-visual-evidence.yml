@@ -15,6 +15,7 @@ on:
       - "scripts/v4-progress-plan-qa.mjs"
       - "scripts/v5-home-onboarding-qa.mjs"
       - "scripts/messenger-unity-qa.mjs"
+      - "scripts/desktop-mode-drawer-qa.mjs"
 
 permissions:
   contents: read
@@ -58,6 +59,8 @@ jobs:
         run: node scripts/v5-home-onboarding-qa.mjs
       - name: Messenger — shared mobile/desktop layout with speech and text
         run: node scripts/messenger-unity-qa.mjs
+      - name: Desktop mode drawer — idle, page colors and bounce
+        run: node scripts/desktop-mode-drawer-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
