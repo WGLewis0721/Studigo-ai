@@ -98,6 +98,11 @@ try {
           assert.ok(headerModes.every(key => key.name?.trim() && key.title && key.name.startsWith(key.title) && key.height >= 43.95 && key.description),
             `Coach and shared header modes need a label, contextual description and 44px touch height: ${JSON.stringify(headerModes)}`);
           if (mode === "materials" && skin === "phase3") {
+            assert.equal(await page.locator(".materialsGuide .guideReadingFocused").count(), 1, "Materials must show one study-notes surface");
+            assert.equal(await page.locator(".materialsGuide .guideLearnCard").count(), 0, "Materials must not duplicate extractive OCR lessons");
+            const downloads = page.locator(".materialsGuide .guideExports");
+            assert.equal(await downloads.count(), 1, "Saved guide exports stay available, but secondary");
+            await downloads.locator("summary").click();
             const exports = page.locator(".materialsGuide .studyGuideDownload button");
             assert.equal(await exports.count(), 2, "generated guide must offer two distinct download formats");
             assert.match(await exports.nth(0).innerText(), /PDF/i, "PDF format must remain visible");
@@ -420,23 +425,39 @@ try {
           return el.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2));
         }), "companion must not cover the Choose files hit target");
       }
-      const citation = page.locator("button.materialsCitation").first();
-      await citation.click();
-      const inspector = page.locator("dialog.materialsSourceDialog[open]");
-      await inspector.waitFor();
-      assert.ok(await inspector.evaluate(el => el.matches(":modal")), "source inspector must use native modal top layer");
-      await inspector.locator("blockquote").waitFor();
-      const box = await inspector.boundingBox();
-      if (viewport.width <= 700) assert.ok(Math.abs(box.y + box.height - viewport.height) <= 2, "phone source sheet must sit at viewport bottom");
-      else assert.ok(Math.abs(box.x + box.width - (viewport.width - 24)) <= 2, "wide source pane must align 24px from right");
-      await page.screenshot({ path: path.join(output, `${viewport.name}-source-inspector-phase3.png`), animations: "disabled" });
-      await page.keyboard.press("Escape");
-      await inspector.waitFor({ state: "detached" });
-      assert.ok(await citation.evaluate(el => el === document.activeElement), "Escape must restore citation focus");
-      await citation.click();
-      await page.locator("dialog.materialsSourceDialog[open]").getByRole("button", { name: "Close", exact: true }).click();
-      assert.ok(await citation.evaluate(el => el === document.activeElement), "Close must restore citation focus");
-      interaction.sourceInspector = true;
+      assert.equal(await page.locator(".materialsGuide .guideLearnCard").count(), 0, "no second LEARN · FROM YOUR MATERIALS section");
+      assert.equal(await page.locator(".materialsGuide .guideReadingFocused").count(), 1, "one dominant note reader");
+      // Synthetic browser response: no paid provider calls or real learner data.
+      let noteCalls = 0;
+      await page.route("**/api/learn", route => {
+        noteCalls++;
+        return route.fulfill({ json: {
+          explanation: "### THE IDEA\\n- Traits are passed from parents to offspring.\\n### WHY IT MATTERS\\n- Inherited traits help explain family resemblance.",
+          citations: [{ documentId: "source", documentName: "Synthetic source.pdf", pageNumber: 1 }]
+        } });
+      });
+      assert.equal(noteCalls, 0, "opening Materials must not call the model");
+      const topic = page.locator(".materialsGuide .guideLearnControls select");
+      assert.ok(await topic.isVisible(), "topic selector must be visible");
+      const explain = page.getByRole("button", { name: "Explain with Studigo", exact: true });
+      assert.ok(await explain.isVisible(), "one primary Learn action must remain visible");
+      await explain.click();
+      const answer = page.locator(".materialsGuide .guideLearnAnswer");
+      await answer.waitFor();
+      assert.equal(noteCalls, 1, "one explicit gesture requests one explanation");
+      assert.match(await answer.innerText(), /THE IDEA/);
+      assert.match(await answer.innerText(), /WHY IT MATTERS/);
+      assert.equal(await answer.locator("h4").count(), 2, "keep actual Learn heading formatting");
+      assert.equal(await answer.locator("li").count(), 2, "keep readable Learn bullets");
+      const source = answer.locator("a.sourceChipLink");
+      assert.equal(await source.count(), 1, "AI citation must open the authorized original");
+      assert.match(await source.getAttribute("href") ?? "", /\/api\/documents\/download\?documentId=source/);
+      assert.ok(await source.isVisible());
+      assert.equal(await page.locator(".guideLearnCard").count(), 0, "no duplicate OCR section after explaining");
+      await topic.selectOption("variation-survival");
+      assert.ok(await explain.isVisible(), "selecting another topic restores Explain action");
+      assert.equal(noteCalls, 1, "topic switches never auto-generate");
+      interaction.materialsNotes = true;
 
     } catch (error) {
       interaction.error = String(error);
