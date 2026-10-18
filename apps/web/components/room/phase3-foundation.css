@@ -3,6 +3,38 @@
   padding: clamp(6px, 1vw, 14px);
   background: linear-gradient(145deg, color-mix(in oklab, var(--shell) 84%, white), var(--shell) 62%, color-mix(in oklab, var(--shell) 78%, var(--ink)));
 }
+/* V5 shell acceptance: the app already owns 100dvh. Its child must not
+   impose another 100vh minimum or clip the last visible row of the Study Room.
+   Allow the inner screen to scroll while the device frame fits the viewport. */
+@media (min-width: 701px) {
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] {
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] > .roomWorkspace {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface:not(:has(.coachChat)) {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  /* Preserve a reachable end-of-content row in every scrollable study mode. */
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface:not(:has(.coachChat)) {
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .roomDevice[data-ui="phase3"] > .roomWorkspace {
   border-radius: 30px;
   background: var(--snow);
@@ -186,6 +218,68 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* The expanded OCR passage must retain Learn's human-readable outline
+   hierarchy. Preserve exact original text behind the second disclosure. */
+.roomDevice[data-ui="phase3"] .guideSourceOutline {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 6px;
+  min-width: 0;
+}
+.roomDevice[data-ui="phase3"] .guideSourceSection {
+  margin: 9px 0 0;
+  padding-bottom: 6px;
+  font: 800 .96rem/1.3 var(--display);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--teal-ink);
+}
+.roomDevice[data-ui="phase3"] .guideSourcePoint {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: .91rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideSourcePoint > span:first-child {
+  font-weight: 900;
+  color: var(--teal-ink);
+}
+.roomDevice[data-ui="phase3"] .guideSourceVerbatim {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--hairline);
+}
+.roomDevice[data-ui="phase3"] .guideSourceVerbatim > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--ink-2);
+  font-size: .84rem;
+  font-weight: 700;
+}
+.roomDevice[data-ui="phase3"] .guideSourceVerbatim > summary:focus-visible {
+  outline: 3px solid var(--teal-ink);
+  outline-offset: 2px;
+}
+.roomDevice[data-ui="phase3"] .guideSourceVerbatim pre {
+  margin: 10px 0 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 .82rem/1.55 var(--sans);
+  color: var(--ink-2);
+  background: var(--snow-2);
+  border-radius: 10px;
+}
+
 .roomDevice[data-ui="phase3"] .guideOutlinePractice ol {
   padding-inline-start: 24px;
   display: grid;
