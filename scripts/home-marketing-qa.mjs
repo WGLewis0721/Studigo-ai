@@ -9,6 +9,30 @@ const widths = [
   { width: 1440, height: 900 }
 ];
 
+// The public Learn iframe has no .coachChat, so the usual mobile navigation
+// collapse must be verified separately for both the hero phone and modes iPad.
+async function readExploreTopGap(page, iframeId) {
+  return page.frameLocator(iframeId).locator(".roomWorkspace").evaluate(root => {
+    const top = root.querySelector(".workspaceTopbar")?.getBoundingClientRect();
+    const learnHeader = root.querySelector(".modeSurfaceFramed > .modeFrame .modeHead")?.getBoundingClientRect();
+    const spacer = root.querySelector(".studyNavigation")?.getBoundingClientRect();
+    return {
+      gap: top && learnHeader ? Math.round(learnHeader.top - top.bottom) : null,
+      spacerHeight: spacer ? Math.round(spacer.height) : null,
+      width: window.innerWidth
+    };
+  });
+}
+function assertExploreTopGap(geometry, where) {
+  assert.ok(geometry.gap !== null && geometry.spacerHeight !== null,
+    `${where} must contain a topbar, Learn header and navigation spacer`);
+  if (geometry.width <= 700) {
+    assert.ok(geometry.spacerHeight <= 4,
+      `${where} retains the mobile navigation spacer: ${JSON.stringify(geometry)}`);
+    assert.ok(geometry.gap >= -4 && geometry.gap <= 22,
+      `${where} has an empty band above Learn: ${JSON.stringify(geometry)}`);
+  }
+}
 const browser = await chromium.launch({ headless: true });
 try {
   for (const viewport of widths) {
@@ -25,6 +49,7 @@ try {
     await page.frameLocator("#homePhone").locator(".exploreJournalQuest").first().waitFor({ timeout: 30000 });
     assert.equal(await page.frameLocator("#homePhone").locator(".exploreJournalQuest").count(), 8,
       "Hero phone must mount the actual eight-quest ExploreJournal fixture");
+    assertExploreTopGap(await readExploreTopGap(page, "#homePhone"), "Hero iPhone Learn");
     // Regression #242: replacing the original iPhone with an iframe must not
     // remove its hardware cues, separate the copy from the device, or leak
     // the yellow synthetic-fixture notice into the marketing screenshot.
@@ -58,6 +83,7 @@ try {
     await page.locator('.modeStep[data-mode="Learn"] .modeChoose').click();
     await page.waitForFunction(() => document.querySelector("#homeModeIframe")?.getAttribute("src") === "/demo/room?mode=learn");
     await page.frameLocator("#homeModeIframe").locator(".exploreJournalQuest").first().waitFor({ timeout: 30000 });
+    assertExploreTopGap(await readExploreTopGap(page, "#homeModeIframe"), "Section 03 iPad Learn");
     const geometry = await page.evaluate(() => ({
       overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
       optionTargets: [...document.querySelectorAll(".modeChoose")].map(node => Math.round(node.getBoundingClientRect().height)),
