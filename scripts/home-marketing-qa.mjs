@@ -14,7 +14,7 @@ const widths = [
 async function readExploreTopGap(page, iframeId) {
   return page.frameLocator(iframeId).locator(".roomWorkspace").evaluate(root => {
     const top = root.querySelector(".workspaceTopbar")?.getBoundingClientRect();
-    const learnHeader = root.querySelector(".coachMode .modeHead")?.getBoundingClientRect();
+    const learnHeader = root.querySelector(".modeSurfaceFramed > .modeFrame .modeHead")?.getBoundingClientRect();
     const spacer = root.querySelector(".studyNavigation")?.getBoundingClientRect();
     return {
       gap: top && learnHeader ? Math.round(learnHeader.top - top.bottom) : null,
