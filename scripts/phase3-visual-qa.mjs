@@ -553,7 +553,7 @@ try {
       const sourceSheet = page.locator(".learnSourceDialog[open]");
       await sourceSheet.waitFor();
       assert.ok(await sourceSheet.evaluate(el => el.matches(":modal")), "source spotlight must use native modal focus boundary");
-      assert.ok(await sourceSheet.getByText("The legislative branch makes laws", { exact: false }).isVisible());
+      assert.ok(await sourceSheet.locator(".learnSourceFormatted").getByText("The legislative branch makes laws", { exact: false }).isVisible());
       if (viewport.width > 700) {
         const sourceHeight = await sourceSheet.evaluate(el => el.getBoundingClientRect().height);
         assert.ok(sourceHeight >= 440, "Wide source inspector should be a substantial reader, not a short popup");
