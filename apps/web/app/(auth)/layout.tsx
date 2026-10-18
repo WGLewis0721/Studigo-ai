@@ -1,5 +1,5 @@
 import "@/components/companion/companion.css";
-import { StudigoMascot } from "@/components/studigo-mascot";
+import { StudigoWordmark } from "@/components/studigo-wordmark";
 import { StudigoFigure } from "@/components/companion/figure";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -9,8 +9,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <main className="authPage">
       <div className="authCard">
         <Link className="wordmark" href="/" aria-label="Studigo home">
-          <StudigoMascot size={40} mark />
-          <span>Studigo</span>
+          <StudigoWordmark className="brandWordmark" />
         </Link>
         {children}
       </div>
