@@ -14,7 +14,8 @@ import {
   resumeFirstRun,
   roomTitleFromGuess,
   type FirstRunStep,
-  type SampleGoal
+  type SampleGoal,
+  roomEntryForFirstRun
 } from "@/lib/first-run";
 import type { HomeNext } from "@/lib/home-next";
 import { ROOM_THEMES, saveRoomTheme, useRoomTheme, type RoomTheme } from "@/lib/room-theme";
@@ -81,6 +82,7 @@ export function HomeHero({ next }: { next: HomeNext }) {
 }
 
 const FIRST_RUN_KEY = "studigo-first-run";
+const FIRST_RUN_PATH_KEY = "studigo-first-run-path";
 
 const GOAL_LABEL: Record<SampleGoal, string> = {
   understand: "Understand",
@@ -104,6 +106,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const router = useRouter();
   const stage = useRef<StageHandle>(null);
   const [step, setStep] = useState<FirstRunStep>("material");
+  const [materialPath, setMaterialPath] = useState<"sample" | "own">("sample");
   const [subject, setSubject] = useState<string>(SAMPLE.subject);
   const [topic, setTopic] = useState<string>(SAMPLE.topic);
   const [goal, setGoal] = useState<SampleGoal>(SAMPLE.goalChoices[0]);
@@ -117,7 +120,15 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
 
   useEffect(() => { stage.current?.react("wave", 1700); }, []);
   useEffect(() => {
-    setStep(resumeFirstRun(window.localStorage.getItem(FIRST_RUN_KEY)));
+    try {
+      const savedPath = window.localStorage.getItem(FIRST_RUN_PATH_KEY);
+      if (savedPath === "own") {
+        setMaterialPath("own");
+        setSubject("");
+        setTopic("");
+      }
+      setStep(resumeFirstRun(window.localStorage.getItem(FIRST_RUN_KEY)));
+    } catch { /* first-run state still works without browser storage */ }
   }, []);
   // Each later step starts at its heading, for keyboard and screen-reader users.
   useEffect(() => { if (step !== "material") headingRef.current?.focus({ preventScroll: true }); }, [step]);
@@ -131,6 +142,8 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     go(FIRST_RUN_STEPS[stepIndex - 1]);
   }
   function chooseSample() {
+    setMaterialPath("sample");
+    try { window.localStorage.setItem(FIRST_RUN_PATH_KEY, "sample"); } catch { /* optional */ }
     setSubject(SAMPLE.subject);
     setTopic(SAMPLE.topic);
     setGoal(SAMPLE.goalChoices[0]);
@@ -139,6 +152,13 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   }
   function chooseOwn() {
     if (!canLeaveMaterial("")) return;
+    // An uploaded study guide has not been read. Never give this path the
+    // civics sample's topic or a fabricated answer/grade.
+    setMaterialPath("own");
+    setSubject("");
+    setTopic("");
+    setResponse("");
+    try { window.localStorage.setItem(FIRST_RUN_PATH_KEY, "own"); } catch { /* optional */ }
     const next = nextFirstRunStep("material");
     if (next) go(next);
   }
@@ -169,11 +189,14 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     try {
       const result = await createFirstRoomAction(data);
       if (!result.roomId) { setError(result.error ?? "The room could not be created. Try again."); setBusy(false); return; }
-      try { window.localStorage.removeItem(FIRST_RUN_KEY); } catch { /* storage is optional */ }
+      try {
+        window.localStorage.removeItem(FIRST_RUN_KEY);
+        window.localStorage.removeItem(FIRST_RUN_PATH_KEY);
+      } catch { /* storage is optional */ }
       saveRoomTheme(result.roomId, theme);
       announceLeap(button);
       void stage.current?.leapTo(button.getBoundingClientRect());
-      router.push(`/app/rooms/${result.roomId}`);
+      router.push(roomEntryForFirstRun(result.roomId, materialPath));
     } catch {
       setError("The room could not be created. Check your connection and try again.");
       setBusy(false);
@@ -212,8 +235,8 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
         {step === "correction" && (
           <>
             <span className="tinyLabel">{SAMPLE_LABEL}</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Does this look right?</h1>
-            <p className="pageLede">Subject and topic start filled in. Change them if you want. You can leave either one blank.</p>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>{materialPath === "own" ? "What are you studying?" : "Does this look right?"}</h1>
+            <p className="pageLede">{materialPath === "own" ? "Add a subject or topic if you know it. Both can wait until you upload your file." : "Subject and topic start filled in. Change them if you want. You can leave either one blank."}</p>
             <label className="field">
               <span>Subject</span>
               <input name="subject" value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={160} autoComplete="off" />
@@ -242,7 +265,16 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
           </>
         )}
 
-        {step === "lesson" && (
+        {step === "lesson" && (materialPath === "own" ? (
+          <>
+            <span className="tinyLabel">YOUR MATERIAL / NEXT STEP</span>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Your first lesson starts with your file.</h1>
+            <p className="pageLede">Open Materials after creating this room to upload your notes or study guide. Studigo will read your source before offering a lesson or checking an answer.</p>
+            <button className="buttonPrimary" type="button" onClick={() => go("optional")}>
+              Next <span aria-hidden="true">→</span>
+            </button>
+          </>
+        ) : (
           <>
             <span className="tinyLabel">{SAMPLE_LABEL}</span>
             <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Try one question.</h1>
@@ -255,13 +287,13 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
             </label>
             <button className="buttonPrimary" type="button" disabled={!response.trim()} onClick={() => { const next = nextFirstRunStep("lesson"); if (next && response.trim()) go(next); }}>Next <span aria-hidden="true">→</span></button>
           </>
-        )}
+        ))}
 
         {step === "optional" && (
           <>
             <span className="tinyLabel">OPTIONAL</span>
-            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Name and color can wait.</h1>
-            <p className="pageLede">Skip this and the room still opens. Nothing here is required.</p>
+            <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>{materialPath === "own" ? "Ready to add your file." : "Name and color can wait."}</h1>
+            <p className="pageLede">{materialPath === "own" ? "Choose a name or color, or skip these. Your room will open directly to Materials." : "Skip this and the room still opens. Nothing here is required."}</p>
             <label className="field">
               <span>Room name <small>(optional)</small></span>
               <input name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} placeholder={previewTitle} autoComplete="off" />
@@ -280,7 +312,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
             {error && <p className="formError" role="alert">{error}</p>}
             <button className="ghostButton" type="button" onClick={finish} disabled={busy}>Skip</button>
             <button className="buttonPrimary" type="button" onClick={finish} disabled={busy}>
-              {busy ? "Creating your room…" : "Open my Study Room"} <span aria-hidden="true">→</span>
+              {busy ? "Creating your room…" : materialPath === "own" ? "Open Materials" : "Open my Study Room"} <span aria-hidden="true">→</span>
             </button>
           </>
         )}
