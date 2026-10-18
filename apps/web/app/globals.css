@@ -3350,43 +3350,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .roomDevice .modeHead .coachTabs, .roomDevice .mhChipBar .coachTabs { background: color-mix(in oklab, var(--th-bar) 55%, var(--white)); box-shadow: inset 0 0 0 1px var(--th-line); }
 .roomDevice .modeHead .coachTabs button[aria-pressed="true"], .roomDevice .mhChipBar .coachTabs button[aria-pressed="true"] { background: var(--white); box-shadow: 0 1px 2px rgba(20, 27, 45, .14); }
 
-/* Coach arrival: the options strip above the orange rail eases from 100% to 60%.
-   Width stays full because scale and width stay reciprocals of the same number. */
-@property --strip-scale {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
+/* Desktop headers never shrink on arrival, hover, focus or typing.
+   A visible button on the shared Studigo rail collapses the complete options strip. */
+.modeFrame { width: 100%; position: relative; }
+.modeStrip[hidden] { display: none; }
+.modeCollapseToggle { display: none; }
+@media (min-width: 701px) {
+  .modeFrame > .studigoRail { height: 44px; }
+  .modeCollapseToggle {
+    position: absolute; z-index: 5; right: 12px; bottom: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-width: 44px; min-height: 44px; padding: 0 10px;
+    border: 0; border-radius: 12px; cursor: pointer;
+    color: var(--tone-on); background: transparent; font: inherit; font-weight: 750; font-size: .76rem;
+  }
+  .modeCollapseToggle:hover { background: color-mix(in oklab, var(--tone-on) 12%, transparent); }
+  .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-on); outline-offset: -4px; }
+  .modeCollapseToggle > span:first-child { font-size: 1.2rem; line-height: 1; }
+  .modeFrame[data-collapsed="true"] > .coachHeaderNav { display: none; }
 }
-.modeFrame {
-  --strip-scale: 1;
-  width: 100%;
-  transition: --strip-scale 560ms cubic-bezier(.22, .8, .2, 1);
-}
-.modeFrame[data-compact="true"] { --strip-scale: 0.6; }
-.modeFrame[data-compact="true"]:has(.modeStrip:hover),
-.modeFrame[data-compact="true"]:has(.modeStrip:focus-within),
-.modeFrame[data-compact="true"]:has(.modeStrip[data-open="true"]) { --strip-scale: 1; }
-.modeFrame .modeStrip {
-  width: 100%;
-  overflow: hidden;
-  height: auto;
-  height: calc(var(--strip-h) * var(--strip-scale));
-}
-.modeFrame[data-compact="true"] .modeStrip .modeHead {
-  transform-origin: top left;
-  transform: scale(var(--strip-scale));
-  width: calc(100% / var(--strip-scale));
-}
-/* The compact strip scales visually, but its *actual rendered* mode keys
-   retain a 44px reach target (44/.6 virtual px at maximum compaction). */
-.modeFrame[data-compact="true"] .modeStrip .modeHead .chatModes button {
-  min-height: calc(44px / var(--strip-scale));
-}
-.modeFrame[style*="--strip-h"] .modeStrip .modeHead {
-  height: var(--strip-h);
-  min-height: 0;
-  max-height: var(--strip-h);
-}
+
 .learnMission { display: grid; align-content: start; gap: 14px; width: 100%; overflow-wrap: anywhere; }
 .learnMissionHead h2 { margin: 4px 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.15; }
 .learnMissionHead p { margin: 0; color: var(--ink-2); line-height: 1.5; }
@@ -3405,61 +3388,18 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .learnMissionActions button, .learnMissionChoices button { min-height: 44px; }
 .learnMissionFixture { margin: 0; padding: 8px 12px; border-radius: 10px; background: var(--dandelion-soft); font-size: .82rem; }
 .chatThread .learnMission { max-width: none; margin: 0; padding: 0; }
-.modeFrame[data-tone="coach"][data-compact="true"] + .coachMode[data-work="grown"] .lessonPosition {
-  font-size: 1.35rem;
-  transition: font-size 560ms cubic-bezier(.22, .8, .2, 1);
+/* Stable desktop action row and topic sidebar: the optional sidebar can be
+   fully hidden with its own button. No CSS zoom or hover-triggered resizing. */
+.coachAsideScale[hidden] { display: none !important; }
+.coachAsideToggle {
+  flex: none; align-self: flex-end; display: grid; place-items: center;
+  width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--th-line, var(--hairline)); border-radius: 12px;
+  background: var(--white); color: var(--ink); cursor: pointer;
 }
-@property --rest-scale {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-@property --aside-scale {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 1;
-}
-.coachMode[data-work="grown"] .coachRest,
-.coachMode[data-work="grown"] .coachBody {
-  --rest-scale: 0.6;
-  --aside-scale: 0.6;
-  transition: --rest-scale 420ms cubic-bezier(.22, .8, .2, 1), --aside-scale 420ms cubic-bezier(.22, .8, .2, 1);
-}
-.coachMode[data-work="grown"] .coachRest {
-  zoom: var(--rest-scale);
-}
-.coachMode[data-work="grown"] .coachRest:hover,
-.coachMode[data-work="grown"] .coachRest:focus-within,
-.coachMode[data-work="grown"] .coachRest[data-open="true"] {
-  --rest-scale: 1;
-}
-.coachMode[data-work="grown"] .coachBody:has(.coachAside:hover),
-.coachMode[data-work="grown"] .coachBody:has(.coachAside:focus-within),
-.coachMode[data-work="grown"] .coachBody:has(.coachAside[data-open="true"]) {
-  --aside-scale: 1;
-}
-.coachAsideScale { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-.coachMode[data-work="grown"] .coachAside { overflow: hidden; }
-.coachMode[data-work="grown"] .coachAside:hover,
-.coachMode[data-work="grown"] .coachAside:focus-within,
-.coachMode[data-work="grown"] .coachAside[data-open="true"] { overflow: auto; }
-.coachMode[data-work="grown"] .coachAsideScale {
-  width: calc(100% / var(--aside-scale));
-  transform: scale(var(--aside-scale));
-  transform-origin: top left;
-}
-@media (max-width: 700px) {
-  .coachMode[data-work="grown"] .coachRest,
-  .coachMode[data-work="grown"] .coachBody { --rest-scale: 1; --aside-scale: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .modeFrame { transition: none; }
-  .modeFrame[data-tone="coach"] + .coachMode .lessonText,
-  .modeFrame[data-tone="coach"] + .coachMode .answerText,
-  .modeFrame[data-tone="coach"] + .coachMode .lessonPosition { transition: none; }
-  .coachMode[data-work="grown"] .coachRest,
-  .coachMode[data-work="grown"] .coachBody { transition: none; }
-}
+.coachAsideToggle > span { font-size: 1.55rem; line-height: 1; }
+.coachAsideToggle:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
+.coachAside[data-collapsed="true"] { align-items: center; overflow: visible; }
 
 /* Materials: a file's buttons drop to their own line when the column is narrow, so its name keeps room. */
 .documentList { container: docs / inline-size; }
@@ -3804,7 +3744,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @container surface (min-width: 980px) {
   /* Coach: the chat, with the room's own numbers beside it. */
   .coachBody { grid-template-columns: minmax(0, 1fr) clamp(280px, 26%, 360px); }
-  .coachMode[data-work="grown"] .coachBody { grid-template-columns: minmax(0, 1fr) calc(clamp(280px, 26%, 360px) * var(--aside-scale, 1)); }
+  .coachBody:has(> .coachAside[data-collapsed="true"]) { grid-template-columns: minmax(0, 1fr) 44px; }
   .coachAside { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
   .asideCard {
     display: grid; gap: 8px; padding: 16px 18px; border-radius: var(--r-lg);
@@ -4220,7 +4160,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     position: absolute; z-index: 3;
     display: inline-flex; align-items: center; justify-content: center;
     left: clamp(390px, 30%, 470px);
-    top: max(2px, calc((var(--strip-h, 82px) * var(--strip-scale) - 44px) / 2));
+    top: 19px;
     height: 44px; max-width: calc(100% - 520px); padding: 0 3px;
     gap: 4px; border-radius: 999px;
     background: color-mix(in oklab, var(--th-bar) 55%, var(--white));
@@ -4248,17 +4188,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .roomDevice .studyGroups[data-keyboard="open"] {
     visibility: hidden;
     pointer-events: none;
-  }
-}
-
-/* V1 mobile polish — maintain the approved full-sized Coach/Learn tabs.
-   The desktop header may tuck, but on a phone shrinking labels makes the
-   most important navigation illegible. Keep the strip's geometry stable. */
-@media (max-width: 700px) {
-  .roomDevice .modeFrame,
-  .roomDevice .modeFrame[data-compact="true"] {
-    --strip-scale: 1;
-    transition: none;
   }
 }
 
