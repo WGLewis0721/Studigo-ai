@@ -13,6 +13,7 @@ on:
       - "scripts/v1-webkit-smoke.mjs"
       - "scripts/v3-practice-qa.mjs"
       - "scripts/v4-progress-plan-qa.mjs"
+      - "scripts/v5-home-onboarding-qa.mjs"
       - "scripts/messenger-unity-qa.mjs"
 
 permissions:
@@ -53,6 +54,8 @@ jobs:
         run: node scripts/v3-practice-qa.mjs
       - name: V4 — saved evidence and plan action routing
         run: node scripts/v4-progress-plan-qa.mjs
+      - name: V5 — Home, room entry and first-run across four widths
+        run: node scripts/v5-home-onboarding-qa.mjs
       - name: Messenger — shared mobile/desktop layout with speech and text
         run: node scripts/messenger-unity-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
