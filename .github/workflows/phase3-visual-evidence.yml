@@ -16,6 +16,7 @@ on:
       - "scripts/v4-progress-plan-qa.mjs"
       - "scripts/v5-home-onboarding-qa.mjs"
       - "scripts/v5-shell-settings-auth-qa.mjs"
+      - "scripts/v6-cross-device-parity-qa.mjs"
       - "scripts/messenger-unity-qa.mjs"
       - "scripts/desktop-mode-drawer-qa.mjs"
       - "scripts/capture-golden-2026-10-18-public.mjs"
@@ -62,6 +63,8 @@ jobs:
         run: node scripts/v5-home-onboarding-qa.mjs
       - name: V5 — signed-in shell fixture, room settings and public auth parity
         run: node scripts/v5-shell-settings-auth-qa.mjs
+      - name: V6 — same-fixture cross-device mode parity and text reflow
+        run: node scripts/v6-cross-device-parity-qa.mjs
       - name: Messenger — shared mobile/desktop layout with speech and text
         run: node scripts/messenger-unity-qa.mjs
       - name: Desktop mode drawer — idle, page colors and bounce
