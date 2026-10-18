@@ -1,6 +1,6 @@
 # Studigo V5 — Home, Room Entry & Onboarding Execution
 
-**State:** First V5 slice shipped in PR #235. Second closure candidate adds shell/settings/auth verification; do not claim final signed-in/hardware acceptance before observed.
+**State:** V5 engineering implementation SHIPPED: first slice PR #235, second slice PR #251; real signed-in/hardware acceptance still pending.
 **Original base:** V4 merged in PR #234 at `6d4ae86`. **New approved golden:** `daeaa67`, immutable Ready deployment `dpl_AcPtnhTyyYoSjWVJvn3NEFbrZnkb`, [golden runbook](GOLDEN_BASELINE_PRE_V5_V6_2026-10-18.md).
 **Design authority:** `docs/DESIGN_SYSTEM.md`, existing Home/first-room components, approved Study Room chrome and `STUDIGO_CROSS_DEVICE_VISUAL_UNIFICATION_PLAN.md`.
 
@@ -32,10 +32,10 @@
 ## Exit criteria and evidence
 
 - [x] First V5 Home/first-run slice: PR #235 merged, original CI/security/four-width tests green and production Ready verified.
-- [ ] Second slice CI validate/typecheck/unit/build and four-width shell/settings/auth acceptance.
-- [ ] Second slice PostgreSQL/security contention and inherited visual gates.
-- [ ] Merge second slice exact green head into main.
-- [ ] Verify Vercel Ready production alias on exact second-slice merge SHA.
+- [x] Second slice CI validate/typecheck/unit/build and four-width shell/settings/auth acceptance (PR #251).
+- [x] Second slice PostgreSQL/security contention and inherited visual gates.
+- [x] Merge second slice exact green head into main: PR #251, merge `f842baf`.
+- [x] Confirmed V5 functionality in newer V6 Ready production `a9d204f`, deployment `dpl_EKwW8teAxhAmJGqNrDQWrVUUmboM` (V5 merge `f842baf` is an ancestor).
 - [ ] Owner checks actual first-time registration, own PDF upload → first useful explanation, room persistence and returning state.
 - [ ] Hardware iPhone/iPadOS Safari keyboard/safe areas, 200% text and VoiceOver. Synthetic/WebKit are not hardware certification.
 
