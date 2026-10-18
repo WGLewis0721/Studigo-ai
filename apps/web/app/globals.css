@@ -3396,43 +3396,74 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .modeFrame[data-drawer-animated="true"][data-collapsed="false"] .modeStripInner {
     animation: modeDrawerOut .58s cubic-bezier(.22,.8,.22,1) both;
   }
+  /* The pull tab is an extension of the divider, not a floating pill.
+     Borrow the companion's glossy material, luminous white LED and chevron. */
   .modeCollapseToggle {
     position: absolute;
     z-index: 8;
-    right: clamp(12px, 2vw, 28px);
+    left: clamp(12px, 2vw, 28px);
+    right: auto;
     bottom: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    min-width: 118px;
+    gap: 9px;
+    min-width: 148px;
     min-height: 44px;
-    padding: 0 12px;
-    border: 2px solid color-mix(in oklab, var(--tone-on) 72%, transparent);
+    padding: 0 14px;
+    border: 1px solid var(--tone-key);
+    border-bottom: 0;
     border-radius: 12px 12px 0 0;
-    background: var(--tone-key);
+    background-color: var(--tone-key);
+    background-image: var(--gloss);
     color: var(--tone-on);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45),
+                inset 0 -1px 0 rgba(20, 27, 45, .13),
+                0 5px 14px -7px var(--tone-glow);
     font: inherit;
-    font-weight: 750;
+    font-weight: 800;
     font-size: .78rem;
+    letter-spacing: .005em;
+    white-space: nowrap;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
-  .modeCollapseToggle:hover { background: color-mix(in oklab, var(--tone-key) 85%, var(--tone-on)); }
+  .modeCollapseToggle:hover { filter: brightness(1.06) saturate(1.04); }
+  .modeCollapseToggle:active { filter: brightness(.96); }
   .modeCollapseToggle:focus-visible { outline: 3px solid var(--tone-ink); outline-offset: 2px; }
-  .modeCollapseToggle > span:first-child { font-size: 1.15rem; line-height: 1; }
+  .modeTabLed {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4);
+  }
+  .modeTabChevron { flex: none; width: 15px; height: 15px; }
+  .modeCollapseText { line-height: 1; }
   .modeFrame[data-collapsed="true"] .modeCollapseToggle {
     bottom: 42px;
     transform: translateY(42px);
-    border: 2px solid var(--tone-key);
+    border: 1px solid var(--tone-key);
     border-top: 0;
     border-radius: 0 0 12px 12px;
-    color: var(--tone-ink);
-    background: var(--tone-soft);
-    box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--tone-key) 24%, transparent);
+    background-color: var(--tone-key);
+    background-image: var(--gloss);
+    color: var(--tone-on);
+    box-shadow: inset 1px 0 0 rgba(255, 255, 255, .2),
+                inset -1px 0 0 rgba(255, 255, 255, .2),
+                inset 0 -1px 0 rgba(20, 27, 45, .18),
+                0 5px 14px -7px var(--tone-glow);
   }
-  .modeFrame[data-collapsed="true"] .modeCollapseToggle:hover {
-    background: color-mix(in oklab, var(--tone-soft) 75%, white);
+  .modeFrame[data-collapsed="true"] .modeCollapseToggle::before {
+    content: "";
+    position: absolute;
+    height: 3px;
+    left: -1px;
+    right: -1px;
+    top: -3px;
+    background: var(--tone-key);
+    pointer-events: none;
   }
   .modeFrame[data-drawer-animated="true"][data-collapsed="true"] .modeCollapseToggle {
     animation: modeDrawerTabDown .58s cubic-bezier(.22,.8,.22,1) both;

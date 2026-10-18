@@ -46,6 +46,29 @@ try {
         divider: getComputedStyle(el.closest(".modeFrame").querySelector(".studigoRail")).backgroundColor
       }));
       assert.equal(colors.border, colors.divider, "Show controls border matches the page-specific divider");
+      const tab = await toggle.evaluate(el => {
+        const box = el.getBoundingClientRect();
+        const rail = el.closest(".modeFrame").querySelector(".studigoRail").getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const led = el.querySelector(".modeTabLed");
+        return {
+          tabLeft: box.left, tabTop: box.top, tabWidth: box.width,
+          railLeft: rail.left, railRight: rail.right, railBottom: rail.bottom,
+          fill: style.backgroundColor, border: style.borderLeftColor,
+          radius: style.borderBottomLeftRadius,
+          ledColor: getComputedStyle(led).backgroundColor,
+          ledGlow: getComputedStyle(led).boxShadow,
+          chevrons: el.querySelectorAll(".modeTabChevron path").length
+        };
+      });
+      assert.ok(tab.tabLeft >= tab.railLeft && tab.tabLeft - tab.railLeft <= 45, "drawer handle anchors to the left of the divider");
+      assert.ok(tab.tabLeft + tab.tabWidth < tab.railRight, "drawer handle stays within divider width");
+      assert.ok(Math.abs(tab.tabTop - tab.railBottom) <= 4, "handle attaches flush beneath divider without floating gap");
+      assert.equal(tab.fill, tab.border, "handle uses the same saturated color as the divider border");
+      assert.equal(tab.ledColor, "rgb(255, 255, 255)", "handle includes companion-style white status LED");
+      assert.match(tab.ledGlow, /rgb\(255, 255, 255\)/, "status LED glows white");
+      assert.equal(tab.chevrons, 1, "handle includes a drawn direction arrow");
+      assert.equal(tab.radius, "12px", "handle rounds outward like companion's tab");
       assert.equal(await toggle.getAttribute("aria-label"), "Show controls");
       assert.equal(await strip.locator(".modeStripInner").evaluate(el => getComputedStyle(el).animationName), "modeDrawerIn");
       await page.screenshot({ path: `${output}/${width}-${mode}-closed.png`, animations: "disabled" });
