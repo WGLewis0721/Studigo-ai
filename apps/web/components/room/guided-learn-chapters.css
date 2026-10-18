@@ -683,3 +683,128 @@
   .learnProgressGlowOverlay { display: none; }
   .learnProgressGlowBurst { animation: none; }
 }
+
+/* Explore source reading — approved Materials hierarchy.
+   Format the same verified passage on both screens without double cards or
+   an extra AI generation path. Scroll belongs to the lesson or source sheet,
+   never to a nested box around the learner's words. */
+.learnReading .learnSourceReading {
+  gap: 12px;
+  max-height: none;
+  overflow: visible;
+  overscroll-behavior: auto;
+  min-width: 0;
+  background: var(--white);
+  border: 0;
+  border-top: 1px solid var(--snow-3);
+  border-radius: 0;
+  padding: clamp(14px, 2vw, 20px) 0 0;
+}
+.learnReading .learnSourceReading > .tinyLabel {
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--teal-ink);
+  letter-spacing: .08em;
+}
+.learnSourceFormatted {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  color: var(--ink);
+}
+.learnSourceFormatted :is(h3, p, ul, li) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.learnSourceFormatted .learnSourceSubheading {
+  color: var(--teal-ink);
+  font: 800 clamp(1rem, 1.6vw, 1.18rem)/1.4 var(--display);
+  letter-spacing: -.01em;
+  padding: 0 0 7px;
+  border-bottom: 1px solid color-mix(in oklab, var(--teal) 22%, white);
+}
+.learnSourceFormatted .learnSourceParagraph {
+  font-size: clamp(.98rem, 1.4vw, 1.09rem);
+  line-height: 1.55;
+  max-width: 70ch;
+}
+.learnSourceFormatted .learnSourceFacts {
+  display: grid;
+  gap: 9px;
+  list-style: disc;
+  padding-inline-start: 1.3rem;
+}
+.learnSourceFormatted .learnSourceFacts li {
+  padding-inline-start: .15rem;
+  font-size: clamp(.98rem, 1.4vw, 1.09rem);
+  line-height: 1.58;
+}
+.learnSourceFormatted .learnSourceFacts li::marker { color: var(--teal-ink); }
+@media (max-width: 390px) {
+  .learnReading .learnSourceReading { max-height: none; }
+}
+.learnSourceDialog[open] { gap: 12px; }
+.learnSourceDialog .learnSourceBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background: var(--white);
+  border-top: 1px solid var(--snow-3);
+  padding: 14px 2px 16px 0;
+}
+.learnSourceDialog .learnSourceBody .learnSourceFormatted { gap: 13px; }
+.learnSourceDialog .learnSourceBody .learnSourceSubheading { font-size: 1.08rem; }
+.learnSourceDialog .learnSourceBody .learnSourceFacts li,
+.learnSourceDialog .learnSourceBody .learnSourceParagraph {
+  font-size: clamp(.98rem, 1.35vw, 1.08rem);
+}
+.learnSourceDialog .learnSourceRaw {
+  border-top: 1px solid var(--snow-3);
+  margin-top: 18px;
+  padding-top: 9px;
+}
+.learnSourceDialog .learnSourceRaw > summary {
+  color: var(--teal-ink);
+  font-size: .84rem;
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 12px;
+}
+.learnSourceDialog .learnSourceRaw > summary:focus-visible {
+  outline: 3px solid var(--teal-ink);
+  outline-offset: 2px;
+}
+.learnSourceDialog .learnSourceRaw .learnSourceQuote {
+  display: block;
+  flex: none;
+  margin-top: 5px;
+  padding: 12px 14px;
+  min-height: 0 !important;
+  max-height: none;
+  overflow: visible;
+  border: 0;
+  border-left: 3px solid var(--teal);
+  border-radius: 0;
+  background: var(--snow-2);
+  font-size: .93rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.learnSourceDialog .learnSourceNote {
+  font-size: .78rem;
+  line-height: 1.4;
+}
+.learnSourceDialog .learnSourceMeta {
+  overflow-wrap: anywhere;
+  gap: 2px;
+}
+@media (max-width: 700px) {
+  .learnSourceDialog[open] { padding-inline: clamp(14px, 4vw, 20px); }
+  .learnSourceDialog .learnSourceBody { padding-block: 12px; }
+  .learnReading .learnSourceReading > .tinyLabel { font-size: .68rem; }
+}
