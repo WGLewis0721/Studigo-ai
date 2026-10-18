@@ -12,8 +12,8 @@ export function guideOutlineHeading(raw: string, position: number) {
 
   // Prefer the learner-facing lesson title to an all-caps scan/file heading.
   // This is an exact substring of the original OCR, not a generated subject.
-  const pageTitle = text.match(/\\bPage\\s+\\d+\\s+(.{3,72}?)\\s+(?:Vocabulary|Key\\s+Terms|Definitions)\\b/i)?.[1]?.trim();
-  if (pageTitle && !/\\bPage\\s+\\d+\\b/i.test(pageTitle)) {
+  const pageTitle = text.match(/\bPage\s+\d+\s+(.{3,72}?)\s+(?:Vocabulary|Key\s+Terms|Definitions)\b/i)?.[1]?.trim();
+  if (pageTitle && !/\bPage\s+\d+\b/i.test(pageTitle)) {
     return { heading: pageTitle, oversized: true };
   }
 
@@ -96,16 +96,16 @@ export function guideSourceSegments(raw: string, terms: string[]): string[] {
  */
 export function guideChapterNotes(chapter: GuideChapter) {
   const longFacts = chapter.facts.filter((fact) =>
-    fact.text.length > 225 || /\\bPage\\s+\\d+\\b[\\s\\S]*\\bVocabulary\\b/i.test(fact.text)
+    fact.text.length > 225 || /\bPage\s+\d+\b[\s\S]*\bVocabulary\b/i.test(fact.text)
   );
   const facts = chapter.facts.filter((fact) => !longFacts.includes(fact));
-  const whyPattern = /\\b(because|so that|as a result|therefore|allows?|enables?|helps?|matters|important)\\b/i;
+  const whyPattern = /\b(because|so that|as a result|therefore|allows?|enables?|helps?|matters|important)\b/i;
   const why = facts.filter((fact) => whyPattern.test(fact.text));
   const other = facts.filter((fact) => !why.includes(fact));
   const objective = chapter.objective.trim();
   const objectiveIsReadable = objective.length > 0
     && objective.length <= 170
-    && !/\\bPage\\s+\\d+\\b/i.test(objective)
+    && !/\bPage\s+\d+\b/i.test(objective)
     && objective.toLowerCase() !== chapter.title.trim().toLowerCase();
   const lead = objectiveIsReadable
     ? { text: objective, evidence: chapter.objectiveEvidence }
