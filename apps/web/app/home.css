@@ -176,7 +176,7 @@ html:has(.home) { scroll-behavior: smooth; }
 @media (pointer: coarse) { .home .fineOnly { display: none; } .home .coarseOnly { display: inline; } }
 
 /* ---------- modes: the device stays put, the room changes color ---------- */
-.home .modesGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 96px); align-items: start; }
+.home .modesGrid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(28px, 6vw, 96px); align-items: start; }
 .home .modeSteps { list-style: none; margin: 0; padding: 0; }
 .home .modeStep { display: grid; align-content: center; min-height: 68vh; padding: 24px 0; border-top: 1px solid var(--hairline); opacity: .82; transition: opacity .4s ease; }
 .home .modeStep.on { opacity: 1; }
@@ -189,15 +189,22 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .modesGrid.pinned .modeStage { display: block; }
 .home .modeDevice {
   position: relative; isolation: isolate;
-  width: min(700px, 100%); margin-inline: auto; padding: 14px 14px 18px;
+  width: min(760px, 100%); margin-inline: auto; padding: 12px;
   border: 7px solid #222938; border-radius: 36px; background: #161d2b;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.3),
     0 48px 70px -38px rgba(20,27,45,.44), 0 12px 22px -12px rgba(20,27,45,.28);
 }
+/* Keep landscape iPad proportions without presenting the mobile app at
+    full-size: a larger iframe viewport is rendered at 80% inside the bezel.
+    Unlike zooming the page content, this preserves the real Study Room CSS. */
+ .home .modeTabletViewport {
+  width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px;
+  background: var(--snow);
+}
 .home .modeTabletScreen {
-  display: block; width: 100%; aspect-ratio: 4 / 3;
-  min-height: 0; border: 0; border-radius: 18px; background: var(--snow);
-  color-scheme: light;
+  display: block; width: 125%; height: 125%; min-height: 0; aspect-ratio: auto;
+  border: 0; border-radius: 0; background: var(--snow); color-scheme: light;
+  transform: scale(.8); transform-origin: top left;
 }
 .home .modeTabletCamera {
   position: absolute; top: 50%; left: 4px; transform: translateY(-50%);
@@ -401,8 +408,8 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .meetScreen { max-width: 440px; border-radius: 44px; justify-self: center; width: 100%; }
   .home .modeStep { min-height: 0; opacity: 1; padding: 14px 0; }
   .home .modesGrid.pinned .modeStage { position: relative; top: auto; }
-  .home .modeDevice { max-width: 700px; border-radius: 25px; padding: 9px; border-width: 5px; }
-  .home .modeTabletScreen { border-radius: 14px; }
+  .home .modeDevice { max-width: 760px; border-radius: 25px; padding: 9px; border-width: 5px; }
+  .home .modeTabletViewport { border-radius: 14px; }
   .home .modeChoose { min-height: 60px; }
   .home .modeDescription { max-width: none; font-size: 1.12rem; }
   .home .sources, .home .cta { border-radius: 30px; }
