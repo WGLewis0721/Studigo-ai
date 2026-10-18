@@ -85,6 +85,53 @@ jobs:
             fi
             echo "::endgroup::"
           done
+      - name: Public-only Chegg and Mathway REA browser observations
+        shell: bash
+        run: |
+          set -uo pipefail
+          browser="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$browser" ]; then
+            echo "REA_BROWSER_UNAVAILABLE=Chrome not installed"
+            exit 0
+          fi
+          echo "REA_BROWSER_VERSION=$("$browser" --version)"
+          for spec in "mathway:https://www.mathway.com/Algebra" "chegg:https://www.chegg.com/study"; do
+            name="${spec%%:*}"
+            url="${spec#*:}"
+            echo "::group::Public REA browser inspection $name"
+            "$browser" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --password-store=basic --no-first-run \
+              --remote-debugging-port=9222 --user-data-dir="/tmp/rea-$name-profile" "$url" \
+              > "/tmp/rea-evidence/$name-chrome.log" 2>&1 &
+            chrome_pid=$!
+            ready=0
+            for n in $(seq 1 20); do
+              if curl -fsS --max-time 2 http://127.0.0.1:9222/json/list > "/tmp/rea-evidence/$name-targets.json"; then
+                ready=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$ready" -eq 1 ]; then
+              sleep 5
+              target="$(jq -r '[.[]|select(.type=="page")|.id][0] // empty' "/tmp/rea-evidence/$name-targets.json")"
+              echo "REA_BROWSER_TARGET=$name:${target:+found}"
+              if [ -n "$target" ] && timeout 40 npx --yes rea-agents@6.7.0 inspect-web-page http://127.0.0.1:9222 "$target" --observation-ms 1000 --json > "/tmp/rea-evidence/$name-web.json" 2> "/tmp/rea-evidence/$name-web.stderr"; then
+                echo "REA_WEB_OK=$name"
+                jq -c '{operation,confidence,authority,subject,normalized_result_keys:(.normalized_result|keys),limitations}' "/tmp/rea-evidence/$name-web.json" | head -c 7000
+                echo
+              else
+                echo "REA_WEB_FAILED=$name"
+                head -c 1600 "/tmp/rea-evidence/$name-web.stderr"
+                echo
+              fi
+            else
+              echo "REA_BROWSER_UNAVAILABLE=$name DevTools endpoint not ready"
+            fi
+            kill "$chrome_pid" 2>/dev/null || true
+            wait "$chrome_pid" 2>/dev/null || true
+            pkill -f "rea-$name-profile" 2>/dev/null || true
+            echo "::endgroup::"
+          done
       - name: Store inspectable REA evidence
         if: always()
         uses: actions/upload-artifact@v4
