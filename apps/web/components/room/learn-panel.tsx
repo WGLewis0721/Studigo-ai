@@ -49,23 +49,9 @@ export function keepIndependentSurfaces<L, O, C>(current: LearnSurfaces<L, O, C>
  * Clear / Previous / Next. Citations and actions are siblings of the scroller so a full
  * thread cannot clip them.
  */
-/** A control cluster that eases down with the Coach chrome and opens again on hover or click. */
+/** Essential lesson actions stay full-size and do not expand or shrink on hover. */
 export function RestRegion({ children, className }: { children: ReactNode; className?: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: PointerEvent) => {
-      if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) setOpen(false);
-    };
-    window.addEventListener("pointerdown", close);
-    return () => window.removeEventListener("pointerdown", close);
-  }, [open]);
-  return (
-    <div ref={ref} className={className} data-open={open ? "true" : undefined} onClick={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }
 
 export function LessonMobileFrame({
