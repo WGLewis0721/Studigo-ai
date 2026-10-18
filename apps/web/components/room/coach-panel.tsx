@@ -21,7 +21,6 @@ import { LearnMission } from "./learn-mission";
 import { RichText } from "./rich-text";
 import type { Topic } from "@/lib/rooms";
 import { useFitViewport } from "./use-fit-viewport";
-import { CoachAside } from "./coach-aside";
 import type { WeakArea } from "@/lib/study-planning";
 import { LEARN_MODE_OPTIONS, describeLearning, type LearnPreferences } from "@/lib/learn-preferences";
 import { learnOutcomeView, readLearnOutcome } from "@/lib/learn-outcome-client";
@@ -75,7 +74,7 @@ function answerLabel(message: Message): string {
   return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
-export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], onOpenMaterials, onOpenPractice, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, explorePreview = false, requestedChat = { mode: "coach", nonce: 0 } }: {
+export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMaterials, onOpenPractice, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, explorePreview = false, requestedChat = { mode: "coach", nonce: 0 } }: {
   roomId: string;
   coaching: ReturnType<typeof useCoachPreferences>;
   readyCount: number;
@@ -1065,6 +1064,9 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         </>}
         </LessonMobileFrame>
         <div className="chatDock">
+          <button type="button" className="chatMaterials" aria-label="Open Materials" title="Open Materials" onClick={onOpenMaterials}>
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 5h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M3 10h18" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>
+          </button>
           <button type="button" className="chatEraser" disabled={busy || restoring} aria-label={chatMode === "learn" ? "Clear Learn chat" : "Clear Coach chat"} onClick={() => void startFresh()}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4.5 7h15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M9.2 7V5.4A1.4 1.4 0 0 1 10.6 4h2.8a1.4 1.4 0 0 1 1.4 1.4V7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M7.2 7.2 8.1 19a1.6 1.6 0 0 0 1.6 1.4h4.6a1.6 1.6 0 0 0 1.6-1.4l.9-11.8" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M10.2 10.6v6M13.8 10.6v6" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
           </button>
@@ -1082,21 +1084,6 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, areas = [], o
         </div>
       </section>
       </div>
-      <CoachAside topics={topics} areas={areas} selectedTitle={selectedTopic.title} onSelect={(topic) => {
-        if (chatMode === "coach") {
-          setCoachTopicIds([topic.id]);
-          scopeEdited.current.coach = true;
-          conversationId.current = null;
-          resetThreadIdentity("coach");
-          rememberThread("coach", { topicIds: [topic.id] });
-        } else {
-          setLearnTopicIds([topic.id]);
-          scopeEdited.current.learn = true;
-          askConversationId.current = null;
-          resetThreadIdentity("learn");
-          rememberThread("learn", { topicIds: [topic.id] });
-        }
-      }} onAllTopics={openTopicPicker} />
       </div>
       )}
       </>}
