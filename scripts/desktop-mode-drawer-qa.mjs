@@ -94,8 +94,9 @@ try {
         await expanded.locator(":scope > summary").click();
         assert.ok(await expanded.locator(".guideSourcePoint").count() > 1, "expanded OCR has separate readable points");
         assert.ok(await expanded.locator(".guideSourceSection").count() >= 2, "original pages and headings are structured");
-        assert.equal(await expanded.locator(".guideSourceVerbatim pre").innerText(), raw, "exact OCR wording preserved");
         await page.screenshot({ path: `${output}/${width}-materials-outline-expanded.png`, animations: "disabled" });
+        await expanded.locator(".guideSourceVerbatim > summary").click();
+        assert.equal(await expanded.locator(".guideSourceVerbatim pre").innerText(), raw, "exact OCR wording preserved");
       }
       assert.deepEqual(errors, [], "no browser JS errors");
       results.push({ width, height, mode, fit, border: colors.border });
