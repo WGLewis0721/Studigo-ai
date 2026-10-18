@@ -7,18 +7,23 @@ import { guideOutlineHeading, guideFactExcerpt, guideSourceSegments, guideChapte
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
+import { RichText } from "./rich-text";
+import { CitationChips, type Citation } from "./citations";
+import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 
 export function GuidePreview({
   roomId,
   edition,
   initialAnswersRevealed = false,
   phase3Materials = false,
+  topics = [],
   sourceRevision = ""
 }: {
   roomId: string;
   edition?: StudyGuideContent | null;
   initialAnswersRevealed?: boolean;
   phase3Materials?: boolean;
+  topics?: Array<{ id: string; title: string }>;
   sourceRevision?: string;
 }) {
   const [loaded, setLoaded] = useState<StudyGuideContent | null>(edition ?? null);
@@ -26,6 +31,12 @@ export function GuidePreview({
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [reload, setReload] = useState(0);
   const [showAnswers, setShowAnswers] = useState(initialAnswersRevealed);
+  const [notesTopicId, setNotesTopicId] = useState("");
+  const [notesByTopic, setNotesByTopic] = useState<Record<string, { text: string; citations: Citation[] }>>({});
+  const [notesBusy, setNotesBusy] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null);
+  const noteRequests = useRef(0);
+  const noteGestures = useRef(createGestureBook());
   const [guideQuiet, setGuideQuiet] = useState<{ acknowledgement: Exclude<QuietAcknowledgement, "none">; status: string } | null>(null);
   const [source, setSource] = useState<{ state: "loading" | "ready" | "unavailable"; blockKey: string; pageNumber: number; text?: string; document?: { id: string; name?: string; mimeType?: string } } | null>(null);
   const sourcePanelId = useId();
@@ -71,6 +82,11 @@ export function GuidePreview({
   useEffect(() => {
     sourceRequest.current += 1;
     setSource(null);
+    noteRequests.current += 1;
+    setNotesByTopic({});
+    setNotesBusy(false);
+    setNotesError(null);
+    setNotesTopicId("");
     setShowAnswers(initialAnswersRevealed);
   }, [roomId, sourceRevision, edition, initialAnswersRevealed]);
 
@@ -129,6 +145,51 @@ export function GuidePreview({
     return <p className="setupLead">{phase3Materials ? "No generated guide yet. Once your files are readable, it will appear here; your original files remain available above." : "Your guide will show up here after your files are ready."}</p>;
   }
 
+  const availableTopics = topics.filter((topic) =>
+    loaded.topicIds.length === 0 || loaded.topicIds.includes(topic.id)
+  );
+  const selectedTopic = availableTopics.find((topic) => topic.id === notesTopicId) ?? availableTopics[0] ?? null;
+  const selectedNotes = selectedTopic ? notesByTopic[selectedTopic.id] : null;
+
+  // Deliberate learner gesture: reuse the existing admitted/cited Learn pipeline,
+  // not a new unmetered guide generator or an automatic provider call on mount.
+  async function explainWithStudigo() {
+    if (!selectedTopic || notesBusy || selectedNotes) return;
+    const body = JSON.stringify({ roomId, topicId: selectedTopic.id });
+    const slot = `materials-note:${roomId}:${selectedTopic.id}`;
+    const attempt = noteGestures.current.begin(slot, body);
+    if (!attempt.started) return;
+    const request = ++noteRequests.current;
+    setNotesBusy(true);
+    setNotesError(null);
+    try {
+      const response = await fetch("/api/learn", {
+        method: "POST", headers: operationHeaders(attempt.id), body
+      });
+      noteGestures.current.finish(slot, response.status);
+      const payload = await response.json().catch(() => null) as
+        { explanation?: string; error?: string; citations?: Citation[] } | null;
+      if (!response.ok || typeof payload?.explanation !== "string" || !payload.explanation.trim()) {
+        throw new Error(payload?.error || "Studigo could not explain that topic from these materials.");
+      }
+      if (request !== noteRequests.current) return;
+      setNotesByTopic((current) => ({
+        ...current,
+        [selectedTopic.id]: {
+          text: payload.explanation!,
+          citations: Array.isArray(payload.citations) ? payload.citations : []
+        }
+      }));
+    } catch (error) {
+      noteGestures.current.abort(slot);
+      if (request === noteRequests.current) {
+        setNotesError(error instanceof Error ? error.message : "Could not load your notes.");
+      }
+    } finally {
+      if (request === noteRequests.current) setNotesBusy(false);
+    }
+  }
+
   const model = guidePreviewModel(loaded);
   const printText = guidePrintEdition(loaded, showAnswers);
   const sourceLinks = (refs: Array<{ blockKey: string; pageNumber: number }>) => refs.map((ref) => {
@@ -155,6 +216,34 @@ export function GuidePreview({
         <button type="button" aria-label="Print generated Studigo guide" onClick={() => window.print()}>Print</button>
       </div>
       <pre className="guidePrintSheet" aria-hidden="true">{printText}</pre>
+      {phase3Materials && availableTopics.length > 0 && (
+        <section className="guideLearnOnDemand" aria-label="Explain a source-backed topic">
+          <span className="tinyLabel guideLearnKicker">LEARN · FROM YOUR MATERIALS</span>
+          <h3>Understand a topic</h3>
+          <p>Get a short, source-cited explanation using Studigo's established Learn engine. Your original guide stays intact.</p>
+          <div className="guideLearnControls">
+            <label htmlFor={`${sourcePanelId}-learn-topic`}>Topic</label>
+            <select id={`${sourcePanelId}-learn-topic`} value={selectedTopic?.id ?? ""} onChange={(event) => {
+              noteRequests.current += 1;
+              setNotesBusy(false);
+              setNotesError(null);
+              setNotesTopicId(event.currentTarget.value);
+            }}>
+              {availableTopics.map((topic) => <option key={topic.id} value={topic.id}>{topic.title}</option>)}
+            </select>
+            {!selectedNotes && <button className="ghostButton" type="button" onClick={() => void explainWithStudigo()} disabled={notesBusy}>
+              {notesBusy ? "Explaining…" : "Explain with Studigo"}
+            </button>}
+          </div>
+          {notesError && <p className="guideNeedsReview" role="status">{notesError}</p>}
+          {selectedNotes && (
+            <div className="guideLearnAnswer">
+              <RichText text={selectedNotes.text} className="lessonText" />
+              <CitationChips citations={selectedNotes.citations} />
+            </div>
+          )}
+        </section>
+      )}
       {phase3Materials && source && <dialog ref={sourceDialog} id={sourcePanelId} className="materialsSourceSpotlight materialsSourceDialog" aria-labelledby={`${sourcePanelId}-title`} onCancel={(event) => { event.preventDefault(); closeSource(); }}>
         <div className="materialsSourceTop"><h3 id={`${sourcePanelId}-title`} ref={sourceHeading} tabIndex={-1}>Source passage{source.pageNumber > 0 ? ` · page ${source.pageNumber}` : ""}</h3><button type="button" onClick={closeSource}>Close</button></div>
         {source.state === "loading" && <p role="status">Checking the current source…</p>}
