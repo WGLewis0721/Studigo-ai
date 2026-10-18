@@ -59,9 +59,18 @@ try {
         const surface = page.locator(".modeSurface");
         const scroller = await surface.evaluate(el => getComputedStyle(el).overflowY);
         assert.equal(scroller, "auto", "non-chat room content uses the scrollable screen");
-        await surface.evaluate(el => { el.scrollTo({ top: el.scrollHeight, behavior: "instant" }); });
-        const atBottom = await surface.evaluate(el => el.scrollTop + el.clientHeight + 2 >= el.scrollHeight);
-        assert.equal(atBottom, true, "the last row is reachable by scrolling");
+        await surface.evaluate(el => { el.scrollTop = el.scrollHeight; });
+        // Sticky headers and the drawer's layout transition can change height
+        // during the same frame, so inspect a settled scroll position.
+        await page.waitForTimeout(150);
+        const scroll = await surface.evaluate(el => ({
+          scrollTop: el.scrollTop, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight,
+          overflowY: getComputedStyle(el).overflowY, scrollBehavior: getComputedStyle(el).scrollBehavior,
+          frameHeight: el.getBoundingClientRect().height
+        }));
+        console.log(`Viewport ${width} mode ${mode} bottom-scroll ${JSON.stringify(scroll)}`);
+        assert.ok(scroll.scrollTop + scroll.clientHeight + 2 >= scroll.scrollHeight,
+          `last row is reachable: ${JSON.stringify({ width, height, mode, fit, scroll })}`);
       }
 
       await page.waitForFunction(() => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true", undefined, { timeout: 6500 });
