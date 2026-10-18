@@ -159,10 +159,10 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
     return () => window.clearTimeout(timer);
   }, [desktop, collapsed, focused, activity, tone]);
 
-  function toggleDrawer() {
+  function showControls() {
     if (!desktop) return;
     setHasMoved(true);
-    setCollapsed((closed) => !closed);
+    setCollapsed(false);
   }
 
   return (
@@ -183,21 +183,23 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
       </div>
       {accessory}
       <StudigoRail tone={tone} />
-      <button
-        type="button"
-        className="modeCollapseToggle"
-        aria-controls={controlsId}
-        aria-expanded={!collapsed}
-        aria-label={collapsed ? "Show controls" : "Hide controls"}
-        title={collapsed ? "Show controls" : "Hide controls"}
-        onClick={toggleDrawer}
-      >
-        <span className="modeTabLed" aria-hidden="true" />
-        <svg className="modeTabChevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-          <path d={collapsed ? "m5 9 7 7 7-7" : "m5 15 7-7 7 7"} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span className="modeCollapseText">{collapsed ? "Show controls" : "Hide controls"}</span>
-      </button>
+      {desktop && collapsed && (
+        <button
+          type="button"
+          className="modeCollapseToggle"
+          aria-controls={controlsId}
+          aria-expanded={false}
+          aria-label="Show controls"
+          title="Show controls"
+          onClick={showControls}
+        >
+          <span className="modeTabLed" aria-hidden="true" />
+          <svg className="modeTabChevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+            <path d="m5 9 7 7 7-7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="modeCollapseText">Show controls</span>
+        </button>
+      )}
     </div>
   );
 }
