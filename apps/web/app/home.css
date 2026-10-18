@@ -424,6 +424,13 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .legend > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .home .float { font-size: .78rem; padding: 8px 11px; }
 }
+@media (max-width: 370px) {
+  /* Keep status icons clear of the Dynamic Island even when the marketing
+     phone is scaled down to fit a 320px-wide browser. */
+  .home .phoneStatus { padding-right: 12px; padding-left: 12px; }
+  .home .phoneIsland { width: 76px; height: 25px; }
+  .home .phoneSignals { gap: 2px; transform: scale(.84); transform-origin: right bottom; }
+}
 @media (prefers-reduced-motion: reduce) {
   html:has(.home) { scroll-behavior: auto; }
   .home .rv, .home[data-motion] .rv:not(.in), .home .hero .rv:not(.in) { opacity: 1; transform: none; transition: none; animation: none; }
