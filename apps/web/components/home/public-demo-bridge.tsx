@@ -56,6 +56,13 @@ export function PublicDemoBridge() {
         padding-top: 0;
       }
     }
+    /* The synthetic fixture mounts only .appMain inside .appShell. At tablet
+       (>700px) widths, the normal shell reserves a separate first grid row for
+       real app chrome; the bare demo has no such sibling and its room collapses
+       to zero height. Give this public-only bare shell one full-height row. */
+    @media (min-width: 701px) {
+      .appShell:has(.roomDevice) { grid-template-rows: minmax(0, 1fr); }
+    }
     /* Scroll stays functional; desktop scrollbar chrome does not appear inside
        the simulated iPhone or marketing iPad. */
     html, body { scrollbar-width: none; }
