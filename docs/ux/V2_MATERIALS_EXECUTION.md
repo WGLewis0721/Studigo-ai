@@ -47,4 +47,4 @@ User requested **light testing** and will supply detailed visual/user acceptance
 - [ ] Confirm stale guide warning with a real authorized source revision.
 - [ ] Confirm errors show actionable retry without stale source substitution.
 
-V3 must wait for the owner's V2 critique.
+The owner's subsequent V3–V6 mission supersedes the historical V2 critique hold. V3 shipped in #230; the real-source manual acceptance items above remain unverified.
