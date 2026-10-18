@@ -65,3 +65,8 @@ test("Home resumes only an unfinished allowlisted reading", () => {
   assert.match(door?.note ?? "", /try/);
   assert.match(door?.note ?? "", /not a grade/);
 });
+
+test('missing review priorities do not invent strong achievement',()=>{
+ const next=buildHomeNext(room('Science',null),[],{topicCount:4,practicedTopicCount:1,masteredCount:0},NOW);
+ assert.equal(next.heading,'Choose a topic to review');
+});
