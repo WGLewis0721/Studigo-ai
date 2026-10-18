@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
-import { guideOutlineHeading, guideFactExcerpt, guideSourceSegments, guideChapterNotes } from "@/lib/guide-outline";
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
@@ -38,50 +37,9 @@ export function GuidePreview({
   const noteRequests = useRef(0);
   const noteGestures = useRef(createGestureBook());
   const [guideQuiet, setGuideQuiet] = useState<{ acknowledgement: Exclude<QuietAcknowledgement, "none">; status: string } | null>(null);
-  const [source, setSource] = useState<{ state: "loading" | "ready" | "unavailable"; blockKey: string; pageNumber: number; text?: string; document?: { id: string; name?: string; mimeType?: string } } | null>(null);
   const sourcePanelId = useId();
-  const sourceRequest = useRef(0);
-  const sourceHeading = useRef<HTMLHeadingElement>(null);
-  const sourceDialog = useRef<HTMLDialogElement>(null);
-  const sourceTrigger = useRef<HTMLButtonElement | null>(null);
-
-  function closeSource() {
-    sourceRequest.current += 1;
-    sourceDialog.current?.close();
-    setSource(null);
-    sourceTrigger.current?.focus({ preventScroll: true });
-  }
-
-  async function inspectSource(blockKey: string, pageNumber: number, trigger: HTMLButtonElement) {
-    sourceTrigger.current = trigger;
-    const request = ++sourceRequest.current;
-    setSource({ state: "loading", blockKey, pageNumber });
-    try {
-      const response = await fetch(evidenceHref(roomId, blockKey));
-      const body = response.ok ? await response.json() as { blockKey?: string; pageNumber?: number; text?: string; document?: { id: string; name?: string; mimeType?: string } } : null;
-      if (request !== sourceRequest.current) return;
-      if (!body || body.blockKey !== blockKey || typeof body.text !== "string" || !body.text.trim()) {
-        setSource({ state: "unavailable", blockKey, pageNumber });
-      } else {
-        setSource({ state: "ready", blockKey, pageNumber: typeof body.pageNumber === "number" && body.pageNumber > 0 ? body.pageNumber : 0, text: body.text, document: body.document });
-      }
-    } catch {
-      if (request === sourceRequest.current) setSource({ state: "unavailable", blockKey, pageNumber });
-    }
-  }
 
   useEffect(() => {
-    if (!source) return;
-    const dialog = sourceDialog.current;
-    // Native top layer keeps the companion/navigation behind the sheet and
-    // supplies focus containment, including while a source request is pending.
-    if (dialog && !dialog.open) dialog.showModal();
-    sourceHeading.current?.focus({ preventScroll: true });
-  }, [source?.blockKey]);
-
-  useEffect(() => {
-    sourceRequest.current += 1;
-    setSource(null);
     noteRequests.current += 1;
     setNotesByTopic({});
     setNotesBusy(false);
@@ -192,35 +150,34 @@ export function GuidePreview({
 
   const model = guidePreviewModel(loaded);
   const printText = guidePrintEdition(loaded, showAnswers);
-  const sourceLinks = (refs: Array<{ blockKey: string; pageNumber: number }>) => refs.map((ref) => {
-    const label = ref.pageNumber > 0 ? `Check source · page ${ref.pageNumber}` : "Check source passage";
-    return phase3Materials
-      ? <button className="materialsCitation" type="button" key={ref.blockKey} aria-expanded={source?.blockKey === ref.blockKey} aria-controls={sourcePanelId} onClick={(event) => void inspectSource(ref.blockKey, ref.pageNumber, event.currentTarget)}>{label}</button>
-      : <a key={ref.blockKey} href={evidenceHref(roomId, ref.blockKey)}>{label}</a>;
-  });
+  // The saved original guide remains available to download, not duplicated as
+  // a second OCR-heavy learning card on Materials. Legacy preview retains its
+  // original source links and answer key.
+  const sourceLinks = (refs: Array<{ blockKey: string; pageNumber: number }>) =>
+    refs.map((ref) => <a key={ref.blockKey} href={evidenceHref(roomId, ref.blockKey)}>Check source{ref.pageNumber > 0 ? ` · page ${ref.pageNumber}` : ""}</a>);
   return (
-    <article className="guideReading" aria-label="Study guide preview" style={{ overflowWrap: "anywhere", background: "#fff", maxWidth: phase3Materials ? undefined : 320 }}>
+    <article className={`guideReading${phase3Materials ? " guideReadingFocused" : ""}`} aria-label={phase3Materials ? "Study notes" : "Study guide preview"} style={{ overflowWrap: "anywhere", background: "#fff", maxWidth: phase3Materials ? undefined : 320 }}>
       <div className="materialsGuideProvenance">
-        <span className="tinyLabel">STUDIGO GUIDE · VERSION {model.version}</span>
+        <span className="tinyLabel">{phase3Materials ? `SAVED GUIDE · VERSION ${model.version}` : `STUDIGO GUIDE · VERSION ${model.version}`}</span>
         <span className="materialsGuideEvidence">{model.sourceCount} {model.sourceCount === 1 ? "cited source" : "cited sources"} · {model.level}</span>
       </div>
-      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Your study notes" : model.title}</h2>
+      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Study notes" : model.title}</h2>
       {updateAvailable && <p className="materialsGuideStale" role="status">
         <strong>Source changes need review.</strong>{" "}
         This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
       </p>}
-      <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
-        {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
-        <StudyGuideDownloadButton roomId={roomId} compactLabel={phase3Materials} />
-        <StudyGuideDownloadButton roomId={roomId} format="docx" compactLabel={phase3Materials} />
-        <button type="button" aria-label="Print generated Studigo guide" onClick={() => window.print()}>Print</button>
-      </div>
+      {!phase3Materials && (
+        <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
+          {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
+          <StudyGuideDownloadButton roomId={roomId} />
+          <StudyGuideDownloadButton roomId={roomId} format="docx" />
+          <button type="button" aria-label="Print generated Studigo guide" onClick={() => window.print()}>Print</button>
+        </div>
+      )}
       <pre className="guidePrintSheet" aria-hidden="true">{printText}</pre>
       {phase3Materials && availableTopics.length > 0 && (
         <section className="guideLearnOnDemand" aria-label="Explain a source-backed topic">
-          <span className="tinyLabel guideLearnKicker">LEARN · FROM YOUR MATERIALS</span>
-          <h3>Understand a topic</h3>
-          <p>Get a short, source-cited explanation using Studigo's established Learn engine. Your original guide stays intact.</p>
+          <p className="guideLearnIntro">Choose a topic to get a clear explanation using your uploaded materials.</p>
           <div className="guideLearnControls">
             <label htmlFor={`${sourcePanelId}-learn-topic`}>Topic</label>
             <select id={`${sourcePanelId}-learn-topic`} value={selectedTopic?.id ?? ""} disabled={notesBusy} onChange={(event) => {
@@ -237,130 +194,27 @@ export function GuidePreview({
           </div>
           {notesError && <p className="guideNeedsReview" role="status">{notesError}</p>}
           {selectedNotes && (
-            <div className="guideLearnAnswer">
+            <div className="guideLearnAnswer" aria-live="polite">
               <RichText text={selectedNotes.text} className="lessonText" />
               <CitationChips citations={selectedNotes.citations} />
             </div>
           )}
         </section>
       )}
-      {phase3Materials && source && <dialog ref={sourceDialog} id={sourcePanelId} className="materialsSourceSpotlight materialsSourceDialog" aria-labelledby={`${sourcePanelId}-title`} onCancel={(event) => { event.preventDefault(); closeSource(); }}>
-        <div className="materialsSourceTop"><h3 id={`${sourcePanelId}-title`} ref={sourceHeading} tabIndex={-1}>Source passage{source.pageNumber > 0 ? ` · page ${source.pageNumber}` : ""}</h3><button type="button" onClick={closeSource}>Close</button></div>
-        {source.state === "loading" && <p role="status">Checking the current source…</p>}
-        {source.state === "unavailable" && <><p role="status">This passage is unavailable or no longer current. Check the original files above. Studigo will not substitute a passage from another source.</p><button className="ghostButton" type="button" onClick={() => { if (sourceTrigger.current) void inspectSource(source.blockKey, source.pageNumber, sourceTrigger.current); }}>Check passage again</button></>}
-        {source.state === "ready" && <>
-          <p className="materialsSourceName"><span>Original source</span><strong>{source.document?.name ?? "Authorized source passage"}</strong></p>
-          <blockquote>{source.text}</blockquote>
-          {source.document?.id && <a href={`/api/documents/download?documentId=${encodeURIComponent(source.document.id)}&inline=1${source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? `&page=${source.pageNumber}` : ""}`} target="_blank" rel="noreferrer">Open original{source.document.mimeType === "application/pdf" && source.pageNumber > 0 ? ` at page ${source.pageNumber}` : ""}</a>}
-        </>}
-      </dialog>}
-      {loaded.chapters.map((chapter, chapterIndex) => phase3Materials ? (
-        <section key={chapter.id} className="guideOutlineChapter guideLearnCard" aria-label={guideOutlineHeading(chapter.title, chapterIndex).heading}>
-          <div className="guideOutlineChapterHeading">
-            <span className="tinyLabel guideLearnKicker">LEARN · FROM YOUR MATERIALS · SECTION {chapterIndex + 1}</span>
-            <h3>{guideOutlineHeading(chapter.title, chapterIndex).heading}</h3>
+      {phase3Materials && (
+        <details className="guideExports">
+          <summary>Saved guide downloads</summary>
+          <div className="guideActions lessonProgressRow">
+            <StudyGuideDownloadButton roomId={roomId} compactLabel />
+            <StudyGuideDownloadButton roomId={roomId} format="docx" compactLabel />
+            <button type="button" aria-label="Print saved Studigo guide" onClick={() => window.print()}>Print</button>
           </div>
-          {guideOutlineHeading(chapter.title, chapterIndex).oversized && (
-            <details className="guideOutlineOriginal">
-              <summary>View original heading and source wording</summary>
-              <div className="guideSourceOutline" aria-label="Original source wording, organized into readable passages">
-                {guideSourceSegments(chapter.title, chapter.terms.map((term) => term.term)).map((passage, index) =>
-                  <p key={index}>{passage.trim()}</p>
-                )}
-              </div>
-              {sourceLinks(chapter.objectiveEvidence)}
-            </details>
-          )}
-          {guideChapterNotes(chapter).lead && (
-            <p className="guideLearnLead">
-              <strong>{guideChapterNotes(chapter).lead?.text}</strong>
-              {sourceLinks(guideChapterNotes(chapter).lead?.evidence ?? [])}
-            </p>
-          )}
-          {guideChapterNotes(chapter).idea.length > 0 && (
-            <div className="guideOutlineGroup">
-              <h4>The idea</h4>
-              <ul className="guideOutlinePoints">
-                {guideChapterNotes(chapter).idea.map((fact) => <li key={fact.id}>
-                  {fact.text} {sourceLinks(fact.evidence)}
-                </li>)}
-              </ul>
-            </div>
-          )}
-          {guideChapterNotes(chapter).why.length > 0 && (
-            <div className="guideOutlineGroup">
-              <h4>Why it matters</h4>
-              <ul className="guideOutlinePoints">
-                {guideChapterNotes(chapter).why.map((fact) => <li key={fact.id}>
-                  {fact.text} {sourceLinks(fact.evidence)}
-                </li>)}
-              </ul>
-            </div>
-          )}
-          {guideChapterNotes(chapter).raw.length > 0 && (
-            <details className="guideOutlineOriginal guideRawNotes">
-              <summary>Read unformatted source passage ({guideChapterNotes(chapter).raw.length})</summary>
-              {guideChapterNotes(chapter).raw.map((fact) => (
-                <div key={fact.id} className="guideSourceOutline">
-                  {guideSourceSegments(fact.text, chapter.terms.map((term) => term.term)).map((passage, index) =>
-                    <p key={index}>{passage.trim()}</p>
-                  )}
-                  {sourceLinks(fact.evidence)}
-                </div>
-              ))}
-            </details>
-          )}
-          {guideChapterNotes(chapter).needsSourceReview && (
-            <p className="guideNeedsReview">This scanned passage has no reliable short notes yet. Check the original source before studying it.</p>
-          )}
-          {chapter.terms.length > 0 && (
-            <div className="guideOutlineGroup">
-              <h4>Vocabulary</h4>
-              <dl className="guideOutlineTerms">
-                {chapter.terms.map((term) => {
-                  const note = guideFactExcerpt(term.definition, 225);
-                  return (
-                    <div className="guideOutlineTerm" key={term.id}>
-                      <dt>{term.term}</dt>
-                      <dd>{note.long ? (
-                        <details className="guideOutlineLongNote">
-                          <summary>{note.excerpt}</summary>
-                          <p>{term.definition}</p>
-                        </details>
-                      ) : term.definition}
-                      {sourceLinks(term.evidence)}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </div>
-          )}
-          {chapter.examples.length > 0 && (
-            <div className="guideOutlineGroup">
-              <h4>Examples</h4>
-              <ul className="guideOutlinePoints">
-                {chapter.examples.map((example) => <li key={example.id}>
-                  {example.text} {sourceLinks(example.evidence)}
-                </li>)}
-              </ul>
-            </div>
-          )}
-          {chapter.practice.length > 0 && (
-            <details className="guideOutlinePractice">
-              <summary>Practice questions ({chapter.practice.length})</summary>
-              <ol>
-                {chapter.practice.map((question) => <li key={question.id}>{question.prompt} {sourceLinks(question.evidence)}</li>)}
-              </ol>
-              {showAnswers ? (
-                <><button type="button" onClick={() => setShowAnswers(false)}>Hide answers</button>
-                  <ol className="guideAnswerKey">
-                    {chapter.answers.map((answer) => <li key={answer.id}>{answer.text} {sourceLinks(answer.evidence)}</li>)}
-                  </ol></>
-              ) : <button type="button" onClick={() => setShowAnswers(true)}>Show answers</button>}
-            </details>
-          )}
-        </section>
-      ) : (
+        </details>
+      )}
+      {phase3Materials && availableTopics.length === 0 && (
+        <p className="guideNeedsReview" role="status">No study topics are ready yet. Check the original files above, then refresh your study guide if needed.</p>
+      )}
+      {!phase3Materials && loaded.chapters.map((chapter) => (
         <section key={chapter.id}>
           <h3>{chapter.title}</h3>
           {chapter.facts.map((fact) => <p key={fact.id}>{fact.text} {sourceLinks(fact.evidence)}</p>)}
