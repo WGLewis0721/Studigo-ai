@@ -559,33 +559,46 @@ try {
         assert.ok(sourceHeight >= 440, "Wide source inspector should be a substantial reader, not a short popup");
         missionCase.sourceHeight = sourceHeight;
       }
+      // Both circled surfaces must use the same semantic reading layout, not
+      // a flat OCR block. The exact source remains under disclosure.
+      const reader = sourceSheet.locator(".learnSourceFormatted");
+      assert.equal(await reader.count(), 1, "source inspector uses the shared Materials-style reader");
+      assert.equal(await page.locator(".learnSourceReading .learnSourceFormatted").count(), 0,
+        "the first-check step should not show an extra passage");
+      assert.equal(await sourceSheet.locator(".learnSourceRaw:not([open])").count(), 1,
+        "verbatim OCR is available without cluttering the source inspector");
       missionCase.sourceScreenshot = path.join(output, `${viewport.name}-guided-learn-source-phase3.png`);
       await page.screenshot({ path: missionCase.sourceScreenshot, animations: "disabled" });
-      // A long real OCR extraction must remain within the source viewport.
+      // The source sheet has exactly one scroll region: the complete reading
+      // (with optional raw text) scrolls, while the source and Back actions stay
+      // visible and reachable on all four widths.
+      await sourceSheet.locator(".learnSourceRaw > summary").click();
       const clip = await sourceSheet.evaluate(dialog => {
+        const body = dialog.querySelector(".learnSourceBody");
         const quote = dialog.querySelector(".learnSourceQuote");
         const original = dialog.querySelector(".learnSourceOriginal");
         const back = dialog.querySelector(".ghostButton");
-        if (!quote || !back) throw new Error("Source dialog missing quote or exit");
+        if (!body || !quote || !back) throw new Error("Source dialog missing reader, exact text or exit");
         const initialContent = quote.textContent;
-        quote.textContent = Array.from({length: 70}, () => initialContent).join("\n");
+        quote.textContent = Array.from({ length: 70 }, () => initialContent).join("\n");
         const rect = dialog.getBoundingClientRect();
-        const quoteBox = quote.getBoundingClientRect();
+        const bodyBox = body.getBoundingClientRect();
         const exitBox = back.getBoundingClientRect();
-        const documentHeight = quote.scrollHeight;
-        const viewportHeight = quote.clientHeight;
+        const documentHeight = body.scrollHeight;
+        const viewportHeight = body.clientHeight;
         quote.textContent = initialContent;
         return {
           trulyScrollable: documentHeight > viewportHeight + 100,
-          scrollableExcerpt: getComputedStyle(quote).overflowY === "auto",
-          quoteInside: quoteBox.top >= rect.top && quoteBox.bottom <= exitBox.top + 1,
+          scrollableExcerpt: getComputedStyle(body).overflowY === "auto",
+          oneScrollableReader: getComputedStyle(quote).overflowY !== "auto",
+          quoteInside: bodyBox.top >= rect.top && bodyBox.bottom <= exitBox.top + 1,
           exitInside: exitBox.bottom <= rect.bottom + 1,
           sourceHeight: documentHeight,
-          originalInside: !original || original.getBoundingClientRect().bottom <= exitBox.top
+          originalInside: !original || original.getBoundingClientRect().bottom <= rect.bottom + 1
         };
       });
-      assert.ok(clip.trulyScrollable && clip.scrollableExcerpt && clip.quoteInside && clip.exitInside && clip.originalInside,
-        "Source excerpt must scroll internally without overlapping Open original or Back to lesson");
+      assert.ok(clip.trulyScrollable && clip.scrollableExcerpt && clip.oneScrollableReader && clip.quoteInside && clip.exitInside && clip.originalInside,
+        "Source reader must scroll without nesting or covering the original and lesson exit controls");
       missionCase.sourceClip = clip;
       await sourceSheet.getByRole("button", { name: "Back to lesson" }).click();
       await sourceSheet.waitFor({ state: "hidden" });
