@@ -12,6 +12,7 @@ on:
       - "scripts/v1-final-qa.mjs"
       - "scripts/v1-webkit-smoke.mjs"
       - "scripts/v3-practice-qa.mjs"
+      - "scripts/v4-progress-plan-qa.mjs"
       - "scripts/messenger-unity-qa.mjs"
 
 permissions:
@@ -50,6 +51,8 @@ jobs:
         run: node scripts/v1-webkit-smoke.mjs
       - name: V3 — Coach and Practice interactions at four widths
         run: node scripts/v3-practice-qa.mjs
+      - name: V4 — saved evidence and plan action routing
+        run: node scripts/v4-progress-plan-qa.mjs
       - name: Messenger — shared mobile/desktop layout with speech and text
         run: node scripts/messenger-unity-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report

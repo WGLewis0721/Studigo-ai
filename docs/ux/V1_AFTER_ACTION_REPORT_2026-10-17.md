@@ -1,7 +1,7 @@
 # Studigo V1 — After-action report and design-law traceability
 
 **Date:** 2026-10-17  
-**Status:** engineering implementation submitted in PR #225; final merge/deployment and owner critique are separate verification events. Update this ledger only from observed test/release evidence.  
+**Status:** software shipped in #225, with subsequent mobile fixes #226/#227. Software/browser gates and production Ready were reverified through V3 #230. This after-action record preserves historical candidate notes; hardware/VoiceOver acceptance is still unverified.
 **Release scope:** V1 shared navigation, keyboard/focus interaction, component-state semantics and responsive readability. **Not** V2 Materials, V3 Coach/Practice redesign, or a new design system.  
 **Golden recovery:** frozen source [`726b1e7`](https://github.com/WGLewis0721/Studigo-ai/tree/golden/pre-v1-2026-10-17-726b1e7) and Vercel Ready deployment `dpl_aw3c2RDmDPkQYWZcsR28e8RC8Wdn`. [V0 record](GOLDEN_BASELINE_V0_2026-10-17.md). Data rollback is explicitly not promised.
 
@@ -64,7 +64,7 @@ Sources: [Foundational Studigo UX principles](FOUNDATIONAL_UX_PRINCIPLES.md), [C
 
 - [x] V0 golden source branch frozen, Ready rollback deployment identified, visual fixture/public screenshot archive produced ([record](GOLDEN_BASELINE_V0_2026-10-17.md)).
 - [x] PRs #221, #223 and #222 individually passed application, database and four-width synthetic browser gates; each was merged and deployed Ready.
-- [x] V1 final candidate includes focused Chromium and WebKit synthetic checks. **Mark release complete only after current PR #225's precise checks pass and Vercel main is Ready.**
+- [x] V1 final candidate includes focused Chromium and WebKit synthetic checks. Released through #225/#226/#227; checks and Ready production were reverified through #230.
 - [ ] Authenticated end-to-end real-source flow on a disposable account after the owner-authorized database reset. Synthetic fixtures are not a substitute.
 - [ ] Hardware iPhone Safari keyboard, notches/safe areas and iPadOS tests.
 - [ ] Actual VoiceOver screen-reader navigation and hardware 200% text enlargement. Chromium CSS zoom and Linux WebKit do not establish these.
@@ -76,4 +76,4 @@ Sources: [Foundational Studigo UX principles](FOUNDATIONAL_UX_PRINCIPLES.md), [C
 
 Review UI at [production](https://studigo-ai.vercel.app) **only after** the post-merge deployment is confirmed Ready. If release breaks core room navigation, restore the V0 verified deployment `dpl_aw3c2RDmDPkQYWZcsR28e8RC8Wdn`; verify schema/API compatibility and preserve learner data. Deployment rollback does **not** restore deleted Supabase accounts or uploads.
 
-**Hold V2 until the owner critiques the V1 build.** Do not start Materials/source redesign here. Next phase prioritization should include whatever the owner finds in the real product rather than preemptively replacing approved components.
+**Historical hold superseded:** the owner subsequently directed V2 #228/#229 and explicitly authorized sequential V3–V6 implementation. Next phase prioritization should include whatever the owner finds in the real product rather than preemptively replacing approved components.

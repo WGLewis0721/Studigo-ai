@@ -1,5 +1,6 @@
 "use client";
 
+import { topicEvidenceLabel } from "@/lib/progress-view";
 import type { Topic } from "@/lib/rooms";
 
 /**
@@ -48,7 +49,7 @@ export function TopicReadout({
                 <span className="trMeter" aria-hidden="true" data-state={!practiced ? "new" : topic.status === "mastered" ? "mastered" : "learning"}>
                   <i style={{ width: `${practiced ? Math.max(4, Math.min(100, score)) : 0}%` }} />
                 </span>
-                <small>{practiced ? `${score}%` : "Not practiced"}</small>
+                <small>{topicEvidenceLabel(topic)}</small>
               </Row>
             </li>
           );

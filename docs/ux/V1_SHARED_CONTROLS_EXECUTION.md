@@ -1,6 +1,6 @@
 # Studigo V1 — Shared navigation and control consistency
 
-**Status:** PRs #221 (shared keys), #223 (unified loading) and #222 (mobile dock/companion clearance) **shipped**. PR #225 contains the V1 final shared-state, error, focus, four-width, zoom and WebKit engine acceptance increment. V1 software completion is contingent on PR #225's CI + production Ready; real-device/VoiceOver and owner critique remain pending.  
+**Status:** software release shipped in #221, #223, #222, #225, #226 and #227. Required software/browser gates and Ready production were reverified through V3 #230. Historical V2 critique holds below are superseded by the owner's subsequent V2 releases and explicit V3–V6 mission. Real-device and VoiceOver acceptance remains unverified.
 **Golden rollback:** [V0 frozen baseline](GOLDEN_BASELINE_V0_2026-10-17.md) (SHA `726b1e7`, Vercel deployment `dpl_aw3c2RDmDPkQYWZcsR28e8RC8Wdn`).  
 **Governing design law:** [Foundational UX Principles](FOUNDATIONAL_UX_PRINCIPLES.md) and [reconciled inventory](../../design/README.md). Preserve the approved Learn → Explore UI.
 
@@ -48,7 +48,7 @@ Principles: **Unity/repetition, visual balance, hierarchy, scale and contrast** 
 1. Real signed-in Study Room with a disposable source after the account reset, including Coach/Learn switch and settings focus return.
 2. iPhone Safari software keyboard/notch/dynamic text and iPadOS portrait/landscape.
 3. VoiceOver complete keyboard/screen-reader reading order and 200% device text settings.
-4. Owner review/critique of the live build before beginning V2.
+4. Owner design review remains ongoing; V2 #228/#229 and the subsequent V3–V6 mission supersede the original pre-V2 hold.
 
 
 

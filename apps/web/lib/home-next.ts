@@ -86,7 +86,7 @@ export function buildHomeNext(
   }
   const first = areas[0];
   if (!first) {
-    return { ...base, heading: "Everything here is strong", note: "Nothing is slipping right now. A quiz keeps it that way.", mode: "quiz" };
+    return { ...base, heading: readiness.masteredCount===readiness.topicCount?"Everything here is strong":"Choose a topic to review", note: "No review priority is available. Choose a quiz topic, or check your current materials.", mode: "quiz" };
   }
   return { ...base, heading: first.topic.title, note: first.reasons[0] ?? `${first.label}. Practice it next.`, mode: first.recommendation };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { topicEvidenceLabel } from "@/lib/progress-view";
 import { AnswerChoices } from "./answer-choices";
 import { ActivityProgress } from "./activity-progress";
 import { StudyRoomEmptyState } from "./study-room-empty-state";
@@ -236,7 +237,7 @@ export function QuizPanel({
             <option value="">Where I&apos;m weakest</option>
             {topics.map((topic) => (
               <option key={topic.id} value={topic.id}>
-                {topic.title} · {topic.last_practiced_at ? `${Math.round(topic.mastery_score)}%` : "Not practiced"}
+                {topic.title} · {topicEvidenceLabel(topic)}
               </option>
             ))}
           </ChipSelect>
