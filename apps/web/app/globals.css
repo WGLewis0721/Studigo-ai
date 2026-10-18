@@ -661,6 +661,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .dangerZone { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--hairline); padding-top: 16px; }
 .dangerZone strong { display: block; }
 .dangerZone small { color: var(--muted); }
+/* Match the Study Room touch-target contract without enlarging document shelf actions. */
+.roomSettings .dangerZone button.danger { min-height: 44px; }
 
 /* Section headings inside modes */
 .modeEmpty { max-width: 640px; display: grid; gap: 14px; justify-items: start; }

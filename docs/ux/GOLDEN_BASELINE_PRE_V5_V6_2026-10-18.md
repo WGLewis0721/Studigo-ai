@@ -22,7 +22,7 @@ The new baseline includes the owner-approved three-second Show-only drawer, left
 - The gated `phase3-visual-evidence` workflow checks out this exact golden content (docs/CI PR only; no runtime changes) and captures four synthetic real-component Study Rooms at 320, 390, 820 and 1440 CSS pixels. It also includes Coach, Practice, Progress, Materials, Plan, Learn/Explore, first-run, drawer and companion interaction checks, using synthetic test content.
 - `scripts/capture-golden-2026-10-18-public.mjs` separately takes eight screenshots of the **immutable Ready production deployment**: actual public Home and /signup at 320×720, 390×844, 820×1180 and 1440×900. The manifest records production SHA, deployment ID, route, status and filename; each context is anonymous.
 - Artifacts are retained by GitHub Actions for 90 days, not indefinitely. Archive separately before expiry. No private learner files, authenticated rooms or real student outcomes are captured.
-- **Pending until CI completes:** append the successful workflow URL, artifact ID and browser screenshot manifest. Do not describe the golden screenshot capture as passed until the run is green.
+- **Screenshot verification (passed):** [Phase 3 golden capture workflow #39126602974](https://github.com/WGLewis0721/Studigo-ai/actions/runs/39126602974) completed successfully on the frozen source tree. Its uploaded `phase3-visual-evidence` artifact is **12135449939**, 57,775,086 bytes, retained through **2027-01-16**. Both the synthetic Study Room screenshot matrix and the immutable real-public Home/signup capture steps finished with success. The actual public-page manifest and PNGs are inside the artifact. These are not authenticated-room captures.
 
 ## Safe recovery
 
@@ -37,6 +37,6 @@ The new baseline includes the owner-approved three-second Show-only drawer, left
 
 - [x] GitHub branch pinned at the exact observed production SHA
 - [x] Vercel Ready deployment matches branch and production alias
-- [ ] Four-width synthetic and actual public production screenshot artifacts successfully uploaded
-- [ ] Freeze PR merged without changing runtime
+- [x] Four-width synthetic and actual public production screenshot artifacts successfully uploaded (run #39126602974; artifact #12135449939)
+- [x] Freeze [PR #250](https://github.com/WGLewis0721/Studigo-ai/pull/250) merged without changing runtime at `69c7038a58b75c62d7353272cc76007ebd9c1e6a`
 - [ ] V5/V6 implementation branches begin only after the evidence is green
