@@ -38,6 +38,10 @@ export function PublicDemoBridge() {
        The regular app and developer fixtures still show them. */
     .roomDevice .learnMissionFixture { display: none !important; }
     .roomDevice .modeSurface:has(.exploreJournal) { padding-top: 10px; }
+    /* Scroll stays functional; desktop scrollbar chrome does not appear inside
+       the simulated iPhone or marketing iPad. */
+    html, body { scrollbar-width: none; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
     body[data-home-borrowed] .roomWorkspace .cmp,
     body[data-home-borrowed] .roomWorkspace .cmpTab { visibility: hidden !important; }
   `}</style>;
