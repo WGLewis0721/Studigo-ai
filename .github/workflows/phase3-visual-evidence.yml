@@ -45,6 +45,8 @@ jobs:
           done
           cat /tmp/studigo-phase3-dev.log
           exit 1
+      - name: Desktop drawer, final row and expanded source outline
+        run: node scripts/desktop-mode-drawer-qa.mjs
       - name: V1 mobile dock — scroll, modal, keyboard and reduced motion
         run: node scripts/v1-mobile-tabbar-qa.mjs
       - name: V1 — focus, empty states and four-width zoom/reflow
@@ -59,8 +61,6 @@ jobs:
         run: node scripts/v5-home-onboarding-qa.mjs
       - name: Messenger — shared mobile/desktop layout with speech and text
         run: node scripts/messenger-unity-qa.mjs
-      - name: Desktop drawer, final row and expanded source outline
-        run: node scripts/desktop-mode-drawer-qa.mjs
       - name: Capture legacy vs Phase 3 screenshots and overflow report
         run: node scripts/phase3-visual-qa.mjs
       - name: Capture production public golden pages
