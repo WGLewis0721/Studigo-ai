@@ -3,6 +3,38 @@
   padding: clamp(6px, 1vw, 14px);
   background: linear-gradient(145deg, color-mix(in oklab, var(--shell) 84%, white), var(--shell) 62%, color-mix(in oklab, var(--shell) 78%, var(--ink)));
 }
+/* V5 shell acceptance: the app already owns 100dvh. Its child must not
+   impose another 100vh minimum or clip the last visible row of the Study Room.
+   Allow the inner screen to scroll while the device frame fits the viewport. */
+@media (min-width: 701px) {
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] {
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] > .roomWorkspace {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  /* Preserve a reachable end-of-content row in every scrollable study mode. */
+  .appShell:has(.roomWorkspace) .roomDevice[data-ui="phase3"] .modeSurface:not(:has(.coachChat)) {
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .roomDevice[data-ui="phase3"] > .roomWorkspace {
   border-radius: 30px;
   background: var(--snow);
