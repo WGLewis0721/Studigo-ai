@@ -58,8 +58,20 @@ export function guideSourceSegments(raw: string, terms: string[]): string[] {
   }
   const boundaries = [...new Set(locations)].sort((a, b) => a - b);
   if (boundaries.length === 0) {
-    // Do not guess OCR structure: retain verbatim text and existing newlines.
-    return raw.split(/\n\s*\n/).filter(Boolean);
+    // No glossary alignment: preserve all wording while breaking very long
+    // OCR blocks at existing whitespace into readable visual paragraphs.
+    const chunks: string[] = [];
+    for (const paragraph of raw.match(/[^\n]*\n?|[^\n]+/g) ?? []) {
+      let remaining = paragraph;
+      while (remaining.length > 240) {
+        const boundary = remaining.lastIndexOf(" ", 240);
+        const cut = boundary >= 120 ? boundary + 1 : 240;
+        chunks.push(remaining.slice(0, cut));
+        remaining = remaining.slice(cut);
+      }
+      if (remaining) chunks.push(remaining);
+    }
+    return chunks.filter(Boolean);
   }
   const starts = [0, ...boundaries.filter(i => i > 0)];
   return starts.map((pos, i) => raw.slice(pos, starts[i + 1] ?? raw.length)).filter(Boolean);
