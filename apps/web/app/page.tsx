@@ -5,6 +5,7 @@ import { preload } from "react-dom";
 import "./home.css";
 import { ModeGlyph, type GlyphName } from "@/components/mode-glyph";
 import { HomeMotion } from "@/components/home/home-motion";
+import { StudigoWordmark } from "@/components/studigo-wordmark";
 import { MeetPortrait } from "@/components/home/meet-portrait";
 import { StudigoWaitlist } from "@/components/home/waitlist";
 import "./waitlist.css";
@@ -152,7 +153,7 @@ export default function HomePage() {
       <script dangerouslySetInnerHTML={{ __html: INTRO_GUARD }} />
 
       <header className="nav">
-        <a className="wordmark" href="#top" aria-label="Studigo home"><span className="wmLed" aria-hidden="true" />Studigo</a>
+        <a className="wordmark" href="#top" aria-label="Studigo home"><StudigoWordmark className="brandWordmark" /></a>
         <nav className="navLinks" aria-label="Primary navigation">
           <a href="#meet">Meet Studigo</a>
           <a href="#modes">Modes</a>
