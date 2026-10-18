@@ -166,16 +166,7 @@ export function GuidePreview({
         <strong>Source changes need review.</strong>{" "}
         This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
       </p>}
-      {phase3Materials ? (
-        <details className="guideExports">
-          <summary>Saved guide downloads</summary>
-          <div className="guideActions lessonProgressRow">
-            <StudyGuideDownloadButton roomId={roomId} compactLabel />
-            <StudyGuideDownloadButton roomId={roomId} format="docx" compactLabel />
-            <button type="button" aria-label="Print saved Studigo guide" onClick={() => window.print()}>Print</button>
-          </div>
-        </details>
-      ) : (
+      {!phase3Materials && (
         <div className="guideActions lessonProgressRow" data-quiet={guideQuiet?.acknowledgement ?? "none"}>
           {guideQuiet?.status ? <p className="quietStatus" role="status">{guideQuiet.status}</p> : null}
           <StudyGuideDownloadButton roomId={roomId} />
@@ -209,6 +200,16 @@ export function GuidePreview({
             </div>
           )}
         </section>
+      )}
+      {phase3Materials && (
+        <details className="guideExports">
+          <summary>Saved guide downloads</summary>
+          <div className="guideActions lessonProgressRow">
+            <StudyGuideDownloadButton roomId={roomId} compactLabel />
+            <StudyGuideDownloadButton roomId={roomId} format="docx" compactLabel />
+            <button type="button" aria-label="Print saved Studigo guide" onClick={() => window.print()}>Print</button>
+          </div>
+        </details>
       )}
       {phase3Materials && availableTopics.length === 0 && (
         <p className="guideNeedsReview" role="status">No study topics are ready yet. Check the original files above, then refresh your study guide if needed.</p>
