@@ -135,6 +135,91 @@
   border-top: 1px solid var(--hairline);
 }
 
+/* On-demand model-generated lesson reuses the exact Learn Markdown renderer,
+   but stays subordinate to the user's original, independently inspectable file. */
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand {
+  display: grid;
+  gap: 12px;
+  padding: clamp(16px, 2vw, 24px);
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in oklab, var(--teal) 32%, white);
+  background: var(--teal-soft);
+}
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand h3 {
+  margin: 0;
+  color: var(--teal-ink);
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+}
+.roomDevice[data-ui="phase3"] .guideLearnOnDemand > p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls label {
+  color: var(--teal-ink);
+  font-size: .85rem;
+  font-weight: 800;
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 190px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--snow-3);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  color: var(--ink);
+}
+.roomDevice[data-ui="phase3"] .guideLearnControls button {
+  min-height: 44px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer {
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--r-sm);
+  background: var(--white);
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .richText {
+  display: grid;
+  gap: 10px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .richText h4 {
+  color: var(--teal-ink);
+  font: 800 .83rem/1.4 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--snow-3);
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer :is(p, ul, ol) {
+  margin: 0;
+  line-height: 1.5;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .sourceStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.roomDevice[data-ui="phase3"] .guideLearnAnswer .sourceChipLink {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 420px) {
+  .roomDevice[data-ui="phase3"] .guideLearnControls button {
+    width: 100%;
+  }
+}
+
 /* Source-grounded outline instead of promoting entire OCR passages to headings.
    Chapter/fact text remains verbatim in optional disclosures. */
 .roomDevice[data-ui="phase3"] .materialsGuide .guideReading {
