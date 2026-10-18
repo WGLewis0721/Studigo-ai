@@ -204,8 +204,20 @@ export default function HomePage() {
 
             <div className="heroProduct rv" style={delay(200)}>
               <div className="plinth" aria-hidden="true" />
-              <div className="phoneFrame" id="homePhoneFrame">
-                <iframe id="homePhone" src="/demo/room?mode=learn" title="Interactive Studigo Explore demo using the real Study Room interface with example classroom material" loading="eager" />
+              <div className="phoneFrame" id="homePhoneFrame" aria-label="Studigo Explore on an iPhone">
+                <div className="phoneGlass">
+                  <div className="phoneStatus" aria-hidden="true">
+                    <span className="phoneClock">9:41</span>
+                    <span className="phoneIsland" />
+                    <span className="phoneSignals">
+                      <svg width="17" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+                      <svg width="15" height="12" viewBox="0 0 17 12" fill="currentColor"><path d="M8.5 2.3c2.3 0 4.4.9 6 2.4l1.1-1.2A10.3 10.3 0 0 0 8.5.6C5.8.6 3.3 1.7 1.4 3.5l1.1 1.2c1.6-1.5 3.7-2.4 6-2.4Zm0 3.5c1.4 0 2.7.5 3.7 1.4l1.1-1.2a7.1 7.1 0 0 0-9.6 0l1.1 1.2c1-.9 2.3-1.4 3.7-1.4Zm0 3.4c-.7 0-1.3.3-1.8.7l1.8 1.9 1.8-1.9c-.5-.4-1.1-.7-1.8-.7Z"/></svg>
+                      <svg width="25" height="12" viewBox="0 0 27 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="19" height="9" rx="2.2" fill="currentColor"/><rect x="24" y="4.2" width="2" height="4.6" rx="1" fill="currentColor" opacity=".45"/></svg>
+                    </span>
+                  </div>
+                  <iframe id="homePhone" src="/demo/room?mode=learn" title="Interactive Studigo Explore demo using the real Study Room interface with example classroom material" loading="eager" />
+                  <span className="phoneHomeBar" aria-hidden="true" />
+                </div>
               </div>
               <span className="float floatGuide" aria-hidden="true"><small>STUDY GUIDE · SETS THE SCOPE</small><strong>Science study guide.pdf</strong></span>
               <span className="float floatCite" aria-hidden="true"><i>1</i>Example lesson</span>

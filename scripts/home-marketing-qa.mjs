@@ -25,6 +25,32 @@ try {
     await page.frameLocator("#homePhone").locator(".exploreJournalQuest").first().waitFor({ timeout: 30000 });
     assert.equal(await page.frameLocator("#homePhone").locator(".exploreJournalQuest").count(), 8,
       "Hero phone must mount the actual eight-quest ExploreJournal fixture");
+    // Regression #242: replacing the original iPhone with an iframe must not
+    // remove its hardware cues, separate the copy from the device, or leak
+    // the yellow synthetic-fixture notice into the marketing screenshot.
+    const hardware = await page.evaluate(() => {
+      const frame = document.querySelector("#homePhoneFrame");
+      const copy = document.querySelector(".heroCopy");
+      const status = frame?.querySelector(".phoneStatus");
+      const island = frame?.querySelector(".phoneIsland");
+      const homeBar = frame?.querySelector(".phoneHomeBar");
+      const rect = frame?.getBoundingClientRect();
+      return {
+        statusHeight: status?.getBoundingClientRect().height ?? 0,
+        islandWidth: island?.getBoundingClientRect().width ?? 0,
+        homeBarWidth: homeBar?.getBoundingClientRect().width ?? 0,
+        bezel: frame ? parseFloat(getComputedStyle(frame).borderTopWidth) : 0,
+        gap: rect && copy ? rect.left - copy.getBoundingClientRect().right : 0
+      };
+    });
+    assert.ok(hardware.bezel >= 3 && hardware.statusHeight >= 40 &&
+      hardware.islandWidth >= (viewport.width <= 370 ? 70 : 80) && hardware.homeBarWidth >= 90,
+      `iPhone hardware cues missing at ${viewport.width}px: ${JSON.stringify(hardware)}`);
+    if (viewport.width >= 961)
+      assert.ok(hardware.gap >= 0 && hardware.gap < 150, `Excessive hero gap: ${hardware.gap}px`);
+    const fixtureDisplay = await page.frameLocator("#homePhone").locator(".learnMissionFixture")
+      .evaluate(node => getComputedStyle(node).display);
+    assert.equal(fixtureDisplay, "none", "Yellow synthetic-fixture disclaimer must be hidden only in the marketing demo");
     const stage = page.locator("#homeModeIframe");
     await stage.scrollIntoViewIfNeeded();
     await page.frameLocator("#homeModeIframe").locator(".roomWorkspace").waitFor({ timeout: 30000 });

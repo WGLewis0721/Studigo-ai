@@ -67,7 +67,7 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .hero { --room: var(--teal); position: relative; padding: clamp(120px, 15vh, 168px) 0 clamp(48px, 7vw, 96px); }
 .home .hero[data-room="blueberry"] { --room: var(--blueberry); } .home .hero[data-room="grape"] { --room: var(--grape); }
 .home .hero[data-room="kiwi"] { --room: var(--kiwi); } .home .hero[data-room="berry"] { --room: var(--berry); }
-.home .heroGrid { display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(0, .78fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
+.home .heroGrid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: clamp(16px, 2.2vw, 32px); align-items: center; }
 .home .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: .74rem; font-weight: 600; letter-spacing: .06em; color: var(--ink-2); }
 .home .eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--tangerine); box-shadow: 0 0 0 3px color-mix(in oklab, var(--tangerine) 25%, transparent); }
 /* One official logo, then a friendly invitation. Keep the phone column untouched. */
@@ -101,8 +101,40 @@ html:has(.home) { scroll-behavior: smooth; }
 }
 .home .plinth::before, .home .plinth::after { content: ""; position: absolute; inset: 7%; border-radius: 50%; border: 1px dashed color-mix(in oklab, var(--room) 45%, white); opacity: .8; }
 .home .plinth::after { inset: -6%; border-style: solid; opacity: .35; }
-.home .phoneFrame { position: relative; z-index: 2; width: 350px; aspect-ratio: 417 / 876; border-radius: 56px; filter: drop-shadow(0 40px 50px rgba(20, 27, 45, .28)) drop-shadow(0 12px 16px rgba(20, 27, 45, .14)); will-change: transform; }
-.home .phoneFrame iframe { display: block; width: 100%; height: 100%; border: 0; border-radius: 56px; background: #0d1016; color-scheme: light; }
+/* Real Study Room remains interactive inside a distinct iPhone enclosure.
+   Hardware belongs to the homepage, not to signed-in Study Rooms. */
+.home .phoneFrame {
+  position: relative; z-index: 2; width: 354px; aspect-ratio: 417 / 876;
+  padding: 8px; border: 3px solid #111722; border-radius: 58px;
+  background: #111722; box-shadow: inset 0 0 0 1px #59616b;
+  filter: drop-shadow(0 40px 50px rgba(20, 27, 45, .28)) drop-shadow(0 12px 16px rgba(20, 27, 45, .14));
+  will-change: transform;
+}
+.home .phoneGlass {
+  position: relative; display: flex; flex-direction: column; width: 100%; height: 100%;
+  overflow: hidden; border-radius: 46px; background: var(--room, #1fc3b6);
+}
+.home .phoneStatus {
+  position: relative; z-index: 1; flex: 0 0 44px; display: flex; align-items: flex-end;
+  justify-content: space-between; padding: 0 19px 9px 24px;
+  background: var(--room, #1fc3b6); color: #0b1827;
+  font: 700 13px/1 system-ui, -apple-system, sans-serif;
+  pointer-events: none;
+}
+.home .phoneIsland {
+  position: absolute; left: 50%; top: 8px; transform: translateX(-50%);
+  width: 96px; height: 27px; border-radius: 999px; background: #07090d;
+}
+.home .phoneSignals { display: inline-flex; align-items: center; gap: 4px; }
+.home .phoneFrame iframe {
+  position: relative; flex: 1 1 0; display: block; width: 100%; min-height: 0;
+  border: 0; border-radius: 0; background: var(--room, #1fc3b6); color-scheme: light;
+}
+.home .phoneHomeBar {
+  position: absolute; bottom: 6px; left: 50%; z-index: 5; transform: translateX(-50%);
+  width: 108px; height: 4px; border-radius: 999px; background: #242b37; opacity: .8;
+  pointer-events: none;
+}
 .home .float { position: absolute; z-index: 3; display: grid; gap: 2px; width: max-content; max-width: 204px; padding: 10px 14px; border-radius: 14px; background: var(--white); font-size: .86rem; box-shadow: var(--edge), inset 0 0 0 1px var(--hairline), 0 18px 30px -18px rgba(20, 27, 45, .45); animation: floaty 7s ease-in-out infinite; }
 .home .float small { font-family: var(--mono); font-size: .6rem; font-weight: 600; letter-spacing: .08em; color: var(--tangerine-ink); }
 .home .floatGuide { right: calc(50% + 150px); top: 2%; border-left: 6px solid var(--tangerine); border-radius: 6px 14px 14px 6px; }
@@ -358,8 +390,8 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .hero { padding-top: 104px; }
   .home .heroGrid, .home .meetGrid, .home .modesGrid, .home .sourcesGrid, .home .masteryGrid, .home .faqGrid, .home .ctaGrid { grid-template-columns: minmax(0, 1fr); }
   .home .heroProduct { min-height: 0; padding: 82px 0 56px; }
-  .home .phoneFrame { width: min(330px, 82vw); border-radius: 13vw; }
-  .home .phoneFrame iframe { border-radius: inherit; }
+  .home .phoneFrame { width: min(354px, 82vw); border-radius: 13vw; }
+  .home .phoneGlass { border-radius: calc(13vw - 12px); }
   .home .floatGuide { left: 0; right: auto; top: 0; max-width: 184px; } .home .floatCite { left: auto; right: 0; top: 20px; } .home .floatLive { left: 0; right: auto; bottom: 6px; max-width: none; }
   .home .loop ol { grid-template-columns: minmax(0, 1fr); }
   .home .loop li { grid-template-columns: 40px minmax(0, 1fr); gap: 2px 16px; padding: 18px 0; border-left: 0; border-top: 1px solid var(--hairline); }
@@ -391,6 +423,13 @@ html:has(.home) { scroll-behavior: smooth; }
   .home .spec > div { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .home .legend > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .home .float { font-size: .78rem; padding: 8px 11px; }
+}
+@media (max-width: 370px) {
+  /* Keep status icons clear of the Dynamic Island even when the marketing
+     phone is scaled down to fit a 320px-wide browser. */
+  .home .phoneStatus { padding-right: 12px; padding-left: 12px; }
+  .home .phoneIsland { width: 76px; height: 25px; }
+  .home .phoneSignals { gap: 2px; transform: scale(.84); transform-origin: right bottom; }
 }
 @media (prefers-reduced-motion: reduce) {
   html:has(.home) { scroll-behavior: auto; }
