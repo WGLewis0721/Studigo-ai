@@ -223,7 +223,7 @@ export function GuidePreview({
           <p>Get a short, source-cited explanation using Studigo's established Learn engine. Your original guide stays intact.</p>
           <div className="guideLearnControls">
             <label htmlFor={`${sourcePanelId}-learn-topic`}>Topic</label>
-            <select id={`${sourcePanelId}-learn-topic`} value={selectedTopic?.id ?? ""} onChange={(event) => {
+            <select id={`${sourcePanelId}-learn-topic`} value={selectedTopic?.id ?? ""} disabled={notesBusy} onChange={(event) => {
               noteRequests.current += 1;
               setNotesBusy(false);
               setNotesError(null);
