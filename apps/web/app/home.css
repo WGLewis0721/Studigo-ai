@@ -51,6 +51,12 @@ html:has(.home) { scroll-behavior: smooth; }
   transition: transform .4s var(--ease-out), opacity .3s ease;
 }
 .home .wordmark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-weight: 800; font-size: 1.3rem; letter-spacing: -.04em; }
+
+.home .wordmark .brandWordmark { width: 162px; height: auto; }
+@media (max-width: 480px) {
+  .home .wordmark .brandWordmark { width: 128px; }
+}
+
 .home .wmLed { width: 10px; height: 10px; border-radius: 50%; background: var(--tangerine); box-shadow: 0 0 0 3px color-mix(in oklab, var(--tangerine) 28%, transparent), 0 0 12px var(--tangerine); }
 .home .navLinks { display: flex; gap: 4px; margin-left: auto; }
 .home .navLinks a, .home .navSign { padding: 9px 13px; border-radius: 12px; text-decoration: none; font-size: .9rem; font-weight: 600; color: var(--ink-2); }
