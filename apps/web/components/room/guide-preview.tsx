@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { StudyGuideContent } from "@studigo/ai";
 import { evidenceHref, guidePreviewModel } from "@/lib/guide-preview";
-import { guideOutlineHeading, guideFactExcerpt, guideSourceSegments } from "@/lib/guide-outline";
+import { guideOutlineHeading, guideFactExcerpt, guideSourceSegments, guideChapterNotes } from "@/lib/guide-outline";
 import { guidePrintEdition } from "@/lib/guide-share";
 import { requestQuietAcknowledgement, type QuietAcknowledgement } from "@/lib/quiet-feedback";
 import { StudyGuideDownloadButton } from "./study-guide-download-button";
@@ -143,7 +143,7 @@ export function GuidePreview({
         <span className="tinyLabel">STUDIGO GUIDE · VERSION {model.version}</span>
         <span className="materialsGuideEvidence">{model.sourceCount} {model.sourceCount === 1 ? "cited source" : "cited sources"} · {model.level}</span>
       </div>
-      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Your study outline" : model.title}</h2>
+      <h2 className={phase3Materials ? "guideOutlineTitle" : undefined}>{phase3Materials ? "Study notes from your materials" : model.title}</h2>
       {updateAvailable && <p className="materialsGuideStale" role="status">
         <strong>Source changes need review.</strong>{" "}
         This saved guide may not reflect the current uploads. Verify its citations against the original files before studying from it.
@@ -166,9 +166,9 @@ export function GuidePreview({
         </>}
       </dialog>}
       {loaded.chapters.map((chapter, chapterIndex) => phase3Materials ? (
-        <section key={chapter.id} className="guideOutlineChapter" aria-label={guideOutlineHeading(chapter.title, chapterIndex).heading}>
+        <section key={chapter.id} className="guideOutlineChapter guideLearnCard" aria-label={guideOutlineHeading(chapter.title, chapterIndex).heading}>
           <div className="guideOutlineChapterHeading">
-            <span className="tinyLabel">SECTION {chapterIndex + 1}</span>
+            <span className="tinyLabel guideLearnKicker">LEARN · FROM YOUR MATERIALS · SECTION {chapterIndex + 1}</span>
             <h3>{guideOutlineHeading(chapter.title, chapterIndex).heading}</h3>
           </div>
           {guideOutlineHeading(chapter.title, chapterIndex).oversized && (
@@ -182,30 +182,47 @@ export function GuidePreview({
               {sourceLinks(chapter.objectiveEvidence)}
             </details>
           )}
-          {chapter.facts.length > 0 && (
+          {guideChapterNotes(chapter).lead && (
+            <p className="guideLearnLead">
+              <strong>{guideChapterNotes(chapter).lead?.text}</strong>
+              {sourceLinks(guideChapterNotes(chapter).lead?.evidence ?? [])}
+            </p>
+          )}
+          {guideChapterNotes(chapter).idea.length > 0 && (
             <div className="guideOutlineGroup">
-              <h4>Key points</h4>
+              <h4>The idea</h4>
               <ul className="guideOutlinePoints">
-                {chapter.facts.map((fact) => {
-                  const note = guideFactExcerpt(fact.text);
-                  return (
-                    <li key={fact.id}>
-                      {note.long ? (
-                        <details className="guideOutlineLongNote">
-                          <summary>{note.excerpt}</summary>
-                          <div className="guideSourceOutline" aria-label="Complete original fact">
-                            {guideSourceSegments(fact.text, chapter.terms.map((term) => term.term)).map((passage, index) =>
-                              <p key={index}>{passage.trim()}</p>
-                            )}
-                          </div>
-                        </details>
-                      ) : <span>{fact.text}</span>}
-                      {sourceLinks(fact.evidence)}
-                    </li>
-                  );
-                })}
+                {guideChapterNotes(chapter).idea.map((fact) => <li key={fact.id}>
+                  {fact.text} {sourceLinks(fact.evidence)}
+                </li>)}
               </ul>
             </div>
+          )}
+          {guideChapterNotes(chapter).why.length > 0 && (
+            <div className="guideOutlineGroup">
+              <h4>Why it matters</h4>
+              <ul className="guideOutlinePoints">
+                {guideChapterNotes(chapter).why.map((fact) => <li key={fact.id}>
+                  {fact.text} {sourceLinks(fact.evidence)}
+                </li>)}
+              </ul>
+            </div>
+          )}
+          {guideChapterNotes(chapter).raw.length > 0 && (
+            <details className="guideOutlineOriginal guideRawNotes">
+              <summary>Read unformatted source passage ({guideChapterNotes(chapter).raw.length})</summary>
+              {guideChapterNotes(chapter).raw.map((fact) => (
+                <div key={fact.id} className="guideSourceOutline">
+                  {guideSourceSegments(fact.text, chapter.terms.map((term) => term.term)).map((passage, index) =>
+                    <p key={index}>{passage.trim()}</p>
+                  )}
+                  {sourceLinks(fact.evidence)}
+                </div>
+              ))}
+            </details>
+          )}
+          {guideChapterNotes(chapter).needsSourceReview && (
+            <p className="guideNeedsReview">This scanned passage has no reliable short notes yet. Check the original source before studying it.</p>
           )}
           {chapter.terms.length > 0 && (
             <div className="guideOutlineGroup">
