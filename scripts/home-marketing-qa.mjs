@@ -9,28 +9,28 @@ const widths = [
   { width: 1440, height: 900 }
 ];
 
-// The public Learn iframe has no .coachChat, so the usual mobile navigation
-// collapse must be verified separately for both the hero phone and modes iPad.
-async function readExploreTopGap(page, iframeId) {
+// The public demo has no signed-in shell; verify that every page header begins
+// immediately below the Study Room toolbar (not just the Explore header).
+async function readModeTopGap(page, iframeId) {
   return page.frameLocator(iframeId).locator(".roomWorkspace").evaluate(root => {
     const top = root.querySelector(".workspaceTopbar")?.getBoundingClientRect();
-    const learnHeader = root.querySelector(".modeSurfaceFramed > .modeFrame .modeHead")?.getBoundingClientRect();
+    const modeHeader = root.querySelector(".modeFrame .modeHead")?.getBoundingClientRect();
     const spacer = root.querySelector(".studyNavigation")?.getBoundingClientRect();
     return {
-      gap: top && learnHeader ? Math.round(learnHeader.top - top.bottom) : null,
+      gap: top && modeHeader ? Math.round(modeHeader.top - top.bottom) : null,
       spacerHeight: spacer ? Math.round(spacer.height) : null,
       width: window.innerWidth
     };
   });
 }
-function assertExploreTopGap(geometry, where) {
+function assertModeTopGap(geometry, where) {
   assert.ok(geometry.gap !== null && geometry.spacerHeight !== null,
-    `${where} must contain a topbar, Learn header and navigation spacer`);
+    `${where} must contain a topbar, mode header and navigation spacer`);
   if (geometry.width <= 700) {
     assert.ok(geometry.spacerHeight <= 4,
       `${where} retains the mobile navigation spacer: ${JSON.stringify(geometry)}`);
     assert.ok(geometry.gap >= -4 && geometry.gap <= 22,
-      `${where} has an empty band above Learn: ${JSON.stringify(geometry)}`);
+      `${where} has an empty band above its mode tabs: ${JSON.stringify(geometry)}`);
   }
 }
 const browser = await chromium.launch({ headless: true });
@@ -49,7 +49,7 @@ try {
     await page.frameLocator("#homePhone").locator(".exploreJournalQuest").first().waitFor({ timeout: 30000 });
     assert.equal(await page.frameLocator("#homePhone").locator(".exploreJournalQuest").count(), 8,
       "Hero phone must mount the actual eight-quest ExploreJournal fixture");
-    assertExploreTopGap(await readExploreTopGap(page, "#homePhone"), "Hero iPhone Learn");
+    assertModeTopGap(await readModeTopGap(page, "#homePhone"), "Hero iPhone Learn");
     // Regression #242: replacing the original iPhone with an iframe must not
     // remove its hardware cues, separate the copy from the device, or leak
     // the yellow synthetic-fixture notice into the marketing screenshot.
@@ -83,7 +83,37 @@ try {
     await page.locator('.modeStep[data-mode="Learn"] .modeChoose').click();
     await page.waitForFunction(() => document.querySelector("#homeModeIframe")?.getAttribute("src") === "/demo/room?mode=learn");
     await page.frameLocator("#homeModeIframe").locator(".exploreJournalQuest").first().waitFor({ timeout: 30000 });
-    assertExploreTopGap(await readExploreTopGap(page, "#homeModeIframe"), "Section 03 iPad Learn");
+    assertModeTopGap(await readModeTopGap(page, "#homeModeIframe"), "Section 03 iPad Learn");
+    // Regression: public Practice modes used a different ModeHeader location,
+    // which retained the same sticky offset after Learn was fixed.
+    for (const [name, route] of [["Quiz", "quiz"], ["Flashcards", "cards"], ["Coach", "coach"]]) {
+      await page.locator(`.modeStep[data-mode="${name}"] .modeChoose`).click();
+      await page.waitForFunction(expected => document.querySelector("#homeModeIframe")?.getAttribute("src") === expected,
+        `/demo/room?mode=${route}`);
+      await page.frameLocator("#homeModeIframe").locator(".modeFrame .modeHead").first().waitFor({ timeout: 30000 });
+      assertModeTopGap(await readModeTopGap(page, "#homeModeIframe"), `Section 03 iPad ${name}`);
+    }
+    // Scaling must increase the actual iframe viewport, not stretch or crop
+    // the app's controls in place. Keep a clear 4:3 iPad window.
+    const tablet = await page.evaluate(() => {
+      const viewport = document.querySelector(".modeTabletViewport");
+      const iframe = document.querySelector("#homeModeIframe");
+      const frame = document.querySelector("#homeModeDevice");
+      const physical = viewport?.getBoundingClientRect();
+      return {
+        physicalWidth: physical?.width ?? 0,
+        physicalHeight: physical?.height ?? 0,
+        virtualWidth: iframe?.contentWindow?.innerWidth ?? 0,
+        workspaceHeight: iframe?.contentDocument?.querySelector(".roomWorkspace")?.getBoundingClientRect().height ?? 0,
+        bezelWidth: frame?.getBoundingClientRect().width ?? 0
+      };
+    });
+    assert.ok(tablet.virtualWidth >= tablet.physicalWidth * 1.23,
+      `iPad remains too zoomed in at ${viewport.width}px: ${JSON.stringify(tablet)}`);
+    assert.ok(Math.abs(tablet.physicalWidth / tablet.physicalHeight - 4/3) < .02,
+      `iPad viewport is not 4:3: ${JSON.stringify(tablet)}`);
+    assert.ok(tablet.workspaceHeight >= 200,
+      `Scaled iPad room collapsed inside bare shell: ${JSON.stringify(tablet)}`);
     const geometry = await page.evaluate(() => ({
       overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
       optionTargets: [...document.querySelectorAll(".modeChoose")].map(node => Math.round(node.getBoundingClientRect().height)),

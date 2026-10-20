@@ -286,13 +286,15 @@ export default function HomePage() {
               <div className="modeStage">
                 <div className="modeDevice" id="homeModeDevice" data-tone="coach">
                   <span className="modeTabletCamera" aria-hidden="true" />
-                  <iframe
-                    id="homeModeIframe"
-                    className="modeTabletScreen"
-                    src="/demo/room?mode=coach"
-                    title="Interactive iPad Study Room demo. Choose a mode to see the actual Studigo interface."
-                    loading="lazy"
-                  />
+                  <div className="modeTabletViewport">
+                    <iframe
+                      id="homeModeIframe"
+                      className="modeTabletScreen"
+                      src="/demo/room?mode=coach"
+                      title="Interactive iPad Study Room demo. Choose a mode to see the actual Studigo interface."
+                      loading="lazy"
+                    />
+                  </div>
                   <span className="modeTabletHome" aria-hidden="true" />
                 </div>
                 <p className="modeStageCaption">Try the sample Study Room. No account or uploads needed.</p>
