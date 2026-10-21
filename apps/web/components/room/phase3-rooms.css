@@ -237,3 +237,82 @@
 @media (max-width: 480px) {
   .assessmentModeOptions { grid-template-columns: 1fr; }
 }
+
+
+/* Full-test reviews reuse the active question treatment, not raw Markdown. */
+.testReviewToolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin: 18px 0 14px; }
+.testReviewToolbar h3 { margin: 0; font-size: clamp(1.2rem, 2vw, 1.5rem); }
+.testReviewControls { display: flex; flex-wrap: wrap; gap: 8px; }
+.testReviewControls button { min-height: 44px; padding: 9px 14px; border-radius: 12px; border: 1px solid var(--hairline-strong); background: var(--white); font-weight: 700; cursor: pointer; }
+.testReviewControls .buttonPrimary { border: 0; background: var(--graphite-2); color: #fff; }
+.testResultsPrintHeading { display: none; }
+.testReviewSummaryTitle { display: grid; gap: 2px; min-width: 0; }
+.testReviewSummaryTitle small { font-weight: 500; color: var(--muted); font-size: .82rem; }
+.testReviewSummaryStatus { flex: none; font-size: .83rem; font-weight: 750; white-space: nowrap; }
+.testReview summary { align-items: center; min-height: 44px; }
+.testReview summary:focus-visible { outline: 3px solid var(--blueberry-ink); outline-offset: 3px; }
+.testReviewContent { padding-top: 16px; display: grid; gap: 12px; }
+.testQuestionPrompt .richText > :first-child { margin-top: 0; }
+.testQuestionPrompt .richText > :last-child { margin-bottom: 0; }
+.testQuestion .testQuestionPrompt { font-family: var(--display); font-size: clamp(1.25rem, 2.4vw, 1.6rem); font-weight: 700; line-height: 1.35; letter-spacing: -.025em; margin: 12px 0; }
+.testQuestion .testQuestionPrompt :is(p,h4) { font: inherit; line-height: inherit; letter-spacing: inherit; }
+.testReview .testQuestionPrompt { font-family: var(--display); font-size: clamp(1.1rem, 2vw, 1.3rem); line-height: 1.42; font-weight: 700; }
+.testReview .testQuestionPrompt :is(p,h4) { font: inherit; line-height: inherit; }
+.testReview .answerChoices { display: grid; gap: 8px; }
+.testReview .answerChoices:disabled .choiceItem { opacity: 1; cursor: default; }
+.testReview .choiceItem { min-height: 50px; }
+.testReviewWritten > span, .testReviewFeedback > strong, .testReviewExplanation > strong { display: block; margin-bottom: 6px; font-size: .88rem; font-weight: 800; }
+.testReviewWritten .blankInput, .testReviewWritten .shortAnswer { display: block; height: auto; min-height: 48px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.testReviewWritten .shortAnswer { min-height: 84px; }
+.testReviewWritten .richText > :last-child, .testReviewAnswer .richText > :last-child,
+.testReviewFeedback .richText > :last-child, .testReviewExplanation .richText > :last-child { margin-bottom: 0; }
+.testReviewAnswer, .testReviewFeedback, .testReviewExplanation { overflow-wrap: anywhere; }
+.testReviewAnswer > .richText { margin-top: 5px; }
+.testReviewBack { margin-top: 20px; }
+@media (max-width: 480px) {
+  .testReviewControls { width: 100%; }
+  .testReviewControls button { flex: 1 1 auto; }
+  .testReview summary { flex-wrap: wrap; }
+}
+
+/* Print the completed assessment only. Open details at beforeprint and restore
+   their screen state at afterprint; collapsed questions must never be omitted. */
+@media print {
+  @page { margin: 15mm; }
+  body:has(#studigo-test-print) { background: #fff !important; color: #111 !important; }
+  body:has(#studigo-test-print) * { visibility: hidden !important; }
+  body:has(#studigo-test-print) .appShell { display: block !important; min-height: 0 !important; }
+  body:has(#studigo-test-print) .appRail { display: none !important; }
+  body:has(#studigo-test-print) :is(.modeSurface, .roomDevice, .appMain, .modeStage, .modePanel) {
+    overflow: visible !important; height: auto !important; max-height: none !important;
+    min-height: 0 !important; transform: none !important;
+  }
+  body:has(#studigo-test-print) :is(.modeSurface, .roomDevice) { width: 100% !important; padding: 0 !important; margin: 0 !important; }
+  body:has(#studigo-test-print) #studigo-test-print,
+  body:has(#studigo-test-print) #studigo-test-print * { visibility: visible !important; }
+  #studigo-test-print {
+    position: absolute !important; left: 0 !important; top: 0 !important;
+    width: 100% !important; max-width: none !important; padding: 0 !important;
+    margin: 0 !important; box-shadow: none !important; background: #fff !important;
+    color: #111 !important; font-size: 11pt !important;
+  }
+  #studigo-test-print .testResultsPrintHeading { display: block !important; margin-bottom: 10mm; }
+  #studigo-test-print .testResultsPrintHeading h2 { margin: 0; font-size: 18pt; }
+  #studigo-test-print .testResultsPrintHeading p { margin: 3px 0; font-size: 10pt; }
+  #studigo-test-print :is(.testReviewToolbar, .testReviewBack, .testTopicResults button, .readAloudControl) { display: none !important; }
+  #studigo-test-print .testScore { color: #111 !important; background: #fff !important; border: 1px solid #999; box-shadow: none !important; padding: 8px 12px; margin-bottom: 8mm; }
+  #studigo-test-print .testScore strong { font-size: 25pt; }
+  #studigo-test-print .testScore span { color: #333 !important; }
+  #studigo-test-print .testTopicResults { margin-bottom: 8mm; }
+  #studigo-test-print .testTopicResults > div { box-shadow: none !important; border-bottom: 1px solid #bbb; padding: 6px 0; }
+  #studigo-test-print .testReview { break-inside: avoid-page; page-break-inside: avoid; box-shadow: none !important; border: 1px solid #bbb; background: #fff !important; padding: 10px 12px; border-radius: 6px; margin-bottom: 5mm; }
+  #studigo-test-print .testReview summary { list-style: none; padding-bottom: 3mm; border-bottom: 1px solid #ddd; }
+  #studigo-test-print .testReview summary::-webkit-details-marker { display: none; }
+  #studigo-test-print .testReviewContent { padding-top: 3mm; gap: 7px; }
+  #studigo-test-print .testReview .choiceItem { background: #fff !important; color: #111 !important; box-shadow: none !important; border: 1px solid #ccc !important; min-height: 0; padding: 5px 8px; }
+  #studigo-test-print .testReview .choiceCorrect { border: 2px solid #444 !important; }
+  #studigo-test-print .testReview .choiceVerdict { color: #111 !important; }
+  #studigo-test-print .testReview .richText { color: #111 !important; }
+  #studigo-test-print .sourceChipLink { color: #111 !important; box-shadow: none !important; border: 1px solid #ccc; }
+  #studigo-test-print .sourceChipOpen { display: none !important; }
+}
