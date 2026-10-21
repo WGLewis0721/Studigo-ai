@@ -2,6 +2,9 @@
 
 import { topicEvidenceLabel } from "@/lib/progress-view";
 import { AnswerChoices } from "./answer-choices";
+import { AssessmentModePicker } from "./assessment-mode-picker";
+import { ReadAloudControl } from "./read-aloud-control";
+import { ASSESSMENT_MODES, QUIZ_QUESTION_COUNTS, spokenQuestion, type AssessmentMode } from "@/lib/practice-assessment";
 import { ActivityProgress } from "./activity-progress";
 import { StudyRoomEmptyState } from "./study-room-empty-state";
 import { TopicReadout } from "./topic-readout";
@@ -86,6 +89,8 @@ export function QuizPanel({
   phase3Ui?: boolean;
 }) {
   const [topicId, setTopicId] = useState<string>(initialTopicId ?? "");
+  const [count, setCount] = useState<number>(5);
+  const [modes, setModes] = useState<AssessmentMode[]>([...ASSESSMENT_MODES]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -107,7 +112,8 @@ export function QuizPanel({
   const phase3 = phase3Ui ?? process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
 
   async function build() {
-    const body = JSON.stringify({ roomId, topicId: topicId || null, count: 5 });
+    const body = JSON.stringify({ roomId, topicId: topicId || null, count, kinds: modes });
+    if (!modes.length) return;
     const attempt = gestures.current.begin("quiz-build", body);
     if (!attempt.started) return;
     setLoading(true);
@@ -241,13 +247,23 @@ export function QuizPanel({
               </option>
             ))}
           </ChipSelect>
+          <ChipSelect
+            label={`${count} questions`}
+            ariaLabel="Number of quiz questions"
+            value={String(count)}
+            onChange={(value) => setCount(Number(value))}
+            disabled={loading}
+          >
+            {QUIZ_QUESTION_COUNTS.map((n) => <option key={n} value={n}>{n} questions</option>)}
+          </ChipSelect>
         </HeaderChip>
 
         <div className="setupHeading">
           <span className="tinyLabel">PRACTICE STUDIO / INDEPENDENT RECALL</span>
           <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where you\u2019re weakest"}</h3>
         </div>
-        <p className="setupLead">{finished ? "Go again with a new set." : "Five questions from your materials. Your answers are checked only after you submit each one."}</p>
+        <p className="setupLead">{finished ? "Go again with a new set." : `${count} questions from your materials. Your answers are checked only after you submit each one.`}</p>
+        <AssessmentModePicker value={modes} onChange={setModes} disabled={loading} />
 
         {error && (
           <p className="formError" role="alert">
@@ -255,7 +271,7 @@ export function QuizPanel({
           </p>
         )}
 
-        <button className="buttonPrimary" type="button" onClick={() => void build()} disabled={loading}>
+        <button className="buttonPrimary" type="button" onClick={() => void build()} disabled={loading || modes.length === 0}>
           {loading ? "Writing questions…" : "Start quiz"} <span aria-hidden="true">→</span>
         </button>
         </div>
@@ -276,6 +292,7 @@ export function QuizPanel({
           current.prompt
         )}
       </h2>
+      <ReadAloudControl key={current.id} text={spokenQuestion(current)} label="Read question and choices aloud" />
       {phase3 && !result && <p className="roomStudioInstruction">{usesChoices ? "Choose one answer. You can change it until you submit." : "Write your answer, then choose how sure you feel before submitting."}</p>}
 
       {usesChoices && <AnswerChoices choices={current.choices} selected={selected} onSelect={setSelected}
@@ -317,6 +334,7 @@ export function QuizPanel({
           <span className="answerKicker">
             {result.isCorrect ? "CORRECT" : "NOT QUITE"} · {result.score}%
           </span>
+          <ReadAloudControl key={`feedback-${current.id}`} text={[result.feedback, result.explanation].filter(Boolean).join(" ")} label="Read answer feedback aloud" />
           {result.confidence === 3 && !result.isCorrect && (
             <p className="blindSpotFlag">
               You were confident here. This is a blind spot worth a second look.
