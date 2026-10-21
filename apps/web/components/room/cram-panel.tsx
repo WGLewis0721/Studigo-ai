@@ -10,12 +10,21 @@ import { RichText } from "./rich-text";
 import { CitationChips, type Citation } from "./citations";
 import "./phase3-rooms.css";
 
-function CramNotes({ roomId, topic }: { roomId: string; topic: Topic }) {
-  const [notes, setNotes] = useState<string | null>(null);
-  const [citations, setCitations] = useState<Citation[]>([]);
+type CachedNotes = { notes: string; citations: Citation[] };
+function CramNotes({ roomId, topic, cache }: { roomId: string; topic: Topic; cache: Map<string, CachedNotes> }) {
+  const saved = cache.get(topic.id);
+  const [notes, setNotes] = useState<string | null>(saved?.notes ?? null);
+  const [citations, setCitations] = useState<Citation[]>(saved?.citations ?? []);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!saved);
   useEffect(() => {
+    const stored = cache.get(topic.id);
+    if (stored) {
+      setNotes(stored.notes);
+      setCitations(stored.citations);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -27,13 +36,18 @@ function CramNotes({ roomId, topic }: { roomId: string; topic: Topic }) {
       const payload = await response.json();
       if (!response.ok || typeof payload.explanation !== "string" || !payload.explanation.trim())
         throw new Error(payload.error || "Could not load source-backed notes for this topic.");
-      setNotes(compactCramNotes(payload.explanation) || payload.explanation);
-      setCitations(Array.isArray(payload.citations) ? payload.citations : []);
+      const record = {
+        notes: compactCramNotes(payload.explanation) || payload.explanation,
+        citations: Array.isArray(payload.citations) ? payload.citations as Citation[] : []
+      };
+      cache.set(topic.id, record);
+      setNotes(record.notes);
+      setCitations(record.citations);
     }).catch((cause) => {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load notes.");
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [roomId, topic.id]);
+  }, [roomId, topic.id, cache]);
   return <article className="cramNotes" aria-label={`Cram notes for ${topic.title}`}>
     <h3>{topic.title}</h3>
     {loading ? <p role="status">Loading notes from your materials.</p> : error ? <p className="formError" role="alert">{error}</p> : <>
@@ -53,6 +67,7 @@ export function CramPanel({ roomId, topics, areas, testDate }: { roomId: string;
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const deadline = useRef(0);
+  const notesCache = useRef(new Map<string, CachedNotes>());
   const chosen = topics.filter((topic) => selectedIds === null || selectedIds.includes(topic.id));
   const preview = buildCramPlan(areas.filter((area) => chosen.some((topic) => topic.id === area.topic.id)), chosen, minutes, testDate);
   const step = session?.[index];
@@ -83,7 +98,7 @@ export function CramPanel({ roomId, topics, areas, testDate }: { roomId: string;
     <header className="cramTimerBar"><div><span className="tinyLabel">CRAM / {index + 1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong role="timer" aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</strong><button onClick={() => { if (!running) { deadline.current = Date.now() + Math.max(remaining, 60) * 1000; setRemaining((value) => Math.max(value, 60)); } setRunning((value) => !value); }}>{running ? "Pause" : remaining === 0 ? "Add one minute" : "Resume"}</button></div></header>
     <ol className="cramTrack">{session.map((item, position) => <li key={item.key} aria-current={position === index ? "step" : undefined}><span>{position + 1}</span>{item.title}<small>{item.minutes} min</small></li>)}</ol>
     {!remaining && <p className="formNotice" role="status">Time for the next topic.</p>}
-    <div className="cramActivity" key={step.topicId}>{topics.find((topic) => topic.id === step.topicId) && <CramNotes roomId={roomId} topic={topics.find((topic) => topic.id === step.topicId)!} />}</div>
+    <div className="cramActivity" key={step.topicId}>{topics.find((topic) => topic.id === step.topicId) && <CramNotes roomId={roomId} topic={topics.find((topic) => topic.id === step.topicId)!} cache={notesCache.current} />}</div>
     <footer className="cramFooter"><button className="ghostButton" type="button" disabled={index === 0} onClick={() => session && openStep(index - 1, session)}> Previous step</button><button className="buttonPrimary" type="button" onClick={advance}>{index + 1 === session.length ? "Finish session" : "Next topic"} </button></footer>
   </section>;
   const allSelected = chosen.length === topics.length;
