@@ -73,7 +73,7 @@ try {
   });
   await go('test');await page.getByRole('button',{name:'Build practice test'}).click();await page.locator('.choiceItem').first().click();await page.getByRole('button',{name:'Next question',exact:false}).click();await page.getByRole('textbox',{name:'Your answer',exact:true}).fill('Traits pass from parents to offspring.');
   await page.getByRole('button',{name:'Next question',exact:false}).click();
-  await page.getByRole('radio',{name:'True'}).check();
+  await page.locator('.testQuestion .choiceItem').first().click();assert.equal(await page.getByRole('radio',{name:'True'}).isChecked(),true);
   await page.getByRole('button',{name:'Next question',exact:false}).click();
   await page.getByRole('textbox',{name:'Fill in the blank'}).fill('voter');
   await page.getByRole('status').filter({hasText:'Draft saved'}).waitFor();assert.ok(saves>=1);
