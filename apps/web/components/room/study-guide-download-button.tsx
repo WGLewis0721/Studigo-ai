@@ -1,15 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  browserCanShareFile,
-  decideGuideExport,
-  guideDownloadPath,
-  guideExportFile,
-  guideFilenameFromDisposition,
-  isShareCancellation,
-  type GuideExportFormat
-} from "@/lib/guide-share";
+import { guideDownloadPath, guideExportFile, guideFilenameFromDisposition, type GuideExportFormat } from "@/lib/guide-share";
 
 export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel = false }: { roomId: string; format?: GuideExportFormat; compactLabel?: boolean }) {
   const [busy, setBusy] = useState(false);
@@ -17,7 +9,7 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel 
   const inFlight = useRef(false);
 
   async function download() {
-    if (decideGuideExport({ inFlight: inFlight.current, canShare: false, cancelled: false, format }).action === "reject-inflight") return;
+    if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
     setError(null);
@@ -36,30 +28,8 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel 
       const filename = guideFilenameFromDisposition(response.headers.get("Content-Disposition"), format);
       const contentType = response.headers.get("Content-Type");
       const file = guideExportFile(bytes, filename, format, contentType);
-      const canShare = browserCanShareFile(typeof navigator === "undefined" ? undefined : navigator, file);
-      const decision = decideGuideExport({ inFlight: false, canShare, cancelled: false, format, file });
-
-      if (decision.action === "share-file" && typeof navigator.share === "function") {
-        try {
-          await navigator.share({ files: decision.payload.files, title: decision.payload.title });
-        } catch (shareError) {
-          const settled = decideGuideExport({
-            inFlight: false,
-            canShare: true,
-            cancelled: isShareCancellation(shareError),
-            failed: !isShareCancellation(shareError),
-            format,
-            file,
-            message: "Could not share the study guide."
-          });
-          if (settled.action === "error") setError(settled.message);
-        }
-        return;
-      }
-
-      if (decision.action === "share-file" || decision.action === "download") saveGuideFile(decision.file);
+      saveGuideFile(file);
     } catch (downloadError) {
-      if (isShareCancellation(downloadError)) return;
       setError(downloadError instanceof Error ? downloadError.message : "Could not build the study guide.");
     } finally {
       inFlight.current = false;
@@ -71,7 +41,7 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel 
     <span className="studyGuideDownload">
       <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy} aria-label={`Download generated Studigo guide as ${format === "docx" ? "Word" : "PDF"}`}>
         <span className="studyGuideDownloadLabel">{busy ? "Saving..." : compactLabel ? format === "docx" ? "Word" : "PDF" : format === "docx" ? "Word" : "Download study guide"}</span>
-        <span className="studyGuideDownloadIcon" aria-hidden="true">↓</span>
+        <span className="studyGuideDownloadIcon" aria-hidden="true"></span>
       </button>
       {error && <small className="formError" role="alert">{error}</small>}
     </span>
@@ -88,6 +58,6 @@ function saveGuideFile(file: File) {
     link.click();
     link.remove();
   } finally {
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 }
