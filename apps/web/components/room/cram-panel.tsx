@@ -93,13 +93,13 @@ export function CramPanel({ roomId, topics, areas, testDate }: { roomId: string;
     if (index + 1 >= session.length) { setDone(true); setRunning(false); return; }
     openStep(index + 1, session);
   }
-  if (done) return <section className="modeEmpty"><StudigoMascot state="celebrate" size={80} /><span className="tinyLabel">FOCUSED SESSION COMPLETE</span><h2>Review complete.</h2><p>Reading these notes does not change mastery. Practice when you are ready to check recall.</p><button className="buttonPrimary" onClick={() => { setSession(null); setDone(false); }}>Choose another session </button></section>;
+  if (done) return <section className="modeEmpty"><StudigoMascot state="celebrate" size={80} /><span className="tinyLabel">FOCUSED SESSION COMPLETE</span><h2>Review complete.</h2><p>Reading these notes does not change mastery. Practice when you are ready to check recall.</p><button className="buttonPrimary" onClick={() => { setSession(null); setDone(false); }}>Choose another session →</button></section>;
   if (session && step) return <section className="cramSession">
     <header className="cramTimerBar"><div><span className="tinyLabel">CRAM / {index + 1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong role="timer" aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</strong><button onClick={() => { if (!running) { deadline.current = Date.now() + Math.max(remaining, 60) * 1000; setRemaining((value) => Math.max(value, 60)); } setRunning((value) => !value); }}>{running ? "Pause" : remaining === 0 ? "Add one minute" : "Resume"}</button></div></header>
     <ol className="cramTrack">{session.map((item, position) => <li key={item.key} aria-current={position === index ? "step" : undefined}><span>{position + 1}</span>{item.title}<small>{item.minutes} min</small></li>)}</ol>
     {!remaining && <p className="formNotice" role="status">Time for the next topic.</p>}
     <div className="cramActivity" key={step.topicId}>{topics.find((topic) => topic.id === step.topicId) && <CramNotes roomId={roomId} topic={topics.find((topic) => topic.id === step.topicId)!} cache={notesCache.current} />}</div>
-    <footer className="cramFooter"><button className="ghostButton" type="button" disabled={index === 0} onClick={() => session && openStep(index - 1, session)}> Previous step</button><button className="buttonPrimary" type="button" onClick={advance}>{index + 1 === session.length ? "Finish session" : "Next topic"} </button></footer>
+    <footer className="cramFooter"><button className="ghostButton" type="button" disabled={index === 0} onClick={() => session && openStep(index - 1, session)}>← Previous step</button><button className="buttonPrimary" type="button" onClick={advance}>{index + 1 === session.length ? "Finish session" : "Next topic"} →</button></footer>
   </section>;
   const allSelected = chosen.length === topics.length;
   return <section className="cramSetup"><div className="roomSectionIntro"><span className="tinyLabel">PLANNING ROOM / CRAM</span><h2>Only the topics you need.</h2><p>Read the key notes from your materials, one topic after another.</p></div>
@@ -110,6 +110,6 @@ export function CramPanel({ roomId, topics, areas, testDate }: { roomId: string;
     </div>
     <div className="timeChoices" role="group" aria-label="Available study time">{[15, 30, 60, 120].map((value) => <button key={value} aria-pressed={minutes === value} onClick={() => setMinutes(value)}>{value < 60 ? `${value} min` : `${value / 60} hour${value === 120 ? "s" : ""}`}</button>)}</div>
     <ol className="cramPreview">{preview.map((item) => <li key={item.key}><strong>{item.title}</strong><b>{item.minutes} min</b></li>)}</ol>
-    {!topics.length ? <p>Add your study guide and build a topic map first.</p> : <button className="buttonPrimary" disabled={!preview.length} onClick={begin}>Start {minutes}-minute session </button>}
+    {!topics.length ? <p>Add your study guide and build a topic map first.</p> : <button className="buttonPrimary" disabled={!preview.length} onClick={begin}>Start {minutes}-minute session →</button>}
   </section>;
 }
