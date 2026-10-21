@@ -22,6 +22,11 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
   const [tests,setTests]=useState<Test[]>([]);const [active,setActive]=useState<Test|null>(null);const [questions,setQuestions]=useState<Question[]>([]);
   const [answers,setAnswers]=useState<Record<string,Answer>>({});const [index,setIndex]=useState(0);const [count,setCount]=useState(10);
   const [modes,setModes]=useState<AssessmentMode[]>([...ASSESSMENT_MODES]);
+  const [selectedTopicIds,setSelectedTopicIds]=useState<string[]>(()=>topics.map(topic=>topic.id));
+  const topicIds=topics.filter(topic=>selectedTopicIds.includes(topic.id)).map(topic=>topic.id);
+  const topicSelector=(className:string)=><TopicReadout topics={topics} selectedIds={topicIds} heading="TOPICS IN SCOPE" className={className} disabled={busy}
+    onToggle={id=>setSelectedTopicIds(ids=>ids.includes(id)?ids.filter(item=>item!==id):[...ids,id])}
+    onSelectAll={()=>setSelectedTopicIds(topics.map(topic=>topic.id))}/>;
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);const [saveState,setSaveState]=useState('');const [confirmSubmit,setConfirmSubmit]=useState(false);
   const operation=useRef(false);const saveChain=useRef<Promise<void>>(Promise.resolve());const saveVersion=useRef(0);const gestures=useRef(createGestureBook());
   useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(saveState==='Saving…'||saveState.startsWith('Draft not saved'))event.preventDefault();};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[saveState]);
@@ -33,7 +38,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     catch(e){setError(e instanceof Error?e.message:'Could not open test.');}finally{setBusy(false);}
   }
   async function build() {
-    if(operation.current||!modes.length)return;const body=JSON.stringify({roomId,count,kinds:modes});const attempt=gestures.current.begin('practice-build',body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
+    if(operation.current||!modes.length||!topicIds.length)return;const body=JSON.stringify({roomId,count,kinds:modes,topicIds});const attempt=gestures.current.begin('practice-build',body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
     try {const r=await fetch('/api/practice-tests',{method:'POST',headers:operationHeaders(attempt.id),body});gestures.current.finish('practice-build',r.status);const p=await r.json();if(r.status===202||r.status===409||!r.ok)throw new Error(p.error);await open(p.testId);await loadList();}
     catch(e){gestures.current.abort('practice-build');setError(e instanceof Error?e.message:'Could not build test.');}finally{operation.current=false;setBusy(false);}
   }
@@ -81,14 +86,15 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     <HeaderChip><ChipSelect label={`${count} questions`} ariaLabel="Number of test questions" value={String(count)} onChange={v=>setCount(Number(v))} disabled={busy}>{TEST_QUESTION_COUNTS.map(n=><option key={n} value={n}>{n} questions</option>)}</ChipSelect></HeaderChip>
     <div className="setupHeading"><span className="tinyLabel">PRACTICE STUDIO / FULL REHEARSAL</span><h3>{count} questions</h3></div>
     <p className="setupLead">A full test, graded when you submit.</p>
-    <p className="hintText">Covers up to {Math.min(count,topicCount)} of {topicCount} current topics. Choose more questions to cover a larger scope.</p>
+    <p className="hintText">Covers up to {Math.min(count,topicIds.length)} of {topicIds.length} selected topics. Choose more questions to cover a larger scope.</p>
+    {topicSelector('topicReadoutMobile')}
     <AssessmentModePicker value={modes} onChange={setModes} disabled={busy} />
-    <button className="buttonPrimary" disabled={busy||topicCount<2||modes.length===0} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>
-    {topicCount<2&&<p className="hintText">Add a study guide with at least two topics first. Quiz works for a single topic.</p>}
+    <button className="buttonPrimary" disabled={busy||topicIds.length===0||modes.length===0} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>
+    {topicCount===0&&<p className="hintText">Add a study guide with topics first.</p>}
     {error&&<p className="formError" role="alert">{error}</p>}
     </div>
     <div className="setupAside">
-    <TopicReadout topics={topics} heading="TOPICS IN SCOPE"/>
+    {topicSelector('topicReadoutDesktop')}
     {tests.length>0&&<section className="savedTests"><h3>Your tests</h3>{tests.map(t=><button key={t.id} disabled={busy} onClick={()=>void open(t.id)}><span>{t.status==='draft'?'Continue draft':'Review completed test'}</span><small>{new Date(t.created_at).toLocaleDateString()} · {t.topic_snapshot.length} topics {t.result?`· ${t.result.score}%`:''}</small><span>→</span></button>)}</section>}
     </div>
   </section>;
