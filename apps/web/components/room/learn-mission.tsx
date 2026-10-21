@@ -7,7 +7,7 @@ import { MissionControlIcon } from "./mission-control-icon";
 import { LearnProgressGlow } from "./learn-progress-glow";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
-import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
+import { missionBeats, supplementalMissionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -82,6 +82,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [shown, setShown] = useState(false);
   const [helpUsed, setHelpUsed] = useState(false);
   const [spokenDraft, setSpokenDraft] = useState("");
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [sourceOpen, setSourceOpen] = useState(false);
   // The original synthetic Guided Learn fixture stays pixel-for-pixel unchanged.
   const [journalOpen, setJournalOpen] = useState(roomId !== "fixture" || previewJournal);
@@ -211,11 +212,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   // silently replay the preceding activity (and force duplicate Continue).
   const beats = proposedBeats.length === 4 ? proposedBeats : [];
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
-  const beat = step === null ? undefined : beats[step];
+  const extra = lines && beats.length ? supplementalMissionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  const phaseQuestions = step === null ? [] : [
+    beats[step],
+    ...(step === 0 ? [] : extra.filter((_, index) => index % 3 === step - 1))
+  ];
+  const beat = phaseQuestions[Math.min(questionIndex, phaseQuestions.length - 1)];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
   // A saved phase, rather than a guessed grade or a local answer selection,
   // is the source of truth for each substantial visible progress jump.
-  const progress = integratedJourney && mission ? learnPhaseProgress(mission.phase)
+  const progress = integratedJourney && mission ? Math.min(100, learnPhaseProgress(mission.phase) + Math.round(questionIndex / Math.max(1, phaseQuestions.length) * 18))
     : beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
   const phaseHeat = mission ? LEARN_PROGRESS_HEAT[mission.phase] : LEARN_PROGRESS_HEAT.brief;
   useEffect(() => {
@@ -227,11 +233,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
+    setQuestionIndex(0);
     setPicked([]);
     setShown(false);
     setHelpUsed(false);
     setSpokenDraft("");
   }, [passageKey, mission?.phase]);
+
+  useEffect(() => {
+    setPicked([]);
+    setShown(false);
+    setHelpUsed(false);
+    setSpokenDraft("");
+  }, [questionIndex]);
 
   function play(index: number) {
     if (shown || !beat || beat.kind === "read") return;
@@ -243,6 +257,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   function advanceLevel() {
     if (!mission || mission.paused || mission.phase === "done") return;
+    if (questionIndex + 1 < phaseQuestions.length) {
+      setQuestionIndex((index) => index + 1);
+      return;
+    }
     // The server advances the source-bound cursor. UI does not own progression.
     void act("advance", formativeReflection(mission.phase, shown, hit && !helpUsed));
   }
@@ -304,16 +322,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
             onClick={() => setSample(key)}>{key === "college" ? "College physics" : "Elementary science"}</button>)}
       </div>}
       <button className="buttonPrimary learnInvitationStart" type="button" disabled={busy || (!fixture && !selectedTopic)}
-        onClick={() => void act("start")}>Start learning →</button>
+        onClick={() => void act("start")}>Start learning </button>
       {!fixture && <button className="ghostButton" type="button" onClick={onOpenMaterials}>View original materials</button>}
       {!fixture && missionPlan.sourceStatus === "missing" && <p className="hintText">Studigo will verify the exact source passage when you start. Unsupported topics cannot become cited lessons.</p>}
     </div>}
     {mission?.paused && <div className="learnInvitation" role="status">
-      <p className="tinyLabel">PAUSED MISSION · LESSON {lessonNumber} OF {topics.length}</p>
+      <p className="tinyLabel">PAUSED MISSION � LESSON {lessonNumber} OF {topics.length}</p>
       <h2>{currentTopic?.title || "Your saved lesson"}</h2>
       <p>You're at {mission.phase}. Continue exactly where you stopped.</p>
       <button className="buttonPrimary" type="button" disabled={busy}
-        onClick={() => void act("resume")}>Continue lesson →</button>
+        onClick={() => void act("resume")}>Continue lesson </button>
     </div>}
 
     {mission && !mission.paused && !integratedJourney && <div className="learnLessonLabel" aria-label={`Lesson ${lessonNumber} of ${topics.length}`}>
@@ -336,13 +354,13 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         </div>)}
     {error && <p className="formError" role="alert">{error}</p>}
     {mission?.paused || (!mission && !loading) ? null : snapshot?.sourceCurrent === false ? <p role="status">This part changed. Please restart from the current source.</p> : mission?.phase === "done" ? <div className="learnInvitation learnHandoff" role="status">
-      <p className="tinyLabel">LEARNING CHECKPOINT COMPLETE · NO MASTERY AWARDED</p>
+      <p className="tinyLabel">LEARNING CHECKPOINT COMPLETE � NO MASTERY AWARDED</p>
       <h2>You practiced {currentTopic?.title || (fixture ? SAMPLES[sample].title : "this idea")}.</h2>
       <p>Studigo helped you learn the idea. To find out what you know independently, try Coach or a Practice question.</p>
-      {mission.reflection && <p className="learnAssistanceNote">Last learning check: {mission.reflection === "ready" ? "Ready to try" : "Review suggested"} · Formative only</p>}
+      {mission.reflection && <p className="learnAssistanceNote">Last learning check: {mission.reflection === "ready" ? "Ready to try" : "Review suggested"} � Formative only</p>}
       <div className="learnHandoffActions">
         {onTryCoach && <button className="buttonPrimary" type="button"
-          onClick={() => onTryCoach(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Try with Coach →</button>}
+          onClick={() => onTryCoach(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Try with Coach </button>}
         {onTryPractice && <button className="ghostButton" type="button"
           onClick={() => onTryPractice(topics.some((topic) => topic.id === mission.topic_id) ? mission.topic_id : selectedTopicId ?? mission.topic_id)}>Practice independently</button>}
         {snapshot?.source && <button className="ghostButton" type="button" onClick={openSource}>Review source</button>}
@@ -358,17 +376,17 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           {introduction && <p className="learnJourneyDialogue">Let's explore {currentTopic?.title ?? "this topic"}. First, read what your study guide says. Then we'll check what you noticed before going deeper.</p>}
           {!introduction && <h2 className="learnAsk">{beat.kind === "read" ? beat.title : beat.prompt}</h2>}
           {beat.kind === "read" && (introduction ? <div className="learnSourceReading">
-            <p className="tinyLabel">FROM YOUR GUIDE{snapshot?.source?.pageNumber ? ` · PAGE ${snapshot.source.pageNumber}` : ""}</p>
+            <p className="tinyLabel">FROM YOUR GUIDE{snapshot?.source?.pageNumber ? ` � PAGE ${snapshot.source.pageNumber}` : ""}</p>
             <SourceReading text={reading} topic={currentTopic?.title} />
           </div> : <p className="learnLine">{beat.body}</p>)}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
-            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
+            <ReadAloudControl key={`${mission?.phase}:${questionIndex}`} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
             {beat.kind !== "read" && <div className="learnOptionalVoice">
               <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
               <span className="learnVoiceExplanation">Speak an answer draft</span>
             </div>}
           </div>
-          {spokenDraft && beat.kind !== "read" && <p className="learnSpokenDraft" role="status">Spoken draft: {spokenDraft} · Select an answer to check.</p>}
+          {spokenDraft && beat.kind !== "read" && <p className="learnSpokenDraft" role="status">Spoken draft: {spokenDraft} � Select an answer to check.</p>}
 
           {beat.kind === "blank" && <p className="learnLine">{beat.before}<span className="learnGap">{picked.length ? beat.options[picked[0]] : "______"}</span>{beat.after}</p>}
           {beat.kind === "blank" && <div className="learnWords">{beat.options.map((word, index) => <button key={word} type="button" className="learnWord" aria-pressed={picked[0] === index} onClick={() => play(index)}>{word}</button>)}</div>}
@@ -377,7 +395,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
               const result = !shown ? undefined : beat.kind === "choice"
                 ? (index === beat.answer ? "hit" : picked[0] === index ? "miss" : undefined)
                 : beat.answers.includes(index) ? "hit" : picked.includes(index) ? "miss" : undefined;
-              const mark = result === "miss" ? "×" : result === "hit" || picked.includes(index) ? "✓" : "";
+              const mark = result === "miss" ? "x" : result === "hit" || picked.includes(index) ? "�" : "";
               return <button key={option} type="button" className="learnChoice" aria-pressed={picked.includes(index)} data-result={result} onClick={() => play(index)}><span className="learnBox" aria-hidden="true">{mark}</span>{option}</button>;
             })}
           </div>}
@@ -405,7 +423,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       onClose={() => { setSourceOpen(false); sourceButtonRef.current?.focus(); }}>
       <div className="learnSourceHeading">
         <div><span className="tinyLabel">FROM YOUR ORIGINAL MATERIAL</span><h2>Find it in your guide</h2></div>
-        <button type="button" className="learnSourceClose" aria-label="Close source" onClick={closeSource}>×</button>
+        <button type="button" className="learnSourceClose" aria-label="Close source" onClick={closeSource}>x</button>
       </div>
       {snapshot?.sourceCurrent === false ? <p role="status">The original source changed. Restart with current material.</p> : snapshot?.source ? <>
         <div className="learnSourceMeta">
@@ -422,14 +440,14 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         {sourceOpen && <ReadAloudControl text={snapshot.source.excerpt} label="Hear the verified source excerpt" />}
         <p className="learnSourceNote">Formatted from the verified text in your guide. Open the PDF for the original page layout.</p>
         {!fixture && <a className="buttonPrimary learnSourceOriginal" target="_blank" rel="noopener noreferrer"
-          href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` · p. ${snapshot.source.pageNumber}` : ""}</a>}
+          href={`/api/documents/download?documentId=${encodeURIComponent(mission.document_id)}&inline=1${snapshot.source.pageNumber ? `&page=${snapshot.source.pageNumber}` : ""}`}>Open original{snapshot.source.pageNumber ? ` � p. ${snapshot.source.pageNumber}` : ""}</a>}
         {fixture && <p className="hintText">This is a synthetic review source. Original-file links are only enabled for authorized uploaded material.</p>}
       </> : <p role="status">This source has no available extract. Return to Materials for help.</p>}
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
     {((mission && (ready || snapshot?.sourceCurrent === false || ((!fixture || previewJournal) && (mission.paused || mission.phase === "done")))) || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
-      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || mission.phase === "brief"}
-        onClick={() => void act("back")} aria-label="Previous lesson step" title="Previous step">
+      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || (mission.phase === "brief" && questionIndex === 0)}
+        onClick={() => questionIndex > 0 ? setQuestionIndex((index) => index - 1) : void act("back")} aria-label="Previous lesson step" title="Previous step">
         <MissionControlIcon name="back" />
       </button>}
       {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockPause learnIconKey" type="button" disabled={busy}
@@ -455,9 +473,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           if (!beat || beat.kind === "read" || shown) advanceLevel();
           else setShown(true);
         }}>{introduction ? <MissionControlIcon name="check" />
-          : beat?.kind === "read" ? "Start question →"
-          : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
-          : "Check answer →"}</button>}
+          : beat?.kind === "read" ? "Start question "
+          : shown ? firstCheck ? "Explore this lesson " : mission?.phase === "check" ? "Finish lesson " : "Next activity "
+          : "Check answer "}</button>}
       {ready && <button type="button" className="ghostButton learnDockSource learnIconKey"
         ref={sourceButtonRef} onClick={openSource} aria-label="Find it in my guide" title="Find it in my guide">
         <MissionControlIcon name="guide" />
