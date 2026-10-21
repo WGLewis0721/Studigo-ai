@@ -6,7 +6,7 @@ import { TopicReadout } from "./topic-readout";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { Topic } from "@/lib/rooms";
 import { CitationChips, type Citation } from "./citations";
-import { ChipSelect, HeaderChip, HeaderMascot } from "./mode-header";
+import { HeaderMascot } from "./mode-header";
 import { useCompanion } from "@/components/companion/companion";
 import { createGestureBook, operationHeaders } from "@/lib/ai-operation-client";
 import { StudigoFigure } from "@/components/companion/figure";
@@ -44,7 +44,13 @@ export function CardsPanel({
   const [cards, setCards] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [topicId, setTopicId] = useState(initialTopicId ?? "");
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(() => initialTopicId && topics.some((topic) => topic.id === initialTopicId)
+    ? [initialTopicId] : topics.map((topic) => topic.id));
+  const topicIds = topics.filter((topic) => selectedTopicIds.includes(topic.id)).map((topic) => topic.id);
+  const topicKey = topicIds.join(",");
+  const initialTopicKey = useRef(topicKey);
+  const cardCount = Math.min(20, Math.max(10, topicIds.length));
+  const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,12 +62,17 @@ export function CardsPanel({
   const [draft, setDraft] = useState({ front: "", back: "" });
   const [, startTransition] = useTransition();
   const companion = useCompanion();
+  const topicSelector = (className: string) => <TopicReadout topics={topics} selectedIds={topicIds} heading="TOPICS AND PRACTICE" className={className} disabled={generating}
+    onToggle={(id) => { setShowSetup(true); setSelectedTopicIds((ids) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]); }}
+    onSelectAll={() => { setShowSetup(true); setSelectedTopicIds(topics.map((topic) => topic.id)); }} />;
 
-  const loadDue = useCallback(async () => {
+  const loadDue = useCallback(async (scopeKey: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/flashcards?roomId=${roomId}${topicId ? `&topicId=${encodeURIComponent(topicId)}` : ""}`);
+      if (topics.length && !scopeKey) { setCards([]); setIndex(0); return; }
+      const scope = scopeKey && scopeKey.split(",").length !== topics.length ? `&topicIds=${encodeURIComponent(scopeKey)}` : "";
+      const response = await fetch(`/api/flashcards?roomId=${encodeURIComponent(roomId)}${scope}`);
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not load your cards.");
       setCards(payload.cards as Card[]);
@@ -72,14 +83,15 @@ export function CardsPanel({
     } finally {
       setLoading(false);
     }
-  }, [roomId, topicId]);
+  }, [roomId, topics.length]);
 
   useEffect(() => {
-    void loadDue();
+    void loadDue(initialTopicKey.current);
   }, [loadDue]);
 
   async function generate() {
-    const body = JSON.stringify({ roomId, topicId: topicId || null, count: 10 });
+    if (!topicIds.length) return;
+    const body = JSON.stringify({ roomId, topicIds, count: cardCount });
     const attempt = gestures.current.begin("flashcards-generate", body);
     if (!attempt.started) return;
     setGenerating(true);
@@ -91,7 +103,11 @@ export function CardsPanel({
       if (response.status === 202 || response.status === 409 || !response.ok) {
         throw new Error(payload.error || "Could not build cards.");
       }
-      await loadDue();
+      if (!payload.cards?.length) { setError(payload.note || "No new cards could be made from those topics."); return; }
+      setCards(payload.cards as Card[]);
+      setIndex(0);
+      setFlipped(false);
+      setShowSetup(false);
       startTransition(onReviewed);
     } catch (generateError) {
       gestures.current.abort("flashcards-generate");
@@ -207,7 +223,7 @@ export function CardsPanel({
 
   if (loading) return <div className="roomStudioState" role="status"><span className="tinyLabel">PRACTICE STUDIO / CARDS</span><h3>Finding cards due now…</h3><p>Your review schedule is loading.</p></div>;
 
-  if (!cards.length || done) {
+  if (!cards.length || done || showSetup) {
     return (
       <div className="quizSetup roomStudioSetup">
         <div className="setupMain">
@@ -220,28 +236,12 @@ export function CardsPanel({
           </div>
         )}
 
-        <HeaderChip>
-          <ChipSelect
-            label={topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Everything in this room"}
-            ariaLabel="Flashcard topic"
-            value={topicId}
-            onChange={setTopicId}
-            disabled={generating}
-          >
-            <option value="">Everything in this room</option>
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title}
-              </option>
-            ))}
-          </ChipSelect>
-        </HeaderChip>
-
         <div className="setupHeading">
           <span className="tinyLabel">PRACTICE STUDIO / SPACED REVIEW</span>
-          <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Everything in this room"}</h3>
+          <h3>{topicIds.length === 1 ? topics.find((topic) => topic.id === topicIds[0])?.title : `${topicIds.length} topics selected`}</h3>
         </div>
-        <p className="setupLead">{done ? "Nothing else due right now." : "Terms worth drilling, on a schedule."}</p>
+        <p className="setupLead">{done && !showSetup ? "Nothing else due right now." : `Add ${cardCount} cards covering up to ${Math.min(cardCount, topicIds.length)} selected topics.`}</p>
+        {topicSelector("topicReadoutMobile")}
 
         {error && (
           <p className="formError" role="alert">
@@ -249,18 +249,20 @@ export function CardsPanel({
           </p>
         )}
 
-        {error && <button className="ghostButton" type="button" onClick={() => void loadDue()} disabled={generating}>Retry loading due cards</button>}
-        <button className="buttonPrimary" type="button" onClick={() => void generate()} disabled={generating}>
-          {generating ? "Writing cards…" : "Add 10 cards"} <span aria-hidden="true">→</span>
+        {error && <button className="ghostButton" type="button" onClick={() => void loadDue(topicKey)} disabled={generating}>Retry loading due cards</button>}
+        {showSetup && cards.length > 0 && !done && <button className="ghostButton" type="button" onClick={() => setShowSetup(false)}>Resume current deck</button>}
+        <button className="buttonPrimary" type="button" onClick={() => void generate()} disabled={generating || topicIds.length === 0}>
+          {generating ? "Writing cards…" : `Add ${cardCount} cards`} <span aria-hidden="true">→</span>
         </button>
         </div>
-        <TopicReadout topics={topics} heading="TOPICS AND PRACTICE" />
+        {topicSelector("topicReadoutDesktop")}
       </div>
     );
   }
 
   return (
     <div className="cardsMode roomStudioCards">
+      <button className="ghostButton" type="button" onClick={() => setShowSetup(true)}>Choose topics or add cards</button>
       <ActivityProgress current={index+1} total={cards.length} label="Card"/>
       <p className="roomStudioInstruction">Recall the answer first. Flip to check it, then rate how it went to schedule your next review.</p>
 
