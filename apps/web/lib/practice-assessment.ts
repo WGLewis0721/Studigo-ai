@@ -1,6 +1,15 @@
 /** Learner-selectable question types shared by Quiz and full Practice Test. */
 export const ASSESSMENT_MODES = ["multiple_choice", "fill_blank", "true_false"] as const;
 export type AssessmentMode = (typeof ASSESSMENT_MODES)[number];
+/** Reject invalid explicit selections instead of silently replacing them with unrequested formats. */
+export function parseAssessmentModes(input: unknown): AssessmentMode[] | null {
+  if (!Array.isArray(input) || input.length === 0 || input.length > ASSESSMENT_MODES.length) return null;
+  if (!input.every(value => typeof value === "string" && (ASSESSMENT_MODES as readonly string[]).includes(value))) return null;
+  const selected = input as AssessmentMode[];
+  if (new Set(selected).size !== selected.length) return null;
+  return ASSESSMENT_MODES.filter(mode => selected.includes(mode));
+}
+
 export const QUIZ_QUESTION_COUNTS = [3, 5, 10] as const;
 export const TEST_QUESTION_COUNTS = [6, 10, 15, 20] as const;
 
