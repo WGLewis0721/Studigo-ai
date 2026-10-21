@@ -159,7 +159,7 @@ try {
   await writeFile(`${output}/${width}-test-results.pdf`,pdf);
   const text=execFileSync('python3',['-c',
     "import fitz,sys; doc=fitz.open(stream=sys.stdin.buffer.read(),filetype='pdf'); print(' '.join(page.get_text() for page in doc))"
-  ],{input:pdf,encoding:'utf8'}).replace(/\\s+/g,' ');
+  ],{input:pdf,encoding:'utf8'}).replace(/\s+/g,' ');
   assert.ok(text.trim().length>250,`printed PDF must not be blank at ${width}px; got ${text.length} chars`);
   for(const expected of ['Practice test results','Question 1','Question 2','Question 3','Question 4','Which description matches inherited traits','Traits pass from parents','voter','Needs review']) {
     assert.ok(text.includes(expected),`printed PDF missing "${expected}" at ${width}px`);
