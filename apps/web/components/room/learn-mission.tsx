@@ -208,8 +208,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   const lines = snapshot?.source?.excerpt ? passageLines(objectiveSource, snapshot.source.excerpt) : null;
   const proposedBeats = lines ? missionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
-  // Backend uses four fixed formative phases. A shorter question set must not
-  // silently replay the preceding activity (and force duplicate Continue).
+  // Backend uses four fixed formative phases. Sparse sources end with a
+  // reading handoff; they never replay a question to fill the last phase.
   const beats = proposedBeats.length === 4 ? proposedBeats : [];
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
   const extra = lines && beats.length ? supplementalMissionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
@@ -473,7 +473,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
           if (!beat || beat.kind === "read" || shown) advanceLevel();
           else setShown(true);
         }}>{introduction ? <MissionControlIcon name="check" />
-          : beat?.kind === "read" ? "Start question →"
+          : beat?.kind === "read" ? mission?.phase === "check" ? "Finish lesson →" : "Start question →"
           : shown ? firstCheck ? "Explore this lesson →" : mission?.phase === "check" ? "Finish lesson →" : "Next activity →"
           : "Check answer →"}</button>}
       {ready && <button type="button" className="ghostButton learnDockSource learnIconKey"
