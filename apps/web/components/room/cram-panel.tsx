@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Topic } from "@/lib/rooms";
+import { compactCramNotes } from "@/lib/cram-notes";
 import { buildCramPlan, type StudyAction, type WeakArea } from "@/lib/study-planning";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -26,7 +27,7 @@ function CramNotes({ roomId, topic }: { roomId: string; topic: Topic }) {
       const payload = await response.json();
       if (!response.ok || typeof payload.explanation !== "string" || !payload.explanation.trim())
         throw new Error(payload.error || "Could not load source-backed notes for this topic.");
-      setNotes(payload.explanation);
+      setNotes(compactCramNotes(payload.explanation) || payload.explanation);
       setCitations(Array.isArray(payload.citations) ? payload.citations : []);
     }).catch((cause) => {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load notes.");
