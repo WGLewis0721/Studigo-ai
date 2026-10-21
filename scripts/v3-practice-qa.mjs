@@ -142,12 +142,14 @@ try {
     toolbar:getComputedStyle(document.querySelector('.testReviewToolbar')).display,
     title:getComputedStyle(document.querySelector('.testResultsPrintHeading')).display,
     review:getComputedStyle(document.querySelector('#studigo-test-print')).visibility,
-    shell:getComputedStyle(document.querySelector('.appRail')).display
+    shell:getComputedStyle(document.querySelector('.appRail')).display,
+    preview:getComputedStyle(document.querySelector('.testReviewPromptPreview')).display
   }));
   assert.equal(printed.toolbar,'none','print hides controls');
   assert.notEqual(printed.title,'none','print has titled report');
   assert.equal(printed.review,'visible','review must be printable');
   assert.equal(printed.shell,'none','print hides app navigation');
+  assert.equal(printed.preview,'none','print shows each full question only once');
   await page.emulateMedia({media:'screen'});
   await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
   assert.equal(await page.locator('details.testReview[open]').count(),1,'printing restores collapsed state');
