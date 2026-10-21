@@ -1,13 +1,13 @@
 "use client";
 import { AnswerChoices } from "./answer-choices";
+import { TestQuestionPrompt } from "./test-question-prompt";
+import { PracticeTestResults, type PracticeTestResult } from "./practice-test-results";
 import { AssessmentModePicker } from "./assessment-mode-picker";
 import { ReadAloudControl } from "./read-aloud-control";
 import { ASSESSMENT_MODES, TEST_QUESTION_COUNTS, spokenQuestion, type AssessmentMode } from "@/lib/practice-assessment";
 import { ActivityProgress } from "./activity-progress";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createGestureBook, operationHeaders } from '@/lib/ai-operation-client';
-import { CitationChips, type Citation } from './citations';
-import { StudigoMascot } from '@/components/studigo-mascot';
 import { ChipSelect, HeaderChip, HeaderMascot } from './mode-header';
 import { TopicReadout } from './topic-readout';
 import type { Topic } from '@/lib/rooms';
@@ -15,8 +15,7 @@ import './phase3-rooms.css';
 type Answer={selectedChoice:number|null;response:string};
 type Question={id:string;kind:'multiple_choice'|'short_answer'|'true_false'|'fill_blank';prompt:string;choices:string[];topic_id:string};
 const usesChoices=(kind:Question['kind'])=>kind==='multiple_choice'||kind==='true_false';
-type Review=Question&{score:number;is_correct:boolean;feedback:string;explanation:string;expected_answer:string|null;correct_choice:number|null;citations:Citation[];response:string|null;selected_choice:number|null};
-type Result={score:number;questionCount:number;topics:Array<{topic_id:string;title:string;questions:number;score:number;misses:number}>;reviews:Review[]};
+type Result=PracticeTestResult;
 type Test={id:string;status:'draft'|'submitted';created_at:string;draft_answers?:Record<string,Answer>;result:Result|null;topic_snapshot:Array<{id:string;title:string;questions:number}>};
 
 export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReviewTopic}:{roomId:string;topicCount:number;topics?:Topic[];onGraded:()=>void;onReviewTopic:(id:string)=>void}) {
@@ -59,20 +58,13 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
   }
   const answered=(q:Question)=>usesChoices(q.kind)?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
   const completed=questions.filter(answered).length;const current=questions[index];
-  if(active?.result) return <section className="testResults roomStudioResults">
-    <HeaderMascot state={active.result.score>=80?'celebrate':'explain'}/>
-    <p className="setupLead">{active.result.score>=80?'A strong rehearsal. Review each miss below.':'Now you know where to focus.'}</p>
-    <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
-    <div className="testTopicResults">{active.result.topics.map(t=><div key={t.topic_id}><strong>{t.title}</strong><span>{t.score}% · {t.misses} missed / {t.questions}</span><button onClick={()=>onReviewTopic(t.topic_id)}>{t.misses?'Review concept':'Keep practicing'} →</button></div>)}</div>
-    <h3>Review your answers and sources.</h3>
-    {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {usesChoices(q.kind)?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]??'Unanswered'):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {usesChoices(q.kind)?(q.correct_choice===null?'Not available':q.choices[q.correct_choice]??'Not available'):q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><ReadAloudControl text={[q.feedback,q.explanation].filter(Boolean).join(' ')} label="Read review feedback aloud"/><CitationChips citations={q.citations??[]}/></details>)}
-    <button className="buttonPrimary" onClick={()=>{setActive(null);setQuestions([]);}}>Back to practice tests →</button>
-  </section>;
+  if(active?.result) return <PracticeTestResults key={active.id} result={active.result} createdAt={active.created_at}
+    onReviewTopic={onReviewTopic} onBack={()=>{setActive(null);setQuestions([]);}} />;
   if(active&&current) return <section className="testSession roomStudioTest">
     <div className="testSessionTop"><div><span className="tinyLabel">INDEPENDENT REHEARSAL / ANSWERS AFTER SUBMISSION</span><h2>Question {index+1} of {questions.length}</h2></div><span role="status">{completed}/{questions.length} answered · {saveState}</span></div>
     <ActivityProgress current={index+1} total={questions.length} completed={completed} label="Question"/>
     <nav className="testQuestionNav" aria-label="Test questions">{questions.map((q,i)=><button key={q.id} disabled={busy} aria-current={i===index?'step':undefined} className={answered(q)?'answered':''} aria-label={`Question ${i+1}${answered(q)?', answered':', unanswered'}`} onClick={()=>setIndex(i)}>{i+1}</button>)}</nav>
-    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':current.kind==='fill_blank'?'FILL IN THE BLANK':current.kind==='true_false'?'TRUE OR FALSE':'MULTIPLE CHOICE'}</span><h3>{current.kind==='fill_blank'?current.prompt.replace('____','______'):current.prompt}</h3>
+    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':current.kind==='fill_blank'?'FILL IN THE BLANK':current.kind==='true_false'?'TRUE OR FALSE':'MULTIPLE CHOICE'}</span><TestQuestionPrompt prompt={current.prompt} kind={current.kind} />
       <ReadAloudControl key={current.id} text={spokenQuestion(current)} label="Read question and choices aloud"/><p className="roomStudioInstruction">This is a draft until you submit the full test. You can revisit any question.</p>
       {usesChoices(current.kind)?<AnswerChoices choices={current.choices} binary={current.kind==='true_false'} selected={answers[current.id]?.selectedChoice??null} disabled={busy} onSelect={i=>change(current.id,{selectedChoice:i,response:''})}/>:
       current.kind==='fill_blank'?<input className="blankInput" aria-label="Fill in the blank" maxLength={120} autoComplete="off" disabled={busy} value={answers[current.id]?.response??''} placeholder="Missing word or phrase…" onChange={e=>change(current.id,{selectedChoice:null,response:e.target.value})}/>:
