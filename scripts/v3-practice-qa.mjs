@@ -60,9 +60,14 @@ try {
    ...questions[0],id:`test-q${i}`,
    kind:i===1?'short_answer':i===2?'true_false':i===3?'fill_blank':'multiple_choice',
    choices:i===2?['True','False']:i===3?[]:questions[0].choices,
-   prompt:i===3?'A ____ can take part in an election.':questions[0].prompt
+   prompt:i===3?'A ____ can take part in an election.':i===0?'Which **description** matches inherited traits?':questions[0].prompt
   }));
-  const result={score:10,questionCount:10,topics:[{topic_id:'inherited-environment',title:'Inherited traits and environment',questions:10,score:10,misses:9}],reviews:[{...testQuestions[0],score:100,is_correct:true,feedback:'Correct.',explanation:'',expected_answer:null,correct_choice:0,citations:[],response:null,selected_choice:0}]};
+  const result={score:75,questionCount:10,topics:[{topic_id:'inherited-environment',title:'Inherited traits and environment',questions:10,score:75,misses:1}],reviews:[
+    {...testQuestions[0],score:100,is_correct:true,feedback:'**Correct.** The source explains this idea.',explanation:'',expected_answer:null,correct_choice:0,citations:[],response:null,selected_choice:0},
+    {...testQuestions[1],score:100,is_correct:true,feedback:'Good explanation.',explanation:'',expected_answer:'Traits come from parents.',correct_choice:null,citations:[],response:'Traits pass from parents to offspring.',selected_choice:null},
+    {...testQuestions[2],score:0,is_correct:false,feedback:'**Review:** The claim was false.',explanation:'See the source.',expected_answer:null,correct_choice:1,citations:[],response:null,selected_choice:0},
+    {...testQuestions[3],score:100,is_correct:true,feedback:'Correct spelling.',explanation:'',expected_answer:'voter',correct_choice:null,citations:[],response:'voter',selected_choice:null}
+  ]};
   let submitted=false;let saves=0;
   const test=()=>({id:'test-1',status:submitted?'submitted':'draft',created_at:'2026-10-17T12:00:00Z',draft_answers:{},result:submitted?result:null,topic_snapshot:[{id:'inherited-environment',title:'Inherited traits',questions:10}]});
   await context.route(/\/api\/practice-tests(?:\?|\/|$)/,async r=>{
@@ -77,7 +82,43 @@ try {
   await page.getByRole('button',{name:'Next question',exact:false}).click();
   await page.getByRole('textbox',{name:'Fill in the blank'}).fill('voter');
   await page.getByRole('status').filter({hasText:'Draft saved'}).waitFor();assert.ok(saves>=1);
-  await shot('test-draft');await page.getByRole('button',{name:'Review and submit entire test'}).click();assert.equal(submitted,false);await page.getByRole('button',{name:'Submit all answers'}).click();await page.locator('.testResults').waitFor();await shot('test-results');
+  await shot('test-draft');await page.getByRole('button',{name:'Review and submit entire test'}).click();assert.equal(submitted,false);await page.getByRole('button',{name:'Submit all answers'}).click();await page.locator('.testResults').waitFor();
+  const reviewCards=page.locator('details.testReview');
+  assert.equal(await reviewCards.count(),4,'all four response types are reviewable');
+  assert.equal(await page.locator('details.testReview[open]').count(),1,'missed question opens by default');
+  await page.getByRole('button',{name:'Expand all'}).click();
+  assert.equal(await page.locator('details.testReview[open]').count(),4);
+  assert.equal(await reviewCards.first().locator('strong',{hasText:'description'}).count(),1,'Markdown in question is rendered');
+  assert.equal(await reviewCards.first().locator('.testQuestionPrompt').innerText().then(text=>text.includes('**')),false,'no raw Markdown');
+  assert.equal(await reviewCards.first().locator('.choiceItem').count(),2,'same answer choices as test');
+  assert.equal(await reviewCards.first().locator('.choiceSelected').count(),0,'graded state replaces draft selection');
+  assert.equal(await reviewCards.first().locator('.choiceCorrect').count(),1,'correct answer highlighted');
+  assert.equal(await reviewCards.nth(1).locator('.shortAnswer').innerText().then(text=>text.includes('Traits pass')),true);
+  assert.equal(await reviewCards.nth(2).locator('.choiceWrong').count(),1,'incorrect selection remains visible');
+  assert.equal(await reviewCards.nth(3).locator('.blankInput').innerText(),'voter');
+  await shot('test-results-expanded');
+  await page.getByRole('button',{name:'Collapse all'}).click();
+  assert.equal(await page.locator('details.testReview[open]').count(),0);
+  await reviewCards.nth(1).locator('summary').click();
+  assert.equal(await page.locator('details.testReview[open]').count(),1,'individual question opens');
+  await page.evaluate(()=>{window.print=()=>{};});
+  await page.getByRole('button',{name:'Print results'}).click();
+  assert.equal(await page.locator('details.testReview[open]').count(),4,'print expands every question including collapsed ones');
+  await page.emulateMedia({media:'print'});
+  const printed=await page.evaluate(()=>({
+    toolbar:getComputedStyle(document.querySelector('.testReviewToolbar')).display,
+    title:getComputedStyle(document.querySelector('.testResultsPrintHeading')).display,
+    review:getComputedStyle(document.querySelector('#studigo-test-print')).visibility,
+    shell:getComputedStyle(document.querySelector('.appRail')).display
+  }));
+  assert.equal(printed.toolbar,'none','print hides controls');
+  assert.notEqual(printed.title,'none','print has titled report');
+  assert.equal(printed.review,'visible','review must be printable');
+  assert.equal(printed.shell,'none','print hides app navigation');
+  await page.emulateMedia({media:'screen'});
+  await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
+  assert.equal(await page.locator('details.testReview[open]').count(),1,'printing restores collapsed state');
+  await shot('test-results');
   await go('test');await page.getByRole('button',{name:/Review completed test/}).click();await page.locator('.testResults').waitFor();assert.match(await page.locator('.testScore').innerText(),/10 questions/);
   // Cram: the timer never submits a response; pause remains available.
   await go('cram');await page.getByRole('button',{name:'15 min',exact:true}).click();await shot('cram-setup');await page.getByRole('button',{name:/Start 15-minute session/}).click();await page.getByRole('button',{name:'Pause',exact:true}).click();await page.getByRole('button',{name:'Resume',exact:true}).waitFor();await shot('cram-paused');
