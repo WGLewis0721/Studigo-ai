@@ -543,7 +543,7 @@
     gap: 16px;
     min-width: 0;
   }
-  #studigo-test-print .testReviewSummaryTitle strong { flex: 0 0 auto; font-size: 1.06rem; }
+  #studigo-test-print .testReviewSummaryTitle strong { flex: 0 0 auto; font-size: 1.2rem; }
   #studigo-test-print .testReviewPromptPreview { min-width: 0; margin: 0; font-size: 1rem; }
   #studigo-test-print .testReviewPromptPreview .richText {
     display: block;
@@ -551,7 +551,6 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
-  #studigo-test-print .testReview[open] .testReviewPromptPreview { display: block; }
 }
 @media screen and (max-width: 600px) {
   #studigo-test-print .testTopicResults { grid-template-columns: repeat(2, minmax(0, 1fr)); }
