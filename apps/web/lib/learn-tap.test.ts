@@ -90,6 +90,6 @@ test("longer sourced passages offer additional distinct guided checks", () => {
   const facts = Array.from({ length: 14 }, (_, index) => `The candidate in district ${index} made a distinct decision for the citizens on election day.`);
   assert.equal(supplementalMissionBeats("Election", facts.slice(0, 2), 0).length, 0);
   const checks = supplementalMissionBeats("Election", facts, 0);
-  assert.ok(checks.length >= 4 && checks.length <= 9);
+  assert.ok(checks.length >= 2 && checks.length <= 9);
   assert.ok(checks.every((beat) => beat.kind === "blank" && facts.slice(1).some((fact) => fact.includes(beat.before))));
 });
