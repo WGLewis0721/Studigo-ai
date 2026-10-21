@@ -1135,7 +1135,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     var(--tone);
 }
 .flashcardSide { font-family: var(--display); font-weight: 700; font-size: clamp(1.4rem, 2.8vw, 2.1rem); letter-spacing: -.03em; line-height: 1.22; }
-.flashcardBack .flashcardSide { font-family: var(--sans); font-size: 1.12rem; font-weight: 600; line-height: 1.62; letter-spacing: 0; }
+.flashcardBack .flashcardSide { font-family: var(--sans); font-size: clamp(1.35rem, 2vw, 1.75rem); font-weight: 650; line-height: 1.42; letter-spacing: 0; }
 .flashcardFace small { color: var(--tone-ink); font-size: .72rem; font-weight: 700; letter-spacing: .08em; }
 .flashcard:hover .flashcardInner { transform: translateY(-3px) rotateX(2deg); }
 .flashcardFlipped:hover .flashcardInner { transform: rotateY(180deg) translateY(-3px); }
