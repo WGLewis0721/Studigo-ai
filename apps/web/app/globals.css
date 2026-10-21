@@ -2075,6 +2075,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   }
 
   html { scroll-behavior: smooth; }
+  html:has(.roomWorkspace) { scroll-behavior: auto; }
   body { overscroll-behavior-y: none; }
   .roomWorkspace button,
   .roomWorkspace a,
@@ -2085,6 +2086,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   /* Collapse the desktop app rail entirely inside a Study Room. */
   .appShell:has(.roomWorkspace) { display: block; min-height: 100dvh; }
   .appShell:has(.roomWorkspace) > .appRail { display: none; }
+  /* The deletion reminder is available on the rooms list. Inside a room it
+     sits above the mobile viewport while Coach alone is fixed over it. */
+  .appMain:has(.roomDevice) > .betaRetention { display: none; }
 
   /* One compact navigation bar instead of two stacked headers. */
   .roomWorkspace .workspaceTopbar {
@@ -3292,8 +3296,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 @media (max-width: 700px) {
   /* Groups live in the bottom bar, so the old nav wrapper takes no room; the header sits right under the top bar. */
-  .studyNavigation { height: 0; min-height: 0; padding: 0; margin: 0; gap: 0; border: 0; overflow: visible; }
-  .modeFrame { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
+  /* Its only child is the fixed bottom dock. Do not leave an empty row above
+     the mode header when the dock is taken out of document flow. */
+  .studyNavigation { display: contents; }
   /* Every page's header is one row at one height (mascot and the page's switch or title), so the
      Studigo rail sits in the same place on all five. What you can change on the page (topic,
      date, file type) sits on a line just under the rail. */
@@ -3370,6 +3375,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    Interactive content becomes inert while closed (managed in ModeFrame). */
 .modeFrame { width: 100%; position: relative; }
 .modeCollapseToggle { display: none; }
+@media (max-width: 700px) {
+  /* Keep the header in normal flow at first paint, then pinned below the
+     toolbar while scrolling. The base relative rule above must not retain a
+     mobile top offset, which shifts the header over the page content. */
+  .modeFrame { position: sticky; top: var(--m-topbar, 58px); z-index: 60; }
+}
 
 @media (min-width: 701px) {
   .modeFrame {

@@ -140,10 +140,11 @@ export function RoomWorkspace({
     return () => window.removeEventListener("keydown", onKey);
   }, [settingsOpen, closeSettings]);
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
-  // On wide screens the page scrolls inside the room frame, so a new page (or Coach's
-  // Chat/Topics switch) starts at the top instead of keeping the last page's scroll.
+  // Wide screens scroll inside the room. Phones scroll the document on every
+  // page except Coach, which pins its own chat to the viewport.
   useEffect(() => {
     if (surfaceRef.current) surfaceRef.current.scrollTop = 0;
+    if (window.matchMedia("(max-width: 700px)").matches) window.scrollTo(0, 0);
   }, [mode, coachView]);
   const [theme] = useRoomTheme(room.id);
   const [chipHost, setChipHost] = useState<HTMLElement | null>(null);
