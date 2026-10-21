@@ -121,7 +121,7 @@ try {
   await page.getByRole('button',{name:'Expand all'}).click();
   assert.equal(await reviewCards.first().locator('.testReviewPromptPreview').evaluate(el=>getComputedStyle(el).display),'none','expanded question does not duplicate prompt');
   assert.equal(await page.locator('details.testReview[open]').count(),4);
-  assert.equal(await reviewCards.first().locator('strong',{hasText:'description'}).count(),1,'Markdown in question is rendered');
+  assert.equal(await reviewCards.first().locator('.testReviewContent .testQuestionPrompt strong',{hasText:'description'}).count(),1,'expanded question Markdown is rendered');
   assert.equal(await reviewCards.first().locator('.testQuestionPrompt').innerText().then(text=>text.includes('**')),false,'no raw Markdown');
   assert.equal(await reviewCards.first().locator('.choiceItem').count(),2,'same answer choices as test');
   assert.equal(await reviewCards.first().locator('.choiceSelected').count(),0,'graded state replaces draft selection');
