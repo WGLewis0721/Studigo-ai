@@ -143,7 +143,7 @@ try {
         undefined, { timeout: 6500 }
       );
       assert.equal(await frame.getByRole("button", { name: "Show controls" }).count(), 1,
-        `${initialMode}  ${destination}: pointer navigation must auto-collapse after three seconds`);
+        `${initialMode} → ${destination}: pointer navigation must auto-collapse after three seconds`);
       cases.push({ initialMode, destination, autoCollapsed: true });
     } finally { await context.close(); }
   }
