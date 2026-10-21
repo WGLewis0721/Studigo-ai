@@ -18,6 +18,7 @@ try {
           const frame = document.querySelector(".modeFrame");
           const surface = document.querySelector(".modeSurface");
           const rail = frame?.querySelector(".studigoRail");
+          const navigation = document.querySelector(".studyNavigation");
           if (!appMain || !room || !topbar || !frame || !surface || !rail) throw new Error("Missing room chrome");
           const reminder = document.createElement("p");
           reminder.className = "betaRetention";
@@ -26,6 +27,9 @@ try {
           return {
             reminder: getComputedStyle(reminder).display,
             gap: frame.getBoundingClientRect().top - topbar.getBoundingClientRect().bottom,
+            topbar: [topbar.getBoundingClientRect().top, topbar.getBoundingClientRect().bottom],
+            frame: [frame.getBoundingClientRect().top, frame.getBoundingClientRect().bottom],
+            navigation: navigation && { display: getComputedStyle(navigation).display, height: navigation.getBoundingClientRect().height },
             contentTop: surface.firstElementChild?.getBoundingClientRect().top,
             railBottom: rail.getBoundingClientRect().bottom,
             scrollWidth: document.documentElement.scrollWidth,
