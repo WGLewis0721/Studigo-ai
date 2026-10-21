@@ -56,8 +56,10 @@ test("Source-faithful formatting handles OCR bullets on one line, ordinary prose
   ]);
   assert.deepEqual(parseSourceReading(""), []);
   assert.deepEqual(parseSourceReading("The Constitution\nA written plan for government"), [
-    { kind: "paragraph", text: "The Constitution" },
-    { kind: "paragraph", text: "A written plan for government" }
+    { kind: "paragraph", text: "The Constitution A written plan for government" }
+  ]);
+  assert.deepEqual(parseSourceReading("On Election Day, voters cast their ballot for\nthe candidates and issues they support. But did\nyou know that your vote does not go directly to the president?"), [
+    { kind: "paragraph", text: "On Election Day, voters cast their ballot for the candidates and issues they support. But did you know that your vote does not go directly to the president?" }
   ]);
 });
 
