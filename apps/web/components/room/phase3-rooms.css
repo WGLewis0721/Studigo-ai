@@ -425,3 +425,9 @@
   #studigo-test-print .testReviewSummaryTitle strong { font-size: 1.2rem; }
   #studigo-test-print .testReviewSummaryTitle small { font-size: .94rem; }
 }
+
+/* The collapsed-row question preview is for screen scanning only.
+   Print already includes the full question underneath. */
+@media print {
+  #studigo-test-print .testReviewPromptPreview { display: none !important; }
+}
