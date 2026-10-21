@@ -1,5 +1,6 @@
 import { guardAiRequest } from "@/lib/ai-admission";
 import { generateQuizQuestions } from '@studigo/ai';
+import { parseAssessmentModes, TEST_QUESTION_COUNTS } from '@/lib/practice-assessment';
 import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/retrieval';
@@ -31,7 +32,10 @@ export async function GET(request: Request) {
 async function guardedPost(request: Request) {
   const {supabase,user,unauthorized}=await requireApiUser(); if(!user) return unauthorized;
   const body=await request.json().catch(()=>null);
-  if(typeof body?.roomId!=='string' || ![6,10,15,20].includes(body?.count)) return Response.json({error:'Choose a room and test length.'},{status:400});
+  if(typeof body?.roomId!=='string' || !(TEST_QUESTION_COUNTS as readonly number[]).includes(body?.count)) return Response.json({error:'Choose a room and test length.'},{status:400});
+  // Absent selection preserves existing saved clients. An explicit invalid selection is rejected.
+  const requestedKinds=body.kinds===undefined?null:parseAssessmentModes(body.kinds);
+  if(body.kinds!==undefined&&!requestedKinds) return Response.json({error:'Select one or more valid question types.'},{status:400});
   const room=await assertRoomAccess(supabase,body.roomId); if(!room) return Response.json({error:'Study Room not found.'},{status:404});
   const {data:rows,error}=await supabase.from('topics').select(TOPIC_COLUMNS).eq('room_id',body.roomId).eq('active',true);
   if(error) return Response.json({error:'Could not load the current study scope.'},{status:500});
@@ -48,7 +52,9 @@ async function guardedPost(request: Request) {
         // Rotate the format per topic so one test exercises recognition,
         // recall and explanation rather than twenty of the same shape.
         const kind=TEST_KIND_ROTATION[(offset+index)%TEST_KIND_ROTATION.length];
-        const generated=(await generateQuizQuestions({chunks,topicTitle:topic.title,objective:topic.objective??undefined,count,kind})).filter(q=>q.kind===kind&&q.sourceMarkers.length>0).slice(0,count);
+        const generated=(await generateQuizQuestions({chunks,topicTitle:topic.title,objective:topic.objective??undefined,count,...(requestedKinds?{kinds:requestedKinds}:{kind})})).filter(q=>
+          (requestedKinds?requestedKinds.includes(q.kind as (typeof requestedKinds)[number]):q.kind===kind)&&q.sourceMarkers.length>0
+        ).slice(0,count);
         if(generated.length!==count) throw new Error(`Could not produce enough grounded questions for “${topic.title}”. Try again.`);
         return generated.map(q=>({topic_id:topic.id,kind:q.kind,prompt:q.prompt,choices:q.choices,correct_choice:q.correctChoice,
           expected_answer:q.expectedAnswer,accepted_answers:q.acceptedAnswers,explanation:q.explanation,difficulty:q.difficulty,citations:markersToCitations(q.sourceMarkers,chunks)}));
