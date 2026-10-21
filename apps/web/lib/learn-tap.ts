@@ -61,7 +61,7 @@ export function missionBeats(objective: string, sentences: string[], target: num
   const distractors = sentences.filter((sentence, index) =>
     index !== safeTarget && sentence.split(/\s+/).length >= 5 && sentence.length >= 30
   );
-  const concept = answer.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[--:]\s+.{12,}$/)?.[1]?.trim();
+  const concept = answer.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[—–:]\s+.{12,}$/)?.[1]?.trim();
   const question = concept
     ? `What does "${concept}" mean?`
     : /^\s*(who|what|which|where|when|why|how)\b/i.test(objective)
@@ -152,7 +152,7 @@ export function tapCheck(objective: string, excerpt: string): { sentences: strin
   candidates.forEach(({ sentence, index }) => {
     const seen = words(sentence);
     const score = wanted.filter((word) => seen.some((token) => token === word || token.startsWith(word))).length;
-    const isDefinition = /[--:]\s+[a-z]/i.test(sentence);
+    const isDefinition = /[—–:]\s+[a-z]/i.test(sentence);
     const isStatement = /[.!?]$/.test(sentence);
     const quality = score * 10 + (isDefinition ? 3 : 0) + (isStatement ? 1 : 0);
     if (quality > best) {
