@@ -67,7 +67,7 @@ test("government guide uses an actual question, not a heading as its answer", ()
     "Page 2",
     "Our Government Vocabulary",
     "The Constitution",
-    "primary source - a record of an event made by a person who was there when it happened",
+    "primary source — a record of an event made by a person who was there when it happened",
     "The legislative branch makes laws for the country and represents citizens.",
     "The judicial branch interprets laws and decides whether laws follow the Constitution."
   ].join("\n");
