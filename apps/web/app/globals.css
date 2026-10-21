@@ -3299,7 +3299,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   /* Its only child is the fixed bottom dock. Do not leave an empty row above
      the mode header when the dock is taken out of document flow. */
   .studyNavigation { display: contents; }
-  .modeFrame { position: sticky; top: calc(var(--m-topbar, 56px) - 1px); z-index: 60; }
   /* Every page's header is one row at one height (mascot and the page's switch or title), so the
      Studigo rail sits in the same place on all five. What you can change on the page (topic,
      date, file type) sits on a line just under the rail. */
@@ -3376,6 +3375,12 @@ button:disabled { opacity: .5; cursor: not-allowed; }
    Interactive content becomes inert while closed (managed in ModeFrame). */
 .modeFrame { width: 100%; position: relative; }
 .modeCollapseToggle { display: none; }
+@media (max-width: 700px) {
+  /* Keep the header in normal flow at first paint, then pinned below the
+     toolbar while scrolling. The base relative rule above must not retain a
+     mobile top offset, which shifts the header over the page content. */
+  .modeFrame { position: sticky; top: var(--m-topbar, 58px); z-index: 60; }
+}
 
 @media (min-width: 701px) {
   .modeFrame {
