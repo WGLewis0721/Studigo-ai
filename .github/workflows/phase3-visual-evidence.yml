@@ -10,6 +10,7 @@ on:
       - "scripts/phase3-visual-qa.mjs"
       - "scripts/home-marketing-qa.mjs"
       - "scripts/v1-mobile-tabbar-qa.mjs"
+      - "scripts/mobile-room-chrome-qa.mjs"
       - "scripts/v1-final-qa.mjs"
       - "scripts/v1-webkit-smoke.mjs"
       - "scripts/v3-practice-qa.mjs"
@@ -53,6 +54,8 @@ jobs:
           exit 1
       - name: V1 mobile dock — scroll, modal, keyboard and reduced motion
         run: node scripts/v1-mobile-tabbar-qa.mjs
+      - name: Mobile room chrome — page headers and scroll position
+        run: node scripts/mobile-room-chrome-qa.mjs
       - name: V1 — focus, empty states and four-width zoom/reflow
         run: node scripts/v1-final-qa.mjs
       - name: V1 — WebKit engine phone/tablet keyboard focus and touch smoke
