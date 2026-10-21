@@ -91,12 +91,26 @@ async function guardedPost(request: Request) {
     kinds: requestedKinds
   });
 
-  if (!generated.length) {
+  // Normalization may reject an AI-produced question. Top up once rather than
+  // silently delivering fewer questions than the learner selected.
+  if (generated.length < count) {
+    const additional = await generateQuizQuestions({
+      chunks,
+      topicTitle: topic?.title,
+      objective: topic?.objective ?? undefined,
+      count: count - generated.length,
+      kinds: requestedKinds,
+      avoidPrompts: generated.map((question) => question.prompt)
+    });
+    generated.push(...additional);
+  }
+  if (generated.length < count) {
     return Response.json(
-      { error: "Studigo couldn't build grounded questions from this material." },
+      { error: "Studigo couldn't build the full set of grounded questions. Try fewer questions or more study material." },
       { status: 422 }
     );
   }
+  generated.length = count;
 
   const { data: inserted, error } = await createServiceSupabaseClient()
     .from("quiz_questions")
