@@ -94,11 +94,11 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
       const answer = question.response?.trim() || "Unanswered";
       return <details key={question.id} className={`testReview ${question.is_correct ? "testReviewCorrect" : "testReviewIncorrect"}`} open={!question.is_correct}>
         <summary>
-          <span className="testReviewSummaryTitle">
+          <div className="testReviewSummaryTitle">
             <strong>Question {index + 1}</strong>
             <small>{question.kind === "fill_blank" ? "Fill in the blank" : question.kind === "true_false" ? "True or false" : question.kind === "short_answer" ? "Short answer" : "Multiple choice"}</small>
-            <span className="testReviewPromptPreview"><RichText text={question.prompt} /></span>
-          </span>
+            <div className="testReviewPromptPreview"><RichText text={question.prompt} /></div>
+          </div>
           <span className="testReviewSummaryStatus">
             <span aria-hidden="true">{question.is_correct ? "✓" : "✕"}</span>
             {question.is_correct ? "Correct" : "Needs review"} · {question.score}%
