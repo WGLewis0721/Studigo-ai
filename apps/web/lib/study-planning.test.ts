@@ -29,14 +29,16 @@ test('Test allocation covers every affordable topic before priority-weighted ext
   assert.ok(result.find(a=>a.topic.id==='high')!.count>result.find(a=>a.topic.id==='low')!.count);
   assert.equal(allocateTestQuestions([topic('low'),topic('high',{priority:100})],1)[0].topic.id,'high');
 });
-test('Every Cram duration fits its exact budget and reuses the three existing learning modes',()=>{
+test('Cram covers each selected topic as reading only, ordered by weakness',()=>{
   const topics=Array.from({length:10},(_,i)=>topic(String(i)));
   for(const minutes of [15,30,60,120]) {
     const plan=buildCramPlan(rankWeakAreas(topics,[],now),topics,minutes);
     assert.equal(plan.reduce((n,a)=>n+a.minutes,0),minutes);assert.ok(plan.every(a=>a.minutes>0));
-    assert.deepEqual([...new Set(plan.map(a=>a.mode))],['learn','quiz','cards']);
+    assert.deepEqual(plan.map(a=>a.mode),Array(topics.length).fill('learn'));
   }
   assert.deepEqual(buildCramPlan([],[],30),[]);
+  const selected=[topic('low',{priority:10}),topic('high',{priority:90})];
+  assert.deepEqual(buildCramPlan(rankWeakAreas(selected,[],now),selected,15).map(a=>a.topicId),['high','low']);
 });
 test('Study plan responds to test date, completion, skips, and improved performance',()=>{
   const topics=[topic('a',{priority:100}),topic('b')];

@@ -1,43 +1,115 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
-import type { Topic } from '@/lib/rooms';
-import { buildCramPlan, type StudyAction, type WeakArea } from '@/lib/study-planning';
-import { LearnPanel } from './learn-panel';
-import { QuizPanel } from './quiz-panel';
-import { CardsPanel } from './cards-panel';
-import { StudigoMascot } from '@/components/studigo-mascot';
-import { INLINE_SLOTS, HeaderSlots } from './mode-header';
-import './phase3-rooms.css';
-export function CramPanel({roomId,topics,areas,testDate,onChanged,phase3Ui}:{roomId:string;topics:Topic[];areas:WeakArea[];testDate:string|null;onChanged:()=>void;phase3Ui?:boolean}) {
-  const [minutes,setMinutes]=useState(30);const [session,setSession]=useState<StudyAction[]|null>(null);const [index,setIndex]=useState(0);
-  const [remaining,setRemaining]=useState(0);const [running,setRunning]=useState(false);const deadline=useRef(0);const [done,setDone]=useState(false);
-  const preview=buildCramPlan(areas,topics,minutes,testDate);const step=session?.[index];
-  useEffect(()=>{
-    if(!running)return;
-    const timer=setInterval(()=>{const left=Math.max(0,Math.ceil((deadline.current-Date.now())/1000));setRemaining(left);if(left===0)setRunning(false);},500);
-    return ()=>clearInterval(timer);
-  },[running]);
-  function begin(){if(!preview.length)return;setSession(preview);setIndex(0);setDone(false);setRemaining(preview[0].minutes*60);deadline.current=Date.now()+preview[0].minutes*60000;setRunning(true);}
-  function advance(){if(!session)return;if(index+1>=session.length){setDone(true);setRunning(false);onChanged();return;}const next=index+1;setIndex(next);setRemaining(session[next].minutes*60);deadline.current=Date.now()+session[next].minutes*60000;setRunning(true);}
-  if(done) return <section className="modeEmpty"><StudigoMascot state="celebrate" size={80}/><span className="tinyLabel">FOCUSED SESSION COMPLETE</span><h2>You made time count.</h2><p>Only your saved quiz answers and card reviews changed mastery. Reading and completing the plan do not earn points.</p><button className="buttonPrimary" onClick={()=>{setSession(null);setDone(false);}}>Reassess my next session →</button></section>;
-  if(session&&step) return <section className="cramSession">
-    <header className="cramTimerBar"><div><span className="tinyLabel">FOCUS / {index+1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong role="timer" aria-label="Time remaining">{Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')}</strong><button onClick={()=>{if(!running){deadline.current=Date.now()+Math.max(remaining,60)*1000;setRemaining(v=>Math.max(v,60));}setRunning(v=>!v);}}>{running?'Pause':remaining===0?'Add one minute':'Resume'}</button></div></header>
-    <ol className="cramTrack">{session.map((s,i)=><li key={s.key} aria-current={i===index?'step':undefined}><span>{i+1}</span>{s.title}<small>{s.minutes} min</small></li>)}</ol>
-    {!remaining&&<p className="formNotice" role="status">Time for the next step. Finish your current answer before moving on.</p>}
-    <p className="hintText">{step.reason}</p>
-    <HeaderSlots.Provider value={INLINE_SLOTS}>
-    <div className="cramActivity" key={`${index}:${step.topicId}`}>
-      {step.mode==='learn'&&<LearnPanel roomId={roomId} topics={topics.filter(t=>t.id===step.topicId)} hasMaterials onChanged={onChanged}/>}
-      {step.mode==='quiz'&&<QuizPanel phase3Ui={phase3Ui} roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onGraded={onChanged}/>}
-      {step.mode==='cards'&&<CardsPanel roomId={roomId} topics={topics} hasMaterials initialTopicId={step.topicId} onReviewed={onChanged}/>}
-    </div>
-    </HeaderSlots.Provider>
-    <footer className="cramFooter"><p>Save or grade your response before continuing.</p><button className="buttonPrimary" onClick={advance}>{index+1===session.length?'Finish session':'Next step'} →</button></footer>
+
+import { useEffect, useRef, useState } from "react";
+import type { Topic } from "@/lib/rooms";
+import { compactCramNotes } from "@/lib/cram-notes";
+import { buildCramPlan, type StudyAction, type WeakArea } from "@/lib/study-planning";
+import { StudigoMascot } from "@/components/studigo-mascot";
+import { ReadAloudControl } from "./read-aloud-control";
+import { RichText } from "./rich-text";
+import { CitationChips, type Citation } from "./citations";
+import "./phase3-rooms.css";
+
+type CachedNotes = { notes: string; citations: Citation[] };
+function CramNotes({ roomId, topic, cache }: { roomId: string; topic: Topic; cache: Map<string, CachedNotes> }) {
+  const saved = cache.get(topic.id);
+  const [notes, setNotes] = useState<string | null>(saved?.notes ?? null);
+  const [citations, setCitations] = useState<Citation[]>(saved?.citations ?? []);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!saved);
+  useEffect(() => {
+    const stored = cache.get(topic.id);
+    if (stored) {
+      setNotes(stored.notes);
+      setCitations(stored.citations);
+      setLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setNotes(null);
+    void fetch("/api/learn", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId, topicId: topic.id }), signal: controller.signal
+    }).then(async (response) => {
+      const payload = await response.json();
+      if (!response.ok || typeof payload.explanation !== "string" || !payload.explanation.trim())
+        throw new Error(payload.error || "Could not load source-backed notes for this topic.");
+      const record = {
+        notes: compactCramNotes(payload.explanation) || payload.explanation,
+        citations: Array.isArray(payload.citations) ? payload.citations as Citation[] : []
+      };
+      cache.set(topic.id, record);
+      setNotes(record.notes);
+      setCitations(record.citations);
+    }).catch((cause) => {
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Could not load notes.");
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [roomId, topic.id, cache]);
+  return <article className="cramNotes" aria-label={`Cram notes for ${topic.title}`}>
+    <h3>{topic.title}</h3>
+    {loading ? <p role="status">Loading notes from your materials.</p> : error ? <p className="formError" role="alert">{error}</p> : <>
+      <RichText text={notes ?? ""} />
+      <ReadAloudControl text={notes ?? ""} label={`Read ${topic.title} notes aloud`} />
+      <CitationChips citations={citations} />
+    </>}
+  </article>;
+}
+
+export function CramPanel({ roomId, topics, areas, testDate }: { roomId: string; topics: Topic[]; areas: WeakArea[]; testDate: string | null; onChanged: () => void; phase3Ui?: boolean }) {
+  const [minutes, setMinutes] = useState(30);
+  const [selectedIds, setSelectedIds] = useState<string[] | null>(null);
+  const [session, setSession] = useState<StudyAction[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [remaining, setRemaining] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const deadline = useRef(0);
+  const notesCache = useRef(new Map<string, CachedNotes>());
+  const chosen = topics.filter((topic) => selectedIds === null || selectedIds.includes(topic.id));
+  const preview = buildCramPlan(areas.filter((area) => chosen.some((topic) => topic.id === area.topic.id)), chosen, minutes, testDate);
+  const step = session?.[index];
+
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => {
+      const left = Math.max(0, Math.ceil((deadline.current - Date.now()) / 1000));
+      setRemaining(left);
+      if (!left) setRunning(false);
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [running]);
+  function openStep(next: number, plan: StudyAction[]) {
+    setIndex(next);
+    setRemaining(plan[next].minutes * 60);
+    deadline.current = Date.now() + plan[next].minutes * 60_000;
+    setRunning(true);
+  }
+  function begin() { if (preview.length) { setSession(preview); setDone(false); openStep(0, preview); } }
+  function advance() {
+    if (!session) return;
+    if (index + 1 >= session.length) { setDone(true); setRunning(false); return; }
+    openStep(index + 1, session);
+  }
+  if (done) return <section className="modeEmpty"><StudigoMascot state="celebrate" size={80} /><span className="tinyLabel">FOCUSED SESSION COMPLETE</span><h2>Review complete.</h2><p>Reading these notes does not change mastery. Practice when you are ready to check recall.</p><button className="buttonPrimary" onClick={() => { setSession(null); setDone(false); }}>Choose another session →</button></section>;
+  if (session && step) return <section className="cramSession">
+    <header className="cramTimerBar"><div><span className="tinyLabel">CRAM / {index + 1} OF {session.length}</span><h2>{step.title}</h2></div><div className="cramClock"><strong role="timer" aria-label="Time remaining">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</strong><button onClick={() => { if (!running) { deadline.current = Date.now() + Math.max(remaining, 60) * 1000; setRemaining((value) => Math.max(value, 60)); } setRunning((value) => !value); }}>{running ? "Pause" : remaining === 0 ? "Add one minute" : "Resume"}</button></div></header>
+    <ol className="cramTrack">{session.map((item, position) => <li key={item.key} aria-current={position === index ? "step" : undefined}><span>{position + 1}</span>{item.title}<small>{item.minutes} min</small></li>)}</ol>
+    {!remaining && <p className="formNotice" role="status">Time for the next topic.</p>}
+    <div className="cramActivity" key={step.topicId}>{topics.find((topic) => topic.id === step.topicId) && <CramNotes roomId={roomId} topic={topics.find((topic) => topic.id === step.topicId)!} cache={notesCache.current} />}</div>
+    <footer className="cramFooter"><button className="ghostButton" type="button" disabled={index === 0} onClick={() => session && openStep(index - 1, session)}>← Previous step</button><button className="buttonPrimary" type="button" onClick={advance}>{index + 1 === session.length ? "Finish session" : "Next topic"} →</button></footer>
   </section>;
-  return <section className="cramSetup"><div className="roomSectionIntro"><span className="tinyLabel">PLANNING ROOM / FOCUS SPRINT</span><h2>A short session with a clear route.</h2><p>Start with the biggest gaps. The timer is a guide; it never submits your work.</p></div><p className="setupLead">Choose how much time you have.</p>
-    <div className="timeChoices" role="group" aria-label="Available study time">{[15,30,60,120].map(n=><button key={n} aria-pressed={minutes===n} onClick={()=>setMinutes(n)}>{n<60?`${n} min`:`${n/60} hour${n===120?'s':''}`}</button>)}</div>
-    <ol className="cramPreview">{preview.map(s=><li key={s.key}><div><strong>{s.title}</strong><p>{s.reason}</p></div><b>{s.minutes} min</b></li>)}</ol>
-    {!preview.length?<p>Add your study guide and build a topic map first.</p>:<button className="buttonPrimary" onClick={begin}>Start {minutes}-minute session <span>→</span></button>}
-    <p className="hintText">Each step opens the actual lesson, quiz, or flashcards here. The timer guides pacing; it never submits an answer for you. Keep this page open during the session.</p>
+  const allSelected = chosen.length === topics.length;
+  return <section className="cramSetup"><div className="roomSectionIntro"><span className="tinyLabel">PLANNING ROOM / CRAM</span><h2>Only the topics you need.</h2><p>Read the key notes from your materials, one topic after another.</p></div>
+    <p className="setupLead">Choose your topics and time.</p>
+    <div className="cramTopicPicker" role="group" aria-label="Topics to cram">
+      <label><input type="checkbox" checked={allSelected} onChange={(event) => setSelectedIds(event.target.checked ? null : [])} />Select all</label>
+      <div>{topics.map((topic) => <label key={topic.id}><input type="checkbox" checked={selectedIds === null || selectedIds.includes(topic.id)} onChange={(event) => setSelectedIds((current) => { const ids = current ?? topics.map((item) => item.id); return event.target.checked ? [...ids, topic.id] : ids.filter((id) => id !== topic.id); })} />{topic.title}</label>)}</div>
+    </div>
+    <div className="timeChoices" role="group" aria-label="Available study time">{[15, 30, 60, 120].map((value) => <button key={value} aria-pressed={minutes === value} onClick={() => setMinutes(value)}>{value < 60 ? `${value} min` : `${value / 60} hour${value === 120 ? "s" : ""}`}</button>)}</div>
+    <ol className="cramPreview">{preview.map((item) => <li key={item.key}><strong>{item.title}</strong><b>{item.minutes} min</b></li>)}</ol>
+    {!topics.length ? <p>Add your study guide and build a topic map first.</p> : <button className="buttonPrimary" disabled={!preview.length} onClick={begin}>Start {minutes}-minute session →</button>}
   </section>;
 }

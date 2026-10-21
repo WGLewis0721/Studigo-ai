@@ -32,20 +32,36 @@ export function parseSourceReading(text: string, currentTopic = ""): SourceReadi
   const lines = rawLines.filter((line) => !isPageChrome(line));
   const result: SourceReadingBlock[] = [];
   const topic = currentTopic.trim().toLocaleLowerCase();
+  let proseLines: string[] = [];
+  const flushProse = () => {
+    if (proseLines.length) result.push({ kind: "paragraph", text: proseLines.join(" ") });
+    proseLines = [];
+  };
+
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
     const bullet = line.match(/^[•●]\s*(.*)$/);
     if (bullet) {
+      flushProse();
       if (bullet[1].trim()) result.push({ kind: "fact", text: bullet[1].trim() });
       continue;
     }
+
     // A heading precedes a bullet list; it must be a verbatim source line.
     const next = lines[index + 1] ?? "";
     const heading = line.length <= 95 && !/[.!?:;]$/.test(line)
       && /^[•●]\s*/.test(next);
-    if (heading && line.toLocaleLowerCase() === topic) continue;
-    result.push({ kind: heading ? "heading" : "paragraph", text: line });
+    if (heading) {
+      flushProse();
+      if (line.toLocaleLowerCase() !== topic) result.push({ kind: "heading", text: line });
+      continue;
+    }
+
+    // OCR often inserts a newline at the page's narrow text-column edge.
+    // Join those visual wraps so learners see and hear continuous prose.
+    proseLines.push(line);
   }
+  flushProse();
   // No bullet paragraphs? Nothing is guessed; render original text as prose.
   return result;
 }

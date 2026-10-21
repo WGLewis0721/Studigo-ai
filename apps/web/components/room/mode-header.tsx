@@ -127,6 +127,7 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   const [desktop, setDesktop] = useState(false);
   const [activity, setActivity] = useState(0);
   const [focused, setFocused] = useState(false);
+  const [pointerInside, setPointerInside] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
   const controlsId = useId();
 
@@ -151,13 +152,13 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   }, [tone]);
 
   useEffect(() => {
-    if (!desktop || collapsed || focused) return;
+    if (!desktop || collapsed || focused || pointerInside) return;
     const timer = window.setTimeout(() => {
       setHasMoved(true);
       setCollapsed(true);
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [desktop, collapsed, focused, activity, tone]);
+  }, [desktop, collapsed, focused, pointerInside, activity, tone]);
 
   function showControls() {
     if (!desktop) return;
@@ -166,7 +167,9 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   }
 
   return (
-    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : "false"} data-drawer-animated={hasMoved ? "true" : undefined} ref={frameRef}>
+    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : "false"} data-drawer-animated={hasMoved ? "true" : undefined} ref={frameRef}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true); }}
+      onPointerLeave={() => setPointerInside(false)}>
       <div
         className="modeStrip"
         id={controlsId}

@@ -63,23 +63,17 @@ export function allocateTestQuestions(topics: Topic[], count: number) {
 
 export function buildCramPlan(areas: WeakArea[], topics: Topic[], minutes: number, testDate: string | null = null, now = Date.now()): StudyAction[] {
   const budget=[15,30,60,120].includes(minutes)?minutes:30;
-  const ranked=topics.some(t=>t.canonical)?orderCanonicalTopics(topics,'cram',now):areas.length?areas.map(a=>a.topic):[...topics].sort((a,b)=>b.priority-a.priority);
+  const preferred=topics.some(t=>t.canonical)?orderCanonicalTopics(topics,'cram',now):areas.length?areas.map(a=>a.topic):[...topics].sort((a,b)=>b.priority-a.priority);
+  const ranked=[...preferred,...topics.filter(t=>!preferred.some(p=>p.id===t.id))];
   if (!ranked.length) return [];
-  const chosen=ranked.slice(0,Math.min(ranked.length,budget===15?2:budget===30?3:budget===60?5:8));
-  const recallMinutes=budget===15?2:budget===30?3:5;
-  const daysToTest=testDate?(Date.parse(testDate)-now)/DAY:null;
-  const imminent=daysToTest!==null && daysToTest>=-1 && daysToTest<=2;
-  const quizMinutes=Math.min(25,Math.max(4,Math.round(budget*(imminent?.35:.25))));
-  let studyMinutes=budget-recallMinutes-quizMinutes;
-  const actions: StudyAction[]=chosen.map((topic,index)=>{
-    const allocated=Math.floor(studyMinutes/(chosen.length-index)); studyMinutes-=allocated;
-    const area=areas.find(a=>a.topic.id===topic.id);
-    return { key:`learn:${topic.id}`, mode:'learn', title:topic.title, topicId:topic.id, minutes:allocated,
-      reason:area?.reasons[0]??'Refresh a high-priority topic from your materials.' };
+  // Cram is a continuous reading sprint. Keep every selected topic, ordered
+  // by the same weakness signal as the study plan; no formative checks here.
+  let remaining=Math.max(budget,ranked.length);
+  return ranked.map((topic,index):StudyAction=>{
+    const allocated=Math.floor(remaining/(ranked.length-index));
+    remaining-=allocated;
+    return {key:`learn:${topic.id}`,mode:'learn',title:topic.title,topicId:topic.id,minutes:allocated,reason:''};
   });
-  actions.push({key:'quiz:mixed',mode:'quiz',title:'Check your weakest topic',topicId:chosen[0].id,minutes:quizMinutes,reason:imminent?'Your test is close: spend more of this session checking recall without notes.':'Try questions without looking at your notes.'});
-  actions.push({key:'cards:recall',mode:'cards',title:'Rapid recall',topicId:chosen[0].id,minutes:recallMinutes,reason:'Review due cards; missed cards return sooner.'});
-  return actions;
 }
 
 export function buildStudyPlan(args: { topics: Topic[]; areas: WeakArea[]; testDate: string | null; cardsDue: number; events: PlanEvent[]; now?: number }): PlanDay[] {

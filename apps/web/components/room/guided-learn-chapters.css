@@ -727,7 +727,7 @@
 .learnSourceFormatted .learnSourceParagraph {
   font-size: clamp(.98rem, 1.4vw, 1.09rem);
   line-height: 1.55;
-  max-width: 70ch;
+  max-width: none;
 }
 .learnSourceFormatted .learnSourceFacts {
   display: grid;

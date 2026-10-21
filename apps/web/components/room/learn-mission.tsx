@@ -7,7 +7,7 @@ import { MissionControlIcon } from "./mission-control-icon";
 import { LearnProgressGlow } from "./learn-progress-glow";
 import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
-import { missionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
+import { missionBeats, supplementalMissionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -82,6 +82,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [shown, setShown] = useState(false);
   const [helpUsed, setHelpUsed] = useState(false);
   const [spokenDraft, setSpokenDraft] = useState("");
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [sourceOpen, setSourceOpen] = useState(false);
   // The original synthetic Guided Learn fixture stays pixel-for-pixel unchanged.
   const [journalOpen, setJournalOpen] = useState(roomId !== "fixture" || previewJournal);
@@ -211,11 +212,16 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   // silently replay the preceding activity (and force duplicate Continue).
   const beats = proposedBeats.length === 4 ? proposedBeats : [];
   const step = mission ? lessonBeatIndex(mission.phase, beats.length) : null;
-  const beat = step === null ? undefined : beats[step];
+  const extra = lines && beats.length ? supplementalMissionBeats(objectiveSource, lines.sentences, lines.target, explainLevel) : [];
+  const phaseQuestions = step === null ? [] : [
+    beats[step],
+    ...(step === 0 ? [] : extra.filter((_, index) => index % 3 === step - 1))
+  ];
+  const beat = phaseQuestions[Math.min(questionIndex, phaseQuestions.length - 1)];
   const passageKey = `${explainLevel}|${objectiveSource}|${snapshot?.source?.excerpt ?? ""}`;
   // A saved phase, rather than a guessed grade or a local answer selection,
   // is the source of truth for each substantial visible progress jump.
-  const progress = integratedJourney && mission ? learnPhaseProgress(mission.phase)
+  const progress = integratedJourney && mission ? Math.min(100, learnPhaseProgress(mission.phase) + Math.round(questionIndex / Math.max(1, phaseQuestions.length) * 18))
     : beats.length && step !== null ? Math.round(((step + (beat?.kind === "read" || shown ? 1 : 0.35)) / beats.length) * 100) : 16;
   const phaseHeat = mission ? LEARN_PROGRESS_HEAT[mission.phase] : LEARN_PROGRESS_HEAT.brief;
   useEffect(() => {
@@ -227,11 +233,19 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const hit = Boolean(beat && beat.kind !== "read" && shown && beatHit(beat, picked));
 
   useEffect(() => {
+    setQuestionIndex(0);
     setPicked([]);
     setShown(false);
     setHelpUsed(false);
     setSpokenDraft("");
   }, [passageKey, mission?.phase]);
+
+  useEffect(() => {
+    setPicked([]);
+    setShown(false);
+    setHelpUsed(false);
+    setSpokenDraft("");
+  }, [questionIndex]);
 
   function play(index: number) {
     if (shown || !beat || beat.kind === "read") return;
@@ -243,6 +257,10 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
 
   function advanceLevel() {
     if (!mission || mission.paused || mission.phase === "done") return;
+    if (questionIndex + 1 < phaseQuestions.length) {
+      setQuestionIndex((index) => index + 1);
+      return;
+    }
     // The server advances the source-bound cursor. UI does not own progression.
     void act("advance", formativeReflection(mission.phase, shown, hit && !helpUsed));
   }
@@ -362,7 +380,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
             <SourceReading text={reading} topic={currentTopic?.title} />
           </div> : <p className="learnLine">{beat.body}</p>)}
           <div className="learnLessonAudio" role="group" aria-label="Optional audio help">
-            <ReadAloudControl key={mission?.phase} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
+            <ReadAloudControl key={`${mission?.phase}:${questionIndex}`} text={beat.kind === "read" ? reading : [beat.prompt, ...("options" in beat ? beat.options : [])].join(". ")} label={introduction ? "Hear the verified source passage" : "Hear this teaching step"} />
             {beat.kind !== "read" && <div className="learnOptionalVoice">
               <SpeechAnswerControl onUse={(text) => setSpokenDraft(text)} />
               <span className="learnVoiceExplanation">Speak an answer draft</span>
@@ -428,8 +446,8 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
       <button className="ghostButton" type="button" onClick={closeSource}>Back to lesson</button>
     </dialog>}
     {((mission && (ready || snapshot?.sourceCurrent === false || ((!fixture || previewJournal) && (mission.paused || mission.phase === "done")))) || (error && !mission)) && <div className="learnActionDock" role="group" aria-label="Lesson actions">
-      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || mission.phase === "brief"}
-        onClick={() => void act("back")} aria-label="Previous lesson step" title="Previous step">
+      {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockBack learnIconKey" type="button" disabled={busy || (mission.phase === "brief" && questionIndex === 0)}
+        onClick={() => questionIndex > 0 ? setQuestionIndex((index) => index - 1) : void act("back")} aria-label="Previous lesson step" title="Previous step">
         <MissionControlIcon name="back" />
       </button>}
       {mission && !mission.paused && mission.phase !== "done" && <button className="ghostButton learnDockPause learnIconKey" type="button" disabled={busy}

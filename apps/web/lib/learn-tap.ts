@@ -117,6 +117,19 @@ export function missionBeats(objective: string, sentences: string[], target: num
   return beats;
 }
 
+/** More distinct source lines earn more guided checks; never invent a fact. */
+export function supplementalMissionBeats(objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
+  const wordCount = sentences.join(" ").split(/\s+/).length;
+  const count = Math.min(9, Math.floor(wordCount / 80), sentences.length - 1);
+  return sentences.map((sentence, index) => ({ sentence, index }))
+    .filter(({ index }) => index !== target)
+    .slice(0, count)
+    .flatMap(({ index }) => {
+      const beat = missionBeats(objective, sentences, index, level).find((item) => item.kind === "blank");
+      return beat ? [beat] : [];
+    });
+}
+
 function words(value: string): string[] {
   return value.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 3);
 }

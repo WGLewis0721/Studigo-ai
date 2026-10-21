@@ -19,7 +19,8 @@ export function ReadAloudControl({ text, label = "Read this aloud" }: { text: st
       return;
     }
     window.speechSynthesis.cancel();
-    const message = new SpeechSynthesisUtterance(text.slice(0, 2400));
+    // OCR line breaks are visual wraps, not pauses in a sentence.
+    const message = new SpeechSynthesisUtterance(text.replace(/\s+/g, " ").trim().slice(0, 2400));
     message.lang = document.documentElement.lang || navigator.language || "en-US";
     message.rate = 0.93;
     message.onend = () => { utterance.current = null; setStatus("idle"); };

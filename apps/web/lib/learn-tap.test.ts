@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { missionBeats, sourceSentences, tapCheck } from "./learn-tap";
+import { missionBeats, sourceSentences, supplementalMissionBeats, tapCheck } from "./learn-tap";
 
 test("study-guide lines stay separate instead of gluing into one sentence", () => {
   const excerpt = [
@@ -85,4 +85,11 @@ test("government guide uses an actual question, not a heading as its answer", ()
 });
 test("does not manufacture a question from OCR title-only material", () => {
   assert.equal(tapCheck("Vocabulary", ["STUDY GUIDE", "Page 2", "Contents", "Our Vocabulary"].join("\n")), null);
+});
+test("longer sourced passages offer additional distinct guided checks", () => {
+  const facts = Array.from({ length: 14 }, (_, index) => `The candidate in district ${index} made a distinct decision for the citizens on election day.`);
+  assert.equal(supplementalMissionBeats("Election", facts.slice(0, 2), 0).length, 0);
+  const checks = supplementalMissionBeats("Election", facts, 0);
+  assert.ok(checks.length >= 2 && checks.length <= 9);
+  assert.ok(checks.every((beat) => beat.kind === "blank" && facts.slice(1).some((fact) => fact.includes(beat.before))));
 });

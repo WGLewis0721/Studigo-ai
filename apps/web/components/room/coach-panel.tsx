@@ -206,6 +206,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
     if (threadRef.current) scrollPositions.current[chatMode] = threadRef.current.scrollTop;
     setPersonalizeOpen(false);
     setChatMode(mode);
+    if (mode === "learn" && (roomId === "fixture" || phase3Learn)) onViewChange("chat");
   };
 
   useEffect(() => {
@@ -875,7 +876,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
             <strong>Learn</strong><small id="studigo-learn-mode-description">Facts, with sources</small>
           </button>
         </div>
-        <div className="chatTopicRow mhChipRow">{contextControls}</div>
+        <div className="chatTopicRow mhChipRow">{guidedLearn ? null : contextControls}</div>
       </header>
     </ModeFrame>
     <div className={messages.length > 0 ? "coachMode activeSession" : "coachMode"}>
