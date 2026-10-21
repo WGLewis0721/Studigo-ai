@@ -61,17 +61,17 @@ function toVisibleMessages(thread: RestoredThread, mode: ChatMode): Message[] {
 
 function answerLabel(message: Message): string {
   const state = coachMaterialState({ content: message.content, grounded: message.grounded, streaming: message.streaming });
-  if (message.kind === "guide") return "LEARN � HOW IT WORKS";
+  if (message.kind === "guide") return "LEARN · HOW IT WORKS";
   if (message.mode === "learn") {
-    if (state === "streaming") return "LEARN � READING YOUR MATERIALS.";
+    if (state === "streaming") return "LEARN · READING YOUR MATERIALS…";
     if (message.outcome) {
       const view = learnOutcomeView(message.outcome);
-      if (view) return `LEARN � ${view.title.toUpperCase()}`;
+      if (view) return `LEARN · ${view.title.toUpperCase()}`;
     }
-    return state === "grounded" ? "LEARN � FROM YOUR MATERIALS" : "LEARN � NOT IN YOUR MATERIALS";
+    return state === "grounded" ? "LEARN · FROM YOUR MATERIALS" : "LEARN · NOT IN YOUR MATERIALS";
   }
-  if (state === "streaming") return "COACH � THINKING.";
-  return state === "insufficient" ? "COACH � NEEDS MORE MATERIAL" : "COACH � PRACTICE";
+  if (state === "streaming") return "COACH · THINKING…";
+  return state === "insufficient" ? "COACH · NEEDS MORE MATERIAL" : "COACH · PRACTICE";
 }
 
 export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMaterials, onOpenPractice, view, onViewChange, focusTopicId, onClearFocus, onTopicsChanged, phase3Learn = false, explorePreview = false, requestedChat = { mode: "coach", nonce: 0 } }: {
@@ -231,7 +231,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
   const learnTopicTitle = topics.find((topic) => topic.id === learnCursorId)?.title ?? GENERAL_TOPIC.title;
   const learnLabel = lessonPositionLabel(cursors.learn, learnTopicIds.length);
   const showingOverview = chatMode === "learn" && learnView === "overview";
-  // One Learn journey in the authorized canary: source introduction  understanding check  Explore.
+  // One Learn journey in the authorized canary: source introduction → understanding check → Explore.
   // The unflagged signed-in Learn surface remains unchanged on production.
   const guidedLearn = (roomId === "fixture" || phase3Learn) && chatMode === "learn";
   const cursorLesson = learnCursorId ? lessonCache[learnCursorId] ?? null : null;
@@ -555,8 +555,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
     // and the identity of any learning evidence, so a resend of this same
     // turn is recognized server-side instead of being recorded twice.
     const interactionId = retryInteractionId ?? crypto.randomUUID();
-    // Snapshot the conversation so far - before the new user turn and the
-    // streaming placeholder are added - so the engine can dedupe a new
+    // Snapshot the conversation so far — before the new user turn and the
+    // streaming placeholder are added — so the engine can dedupe a new
     // batch of practice questions against everything already asked.
     const priorHistory = messagesByMode[messageMode]
       .filter((message) => !message.streaming && message.kind !== "guide")
@@ -824,7 +824,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
     onViewChange("chat");
   }
 
-  if (readyCount === 0 && chatMode === "coach") return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true"></span></button><button className="ghostButton" type="button" onClick={() => { switchChatMode("learn"); onViewChange("chat"); }}>Open Learn</button></div>;
+  if (readyCount === 0 && chatMode === "coach") return <div className="modeEmpty"><h3>Nothing to coach from yet.</h3><p>Upload a study guide, worksheet, notes, or slides first. The coach only teaches from this room&apos;s materials.</p><button className="buttonPrimary" type="button" onClick={onOpenMaterials}>Add materials <span aria-hidden="true">→</span></button><button className="ghostButton" type="button" onClick={() => { switchChatMode("learn"); onViewChange("chat"); }}>Open Learn</button></div>;
 
   // Chat stays the conversation view. Topics is now the topic-scope control itself,
   // so there is no second green topic dropdown competing with it.
@@ -887,7 +887,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
       </div>
       {view === "topics" ? (
         <div className="coachTopicsView">
-          {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic � Show all</button>}
+          {focusTopicId && <button type="button" className="ghostButton coachShowAll" onClick={onClearFocus}>Showing one topic · Show all</button>}
           <LearnPanel embedded roomId={roomId} topics={focusTopicId ? topics.filter((topic) => topic.id === focusTopicId) : topics} hasMaterials={readyCount > 0} onChanged={onTopicsChanged} onCoachTopic={coachTopic} onOpenMaterials={onOpenMaterials} lessonCursor={learnLabel ? { index: cursors.learn, count: learnTopicIds.length, title: learnTopicTitle } : null} />
         </div>
       ) : (
@@ -974,7 +974,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
         )}
         <div className="coachApplyActions">
           <button className="buttonPrimary" type="button" disabled={busy || coaching.applying || coaching.learnApplying || (chatMode === "coach" ? !coachDirty : !learnDirty)} onClick={() => void applySurfaceSettings()}>
-            {(chatMode === "coach" ? coaching.applying : coaching.learnApplying) ? "Recalibrating." : chatMode === "coach" ? "Apply Coach" : "Apply Learn"}
+            {(chatMode === "coach" ? coaching.applying : coaching.learnApplying) ? "Recalibrating…" : chatMode === "coach" ? "Apply Coach" : "Apply Learn"}
           </button>
           <small>{busy ? "Apply after Studigo finishes this reply." : "Apply saves the selection and starts a fresh response context for this surface."}</small>
         </div>
@@ -996,8 +996,8 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
           text={guidedLearn || chatMode !== "learn" ? null : showingOverview ? (overviewDoc?.text ?? null) : (cursorLesson?.text ?? null)}
           citations={!guidedLearn && chatMode === "learn" && !showingOverview ? (cursorLesson?.citations ?? []) : []}
           status={chatMode !== "learn" ? null : showingOverview
-            ? (overviewPhase === "loading" ? "Opening the unit overview." : overviewPhase === "error" ? "The overview could not refresh. The lesson and cursor were kept." : null)
-            : (lessonPhase === "loading" && !cursorLesson ? "Reading your materials." : lessonPhase === "loading" ? "Checking this lesson again." : lessonPhase === "error" ? "This lesson could not refresh. The last lesson is still here." : null)}
+            ? (overviewPhase === "loading" ? "Opening the unit overview…" : overviewPhase === "error" ? "The overview could not refresh. The lesson and cursor were kept." : null)
+            : (lessonPhase === "loading" && !cursorLesson ? "Reading your materials…" : lessonPhase === "loading" ? "Checking this lesson again…" : lessonPhase === "error" ? "This lesson could not refresh. The last lesson is still here." : null)}
           onRetry={chatMode !== "learn" ? undefined : showingOverview && overviewPhase === "error"
             ? () => void teachSelected("Teach my selected topics")
             : !showingOverview && lessonPhase === "error"
