@@ -86,9 +86,42 @@ try {
   const reviewCards=page.locator('details.testReview');
   assert.equal(await reviewCards.count(),4,'all four response types are reviewable');
   assert.equal(await page.locator('details.testReview[open]').count(),1,'missed question opens by default');
+  const reviewStyles=await page.evaluate(()=>{
+    const cards=Array.from(document.querySelectorAll('details.testReview'));
+    const title=cards[0].querySelector('.testReviewSummaryTitle strong');
+    const preview=cards[0].querySelector('.testReviewPromptPreview');
+    const result=cards[0].querySelector('.testReviewSummaryStatus');
+    const wrong=cards[2].querySelector('.testReviewSummaryStatus');
+    const page=document.querySelector('#studigo-test-print');
+    return {
+      correctClass:cards[0].classList.contains('testReviewCorrect'),
+      wrongClass:cards[2].classList.contains('testReviewIncorrect'),
+      green:getComputedStyle(result).backgroundColor,
+      red:getComputedStyle(wrong).backgroundColor,
+      cardGreen:getComputedStyle(cards[0]).borderLeftColor,
+      cardRed:getComputedStyle(cards[2]).borderLeftColor,
+      fontSize:parseFloat(getComputedStyle(title).fontSize),
+      fontWeight:parseInt(getComputedStyle(title).fontWeight,10),
+      previewSize:parseFloat(getComputedStyle(preview).fontSize),
+      previewText:preview.textContent,
+      previewDisplay:getComputedStyle(preview).display,
+      backdrop:getComputedStyle(page).backgroundColor
+    };
+  });
+  assert.equal(reviewStyles.correctClass,true,'right cards use correct modifier');
+  assert.equal(reviewStyles.wrongClass,true,'missed cards use incorrect modifier');
+  assert.notEqual(reviewStyles.green,reviewStyles.red,'correct and missed badges use distinct colors');
+  assert.notEqual(reviewStyles.cardGreen,reviewStyles.cardRed,'card borders show result color');
+  assert.ok(reviewStyles.fontSize>=19,'question number is easily readable');
+  assert.ok(reviewStyles.fontWeight>=700,'question number uses strong weight');
+  assert.ok(reviewStyles.previewSize>=16,'collapsed question prompt is legible');
+  assert.match(reviewStyles.previewText,/Which description matches/,'collapsed card identifies the actual question');
+  assert.notEqual(reviewStyles.previewDisplay,'none','collapsed prompt must be visible');
+  assert.notEqual(reviewStyles.backdrop,'rgb(255, 255, 255)','review uses a soft local backdrop');
   await page.getByRole('button',{name:'Expand all'}).click();
+  assert.equal(await reviewCards.first().locator('.testReviewPromptPreview').evaluate(el=>getComputedStyle(el).display),'none','expanded question does not duplicate prompt');
   assert.equal(await page.locator('details.testReview[open]').count(),4);
-  assert.equal(await reviewCards.first().locator('strong',{hasText:'description'}).count(),1,'Markdown in question is rendered');
+  assert.equal(await reviewCards.first().locator('.testReviewContent .testQuestionPrompt strong',{hasText:'description'}).count(),1,'expanded question Markdown is rendered');
   assert.equal(await reviewCards.first().locator('.testQuestionPrompt').innerText().then(text=>text.includes('**')),false,'no raw Markdown');
   assert.equal(await reviewCards.first().locator('.choiceItem').count(),2,'same answer choices as test');
   assert.equal(await reviewCards.first().locator('.choiceSelected').count(),0,'graded state replaces draft selection');
@@ -109,12 +142,14 @@ try {
     toolbar:getComputedStyle(document.querySelector('.testReviewToolbar')).display,
     title:getComputedStyle(document.querySelector('.testResultsPrintHeading')).display,
     review:getComputedStyle(document.querySelector('#studigo-test-print')).visibility,
-    shell:getComputedStyle(document.querySelector('.appRail')).display
+    shell:getComputedStyle(document.querySelector('.appRail')).display,
+    preview:getComputedStyle(document.querySelector('.testReviewPromptPreview')).display
   }));
   assert.equal(printed.toolbar,'none','print hides controls');
   assert.notEqual(printed.title,'none','print has titled report');
   assert.equal(printed.review,'visible','review must be printable');
   assert.equal(printed.shell,'none','print hides app navigation');
+  assert.equal(printed.preview,'none','print shows each full question only once');
   await page.emulateMedia({media:'screen'});
   await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
   assert.equal(await page.locator('details.testReview[open]').count(),1,'printing restores collapsed state');
