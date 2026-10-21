@@ -92,10 +92,17 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
     <div className="testReviewList">{result.reviews.map((question, index) => {
       const choiceQuestion = question.kind === "multiple_choice" || question.kind === "true_false";
       const answer = question.response?.trim() || "Unanswered";
-      return <details key={question.id} className="testReview" open={!question.is_correct}>
+      return <details key={question.id} className={`testReview ${question.is_correct ? "testReviewCorrect" : "testReviewIncorrect"}`} open={!question.is_correct}>
         <summary>
-          <span className="testReviewSummaryTitle">Question {index + 1} <small>{question.kind === "fill_blank" ? "Fill in the blank" : question.kind === "true_false" ? "True or false" : question.kind === "short_answer" ? "Short answer" : "Multiple choice"}</small></span>
-          <span className="testReviewSummaryStatus">{question.is_correct ? "Correct" : "Needs review"} · {question.score}%</span>
+          <span className="testReviewSummaryTitle">
+            <strong>Question {index + 1}</strong>
+            <small>{question.kind === "fill_blank" ? "Fill in the blank" : question.kind === "true_false" ? "True or false" : question.kind === "short_answer" ? "Short answer" : "Multiple choice"}</small>
+            <span className="testReviewPromptPreview"><RichText text={question.prompt} /></span>
+          </span>
+          <span className="testReviewSummaryStatus">
+            <span aria-hidden="true">{question.is_correct ? "✓" : "✕"}</span>
+            {question.is_correct ? "Correct" : "Needs review"} · {question.score}%
+          </span>
         </summary>
         <div className="testReviewContent">
           <TestQuestionPrompt prompt={question.prompt} kind={question.kind} />
