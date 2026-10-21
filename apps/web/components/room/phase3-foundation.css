@@ -518,7 +518,7 @@
   .roomDevice[data-ui="phase3"] .workspaceTitle strong { font-size: 1.04rem; }
   .roomDevice[data-ui="phase3"] .workspaceTitle .crumb { font-size: .57rem; }
   .roomDevice[data-ui="phase3"] .sourceCount { display: none; }
-  .roomDevice[data-ui="phase3"] .studyNavigation { height: 0; }
+  .roomDevice[data-ui="phase3"] .studyNavigation { display: contents; }
   .roomDevice[data-ui="phase3"] .studyGroups button { min-height: 50px; }
   .roomDevice[data-ui="phase3"] .modeHead { min-height: 78px; padding: 10px 15px; }
   .roomDevice[data-ui="phase3"]:has(.coachChat) .modeHead { min-height: 0; padding: 8px 14px; }
