@@ -316,3 +316,112 @@
   #studigo-test-print .sourceChipLink { color: #111 !important; box-shadow: none !important; border: 1px solid #ccc; }
   #studigo-test-print .sourceChipOpen { display: none !important; }
 }
+
+
+/* Test review legibility. Keep the rest of Studigo's visual baseline unchanged.
+   Reuse Quiz's kiwi/berry correctness tokens rather than introducing colors. */
+@media screen {
+  #studigo-test-print.roomStudioResults {
+    background: #f0f2f4;
+    padding: clamp(14px, 2.3vw, 28px);
+    border-radius: var(--r-xl);
+  }
+  #studigo-test-print .testReviewList { display: grid; gap: 12px; }
+  #studigo-test-print .testReview {
+    --review-accent: var(--ink-2);
+    --review-soft: var(--snow-2);
+    min-width: 0;
+    margin: 0;
+    padding: clamp(16px, 2vw, 22px);
+    border: 1px solid color-mix(in srgb, var(--review-accent) 23%, transparent);
+    background: var(--review-soft);
+    box-shadow: inset 5px 0 0 var(--review-accent), 0 1px 4px rgba(20, 27, 45, .035);
+  }
+  #studigo-test-print .testReviewCorrect {
+    --review-accent: var(--kiwi-ink);
+    --review-soft: linear-gradient(115deg, var(--kiwi-soft), #f8fcef);
+  }
+  #studigo-test-print .testReviewIncorrect {
+    --review-accent: var(--berry-ink);
+    --review-soft: linear-gradient(115deg, var(--berry-soft), #fff6f8);
+  }
+  #studigo-test-print .testReview summary {
+    gap: 18px;
+    min-height: 56px;
+    font-family: var(--sans);
+    color: var(--ink);
+    align-items: center;
+  }
+  #studigo-test-print .testReviewSummaryTitle {
+    display: grid;
+    gap: 5px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  #studigo-test-print .testReviewSummaryTitle strong {
+    font: 800 clamp(1.2rem, 2.2vw, 1.42rem)/1.27 var(--sans);
+    letter-spacing: -.016em;
+  }
+  #studigo-test-print .testReviewSummaryTitle small {
+    color: var(--ink-2);
+    font: 650 .98rem/1.4 var(--sans);
+  }
+  #studigo-test-print .testReviewPromptPreview {
+    margin-top: 6px;
+    font: 650 clamp(1.03rem, 1.45vw, 1.13rem)/1.5 var(--sans);
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+  }
+  #studigo-test-print .testReviewPromptPreview .richText > * { margin: 0; font: inherit; }
+  #studigo-test-print .testReviewPromptPreview .richText {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  #studigo-test-print .testReview[open] .testReviewPromptPreview { display: none; }
+  #studigo-test-print .testReviewSummaryStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 9px 12px;
+    font: 800 clamp(.88rem, 1.3vw, 1rem)/1.3 var(--sans);
+    background: var(--review-accent);
+    color: #fff;
+    white-space: nowrap;
+  }
+  #studigo-test-print .testReviewSummaryStatus > span {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  #studigo-test-print .testReviewContent {
+    border-top: 1px solid color-mix(in srgb, var(--review-accent) 20%, transparent);
+    margin-top: 12px;
+    gap: 15px;
+  }
+  #studigo-test-print .testReview .testQuestionPrompt {
+    font: 750 clamp(1.22rem, 2.1vw, 1.5rem)/1.48 var(--sans);
+    color: var(--ink);
+    letter-spacing: -.018em;
+  }
+  #studigo-test-print .testReview .testQuestionPrompt :is(p,h4) { font: inherit; line-height: inherit; }
+  #studigo-test-print .testReview :is(.testReviewAnswer, .testReviewFeedback, .testReviewExplanation) {
+    font-size: 1rem;
+    line-height: 1.58;
+    color: var(--ink);
+  }
+  #studigo-test-print .testReview :is(.choiceItem, .testReviewWritten) {
+    font-size: 1rem;
+  }
+  #studigo-test-print .testReview .choiceItem { background-color: rgba(255,255,255,.86); }
+  #studigo-test-print .testReview .choiceCorrect { background: var(--kiwi-soft); }
+  #studigo-test-print .testReview .choiceWrong { background: var(--berry-soft); }
+}
+@media screen and (max-width: 600px) {
+  #studigo-test-print .testReview summary { align-items: flex-start; gap: 10px; }
+  #studigo-test-print .testReviewSummaryStatus { padding: 8px 10px; font-size: .87rem; }
+  #studigo-test-print .testReviewSummaryTitle strong { font-size: 1.2rem; }
+  #studigo-test-print .testReviewSummaryTitle small { font-size: .94rem; }
+}
