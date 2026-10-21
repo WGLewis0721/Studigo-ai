@@ -72,7 +72,7 @@ export function ChipSelect({
   return (
     <label className="chatTopic mhSelect">
       <span className="chatTopicName">{label}</span>
-      <span aria-hidden="true">▾</span>
+      <span aria-hidden="true">?</span>
       <select aria-label={ariaLabel} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
         {children}
       </select>
@@ -127,6 +127,7 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   const [desktop, setDesktop] = useState(false);
   const [activity, setActivity] = useState(0);
   const [focused, setFocused] = useState(false);
+  const [pointerInside, setPointerInside] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
   const controlsId = useId();
 
@@ -151,13 +152,13 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   }, [tone]);
 
   useEffect(() => {
-    if (!desktop || collapsed || focused) return;
+    if (!desktop || collapsed || focused || pointerInside) return;
     const timer = window.setTimeout(() => {
       setHasMoved(true);
       setCollapsed(true);
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [desktop, collapsed, focused, activity, tone]);
+  }, [desktop, collapsed, focused, pointerInside, activity, tone]);
 
   function showControls() {
     if (!desktop) return;
@@ -172,6 +173,8 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         id={controlsId}
         aria-hidden={collapsed || undefined}
         inert={collapsed}
+        onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true); }}
+        onPointerLeave={() => setPointerInside(false)}
         onPointerMove={() => setActivity((n) => n + 1)}
         onPointerDown={() => setActivity((n) => n + 1)}
         // Pointer-selected Coach/Practice tabs keep DOM focus after navigation,
