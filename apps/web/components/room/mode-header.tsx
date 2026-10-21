@@ -72,7 +72,7 @@ export function ChipSelect({
   return (
     <label className="chatTopic mhSelect">
       <span className="chatTopicName">{label}</span>
-      <span aria-hidden="true">?</span>
+      <span aria-hidden="true">▾</span>
       <select aria-label={ariaLabel} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
         {children}
       </select>
