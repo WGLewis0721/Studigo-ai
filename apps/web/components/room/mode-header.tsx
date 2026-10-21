@@ -154,11 +154,17 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   useEffect(() => {
     if (!desktop || collapsed || focused || pointerInside) return;
     const timer = window.setTimeout(() => {
+      // Opening the drawer removes its handle under the pointer. Browser hover
+      // can move to a control without a new enter event on the outer frame.
+      if (document.getElementById(controlsId)?.matches(":hover")) {
+        setPointerInside(true);
+        return;
+      }
       setHasMoved(true);
       setCollapsed(true);
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [desktop, collapsed, focused, pointerInside, activity, tone]);
+  }, [desktop, collapsed, focused, pointerInside, activity, tone, controlsId]);
 
   function showControls() {
     if (!desktop) return;
@@ -175,14 +181,19 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         id={controlsId}
         aria-hidden={collapsed || undefined}
         inert={collapsed}
-        onPointerMove={() => setActivity((n) => n + 1)}
+        onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true); }}
+        onPointerMove={(event) => {
+          if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true);
+          setActivity((n) => n + 1);
+        }}
         onPointerDown={() => setActivity((n) => n + 1)}
+        onChangeCapture={() => setFocused(false)}
         // Pointer-selected Coach/Practice tabs keep DOM focus after navigation,
         // but should not suspend the idle drawer indefinitely. Only visible
         // keyboard focus holds it open; pointer activity already resets 3s.
         onFocusCapture={(event) => {
           const target = event.target;
-          setFocused(target instanceof HTMLElement && target.matches(":focus-visible"));
+          setFocused(target instanceof HTMLElement && (target.matches(":focus-visible") || target.matches("select")));
         }}
         onBlurCapture={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);

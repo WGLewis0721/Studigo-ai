@@ -90,6 +90,19 @@ try {
       const openHeight = await frame.evaluate(el => el.getBoundingClientRect().height);
       assert.ok(openHeight > closedHeight + 25, `drawer gives content real vertical space: ${JSON.stringify({width,mode,closedHeight,openHeight})}`);
       await page.screenshot({ path: `${output}/${width}-${mode}-open.png`, animations: "disabled" });
+      if (mode === "coach") {
+        // Reopen from the handle, then dwell over an option. Removing the
+        // handle must not leave a stale timer that closes under the pointer.
+        await frame.locator(".modeHead .chatModes button").first().hover();
+        await page.waitForTimeout(3300);
+        assert.equal(await frame.getAttribute("data-collapsed"), "false",
+          "controls stay open while the pointer is over an option after opening");
+        await page.mouse.move(1, 1);
+        await page.waitForFunction(
+          () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
+          undefined, { timeout: 4800 }
+        );
+      }
       const fit = await page.evaluate(() => ({
         horizontalOverflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
         deviceBottom: document.querySelector(".roomDevice")?.getBoundingClientRect().bottom,
