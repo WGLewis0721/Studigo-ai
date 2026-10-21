@@ -1,6 +1,6 @@
 import { guardAiRequest } from "@/lib/ai-admission";
 import { generateQuizQuestions } from '@studigo/ai';
-import { parseAssessmentModes, TEST_QUESTION_COUNTS } from '@/lib/practice-assessment';
+import { parseAssessmentModes, TEST_QUESTION_COUNTS, type AssessmentMode } from '@/lib/practice-assessment';
 import { requireApiUser } from '@/lib/auth';
 import { createServiceSupabaseClient } from '@/lib/supabase/service';
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/retrieval';
@@ -53,7 +53,7 @@ async function guardedPost(request: Request) {
         // recall and explanation rather than twenty of the same shape.
         const kind=TEST_KIND_ROTATION[(offset+index)%TEST_KIND_ROTATION.length];
         const generated=(await generateQuizQuestions({chunks,topicTitle:topic.title,objective:topic.objective??undefined,count,...(requestedKinds?{kinds:requestedKinds}:{kind})})).filter(q=>
-          (requestedKinds?requestedKinds.includes(q.kind as (typeof requestedKinds)[number]):q.kind===kind)&&q.sourceMarkers.length>0
+          (requestedKinds?requestedKinds.includes(q.kind as AssessmentMode):q.kind===kind)&&q.sourceMarkers.length>0
         ).slice(0,count);
         if(generated.length!==count) throw new Error(`Could not produce enough grounded questions for “${topic.title}”. Try again.`);
         return generated.map(q=>({topic_id:topic.id,kind:q.kind,prompt:q.prompt,choices:q.choices,correct_choice:q.correctChoice,
