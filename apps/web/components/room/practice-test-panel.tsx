@@ -1,5 +1,8 @@
 "use client";
 import { AnswerChoices } from "./answer-choices";
+import { AssessmentModePicker } from "./assessment-mode-picker";
+import { ReadAloudControl } from "./read-aloud-control";
+import { ASSESSMENT_MODES, TEST_QUESTION_COUNTS, spokenQuestion, type AssessmentMode } from "@/lib/practice-assessment";
 import { ActivityProgress } from "./activity-progress";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createGestureBook, operationHeaders } from '@/lib/ai-operation-client';
@@ -10,7 +13,8 @@ import { TopicReadout } from './topic-readout';
 import type { Topic } from '@/lib/rooms';
 import './phase3-rooms.css';
 type Answer={selectedChoice:number|null;response:string};
-type Question={id:string;kind:'multiple_choice'|'short_answer';prompt:string;choices:string[];topic_id:string};
+type Question={id:string;kind:'multiple_choice'|'short_answer'|'true_false'|'fill_blank';prompt:string;choices:string[];topic_id:string};
+const usesChoices=(kind:Question['kind'])=>kind==='multiple_choice'||kind==='true_false';
 type Review=Question&{score:number;is_correct:boolean;feedback:string;explanation:string;expected_answer:string|null;correct_choice:number|null;citations:Citation[];response:string|null;selected_choice:number|null};
 type Result={score:number;questionCount:number;topics:Array<{topic_id:string;title:string;questions:number;score:number;misses:number}>;reviews:Review[]};
 type Test={id:string;status:'draft'|'submitted';created_at:string;draft_answers?:Record<string,Answer>;result:Result|null;topic_snapshot:Array<{id:string;title:string;questions:number}>};
@@ -18,6 +22,7 @@ type Test={id:string;status:'draft'|'submitted';created_at:string;draft_answers?
 export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReviewTopic}:{roomId:string;topicCount:number;topics?:Topic[];onGraded:()=>void;onReviewTopic:(id:string)=>void}) {
   const [tests,setTests]=useState<Test[]>([]);const [active,setActive]=useState<Test|null>(null);const [questions,setQuestions]=useState<Question[]>([]);
   const [answers,setAnswers]=useState<Record<string,Answer>>({});const [index,setIndex]=useState(0);const [count,setCount]=useState(10);
+  const [modes,setModes]=useState<AssessmentMode[]>([...ASSESSMENT_MODES]);
   const [busy,setBusy]=useState(false);const [error,setError]=useState<string|null>(null);const [saveState,setSaveState]=useState('');const [confirmSubmit,setConfirmSubmit]=useState(false);
   const operation=useRef(false);const saveChain=useRef<Promise<void>>(Promise.resolve());const saveVersion=useRef(0);const gestures=useRef(createGestureBook());
   useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(saveState==='Saving…'||saveState.startsWith('Draft not saved'))event.preventDefault();};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[saveState]);
@@ -29,7 +34,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     catch(e){setError(e instanceof Error?e.message:'Could not open test.');}finally{setBusy(false);}
   }
   async function build() {
-    if(operation.current)return;const body=JSON.stringify({roomId,count});const attempt=gestures.current.begin('practice-build',body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
+    if(operation.current||!modes.length)return;const body=JSON.stringify({roomId,count,kinds:modes});const attempt=gestures.current.begin('practice-build',body);if(!attempt.started)return;operation.current=true;setBusy(true);setError(null);
     try {const r=await fetch('/api/practice-tests',{method:'POST',headers:operationHeaders(attempt.id),body});gestures.current.finish('practice-build',r.status);const p=await r.json();if(r.status===202||r.status===409||!r.ok)throw new Error(p.error);await open(p.testId);await loadList();}
     catch(e){gestures.current.abort('practice-build');setError(e instanceof Error?e.message:'Could not build test.');}finally{operation.current=false;setBusy(false);}
   }
@@ -52,7 +57,7 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
       setActive({...active,status:'submitted',result:p.result});setConfirmSubmit(false);onGraded();await loadList();
     }catch(e){gestures.current.abort(`practice-submit:${active.id}`);setError(e instanceof Error?e.message:'Submission failed. Retry with your answers intact.');}finally{operation.current=false;setBusy(false);}
   }
-  const answered=(q:Question)=>q.kind==='multiple_choice'?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
+  const answered=(q:Question)=>usesChoices(q.kind)?Number.isInteger(answers[q.id]?.selectedChoice):Boolean(answers[q.id]?.response.trim());
   const completed=questions.filter(answered).length;const current=questions[index];
   if(active?.result) return <section className="testResults roomStudioResults">
     <HeaderMascot state={active.result.score>=80?'celebrate':'explain'}/>
@@ -60,15 +65,17 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
     <div className="testScore"><strong>{active.result.score}%</strong><span>{active.result.questionCount} questions · full test submitted</span></div>
     <div className="testTopicResults">{active.result.topics.map(t=><div key={t.topic_id}><strong>{t.title}</strong><span>{t.score}% · {t.misses} missed / {t.questions}</span><button onClick={()=>onReviewTopic(t.topic_id)}>{t.misses?'Review concept':'Keep practicing'} →</button></div>)}</div>
     <h3>Review your answers and sources.</h3>
-    {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {q.kind==='multiple_choice'?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {q.kind==='multiple_choice'?(q.correct_choice===null?'Not available':q.choices[q.correct_choice]??'Not available'):q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><CitationChips citations={q.citations??[]}/></details>)}
+    {active.result.reviews.map((q,i)=><details key={q.id} className="testReview" open={!q.is_correct}><summary><span>{i+1}. {q.prompt}</span><b>{q.score}%</b></summary><p><strong>Your answer:</strong> {usesChoices(q.kind)?(q.selected_choice===null?'Unanswered':q.choices[q.selected_choice]??'Unanswered'):q.response||'Unanswered'}</p><p><strong>Expected:</strong> {usesChoices(q.kind)?(q.correct_choice===null?'Not available':q.choices[q.correct_choice]??'Not available'):q.expected_answer}</p><p>{q.feedback}</p><p>{q.explanation}</p><ReadAloudControl text={[q.feedback,q.explanation].filter(Boolean).join(' ')} label="Read review feedback aloud"/><CitationChips citations={q.citations??[]}/></details>)}
     <button className="buttonPrimary" onClick={()=>{setActive(null);setQuestions([]);}}>Back to practice tests →</button>
   </section>;
   if(active&&current) return <section className="testSession roomStudioTest">
     <div className="testSessionTop"><div><span className="tinyLabel">INDEPENDENT REHEARSAL / ANSWERS AFTER SUBMISSION</span><h2>Question {index+1} of {questions.length}</h2></div><span role="status">{completed}/{questions.length} answered · {saveState}</span></div>
     <ActivityProgress current={index+1} total={questions.length} completed={completed} label="Question"/>
     <nav className="testQuestionNav" aria-label="Test questions">{questions.map((q,i)=><button key={q.id} disabled={busy} aria-current={i===index?'step':undefined} className={answered(q)?'answered':''} aria-label={`Question ${i+1}${answered(q)?', answered':', unanswered'}`} onClick={()=>setIndex(i)}>{i+1}</button>)}</nav>
-    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':'MULTIPLE CHOICE'}</span><h3>{current.prompt}</h3><p className="roomStudioInstruction">This is a draft until you submit the full test. You can revisit any question.</p>
-      {current.kind==='multiple_choice'?<AnswerChoices choices={current.choices} selected={answers[current.id]?.selectedChoice??null} disabled={busy} onSelect={i=>change(current.id,{selectedChoice:i,response:''})}/>:
+    <div className="testQuestion"><span className="tinyLabel">{current.kind==='short_answer'?'SHORT RESPONSE':current.kind==='fill_blank'?'FILL IN THE BLANK':current.kind==='true_false'?'TRUE OR FALSE':'MULTIPLE CHOICE'}</span><h3>{current.kind==='fill_blank'?current.prompt.replace('____','______'):current.prompt}</h3>
+      <ReadAloudControl key={current.id} text={spokenQuestion(current)} label="Read question and choices aloud"/><p className="roomStudioInstruction">This is a draft until you submit the full test. You can revisit any question.</p>
+      {usesChoices(current.kind)?<AnswerChoices choices={current.choices} binary={current.kind==='true_false'} selected={answers[current.id]?.selectedChoice??null} disabled={busy} onSelect={i=>change(current.id,{selectedChoice:i,response:''})}/>:
+      current.kind==='fill_blank'?<input className="blankInput" aria-label="Fill in the blank" maxLength={120} autoComplete="off" disabled={busy} value={answers[current.id]?.response??''} placeholder="Missing word or phrase…" onChange={e=>change(current.id,{selectedChoice:null,response:e.target.value})}/>:
       <textarea aria-label="Your answer" rows={5} maxLength={4000} disabled={busy} value={answers[current.id]?.response??''} placeholder="Explain the idea in your own words…" onChange={e=>change(current.id,{selectedChoice:null,response:e.target.value})}/>}
     </div>
     {error&&<p role="alert" className="formError">{error}</p>}
@@ -79,11 +86,12 @@ export function PracticeTestPanel({roomId,topicCount,topics=[],onGraded,onReview
   </section>;
   return <section className="practiceTestSetup roomStudioSetup">
     <div className="setupMain">
-    <HeaderChip><ChipSelect label={`${count} questions`} ariaLabel="Number of test questions" value={String(count)} onChange={v=>setCount(Number(v))} disabled={busy}>{[6,10,15,20].map(n=><option key={n} value={n}>{n} questions</option>)}</ChipSelect></HeaderChip>
+    <HeaderChip><ChipSelect label={`${count} questions`} ariaLabel="Number of test questions" value={String(count)} onChange={v=>setCount(Number(v))} disabled={busy}>{TEST_QUESTION_COUNTS.map(n=><option key={n} value={n}>{n} questions</option>)}</ChipSelect></HeaderChip>
     <div className="setupHeading"><span className="tinyLabel">PRACTICE STUDIO / FULL REHEARSAL</span><h3>{count} questions</h3></div>
     <p className="setupLead">A full test, graded when you submit.</p>
     <p className="hintText">Covers up to {Math.min(count,topicCount)} of {topicCount} current topics. Choose more questions to cover a larger scope.</p>
-    <button className="buttonPrimary" disabled={busy||topicCount<2} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>
+    <AssessmentModePicker value={modes} onChange={setModes} disabled={busy} />
+    <button className="buttonPrimary" disabled={busy||topicCount<2||modes.length===0} onClick={()=>void build()}>{busy?'Building a grounded test…':'Build practice test'} <span>→</span></button>
     {topicCount<2&&<p className="hintText">Add a study guide with at least two topics first. Quiz works for a single topic.</p>}
     {error&&<p className="formError" role="alert">{error}</p>}
     </div>
