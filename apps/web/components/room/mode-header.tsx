@@ -167,14 +167,14 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
   }
 
   return (
-    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : "false"} data-drawer-animated={hasMoved ? "true" : undefined} ref={frameRef}>
+    <div className="modeFrame" data-tone={tone} data-collapsed={collapsed ? "true" : "false"} data-drawer-animated={hasMoved ? "true" : undefined} ref={frameRef}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true); }}
+      onPointerLeave={() => setPointerInside(false)}>
       <div
         className="modeStrip"
         id={controlsId}
         aria-hidden={collapsed || undefined}
         inert={collapsed}
-        onPointerEnter={(event) => { if (event.pointerType === "mouse" || event.pointerType === "pen") setPointerInside(true); }}
-        onPointerLeave={() => setPointerInside(false)}
         onPointerMove={() => setActivity((n) => n + 1)}
         onPointerDown={() => setActivity((n) => n + 1)}
         // Pointer-selected Coach/Practice tabs keep DOM focus after navigation,
