@@ -29,12 +29,18 @@ async function guardedPost(request: Request) {
 
   const count = Math.min(MAX_QUESTIONS, Math.max(1, Math.round(body?.count ?? 5)));
 
-  // An unset or unrecognized list means a mixed set, which is the default.
-  const requestedKinds = Array.isArray(body?.kinds)
-    ? (body.kinds.filter((kind): kind is QuestionKind =>
-        (QUESTION_KINDS as readonly string[]).includes(kind as string)
-      ) as QuestionKind[])
-    : undefined;
+  // Preserve mixed sets for old clients, but never silently replace a learner's
+  // explicit selection with an unwanted question type.
+  const hasKinds = body?.kinds !== undefined;
+  const validKinds = Array.isArray(body?.kinds)
+    && body.kinds.length > 0
+    && body.kinds.length <= QUESTION_KINDS.length
+    && body.kinds.every((kind: unknown) => typeof kind === "string" && (QUESTION_KINDS as readonly string[]).includes(kind))
+    && new Set(body.kinds).size === body.kinds.length;
+  if (hasKinds && !validKinds) {
+    return Response.json({ error: "Select one or more valid question types." }, { status: 400 });
+  }
+  const requestedKinds = validKinds ? body!.kinds as QuestionKind[] : undefined;
 
   type QuizTopic = { id: string; title: string; objective: string | null; key_terms: string[] };
   let topic: QuizTopic | null = null;
