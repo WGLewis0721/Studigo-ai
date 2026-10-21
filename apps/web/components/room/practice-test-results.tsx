@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { PracticeTestPrintSheet } from "./practice-test-print-sheet";
 import { AnswerChoices } from "./answer-choices";
 import { ReadAloudControl } from "./read-aloud-control";
 import { TestQuestionPrompt } from "./test-question-prompt";
@@ -39,34 +41,15 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
   onBack: () => void;
 }) {
   const root = useRef<HTMLElement>(null);
-  const printSnapshot = useRef<boolean[] | null>(null);
+  const [printHost, setPrintHost] = useState<HTMLElement | null>(null);
+  useEffect(() => { setPrintHost(document.body); }, []);
   const details = () => Array.from(root.current?.querySelectorAll<HTMLDetailsElement>("details.testReview") ?? []);
 
   function expandAll(open: boolean) {
     details().forEach((item) => { item.open = open; });
   }
-  function preparePrint() {
-    if (printSnapshot.current !== null) return;
-    const items = details();
-    printSnapshot.current = items.map((item) => item.open);
-    items.forEach((item) => { item.open = true; });
-  }
-  function restorePrint() {
-    if (printSnapshot.current === null) return;
-    const snapshot = printSnapshot.current;
-    details().forEach((item, index) => { item.open = snapshot[index] ?? false; });
-    printSnapshot.current = null;
-  }
-  useEffect(() => {
-    window.addEventListener("beforeprint", preparePrint);
-    window.addEventListener("afterprint", restorePrint);
-    return () => {
-      window.removeEventListener("beforeprint", preparePrint);
-      window.removeEventListener("afterprint", restorePrint);
-    };
-  }, []);
-
-  return <section id="studigo-test-print" ref={root} className="testResults roomStudioResults">
+  return <>
+    <section id="studigo-test-print" ref={root} className="testResults roomStudioResults">
     <HeaderMascot state={result.score >= 80 ? "celebrate" : "explain"} />
     <div className="testResultsPrintHeading">
       <h2>Studigo · Practice test results</h2>
@@ -83,10 +66,7 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
       <div className="testReviewControls" role="group" aria-label="Question review controls">
         <button type="button" onClick={() => expandAll(true)}>Expand all</button>
         <button type="button" onClick={() => expandAll(false)}>Collapse all</button>
-        <button type="button" className="buttonPrimary" onClick={() => {
-          preparePrint();
-          window.print();
-        }}>Print results</button>
+        <button type="button" className="buttonPrimary" disabled={!printHost} onClick={() => window.print()}>Print results</button>
       </div>
     </div>
     <div className="testReviewList">{result.reviews.map((question, index) => {
@@ -127,5 +107,7 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
       </details>;
     })}</div>
     <button className="buttonPrimary testReviewBack" type="button" onClick={onBack}>Back to practice tests →</button>
-  </section>;
+    </section>
+    {printHost && createPortal(<PracticeTestPrintSheet result={result} createdAt={createdAt} />, printHost)}
+  </>;
 }

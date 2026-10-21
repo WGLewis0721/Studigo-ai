@@ -431,3 +431,69 @@
 @media print {
   #studigo-test-print .testReviewPromptPreview { display: none !important; }
 }
+
+
+/* A body-level print portal bypasses the Study Room's fixed-height, scroll-clipped
+   shell. This is intentionally isolated from the screen review design. */
+.studigoPrintSheet { display: none; }
+
+@media print {
+  @page { margin: 14mm; }
+  body:has(> #studigo-print-sheet) { display: block !important; min-height: 0 !important; background: #fff !important; }
+  body:has(> #studigo-print-sheet) > :not(#studigo-print-sheet) { display: none !important; }
+  body:has(> #studigo-print-sheet) #studigo-print-sheet,
+  body:has(> #studigo-print-sheet) #studigo-print-sheet * {
+    visibility: visible !important;
+  }
+  body:has(> #studigo-print-sheet) #studigo-print-sheet {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    color: #171b27 !important;
+    background: #fff !important;
+    font: 11pt/1.45 Arial, sans-serif !important;
+  }
+  #studigo-print-sheet :is(h1,h2,h3,p) { color: #171b27 !important; break-after: avoid; }
+  #studigo-print-sheet .studigoPrintHeader { margin: 0 0 12pt; padding-bottom: 10pt; border-bottom: 2px solid #252c3e; }
+  #studigo-print-sheet h1 { font-size: 19pt; margin: 0 0 5pt; }
+  #studigo-print-sheet h2 { font-size: 14pt; margin: 12pt 0 6pt; }
+  #studigo-print-sheet h3 { font-size: 12pt; margin: 0; }
+  #studigo-print-sheet p { margin: 3pt 0 6pt; }
+  #studigo-print-sheet .studigoPrintTopics { margin-bottom: 12pt; }
+  #studigo-print-sheet .studigoPrintQuestion {
+    display: block;
+    padding: 9pt 11pt;
+    border: 1px solid #c8cbd3;
+    border-radius: 5pt;
+    margin: 0 0 10pt;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+  #studigo-print-sheet .studigoPrintQuestionHeading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12pt;
+    margin-bottom: 7pt;
+    padding-bottom: 4pt;
+    border-bottom: 1px solid #dedfe3;
+  }
+  #studigo-print-sheet .richText :is(p,li,h4) { color: #171b27 !important; font-size: 11pt; line-height: 1.45; }
+  #studigo-print-sheet .richText :is(p,h4) { margin: 0 0 5pt; }
+  #studigo-print-sheet .studigoPrintChoices { padding-left: 22pt; margin: 5pt 0 8pt; }
+  #studigo-print-sheet .studigoPrintChoices li { margin: 3pt 0; padding-left: 3pt; }
+  #studigo-print-sheet .studigoPrintResponse { margin: 4pt 0; overflow-wrap: anywhere; }
+  #studigo-print-sheet .studigoPrintResponse .richText { display: inline; }
+  #studigo-print-sheet .studigoPrintResponse .richText p { display: inline; }
+  #studigo-print-sheet .studigoPrintExplanation { margin-top: 6pt; }
+  #studigo-print-sheet .studigoPrintSources { font-size: 9pt; }
+}

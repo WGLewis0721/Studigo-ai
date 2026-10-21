@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 const origin=process.env.PHASE3_VISUAL_BASE_URL??'http://127.0.0.1:3000';
 const output='artifacts/phase3-visual/v3';
@@ -134,25 +135,37 @@ try {
   assert.equal(await page.locator('details.testReview[open]').count(),0);
   await reviewCards.nth(1).locator('summary').click();
   assert.equal(await page.locator('details.testReview[open]').count(),1,'individual question opens');
+  // The printable result is a standalone body-level document. Its content
+  // must survive PDF pagination even if the interactive cards are collapsed
+  // inside a scrolled, clipped Study Room.
   await page.evaluate(()=>{window.print=()=>{};});
   await page.getByRole('button',{name:'Print results'}).click();
-  assert.equal(await page.locator('details.testReview[open]').count(),4,'print expands every question including collapsed ones');
+  assert.equal(await page.locator('details.testReview[open]').count(),1,'printing preserves the interactive expansion state');
+  assert.equal(await page.locator('#studigo-print-sheet .studigoPrintQuestion').count(),4,'print contains all reviewed questions');
   await page.emulateMedia({media:'print'});
   const printed=await page.evaluate(()=>({
     toolbar:getComputedStyle(document.querySelector('.testReviewToolbar')).display,
-    title:getComputedStyle(document.querySelector('.testResultsPrintHeading')).display,
-    review:getComputedStyle(document.querySelector('#studigo-test-print')).visibility,
-    shell:getComputedStyle(document.querySelector('.appRail')).display,
+    sheet:getComputedStyle(document.querySelector('#studigo-print-sheet')).display,
+    sheetVisible:getComputedStyle(document.querySelector('#studigo-print-sheet')).visibility,
+    shell:getComputedStyle(document.querySelector('.appShell')).display,
     preview:getComputedStyle(document.querySelector('.testReviewPromptPreview')).display
   }));
-  assert.equal(printed.toolbar,'none','print hides controls');
-  assert.notEqual(printed.title,'none','print has titled report');
-  assert.equal(printed.review,'visible','review must be printable');
-  assert.equal(printed.shell,'none','print hides app navigation');
-  assert.equal(printed.preview,'none','print shows each full question only once');
+  assert.equal(printed.toolbar,'none','print hides screen controls');
+  assert.equal(printed.sheet,'block','print-only sheet is in normal document flow');
+  assert.equal(printed.sheetVisible,'visible','print-only sheet is not hidden by sitewide print rules');
+  assert.equal(printed.shell,'none','print hides the Study Room shell');
+  assert.equal(printed.preview,'none','print does not duplicate collapsed previews');
+  const pdf=await page.pdf({format:'A4',printBackground:true});
+  await writeFile(`${output}/${width}-test-results.pdf`,pdf);
+  const text=execFileSync('python3',['-c',
+    "import fitz,sys; doc=fitz.open(stream=sys.stdin.buffer.read(),filetype='pdf'); print(' '.join(page.get_text() for page in doc))"
+  ],{input:pdf,encoding:'utf8'}).replace(/\s+/g,' ');
+  assert.ok(text.trim().length>250,`printed PDF must not be blank at ${width}px; got ${text.length} chars`);
+  for(const expected of ['Practice test results','Question 1','Question 2','Question 3','Question 4','Which description matches inherited traits','Traits pass from parents','voter','Needs review']) {
+    assert.ok(text.includes(expected),`printed PDF missing "${expected}" at ${width}px`);
+  }
   await page.emulateMedia({media:'screen'});
-  await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
-  assert.equal(await page.locator('details.testReview[open]').count(),1,'printing restores collapsed state');
+  assert.equal(await page.locator('details.testReview[open]').count(),1,'print leaves the screen review state untouched');
   await shot('test-results');
   await go('test');await page.getByRole('button',{name:/Review completed test/}).click();await page.locator('.testResults').waitFor();assert.match(await page.locator('.testScore').innerText(),/10 questions/);
   // Cram: the timer never submits a response; pause remains available.

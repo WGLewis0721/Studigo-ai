@@ -38,6 +38,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Chromium and WebKit
         run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Install PDF inspector for real print assertions
+        run: python3 -m pip install --disable-pip-version-check pymupdf
       - name: Start local synthetic fixture
         run: |
           NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1 pnpm --filter @studigo/web dev --hostname 127.0.0.1 -p 3000 >/tmp/studigo-phase3-dev.log 2>&1 &
