@@ -70,7 +70,7 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
     <HeaderMascot state={result.score >= 80 ? "celebrate" : "explain"} />
     <div className="testResultsPrintHeading">
       <h2>Studigo · Practice test results</h2>
-      <p>Completed {new Date(createdAt).toLocaleDateString()}</p>
+      <p>Test created {new Date(createdAt).toLocaleDateString()}</p>
     </div>
     <p className="setupLead">{result.score >= 80 ? "A strong rehearsal. Review each miss below." : "Now you know where to focus."}</p>
     <div className="testScore"><strong>{result.score}%</strong><span>{result.questionCount} questions · full test submitted</span></div>
