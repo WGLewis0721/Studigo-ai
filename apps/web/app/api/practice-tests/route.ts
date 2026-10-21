@@ -7,6 +7,7 @@ import { assertRoomAccess, markersToCitations, retrieveForRoom } from '@/lib/ret
 import { allocateTestQuestions } from '@/lib/study-planning';
 import { readConfidence, readSelectedChoice } from '@/lib/grading';
 import { TOPIC_COLUMNS, type Topic } from '@/lib/rooms';
+import { selectPracticeTopics } from '@/lib/practice-topic-selection';
 export const runtime='nodejs';
 export const maxDuration=300;
 const SAFE_QUESTION_COLUMNS='id,kind,prompt,choices,difficulty,topic_id,test_position';
@@ -40,8 +41,10 @@ async function guardedPost(request: Request) {
   const {data:rows,error}=await supabase.from('topics').select(TOPIC_COLUMNS).eq('room_id',body.roomId).eq('active',true);
   if(error) return Response.json({error:'Could not load the current study scope.'},{status:500});
   const topics=(rows??[]) as Topic[];
-  if(topics.length<2) return Response.json({error:'A full practice test needs at least two study topics. Add your study guide or use Quiz for one topic.'},{status:422});
-  const allocation=allocateTestQuestions(topics,body.count);
+  const selected=body.topicIds===undefined?topics:selectPracticeTopics(topics,body.topicIds);
+  if(!selected) return Response.json({error:'Select one or more current topics in this room.'},{status:400});
+  if(!selected.length) return Response.json({error:'Add a study topic before building a test.'},{status:422});
+  const allocation=allocateTestQuestions(selected,body.count);
   try {
     const questions: Array<Record<string,unknown>>=[];
     // Two at a time bounds model pressure while preserving deterministic positions.
@@ -66,7 +69,7 @@ async function guardedPost(request: Request) {
       p_topics:allocation.map(a=>({id:a.topic.id,title:a.topic.title,objective:a.topic.objective,priority:a.topic.priority,questions:a.count})),p_questions:questions
     });
     if(saveError||!testId) throw new Error('The test could not be saved. The study scope may have changed; try again.');
-    return Response.json({testId,coveredTopics:allocation.length,totalTopics:topics.length},{status:201});
+    return Response.json({testId,coveredTopics:allocation.length,totalTopics:selected.length},{status:201});
   } catch(error) { return Response.json({error:error instanceof Error?error.message:'Could not build the test.'},{status:422}); }
 }
 

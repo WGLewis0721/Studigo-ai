@@ -1,6 +1,5 @@
 "use client";
 
-import { topicEvidenceLabel } from "@/lib/progress-view";
 import { AnswerChoices } from "./answer-choices";
 import { AssessmentModePicker } from "./assessment-mode-picker";
 import { ReadAloudControl } from "./read-aloud-control";
@@ -88,7 +87,9 @@ export function QuizPanel({
   onGraded: () => void;
   phase3Ui?: boolean;
 }) {
-  const [topicId, setTopicId] = useState<string>(initialTopicId ?? "");
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(() => initialTopicId && topics.some((topic) => topic.id === initialTopicId)
+    ? [initialTopicId] : topics.map((topic) => topic.id));
+  const topicIds = topics.filter((topic) => selectedTopicIds.includes(topic.id)).map((topic) => topic.id);
   const [count, setCount] = useState<number>(5);
   const [modes, setModes] = useState<AssessmentMode[]>([...ASSESSMENT_MODES]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -110,10 +111,13 @@ export function QuizPanel({
   const usesChoices = current?.kind === "multiple_choice" || current?.kind === "true_false";
   const hasAnswer = usesChoices ? selected !== null : written.trim().length > 0;
   const phase3 = phase3Ui ?? process.env.NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI === "1";
+  const topicSelector = (className: string) => <TopicReadout topics={topics} selectedIds={topicIds} heading="TOPICS AND PRACTICE" className={className} disabled={loading}
+    onToggle={(id) => setSelectedTopicIds((ids) => ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id])}
+    onSelectAll={() => setSelectedTopicIds(topics.map((topic) => topic.id))} />;
 
   async function build() {
-    const body = JSON.stringify({ roomId, topicId: topicId || null, count, kinds: modes });
-    if (!modes.length) return;
+    if (!modes.length || !topicIds.length) return;
+    const body = JSON.stringify({ roomId, topicIds, count, kinds: modes });
     const attempt = gestures.current.begin("quiz-build", body);
     if (!attempt.started) return;
     setLoading(true);
@@ -234,20 +238,6 @@ export function QuizPanel({
 
         <HeaderChip>
           <ChipSelect
-            label={topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where I'm weakest"}
-            ariaLabel="Quiz topic"
-            value={topicId}
-            onChange={setTopicId}
-            disabled={loading}
-          >
-            <option value="">Where I&apos;m weakest</option>
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title} · {topicEvidenceLabel(topic)}
-              </option>
-            ))}
-          </ChipSelect>
-          <ChipSelect
             label={`${count} questions`}
             ariaLabel="Number of quiz questions"
             value={String(count)}
@@ -260,9 +250,10 @@ export function QuizPanel({
 
         <div className="setupHeading">
           <span className="tinyLabel">PRACTICE STUDIO / INDEPENDENT RECALL</span>
-          <h3>{topicId ? (topics.find((topic) => topic.id === topicId)?.title ?? "Topic") : "Where you\u2019re weakest"}</h3>
+          <h3>{topicIds.length === 1 ? topics.find((topic) => topic.id === topicIds[0])?.title : `${topicIds.length} topics selected`}</h3>
         </div>
-        <p className="setupLead">{finished ? "Go again with a new set." : `${count} questions from your materials. Your answers are checked only after you submit each one.`}</p>
+        <p className="setupLead">{finished ? "Go again with a new set." : `${count} questions from up to ${Math.min(count, topicIds.length)} selected topics. Your answers are checked only after you submit each one.`}</p>
+        {topicSelector("topicReadoutMobile")}
         <AssessmentModePicker value={modes} onChange={setModes} disabled={loading} />
 
         {error && (
@@ -271,11 +262,11 @@ export function QuizPanel({
           </p>
         )}
 
-        <button className="buttonPrimary" type="button" onClick={() => void build()} disabled={loading || modes.length === 0}>
+        <button className="buttonPrimary" type="button" onClick={() => void build()} disabled={loading || modes.length === 0 || topicIds.length === 0}>
           {loading ? "Writing questions…" : "Start quiz"} <span aria-hidden="true">→</span>
         </button>
         </div>
-        <TopicReadout topics={topics} heading="TOPICS AND PRACTICE" />
+        {topicSelector("topicReadoutDesktop")}
       </div>
     );
   }

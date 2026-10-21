@@ -30,9 +30,15 @@ try {
   // submission, failed save stays on the same question, then all five results.
   const questions=Array.from({length:5},(_,i)=>({id:`q${i}`,kind:'multiple_choice',prompt:`Which description matches inherited traits? Question ${i+1}.`,choices:['A characteristic passed from parents to offspring.','A behavior learned through practice.'],difficulty:'easy',topic_id:'inherited-environment'}));
   let grades=0;let failGrade=true;
-  await context.route('**/api/quiz',async route=>{assert.equal(route.request().postDataJSON().count,5);assert.deepEqual(route.request().postDataJSON().kinds,['multiple_choice','true_false']);await route.fulfill({json:{questions}});});
+  await context.route('**/api/quiz',async route=>{assert.equal(route.request().postDataJSON().count,5);assert.deepEqual(route.request().postDataJSON().kinds,['multiple_choice','true_false']);assert.deepEqual(route.request().postDataJSON().topicIds,['instinct-learned','inherited-environment']);await route.fulfill({json:{questions}});});
   await context.route('**/api/quiz/attempt',async route=>{grades++;if(failGrade){failGrade=false;await route.fulfill({status:503,json:{error:'Temporary interruption. Retry your answer.'}});return;}assert.equal(route.request().postDataJSON().selectedChoice,0);await route.fulfill({json:{isCorrect:true,score:100,confidence:3,correctChoice:0,feedback:'Correct. Traits can pass from parents to offspring.',explanation:'',expectedAnswer:null,citations:[]}});});
   await go('quiz');await shot('quiz-setup');
+  const quizTopics=page.locator('.topicReadout:visible input[type="checkbox"]');
+  assert.equal(await quizTopics.count(),8);await quizTopics.first().uncheck();
+  assert.equal(await page.locator('.topicReadout:visible .trCount').innerText(),'7 of 8 topics selected');
+  await page.getByRole('button',{name:'Select all'}).click();assert.equal(await quizTopics.first().isChecked(),true);
+  for(let i=7;i>=2;i--)await quizTopics.nth(i).uncheck();
+  assert.equal(await page.locator('.topicReadout:visible .trCount').innerText(),'2 of 8 topics selected');
   await page.getByRole('combobox',{name:'Number of quiz questions'}).selectOption('10');
   await page.getByRole('combobox',{name:'Number of quiz questions'}).selectOption('5');
   await page.getByRole('checkbox',{name:'Fill in the Blank'}).uncheck();
@@ -55,6 +61,12 @@ try {
   await page.getByRole('button',{name:/Show answer/}).click();await shot('cards-answer');
   await page.getByRole('button',{name:/Got it/}).click();await page.getByRole('alert').filter({hasText:"review didn't save"}).waitFor();assert.equal(await page.locator('.flashcardFlipped').count(),1);
   await page.getByRole('button',{name:/Retry review/}).click();await page.locator('.quizScoreCard').waitFor();assert.equal(reviews[0].requestId,reviews[1].requestId);
+  const cardTopics=page.locator('.topicReadout:visible input[type="checkbox"]');
+  for(let i=7;i>=2;i--)await cardTopics.nth(i).uncheck();
+  await context.route('**/api/flashcards',async r=>{const body=r.request().postDataJSON();assert.deepEqual(body.topicIds,['instinct-learned','inherited-environment']);assert.equal(body.count,10);await r.fulfill({json:{cards:[card]}});});
+  await page.getByRole('button',{name:'Add 10 cards'}).click();await page.locator('.flashcard').waitFor();
+  await page.getByRole('button',{name:'Choose topics or add cards'}).click();
+  assert.equal(await page.locator('.topicReadout:visible .trCount').innerText(),'2 of 8 topics selected');
   // Full test: requested ten questions, draft save, explicit final confirmation,
   // result review and reopening a server-returned submitted attempt.
   const testQuestions=Array.from({length:10},(_,i)=>({
@@ -73,11 +85,13 @@ try {
   const test=()=>({id:'test-1',status:submitted?'submitted':'draft',created_at:'2026-10-17T12:00:00Z',draft_answers:{},result:submitted?result:null,topic_snapshot:[{id:'inherited-environment',title:'Inherited traits',questions:10}]});
   await context.route(/\/api\/practice-tests(?:\?|\/|$)/,async r=>{
    if(r.request().url().endsWith('/submit')){assert.equal(Object.keys(r.request().postDataJSON().answers).length,4);submitted=true;await r.fulfill({json:{result}});}
-   else if(r.request().method()==='POST'){assert.equal(r.request().postDataJSON().count,10);assert.deepEqual(r.request().postDataJSON().kinds,['multiple_choice','fill_blank','true_false']);await r.fulfill({json:{testId:'test-1'}});}
+   else if(r.request().method()==='POST'){assert.equal(r.request().postDataJSON().count,10);assert.deepEqual(r.request().postDataJSON().kinds,['multiple_choice','fill_blank','true_false']);assert.deepEqual(r.request().postDataJSON().topicIds,['instinct-learned','inherited-environment']);await r.fulfill({json:{testId:'test-1'}});}
    else if(r.request().method()==='PATCH'){saves++;await r.fulfill({json:{ok:true}});}
    else await r.fulfill({json:r.request().url().includes('testId=')?{test:test(),questions:testQuestions}:{tests:[test()]}});
   });
-  await go('test');await page.getByRole('button',{name:'Build practice test'}).click();await page.locator('.choiceItem').first().click();await page.getByRole('button',{name:'Next question',exact:false}).click();await page.getByRole('textbox',{name:'Your answer',exact:true}).fill('Traits pass from parents to offspring.');
+  await go('test');const testTopics=page.locator('.topicReadout:visible input[type="checkbox"]');
+  for(let i=7;i>=2;i--)await testTopics.nth(i).uncheck();
+  await page.getByRole('button',{name:'Build practice test'}).click();await page.locator('.choiceItem').first().click();await page.getByRole('button',{name:'Next question',exact:false}).click();await page.getByRole('textbox',{name:'Your answer',exact:true}).fill('Traits pass from parents to offspring.');
   await page.getByRole('button',{name:'Next question',exact:false}).click();
   await page.locator('.testQuestion .choiceItem').first().click();assert.equal(await page.getByRole('radio',{name:'True'}).isChecked(),true);
   await page.getByRole('button',{name:'Next question',exact:false}).click();

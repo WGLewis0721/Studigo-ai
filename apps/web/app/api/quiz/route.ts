@@ -3,6 +3,9 @@ import { QUESTION_KINDS, generateQuizQuestions, type QuestionKind } from "@studi
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireApiUser } from "@/lib/auth";
 import { assertRoomAccess, markersToCitations, retrieveForRoom } from "@/lib/retrieval";
+import { selectPracticeTopics } from "@/lib/practice-topic-selection";
+import { allocateTestQuestions } from "@/lib/study-planning";
+import { TOPIC_COLUMNS, type Topic } from "@/lib/rooms";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -19,7 +22,7 @@ async function guardedPost(request: Request) {
   if (!user) return unauthorized;
 
   const body = (await request.json().catch(() => null)) as
-    | { roomId?: string; topicId?: string | null; count?: number; kinds?: unknown }
+    | { roomId?: string; topicId?: string | null; topicIds?: unknown; count?: number; kinds?: unknown }
     | null;
   const roomId = body?.roomId?.trim();
   if (!roomId) return Response.json({ error: "roomId is required" }, { status: 400 });
@@ -42,94 +45,55 @@ async function guardedPost(request: Request) {
   }
   const requestedKinds = validKinds ? body!.kinds as QuestionKind[] : undefined;
 
-  type QuizTopic = { id: string; title: string; objective: string | null; key_terms: string[] };
-  let topic: QuizTopic | null = null;
+  const { data: rows, error: topicError } = await supabase.from("topics")
+    .select(TOPIC_COLUMNS).eq("active", true).eq("room_id", roomId);
+  if (topicError) return Response.json({ error: "Could not load the current study scope." }, { status: 500 });
+  const available = (rows ?? []) as Topic[];
+  const selected = body?.topicIds === undefined ? null : selectPracticeTopics(available, body.topicIds);
+  if (body?.topicIds !== undefined && !selected) return Response.json({ error: "Select one or more current topics in this room." }, { status: 400 });
+  // Existing clients still target one topic or the weakest one.
+  const legacy = body?.topicId
+    ? available.find((topic) => topic.id === body.topicId)
+    : [...available].sort((a, b) => a.mastery_score - b.mastery_score || b.priority - a.priority)[0];
+  if (body?.topicId && !legacy) return Response.json({ error: "That topic is no longer in this room." }, { status: 400 });
+  const allocation = allocateTestQuestions(selected ?? (legacy ? [legacy] : []), count);
+  if (!allocation.length) return Response.json({ error: "Add a study topic before building a quiz." }, { status: 400 });
 
-  if (body?.topicId) {
-    const { data } = await supabase
-      .from("topics")
-      .select("id, title, objective, key_terms").eq("active", true)
-      .eq("id", body.topicId)
-      .eq("room_id", roomId)
-      .maybeSingle();
-    topic = (data as QuizTopic | null) ?? null;
-  } else {
-    const { data } = await supabase
-      .from("topics")
-      .select("id, title, objective, key_terms").eq("active", true)
-      .eq("room_id", roomId)
-      .order("mastery_score", { ascending: true })
-      .order("priority", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    topic = (data as QuizTopic | null) ?? null;
+  const questions: Array<Record<string, unknown>> = [];
+  try {
+    // Bound concurrent generation while covering each selected topic separately.
+    for (let offset = 0; offset < allocation.length; offset += 2) {
+      const batches = await Promise.all(allocation.slice(offset, offset + 2).map(async ({ topic, count: topicCount }) => {
+        const chunks = await retrieveForRoom({
+          supabase, roomId,
+          query: [topic.title, topic.objective, topic.key_terms?.join(", ")].filter(Boolean).join(". "),
+          matchCount: Math.min(16, Math.max(6, topicCount * 3))
+        });
+        if (!chunks.length) throw new Error(`Add supporting material for “${topic.title}” before quizzing it.`);
+        const generated = await generateQuizQuestions({ chunks, topicTitle: topic.title, objective: topic.objective ?? undefined, count: topicCount, kinds: requestedKinds });
+        if (generated.length < topicCount) generated.push(...await generateQuizQuestions({
+          chunks, topicTitle: topic.title, objective: topic.objective ?? undefined,
+          count: topicCount - generated.length, kinds: requestedKinds,
+          avoidPrompts: generated.map((question) => question.prompt)
+        }));
+        if (generated.length < topicCount) throw new Error(`Studigo couldn't build enough grounded questions for “${topic.title}”. Try fewer questions or more material.`);
+        return generated.slice(0, topicCount).map((question) => ({
+          room_id: roomId, owner_id: user.id, topic_id: topic.id,
+          kind: question.kind, prompt: question.prompt, choices: question.choices,
+          correct_choice: question.correctChoice, expected_answer: question.expectedAnswer,
+          accepted_answers: question.acceptedAnswers, explanation: question.explanation,
+          difficulty: question.difficulty, citations: markersToCitations(question.sourceMarkers, chunks)
+        }));
+      }));
+      questions.push(...batches.flat());
+    }
+  } catch (error) {
+    return Response.json({ error: error instanceof Error ? error.message : "Could not build this quiz." }, { status: 422 });
   }
-
-  const query = topic
-    ? [topic.title, topic.objective, topic.key_terms?.join(", ")].filter(Boolean).join(". ")
-    : "the most important ideas, definitions, and processes in these materials";
-
-  const chunks = await retrieveForRoom({
-    supabase,
-    roomId,
-    query,
-    matchCount: Math.min(16, count * 3)
-  });
-
-  if (!chunks.length) {
-    return Response.json(
-      { error: "There isn't enough processed material in this room to build a quiz yet." },
-      { status: 400 }
-    );
-  }
-
-  const generated = await generateQuizQuestions({
-    chunks,
-    topicTitle: topic?.title,
-    objective: topic?.objective ?? undefined,
-    count,
-    kinds: requestedKinds
-  });
-
-  // Normalization may reject an AI-produced question. Top up once rather than
-  // silently delivering fewer questions than the learner selected.
-  if (generated.length < count) {
-    const additional = await generateQuizQuestions({
-      chunks,
-      topicTitle: topic?.title,
-      objective: topic?.objective ?? undefined,
-      count: count - generated.length,
-      kinds: requestedKinds,
-      avoidPrompts: generated.map((question) => question.prompt)
-    });
-    generated.push(...additional);
-  }
-  if (generated.length < count) {
-    return Response.json(
-      { error: "Studigo couldn't build the full set of grounded questions. Try fewer questions or more study material." },
-      { status: 422 }
-    );
-  }
-  generated.length = count;
 
   const { data: inserted, error } = await createServiceSupabaseClient()
     .from("quiz_questions")
-    .insert(
-      generated.map((question) => ({
-        room_id: roomId,
-        owner_id: user.id,
-        topic_id: topic?.id ?? null,
-        kind: question.kind,
-        prompt: question.prompt,
-        choices: question.choices,
-        correct_choice: question.correctChoice,
-        expected_answer: question.expectedAnswer,
-        accepted_answers: question.acceptedAnswers,
-        explanation: question.explanation,
-        difficulty: question.difficulty,
-        citations: markersToCitations(question.sourceMarkers, chunks)
-      }))
-    )
+    .insert(questions)
     .select("id, kind, prompt, choices, difficulty, topic_id");
 
   if (error) {
@@ -138,7 +102,7 @@ async function guardedPost(request: Request) {
 
   // The answer key stays server-side until the learner answers.
   return Response.json({
-    topic: topic ? { id: topic.id, title: topic.title } : null,
+    topic: allocation.length === 1 ? { id: allocation[0].topic.id, title: allocation[0].topic.title } : null,
     questions: inserted
   });
 }
