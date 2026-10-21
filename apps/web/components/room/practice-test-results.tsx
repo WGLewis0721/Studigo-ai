@@ -52,15 +52,18 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
     <section id="studigo-test-print" ref={root} className="testResults roomStudioResults">
     <HeaderMascot state={result.score >= 80 ? "celebrate" : "explain"} />
     <div className="testResultsPrintHeading">
-      <h2>Studigo · Practice test results</h2>
+      <h2>Studigo � Practice test results</h2>
       <p>Test created {new Date(createdAt).toLocaleDateString()}</p>
     </div>
     <p className="setupLead">{result.score >= 80 ? "A strong rehearsal. Review each miss below." : "Now you know where to focus."}</p>
-    <div className="testScore"><strong>{result.score}%</strong><span>{result.questionCount} questions · full test submitted</span></div>
-    <div className="testTopicResults">{result.topics.map((topic) =>
-      <div key={topic.topic_id}><strong>{topic.title}</strong><span>{topic.score}% · {topic.misses} missed / {topic.questions}</span>
-        <button type="button" onClick={() => onReviewTopic(topic.topic_id)}>{topic.misses ? "Review concept" : "Keep practicing"} →</button>
-      </div>)}</div>
+    <div className="testScore"><strong>{result.score}%</strong><span>{result.questionCount} questions � full test submitted</span></div>
+    <div className="testTopicResults" role="group" aria-label="Scores by topic">{result.topics.map((topic) =>
+      <button key={topic.topic_id} type="button" className={topic.misses ? "testTopicTile testTopicMissed" : "testTopicTile"}
+        style={{ ["--v" as string]: `${topic.score}%` }}
+        onClick={() => onReviewTopic(topic.topic_id)}
+        aria-label={`${topic.title}: ${topic.score}% on this test, ${topic.misses} missed of ${topic.questions}. Review topic.`}>
+        <strong>{topic.title}</strong><b>{topic.score}%</b><span>{topic.misses} missed / {topic.questions} � Review </span>
+      </button>)}</div>
     <div className="testReviewToolbar">
       <h3>Review your answers and sources</h3>
       <div className="testReviewControls" role="group" aria-label="Question review controls">
@@ -76,12 +79,11 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
         <summary>
           <div className="testReviewSummaryTitle">
             <strong>Question {index + 1}</strong>
-            <small>{question.kind === "fill_blank" ? "Fill in the blank" : question.kind === "true_false" ? "True or false" : question.kind === "short_answer" ? "Short answer" : "Multiple choice"}</small>
             <div className="testReviewPromptPreview"><RichText text={question.prompt} /></div>
           </div>
           <span className="testReviewSummaryStatus">
-            <span aria-hidden="true">{question.is_correct ? "✓" : "✕"}</span>
-            {question.is_correct ? "Correct" : "Needs review"} · {question.score}%
+            <span aria-hidden="true">{question.is_correct ? "�" : "?"}</span>
+            {question.is_correct ? "Correct" : "Needs review"} � {question.score}%
           </span>
         </summary>
         <div className="testReviewContent">
@@ -106,7 +108,7 @@ export function PracticeTestResults({ result, createdAt, onReviewTopic, onBack }
         </div>
       </details>;
     })}</div>
-    <button className="buttonPrimary testReviewBack" type="button" onClick={onBack}>Back to practice tests →</button>
+    <button className="buttonPrimary testReviewBack" type="button" onClick={onBack}>Back to practice tests </button>
     </section>
     {printHost && createPortal(<PracticeTestPrintSheet result={result} createdAt={createdAt} />, printHost)}
   </>;
