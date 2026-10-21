@@ -41,7 +41,7 @@ export function StudyGuideDownloadButton({ roomId, format = "pdf", compactLabel 
     <span className="studyGuideDownload">
       <button className="buttonQuiet" type="button" onClick={() => void download()} disabled={busy} aria-label={`Download generated Studigo guide as ${format === "docx" ? "Word" : "PDF"}`}>
         <span className="studyGuideDownloadLabel">{busy ? "Saving..." : compactLabel ? format === "docx" ? "Word" : "PDF" : format === "docx" ? "Word" : "Download study guide"}</span>
-        <span className="studyGuideDownloadIcon" aria-hidden="true"></span>
+        <span className="studyGuideDownloadIcon" aria-hidden="true">↓</span>
       </button>
       {error && <small className="formError" role="alert">{error}</small>}
     </span>
