@@ -47,87 +47,107 @@ function uniqueWords(words: string[]): string[] {
   return kept;
 }
 
-/** A short tutorial from one passage. Facts stay the source lines. Level changes only the prompt. */
-export function missionBeats(objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
-  const title = objective.trim() || "This idea";
-  const safeTarget = sentences[target] ? target : 0;
-  const answer = sentences[safeTarget] ?? title;
-  const lead = level === "simpler" ? "Watch." : level === "deeper" ? "Notice this." : "Here it is.";
-  const beats: MissionBeat[] = [{ kind: "read", title: lead, body: answer }];
-  if (sentences.length < 2) return beats;
+/** Each check gets its own source fact. A longer reading earns more checks, up to ten. */
+function factOrder(sentences: string[], target: number): number[] {
+  const first = sentences[target] ? target : 0;
+  const rest = sentences.map((_, index) => index).filter((index) => index !== first);
+  // Spread the first three checks across the passage before filling the gaps.
+  const middle = rest[Math.floor((rest.length - 1) / 3)];
+  const last = rest[Math.floor((rest.length - 1) * 2 / 3)];
+  return [first, middle, last, ...rest].filter((index, position, order) =>
+    index !== undefined && order.indexOf(index) === position);
+}
 
-  // The extraction contains page titles and headings as well as facts.
-  // A heading is not a reasonable competing answer to a definition question.
-  const distractors = sentences.filter((sentence, index) =>
-    index !== safeTarget && sentence.split(/\s+/).length >= 5 && sentence.length >= 30
-  );
-  const concept = answer.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[—–:]\s+.{12,}$/)?.[1]?.trim();
-  const question = concept
-    ? `What does "${concept}" mean?`
-    : /^\s*(who|what|which|where|when|why|how)\b/i.test(objective)
-      ? objective.trim().replace(/[.]+$/, "?")
-      : `Which statement from your guide explains "${objective.trim() || "this concept"}"?`;
-  const choicePool = distractors.slice(0, level === "simpler" ? 2 : 3);
-  const slot = safeTarget % (choicePool.length + 1);
-  const options = [...choicePool];
+function clue(sentence: string): string {
+  const definition = sentence.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[—–:]\s+.{12,}$/)?.[1]?.trim();
+  if (definition) return definition;
+  const condition = sentence.match(/^(?:When|If)\s+([^,]{5,70}),/i)?.[1]?.trim();
+  if (condition) return condition;
+  const subject = sentence.match(/^(.{4,65}?)\s+(?:is|are|was|were|can|will|must|may|should|makes?|causes?|helps?|has|have|means?|describes?|represents?|interprets?|explains?|changes?|comes?|uses?|allows?|elects?|votes?|cast)\b/i)?.[1]?.trim();
+  if (subject) return subject;
+  return sentence.split(/\s+/).slice(0, 5).join(" ").replace(/[.,;:!?]+$/, "");
+}
+
+function questionFor(sentence: string, boxes: boolean): string {
+  const definition = sentence.match(/^([A-Za-z][A-Za-z\s-]{2,55})\s*[—–:]\s+.{12,}$/)?.[1]?.trim();
+  if (definition) return `What does "${definition}" mean according to your guide?`;
+  const condition = sentence.match(/^(?:When|If)\s+([^,]{5,70}),/i)?.[1]?.trim();
+  if (condition) return `What happens when ${condition} according to your guide?`;
+  const subject = sentence.match(/^(.{4,65}?)\s+(is|are|was|were|can|will|makes?|causes?|helps?|means?|describes?|represents?|interprets?|changes?|elects?|votes?)\b/i);
+  if (subject) {
+    const name = subject[1].replace(/^(The|A|An|Some|Other|Many|Most|Each|Every)\b/, (word) => word.toLowerCase());
+    if (/^(is|are|was|were)$/i.test(subject[2])) return `How does your guide describe ${name}?`;
+    if (/^can$/i.test(subject[2])) return `What can ${name} do according to your guide?`;
+    return `What does your guide say ${name} does?`;
+  }
+  return boxes ? `Which source detail describes ${clue(sentence)}?`
+    : `What does your guide say about ${clue(sentence)}?`;
+}
+
+function alternatives(sentences: string[], index: number, level: ExplainDelivery): string[] {
+  const key = clue(sentences[index]).toLowerCase();
+  const other = sentences.filter((sentence, position) => position !== index && sentence !== sentences[index]);
+  return [...other.filter((sentence) => !sentence.toLowerCase().includes(key)),
+    ...other.filter((sentence) => sentence.toLowerCase().includes(key))]
+    .slice(0, level === "simpler" ? 2 : 3);
+}
+
+function choiceBeat(sentences: string[], index: number, level: ExplainDelivery, boxes = false): MissionBeat {
+  const answer = sentences[index];
+  const prompt = questionFor(answer, boxes);
+  const options = alternatives(sentences, index, level);
+  const slot = index % (options.length + 1);
   options.splice(slot, 0, answer);
-  beats.push({
-    kind: "choice",
-    prompt: question,
-    options,
-    answer: slot,
-  });
+  return boxes
+    ? { kind: "boxes", prompt, options, answers: [slot] }
+    : { kind: "choice", prompt, options, answer: slot };
+}
 
-  const words = contentWords(answer);
+function blankBeat(sentences: string[], index: number, level: ExplainDelivery): MissionBeat {
+  const answer = sentences[index];
+  const subject = clue(answer).toLowerCase();
+  const candidateWords = contentWords(answer).filter((word) => !subject.includes(word.toLowerCase()));
+  const words = candidateWords.length ? candidateWords : contentWords(answer);
   const hole = (level === "deeper"
     ? [...words].sort((a, b) => b.length - a.length)[0]
-    : level === "simpler"
-      ? [...words].sort((a, b) => a.length - b.length)[0]
-      : words[0]) ?? "";
+    : level === "simpler" ? [...words].sort((a, b) => a.length - b.length)[0]
+      : words[Math.floor(words.length / 2)]) ?? "";
   const at = hole ? answer.toLowerCase().indexOf(hole.toLowerCase()) : -1;
-  const extras = uniqueWords(distractors.flatMap(contentWords)).filter((word) => word.toLowerCase() !== hole.toLowerCase()).slice(0, level === "simpler" ? 1 : 2);
-  if (at >= 0 && extras.length) {
-    const wordSlot = safeTarget % (extras.length + 1);
-    const wordOptions = [...extras];
-    wordOptions.splice(wordSlot, 0, answer.slice(at, at + hole.length));
-    beats.push({
-      kind: "blank",
-      prompt: level === "simpler" ? "Tap the missing word." : level === "deeper" ? "Complete the line." : "Fill the gap.",
-      before: answer.slice(0, at),
-      after: answer.slice(at + hole.length),
-      answer: answer.slice(at, at + hole.length),
-      options: wordOptions,
-    });
-  }
+  const extras = uniqueWords(alternatives(sentences, index, level).flatMap(contentWords))
+    .filter((word) => word.toLowerCase() !== hole.toLowerCase()).slice(0, level === "simpler" ? 1 : 2);
+  if (at < 0 || !extras.length) return choiceBeat(sentences, index, level);
+  const options = [...extras];
+  const wordSlot = index % (options.length + 1);
+  options.splice(wordSlot, 0, answer.slice(at, at + hole.length));
+  return {
+    kind: "blank", prompt: `Complete your guide's idea about ${clue(answer)}.`,
+    before: answer.slice(0, at), after: answer.slice(at + hole.length),
+    answer: answer.slice(at, at + hole.length), options
+  };
+}
 
-  const boxOptions = [answer, ...distractors].slice(0, Math.min(distractors.length + 1, level === "simpler" ? 3 : 4));
-  let boxTarget = boxOptions.indexOf(answer);
-  if (boxTarget < 0) {
-    boxOptions[boxOptions.length - 1] = answer;
-    boxTarget = boxOptions.length - 1;
-  }
-  // Do not infer that a distractor is correct just because it shares topic words.
-  const hits = [boxTarget];
-  beats.push({
-    kind: "boxes",
-    prompt: "Which statement is supported by the passage you just studied?",
-    options: boxOptions,
-    answers: hits.length && hits.length < boxOptions.length ? hits : [boxTarget],
-  });
+/** The persisted mission has four phases. Sparse sources end with a reading handoff rather than replaying a fact. */
+export function missionBeats(_objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
+  const order = factOrder(sentences, target);
+  const lead = level === "simpler" ? "Watch." : level === "deeper" ? "Notice this." : "Here it is.";
+  const beats: MissionBeat[] = [{ kind: "read", title: lead, body: sentences[order[0]] ?? "" }];
+  if (order.length < 2) return beats;
+  beats.push(choiceBeat(sentences, order[0], level));
+  beats.push(blankBeat(sentences, order[1], level));
+  beats.push(order.length >= 3 ? choiceBeat(sentences, order[2], level, true)
+    : { kind: "read", title: "You have covered the distinct ideas in this passage.", body: "Continue when you're ready to practice independently." });
   return beats;
 }
 
-/** More distinct source lines earn more guided checks; never invent a fact. */
-export function supplementalMissionBeats(objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
-  const wordCount = sentences.join(" ").split(/\s+/).length;
-  const count = Math.min(9, Math.floor(wordCount / 80), sentences.length - 1);
-  return sentences.map((sentence, index) => ({ sentence, index }))
-    .filter(({ index }) => index !== target)
-    .slice(0, count)
-    .flatMap(({ index }) => {
-      const beat = missionBeats(objective, sentences, index, level).find((item) => item.kind === "blank");
-      return beat ? [beat] : [];
-    });
+/** Add one new fact per check; no fact is reused by another question. */
+export function supplementalMissionBeats(_objective: string, sentences: string[], target: number, level: ExplainDelivery = "standard"): MissionBeat[] {
+  const order = factOrder(sentences, target);
+  const wordCount = sentences.join(" ").trim().split(/\s+/).length;
+  const baseQuestions = Math.min(3, order.length);
+  const desiredQuestions = Math.min(10, Math.max(baseQuestions, Math.ceil(wordCount / 30)));
+  return order.slice(3, 3 + Math.max(0, desiredQuestions - baseQuestions))
+    .map((index, position) => position % 2 === 0
+      ? choiceBeat(sentences, index, level) : blankBeat(sentences, index, level));
 }
 
 function words(value: string): string[] {
@@ -146,7 +166,17 @@ export function tapCheck(objective: string, excerpt: string): { sentences: strin
       sentence.split(/\s+/).length >= 5 &&
       !/^(page\s*\d+|government\s*\/|study materials)/i.test(sentence));
   if (eligible.length < 2) return null;
-  const candidates = eligible.map(({ sentence, index }) => ({ sentence, index }));
+  const candidates = eligible.filter(({ sentence }, position) => {
+    const tokens = new Set(words(sentence));
+    return !eligible.slice(0, position).some(({ sentence: previous }) => {
+      const prior = new Set(words(previous));
+      const overlap = [...tokens].filter((word) => prior.has(word)).length;
+      const sameNumbers = JSON.stringify(sentence.match(/\d+/g) ?? []) === JSON.stringify(previous.match(/\d+/g) ?? []);
+      return sentence.toLowerCase() === previous.toLowerCase() ||
+        (sameNumbers && tokens.size >= 8 && prior.size >= 8 && overlap / Math.max(tokens.size, prior.size) >= 0.95);
+    });
+  }).map(({ sentence, index }) => ({ sentence, index }));
+  if (candidates.length < 2) return null;
   let target = 0;
   let best = -1;
   candidates.forEach(({ sentence, index }) => {
