@@ -206,6 +206,7 @@ export function CoachPanel({ roomId, coaching, readyCount, topics, onOpenMateria
     if (threadRef.current) scrollPositions.current[chatMode] = threadRef.current.scrollTop;
     setPersonalizeOpen(false);
     setChatMode(mode);
+    if (mode === "learn" && (roomId === "fixture" || phase3Learn)) onViewChange("chat");
   };
 
   useEffect(() => {
