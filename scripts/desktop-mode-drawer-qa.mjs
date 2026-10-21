@@ -120,8 +120,8 @@ try {
     );
   } finally { await focusContext.close(); }
 
-  // Pointer-driven subpage navigation must not leave a focused header button
-  // holding the drawer open indefinitely (Coach/Learn and Practice pages).
+  // Pointer-driven navigation stays open while hovered. Leaving the header
+  // starts the idle countdown (Coach/Learn and Practice pages).
   for (const [initialMode, selector, destination] of [
     ["coach", '.modeHead .chatModes button[data-tone="ask"]', "learn"],
     ["quiz", '.modeHead .chatModes button[data-tone="cards"]', "cards"],
@@ -135,12 +135,15 @@ try {
       const frame = page.locator(".modeFrame").first();
       await page.locator(selector).click();
       assert.equal(await frame.getAttribute("data-collapsed"), "false", "selected subpage initially exposes its controls");
+      await page.waitForTimeout(3300);
+      assert.equal(await frame.getAttribute("data-collapsed"), "false", "hover keeps navigation open");
+      await page.mouse.move(1, 1);
       await page.waitForFunction(
         () => document.querySelector(".modeFrame")?.getAttribute("data-collapsed") === "true",
         undefined, { timeout: 6500 }
       );
       assert.equal(await frame.getByRole("button", { name: "Show controls" }).count(), 1,
-        `${initialMode} → ${destination}: pointer navigation must auto-collapse after three seconds`);
+        `${initialMode}  ${destination}: pointer navigation must auto-collapse after three seconds`);
       cases.push({ initialMode, destination, autoCollapsed: true });
     } finally { await context.close(); }
   }
