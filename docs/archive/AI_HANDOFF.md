@@ -1,13 +1,15 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # AI Companion Handoff
 
 This file is the current coding handoff for the golden V3 web beta. Use
-[`README.md`](README.md) for the documentation map and
-[`ROADMAP.md`](ROADMAP.md) for current release status. Dated phase evidence
+[`README.md`](../README.md) for the documentation map and
+[`ROADMAP.md`](../ROADMAP.md) for current release status. Dated phase evidence
 does not supersede the product and architecture contracts.
 
 ## Integrated adaptive beta status
 
-Read [ADAPTIVE_BETA_EVIDENCE.md](ADAPTIVE_BETA_EVIDENCE.md) for the implemented web beta, validation, additive migration, preview flags, rollback and outstanding TestFlight gates. Claude owns UI/UX; preserve the current interface. The local synthetic adapter is development-only and must never authorize hosted requests.
+Read [ADAPTIVE_BETA_EVIDENCE.md](../ADAPTIVE_BETA_EVIDENCE.md) for the implemented web beta, validation, additive migration, preview flags, rollback and outstanding TestFlight gates. Claude owns UI/UX; preserve the current interface. The local synthetic adapter is development-only and must never authorize hosted requests.
 
 Read [SOL_PHASE3_REVIEW.md](SOL_PHASE3_REVIEW.md) for the sequential Sol xhigh
 backend repairs and acceptance limits. Migration `20261002030000` adds exact
@@ -17,10 +19,10 @@ linkage, measured RAG, trusted Quiz/Test provenance and native acceptance remain
 
 ## Read first
 
-Follow [`AGENTS.md`](../AGENTS.md): read
-[`PRODUCT.md`](PRODUCT.md), [`ARCHITECTURE.md`](ARCHITECTURE.md),
-[`ROADMAP.md`](ROADMAP.md), and this handoff, then inspect the current code.
-The [documentation map](README.md) points to the adaptive, auth, design,
+Follow [`AGENTS.md`](../../AGENTS.md): read
+[`PRODUCT.md`](../PRODUCT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md),
+[`ROADMAP.md`](../ROADMAP.md), and this handoff, then inspect the current code.
+The [documentation map](../README.md) points to the adaptive, auth, design,
 release, and game contracts when relevant.
 
 ## Game prototype (Moon Keep / Core Clash)
@@ -30,7 +32,7 @@ The multiplication Metroidvania lives in `prototypes/moon-road/` and is unrelate
 ## Latest state (October 2, 2026)
 
 The core loop and the study modes are built and deployed from `main`. Read
-`docs/ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
+`../ROADMAP.md`, "Latest shipped", first; it lists what changed most recently
 and what is still unverified.
 
 
@@ -42,7 +44,7 @@ The V3 web implementation is now integrated into `main`. Do not restart the
 Phase 1/2/3 plan. Production enables the atomic Coach and adaptive-session paths;
 keep the standalone durable-session route disabled until its lifecycle is
 atomically linked to Coach pending encounters. Read
-`docs/ADAPTIVE_BETA_EVIDENCE.md` before changing those boundaries.
+`../ADAPTIVE_BETA_EVIDENCE.md` before changing those boundaries.
 
 The shipped V3 contract is documented in the root `IMPLEMENTATION.md`:
 deterministic adaptive game director underneath a grounded GenAI study partner,
@@ -53,7 +55,7 @@ testing also added Materials → **Refresh study guide** as the supported recove
 for stale derived topic scope.
 
 The learner-facing web/PWA finish contract is
-`docs/V3_LEARNER_UI_FINISH_PLAN.md`: persistent Coach/Learn across Chat/Topics,
+`V3_LEARNER_UI_FINISH_PLAN.md`: persistent Coach/Learn across Chat/Topics,
 three Coach modes only, Try a harder question as the one-shot stretch control,
 and the enlarged safe-face companion window. Native work should copy that
 finished contract rather than the legacy Coach settings taxonomy.
@@ -69,7 +71,7 @@ automatic authority over mastery/progression.
   specific format, and typed text is read through one shared module,
   `packages/ai/src/typos.ts`. Keep new typed-text matching in that module and
   pick the right strictness level (loose, strict, command repair) rather than
-  writing another edit-distance check. See `docs/ARCHITECTURE.md`, "Reading typed
+  writing another edit-distance check. See `../ARCHITECTURE.md`, "Reading typed
   text".
 - Model output and app copy avoid em dashes (`PLAIN_PUNCTUATION_RULE`).
 - Live/provider quality is still not closed by synthetic beta evidence. Use the
@@ -87,7 +89,7 @@ The PWA is the primary client. Native shells should reuse the same backend/produ
 ### 2. One canonical identity layer
 Supabase Auth owns Studigo identity across web/PWA and future native shells. Do not add Clerk/Auth0/Firebase Auth alongside it without a concrete unmet requirement.
 
-Launch auth priority is Google -> Apple -> Microsoft -> email fallback. Facebook is later/optional. See `docs/AUTH.md`.
+Launch auth priority is Google -> Apple -> Microsoft -> email fallback. Facebook is later/optional. See `../AUTH.md`.
 
 ### 3. Auth UX is Studigo-branded, provider controls remain recognizable
 Use the Studigo design system around login/onboarding, but keep Google/Apple/Microsoft buttons familiar, accessible, and compliant with provider branding expectations.
@@ -146,8 +148,8 @@ Agents should work through PRs and preserve contracts instead of independently r
 ## Current acceptance target
 
 Preserve the implemented create → upload → grounded study loop while closing
-the open gates in [`ROADMAP.md`](ROADMAP.md) and
-[`ADAPTIVE_BETA_EVIDENCE.md`](ADAPTIVE_BETA_EVIDENCE.md). A production
+the open gates in [`ROADMAP.md`](../ROADMAP.md) and
+[`ADAPTIVE_BETA_EVIDENCE.md`](../ADAPTIVE_BETA_EVIDENCE.md). A production
 provider configuration or device-specific path still needs its own evidence;
 do not infer it from a local fixture.
 

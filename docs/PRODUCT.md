@@ -223,7 +223,7 @@ representation or transfer.
 Progression belongs to the deterministic adaptive game director. The GenAI
 study partner receives the director's task plus grounded room evidence and
 renders it naturally. See `ADAPTIVE_LEARNING_ENGINE.md`,
-`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md` and the root `IMPLEMENTATION.md`.
+`ADAPTIVE_GAME_DIRECTOR_RESEARCH.md` and `archive/IMPLEMENTATION.md`.
 
 ### Coach surface navigation contract
 

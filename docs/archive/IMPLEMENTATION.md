@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Studigo V3 Implementation Plan
 
 **Target:** deterministic adaptive game director underneath a grounded GenAI study partner  
@@ -9,8 +11,8 @@ The user approved the available effort labels `low -> medium -> xhigh` on Octobe
 
 This file is the implementation handoff. It does not replace the product, architecture, adaptive-learning, design-system, or App Store contracts. Read them first and preserve the working product.
 The staged web V3 phases below are executed historical contracts, while
-[`docs/ROADMAP.md`](docs/ROADMAP.md) owns current release status and
-[`docs/README.md`](docs/README.md) is the navigation entrypoint.
+[`docs/ROADMAP.md`](../ROADMAP.md) owns current release status and
+[`docs/README.md`](../README.md) is the navigation entrypoint.
 
 ## Current implementation status — October 2, 2026
 
@@ -33,14 +35,14 @@ gates. Do **not** rerun Phase 1/2/3 as a greenfield build.
   linked.
 
 Canonical verification and remaining limits live in
-[`docs/ADAPTIVE_BETA_EVIDENCE.md`](docs/ADAPTIVE_BETA_EVIDENCE.md).
+[`docs/ADAPTIVE_BETA_EVIDENCE.md`](../ADAPTIVE_BETA_EVIDENCE.md).
 
 ## Execution order and prerequisite gate
 
-Track verified results, source-audit findings and outstanding prerequisite checks in [`docs/V3_EXECUTION_EVIDENCE.md`](docs/V3_EXECUTION_EVIDENCE.md). An unchecked acceptance case remains open even when CI passes.
+Track verified results, source-audit findings and outstanding prerequisite checks in [`V3_EXECUTION_EVIDENCE.md`](V3_EXECUTION_EVIDENCE.md). An unchecked acceptance case remains open even when CI passes.
 
 The prerequisite handoff and V3 web implementation have already been resolved.
-Use `docs/V3_EXECUTION_EVIDENCE.md` and `docs/ADAPTIVE_BETA_EVIDENCE.md` as
+Use `V3_EXECUTION_EVIDENCE.md` and `../ADAPTIVE_BETA_EVIDENCE.md` as
 acceptance evidence. Remaining work is release hardening, not a restart:
 durable-session/Coach atomic linkage, trusted Quiz/Test provenance, reviewed live
 RAG and provider performance/cost measurements, durable ingestion, physical-device
@@ -50,8 +52,8 @@ The shared ChatGPT conversation has not been independently verified and is not a
 
 ## Read first
 
-Follow [`AGENTS.md`](AGENTS.md) and the
-[`docs/README.md`](docs/README.md) map. Read the adaptive engine and
+Follow [`AGENTS.md`](../../AGENTS.md) and the
+[`docs/README.md`](../README.md) map. Read the adaptive engine and
 specialist design/release contracts only for the surface being changed.
 The phases below are historical implementation context, not a second
 current-state reading order.
@@ -541,7 +543,7 @@ The Coach experience is not finished until all of the following are true:
 ## Learner-facing V3 finish
 
 The remaining web/PWA product pass is specified in
-[`docs/V3_LEARNER_UI_FINISH_PLAN.md`](docs/V3_LEARNER_UI_FINISH_PLAN.md).
+[`V3_LEARNER_UI_FINISH_PLAN.md`](V3_LEARNER_UI_FINISH_PLAN.md).
 
 It covers the complete handoff before native parity:
 

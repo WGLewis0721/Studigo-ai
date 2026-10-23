@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Sol Phase 2 integration
 
 Sequential GPT 6.1 Sol medium backend pass, 2026-10-02 UTC, over the low foundation audit. Claude retains UI/UX ownership. This is a reviewable implementation foundation; it does not close Phase 1 measured RAG, Phase 2 native, PR #59/downloadable-guide P0, or hosted acceptance gates.

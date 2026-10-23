@@ -1,6 +1,8 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](../../README.md).
+
 # POC IX Moon Keep Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** this plan is finished history. POC IX is a frozen route. The golden game is POC XI. Do not implement the tasks below. The original text asked workers to use a superpowers execution skill and checkbox steps; that instruction is retired.
 
 **Goal:** Build `/poc-ix/`, a 12-room multiplication Metroidvania slice (factor-locked seals, skip-count factor blocks, two plate bosses, Moon Boots, Knowledge orbs) that ends at the original Core Clash.
 
@@ -8,7 +10,7 @@
 
 **Tech Stack:** Phaser 3.90.0 (global, `../vendor/phaser-3.90.0.min.js`), vanilla JS ES modules, Node 22+ `node:test`, browser QA through the in-app browser / Playwright Chromium.
 
-**Spec:** `docs/superpowers/specs/2026-09-29-poc-ix-moon-keep-design.md`
+**Spec:** `docs/archive/superpowers/specs/2026-09-29-poc-ix-moon-keep-design.md`
 
 ## Global Constraints
 

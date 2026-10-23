@@ -1,5 +1,7 @@
 # Guided Learn — engineering plan
 
+> **Status: design direction.** Room 2 is not accepted. The live experiment is `docs/PHASE3_ROOM2_LEARN.md` and `docs/ux/`. Do not treat this file as shipped behavior.
+
 October 2026. This replaces the study-guide reading as the target for Learn. The wireframe with Brief / Show / Try / Check labels, Mission / Chat / Topics, and a row of Find it / Read aloud / Ask is information hierarchy, not the screen to build.
 
 ## Product DNA

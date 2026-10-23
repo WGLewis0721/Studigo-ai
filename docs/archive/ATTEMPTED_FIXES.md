@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Attempted Fixes — Coach "Give me N questions"
 
 Chronological log of changes made while diagnosing the coach narration bug

@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # Sol Phase 3 integrated review
 
 Actual sequential GPT 6.1 Sol xhigh backend review, 2026-10-02 UTC, after the low

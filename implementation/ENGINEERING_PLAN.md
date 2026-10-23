@@ -27,7 +27,7 @@ When documents disagree, use this order:
 4. `ENGINEERING.md` for the live map,
 5. this file for planned work,
 6. [`implementation/security-readiness/`](security-readiness/) for the public-launch decision,
-7. dated notes (`SOL_PHASE*`, `ATTEMPTED_FIXES.md`, this checklist's history) for evidence, not for the live contract.
+7. dated notes in `docs/archive/` (`SOL_PHASE*`, `ATTEMPTED_FIXES.md`, `PROBLEM_STATEMENT.md`, and this checklist's history) for evidence, not for the live contract.
 
 ## Already done — do not redo
 
@@ -99,7 +99,7 @@ Make orientation cheap. Do not add a second map until the current one fails a te
   - Done when: each README exists and names the test command already in that package.
   - Verify: `pnpm --filter @studigo/ai test` (and the sibling filters) still pass. No behavior change.
 
-- **L4. Docs triage.** In `docs/README.md`, a read-first list with approximate size and "read only if". Move nothing that is still a live contract. Point `SOL_PHASE*`, `ATTEMPTED_FIXES.md`, and `PROBLEM_STATEMENT.md` at as history, from the index, without using them as the idempotency tutorial. One paragraph each in `docs/README.md` for Moon Keep and `services/retrieval/` stating they are not the learning app.
+- **L4. Docs triage.** `docs/README.md` is the read-first list. Historical phase notes, the Sol reviews, the V3 finish plan, the old coding handoff, and the Coach investigation log are in `docs/archive/` (nothing deleted). Do not move a file that is still a live contract. Idempotency is not in those notes; it lives in `apps/web/lib/learning/` and `claim_document`. Moon Keep and `services/retrieval/` are called out on `docs/README.md` as separate from the learning app.
   - Done when: a new reader can see which docs are live.
   - Verify: links resolve. `pnpm test` if the security-readiness check hashes docs (it should not). No deletions of product contracts.
 
@@ -376,7 +376,7 @@ Principles: the core loop is the product. Difficulty adapts like a game assist m
 
 - **G9. Learning as the mechanic.** Stays on the Moon Keep track (`prototypes/moon-road/`). No work in this plan until G1 to G5 have measures.
 
-- **G10. Companion as the reason to return (decision first).** The objective: the avatar is a character the learner knows and cares about, and that relationship is the vehicle for continued play. This reverses the current written rules ("no reward economy, no streaks, no currency", `docs/COMPANION_PARITY_PLAN.md`, `docs/DESIGN_SYSTEM.md`, and the non-goals in `IMPLEMENTATION.md`), so the owner approves the change and those three files are updated in the same PR as the first G10 code.
+- **G10. Companion as the reason to return (decision first).** The objective: the avatar is a character the learner knows and cares about, and that relationship is the vehicle for continued play. This reverses the current written rules ("no reward economy, no streaks, no currency", `docs/COMPANION_PARITY_PLAN.md`, `docs/DESIGN_SYSTEM.md`, and the non-goals in `docs/archive/IMPLEMENTATION.md`), so the owner approves the change and those three files are updated in the same PR as the first G10 code.
   - Rules that stay:
     - The companion never changes mastery, difficulty, or grading. Cosmetic and expressive items only (emotes, outfits, names, room items).
     - Rewards are earned from what Studigo measures (demonstrated recall, completed reviews, improving a weak topic), never from uploaded grades. A grades-based bonus, if ever built, is optional, parent-controlled, verified, and reviewed by counsel (S8).
@@ -489,7 +489,7 @@ Update this table in the PR that changes the status. Do not edit it to match a p
 | Validate hook, schemas, prompts, cache order, typed route errors | Not started | M2 to M6 |
 | Learner experience (core loop, math, visual explanations, auto level, rush detection, scheduling, flags, export quality) | Not started, except existing pieces: a PDF study guide, a room test date, a study-plan route, and practice tests. Decision G1 and child privacy S8 come first | G1 to G8 |
 | Onboarding and conversion (no blank states, free allowance, honest loss framing, anchoring, endowment) | Not started. O1 guardrails and S8 come first | O1 to O8 |
-| Companion bond and cosmetic rewards | Not started. Currently forbidden by `COMPANION_PARITY_PLAN.md`, `DESIGN_SYSTEM.md`, and `IMPLEMENTATION.md`. Needs owner approval | G10 |
+| Companion bond and cosmetic rewards | Not started. Currently forbidden by `COMPANION_PARITY_PLAN.md`, `DESIGN_SYSTEM.md`, and `docs/archive/IMPLEMENTATION.md`. Needs owner approval | G10 |
 | Pull mechanics (something waiting, warm return, fast first minute) | Not started. Needs G6 scheduling and G10 | G11 |
 | Learning-outcome pilot | Not started | G12 |
 | Resilience, telemetry, pinning, config, consistency check (H3 to H7) | Not started | H3 to H7 |

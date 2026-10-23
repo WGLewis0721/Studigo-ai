@@ -1,3 +1,5 @@
+> **Archived** (2026-10-16). Historical. Do not treat this as current work. Index: [`docs/archive/README.md`](README.md).
+
 # V3 execution evidence
 
 ## October 2 recalibration + topic-scope follow-up
@@ -103,7 +105,7 @@ These are static findings, not executed reproductions. They do not establish a c
 
 ## Gate evidence still required
 
-Use the protocol in [USER_TEST_CASES.md](USER_TEST_CASES.md), including the P0 download case, UT-11, UT-12, UT-16 and UT-17. Record commit, hosted deployment, device/browser, fixture identifiers without private source contents, actual result, evidence location and remaining defect for each run.
+Use the protocol in [USER_TEST_CASES.md](../USER_TEST_CASES.md), including the P0 download case, UT-11, UT-12, UT-16 and UT-17. Record commit, hosted deployment, device/browser, fixture identifiers without private source contents, actual result, evidence location and remaining defect for each run.
 
 - [ ] Reproduce and repair source-selection findings with meaningful tests.
 - [ ] Run fresh workspace tests/typecheck/build on the implementation branch.

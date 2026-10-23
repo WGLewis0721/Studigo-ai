@@ -1,6 +1,6 @@
 # Offline advisory BKT baseline
 
-Run `python -m unittest discover -s evals/ml -p test_*.py` and `python evals/ml/run.py --output evals/ml/results/synthetic.json`. Uses only Python's standard library. The CLI accepts synthetic fixtures only; it does not export or train on production learner data. Real child-data work requires a separately authorized privacy-controlled pipeline.
+Run `pnpm test:ml` (`python3 -m unittest discover -s evals/ml -p test_*.py`) and `python3 evals/ml/run.py --output evals/ml/results/synthetic.json`. Uses only Python's standard library. The CLI accepts synthetic fixtures only; it does not export or train on production learner data. Real child-data work requires a separately authorized privacy-controlled pipeline.
 
 The four-parameter BKT implementation predicts before observing each outcome, then updates the known-skill posterior and learning transition. Parameters are chosen from a small interpretable grid using only training learners before a fixed UTC cutoff. Learners are deterministically separated; held-out learner history can warm up sequential predictions but cannot fit parameters. Scored held-out outcomes are after the cutoff. The [CMU worked knowledge-tracing example](https://www.cs.cmu.edu/~listen/BNT-SM/kt.html) documents the underlying inference boundary.
 

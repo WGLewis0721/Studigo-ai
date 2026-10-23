@@ -120,7 +120,7 @@ ASVS is not used as a control set here. At audit time the OWASP page still liste
 | API9-02 | Versioned and flagged routes | PASS | `/api/v1/learning/sessions` returns 404 unless `STUDIGO_DURABLE_SESSIONS=1`. `/api/v1/learning/progress` is owner-checked. |
 | AUX-01 | Auxiliary services authenticated | **FAIL — blocker if deployed** | Found by the readiness gate (GMS-ACCESS-003), not by this pass. The optional Python retrieval service (`services/retrieval/app/main.py`) accepts room IDs with no authenticated Studigo principal. Keep it loopback-only, or add service authentication and caller/room authorization before any non-local deployment. |
 | CI-01 | Protected `main` and required checks | **FAIL / OPS** | Found by the readiness gate (GMS-CI-001). `main` is unprotected, so CI (including the new audit step) is advisory. Enable branch protection with required status checks. |
-| API9-03 | API inventory | PARTIAL | No single route inventory with each route's auth, cost class and limit. `/game` ships in the web build (static; production currently returns 404). AI_HANDOFF says the game must not be linked from `apps/web`. Remove the route or document it. |
+| API9-03 | API inventory | PARTIAL | No single route inventory with each route's auth, cost class and limit. `/game` ships in the web build (static; production currently returns 404). `docs/archive/AI_HANDOFF.md` says the game must not be linked from `apps/web`. Remove the route or document it. |
 
 ## 3. Next.js data security
 

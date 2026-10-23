@@ -4,7 +4,7 @@
 >
 > Read this before opening the rest of the repository. Then load only the task-specific contract or code paths linked below.
 >
-> Broader planned engineering work is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). For the document-learning reliability track, use one assigned card and the shared execution contract in `STUDIGO_CODEX_EXECUTION_PLAN.md`. Do not add competing plans, tours, or security checklists.
+> Broader planned engineering work is `implementation/ENGINEERING_PLAN.md` (workstreams L, E, P, M, G, O, S, H, W). For the document-learning reliability track, use one assigned card in `STUDIGO_CODEX_EXECUTION_PLAN.md` (track queue, not the cold start). Historical phase plans live in `docs/archive/`. The documentation index is `docs/README.md`. Do not add competing plans, tours, or security checklists.
 
 ## System in one sentence
 
@@ -293,6 +293,6 @@ When docs conflict, use this order:
 3. `docs/ARCHITECTURE.md` for intended runtime architecture,
 4. this file for the compact engineering map,
 5. `implementation/ENGINEERING_PLAN.md` for planned work,
-6. dated/audit/history documents for evidence and context.
+6. dated/audit/history documents in `docs/archive/` for evidence and context.
 
 A material architecture change must update this file if it changes the system map, technology rationale, authority boundary, or code ownership.
