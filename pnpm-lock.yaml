@@ -50,7 +50,7 @@ importers:
         version: 9.11.0
       next:
         specifier: 16.3.8
-        version: 16.3.8(@types/node@22.20.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 16.3.8(@types/node@26.6.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
@@ -62,8 +62,8 @@ importers:
         version: 19.3.0(react@19.3.0)
     devDependencies:
       '@types/node':
-        specifier: 22.20.2
-        version: 22.20.2
+        specifier: 26.6.5
+        version: 26.6.5
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -84,8 +84,8 @@ importers:
         version: 7.15.0
     devDependencies:
       '@types/node':
-        specifier: 22.20.2
-        version: 22.20.2
+        specifier: 26.6.5
+        version: 26.6.5
       tsx:
         specifier: 4.23.13
         version: 4.23.13
@@ -118,8 +118,8 @@ importers:
   packages/learning:
     devDependencies:
       '@types/node':
-        specifier: 22.20.2
-        version: 22.20.2
+        specifier: 26.6.5
+        version: 26.6.5
       tsx:
         specifier: 4.23.13
         version: 4.23.13
@@ -130,8 +130,8 @@ importers:
   packages/mastery:
     devDependencies:
       '@types/node':
-        specifier: 22.20.2
-        version: 22.20.2
+        specifier: 26.6.5
+        version: 26.6.5
       tsx:
         specifier: 4.23.15
         version: 4.23.15
@@ -620,9 +620,6 @@ packages:
     engines: {node: '>= 10'}
     hasBin: true
 
-  '@types/node@22.20.2':
-    resolution: {integrity: sha512-xlvWf4Vs9n1PEVYwP1n4vvG07M6y8WgvJ2t0vbrWTmijsIHp1cS+uJ2kMIRdY3nHZK0nCYKrPeD171+SzF4/zw==}
-
   '@types/node@26.6.5':
     resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
 
@@ -1024,9 +1021,6 @@ packages:
   underscore@1.13.8:
     resolution: {integrity: sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==}
 
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
@@ -1373,10 +1367,6 @@ snapshots:
       '@tauri-apps/cli-win32-ia32-msvc': 2.11.4
       '@tauri-apps/cli-win32-x64-msvc': 2.11.4
 
-  '@types/node@22.20.2':
-    dependencies:
-      undici-types: 6.21.0
-
   '@types/node@26.6.5':
     dependencies:
       undici-types: 8.9.0
@@ -1573,7 +1563,7 @@ snapshots:
 
   nanoid@6.0.2: {}
 
-  next@16.3.8(@types/node@22.20.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
+  next@16.3.8(@types/node@26.6.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:
       '@next/env': 16.3.8
       '@swc/helpers': 0.5.23
@@ -1592,7 +1582,7 @@ snapshots:
       '@next/swc-linux-x64-musl': 16.3.8
       '@next/swc-win32-arm64-msvc': 16.3.8
       '@next/swc-win32-x64-msvc': 16.3.8
-      sharp: 0.35.5(@types/node@22.20.2)
+      sharp: 0.35.5(@types/node@26.6.5)
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/node'
@@ -1659,7 +1649,7 @@ snapshots:
 
   setimmediate@1.0.5: {}
 
-  sharp@0.35.5(@types/node@22.20.2):
+  sharp@0.35.5(@types/node@26.6.5):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -1690,7 +1680,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.5
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
-      '@types/node': 22.20.2
+      '@types/node': 26.6.5
     optional: true
 
   source-map-js@1.2.2: {}
@@ -1746,8 +1736,6 @@ snapshots:
       '@typescript/typescript-win32-x64': 7.0.2
 
   underscore@1.13.8: {}
-
-  undici-types@6.21.0: {}
 
   undici-types@8.9.0: {}
 
