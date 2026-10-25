@@ -1,3 +1,5 @@
+> **Superseded (2026-10-25):** this Phase 4 material is historical. Use the Living Companion (LC) knowledge base at [design/living-companion/README.md](../living-companion/README.md) and [implementation/LIVING_COMPANION_V1_PLAN.md](../../implementation/LIVING_COMPANION_V1_PLAN.md). Track renamed to avoid the ROADMAP "Phase 4" (reliability/safety/cost) clash.
+
 # Studigo v2 Phase 4 — Living Companion: Coucou/REA behavior extraction
 
 **Status:** research and source-backed technical reference. **Not implemented; not a Phase 4 release gate.**  

@@ -1,3 +1,5 @@
+> **Superseded (2026-10-25):** this Phase 4 material is historical. Use the Living Companion (LC) knowledge base at [design/living-companion/README.md](../design/living-companion/README.md) and [implementation/LIVING_COMPANION_V1_PLAN.md](LIVING_COMPANION_V1_PLAN.md). Track renamed to avoid the ROADMAP "Phase 4" (reliability/safety/cost) clash.
+
 # Studigo v2 — Phase 4: Living Companion execution plan
 
 **Status:** APPROVED visual/interaction direction; PLANNED engineering execution; NOT IMPLEMENTED, NOT TESTED, NOT DEPLOYED.  
