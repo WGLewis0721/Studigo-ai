@@ -2,7 +2,10 @@
 
 For a GenAI coding agent (Cursor cloud agent / Grok Bot) working this track until v1 is done.
 
-## 0. Read first, every session
+## 0. Retrieve first, every session
+Before acting: retrieve from the LC knowledge base (`design/living-companion/README.md` index), cite the IDs you relied on (`LC-DEC-nnn`, `LC-SRC-nnn`, task `LC-n`), and never state `assumption`/`open` claims as fact. Then verify live repo state (section 1); live code wins.
+
+Then read:
 `AGENTS.md` → `ENGINEERING.md` → `implementation/LIVING_COMPANION_V1_PLAN.md` → the one task's docs here. Do not scan the whole repo (AGENTS.md).
 
 ## 1. Verify state (before any edit)
