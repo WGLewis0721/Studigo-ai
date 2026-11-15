@@ -4,7 +4,7 @@
 
 **Status:** PLANNED, NOT IMPLEMENTED. Track renamed from "Phase 4" to "Living Companion (LC)" because `docs/ROADMAP.md` Phase 4 means "Reliability, safety, cost" (LC-DEC-001).
 
-**Branch note:** this research branch (`research/phase4-coucou-rea-behavior-spec`, PR #164) shares no git history with `main`. Implementation branches start from `main` (LC-DEC-005); cherry-pick or copy these docs, do not merge this branch.
+**Branch note:** the *original research branch* (`research/phase4-coucou-rea-behavior-spec`, PR #164) has unrelated history and must not be merged into `main` directly. This **foundation branch** (`feat/studigo-v2-phase4-animation-foundation`) was created from `main` and copied the LC knowledge-base content. Subsequent implementation task branches follow LC-DEC-005 and start from current `main`.
 
 ## Index (one line + retrieval keywords per doc)
 
