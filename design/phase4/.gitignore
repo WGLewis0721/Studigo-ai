@@ -1,0 +1,3 @@
+# Local-only reference mirror, temporary character experiments and hydration audit.
+# Keep approved/production assets and app code in their existing canonical folders.
+/workspace/
