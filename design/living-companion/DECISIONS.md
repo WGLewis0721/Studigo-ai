@@ -24,3 +24,6 @@ Status: **APPROVED** (owner, William) · **PROPOSAL** (agent, needs no further a
 | LC-DEC-018 | Oct 25 | PROPOSAL | Adopt Avatar Lab ideas clean-room: character JSON + schema (LC-2), micro-saccades + slow drift idle, perspective head yaw/pitch in fallback rig. |
 | LC-DEC-019 | Oct 25 | OPEN | Strip-host slot between nav and rail does not exist on `main`; build in LC-6. |
 | LC-DEC-020 | Oct 25 | OPEN | Home full-body stage and header mascot are not upgraded in v1. |
+| LC-DEC-021 | Nov 15 | APPROVED (owner) | v1 expression and beat lists are the ones in `STUDIGO_EXPRESSIVENESS_SPEC.md` (§3 and §4) as written. Additions are allowed; removals need owner approval. Supersedes the six-expression list in RECONCILIATION C2. |
+| LC-DEC-022 | Nov 15 | APPROVED (owner) | LC docs and the revised plan stay on PR #164. Task branches still come from `main` (LC-DEC-005). |
+| LC-DEC-023 | Nov 15 | APPROVED (owner) | Agent role names (Green, Blue, Yellow, Red Ranger) are not used. Work is assigned by step number in `implementation/LIVING_COMPANION_V1_PLAN.md`. |
