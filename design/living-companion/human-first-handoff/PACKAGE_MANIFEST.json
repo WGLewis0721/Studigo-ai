@@ -1,0 +1,29 @@
+{
+  "package": "Studigo Living Companion Human-First Reference",
+  "prepared_on": "2026-11-14",
+  "audience": "human first; tool and agent agnostic",
+  "status": "reference/handoff, not evidence of implementation or release",
+  "source_context": "reconstructed transcript; not verbatim chat export",
+  "canonical_plan": "implementation/LIVING_COMPANION_V1_PLAN.md on remote foundation branch",
+  "remote_branch": "feat/studigo-v2-phase4-animation-foundation",
+  "remote_branch_verified_head": "4f3f63d38f98b068a9dbba9194003fbda4ab246b",
+  "original_zip_inside": "historical/ORIGINAL_2026-10-25_HANDOFF.zip",
+  "original_zip_sha256": "6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0",
+  "original_zip_bytes": 5775271,
+  "lifecycle": "the old original file remains pinned in existing local hydration script; do not point that script directly at this new pack",
+  "files": [
+    "00_START_HERE.md",
+    "01_AT_A_GLANCE.md",
+    "02_OWNER_DECISIONS.md",
+    "03_THE_THREE_APPROVED_CONCEPTS.md",
+    "04_BEHAVIOR_AND_ANIMATION.md",
+    "05_CURRENT_LIVING_COMPANION_SPEC.md",
+    "06_BUILD_SEQUENCE_AND_RESPONSIBILITIES.md",
+    "07_REPO_AND_LOCAL_WORKSPACE.md",
+    "08_ASSETS_LICENSE_AND_REFERENCES.md",
+    "08_LIVE_SOURCES_AND_LINKS.md",
+    "09_VALIDATION_AND_RELEASE.md",
+    "10_CONVERSATION_HISTORY.md",
+    "11_WHAT_TO_DO_NEXT.md"
+  ]
+}
