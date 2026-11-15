@@ -19,7 +19,7 @@ Committed to your target branch already:
 - design/living-companion/.gitignore
 - scripts/living-companion/prepare_workspace.py
 
-READ root AGENTS.md, ENGINEERING.md, the canonical LC README/DECISIONS and the current LC v1 plan first. The old October 16 Living Companion plan inside the historical ZIP is SUPERSEDED: do not use it as active implementation authority. The product owner subsequently approved 14 expressions, 12 beats, an in-memory mood meter, seven school-subject outfits, a Rive-vs-Canvas feasibility bake-off, and a later provider-agnostic MouthDriver/voice path. See LC-DEC IDs and LC-0..LC-10; nothing has shipped merely because it is planned. ROADMAP already uses Living Companion for Reliability/Safety/Cost, so treat this as LC groundwork while preserving the user's original label as a historical reference. Current code/real tests are authoritative over dated assumptions.
+READ root AGENTS.md, ENGINEERING.md, the canonical LC README/DECISIONS and the current LC v1 plan first. The old October 16 Phase 4 plan inside the historical ZIP is SUPERSEDED: do not use it as active implementation authority. The product owner subsequently approved 14 expressions, 12 beats, an in-memory mood meter, seven school-subject outfits, a Rive-vs-Canvas feasibility bake-off, and a later provider-agnostic MouthDriver/voice path. See LC-DEC IDs and LC-0..LC-10; nothing has shipped merely because it is planned. ROADMAP already uses Phase 4 for Reliability/Safety/Cost, so treat this as LC groundwork while preserving the user's original label as a historical reference. Current code/real tests are authoritative over dated assumptions.
 
 ## Mission A — Safely locate and mirror the remote branch on local
 
@@ -49,7 +49,7 @@ Adjust the archive path. This script uses the Python standard library only. It c
 3. The nested REA machine evidence ZIP stays compressed to save disk. Do not execute scripts from inside the imported archive.
 4. Inspect design/living-companion/workspace/evidence/reference-hydration.json. If downloads failed, report exact failures, repair only necessary small steps; rerun using --offline if network unavailable but DO NOT claim hydration complete.
 5. Stage only the exact ZIP and necessary setup corrections. The entire design/living-companion/workspace/ is ignored. Verify Git's diff does not include private student content, third-party character artwork, large caches or unintended runtime files.
-6. Commit and push to origin/feat/studigo-v2-phase4-animation-foundation with a clear message such as docs(phase4): add verified context ZIP.
+6. Commit and push to origin/feat/studigo-v2-phase4-animation-foundation with a clear message such as docs(lc): add verified context ZIP.
 7. VERIFY THE REMOTE BINARY FILE WAS PUSHED. Confirm GitHub branch path and local remote blob content/sha. If not actually pushed, explicitly report ZIP not yet on remote. Do not claim upload merely from local copy.
 
 ## Mission C — Populate the local reference folder structure
@@ -57,7 +57,7 @@ Adjust the archive path. This script uses the Python standard library only. It c
 The committed script creates the following only-local hierarchy (do not commit it):
 
 design/living-companion/workspace/
-    context/unpacked/Studigo_v2_Living Companion_Grok_Handoff/
+    context/unpacked/Studigo_v2_Phase4_Grok_Handoff/
     references/studigo/<original Studigo relative paths>
     references/coucou/<pinned Coucou code relative paths>
     references/rea/<pinned REA reference relative paths>
