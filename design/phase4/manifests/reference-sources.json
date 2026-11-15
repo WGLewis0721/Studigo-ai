@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "branch": "feat/studigo-v2-phase4-animation-foundation",
+  "canonical_plan": "implementation/PHASE4_LIVING_COMPANION_PLAN.md",
+  "archive": {
+    "filename": "Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip",
+    "repository_path": "design/phase4/context/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip",
+    "sha256": "6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0",
+    "size_bytes": 5775271,
+    "inner_evidence": "Studigo_v2_Phase4_Grok_Handoff/rea_evidence/rea-evidence-original.zip",
+    "note": "The original archive is a reconstructed conversation handoff, not a verbatim transcript. The nested evidence archive remains compressed by default."
+  },
+  "repos": {
+    "studigo": {
+      "repository": "WGLewis0721/Studigo-ai",
+      "revision": "LOCAL_BRANCH",
+      "files": [
+        "AGENTS.md",
+        "ENGINEERING.md",
+        "docs/PRODUCT.md",
+        "docs/ARCHITECTURE.md",
+        "docs/brand/mascot/README.md",
+        "docs/brand/mascot/reference/studigo-2d-brand-reference.jpg",
+        "docs/brand/mascot/reference/studigo-character-bible.jpg",
+        "docs/brand/mascot/reference/studigo-crayon-tail-reference.jpg",
+        "docs/brand/mascot/reference/studigo-icon-reference.jpg",
+        "docs/brand/mascot/reference/studigo-pose-reference-sheet.jpg",
+        "docs/brand/mascot/reference/studigo-profile-reference.jpg",
+        "apps/web/public/mascot/companion/center.webp",
+        "apps/web/public/mascot/companion/full/center.webp",
+        "apps/web/components/companion/engine.ts",
+        "apps/web/components/companion/companion.tsx",
+        "apps/web/components/companion/companion.css",
+        "apps/web/components/companion/stage.tsx",
+        "apps/web/components/room/workspace.tsx",
+        "apps/web/components/room/mode-header.tsx",
+        "apps/web/lib/companion-logic.ts",
+        "apps/web/lib/companion-prefs.ts",
+        "apps/web/lib/companion-logic.test.ts",
+        "docs/ux/PHASE3_UI_CHANGE_LEDGER_2026-10-15.md",
+        "implementation/PHASE4_LIVING_COMPANION_PLAN.md",
+        "design/phase4/COUCOU_REA_BEHAVIOR_EXTRACTION.md"
+      ],
+      "note": "Copy from current local checked-out branch; source-of-truth files remain in their normal locations."
+    },
+    "coucou": {
+      "repository": "WGLewis0721/coucou",
+      "revision": "a95d309a4752c23ae28453819245339800557609",
+      "files": [
+        "LICENSE",
+        "LICENSE-ASSETS.md",
+        "windows/src/mochi/engine.ts",
+        "windows/src/core/anim.ts",
+        "windows/src/core/layout.ts",
+        "windows/src/mochi/greeting.ts",
+        "windows/src/island/fsm.ts",
+        "windows/src/island/island.ts",
+        "NotchBuddy/Sources/CoucouKit/BotEngine.swift",
+        "NotchBuddy/Sources/App/BotCanvasView.swift"
+      ],
+      "note": "Read-only engineering reference. Mochi character and creative assets are separately protected; do not copy artwork, character identity, audio or branded creative animations."
+    },
+    "rea": {
+      "repository": "WGLewis0721/rea",
+      "revision": "40f73f62bc3acf8b444dbafba1b8ed0aef6dd641",
+      "files": [
+        "README.md",
+        "docs/javascript-application-workflows.md",
+        "docs/cli.md",
+        "docs/mcp-contracts.md",
+        "package.json"
+      ],
+      "note": "Read-only REA tool usage and analysis methodology reference."
+    }
+  },
+  "approved_videos": [
+    {
+      "id": "living-character",
+      "filename": "studigo-character-concept.mp4",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IkKBBXHZvEZQt2d8pBaRYd083T/hf_20261015_163130_6647ad5b-1046-436d-85a2-f420df05c498.mp4"
+    },
+    {
+      "id": "floating-dock",
+      "filename": "studigo-floating-dock-concept.mp4",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IkKBBXHZvEZQt2d8pBaRYd083T/868d115b-2c32-43ec-b409-3bca35fd1c8d.mp4"
+    },
+    {
+      "id": "fixed-strip",
+      "filename": "studigo-fixed-strip-concept.mp4",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IkKBBXHZvEZQt2d8pBaRYd083T/hf_20261015_174105_32b24696-7b5c-4407-bcd0-3f8d622575ce.mp4"
+    }
+  ]
+}
