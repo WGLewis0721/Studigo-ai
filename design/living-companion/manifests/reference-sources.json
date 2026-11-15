@@ -3,12 +3,14 @@
   "branch": "feat/studigo-v2-phase4-animation-foundation",
   "canonical_plan": "implementation/LIVING_COMPANION_V1_PLAN.md",
   "archive": {
-    "filename": "Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip",
-    "repository_path": "design/living-companion/handoff/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip",
-    "sha256": "6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0",
-    "size_bytes": 5775271,
-    "inner_evidence": "Studigo_v2_Phase4_Grok_Handoff/rea_evidence/rea-evidence-original.zip",
-    "note": "Historical chat handoff, NOT current plan. Newer owner-approved Living Companion (LC) knowledge base and implementation/LIVING_COMPANION_V1_PLAN.md take precedence; nested REA evidence kept compressed."
+    "filename": "Studigo_Living_Companion_Human_First_Context_2026-11-14.zip",
+    "repository_path": "design/living-companion/handoff/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip",
+    "sha256": "34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4",
+    "size_bytes": 5805718,
+    "superseded_sha256": "6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0",
+    "inner_original": "historical/ORIGINAL_2026-10-25_HANDOFF.zip",
+    "inner_evidence": "Studigo_v2_Phase4_Grok_Handoff/rea_evidence/rea-evidence-original.zip (inside inner_original)",
+    "note": "Human-first context package dated 2026-11-14, pinned by the owner's instruction. It wraps the byte-identical original 2026-10-25 handoff (inner_original, sha256 superseded_sha256). Historical context only: the LC knowledge base and implementation/LIVING_COMPANION_V1_PLAN.md take precedence. The nested REA evidence stays compressed."
   },
   "repos": {
     "studigo": {

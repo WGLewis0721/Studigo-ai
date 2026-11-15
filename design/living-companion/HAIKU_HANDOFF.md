@@ -31,19 +31,19 @@ READ root AGENTS.md, ENGINEERING.md, the canonical LC README/DECISIONS and the c
 
 ## Mission B — Copy, checksum, unzip, and PUSH the original ZIP to GitHub
 
-Required exact archive filename: Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip
-Expected bytes: 5775271
-Expected SHA256: 6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0
-Destination INSIDE REPO: design/living-companion/handoff/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip
+Required exact archive filename: Studigo_Living_Companion_Human_First_Context_2026-11-14.zip
+Expected bytes: 5805718
+Expected SHA256: 34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4
+Destination INSIDE REPO: design/living-companion/handoff/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip
 
 1. Look for this downloaded file only in Downloads, Desktop or an explicitly supplied path. The ChatGPT sandbox path is NOT directly readable from the laptop. If absent, request this one file/path and complete other independent tasks.
 2. Do not trust a similarly named archive whose SHA256 differs. Inspect the checked-in setup script first. Run it from repo root:
 
 Windows PowerShell:
-    py -3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip"
+    py -3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip"
 
 macOS/Linux:
-    python3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip"
+    python3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip"
 
 Adjust the archive path. This script uses the Python standard library only. It checks archive integrity and path traversal, copies the original ZIP into the tracked context folder, extracts top-level handoff into ignored workspace/context/unpacked, mirrors curated local Studigo code/art/docs, downloads SHA-pinned Coucou/REA code references and writes a manifest with file hashes.
 3. The nested REA machine evidence ZIP stays compressed to save disk. Do not execute scripts from inside the imported archive.

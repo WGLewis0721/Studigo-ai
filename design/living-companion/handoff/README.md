@@ -1,13 +1,13 @@
 # Living Companion — Incoming conversation context archive
 
-**User-supplied original ZIP (still pending local Git push):**
-- Filename: `Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip`
-- Expected size: `5,775,271` bytes
-- SHA-256: `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`
-- Repository destination: `design/living-companion/handoff/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip`
+**Pinned context archive (human-first package, dated 2026-11-14):**
+- Filename: `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip`
+- Expected size: `5,805,718` bytes
+- SHA-256: `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`
+- Repository destination: `design/living-companion/handoff/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip`
 
-This file is the prior ChatGPT-to-Grok reconstructed handoff, **not a verbatim transcript**. Its October 16 Phase 4 roadmap is historical. After October 25, the active plan and design authority live in `implementation/LIVING_COMPANION_V1_PLAN.md` and `design/living-companion/` (14 expressions, 12 beats, mood meter, school-subject outfit layers, Rive/Canvas bake-off, future voice).
+It supersedes the earlier pin for `Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip` (SHA-256 `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`, 5,775,271 bytes). That original is kept byte-identical inside this package at `historical/ORIGINAL_2026-10-25_HANDOFF.zip`.
 
-The GitHub text-only connection **cannot upload the original ZIP's bytes**. Haiku on the owner's laptop must obtain the ChatGPT download, validate the SHA-256, use `scripts/living-companion/prepare_workspace.py`, then commit and push this original binary on the foundation branch. Until then, do not report the ZIP as uploaded.
+The package is a reconstructed, tool-agnostic handoff, not a verbatim transcript. Its October 16 Phase 4 roadmap is historical. After October 25, the active plan and design authority live in `implementation/LIVING_COMPANION_V1_PLAN.md` and `design/living-companion/`.
 
-The Python script preserves the archive and safely expands only its top-level contents under ignored `design/living-companion/workspace/context/unpacked/`. Nested REA evidence remains ZIP-compressed to save storage. No commands or scripts from the handoff archive should be executed.
+`scripts/living-companion/prepare_workspace.py` validates the archive, copies it into this folder, and extracts its top-level contents under the ignored `design/living-companion/workspace/context/unpacked/`. The nested REA evidence stays ZIP-compressed. No commands or scripts from the archive are executed.
