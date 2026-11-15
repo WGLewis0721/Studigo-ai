@@ -23,6 +23,8 @@
 | [COUCOU_REA_BEHAVIOR_EXTRACTION.md](COUCOU_REA_BEHAVIOR_EXTRACTION.md) | Coucou open-source behavior numbers (springs, idle, dock) | Coucou, REA, spring, extraction |
 | [assets/ASSET_MANIFEST.md](assets/ASSET_MANIFEST.md) | Assets, outfits, license rules | asset, outfit, license, art |
 | [AGENT_RUNBOOK.md](AGENT_RUNBOOK.md) | Loop an agent follows until v1 is done | runbook, agent, workflow, stop conditions |
+| [HAIKU_HANDOFF.md](HAIKU_HANDOFF.md) | Local repo groundwork, exact historical handoff ZIP upload, reference mirror | local, Haiku, setup, archive, SHA256, hydration |
+| [manifests/reference-sources.json](manifests/reference-sources.json) | SHA-pinned code references, approved concept URLs and archive checksum | manifest, references, videos, Coucou, REA, provenance |
 | [../../implementation/LIVING_COMPANION_V1_PLAN.md](../../implementation/LIVING_COMPANION_V1_PLAN.md) | Executable plan: definition of done, tasks LC-0..LC-10, estimates | plan, task, LC-0, LC-10, acceptance |
 
 ## Retrieval rules
@@ -30,3 +32,9 @@
 2. Cite IDs (`LC-DEC-nnn`, `LC-SRC-nnn`, task `LC-n`) in PRs and reports.
 3. Claims tagged `assumption` or `open` in SOURCES.md must not be stated as fact.
 4. Superseded: `implementation/PHASE4_LIVING_COMPANION_PLAN.md` and `design/phase4/` are historical; LC docs win on conflict.
+
+## Phase 4 label and local groundwork (2026-11-14)
+
+The owner may still call this the “Studigo v2 Phase 4 animation upgrade.” In this repository the current canonical track is **Living Companion (LC)** so it does not conflict with the engineering roadmap's Phase 4 reliability work. This main-based foundation branch is `feat/studigo-v2-phase4-animation-foundation`; follow the **LC** task IDs and the current LC v1 plan. The older October handoff ZIP and old phase4 plan are historical references.
+
+Local intake and source hydration are documented in [HAIKU_HANDOFF.md](HAIKU_HANDOFF.md), [handoff/README.md](handoff/README.md), the pinned [manifest](manifests/reference-sources.json), and [scripts/living-companion/prepare_workspace.py](../../scripts/living-companion/prepare_workspace.py). This branch adds source docs and scripts only; **the original user-downloaded ZIP must still be copied, checksum-validated and committed by the local Haiku session**. Downloaded reference mirrors live under ignored `design/living-companion/workspace/`; no original mascot files, runtime implementation or production configuration are modified by the setup script.
