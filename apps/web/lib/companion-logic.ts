@@ -125,8 +125,9 @@ export function scaleFromDrag(anchorX: number, anchorY: number, pointerX: number
 
 /* ---------- what the room tells him ---------- */
 
-export type CompanionEvent = "correct" | "wrong" | "blindspot" | "setDone" | "cardGood" | "cardMiss";
-export const COMPANION_EVENTS: readonly CompanionEvent[] = ["correct", "wrong", "blindspot", "setDone", "cardGood", "cardMiss"];
+/** Events the room can send. The first six exist on main. The rest are the LC v1 additions from SHARED_COMPANION_EVENTS.md (LC-7 wires their reactions; until then they use placeholder reactions below). */
+export type CompanionEvent = "correct" | "wrong" | "blindspot" | "setDone" | "cardGood" | "cardMiss" | "correctFast" | "stall" | "hintOpened" | "missionComplete" | "sessionReturn";
+export const COMPANION_EVENTS: readonly CompanionEvent[] = ["correct", "wrong", "blindspot", "setDone", "cardGood", "cardMiss", "correctFast", "stall", "hintOpened", "missionComplete", "sessionReturn"];
 
 /** Short, rare, and only when the learner has switched speech on. No em dashes (PLAIN_PUNCTUATION_RULE). */
 export const LINES = {
@@ -153,6 +154,12 @@ export function reactionFor(event: CompanionEvent, streak: number): Reaction {
     case "setDone": return { pose: "celebrate", ms: 3000, sparks: 16, lines: LINES.setDone, always: true };
     case "cardGood": return { pose: "celebrate", ms: 1300, sparks: 5 };
     case "cardMiss": return { pose: "support", ms: 1500, sparks: 0 };
+    // Placeholders for LC v1 events. LC-7 replaces these with the reactions in SHARED_COMPANION_EVENTS.md.
+    case "correctFast": return { pose: "celebrate", ms: 1000, sparks: 6 };
+    case "stall": return { pose: "lean", ms: 2000, sparks: 0, lines: LINES.lean };
+    case "hintOpened": return { pose: "center", ms: 600, sparks: 0 };
+    case "missionComplete": return { pose: "celebrate", ms: 2500, sparks: 16, lines: LINES.setDone, always: true };
+    case "sessionReturn": return { pose: "center", ms: 1500, sparks: 0 };
   }
 }
 
