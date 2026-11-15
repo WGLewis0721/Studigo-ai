@@ -1,5 +1,7 @@
 # GitHub and local reference workspace
 
+> **Repository revision, 2026-11-15:** the archive pin now points at `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip` (SHA-256 `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`), per the owner's instruction. The archive itself is unchanged. The source of truth for pins is `design/living-companion/manifests/reference-sources.json`.
+
 ## The repository
 
 **Repo:** https://github.com/WGLewis0721/Studigo-ai
@@ -16,32 +18,32 @@
 
 The groundwork branch includes `scripts/living-companion/prepare_workspace.py`. It is intended to make a **small and reproducible local reference library** without cloning huge repositories or modifying the product.
 
-It expects the **original historical handoff ZIP** with this exact filename and hash:
+It expects the **pinned context archive** with this exact filename and hash:
 
-- `Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip`
-- SHA-256: `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`
-- Size: `5,775,271` bytes.
+- `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip`
+- SHA-256: `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`
+- Size: `5,805,718` bytes.
 
-**To get that exact file from this new package:** extract `historical/ORIGINAL_2026-10-25_HANDOFF.zip` and rename the extracted *ZIP file* to `Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip` (do not unpack its contents yet). Its bytes/hash are unchanged. The current script only accepts this original historical archive, **not the new human-first ZIP**; this is intentional to preserve the pinned checksum.
+Use the archive as delivered. Do not unpack or rename it. The original 2026-10-25 handoff is nested inside, byte-identical, at `historical/ORIGINAL_2026-10-25_HANDOFF.zip` (SHA-256 `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`). The superseded pin is kept in the manifest for provenance only.
 
 Example commands after safely switching to the existing foundation branch, from the Studigo repo root:
 
 Windows PowerShell:
 
-    py -3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip"
+    py -3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip"
 
 macOS/Linux:
 
-    python3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_v2_Phase4_Full_Chat_Context_for_Grok.zip"
+    python3 scripts/living-companion/prepare_workspace.py --archive "$HOME/Downloads/Studigo_Living_Companion_Human_First_Context_2026-11-14.zip"
 
-Review the script before executing it. It verifies the original archive, safely unpacks the top-level context, mirrors selected current Studigo files and downloads pinned, allowlisted Coucou/REA source references. It keeps the nested huge REA evidence compressed by default. It stages the original archive in `design/living-companion/handoff/`; committing and pushing the binary to the remote is a separate action and **was not completed through the GitHub text interface** during the earlier setup.
+Review the script before executing it. It verifies the pinned archive, safely unpacks the top-level context, mirrors selected current Studigo files and downloads pinned, allowlisted Coucou/REA source references. It keeps the nested huge REA evidence compressed by default. It stages the archive in `design/living-companion/handoff/`. The archive is committed on the foundation branch. Any later change to it is a separate, explicit action.
 
 ### Where reference files live locally
 
     Studigo-ai/
       implementation/LIVING_COMPANION_V1_PLAN.md       [tracked]
       design/living-companion/                          [tracked LC documentation]
-        handoff/                                        [original historical ZIP goes here]
+        handoff/                                        [pinned context archive goes here]
         manifests/reference-sources.json              [pinned source list]
         workspace/                                      [ignored, local-only]
           context/unpacked/                             [historical conversation text]
@@ -56,7 +58,7 @@ Review the script before executing it. It verifies the original archive, safely 
 ## Source safety
 
 - The hydrated reference mirror is not a second source-of-truth copy of the app.
-- Only commit the original ZIP after validating its checksum, confirming the repository is intended to hold it and reviewing it for sensitive material.
+- Only commit the pinned archive after validating its checksum, confirming the repository is intended to hold it and reviewing it for sensitive material.
 - Do not commit the ignored workspace, private student content, Mochi artwork or audio, unapproved generated assets, or large tool caches.
 - A clean local clone/worktree is preferable to overwriting an existing dirty checkout. Never use destructive Git resets or blanket clean commands.
 - Separate real implementation work later into LC task branches off current main, with PRs and explicit test evidence.

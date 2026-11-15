@@ -1,5 +1,7 @@
 # What to do next — owner and collaborator checklist
 
+> **Repository revision, 2026-11-15:** archive items below follow the pinned file in `design/living-companion/manifests/reference-sources.json`.
+
 ## For someone joining the project today
 
 Read `00_START_HERE.md`, `02_OWNER_DECISIONS.md`, `03_THE_THREE_APPROVED_CONCEPTS.md`, and the current LC plan/repo knowledge base. Watch the approved films if available. Inspect the actual local app's companion code before proposing architecture. Then agree on the one next task.
@@ -9,10 +11,10 @@ Read `00_START_HERE.md`, `02_OWNER_DECISIONS.md`, `03_THE_THREE_APPROVED_CONCEPT
 - [ ] Find the existing local Studigo Git clone; preserve its uncommitted changes.
 - [ ] Fetch `feat/studigo-v2-phase4-animation-foundation` without merging or force-resetting other work.
 - [ ] Inspect the checked-in setup script and pinned source manifest.
-- [ ] Recover the exact **old** context ZIP from `historical/ORIGINAL_2026-10-25_HANDOFF.zip`, rename it to the expected original filename and verify the pinned SHA256.
+- [ ] Verify the pinned context archive `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip` (SHA-256 `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`). Use it as delivered and do not rename it. The 2026-10-25 handoff is nested at `historical/ORIGINAL_2026-10-25_HANDOFF.zip`.
 - [ ] Use `scripts/living-companion/prepare_workspace.py` to stage/unpack and hydrate only the small allowlist of Studigo/Coucou/REA references.
 - [ ] Keep the hydrated cache ignored; do not commit a second giant clone or unapproved assets.
-- [ ] If authorized to commit the old handoff ZIP, push only the verified original file to the groundwork branch and verify the remote blob. Don't claim done without proof.
+- [ ] The pinned archive is already committed to the groundwork branch. If it changes, commit only the verified file and verify the remote blob. Don't claim done without proof.
 - [ ] Write a concise foundation evidence note: where files are, source SHAs, missing layers, current branch and blockers.
 
 ## If the next job is to begin the actual animation work
