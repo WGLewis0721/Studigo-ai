@@ -1,5 +1,7 @@
 # Studigo engineering implementation plan
 
+> **Related planned product work:** [Studigo v2 Phase 4 living companion](PHASE4_LIVING_COMPANION_PLAN.md) is a separate approved visual/animation deliverable; it does not supersede the hardening workstreams or Phase 3 release gates. Its Coucou/REA notes are research, not a parallel execution plan.
+>
 > **Broader engineering backlog.** Cold start stays [`ENGINEERING.md`](../ENGINEERING.md). The document-learning reliability and readable study-guide work is executed through the single scoped queue [`STUDIGO_CODEX_EXECUTION_PLAN.md`](../STUDIGO_CODEX_EXECUTION_PLAN.md). Use its individual cards, three-check cap, branch/commit policy and completion evidence; do not independently reassign the overlapping P1/P2 or guide work from this backlog. Other workstreams remain here.
 >
 > It merges two 2026-10-07 drafts that had each declared themselves canonical:
