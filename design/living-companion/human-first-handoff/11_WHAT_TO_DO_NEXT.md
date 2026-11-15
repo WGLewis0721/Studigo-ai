@@ -11,7 +11,7 @@ Read `00_START_HERE.md`, `02_OWNER_DECISIONS.md`, `03_THE_THREE_APPROVED_CONCEPT
 - [ ] Find the existing local Studigo Git clone; preserve its uncommitted changes.
 - [ ] Fetch `feat/studigo-v2-phase4-animation-foundation` without merging or force-resetting other work.
 - [ ] Inspect the checked-in setup script and pinned source manifest.
-- [ ] Verify the pinned context archive `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip` (SHA-256 `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`). Use it as delivered and do not rename it. The 2026-10-25 handoff is nested at `historical/ORIGINAL_2026-10-25_HANDOFF.zip`.
+- [ ] Verify the pinned context archive `Studigo_Living_Companion_Human_First_Context_2026-11-14.zip` (SHA-256 `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`). Use it as delivered and do not rename it. The 2026-10-25 handoff is nested inside the pinned archive at `historical/ORIGINAL_2026-10-25_HANDOFF.zip`.
 - [ ] Use `scripts/living-companion/prepare_workspace.py` to stage/unpack and hydrate only the small allowlist of Studigo/Coucou/REA references.
 - [ ] Keep the hydrated cache ignored; do not commit a second giant clone or unapproved assets.
 - [ ] The pinned archive is already committed to the groundwork branch. If it changes, commit only the verified file and verify the remote blob. Don't claim done without proof.

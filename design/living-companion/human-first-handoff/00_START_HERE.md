@@ -23,7 +23,7 @@ The product team originally called the work **“Studigo v2 Phase 4.”** The re
 
 ## Important honesty and provenance notes
 
-This is a **carefully reconstructed project/context handoff**, not a native word-for-word ChatGPT conversation export. The historical context ZIP is preserved byte-for-byte as `historical/ORIGINAL_2026-10-25_HANDOFF.zip`, including original REA analysis evidence. Its Grok-specific prompts and older plan are **historical evidence**, not active instructions for a human or a new agent. This new package is deliberately tool-agnostic and human-led.
+This is a **carefully reconstructed project/context handoff**, not a native word-for-word ChatGPT conversation export. The historical context ZIP is preserved byte-for-byte inside the pinned archive (`design/living-companion/handoff/`) as `historical/ORIGINAL_2026-10-25_HANDOFF.zip`, including original REA analysis evidence. Its Grok-specific prompts and older plan are **historical evidence**, not active instructions for a human or a new agent. This new package is deliberately tool-agnostic and human-led.
 
 The final authority is **verified code, tests and actual production behavior**, then the current repository LC knowledge base and plan. A concept video is not a working renderer. A GitHub draft PR is not a merge. A successful static analysis is not animation-quality proof.
 

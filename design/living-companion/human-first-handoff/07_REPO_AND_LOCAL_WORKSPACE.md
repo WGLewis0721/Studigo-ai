@@ -24,7 +24,7 @@ It expects the **pinned context archive** with this exact filename and hash:
 - SHA-256: `34c5c99b3d045504c5d487b277721abe85eb3174baa34fe44aa160052bbbc4b4`
 - Size: `5,805,718` bytes.
 
-Use the archive as delivered. Do not unpack or rename it. The original 2026-10-25 handoff is nested inside, byte-identical, at `historical/ORIGINAL_2026-10-25_HANDOFF.zip` (SHA-256 `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`). The superseded pin is kept in the manifest for provenance only.
+Use the archive as delivered. Do not unpack or rename it. The original 2026-10-25 handoff is nested inside the pinned archive, byte-identical, at `historical/ORIGINAL_2026-10-25_HANDOFF.zip`; it is not stored separately in this repo folder (SHA-256 `6408d7a7bd5a24bebc5fdfe04447b91392e7b97a47d9675bba90f1d2a8a040b0`). The superseded pin is kept in the manifest for provenance only.
 
 Example commands after safely switching to the existing foundation branch, from the Studigo repo root:
 

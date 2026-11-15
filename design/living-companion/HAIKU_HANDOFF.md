@@ -75,7 +75,7 @@ Inspect current app files: apps/web/components/companion/{engine.ts,companion.ts
 
 Inspect canonical art and identify what's reusable for a rig and what's missing: independent eyes/pupils/lids, head, face, ivory frills, forearms/paws, vest, body, crayon tail/flame and 2-3 view pivots. The dragon is WINGLESS; no new wings.
 
-Record the owner's approved TWO modes: (1) floating framed dock that can be repositioned as one unit and stays safe around controls; (2) fixed dragon inside the header strip between nav bar and colored divider with restrained life and Phase 3 100%→60% tuck/expand preserved. ONE shared companion, no duplicate runtime.
+Record the owner's approved TWO modes: (1) floating framed dock that can be repositioned as one unit and stays safe around controls; (2) fixed dragon inside the header strip between nav bar and colored divider with restrained life and Phase 3 header drawer preserved (collapses after 3 s idle, reopens on hover, focus, or click). ONE shared companion, no duplicate runtime.
 
 Write ONLY a focused design/living-companion/FOUNDATION_AUDIT.md with verified code paths, source hashes, existing/pending assets, risk matrix and smallest next LC-0 / LC-1 groundwork slice. Do not write a competing implementation plan.
 

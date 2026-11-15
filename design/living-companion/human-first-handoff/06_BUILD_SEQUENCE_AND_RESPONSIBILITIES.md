@@ -12,7 +12,7 @@ This restates the **LC-0 to LC-10** plan in ordinary language. These are **plann
 | Expressiveness | **LC-4** | Build full expressive rig, facial variety, scripted beats and contained interactions. | Look/feel review and measured iPhone behavior. |
 | Outfits | **LC-4b** | Add seven cosmetic, original school-subject outfits. | Independent layers and performance evidence; owner art review. |
 | Floating mode | **LC-5** | True free safe-area positioning and persistence, migration from corner-only preferences and accessible movement controls. | Reload, resize, obstruction and keyboard/touch tests. |
-| Fixed mode | **LC-6** | Integrate the stationary companion above colored divider; preserve 100%/60% Phase 3 geometry. | Strip doesn't move, clip, steal input space or duplicate the dragon. |
+| Fixed mode | **LC-6** | Integrate the stationary companion above colored divider; preserve the Phase 3 header drawer (collapses after 3 s idle). | Strip doesn't move, clip, steal input space or duplicate the dragon. |
 | Study events | **LC-7** | Drive reactions only from confirmed Learn/Coach/Practice events, including agreed Guided Learn stall/hit/miss. | No false correct events; no grading/mastery mutations. |
 | Mouth adapter | **LC-8** | Implement provider-neutral mouth animation interface with fixtures, no voice dependency. | Boundary cases, mute and fallback tests. |
 | Future voice | **LC-10** | Use actual owner-provided voice source later. | Explicit asset/provenance/consent and audio synchronization review. |

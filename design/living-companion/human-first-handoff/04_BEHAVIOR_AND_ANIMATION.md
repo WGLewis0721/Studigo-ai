@@ -24,7 +24,7 @@ https://github.com/WGLewis0721/coucou/actions/runs/38763880044
 
 Its reported figures included 9 parsed TS/JS modules, 20,477 semantic nodes, 16,403 semantic relations and 330 function fingerprints. It was intentionally a **partial** scope. REA analysis and direct source reading helped identify implementation relationships. They do **not** prove runtime animation quality, device performance, licensing permission to use art, or feature equivalence.
 
-The original analysis ZIP remains intact inside `historical/ORIGINAL_2026-10-25_HANDOFF.zip` under `rea_evidence/rea-evidence-original.zip`; it is large, so avoid extracting both until investigation needs it.
+The original analysis ZIP remains intact inside the pinned archive at `historical/ORIGINAL_2026-10-25_HANDOFF.zip` under `rea_evidence/rea-evidence-original.zip`; it is large, so avoid extracting both until investigation needs it.
 
 ## Minimal reusable motion concept
 

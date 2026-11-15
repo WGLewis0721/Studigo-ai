@@ -17,7 +17,7 @@
 ## Fixed strip
 
 - Character remains **below nav, above colored rail**. The rail stays stationary, and content scrolls beneath the header.
-- The Phase 3 desktop 100%→60% header tuck/focus return still behaves as accepted. Phone remains legible with usable composer; no clipping or added duplicate dragon.
+- The Phase 3 desktop header drawer (collapses after 3 s idle; reopens on hover, focus, or click) still behaves as accepted. Phone remains legible with usable composer; no clipping or added duplicate dragon.
 - Motions are restrained and contained; no layout shift as the dragon reacts.
 
 ## Learning, privacy, accessibility

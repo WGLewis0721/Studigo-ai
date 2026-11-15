@@ -17,7 +17,7 @@ Never write mastery, grades, progress or evidence; react only to committed event
 2. ≥10 beats from the spec, each returning to REST; interrupts return to REST ≤400 ms.
 3. All `SHARED_COMPANION_EVENTS.md` reactions wired, including GL08 hit/miss/stall, from committed events only.
 4. Mood meter per `MOOD_METER.md`, with tests; nothing persisted.
-5. Floating dock: free normalized position persists across reload, legacy `dock` corners migrate; never covers composer/answers/citations/nav/modals. Strip: Phase 3 100%→60% tuck unchanged, rail unmoved.
+5. Floating dock: free normalized position persists across reload, legacy `dock` corners migrate; never covers composer/answers/citations/nav/modals. Strip: Phase 3 header drawer unchanged (collapses after 3 s idle, reopens on hover, focus, or click), rail unmoved.
 6. Provider-agnostic `MouthDriver` plug-in (amplitude, timed visemes, word-boundary fallback) implemented and tested with fixtures; real voice wired in LC-10 (not required for v1 done if voice not yet delivered).
 6b. Seven subject outfits selectable in settings/onboarding as layer swaps; cosmetic only, no unlocks/purchases; no measurable frame-time regression vs no outfit.
 7. Calm/reduced-motion mode passes QA A02.
@@ -38,7 +38,7 @@ Never write mastery, grades, progress or evidence; react only to committed event
 | LC-4 | Full rig production: 14 expressions, 12 beats, idle ladder + vignettes, touch play, outfits slots (if C10 yes) | Yellow Ranger (agent) + William review | LC-3 | V01–V03, V07 evidence | 5–10 |
 | LC-4b | Subject outfits: 7 original layers, slot pivots, settings/onboarding picker (read existing settings, cosmetic pref only) | Yellow Ranger (agent) + William art review | LC-4 | Layer swap ≤1 draw layer/slot; frame-time delta measured; no star/mastery reads | 2–4 |
 | LC-5 | Floating dock free position: versioned normalized x/y in `companion-prefs.ts`, legacy migration, obstruction avoidance, keyboard move | Yellow Ranger | LC-3 | UI01–UI05 | 2–4 |
-| LC-6 | Fixed strip host: contained motion, Phase 3 tuck preserved, mode switch | Yellow Ranger | LC-3 | UI06–UI10 | 2–3 |
+| LC-6 | Fixed strip host: contained motion, Phase 3 drawer preserved, mode switch | Yellow Ranger | LC-3 | UI06–UI10 | 2–3 |
 | LC-7 | Shared events: extend `CompanionEvent` additively, `stall` from GL02, reactions + mood wiring | Blue Ranger (emit) + Yellow Ranger (react) | LC-2, GL02 | L01–L05; GL08 acceptance | 2–3 |
 | LC-8 | `MouthDriver` plug-in interface + boundary fallback + fixtures; original chirp bank | Yellow Ranger | LC-4 | Fixture tests for all 3 driver kinds; mute respected | 1–2 |
 | LC-10 | Voice integration (later): wire promo-video narration voice into `MouthDriver` | Yellow Ranger | **Gated on voice delivered by William**; LC-8 | ≤80 ms mouth lag (amplitude/viseme); William sign-off | 1–3 |
