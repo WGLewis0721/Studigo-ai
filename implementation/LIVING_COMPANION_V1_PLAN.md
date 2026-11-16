@@ -1,53 +1,80 @@
-# Living Companion v1 plan (formerly "Studigo v2 Phase 4")
+# Living Companion v1: execution list
 
-Status: **PLAN — NOT IMPLEMENTED, NOT TESTED, NOT DEPLOYED.** Baseline: `main` @ `056066fb2b13a0fe8a529bee74c630ea7c43e723` (2026-10-21, "Make guided Learn checks varied and proportional to reading (#266)").
-Supersedes the Oct 16 draft on `research/phase4-coucou-rea-behavior-spec` (PR #164, head `7831ec1`), which shares no git history with `main` and cannot be merged as is.
-Renamed because `docs/ROADMAP.md` already defines "Phase 4 — Reliability, safety, cost".
+Status: DRAFT, revised 2026-11-15. Replaces the table-based plan on the foundation branch. Nothing is built yet.
 
-Companion docs: `design/living-companion/` — RECONCILIATION, STUDIGO_EXPRESSIVENESS_SPEC, MOOD_METER, SHARED_COMPANION_EVENTS, COUCOU_REA_BEHAVIOR_EXTRACTION, AGENT_RUNBOOK, assets/ASSET_MANIFEST.
+How to read this: do the steps in order. Each step has a **Done when** line. Steps marked **HUMAN** need the owner. Steps marked **STOP** end the run until the owner answers.
 
-## Goal (APPROVED-BY-OWNER)
-Studigo becomes a fully expressive companion and friend — the dynamic range of Muse (Jolly), OpenAI dots, Coucou, the Pokemon GO buddy, and Grok companions' head turning and eye movement — with an original personality built from Sonic (speed), Ms. Frizzle (curiosity), Pikachu (emotive cues) and Krypto (loyalty). Two placements: floating repositionable dock and fixed strip between nav and colored rail (videos V2, V3). Per-session mood meter. School-subject outfits. Voice arrives later from the promo video narration (no engine assumed). No wings. Something kids enjoy beyond games and stars, without XP/gamification in v1.
+## Start here (Fable handoff, 2026-11-16)
 
-## Invariants (every task)
-Never write mastery, grades, progress or evidence; react only to committed events; no camera/mic/pointer logging; reduced-motion/Calm mode; existing WebP + `NEXT_PUBLIC_STUDIGO_COMPANION=off` keep working; one character and one RAF loop; motion failure never blocks the room; Coucou/Mochi art and sounds not copied.
+**Visual style is 2.5D** (LC-DEC-021): layered 2D art with depth cues such as perspective head yaw and pitch. Not full 3D. Coucou is 2D (LC-DEC-022). Ignore the "rigged 3D Studigo" line in `design/companion-demo/README.md` (LC-DEC-023).
 
-## v1 definition of done
-1. 14 expressions blend (≤200 ms crossfade, no popping) in both placements; eyes lead head; independent blinks in every gaze direction.
-2. ≥10 beats from the spec, each returning to REST; interrupts return to REST ≤400 ms.
-3. All `SHARED_COMPANION_EVENTS.md` reactions wired, including GL08 hit/miss/stall, from committed events only.
-4. Mood meter per `MOOD_METER.md`, with tests; nothing persisted.
-5. Floating dock: free normalized position persists across reload, legacy `dock` corners migrate; never covers composer/answers/citations/nav/modals. Strip: Phase 3 header drawer unchanged (collapses after 3 s idle, reopens on hover, focus, or click), rail unmoved.
-6. Provider-agnostic `MouthDriver` plug-in (amplitude, timed visemes, word-boundary fallback) implemented and tested with fixtures; real voice wired in LC-10 (not required for v1 done if voice not yet delivered).
-6b. Seven subject outfits selectable in settings/onboarding as layer swaps; cosmetic only, no unlocks/purchases; no measurable frame-time regression vs no outfit.
-7. Calm/reduced-motion mode passes QA A02.
-8. Performance targets (C17) confirmed by William after first measurement and met on named devices. Stall thresholds set from LC-0b data.
-9. QA matrix (artifact `07_QA_RELEASE_ACCEPTANCE.md` rows V01–V08, UI01–UI10, L01–L07, A01–A09) passes on the release SHA with evidence.
-10. William signs off identity and "feels alive" vs the V1–V3 videos.
-11. `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION` off restores legacy sprites; rollback rehearsed.
+**Branches already pushed to origin**
+- `lc/lc-0-baseline`: baseline at `056066f`, main SHA. Docs only.
+- `lc/03-event-contract` (`7e1db4d`): step 3 done. Event union in `companion-logic.ts`. Tests pass.
+- `lc/04-mood-meter` (`59f8371`): step 4 done. `companion-mood.ts` and 9 tests. Tests pass. Built on `lc/03`.
+- `docs/lc-fable-handoff`: this plan, `evidence/LC-0.md`, and the DECISIONS rows LC-DEC-021 to 023. Based on the feature branch `feat/studigo-v2-phase4-animation-foundation` (`a248848`). Another contributor (aws-dev-wgl) is also committing docs there. Rebase before pushing.
 
-## Work breakdown (estimates are agent-days, ranges, ENGINEERING PROPOSAL)
+**Already done, so skip:** H2 and H7 (recorded), steps 1 to 4. Step 1 is a fetch of main, to be confirmed. Step 2 is done except the OPEN items (H3 films are in `assets/video/` uncommitted; MP4 storage policy is still open, so do not commit the MP4s without owner approval).
 
-| ID | Task | Owner | Depends | Acceptance | Est. |
-|---|---|---|---|---|---|
-| LC-0 | Baseline: record main SHA + Vercel prod SHA, screenshots 375/390/768/1024/1440, nav→strip→rail geometry, flags; download V1–V3 into repo/archive with sha256; refresh companion file inventory | Green Ranger | — | Evidence file in `design/living-companion/evidence/LC-0.md` | 0.5–1 |
-| LC-0b | Measure stall: time-on-beat distribution on Guided Learn fixtures/preview (2nd-grade + college), propose `STALL_LEVEL1_MS` (placeholder 20–45 s) and level 2 (placeholder 2×) | Green Ranger + Blue Ranger | LC-0 | Data + proposal in evidence; William approves values | 0.5–1 |
-| LC-1 | Feasibility bake-off: Rive vs layered Canvas rig; split art into ~20 parts, 6 expressions, 3 beats, gaze, lip-sync stub, Calm mode; throwaway page behind flag | Yellow Ranger (agent) | LC-0 | Spec §14 8 criteria measured; go/no-go note; William identity + feel sign-off | 3–5 (hard cap 7) |
-| LC-2 | Pure TS motion director: state machine L0–L5, channels, named springs, beats, mood meter, injected clock/RNG; re-extract Coucou Swift numbers | Blue Ranger (agent) | LC-1 decision on channel set | Unit tests: 30/60/120 Hz equivalence, preemption, 10k-sequence mood bounds, import-boundary test | 3–5 |
-| LC-3 | Renderer adapter behind `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION` inside existing `engine.ts`/`CompanionHandle`; WebP fallback | Yellow Ranger | LC-1, LC-2 | Flag on/off parity screenshots same SHA; no per-frame React renders; no orphaned RAF | 2–4 |
-| LC-4 | Full rig production: 14 expressions, 12 beats, idle ladder + vignettes, touch play, outfits slots (if C10 yes) | Yellow Ranger (agent) + William review | LC-3 | V01–V03, V07 evidence | 5–10 |
-| LC-4b | Subject outfits: 7 original layers, slot pivots, settings/onboarding picker (read existing settings, cosmetic pref only) | Yellow Ranger (agent) + William art review | LC-4 | Layer swap ≤1 draw layer/slot; frame-time delta measured; no star/mastery reads | 2–4 |
-| LC-5 | Floating dock free position: versioned normalized x/y in `companion-prefs.ts`, legacy migration, obstruction avoidance, keyboard move | Yellow Ranger | LC-3 | UI01–UI05 | 2–4 |
-| LC-6 | Fixed strip host: contained motion, Phase 3 drawer preserved, mode switch | Yellow Ranger | LC-3 | UI06–UI10 | 2–3 |
-| LC-7 | Shared events: extend `CompanionEvent` additively, `stall` from GL02, reactions + mood wiring | Blue Ranger (emit) + Yellow Ranger (react) | LC-2, GL02 | L01–L05; GL08 acceptance | 2–3 |
-| LC-8 | `MouthDriver` plug-in interface + boundary fallback + fixtures; original chirp bank | Yellow Ranger | LC-4 | Fixture tests for all 3 driver kinds; mute respected | 1–2 |
-| LC-10 | Voice integration (later): wire promo-video narration voice into `MouthDriver` | Yellow Ranger | **Gated on voice delivered by William**; LC-8 | ≤80 ms mouth lag (amplitude/viseme); William sign-off | 1–3 |
-| LC-9 | QA, performance on devices, accessibility, canary, rollback rehearsal, release gate | Green Ranger + William | all | Release gate 1–8 in artifact file 07 | 3–5 |
+**Next up:** step 5 (motion director), on a new branch `lc/05-motion-director` from `lc/04-mood-meter` (or from main once `lc/03` and `lc/04` merge, which the owner decides). Then step 6 onward in order.
 
-Total (excl. LC-10): ~27–49 agent-days plus William review time. Red Ranger (lead) assigns and integrates; each task is its own PR.
+**Known environment issue:** the full web suite fails `C19 Word file matches the PDF edition` because `pymupdf` is not installed. This is unrelated. Do not fix it as part of LC work. Run the LC tests directly: `node --import tsx --test lib/companion-mood.test.ts lib/companion-logic.test.ts` from `apps/web`.
 
-## Rollback
-Motion flag off → legacy WebP companion. Companion flag off → no companion. No DB changes in this track. Rollback anchor = LC-0 post-Phase-3 SHA, not the Oct 15 pre-redesign golden.
+**Step 0 (before step 5): organize the docs for faster work.** Read `design/living-companion/README.md` and the human-first-handoff folder. Propose a short index and flag duplicates, such as the same content in `human-first-handoff/` and the top-level docs. Do not delete or move any doc without owner approval. Do not create a new overview document (AGENTS.md). Put the proposal in the README index on `docs/lc-fable-handoff` and report what you changed.
 
-## Open questions (William)
-None open; all resolved Oct 25 (RECONCILIATION C9, C10, C17, C19, C20).
+**Owner blockers still open:** H4 (Rive account and `.riv` terms), H5 (signed-in screenshots at five widths), H6 (production flag names). Steps 10 and 12 wait on them.
+
+## Invariants (every step)
+- The companion never writes mastery, grades, progress, or evidence.
+- It reacts only to committed events.
+- No camera, mic, or pointer logging.
+- Phase 3 header geometry (desktop 100% to 60% tuck) and the rail stay unchanged.
+- The WebP renderer and `NEXT_PUBLIC_STUDIGO_COMPANION=off` keep working.
+- One companion, one animation loop.
+- One branch per step, branched from `main`. PRs open as drafts. No merge without the owner.
+
+## Part A: clear the blockers (owner)
+
+- **H1. Confirm the expression and beat lists.** Owner approves the 14 expressions and at least 10 of the 12 beats in `STUDIGO_EXPRESSIVENESS_SPEC.md`. Reconciliation C2 has an older six-expression list, which is superseded. **Done when:** approved list is in `DECISIONS.md` as a new LC-DEC.
+- **H2. Decide where the LC docs live.** Recommended: a docs-only PR that moves the plan and knowledge base from the foundation branch to `main`. **Done when:** the decision is recorded in `DECISIONS.md`.
+- **H3. Provide the three films.** Download V1, V2, and V3 from the links in `03_THE_THREE_APPROVED_CONCEPTS.md` and share the files. The sandbox cannot fetch them. **Done when:** the SHA-256 of each is recorded in `evidence/LC-0.md`.
+- **H4. Provide Rive access.** Account and plan tier. Confirm the Rive terms for exported `.riv` files cover a commercial kids' app. **Done when:** the account is connected and the terms note is in `evidence/LC-1.md`.
+- **H5. Provide screenshots.** From a signed-in session at 375, 390, 768, 1024, and 1440 wide, with the companion on and off. Save to `evidence/LC-0/`. **Done when:** all ten images are in the repo.
+- **H6. Read the production flags.** Confirm the names and values of `NEXT_PUBLIC_STUDIGO_COMPANION` on Vercel. Names only, no secrets. **Done when:** the values are in `evidence/LC-0.md`.
+- **H7. Confirm agent roles.** The old plan named Green, Blue, Yellow, and Red Ranger. Say whether these apply, or drop them. **Done when:** answered in `DECISIONS.md`.
+
+## Part B: build (Fable runs straight through)
+
+Work the steps in order. Skip a step only when its dependency is marked done.
+
+1. **Check the baseline.** Fetch `origin/main`. Record its SHA. If it is not `056066fb`, update `evidence/LC-0.md` and continue. **Done when:** SHA is in the evidence file.
+2. **Finish the LC-0 evidence file.** Fill in every item not blocked by H3, H5, or H6. Mark the rest `OPEN (H#)`. **Done when:** no empty fields remain.
+3. **Write the event contract.** Add the new events from `SHARED_COMPANION_EVENTS.md` to the union in `companion-logic.ts`. Keep the existing six names. **Done when:** typecheck passes and the existing unit tests pass unchanged.
+4. **Write the pure mood function.** `nextSpark(spark, event, dtMs)` as in `MOOD_METER.md`. No imports from learning, Supabase, or AI. **Done when:** tests cover 10 wrong answers in a row, bounds over 10,000 random sequences, and 30/60/120 Hz equivalence.
+5. **Write the pure motion director.** State machine L0 to L5, named springs, beats, injected clock and random source. No React. **Done when:** tests cover preemption, return to REST within 400 ms, and the import boundary.
+6. **Write the prefs v2 type and migration.** Add `pos` (normalized x, y), `outfit`, and `v: 2`. Keep writing `dock`. Old prefs must still parse. **Done when:** migration tests pass and rollback to the old parser is safe.
+7. **Write the MouthDriver interface.** Three kinds: amplitude, visemes, and word-boundary fallback. Fixture tests for all three. Mute respected. **Done when:** fixtures pass. No voice engine is wired.
+8. **Extract the sprite renderer.** Move the pose swap out of `engine.ts` behind the `CompanionRenderer` interface, unchanged in behavior. **Done when:** unit tests pass and the flag-off path is byte-identical in the DOM test.
+9. **Add the motion flag.** `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION`, default off. Wire the director only when the flag is on. **Done when:** flag-off build matches step 8's output.
+10. **STOP: wait for H4 and H5.** The Rive spike needs the Rive account (H4) and the signed-in screenshots (H5). Do not start the spike without them.
+11. **Run the LC-1 spike.** Rive and a layered Canvas rig, both with the same dragon art. Six expressions, three beats, gaze, mouth placeholder, Calm mode. Measure against spec §14 (blend time, file size, frame time on the named devices). Time cap: 7 days. **Done when:** `evidence/LC-1.md` has both results and a go or no-go recommendation.
+12. **STOP: owner decides the renderer.** Needs H1 (expressions) and the step 11 result. Owner signs off on identity and feel.
+13. **Build the rig for the chosen renderer.** Full set from H1. Rig stays in the repo with pivot map and provenance. **Done when:** V01 to V03 and V07 checks are recorded.
+14. **Build the renderer adapter behind the motion flag.** Lazy-load the chosen renderer. Fall back to the sprite renderer on any error. **Done when:** flag-on and flag-off screenshots match at the same SHA.
+15. **Build the floating dock with free position.** Whole-panel move, persisted in prefs v2, clamped on resize, keyboard move. **Done when:** UI01 to UI05 pass.
+16. **Build the fixed strip.** Slot between nav and rail. Phase 3 tuck preserved. Rail does not move. **Done when:** UI06 to UI10 pass.
+17. **Wire the events.** `stall` from Guided Learn (coordinate with the GL02 owner), and reactions for every event in the shared list. **Done when:** L01 to L05 pass and GL08 acceptance is recorded.
+18. **Build the seven outfits.** Layer swaps only, cosmetic, no unlocks. Needs owner art review per outfit. **Done when:** each outfit is approved and frame-time delta is recorded.
+19. **Build Calm mode.** Reduced motion turns off dashes, spins, shiver, and particles above 4. **Done when:** A02 passes.
+20. **STOP: measure stall times (LC-0b).** Needs real study sessions or owner-provided data. Propose thresholds; owner approves. **Done when:** values are in `DECISIONS.md`.
+21. **Run the QA matrix.** Rows V01 to V08, UI01 to UI10, L01 to L07, A01 to A09. Desktop and emulated phone in Playwright; physical iPhone is a human step. **Done when:** every row has evidence or an `OPEN` note.
+22. **STOP: owner sign-off.** Identity, "feels alive" against V1 to V3, and performance on the named devices.
+23. **Rollback rehearsal.** Turn the motion flag off, confirm the legacy WebP companion returns, and turn the companion off entirely. **Done when:** the rehearsal is recorded in `evidence/LC-9.md`.
+24. **Release PR, draft.** Open against `main`. Do not merge. **Done when:** the PR is open with evidence links.
+25. **Voice (later, LC-10).** Blocked until the owner supplies the narration. Then wire it into the MouthDriver from step 7 and check lip-sync lag at or below 80 ms. **Done when:** owner signs off.
+
+## Rules for Fable
+- Stop at every STOP line. Do not guess the owner's answer.
+- If current code contradicts this list, current code wins. Stop and report.
+- Record every number with the device or test that produced it.
+- Never claim a check passed unless it ran.

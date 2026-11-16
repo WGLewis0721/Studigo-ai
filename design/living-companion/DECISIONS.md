@@ -24,3 +24,6 @@ Status: **APPROVED** (owner, William) · **PROPOSAL** (agent, needs no further a
 | LC-DEC-018 | Oct 25 | PROPOSAL | Adopt Avatar Lab ideas clean-room: character JSON + schema (LC-2), micro-saccades + slow drift idle, perspective head yaw/pitch in fallback rig. |
 | LC-DEC-019 | Oct 25 | OPEN | Strip-host slot between nav and rail does not exist on `main`; build in LC-6. |
 | LC-DEC-020 | Oct 25 | OPEN | Home full-body stage and header mascot are not upgraded in v1. |
+| LC-DEC-021 | Nov 16 | APPROVED | Visual style is 2.5D: layered 2D art with depth cues (perspective head yaw/pitch, layered parts), not full 3D. Owner decision, William, Nov 16. Rive or layered Canvas rig is still decided by the LC-1 bake-off. |
+| LC-DEC-022 | Nov 16 | FACT | Coucou is 2D: its renderer is Canvas 2D with no skeleton rig, lip-sync or 3D (per COUCOU_REA_BEHAVIOR_EXTRACTION.md). Its Swift sources are not yet checked for 3D. Rudi (Grok) is the 3D reference. |
+| LC-DEC-023 | Nov 16 | OPEN | `design/companion-demo/README.md:74` plans a "rigged 3D Studigo". Superseded by LC-DEC-021 unless William says otherwise. |
