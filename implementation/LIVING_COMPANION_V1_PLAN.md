@@ -24,7 +24,7 @@ How to read this: do the steps in order. Each step has a **Done when** line. Ste
 
 **Owner blockers still open:** H5 (signed-in screenshots at five widths), H6 (production flag names). Steps 10 and 12 wait on them.
 
-**H4 update (2026-11-16):** owner reports the Rive account is set up. Still needed: the plan tier, the Rive CLI install status on the owner's Windows PC (`rive doctor` output), and the `.riv` terms check for a commercial kids' app. Record these in `evidence/LC-1.md` before step 11. Do not assume the terms are cleared.
+**H4 update (2026-11-16):** Rive account is set up on the Free tier, signed in as `williamg-6GC8R`. Rive CLI 1.9.2 is installed on the owner's Windows PC and `rive doctor` passes (auth ok, live-link ok, project not yet created, Android tooling not installed and not needed for LC-1). Still needed before step 11: the `.riv` terms check for a commercial kids' app on the Free tier, recorded in `evidence/LC-1.md`. Do not assume the terms are cleared. Check whether the Free tier allows publishing or exporting `.riv` files that ship in a product. If it does not, record the paid-tier requirement as an owner decision.
 
 ## Invariants (every step)
 - The companion never writes mastery, grades, progress, or evidence.
