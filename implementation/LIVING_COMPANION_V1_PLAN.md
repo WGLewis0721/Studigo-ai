@@ -22,7 +22,9 @@ How to read this: do the steps in order. Each step has a **Done when** line. Ste
 
 **Step 0 (before step 5): organize the docs for faster work.** Read `design/living-companion/README.md` and the human-first-handoff folder. Propose a short index and flag duplicates, such as the same content in `human-first-handoff/` and the top-level docs. Do not delete or move any doc without owner approval. Do not create a new overview document (AGENTS.md). Put the proposal in the README index on `docs/lc-fable-handoff` and report what you changed.
 
-**Owner blockers still open:** H4 (Rive account and `.riv` terms), H5 (signed-in screenshots at five widths), H6 (production flag names). Steps 10 and 12 wait on them.
+**Owner blockers still open:** H5 (signed-in screenshots at five widths), H6 (production flag names). Steps 10 and 12 wait on them.
+
+**H4 update (2026-11-16):** owner reports the Rive account is set up. Still needed: the plan tier, the Rive CLI install status on the owner's Windows PC (`rive doctor` output), and the `.riv` terms check for a commercial kids' app. Record these in `evidence/LC-1.md` before step 11. Do not assume the terms are cleared.
 
 ## Invariants (every step)
 - The companion never writes mastery, grades, progress, or evidence.
