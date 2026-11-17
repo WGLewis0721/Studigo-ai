@@ -1,4 +1,6 @@
+import type { Outfit } from "@/lib/companion-logic";
 import type { MotionFrame } from "@/lib/companion-motion/director";
+import { OUTFIT_LAYERS, outfitTransform } from "@/lib/companion-motion/outfits";
 import { RIG, RIG_SIZE, buildRig, poseMesh } from "@/lib/companion-motion/rig";
 import { SPRITES, type CompanionRenderer } from "./renderers";
 
@@ -96,6 +98,39 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
   const uniforms: Record<string, WebGLUniformLocation | null> = {};
   const span = 1 + MARGIN * 2;
 
+  /* The outfit is an image in the same body box as the canvas, so a rig point p sits at p / RIG_SIZE of the box, exactly as the canvas maps it. */
+  let outfit: Outfit | null = null, outfitEl: HTMLImageElement | null = null, outfitShown: Outfit | null = null;
+  let outfitLoaded = false, outfitVisible = false;
+
+  function placeOutfit(frame: MotionFrame) {
+    if (!outfitEl || !outfit) return;
+    const layer = OUTFIT_LAYERS[outfit], pose = outfitTransform(outfit, frame);
+    // translate() percentages are of the layer's own box, so convert the rig offset to that box.
+    const dx = ((pose.x - layer.anchor.x * layer.w) / layer.w) * 100, dy = ((pose.y - layer.anchor.y * layer.h) / layer.h) * 100;
+    outfitEl.style.transform = `translate(${dx}%, ${dy}%) rotate(${pose.rotate}rad) scale(${pose.scaleX}, ${pose.scaleY})`;
+  }
+
+  /* Shown only once his drawing is up and the outfit's art has loaded, so it never appears on its own. */
+  function showOutfit() {
+    if (!outfitEl) return;
+    if (lastFrame) placeOutfit(lastFrame);
+    const visible = outfit !== null && ready && outfitLoaded;
+    if (visible !== outfitVisible) { outfitVisible = visible; outfitEl.style.display = visible ? "block" : "none"; }
+  }
+
+  function setOutfit(next: Outfit | null) {
+    outfit = next;
+    if (outfitEl && next && next !== outfitShown) {
+      const layer = OUTFIT_LAYERS[next];
+      outfitShown = next; outfitLoaded = false;
+      outfitEl.style.width = `${(layer.w / RIG_SIZE) * 100}%`;
+      outfitEl.style.height = `${(layer.h / RIG_SIZE) * 100}%`;
+      outfitEl.style.transformOrigin = `${layer.anchor.x * 100}% ${layer.anchor.y * 100}%`;
+      outfitEl.src = layer.src;
+    }
+    showOutfit();
+  }
+
   function draw(frame: MotionFrame) {
     if (!gl || !canvas || !ready) return;
     poseMesh(mesh, frame, positions);
@@ -167,17 +202,28 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
         ready = true;
         canvas?.setAttribute("data-ready", "");
         if (lastFrame) draw(lastFrame);
+        showOutfit();
       };
       art.onerror = () => { if (!dead) onLost(); };
       art.src = `${SPRITES}/center.webp`;
+      outfitEl = new Image();
+      outfitEl.className = "cmpOutfit";
+      outfitEl.alt = ""; outfitEl.draggable = false; outfitEl.decoding = "async";
+      outfitEl.setAttribute("aria-hidden", "true");
+      Object.assign(outfitEl.style, { position: "absolute", left: "0", top: "0", maxWidth: "none", pointerEvents: "none", display: "none" });
+      outfitEl.onload = () => { outfitLoaded = true; showOutfit(); };
+      canvas.after(outfitEl);
+      if (outfit) setOutfit(outfit);
     },
     load() {},
     setPose() {},
-    apply(frame) { lastFrame = frame; draw(frame); },
+    apply(frame) { lastFrame = frame; draw(frame); showOutfit(); },
+    setOutfit,
     destroy() {
       ready = false; dead = true;
       gl?.getExtension("WEBGL_lose_context")?.loseContext();
       gl = null; canvas = null;
+      outfitEl?.remove(); outfitEl = null; outfit = null; outfitShown = null;
     }
   };
 }

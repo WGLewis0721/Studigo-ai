@@ -105,6 +105,8 @@
 .cmp.land .cmpBody { animation: cmpSquish .45s var(--ease-spring) 1; }
 .cmp.highfive .cmpWin { animation: cmpPop .34s var(--ease-spring) 1; }
 @keyframes cmpPop { 40% { transform: scale(1.12) rotate(3deg); } }
+/* Calm mode: the drawings keep breathing and blinking, but nothing hops or pops. */
+.cmp[data-calm][data-pose="celebrate"] .cmpBody, .cmp[data-calm].highfive .cmpWin { animation: none; }
 
 /* Eyelids for the blink: only the front-facing pose has them. */
 .cmpLid {
@@ -136,7 +138,7 @@
   transition: background-color .3s ease, filter .15s ease, box-shadow .12s ease, transform .12s var(--ease-out);
 }
 .cmpSill::after { content: ""; position: absolute; inset: -4px -4px -12px; }
-.cmpSill .led, .cmpTab .led { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4); }
+.cmpSill .led, .cmpStripMenu .led, .cmpTab .led { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff, 0 0 0 1.5px rgba(255, 255, 255, .4); }
 .cmpSill .led { margin-right: 1px; }
 .sillBrand { font-family: var(--display); font-weight: 800; font-size: .68rem; letter-spacing: .01em; line-height: 1; }
 .sillMore { flex: none; opacity: .75; transition: transform .2s var(--ease-out), opacity .15s ease; }
@@ -271,6 +273,14 @@
 .cmpRange output { grid-column: 2; grid-row: 1 / span 3; align-self: center; justify-self: end; font-family: var(--mono); font-size: .9rem; font-weight: 600; color: var(--ink-2); }
 .cmpCardActions { display: flex; flex-wrap: wrap; gap: 10px; }
 .cmpCardActions .ghostButton { min-height: 48px; padding: 0 18px; font-size: .98rem; }
+.cmpChoice { display: grid; gap: 10px; min-height: 52px; }
+.cmpChoice > b { font-size: 1.08rem; }
+.cmpChoice > small { color: var(--muted); font-size: .92rem; line-height: 1.3; }
+.cmpChoice select { min-height: 48px; padding: 0 14px; border: 1px solid var(--hairline-strong); border-radius: 14px; background: var(--white); color: var(--ink); font: inherit; font-size: 1rem; font-weight: 700; }
+.cmpSegment { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: rgba(20, 27, 45, .07); }
+.cmpSegment button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: inherit; font-size: .98rem; font-weight: 800; cursor: pointer; }
+.cmpSegment button[aria-pressed="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 3px rgba(20, 27, 45, .16); }
+.cmpChoice select:focus-visible, .cmpSegment button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
 /* Room Settings: the same two switches, where the room's other choices live. */
 .companionSettings { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--hairline); }
@@ -280,6 +290,51 @@
 .companionSettings .cmpToggle input { width: 48px; height: 30px; }
 .companionSettings .cmpToggle input::after { width: 24px; height: 24px; }
 .companionSettings .cmpToggle input:checked::after { transform: translateX(18px); }
+.companionSettings .cmpChoice { min-height: 44px; gap: 8px; }
+.companionSettings .cmpChoice > b { font-size: .92rem; }
+.companionSettings .cmpChoice > small { font-size: .8rem; }
+.companionSettings .cmpSegment button { min-height: 38px; font-size: .86rem; }
+.companionSettings .cmpChoice select { min-height: 40px; font-size: .92rem; }
+
+/* The strip: his window moved under the room menu, above the colored rail. The slot has no height
+   unless he is shown in it, so a room without the strip is unchanged. The stage is the same node,
+   drawn at a fixed scale so its bottom edge meets the rail. */
+.cmpStripSlot { position: relative; height: 0; overflow: hidden; transition: height .3s var(--ease-out); }
+.cmpStripSlot[data-on] { height: 64px; }
+.modeFrame[data-collapsed="true"] .cmpStripSlot, html[data-keyboard="open"] .cmpStripSlot { height: 0; }
+/* The pages that hide his window (the reading view, the borrowed home demo) fold his strip too. */
+body:has(.learnReading) .cmpStripSlot, body[data-home-borrowed] .cmpStripSlot { height: 0; }
+.cmpStrip { position: absolute; inset: 0; overflow: hidden; }
+.cmp[data-host="strip"] {
+  --strip-k: .5714; --strip-x: clamp(16px, 3vw, 32px);
+  position: absolute; inset: 0; width: auto; height: auto; z-index: auto; transform: none; overflow: hidden; touch-action: pan-y;
+}
+.cmp[data-host="strip"] .cmpWin { box-shadow: none; background: none; border-radius: 0; transition: none; }
+/* The window's own pops and hops are for the floating frame. In the strip the figure stays put. */
+.cmp[data-host="strip"][data-side] .cmpWin { transform: none; animation: none; }
+.cmp[data-host="strip"] .cmpScale { left: var(--strip-x); top: 0; transform: scale(var(--strip-k)); }
+.cmp[data-host="strip"] .cmpScreen, .cmp[data-host="strip"] .cmpSill, .cmp[data-host="strip"] .cmpCorner { display: none; }
+.cmp[data-host="strip"] .cmpFx { inset: 0 auto 0 var(--strip-x); width: 66px; }
+.cmp[data-host="strip"] .fx { width: 10px; height: 10px; margin: -5px 0 0 -5px; font-size: 10px; line-height: 10px; }
+.cmp[data-host="strip"] .cmpBubble { top: 50%; right: auto; left: calc(var(--strip-x) + 70px); margin-top: -19px; max-width: min(196px, calc(100% - 2 * var(--strip-x) - 180px)); border-radius: 18px 18px 18px 5px; transform-origin: 0 50%; }
+.cmpStripMenu { display: none; }
+.cmp[data-host="strip"] .cmpStripMenu {
+  display: flex; position: absolute; right: var(--strip-x); top: 50%; z-index: 6; height: 28px; margin-top: -14px; padding: 0 12px;
+  align-items: center; gap: 6px; border: 0; border-radius: 999px; cursor: pointer;
+  background-color: var(--ring); background-image: var(--gloss); color: var(--ring-on, var(--ink));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(20, 27, 45, .2);
+  transition: filter .15s ease, box-shadow .12s ease, transform .12s var(--ease-out);
+}
+.cmpStripMenu::after { content: ""; position: absolute; inset: -6px; }
+.cmpStripMenu:hover { filter: brightness(1.07) saturate(1.08); }
+.cmpStripMenu:active { transform: translateY(1px); filter: brightness(.94); }
+.cmpStripMenu:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cmpStripMenu[aria-expanded="true"] { background-color: var(--ink); background-image: none; color: #fff; }
+.cmpStripMenu[aria-expanded="true"] .sillMore { opacity: 1; transform: rotate(180deg); }
+@media (max-width: 700px) {
+  .cmp[data-host="strip"] { --strip-k: .5; --strip-x: 14px; }
+  .cmpStripSlot[data-on] { height: 56px; }
+}
 
 /* ---------------------------------------------------------------------------
    The stage: Studigo full body, standing in the page.
@@ -342,6 +397,6 @@
   .cmpToggle small, .cmpRange small { font-size: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cmp, .cmpWin, .cmpScale, .cmpTab, .cmpSill { transition: none; animation: none; }
+  .cmp, .cmpWin, .cmpScale, .cmpTab, .cmpSill, .cmpStripSlot, .cmpStripMenu { transition: none; animation: none; }
   .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble, .cmp.quietAck .cmpBody, .lessonProgressRow .quietStatus { animation: none !important; }
 }

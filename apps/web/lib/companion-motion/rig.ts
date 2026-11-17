@@ -29,7 +29,9 @@ export const RIG = {
 } as const;
 
 /** How far he can turn before the single drawing stops holding up, in radians. */
-const MAX_YAW = 0.5, MAX_PITCH = 0.34, MAX_TILT = 0.2;
+export const MAX_YAW = 0.5, MAX_PITCH = 0.34, MAX_TILT = 0.2;
+/** How far squash widens him, breath lifts him and a lean brings his head nearer. Outfits stretch with the same factors. */
+export const STRETCH = { squashWide: 0.7, breathTall: 0.55, lean: 0.035 } as const;
 const HEAD_DEPTH = 80;
 
 export type RigMesh = {
@@ -101,7 +103,7 @@ export function posePoint(x: number, y: number, w: { head: number; depth: number
   /* the head: a turn in depth, then a roll about the neck */
   if (w.head > 0) {
     const yaw = Math.max(-1, Math.min(1, f.headYaw)) * MAX_YAW, pitch = Math.max(-1, Math.min(1, f.headPitch)) * MAX_PITCH;
-    const near = 1 + f.lean * 0.035;
+    const near = 1 + f.lean * STRETCH.lean;
     let hx = (px - RIG.head.x) * near, hy = (py - RIG.head.y) * near;
     // Near points travel with the turn; the whole face foreshortens around its center.
     hx = hx * Math.cos(yaw) + Math.sin(yaw) * w.depth * HEAD_DEPTH;
@@ -127,11 +129,11 @@ export function posePoint(x: number, y: number, w: { head: number; depth: number
     const rise = 1 - (py - 240) / 160;
     px += (f.bodyYaw * 9 * rise + (px - RIG.head.x) * (f.breath * 0.7 + f.lift * 0.02)) * w.body;
   }
-  py -= (RIG_SIZE - py) * f.breath * 0.55;
+  py -= (RIG_SIZE - py) * f.breath * STRETCH.breathTall;
 
   /* whole-body moves: squash from his feet, a spin, a hop, a dash */
   const feet = RIG_SIZE, cx = RIG.head.x;
-  px = cx + (px - cx) * (1 + f.squash * 0.7) * Math.cos(f.spin);
+  px = cx + (px - cx) * (1 + f.squash * STRETCH.squashWide) * Math.cos(f.spin);
   py = feet + (py - feet) * (1 - f.squash);
   px += (f.dash + f.shiver) * RIG_SIZE;
   py += f.hop * RIG_SIZE;

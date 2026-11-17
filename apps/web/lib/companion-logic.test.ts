@@ -4,8 +4,8 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, OUTFITS, SLEEP_AFTER_MS, WINDOW,
-  chooseDock, controlSafeDock, clampScale, dirPose, dockForPos, dockFromDrop, idleStage, parsePrefs, pointFromPos, posFromPoint, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
+  COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, SLEEP_AFTER_MS, WINDOW,
+  chooseDock, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, dockFromDrop, idleStage, nudgePos, parseOutfit, parsePrefs, pointFromPos, posFromPoint, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionPrefs, type Rect
 } from "./companion-logic";
 
@@ -22,8 +22,8 @@ test("speech is off unless it was saved on", () => {
 });
 
 test("saved preferences fall back field by field", () => {
-  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { v: 2, speech: false, seated: true, tuck: false, dock: "br", pos: null, outfit: null, calm: false, scale: 1 });
-  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { v: 2, speech: false, seated: false, tuck: true, dock: "tl", pos: null, outfit: null, calm: false, scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { v: 2, speech: false, seated: true, tuck: false, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { v: 2, speech: false, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
 });
 
 test("his size is saved for the device, kept within bounds, and a bad value means the default", () => {
@@ -216,13 +216,13 @@ function parseV1(raw: string) {
 
 test("a save from before v2 migrates: it reads as v2 with the new fields at their defaults", () => {
   assert.deepEqual(parsePrefs('{"speech":true,"seated":false,"tuck":true,"dock":"tl"}', "1.25"), {
-    v: 2, speech: true, seated: false, tuck: true, dock: "tl", pos: null, outfit: null, calm: false, scale: 1.25
+    v: 2, speech: true, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1.25
   });
   assert.deepEqual(parsePrefs(null), DEFAULT_PREFS);
 });
 
 test("a v2 save reads back unchanged", () => {
-  const prefs: CompanionPrefs = { v: 2, speech: true, seated: true, tuck: false, dock: "bl", pos: { x: 0.25, y: 0.75 }, outfit: "sash", calm: true, scale: 1.5 };
+  const prefs: CompanionPrefs = { v: 2, speech: true, seated: true, tuck: false, dock: "bl", pos: { x: 0.25, y: 0.75 }, host: "strip", outfit: "sash", calm: true, scale: 1.5 };
   const { scale, ...room } = prefs;
   assert.deepEqual(parsePrefs(JSON.stringify(room), String(scale)), prefs);
 });
@@ -277,4 +277,124 @@ test("the dock for a saved position is the corner nearest to where he sits", () 
   assert.equal(dockForPos({ x: 0, y: 1 }, a, WINDOW), "bl");
   assert.equal(dockForPos({ x: 1, y: 1 }, a, WINDOW), "br");
   assert.equal(dockForPos({ x: 0.3, y: 0.7 }, a, WINDOW), "bl");
+});
+
+test("arrow keys nudge him a step at a time, stop at the edges, and step back to the same spot", () => {
+  // The same zone as the position tests: 256 px of room to slide each way.
+  const zone: Rect = { left: 10, top: 100, right: 382, bottom: 494 };
+  assert.deepEqual(nudgePos({ x: 0.25, y: 0.5 }, 16, 0, zone, WINDOW), { x: 0.3125, y: 0.5 }, "one 16 px step");
+  assert.deepEqual(nudgePos({ x: 0.25, y: 0.5 }, 0, -64, zone, WINDOW), { x: 0.25, y: 0.25 }, "a Shift step is 64 px");
+  assert.deepEqual(nudgePos({ x: 1, y: 1 }, 16, 16, zone, WINDOW), { x: 1, y: 1 }, "clamped at the bottom right");
+  assert.deepEqual(nudgePos({ x: 0, y: 0 }, -16, -16, zone, WINDOW), { x: 0, y: 0 }, "clamped at the top left");
+  assert.deepEqual(nudgePos({ x: 0.5, y: 0.5 }, 10_000, 0, zone, WINDOW), { x: 1, y: 0.5 }, "a long push stops at the edge");
+  const moved = nudgePos({ x: 0.25, y: 0.5 }, 16, -16, zone, WINDOW);
+  assert.deepEqual(pointFromPos(moved, zone, WINDOW), { x: 90, y: 212 });
+  assert.deepEqual(nudgePos(moved, -16, 16, zone, WINDOW), { x: 0.25, y: 0.5 });
+});
+
+test("a free spot counts as covered only past a sliver of him", () => {
+  const at = { x: 100, y: 200 };
+  assert.equal(coversControl(at, [under(100, 200)]), true);
+  assert.equal(coversControl(at, [{ left: 90, top: 200, right: 110, bottom: 230 }]), false, "a 10 by 30 px corner is a sliver");
+  assert.equal(coversControl(at, [{ left: 300, top: 200, right: 340, bottom: 240 }]), false, "a control beside him is clear");
+  assert.equal(coversControl(at, []), false);
+});
+
+test("the strip is chosen only by the exact value; a save without it, or with another value, is float", () => {
+  assert.equal(DEFAULT_PREFS.host, "float");
+  assert.equal(parsePrefs('{"host":"strip"}').host, "strip");
+  assert.equal(parsePrefs('{"host":"float"}').host, "float");
+  for (const raw of ['{"v":2,"speech":true}', '{"host":"top"}', '{"host":"STRIP"}', '{"host":1}', '{"host":null}', '{"host":["strip"]}', "not json"]) {
+    assert.equal(parsePrefs(raw).host, "float", `host from ${raw}`);
+  }
+  assert.equal(parsePrefs('{"speech":true,"seated":false,"tuck":true,"dock":"tl"}').host, "float", "a v1 save has no host");
+});
+
+test("every outfit has a short plain menu name, and anything else reads as no outfit", () => {
+  for (const outfit of OUTFITS) {
+    const label = OUTFIT_LABELS[outfit];
+    assert.ok(label.length > 0 && label.length <= 24, `${outfit}: ${label}`);
+    assert.ok(!/[—–]/.test(label), `no dashes in ${label}`);
+  }
+  assert.equal(OUTFIT_LABELS.goggles, "Science goggles");
+  assert.equal(OUTFIT_LABELS.sash, "Civics sash");
+  for (const value of ["", "none", "Visor", null, undefined, 3]) assert.equal(parseOutfit(value), null, `outfit from ${String(value)}`);
+  assert.equal(parseOutfit("visor"), "visor");
+});
+
+test("the strip takes no room until he is shown in it, folds with the header, and is at most 56px on a phone", () => {
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  assert.match(css, /\.cmpStripSlot \{[^}]*height: 0;/, "the slot is empty by default");
+  assert.match(css, /\.cmpStripSlot\[data-on\] \{ height: 64px; \}/);
+  assert.match(css, /\.modeFrame\[data-collapsed="true"\] \.cmpStripSlot, html\[data-keyboard="open"\] \.cmpStripSlot \{ height: 0; \}/);
+  assert.match(css, /@media \(max-width: 700px\) \{\s*\.cmp\[data-host="strip"\] \{ --strip-k: \.5; --strip-x: 14px; \}\s*\.cmpStripSlot\[data-on\] \{ height: 56px; \}\s*\}/);
+});
+
+test("the strip clips to its own band, so a hop or a bubble cannot leave it or push the rail", () => {
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  assert.match(css, /\.cmpStrip \{ position: absolute; inset: 0; overflow: hidden; \}/);
+  assert.match(css, /\.cmp\[data-host="strip"\] \{[^}]*position: absolute;[^}]*overflow: hidden;/);
+  assert.doesNotMatch(css, /\.cmpStripSlot[^{]*\{[^}]*(margin|padding|transform)\s*:/, "the slot does not offset the rail");
+});
+
+test("the strip slot sits between the room navigation and the colored rail, and folds with the drawer", () => {
+  const header = readFileSync(join(here, "../components/room/mode-header.tsx"), "utf8");
+  const at = header.indexOf('<div className="cmpStripSlot"');
+  assert.ok(at > header.indexOf("{accessory}") && at < header.indexOf("<StudigoRail tone={tone} />"), "slot is after the accessory and before the rail");
+  const slotLine = header.split("\n").find((line) => line.includes("cmpStripSlot")) ?? "";
+  assert.match(slotLine, /data-companion-strip=""/);
+  assert.match(slotLine, /inert=\{collapsed\}/);
+});
+
+test("calm mode allows no sparks or hearts, only the sleep letters", () => {
+  const engine = readFileSync(join(here, "../components/companion/engine.ts"), "utf8");
+  const burst = /function burst\([\s\S]*?\n  \}/.exec(engine)?.[0] ?? "";
+  assert.match(burst, /if \(calm && kind !== "zzz"\) return;/);
+  assert.doesNotMatch(burst, /Math\.min\(count, 2\)/);
+});
+
+test("the menu and Room Settings offer the same two places and the same outfit names", () => {
+  const engine = readFileSync(join(here, "../components/companion/engine.ts"), "utf8");
+  const settings = readFileSync(join(here, "../components/companion/companion.tsx"), "utf8");
+  for (const label of ["Where he sits", "Floating window", "Strip under the menu"]) {
+    assert.ok(engine.includes(label), `menu: ${label}`);
+    assert.ok(settings.includes(label), `room settings: ${label}`);
+  }
+  assert.match(engine, /renderer\.setOutfit\?\.\(prefs\.outfit\)/);
+  assert.match(engine, /OUTFIT_LABELS\[outfit\]/);
+  assert.match(settings, /OUTFIT_LABELS\[outfit\]/);
+});
+
+test("the strip's menu button is named and has a visible focus style, like the rest of his controls", () => {
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  const engine = readFileSync(join(here, "../components/companion/engine.ts"), "utf8");
+  assert.match(engine, /class="cmpStripMenu" type="button"[^>]*aria-label="Studigo's menu"/);
+  assert.match(css, /\.cmpStripMenu:focus-visible \{/);
+  assert.match(css, /\.cmpSegment button:focus-visible/);
+});
+
+test("no em or en dashes in anything he shows", () => {
+  for (const file of ["../components/companion/engine.ts", "../components/companion/companion.tsx", "../components/room/mode-header.tsx", "companion-logic.ts"]) {
+    assert.ok(!/[—–]/.test(readFileSync(join(here, file), "utf8")), `${file} has an em or en dash`);
+  }
+});
+
+test("the strip choice is saved per room and reads back; another room and an older save stay float", async () => {
+  const store = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => { store.set(key, value); },
+    removeItem: (key: string) => { store.delete(key); }
+  };
+  Object.assign(globalThis, { window: { localStorage: storage, addEventListener() {}, removeEventListener() {} } });
+  try {
+    const saved = await import("./companion-prefs");
+    saved.writeCompanionPrefs("room-a", { host: "strip" });
+    assert.equal(saved.readCompanionPrefs("room-a").host, "strip");
+    assert.equal(saved.readCompanionPrefs("room-b").host, "float");
+    store.set("studigo.companion.room-c", '{"v":2,"speech":true,"seated":false}');
+    assert.equal(saved.readCompanionPrefs("room-c").host, "float");
+  } finally {
+    Reflect.deleteProperty(globalThis, "window");
+  }
 });

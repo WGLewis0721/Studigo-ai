@@ -157,7 +157,7 @@ test("C23 reduced motion and minimized stay quiet", () => {
   const engine = readFileSync(join(here, "../components/companion/engine.ts"), "utf8");
   const acknowledge = /function acknowledgeQuiet\([\s\S]*?\n  \}/.exec(engine)?.[0] ?? "";
   assert.match(acknowledge, /quietFeedback\(/);
-  assert.match(acknowledge, /reducedMotion: reduced/);
+  assert.match(acknowledge, /reducedMotion: calm/);
   assert.match(acknowledge, /minimized: rt\.mode !== "window"/);
   assert.match(acknowledge, /if \(decision\.animate\) pulse\("quietAck"/);
   assert.doesNotMatch(acknowledge, /burst\(|say\(|confetti|mastery/);

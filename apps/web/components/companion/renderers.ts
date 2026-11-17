@@ -1,4 +1,4 @@
-import { MIRRORED, WINDOW_POSES, type GazePose, type WindowPose } from "@/lib/companion-logic";
+import { MIRRORED, WINDOW_POSES, type GazePose, type Outfit, type WindowPose } from "@/lib/companion-logic";
 import type { MotionFrame } from "@/lib/companion-motion/director";
 
 /* How Studigo is drawn inside his window. The engine owns the window, its
@@ -18,6 +18,8 @@ export interface CompanionRenderer {
   setPose(pose: WindowPose): void;
   /** One frame from the motion director. The sprite renderer ignores it. */
   apply(frame: MotionFrame): void;
+  /** Dress him in a cosmetic outfit, or take it off. The original drawings are not dressed. */
+  setOutfit?(outfit: Outfit | null): void;
   destroy(): void;
 }
 

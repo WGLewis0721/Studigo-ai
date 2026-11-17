@@ -1,8 +1,8 @@
 "use client";
 
 import "./companion.css";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type RefObject } from "react";
-import type { CompanionEvent } from "@/lib/companion-logic";
+import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, type RefObject } from "react";
+import { OUTFITS, OUTFIT_LABELS, parseOutfit, type CompanionEvent } from "@/lib/companion-logic";
 import { readCompanionPrefs, useCompanionPrefs } from "@/lib/companion-prefs";
 import { createCompanion, type CompanionHandle } from "./engine";
 
@@ -98,6 +98,7 @@ export function useCompanionWindow({ roomId, workspaceRef, tone }: {
 /** Room Settings: how Studigo behaves in this room. Applies at once, like the room color. */
 export function RoomCompanionSettings({ roomId }: { roomId: string }) {
   const [prefs, update] = useCompanionPrefs(roomId);
+  const whereId = useId();
   return (
     <div className="companionSettings">
       <span className="tinyLabel">STUDIGO IN THIS ROOM</span>
@@ -110,6 +111,27 @@ export function RoomCompanionSettings({ roomId }: { roomId: string }) {
         <b>His window</b>
         <small>He sits in a corner of every page of this room. Off keeps him in his seat.</small>
         <input type="checkbox" checked={!prefs.seated} onChange={(event) => update({ seated: !event.target.checked })} />
+      </label>
+      <label className="cmpToggle">
+        <b>Calm mode</b>
+        <small>Gentler, slower movement. No hops, spins or sparkles.</small>
+        <input type="checkbox" checked={prefs.calm} onChange={(event) => update({ calm: event.target.checked })} />
+      </label>
+      <div className="cmpChoice">
+        <b id={whereId}>Where he sits</b>
+        <small>A floating window you can move, or a strip under the menu.</small>
+        <div className="cmpSegment" role="group" aria-labelledby={whereId}>
+          <button type="button" aria-pressed={prefs.host === "float"} onClick={() => update({ host: "float" })}>Floating window</button>
+          <button type="button" aria-pressed={prefs.host === "strip"} onClick={() => update({ host: "strip" })}>Strip under the menu</button>
+        </div>
+      </div>
+      <label className="cmpChoice">
+        <b>Outfit</b>
+        <small>Cosmetic only. It never changes his progress.</small>
+        <select aria-label="Studigo's outfit" value={prefs.outfit ?? ""} onChange={(event) => update({ outfit: parseOutfit(event.target.value) })}>
+          <option value="">None</option>
+          {OUTFITS.map((outfit) => <option key={outfit} value={outfit}>{OUTFIT_LABELS[outfit]}</option>)}
+        </select>
       </label>
     </div>
   );

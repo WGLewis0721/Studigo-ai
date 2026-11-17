@@ -63,6 +63,12 @@ function overlap(x: number, y: number, rect: Rect, size: Size) {
 /** More than this share of his window over a control counts as sitting on it. */
 const COVERED_SHARE = 0.075;
 
+/** True when more than a sliver of his window, with its top-left at `at`, sits over one of these controls. */
+export function coversControl(at: { x: number; y: number }, controls: Rect[], size: Size = WINDOW): boolean {
+  const limit = size.w * size.h * COVERED_SHARE;
+  return controls.some((rect) => overlap(at.x, at.y, rect, size) > limit);
+}
+
 /**
  * He never sits on a control the learner needs. If his corner covers one and
  * the page cannot scroll it clear, he takes the nearest free corner: the other
@@ -70,8 +76,7 @@ const COVERED_SHARE = 0.075;
  */
 export function chooseDock(preferred: Dock, area: Area, controls: Rect[], canScrollClear: boolean, size: Size = WINDOW): Dock {
   if (area.inRow || canScrollClear) return preferred;
-  const limit = size.w * size.h * COVERED_SHARE;
-  const blocked = (dock: Dock) => { const at = spot(dock, area, size); return controls.some((rect) => overlap(at.x, at.y, rect, size) > limit); };
+  const blocked = (dock: Dock) => coversControl(spot(dock, area, size), controls, size);
   const side = preferred[1], otherSide = side === "r" ? "l" : "r";
   const row = preferred[0], otherRow = row === "b" ? "t" : "b";
   const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
@@ -129,6 +134,12 @@ export function pointFromPos(pos: { x: number; y: number }, area: Rect, size: Si
 export function dockForPos(pos: { x: number; y: number }, area: Rect, size: Size = WINDOW): Dock {
   const at = pointFromPos(pos, area, size);
   return dockFromDrop(at.x + size.w / 2, at.y + size.h / 2, area);
+}
+
+/** Moves a saved position by a few pixels (arrow keys), clamped to the free room. */
+export function nudgePos(pos: { x: number; y: number }, dxPx: number, dyPx: number, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const at = pointFromPos(pos, area, size);
+  return posFromPoint(at.x + dxPx, at.y + dyPx, area, size);
 }
 
 /** How much the page has to move aside for him, per dock. All in CSS pixels. */
@@ -203,6 +214,14 @@ export function idleStage(idleMs: number): "awake" | "lean" | "sleep" {
 /** Cosmetic outfits he can wear. A saved id that is not in this list reads back as no outfit. */
 export const OUTFITS = ["goggles", "explorer", "visor", "reader", "beret", "headphones", "sash"] as const;
 export type Outfit = typeof OUTFITS[number];
+/** The names in the menu. Plain text: no dashes, nothing a child would need explained. */
+export const OUTFIT_LABELS: Record<Outfit, string> = {
+  goggles: "Science goggles", explorer: "Explorer hat", visor: "Math visor", reader: "Reading glasses",
+  beret: "Art beret", headphones: "Music headphones", sash: "Civics sash"
+};
+
+/** Where he is out: his floating window, or the fixed strip under the room menu. */
+export type CompanionHost = "float" | "strip";
 
 export type CompanionPrefs = {
   /** Format version, written as 2 on every save. Older builds ignore the new fields and still read the rest. */
@@ -216,6 +235,8 @@ export type CompanionPrefs = {
   dock: Dock;
   /** Where the learner moved him, as shares of his free room (see posFromPoint). Null means he sits in his dock corner. */
   pos: { x: number; y: number } | null;
+  /** Floating window or the strip. A value that is neither reads as float. */
+  host: CompanionHost;
   /** A cosmetic outfit from OUTFITS, or null for none. */
   outfit: Outfit | null;
   /** The learner's in-app Calm mode (reduced motion). Off unless they turn it on. */
@@ -224,7 +245,7 @@ export type CompanionPrefs = {
   scale: number;
 };
 
-export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, seated: false, tuck: true, dock: "br", pos: null, outfit: null, calm: false, scale: 1 };
+export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, seated: false, tuck: true, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 };
 const DOCKS: readonly string[] = ["br", "bl", "tr", "tl"];
 
 function parsePos(value: unknown): { x: number; y: number } | null {
@@ -234,7 +255,7 @@ function parsePos(value: unknown): { x: number; y: number } | null {
   return { x: clamp01(x), y: clamp01(y) };
 }
 
-function parseOutfit(value: unknown): Outfit | null {
+export function parseOutfit(value: unknown): Outfit | null {
   return OUTFITS.find((outfit) => outfit === value) ?? null;
 }
 
@@ -257,6 +278,7 @@ export function parsePrefs(raw: string | null | undefined, savedScale?: string |
       tuck: value.tuck !== false,
       dock: typeof value.dock === "string" && DOCKS.includes(value.dock) ? (value.dock as Dock) : DEFAULT_PREFS.dock,
       pos: parsePos(value.pos),
+      host: value.host === "strip" ? "strip" : "float",
       outfit: parseOutfit(value.outfit),
       calm: value.calm === true,
       scale

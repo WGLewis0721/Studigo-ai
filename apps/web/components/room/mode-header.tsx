@@ -202,6 +202,8 @@ export function ModeFrame({ tone, children, frameRef, accessory }: { tone: strin
         <div className="modeStripInner">{children}</div>
       </div>
       {accessory}
+      {/* Studigo's fixed strip. It has no height unless he is shown in it (companion.css), and it folds away with the drawer. */}
+      <div className="cmpStripSlot" data-companion-strip="" aria-hidden={collapsed || undefined} inert={collapsed} />
       <StudigoRail tone={tone} />
       {desktop && collapsed && (
         <button
