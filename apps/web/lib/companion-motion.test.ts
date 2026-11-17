@@ -240,3 +240,31 @@ test("the mouth follows its driver and settles shut", () => {
   director.setMouth(0);
   assert.ok(run(director, 120, 200, 900).mouthOpen < 0.05);
 });
+
+test("the rig at rest is the approved drawing, untouched", async () => {
+  const { buildRig, poseMesh } = await import("./companion-motion/rig");
+  const mesh = buildRig();
+  const frame = createDirector({ random: seeded(20) }).advance(0);
+  const posed = poseMesh(mesh, frame, new Float32Array(mesh.count * 2));
+  for (let i = 0; i < posed.length; i += 1) assert.ok(Math.abs(posed[i] - mesh.rest[i]) < 1e-3, `point ${i >> 1} moved at rest`);
+});
+
+test("a head turn has depth: the snout travels further than the skull's edge, and the far side foreshortens", async () => {
+  const { RIG, poseHeadPoint } = await import("./companion-motion/rig");
+  const director = createDirector({ random: seeded(21) });
+  director.advance(0);
+  director.lookAt(1, 0, 5000);
+  const frame = run(director, 120, 0, 2000);
+  const moved = (x: number, y: number) => poseHeadPoint(x, y, frame).x - x;
+  const snout = moved(RIG.snout.x, RIG.snout.y), eye = moved(RIG.eyeL.x, RIG.eyeL.y), rim = moved(RIG.head.x - RIG.head.rx + 2, RIG.head.y);
+  assert.ok(snout > 12, `the snout only moved ${snout.toFixed(1)} px`);
+  assert.ok(snout > eye && eye > rim, JSON.stringify({ snout, eye, rim }));
+  const near = poseHeadPoint(RIG.eyeR.x, RIG.eyeR.y, frame).x - poseHeadPoint(RIG.head.x, RIG.eyeR.y, frame).x;
+  const far = poseHeadPoint(RIG.head.x, RIG.eyeL.y, frame).x - poseHeadPoint(RIG.eyeL.x, RIG.eyeL.y, frame).x;
+  assert.ok(Math.abs(near - far) > 1.5, "both halves of his face kept the same width, so the turn is flat");
+  // The body is not part of the head: a point on his chest does not ride the turn.
+  const { posePoint } = await import("./companion-motion/rig");
+  const chest = { x: 0, y: 0 };
+  posePoint(205, 330, { head: 0, depth: 0, frillL: 0, frillR: 0, tail: 0, flame: 0, body: 1 }, frame, chest);
+  assert.ok(Math.abs(chest.x - 205) < snout / 2);
+});

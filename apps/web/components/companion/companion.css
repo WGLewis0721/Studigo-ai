@@ -117,6 +117,13 @@
 .cmp.blink .cmpLid { animation: cmpBlink .19s ease-in-out 1; }
 @keyframes cmpBlink { 45%, 60% { transform: scaleY(1); } }
 
+/* The living companion: one drawing on a moving mesh. Its motion comes from the
+   director, so the CSS loops that move the stacked drawings stand down. */
+.cmp[data-motion] .cmpBody { animation: none !important; }
+.cmp[data-motion] .cmpStage { clip-path: inset(-26px -22px 0 -22px round 25px 25px 0 0); }
+.cmpRig { position: absolute; left: var(--rig-margin, -30%); top: var(--rig-margin, -30%); width: 160%; height: 160%; max-width: none; opacity: 0; transition: opacity .18s linear; }
+.cmpRig[data-ready] { opacity: 1; }
+
 .cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 116px; border-radius: 28px 28px 0 0; cursor: pointer; z-index: 5; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 /* His name is a key: it opens his menu. The caret says so, it lifts under the

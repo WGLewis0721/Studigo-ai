@@ -1,9 +1,13 @@
 import {
-  LINES, MAX_SCALE, MIN_SCALE, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
+  LINES, MAX_SCALE, MIN_SCALE, WINDOW, chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
   roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
 } from "@/lib/companion-logic";
+import type { BeatName } from "@/lib/companion-motion/beats";
+import { createDirector, type Director } from "@/lib/companion-motion/director";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
+import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
+import { createRigRenderer } from "./rig-renderer";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -13,7 +17,7 @@ import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@
    else: the room around it is React's. It reads the page to stay out of the
    way and never writes to practice state. */
 
-export const SPRITES = "/mascot/companion";
+export { SPRITES };
 
 export type CompanionHandle = {
   /** Something already happened in the room (an answer was graded, a card was rated). */
@@ -22,6 +26,8 @@ export type CompanionHandle = {
   thinking(on: boolean): void;
   setTone(tone: string): void;
   setPrefs(prefs: CompanionPrefs): void;
+  /** Living companion only: play one of his beats by name. For the dev hook and demos. */
+  play?(beat: BeatName): void;
   destroy(): void;
 };
 
@@ -36,6 +42,11 @@ type Options = {
 type Press = { sx: number; sy: number; ox: number; oy: number; mode: "press" | "pet" | "drag" | "long"; lastHeart: number };
 
 const POP: Partial<Record<WindowPose, true>> = { celebrate: true, lean: true, poke: true };
+/** With the living companion, the old pose and pulse commands become beats. */
+const POSE_BEAT: Partial<Record<WindowPose, BeatName>> = { celebrate: "bound", support: "support", poke: "poke", pet: "petted", lean: "lean" };
+const PULSE_BEAT: Partial<Record<string, BeatName>> = { land: "land", sway: "tickle", quietAck: "nod" };
+/** A pointer this far from his eyes (at default size) turns his head all the way. */
+const GAZE_REACH = 170;
 /** Clicking the size handle without dragging steps through these. */
 const SIZE_STEPS = [1, 1.5, 2];
 const SHAPES = {
@@ -83,14 +94,19 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /** The size the learner asked for. What is shown (k) can be smaller when the room is tight. */
   let desired = prefs.scale;
 
+  /* ---------- how he is drawn ---------- */
+  /** The living companion: a motion director and the rig. Null means the original drawings. */
+  let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: reduced }) : null;
+  let renderer: CompanionRenderer = director ? createRigRenderer(() => fallBack()) : createSpriteRenderer();
+
   /* ---------- his elements ---------- */
   host.innerHTML = `
-    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br">
+    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br"${director ? " data-motion" : ""}>
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
       <div class="cmpWin">
         <div class="cmpScale">
           <div class="cmpScreen"></div>
-          <div class="cmpStage"><div class="cmpBody">${WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
+          <div class="cmpStage"><div class="cmpBody">${renderer.markup()}</div></div>
           <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet. His name opens his menu."></div>
           <button class="cmpSill" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Studigo's menu"><span class="led"></span><span class="sillBrand">studigo</span><svg class="sillMore" width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5 5 3.5l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
@@ -109,15 +125,28 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const grip = host.querySelector<HTMLElement>(".cmpGrip")!;
   const sizer = host.querySelector<HTMLButtonElement>(".cmpSize")!;
   const sill = host.querySelector<HTMLButtonElement>(".cmpSill")!;
-  const poseEls = new Map<string, HTMLImageElement>();
-  host.querySelectorAll<HTMLImageElement>(".cmpPose").forEach((img) => poseEls.set(img.dataset.pose ?? "", img));
-  const spriteFor = (pose: string) => `${SPRITES}/${MIRRORED[pose as GazePose] ?? pose}.webp`;
-  poseEls.get("center")!.src = spriteFor("center");
+  const body = host.querySelector<HTMLElement>(".cmpBody")!;
+  let heartbeat = 0, motionFrame = 0;
+  /** The rig could not draw (no WebGL, a lost context, missing art): he goes back to the original drawings. */
+  function fallBack() {
+    if (dead || !director) return;
+    director = null;
+    window.cancelAnimationFrame(motionFrame); motionFrame = 0;
+    try { renderer.destroy(); } catch { /* it was already broken */ }
+    renderer = createSpriteRenderer();
+    body.innerHTML = renderer.markup();
+    renderer.mount(body);
+    delete el.dataset.motion;
+    if (rt.loaded) renderer.load();
+    rt.pose = ""; setPose("center");
+    if (!heartbeat) heartbeat = window.setInterval(tick, 320);
+  }
+  try { renderer.mount(body); } catch (error) { console.warn("Studigo's rig could not start; using his drawings.", error); fallBack(); }
   /** The other poses are only fetched once he is actually out in his window. */
   const loadPoses = () => {
     if (rt.loaded) return;
     rt.loaded = true;
-    poseEls.forEach((img, pose) => { if (!img.getAttribute("src")) img.src = spriteFor(pose); });
+    renderer.load();
   };
 
   /* ---------- geometry, in viewport pixels ---------- */
@@ -272,9 +301,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- poses ---------- */
   function setPose(name: WindowPose) {
+    // The living companion has one drawing and moves it; there is no pose to swap.
+    if (director) return;
     if (rt.pose === name) return;
     rt.pose = name;
-    poseEls.forEach((img, key) => img.classList.toggle("on", key === name));
+    renderer.setPose(name);
     // Re-entering the same pose (a second poke) replays its movement.
     if (el.dataset.pose === name) { el.dataset.pose = ""; void el.offsetWidth; }
     el.dataset.pose = name;
@@ -282,15 +313,26 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   /** A reaction outranks gaze and idle until it runs out. */
   function react(name: WindowPose, ms: number) {
+    if (director) { const beat = POSE_BEAT[name]; if (beat) director.play(beat); return; }
     rt.reacting = true; rt.reactUntil = now() + ms; rt.gazing = false;
     rt.pose = ""; setPose(name);
   }
   function pulse(cls: string, ms: number, node: HTMLElement = el) {
+    if (director && node === el) {
+      const beat = PULSE_BEAT[cls];
+      if (beat) { director.play(beat); return; }
+      if (cls === "bob" || cls === "blink") return;
+    }
     node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls);
     later(() => node.classList.remove(cls), ms);
   }
   const eyesX = () => rt.x + W / 2, eyesY = () => rt.y + 46 * k;
   function lookAt(px: number, py: number, hold: number) {
+    if (director) {
+      // Continuous: his eyes go first, then his head. Only the direction is used; nothing is kept.
+      if (rt.mode === "window" && !rt.drag && !rt.press) director.lookAt((px - eyesX()) / (GAZE_REACH * k), (py - eyesY()) / (GAZE_REACH * k), hold);
+      return;
+    }
     if (rt.mode !== "window" || rt.drag || rt.press || rt.asleep || rt.thinking || now() < rt.reactUntil) return;
     setPose(dirPose(px - eyesX(), py - eyesY(), 54 * k));
     rt.gazing = true; rt.gazeUntil = now() + hold;
@@ -321,6 +363,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- idle: a character waiting for input ---------- */
   function activity() {
     rt.lastInput = now(); rt.leaned = false;
+    director?.activity();
     if (rt.asleep) { rt.asleep = false; react("poke", 800); say(LINES.wake); }
   }
   function tick() {
@@ -353,6 +396,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function highFive() { pulse("highfive", 360); burst("spark", 9); rt.reactUntil = now() + 1100; }
   function startDrag(x: number, y: number, press?: Press) {
+    director?.setPetted(false); director?.setHeld(true);
     rt.drag = { ox: press ? press.ox : x - rt.x, oy: press ? press.oy : y - rt.y };
     el.classList.add("dragging"); bubble.hidden = true;
     rt.pose = ""; setPose("poke");
@@ -365,6 +409,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const a = area();
     if (a) { rt.dock = dockFromDrop(rt.x + W / 2, rt.y + H / 2, a); changePrefs({ dock: rt.dock }); }
     rt.drag = null; el.classList.remove("dragging");
+    director?.setHeld(false);
     place(); pulse("land", 460); react("center", 300);
   }
   let longTimer = 0;
@@ -380,7 +425,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const press = rt.press;
     if (!press || pinch) return;
     const x = event.clientX, y = event.clientY;
-    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); }
+    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); director?.setPetted(true); }
     if (press.mode === "pet") {
       const outside = x < rt.x - 18 || x > rt.x + W + 18 || y < rt.y - 18 || y > rt.y + H + 18;
       if (outside) { press.mode = "drag"; startDrag(x, y, press); }
@@ -392,6 +437,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const press = rt.press;
     if (!press) return;
     cancel(longTimer); rt.press = null;
+    director?.setPetted(false);
     if (press.mode === "press") { if (rt.pose === "celebrate") highFive(); else poke(); }
     else if (press.mode === "pet") react("pet", 750);
     else if (press.mode === "drag") endDrag();
@@ -448,6 +494,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     // A second finger turns the gesture into a pinch: whatever the first finger began is dropped.
     cancel(longTimer); rt.press = null;
     if (rt.drag) { rt.drag = null; el.classList.remove("dragging"); }
+    director?.setHeld(false); director?.setPetted(false);
     rt.pose = ""; setPose("center");
     pinch = { start: Math.max(spread(), 24), from: k };
     sizing(true);
@@ -491,6 +538,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       el.dataset.state = "seat"; place();
       seatTimer = later(() => { ws.dataset.seat = "occupied"; pulse("seatLand", 420, ws); }, reduced ? 0 : 300);
     }
+    syncMotion();
   }
   /** The window appears empty; he lands in it a moment later (the end of his leap from Home). */
   function arrive() {
@@ -587,6 +635,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     activity();
     if (rt.mode !== "window" || now() < rt.reactUntil || rt.thinking) return;
     const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26);
+    // He reads along: eyes on where the words are appearing, a little downward.
+    if (director) { director.lookAt((r.left + 16 + chars * 8.4 - eyesX()) / (GAZE_REACH * k), (r.top + r.height / 2 - eyesY()) / (GAZE_REACH * k) + 0.25, 1500, "drift"); return; }
     setPose(readingPose(r.left + 16 + chars * 8.4 - eyesX(), r.top + r.height / 2 - eyesY()));
     rt.gazing = true; rt.typingUntil = now() + 1500;
     if (!reduced) pulse("bob", 170);
@@ -641,9 +691,29 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   });
   changes.observe(ws, { childList: true, subtree: true });
 
-  const heartbeat = window.setInterval(tick, 320);
+  /* The living companion runs on one animation loop, and only while he is out and the tab is showing. */
+  function motionLoop(time: number) {
+    motionFrame = 0;
+    if (dead || !director) return;
+    motionFrame = window.requestAnimationFrame(motionLoop);
+    const frame = director.advance(time);
+    renderer.apply(frame);
+    for (const item of frame.fx) burst(item.kind, item.count);
+    for (const cue of frame.cues) { if (cue === "lean") say(LINES.lean); else if (cue === "wake") say(LINES.wake); }
+    if (frame.base === "asleep" && time > rt.nextZ) { burst("zzz", 1); rt.nextZ = time + 1500; }
+  }
+  function syncMotion() {
+    if (!director) return;
+    const on = rt.mode === "window" && !document.hidden;
+    director.setVisible(on);
+    if (on && !motionFrame) motionFrame = window.requestAnimationFrame(motionLoop);
+    else if (!on && motionFrame) { window.cancelAnimationFrame(motionFrame); motionFrame = 0; }
+  }
+  document.addEventListener("visibilitychange", syncMotion, { signal });
+  if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
   applyScale(prefs.scale, false);
   if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
+  syncMotion();
 
   /* A lesson opened or a guide became ready. One brief nod, or nothing if he is minimized or motion is reduced. */
   const quietSeen = new Set<string>();
@@ -679,6 +749,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         return;
       }
       const reaction = reactionFor(name, rt.streak);
+      if (director) {
+        // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
+        director.onEvent(name);
+        if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+        return;
+      }
       react(reaction.pose, reaction.ms);
       if (reaction.sparks) burst("spark", reaction.sparks);
       if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
@@ -687,6 +763,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       if (dead || rt.thinking === on) return;
       rt.thinking = on;
       el.classList.toggle("thinking", on);
+      director?.setThinking(on);
       if (rt.mode !== "window") return;
       activity();
       rt.pose = ""; setPose(on ? "up" : "center");
@@ -708,10 +785,13 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       if (!pinch && !resize) desired = next.scale;
       sync();
     },
+    play(beat) { if (!dead) director?.play(beat); },
     destroy() {
       dead = true;
       lifetime.abort();
       window.clearInterval(heartbeat);
+      window.cancelAnimationFrame(motionFrame);
+      try { renderer.destroy(); } catch { /* nothing left to release */ }
       window.cancelAnimationFrame(placeFrame);
       timers.forEach((id) => window.clearTimeout(id));
       sizes.disconnect(); changes.disconnect();
