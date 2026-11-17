@@ -103,6 +103,34 @@ export function dockFromDrop(centerX: number, centerY: number, area: Rect): Dock
   return `${centerY > (area.top + area.bottom) / 2 ? "b" : "t"}${centerX > (area.left + area.right) / 2 ? "r" : "l"}` as Dock;
 }
 
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * The top-left point of his window as a share of the room he has to slide:
+ * 0 at the left or top edge, 1 at the right or bottom. No room to slide reads as the middle.
+ */
+export function posFromPoint(x: number, y: number, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const freeX = area.right - area.left - size.w, freeY = area.bottom - area.top - size.h;
+  return {
+    x: freeX > 0 ? clamp01((x - area.left) / freeX) : 0.5,
+    y: freeY > 0 ? clamp01((y - area.top) / freeY) : 0.5
+  };
+}
+
+/** The inverse of posFromPoint. The window stays inside the area, even when the area has shrunk since the position was saved. */
+export function pointFromPos(pos: { x: number; y: number }, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const freeX = Math.max(0, area.right - area.left - size.w), freeY = Math.max(0, area.bottom - area.top - size.h);
+  return { x: area.left + clamp01(pos.x) * freeX, y: area.top + clamp01(pos.y) * freeY };
+}
+
+/** The corner nearest to where his window sits in the area. */
+export function dockForPos(pos: { x: number; y: number }, area: Rect, size: Size = WINDOW): Dock {
+  const at = pointFromPos(pos, area, size);
+  return dockFromDrop(at.x + size.w / 2, at.y + size.h / 2, area);
+}
+
 /** How much the page has to move aside for him, per dock. All in CSS pixels. */
 export function roomFor(dock: Dock, area: Area, rowHeight: number, size: Size = WINDOW): { right: number; left: number; thread: number; page: number } {
   const bottom = dock[0] === "b", right = dock[1] === "r";
@@ -172,7 +200,13 @@ export function idleStage(idleMs: number): "awake" | "lean" | "sleep" {
 
 /* ---------- what the learner has switched on ---------- */
 
+/** Cosmetic outfits he can wear. A saved id that is not in this list reads back as no outfit. */
+export const OUTFITS = ["goggles", "explorer", "visor", "reader", "beret", "headphones", "sash"] as const;
+export type Outfit = typeof OUTFITS[number];
+
 export type CompanionPrefs = {
+  /** Format version, written as 2 on every save. Older builds ignore the new fields and still read the rest. */
+  v: 2;
   /** Speech bubbles. Off unless the learner turns them on in Room Settings. */
   speech: boolean;
   /** True when the learner sent him back to his seat; he stays there until called. */
@@ -180,14 +214,35 @@ export type CompanionPrefs = {
   /** He turns see-through while the page scrolls, so nothing under him is hidden. */
   tuck: boolean;
   dock: Dock;
+  /** Where the learner moved him, as shares of his free room (see posFromPoint). Null means he sits in his dock corner. */
+  pos: { x: number; y: number } | null;
+  /** A cosmetic outfit from OUTFITS, or null for none. */
+  outfit: Outfit | null;
+  /** The learner's in-app Calm mode (reduced motion). Off unless they turn it on. */
+  calm: boolean;
   /** 1 is his default size. Saved for the device, not per room. */
   scale: number;
 };
 
-export const DEFAULT_PREFS: CompanionPrefs = { speech: false, seated: false, tuck: true, dock: "br", scale: 1 };
+export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, seated: false, tuck: true, dock: "br", pos: null, outfit: null, calm: false, scale: 1 };
 const DOCKS: readonly string[] = ["br", "bl", "tr", "tl"];
 
-/** Reads saved preferences. Anything missing or malformed falls back to the default, so speech can only be on if it was saved on. */
+function parsePos(value: unknown): { x: number; y: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const { x, y } = value as { x?: unknown; y?: unknown };
+  if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return { x: clamp01(x), y: clamp01(y) };
+}
+
+function parseOutfit(value: unknown): Outfit | null {
+  return OUTFITS.find((outfit) => outfit === value) ?? null;
+}
+
+/**
+ * Reads saved preferences. Anything missing or malformed falls back to the default,
+ * so speech can only be on if it was saved on. A save from before v2 has none of the
+ * newer fields, so they read as their defaults.
+ */
 export function parsePrefs(raw: string | null | undefined, savedScale?: string | null): CompanionPrefs {
   const scale = savedScale ? clampScale(savedScale) : DEFAULT_PREFS.scale;
   const base = scale === DEFAULT_PREFS.scale ? DEFAULT_PREFS : { ...DEFAULT_PREFS, scale };
@@ -196,10 +251,14 @@ export function parsePrefs(raw: string | null | undefined, savedScale?: string |
     const value = JSON.parse(raw) as Partial<Record<keyof CompanionPrefs, unknown>> | null;
     if (!value || typeof value !== "object") return base;
     return {
+      v: 2,
       speech: value.speech === true,
       seated: value.seated === true,
       tuck: value.tuck !== false,
       dock: typeof value.dock === "string" && DOCKS.includes(value.dock) ? (value.dock as Dock) : DEFAULT_PREFS.dock,
+      pos: parsePos(value.pos),
+      outfit: parseOutfit(value.outfit),
+      calm: value.calm === true,
       scale
     };
   } catch {

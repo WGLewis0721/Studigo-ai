@@ -100,7 +100,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   // canary use one Learn journey instead of competing Learn/Explore modes.
   const integratedJourney = !fixture || previewJournal;
   const mission = snapshot?.mission ?? null;
-  const { thinking: companionThinking } = useCompanion();
+  const { thinking: companionThinking, event: companionEvent } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
@@ -188,8 +188,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     setBusy(true);
     setError(null);
     try {
-      await post(mission, action, reflection, topicOverride);
+      const saved = await post(mission, action, reflection, topicOverride);
       if (action === "restart" || action === "start") setTapped(null);
+      if (action === "advance" && saved.mission?.phase === "done") companionEvent("missionComplete");
       return true;
     } catch (caught) {
       await reload();
@@ -460,7 +461,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         <MissionControlIcon name="journal" />
       </button>}
       {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint learnIconKey"
-        onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint" title="Give me a hint">
+        onClick={() => { setHelpUsed(true); setShown(true); companionEvent("hintOpened"); }} aria-label="Give me a hint" title="Give me a hint">
         <span className="learnHelpGlyph" aria-hidden="true">?</span>
       </button>}
       {!mission?.paused && mission?.phase !== "done" && <button className={introduction ? "buttonPrimary learnGo learnGoIconOnly" : "buttonPrimary learnGo"} type="button"

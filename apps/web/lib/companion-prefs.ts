@@ -35,7 +35,8 @@ export function readCompanionPrefs(roomId: string): CompanionPrefs {
 }
 
 export function writeCompanionPrefs(roomId: string, patch: Partial<CompanionPrefs>) {
-  const { scale, ...room } = { ...readCompanionPrefs(roomId), ...patch };
+  const next: CompanionPrefs = { ...readCompanionPrefs(roomId), ...patch, v: 2 };
+  const { scale, ...room } = next;
   try {
     window.localStorage.setItem(storageKey(roomId), JSON.stringify(room));
     if (patch.scale !== undefined) window.localStorage.setItem(SCALE_KEY, String(scale));
@@ -47,9 +48,9 @@ export function writeCompanionPrefs(roomId: string, patch: Partial<CompanionPref
 
 /**
  * How Studigo behaves in one Study Room: speech, whether he was sent to his
- * seat, and his corner. Like the room's color it is saved per room in this
- * browser only; his size is saved once for the device. Room Settings and his
- * own card write it; his window reads it.
+ * seat, his corner or the spot he was moved to, his outfit, and Calm mode. Like
+ * the room's color it is saved per room in this browser only; his size is saved
+ * once for the device. Room Settings and his own card write it; his window reads it.
  */
 export function useCompanionPrefs(roomId: string): [CompanionPrefs, (patch: Partial<CompanionPrefs>) => void] {
   // The snapshot is the saved string, so it is stable between renders.

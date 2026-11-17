@@ -4,9 +4,9 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, SLEEP_AFTER_MS, WINDOW,
-  chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, parsePrefs, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
-  type Area, type Rect
+  COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, OUTFITS, SLEEP_AFTER_MS, WINDOW,
+  chooseDock, controlSafeDock, clampScale, dirPose, dockForPos, dockFromDrop, idleStage, parsePrefs, pointFromPos, posFromPoint, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
+  type Area, type CompanionPrefs, type Rect
 } from "./companion-logic";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -22,8 +22,8 @@ test("speech is off unless it was saved on", () => {
 });
 
 test("saved preferences fall back field by field", () => {
-  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { speech: false, seated: true, tuck: false, dock: "br", scale: 1 });
-  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { speech: false, seated: false, tuck: true, dock: "tl", scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { v: 2, speech: false, seated: true, tuck: false, dock: "br", pos: null, outfit: null, calm: false, scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { v: 2, speech: false, seated: false, tuck: true, dock: "tl", pos: null, outfit: null, calm: false, scale: 1 });
 });
 
 test("his size is saved for the device, kept within bounds, and a bad value means the default", () => {
@@ -201,4 +201,80 @@ test("Phase 3 seats temporarily when all corners are blocked, then restores the 
   assert.equal(controlSafeDock("br", { ...a, right: a.left + WINDOW.w - 1 }, []), null);
   assert.equal(controlSafeDock("br", { ...a, bottom: a.top + WINDOW.h - 1 }, []), null);
   assert.equal(controlSafeDock("br", area(true), controls), "br", "Coach keeps its reserved composer geometry");
+});
+
+/** The field picking from before prefs v2, copied so a v2 save can be checked against an older build. */
+function parseV1(raw: string) {
+  const value = JSON.parse(raw) as Record<string, unknown>;
+  return {
+    speech: value.speech === true,
+    seated: value.seated === true,
+    tuck: value.tuck !== false,
+    dock: typeof value.dock === "string" && ["br", "bl", "tr", "tl"].includes(value.dock) ? value.dock : "br"
+  };
+}
+
+test("a save from before v2 migrates: it reads as v2 with the new fields at their defaults", () => {
+  assert.deepEqual(parsePrefs('{"speech":true,"seated":false,"tuck":true,"dock":"tl"}', "1.25"), {
+    v: 2, speech: true, seated: false, tuck: true, dock: "tl", pos: null, outfit: null, calm: false, scale: 1.25
+  });
+  assert.deepEqual(parsePrefs(null), DEFAULT_PREFS);
+});
+
+test("a v2 save reads back unchanged", () => {
+  const prefs: CompanionPrefs = { v: 2, speech: true, seated: true, tuck: false, dock: "bl", pos: { x: 0.25, y: 0.75 }, outfit: "sash", calm: true, scale: 1.5 };
+  const { scale, ...room } = prefs;
+  assert.deepEqual(parsePrefs(JSON.stringify(room), String(scale)), prefs);
+});
+
+test("a build from before v2 still reads speech, seated, tuck and dock from a v2 save", () => {
+  const saved = '{"v":2,"speech":true,"seated":true,"tuck":false,"dock":"tr","pos":{"x":0.5,"y":0.5},"outfit":"beret","calm":true}';
+  assert.deepEqual(parseV1(saved), { speech: true, seated: true, tuck: false, dock: "tr" });
+});
+
+test("a malformed position or outfit falls back to none, and calm is on only when saved as true", () => {
+  for (const pos of ['"0.5,0.5"', "[0.5,0.5]", '{"x":"0.5","y":0.5}', '{"x":0.5}', '{"x":null,"y":null}', '{"x":1e400,"y":0.5}', "true", "null"]) {
+    assert.equal(parsePrefs(`{"pos":${pos}}`).pos, null, `position ${pos}`);
+  }
+  for (const outfit of ['"crown"', '"Visor"', "7", '["visor"]', "null"]) {
+    assert.equal(parsePrefs(`{"outfit":${outfit}}`).outfit, null, `outfit ${outfit}`);
+  }
+  for (const outfit of OUTFITS) assert.equal(parsePrefs(JSON.stringify({ outfit })).outfit, outfit);
+  assert.equal(parsePrefs('{"calm":"yes"}').calm, false);
+  assert.equal(parsePrefs('{"calm":true}').calm, true);
+});
+
+test("a saved position is clamped to 0..1 on each side", () => {
+  assert.deepEqual(parsePrefs('{"pos":{"x":-0.5,"y":1.5}}').pos, { x: 0, y: 1 });
+  assert.deepEqual(parsePrefs('{"pos":{"x":0.3,"y":0.7}}').pos, { x: 0.3, y: 0.7 });
+});
+
+test("a point becomes a position and back, and the corners sit at the ends of the free room", () => {
+  // 256 px of room to slide each way once his 116 x 138 window is placed.
+  const zone: Rect = { left: 10, top: 100, right: 382, bottom: 494 };
+  assert.deepEqual(posFromPoint(10, 100, zone, WINDOW), { x: 0, y: 0 });
+  assert.deepEqual(posFromPoint(266, 356, zone, WINDOW), { x: 1, y: 1 });
+  const pos = posFromPoint(74, 228, zone, WINDOW);
+  assert.deepEqual(pos, { x: 0.25, y: 0.5 });
+  assert.deepEqual(pointFromPos(pos, zone, WINDOW), { x: 74, y: 228 });
+  assert.deepEqual(posFromPoint(0, 0, { left: 0, top: 0, right: WINDOW.w, bottom: WINDOW.h }, WINDOW), { x: 0.5, y: 0.5 }, "no room to slide reads as the middle");
+});
+
+test("a saved position keeps the whole window inside an area that has shrunk", () => {
+  const small: Rect = { left: 10, top: 100, right: 200, bottom: 300 };
+  assert.deepEqual(pointFromPos({ x: 1, y: 1 }, small, WINDOW), { x: small.right - WINDOW.w, y: small.bottom - WINDOW.h });
+  for (const pos of [{ x: 0, y: 0 }, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }]) {
+    const at = pointFromPos(pos, small, WINDOW);
+    assert.ok(at.x >= small.left && at.x + WINDOW.w <= small.right, `across, at ${pos.x}`);
+    assert.ok(at.y >= small.top && at.y + WINDOW.h <= small.bottom, `down, at ${pos.y}`);
+  }
+});
+
+test("the dock for a saved position is the corner nearest to where he sits", () => {
+  const a = area();
+  assert.equal(dockForPos({ x: 0, y: 0 }, a, WINDOW), "tl");
+  assert.equal(dockForPos({ x: 1, y: 0 }, a, WINDOW), "tr");
+  assert.equal(dockForPos({ x: 0, y: 1 }, a, WINDOW), "bl");
+  assert.equal(dockForPos({ x: 1, y: 1 }, a, WINDOW), "br");
+  assert.equal(dockForPos({ x: 0.3, y: 0.7 }, a, WINDOW), "bl");
 });
