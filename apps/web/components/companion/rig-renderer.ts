@@ -1,8 +1,8 @@
-import type { Outfit } from "@/lib/companion-logic";
+import type { Outfit, WindowPose } from "@/lib/companion-logic";
 import type { MotionFrame } from "@/lib/companion-motion/director";
 import { OUTFIT_LAYERS, outfitTransform } from "@/lib/companion-motion/outfits";
-import { RIG, RIG_SIZE, buildRig, poseMesh } from "@/lib/companion-motion/rig";
-import { SPRITES, type CompanionRenderer } from "./renderers";
+import { RIG, RIG_SIZE, STRETCH, buildRig, poseMesh } from "@/lib/companion-motion/rig";
+import { SPRITES, loadSprites, spriteElements, spriteImages, type CompanionRenderer } from "./renderers";
 
 /* The living companion's renderer: the approved front-facing drawing on a
    deforming mesh (lib/companion-motion/rig.ts), drawn with WebGL in one call.
@@ -83,6 +83,13 @@ void main() {
   gl_FragColor = vec4(rgb, a);
 }`;
 
+/* The drawings move with the rig's own whole-body numbers, so a drawing that takes over from the mesh keeps its motion. */
+function bodyTransform(f: MotionFrame): string {
+  const wide = (1 + f.squash * STRETCH.squashWide) * Math.cos(f.spin);
+  const tall = (1 - f.squash) * (1 + f.breath * STRETCH.breathTall);
+  return `translate(${((f.dash + f.shiver) * 100).toFixed(2)}%, ${(f.hop * 100).toFixed(2)}%) rotate(${(f.headTilt * 4).toFixed(2)}deg) scale(${wide.toFixed(4)}, ${tall.toFixed(4)})`;
+}
+
 function compile(gl: WebGLRenderingContext, type: number, source: string) {
   const shader = gl.createShader(type)!;
   gl.shaderSource(shader, source); gl.compileShader(shader);
@@ -93,10 +100,13 @@ function compile(gl: WebGLRenderingContext, type: number, source: string) {
 export function createRigRenderer(onLost: () => void): CompanionRenderer {
   const mesh = buildRig();
   const positions = new Float32Array(mesh.count * 2);
-  let canvas: HTMLCanvasElement | null = null, gl: WebGLRenderingContext | null = null;
+  let wrap: HTMLElement | null = null, canvas: HTMLCanvasElement | null = null, gl: WebGLRenderingContext | null = null;
   let buffer: WebGLBuffer | null = null, ready = false, dead = false, lastFrame: MotionFrame | null = null;
   const uniforms: Record<string, WebGLUniformLocation | null> = {};
   const span = 1 + MARGIN * 2;
+
+  /* The original drawings that stand in for the mesh while the director names one, and the one showing now. */
+  let drawings = new Map<string, HTMLImageElement>(), shown: WindowPose | null = null;
 
   /* The outfit is an image in the same body box as the canvas, so a rig point p sits at p / RIG_SIZE of the box, exactly as the canvas maps it. */
   let outfit: Outfit | null = null, outfitEl: HTMLImageElement | null = null, outfitShown: Outfit | null = null;
@@ -147,12 +157,27 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
     gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 
+  /* A drawing takes over with the canvas's own crossfade. Classes change only when the pose does; while a drawing shows, the body carries the motion the mesh would. */
+  function showPose(frame: MotionFrame) {
+    if (frame.pose !== shown) {
+      if (shown !== null) drawings.get(shown)?.classList.remove("on");
+      if (frame.pose !== null) drawings.get(frame.pose)?.classList.add("on");
+      shown = frame.pose;
+      canvas?.classList.toggle("off", shown !== null);
+      outfitEl?.classList.toggle("off", shown !== null);
+      if (shown === null && wrap) wrap.style.transform = "";
+    }
+    if (shown !== null && wrap) wrap.style.transform = bodyTransform(frame);
+  }
+
   return {
     kind: "rig",
-    markup: () => `<canvas class="cmpRig" aria-hidden="true"></canvas>`,
+    markup: () => `<div class="cmpRigBody"><canvas class="cmpRig" aria-hidden="true"></canvas>${spriteImages(null)}</div>`,
     mount(body) {
       canvas = body.querySelector<HTMLCanvasElement>(".cmpRig");
-      if (!canvas) throw new Error("Studigo's rig has no canvas.");
+      wrap = body.querySelector<HTMLElement>(".cmpRigBody");
+      if (!canvas || !wrap) throw new Error("Studigo's rig has no canvas.");
+      drawings = spriteElements(body);
       // His window is at most 2x; 640 backing pixels keep him sharp there without a large buffer on phones.
       const size = Math.round(Math.min(640, 150 * span * Math.min(2.5, Math.max(1.5, window.devicePixelRatio || 1))));
       canvas.width = size; canvas.height = size;
@@ -212,17 +237,17 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
       outfitEl.setAttribute("aria-hidden", "true");
       Object.assign(outfitEl.style, { position: "absolute", left: "0", top: "0", maxWidth: "none", pointerEvents: "none", display: "none" });
       outfitEl.onload = () => { outfitLoaded = true; showOutfit(); };
-      canvas.after(outfitEl);
+      wrap.appendChild(outfitEl);
       if (outfit) setOutfit(outfit);
     },
-    load() {},
+    load() { loadSprites(drawings); },
     setPose() {},
-    apply(frame) { lastFrame = frame; draw(frame); showOutfit(); },
+    apply(frame) { lastFrame = frame; draw(frame); showPose(frame); showOutfit(); },
     setOutfit,
     destroy() {
       ready = false; dead = true;
       gl?.getExtension("WEBGL_lose_context")?.loseContext();
-      gl = null; canvas = null;
+      gl = null; canvas = null; wrap = null; shown = null; drawings.clear();
       outfitEl?.remove(); outfitEl = null; outfit = null; outfitShown = null;
     }
   };

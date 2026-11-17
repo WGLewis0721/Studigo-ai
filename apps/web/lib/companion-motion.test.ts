@@ -3,8 +3,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { COMPANION_EVENTS, type CompanionEvent } from "./companion-logic";
-import { BEATS, CALM_PARTICLE_CAP, type BeatName } from "./companion-motion/beats";
+import { COMPANION_EVENTS, WINDOW_POSES, type CompanionEvent, type WindowPose } from "./companion-logic";
+import { BEATS, CALM_PARTICLE_CAP, type BeatDef, type BeatName } from "./companion-motion/beats";
 import { createDirector, type MotionFrame } from "./companion-motion/director";
 import { EXPRESSION_NAMES } from "./companion-motion/expressions";
 
@@ -118,19 +118,24 @@ test("a beat that runs to its end leaves him at REST", () => {
   }
 });
 
-test("30, 60 and 120 Hz displays see the same motion", () => {
+test("30, 60 and 120 Hz displays see the same motion and the same drawings", () => {
   const script: [number, CompanionEvent][] = [[500, "correct"], [1500, "wrong"], [2600, "correctFast"], [4000, "setDone"]];
-  const final = [30, 60, 120].map((hz) => {
+  const runs = [30, 60, 120].map((hz) => {
     const director = createDirector({ random: seeded(9) });
+    const poses: (WindowPose | null)[] = [];
+    // Every tenth of a second is a frame on all three displays, so their drawings can be compared frame for frame.
+    const sample = (frame: MotionFrame, nowMs: number) => { if (Math.abs(nowMs / 100 - Math.round(nowMs / 100)) < 1e-6) poses.push(frame.pose); };
     let at = 0;
-    for (const [when, event] of script) { run(director, hz, at, when); director.onEvent(event); at = when; }
+    for (const [when, event] of script) { run(director, hz, at, when, sample); director.onEvent(event); at = when; }
     director.lookAt(0.8, -0.3, 900);
-    return { ...run(director, hz, at, 7000), t: director.state().t };
+    return { final: { ...run(director, hz, at, 7000, sample), t: director.state().t }, poses };
   });
-  for (const other of final.slice(1)) {
-    assert.equal(other.t, final[0].t);
-    assert.equal(other.expression, final[0].expression);
-    for (const key of NUMERIC) assert.ok(Math.abs((other[key] as number) - (final[0][key] as number)) < 1e-9, `${String(key)} differs`);
+  for (const other of runs.slice(1)) {
+    assert.equal(other.final.t, runs[0].final.t);
+    assert.equal(other.final.expression, runs[0].final.expression);
+    assert.equal(other.final.pose, runs[0].final.pose);
+    assert.deepEqual(other.poses, runs[0].poses);
+    for (const key of NUMERIC) assert.ok(Math.abs((other.final[key] as number) - (runs[0].final[key] as number)) < 1e-9, `${String(key)} differs`);
   }
 });
 
@@ -267,4 +272,132 @@ test("a head turn has depth: the snout travels further than the skull's edge, an
   const chest = { x: 0, y: 0 };
   posePoint(205, 330, { head: 0, depth: 0, frillL: 0, frillR: 0, tail: 0, flame: 0, body: 1 }, frame, chest);
   assert.ok(Math.abs(chest.x - 205) < snout / 2);
+});
+
+test("beat drawings are real poses, in time order, and inside the beat", () => {
+  for (const [name, def] of Object.entries<BeatDef>(BEATS)) {
+    let last = -1;
+    for (const key of def.poses ?? []) {
+      assert.ok(key.pose === null || WINDOW_POSES.includes(key.pose), `${name} names ${key.pose}`);
+      assert.ok(key.at > last && key.at < def.ms, `${name}: drawing at ${key.at} ms is out of order or past the beat`);
+      last = key.at;
+    }
+  }
+});
+
+/* What each beat shows: a time into the beat, and the drawing he should show then (null is the rig). */
+const DRAWINGS: [BeatName, number, WindowPose | null][] = [
+  ["hit", 300, "celebrate"], ["hit", 650, null], ["hitFast", 400, "celebrate"], ["hitFast", 850, null],
+  ["celebrate", 300, "celebrate"], ["celebrate", 800, null], ["celebrate", 1500, "celebrate"], ["celebrate", 2400, null],
+  ["cardGood", 250, "celebrate"], ["cardGood", 600, null], ["cardMiss", 350, "support"], ["cardMiss", 800, null],
+  ["miss", 400, "support"], ["miss", 1000, null], ["blindspot", 400, "support"], ["blindspot", 1000, null],
+  ["streak5", 500, "celebrate"], ["streak5", 1200, null], ["streak10", 200, null], ["streak10", 500, "celebrate"], ["streak10", 1800, null],
+  ["bound", 600, "celebrate"], ["bound", 1300, null], ["poke", 300, "poke"], ["poke", 700, null],
+  ["petted", 400, "pet"], ["petted", 850, null], ["tickle", 600, "poke"], ["tickle", 1450, null],
+  ["support", 500, "support"], ["support", 1100, null], ["lean", 2000, "lean"], ["lean", 5200, null],
+  ["wake", 200, "poke"], ["wake", 600, null]
+];
+
+test("each beat shows its drawings at the right moments, and the rig in between", () => {
+  for (const [name, at, pose] of DRAWINGS) {
+    const director = createDirector({ random: seeded(31) });
+    director.advance(0);
+    director.play(name);
+    assert.equal(run(director, 120, 0, at).pose, pose, `${name} at ${at} ms`);
+  }
+});
+
+test("a far gaze draws his head turn in that direction, and lets go when it ends", () => {
+  const turns: [number, number, WindowPose][] = [[1, 0, "right"], [-1, 0, "left"], [0, 1, "down"], [0.7, 0.7, "down-right"], [-0.7, -0.7, "up-left"], [0, -1, "up"]];
+  for (const [x, y, pose] of turns) {
+    const director = createDirector({ random: seeded(34) });
+    run(director, 120, 0, 1000);
+    director.lookAt(x, y, 800, "snap");
+    assert.equal(run(director, 120, 1000, 1200).pose, pose, pose);
+    assert.equal(run(director, 120, 1200, 1900).pose, null, `${pose} after its gaze ends`);
+  }
+});
+
+test("a gaze near the entry line draws nothing, and a drawn gaze survives a dip below it", () => {
+  const quiet = createDirector({ random: seeded(35) });
+  run(quiet, 120, 0, 1000);
+  quiet.lookAt(0.33, 0, 900, "look");
+  const none = new Set<WindowPose | null>();
+  run(quiet, 120, 1000, 1900, (frame) => { none.add(frame.pose); });
+  assert.deepEqual([...none], [null]);
+
+  const director = createDirector({ random: seeded(35) });
+  run(director, 120, 0, 1000);
+  director.lookAt(0.7, 0, 100, "snap");
+  run(director, 120, 1000, 1100);
+  director.lookAt(0.33, 0, 1000, "look");
+  const held = new Set<WindowPose | null>();
+  run(director, 120, 1100, 2000, (frame) => { held.add(frame.pose); });
+  assert.deepEqual([...held], ["right"]);
+});
+
+test("a drawn look holds for 250 ms, so a short glance cannot flicker", () => {
+  const director = createDirector({ random: seeded(36) });
+  run(director, 120, 0, 1000);
+  director.lookAt(1, 0, 60, "snap");
+  assert.equal(run(director, 120, 1000, 1200).pose, "right", "held inside 250 ms");
+  director.lookAt(0, 1, 800, "look");
+  assert.equal(run(director, 120, 1200, 1240).pose, "right", "a switch waits for the hold too");
+  assert.equal(run(director, 120, 1240, 1300).pose, "down", "then it switches");
+});
+
+test("being held, petted or thinking shows its drawing, and the rig comes back after", () => {
+  const director = createDirector({ random: seeded(37) });
+  run(director, 120, 0, 300);
+  director.setHeld(true);
+  assert.equal(run(director, 120, 300, 500).pose, "poke");
+  director.setHeld(false);
+  assert.equal(run(director, 120, 500, 700).pose, null);
+  director.setPetted(true);
+  assert.equal(run(director, 120, 700, 900).pose, "pet");
+  director.setPetted(false);
+  director.setThinking(true);
+  assert.equal(run(director, 120, 900, 1100).pose, "up");
+  director.setThinking(false);
+  assert.equal(run(director, 120, 1100, 1300).pose, null);
+});
+
+test("asleep shows the sleep drawing, and waking shows a poke", () => {
+  const director = createDirector({ random: seeded(13) });
+  let now = 0;
+  const until = (ms: number) => { for (; now <= ms; now += 50) director.advance(now); };
+  until(200_000);
+  assert.equal(director.advance(now).pose, "sleep");
+  director.activity();
+  until(now + 100);
+  assert.equal(director.advance(now).pose, "poke");
+});
+
+test("an explicit rig beat shows the rig, even while his gaze is far off", () => {
+  const director = createDirector({ random: seeded(38) });
+  run(director, 120, 0, 500);
+  director.lookAt(1, 0, 3000, "look");
+  assert.equal(run(director, 120, 500, 700).pose, "right");
+  director.play("stretch");
+  assert.equal(run(director, 120, 700, 1000).pose, null);
+});
+
+test("calm mode shows the same drawings; only the motion is gentler", () => {
+  const trail = (reducedMotion: boolean) => {
+    const director = createDirector({ random: seeded(39), reducedMotion });
+    run(director, 120, 0, 300);
+    director.onEvent("setDone");
+    director.lookAt(0.9, 0, 4000, "look");
+    const poses: (WindowPose | null)[] = [];
+    run(director, 120, 300, 4500, (frame) => { poses.push(frame.pose); });
+    return poses;
+  };
+  const normal = trail(false);
+  assert.ok(normal.includes("celebrate") && normal.includes("right") && normal.includes(null));
+  assert.deepEqual(trail(true), normal);
+});
+
+test("the idle glance's sway is one gentle sway: no tickle, no face change", () => {
+  assert.deepEqual(BEATS.sway.moves.map((move) => [move.kind, move.amount]), [["sway", 0.5]]);
+  assert.deepEqual(BEATS.sway.faces.map((key) => key.face), ["Sunny"]);
 });

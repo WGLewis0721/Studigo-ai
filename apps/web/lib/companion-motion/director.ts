@@ -1,4 +1,4 @@
-import { idleStage, type CompanionEvent } from "../companion-logic";
+import { dirPose, idleStage, type CompanionEvent, type GazePose, type WindowPose } from "../companion-logic";
 import { SPARK_START, moodTier, nextSpark } from "../companion-mood";
 import { BEATS, CALM_DROPS, CALM_PARTICLE_CAP, EVENT_BEAT, STREAK_BEAT, VIGNETTES, type BeatDef, type BeatName, type GazeMode, type Move, type ParticleKind } from "./beats";
 import { EXPRESSIONS, REST, CHANNEL_KEYS, mix, type Channels, type ExpressionName } from "./expressions";
@@ -25,6 +25,8 @@ export type MotionFrame = {
   base: BaseState;
   expression: ExpressionName;
   beat: BeatName | null;
+  /** The drawing he shows in place of the rig, or null for the rig. */
+  pose: WindowPose | null;
   /** Pupils, -1..1 each way. They move first. */
   gazeX: number; gazeY: number;
   /** Head turn, -1..1. It follows the pupils; the body follows the head. */
@@ -68,9 +70,18 @@ const MAX_FRAME_MS = 100;
 const QUEUE_MAX = 2;
 const VIGNETTE_AFTER_MS = 8000;
 const VIGNETTE_COOLDOWN_MS = 4000;
+/* A far gaze draws his head turn. It takes hold at 0.55 and lets go under 0.35, and a drawn look stays at least 250 ms, so a gaze near the line cannot flicker. */
+const LOOK_IN = 0.4, LOOK_OUT = 0.26, LOOK_HOLD_MS = 250;
 const smooth = (p: number) => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
 const BASE_FACE: Record<BaseState, ExpressionName> = { idle: "Sunny", thinking: "Thinking", held: "Wow", petted: "Giggly", asleep: "Sleepy" };
 const GAZE_SPRING: Record<GazeMode, SpringSpec> = { snap: SPRINGS.GAZE_SNAP, look: SPRINGS.GAZE_LOOK, drift: SPRINGS.GAZE_DRIFT };
+
+/** The drawing a beat names at tau: its latest key at or before tau. Undefined while no key has come yet. */
+function beatPose(def: BeatDef, tau: number): WindowPose | null | undefined {
+  let found: { at: number; pose: WindowPose | null } | undefined;
+  for (const key of def.poses ?? []) if (key.at <= tau && (!found || key.at >= found.at)) found = key;
+  return found?.pose;
+}
 
 function moveInto(out: Transient, move: Move, tau: number, weight: number) {
   if (tau < 0 || tau >= move.ms) return;
@@ -123,6 +134,8 @@ export function createDirector(options: DirectorOptions) {
   const gaze = { x: 0, y: 0, mode: "look" as GazeMode, until: 0, owner: "wander" as "wander" | "look" | "beat" };
   const pupilX = spring(), pupilY = spring(), headX = spring(), headY = spring(), bodyX = spring();
   let nextWander = 2000 + random() * 4000, nextSaccade = 600, jitterX = 0, jitterY = 0;
+  /* the drawn head turn he holds, and when it was taken up */
+  let lookPose: GazePose | null = null, lookSince = 0;
 
   /* blink */
   let nextBlink = 2500 + random() * 3500, blinkAt = -Infinity, blinkAgain = false;
@@ -133,7 +146,7 @@ export function createDirector(options: DirectorOptions) {
   const pending = { fx: [] as { kind: ParticleKind; count: number }[], cues: [] as Cue[] };
   const tr: Transient = { hop: 0, squash: 0, spin: 0, dash: 0, shiver: 0, pitch: 0, tilt: 0, eyeOpen: 0, wag: 0, lean: 0 };
   const frame: MotionFrame = {
-    base, expression: faceName, beat: null, gazeX: 0, gazeY: 0, headYaw: 0, headPitch: 0, headTilt: 0, bodyYaw: 0, lean: 0, lift: 0,
+    base, expression: faceName, beat: null, pose: null, gazeX: 0, gazeY: 0, headYaw: 0, headPitch: 0, headTilt: 0, bodyYaw: 0, lean: 0, lift: 0,
     eyeOpenL: 1, eyeOpenR: 1, eyeSmile: 0, brow: 0, mouthCurve: 0, mouthOpen: 0, cheek: 0, frillL: 0, frillR: 0, tail: 0, tailTip: 0,
     flame: 1, breath: 0, hop: 0, dash: 0, shiver: 0, squash: 0, spin: 0, spark, tier: 2, fx: [], cues: []
   };
@@ -231,7 +244,7 @@ export function createDirector(options: DirectorOptions) {
       if (gaze.owner !== "wander") { gaze.owner = "wander"; gaze.x = 0; gaze.y = 0; gaze.mode = "look"; nextWander = t + 1200 + random() * 2500; }
       else if (t > nextWander && !asleep && base !== "held") {
         if (gaze.x !== 0 || gaze.y !== 0) { gaze.x = 0; gaze.y = 0; nextWander = t + 2000 + random() * 4000; }
-        else { const angle = random() * Math.PI * 2, reach = 0.6 * (0.5 + random() * 0.5); gaze.x = Math.cos(angle) * reach; gaze.y = Math.sin(angle) * reach * 0.6; nextWander = t + 800 + random() * 800; }
+        else { const angle = random() * Math.PI * 2, reach = 0.36 * (0.5 + random() * 0.5); gaze.x = Math.cos(angle) * reach; gaze.y = Math.sin(angle) * reach * 0.6; nextWander = t + 800 + random() * 800; }
         gaze.mode = random() < 0.35 ? "drift" : "look";
       }
     }
@@ -272,6 +285,13 @@ export function createDirector(options: DirectorOptions) {
     const flicker = 1 + Math.sin(t / 90) * 0.04 + Math.sin(t / 37) * 0.03;
     const open = Math.max(0, faceNow.eyeOpen + tr.eyeOpen) * (1 - lid) * (asleep ? 0 : 1);
 
+    /* the drawing: a base state, then a beat that names one, then a far look; otherwise the rig */
+    const distance = Math.hypot(gaze.x, gaze.y);
+    const wantLook = distance >= (lookPose ? LOOK_OUT : LOOK_IN) ? dirPose(gaze.x * 100, gaze.y * 100, 0) : null;
+    if (wantLook !== lookPose && (!lookPose || t - lookSince >= LOOK_HOLD_MS)) { lookPose = wantLook; lookSince = t; }
+    const named = playing ? beatPose(playing.def, t - playing.start) : undefined;
+    frame.pose = base === "asleep" ? "sleep" : base === "held" ? "poke" : base === "petted" ? "pet"
+      : named !== undefined ? named : base === "thinking" ? "up" : lookPose;
     frame.base = base; frame.expression = faceName; frame.beat = playing ? playing.name : null;
     frame.gazeX = pupilX.x; frame.gazeY = pupilY.x;
     frame.headYaw = headX.x; frame.headPitch = headY.x;

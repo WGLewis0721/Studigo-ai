@@ -25,21 +25,38 @@ export interface CompanionRenderer {
 
 const spriteFor = (pose: string) => `${SPRITES}/${MIRRORED[pose as GazePose] ?? pose}.webp`;
 
+/** The stacked drawings as markup, one per pose. Only `shown` starts visible. */
+export function spriteImages(shown: WindowPose | null = "center"): string {
+  return WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === shown ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("");
+}
+
+/** The drawings inside a body, by pose. */
+export function spriteElements(body: HTMLElement): Map<string, HTMLImageElement> {
+  const images = new Map<string, HTMLImageElement>();
+  body.querySelectorAll<HTMLImageElement>(".cmpPose").forEach((img) => images.set(img.dataset.pose ?? "", img));
+  return images;
+}
+
+/** Points each drawing at its file. One that already has a source is left alone, so calling this again is free. */
+export function loadSprites(images: Map<string, HTMLImageElement>) {
+  images.forEach((img, pose) => { if (!img.getAttribute("src")) img.src = spriteFor(pose); });
+}
+
 /** The original companion: fifteen stacked drawings and a pair of CSS eyelids. Kept exactly as it was. */
 export function createSpriteRenderer(): CompanionRenderer {
-  const poseEls = new Map<string, HTMLImageElement>();
+  let poseEls = new Map<string, HTMLImageElement>();
   let loaded = false;
   return {
     kind: "sprite",
-    markup: () => `${WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i>`,
+    markup: () => `${spriteImages()}<i class="cmpLid l"></i><i class="cmpLid r"></i>`,
     mount(body) {
-      body.querySelectorAll<HTMLImageElement>(".cmpPose").forEach((img) => poseEls.set(img.dataset.pose ?? "", img));
+      poseEls = spriteElements(body);
       poseEls.get("center")!.src = spriteFor("center");
     },
     load() {
       if (loaded) return;
       loaded = true;
-      poseEls.forEach((img, pose) => { if (!img.getAttribute("src")) img.src = spriteFor(pose); });
+      loadSprites(poseEls);
     },
     setPose(name) { poseEls.forEach((img, key) => img.classList.toggle("on", key === name)); },
     apply() {},

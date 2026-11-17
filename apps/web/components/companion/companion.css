@@ -123,8 +123,14 @@
    director, so the CSS loops that move the stacked drawings stand down. */
 .cmp[data-motion] .cmpBody { animation: none !important; }
 .cmp[data-motion] .cmpStage { clip-path: inset(-26px -22px 0 -22px round 25px 25px 0 0); }
-.cmpRig { position: absolute; left: var(--rig-margin, -30%); top: var(--rig-margin, -30%); width: 160%; height: 160%; max-width: none; opacity: 0; transition: opacity .18s linear; }
+.cmp[data-motion][data-pop] .cmpStage { clip-path: inset(-88px -88px 0 -88px); }
+/* The pivot is the rig's own (x 205 of 400), so a squash or a spin lands where it does on the mesh. */
+.cmpRigBody { position: absolute; inset: 0; transform-origin: 51.25% 100%; }
+.cmpRig { position: absolute; left: var(--rig-margin, -30%); top: var(--rig-margin, -30%); width: 160%; height: 160%; max-width: none; opacity: 0; transition: opacity .13s linear; }
 .cmpRig[data-ready] { opacity: 1; }
+.cmpRig.off { opacity: 0; }
+.cmpOutfit { transition: opacity .13s linear; }
+.cmpOutfit.off { opacity: 0; }
 
 .cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 116px; border-radius: 28px 28px 0 0; cursor: pointer; z-index: 5; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }

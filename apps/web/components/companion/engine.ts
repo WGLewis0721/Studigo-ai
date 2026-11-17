@@ -4,7 +4,7 @@ import {
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
 } from "@/lib/companion-logic";
 import type { BeatName } from "@/lib/companion-motion/beats";
-import { createDirector, type Director } from "@/lib/companion-motion/director";
+import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
 import { createRigRenderer } from "./rig-renderer";
@@ -71,6 +71,16 @@ const pick = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.le
 const shown = (node: Element | null): node is HTMLElement => Boolean(node && node.getClientRects().length);
 /** Keeps a drag attached to its handle. A pointer that is already gone is not worth failing over. */
 const capture = (node: Element, pointerId: number) => { try { node.setPointerCapture(pointerId); } catch { /* the pointer was released first */ } };
+/* Reading targets stay this far out, so the director draws him looking down into the field. */
+const READ_REACH = 0.6;
+/** Reading: he peers down into the field, as the drawn reading pose did. Text beside him, or just above, is pulled down. */
+function readingGaze(x: number, y: number): [number, number] {
+  let gx = x, gy = y;
+  if (gy > -0.3) gy = Math.max(gy, 0.5 * Math.abs(gx), READ_REACH);
+  const length = Math.hypot(gx, gy);
+  if (length < READ_REACH) { gx = (gx * READ_REACH) / length; gy = (gy * READ_REACH) / length; }
+  return [gx, gy];
+}
 
 export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Options): CompanionHandle {
   const systemReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -382,16 +392,20 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const sizing = (on: boolean) => { el.classList.toggle("sizing", on); if (on) bubble.hidden = true; };
 
   /* ---------- poses ---------- */
-  function setPose(name: WindowPose) {
-    // The living companion has one drawing and moves it; there is no pose to swap.
-    if (director) return;
-    if (rt.pose === name) return;
+  /** Writes the pose his element carries: the attribute the CSS reads, and the pop that lets him break out of his frame. */
+  function stamp(name: WindowPose) {
     rt.pose = name;
-    renderer.setPose(name);
     // Re-entering the same pose (a second poke) replays its movement.
     if (el.dataset.pose === name) { el.dataset.pose = ""; void el.offsetWidth; }
     el.dataset.pose = name;
     if (POP[name]) el.dataset.pop = ""; else delete el.dataset.pop;
+  }
+  function setPose(name: WindowPose) {
+    // In motion mode the director names the pose instead (see syncPose).
+    if (director) return;
+    if (rt.pose === name) return;
+    renderer.setPose(name);
+    stamp(name);
   }
   /** A reaction outranks gaze and idle until it runs out. */
   function react(name: WindowPose, ms: number) {
@@ -419,7 +433,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   function lookAt(px: number, py: number, hold: number) {
     if (director) {
       // Continuous: his eyes go first, then his head. Only the direction is used; nothing is kept.
-      if (live() && !rt.drag && !rt.press) { const e = eyes(); director.lookAt((px - e.x) / (GAZE_REACH * e.scale), (py - e.y) / (GAZE_REACH * e.scale), hold); }
+      if (live() && !rt.drag && !rt.press) { const e = eyes(); director.lookAt((px - e.x) / (GAZE_REACH * e.scale), (py - e.y) / (GAZE_REACH * e.scale), hold); rt.gazeUntil = now() + hold; }
       return;
     }
     if (!live() || rt.drag || rt.press || rt.asleep || rt.thinking || now() < rt.reactUntil) return;
@@ -796,8 +810,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (!live() || now() < rt.reactUntil || rt.thinking) return;
     const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26), e = eyes();
     const tx = r.left + 16 + chars * 8.4 - e.x, ty = r.top + r.height / 2 - e.y;
-    // He reads along: eyes on where the words are appearing, a little downward.
-    if (director) { director.lookAt(tx / (GAZE_REACH * e.scale), ty / (GAZE_REACH * e.scale) + 0.25, 1500, "drift"); return; }
+    // He reads along: eyes on where the words are appearing, down into the field.
+    if (director) { const [x, y] = readingGaze(tx / (GAZE_REACH * e.scale), ty / (GAZE_REACH * e.scale)); director.lookAt(x, y, 1500, "drift"); rt.typingUntil = now() + 1500; return; }
     setPose(readingPose(tx, ty));
     rt.gazing = true; rt.typingUntil = now() + 1500;
     if (!calm) pulse("bob", 170);
@@ -862,6 +876,25 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     for (const item of frame.fx) burst(item.kind, item.count);
     for (const cue of frame.cues) { if (cue === "lean") say(LINES.lean); else if (cue === "wake") say(LINES.wake); }
     if (frame.base === "asleep" && time > rt.nextZ) { burst("zzz", 1); rt.nextZ = time + 1500; }
+    syncPose(frame.pose);
+    glance(frame);
+  }
+  /** The pose the director names is the pose he is in. Changed only when it changes, so the CSS animations replay once. */
+  function syncPose(pose: WindowPose | null) {
+    const want: WindowPose = pose ?? "center";
+    if (rt.pose !== want) stamp(want);
+  }
+  /** Idle glances on the drawn version's schedule: a look toward the page, up, down, or a gentle sway. Only while he is idle with nothing playing. */
+  function glance(frame: MotionFrame) {
+    const t = now();
+    if (!director || frame.base !== "idle" || frame.beat !== null || rt.drag || rt.press || !live()) return;
+    if (t < rt.reactUntil || t < rt.typingUntil || t < rt.gazeUntil || t <= rt.nextGlance) return;
+    rt.nextGlance = t + 4800 + Math.random() * 4200;
+    const toward: GazePose = el.dataset.side === "r" ? "left" : "right";
+    const move = pick<GazePose | "sway">([toward, toward, "up", `down-${toward}` as GazePose, "sway"]);
+    if (move === "sway") { director.play("sway"); return; }
+    director.lookAt(move.endsWith("left") ? -0.9 : move.endsWith("right") ? 0.9 : 0, move === "up" ? -0.8 : move.startsWith("down") ? 0.7 : 0, 850);
+    rt.gazeUntil = t + 850;
   }
   function syncMotion() {
     if (!director) return;
