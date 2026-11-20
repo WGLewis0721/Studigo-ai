@@ -26,10 +26,11 @@ STEP 0 — UPDATE THIS LAPTOP TO THE LATEST (do this before anything else)
 3. `git fetch --all --prune`
 4. Get onto the branch: `git switch claude/studigo-living-companion-upgrade-ee0706` (use `--track origin/...` if it does not exist locally), then `git pull --ff-only`. If that fails because of divergence, STOP and show me `git log --oneline --left-right HEAD...origin/claude/studigo-living-companion-upgrade-ee0706`.
 5. Report how far the branch is from `origin/main`: `git rev-list --left-right --count origin/main...HEAD` and `git log --oneline HEAD..origin/main | head -30`. Do NOT merge main. If main has moved, list what changed in `apps/web/components/companion/`, `apps/web/lib/companion-*`, `mode-header.tsx` and the room header, and flag conflicts for me.
-6. Confirm the files below exist; if one is missing, say so: `design/living-companion/STATUS_2026-11-20.md`, `design/living-companion/LOCAL_CONTINUATION_PROMPT.md`, `implementation/LIVING_COMPANION_V1_PLAN.md`, `apps/web/components/companion/rig-renderer.ts`, `apps/web/lib/companion-motion/director.ts`.
-7. Update tooling to what the repo expects: Node per `.nvmrc`, `pnpm` per `package.json` (`packageManager`), then `pnpm install --frozen-lockfile`. Run `rive doctor` if the Rive CLI is installed and record the result (do not install or sign in to anything else).
-8. Baseline, from the repo root, each with its exit code: `pnpm --filter @studigo/web typecheck`, `pnpm --filter @studigo/web lint`, the LC unit tests from `apps/web` (see STATUS section 6), `pnpm --filter @studigo/web build`. The known unrelated failure is `C19 ... pymupdf`; note it and move on.
-9. Save these results to `design/living-companion/evidence/LC-1.md` under "Baseline on laptop <date>". Commit and push (fetch and merge first; another contributor, aws-dev-wgl, also commits to this branch).
+6. This branch already has an open PR into `main`: https://github.com/WGLewis0721/Studigo-ai/pull/268 . Push new commits to the branch (they appear in that PR); do not open a second PR, and do not merge it.
+7. Confirm the files below exist; if one is missing, say so: `design/living-companion/STATUS_2026-11-20.md`, `design/living-companion/LOCAL_CONTINUATION_PROMPT.md`, `implementation/LIVING_COMPANION_V1_PLAN.md`, `apps/web/components/companion/rig-renderer.ts`, `apps/web/lib/companion-motion/director.ts`.
+8. Update tooling to what the repo expects: Node per `.nvmrc`, `pnpm` per `package.json` (`packageManager`), then `pnpm install --frozen-lockfile`. Run `rive doctor` if the Rive CLI is installed and record the result (do not install or sign in to anything else).
+9. Baseline, from the repo root, each with its exit code: `pnpm --filter @studigo/web typecheck`, `pnpm --filter @studigo/web lint`, the LC unit tests from `apps/web` (see STATUS section 6), `pnpm --filter @studigo/web build`. The known unrelated failure is `C19 ... pymupdf`; note it and move on.
+10. Save these results to `design/living-companion/evidence/LC-1.md` under "Baseline on laptop <date>". Commit and push (fetch and merge first; another contributor, aws-dev-wgl, also commits to this branch).
 
 STEP 1 — READ, IN THIS ORDER, AND NOTHING ELSE BY DEFAULT
 AGENTS.md -> ENGINEERING.md -> design/living-companion/STATUS_2026-11-20.md -> implementation/LIVING_COMPANION_V1_PLAN.md -> design/living-companion/DECISIONS.md -> design/living-companion/STUDIGO_EXPRESSIVENESS_SPEC.md -> design/living-companion/INTEGRATION_MAP.md -> design/living-companion/evidence/*. Then only the code a task needs. Do not scan the whole repo.
@@ -57,5 +58,5 @@ STEP 4 — STOP AND ASK ME (do not guess; batch these into one message)
 H1 expression and beat approval; H5 signed-in screenshots at 375/390/768/1024/1440; H6 production flag names; the renderer decision (mesh rig vs Rive vs both); the Rive `.riv` commercial-terms check; outfit art approvals; stall thresholds from real data; identity and "feels alive" sign-off; opening the draft PR to main; voice narration.
 
 STEP 5 — REPORT
-When you stop: what ran and what passed (with exit codes), what failed, what is `OPEN`, the branch SHA you pushed, and the exact questions for me. Open the draft PR to `main` only after I say so. Be honest about anything unverified.
+When you stop: what ran and what passed (with exit codes), what failed, what is `OPEN`, the branch SHA you pushed, and the exact questions for me. PR #268 is the PR for this branch; update its description only after I say so. Be honest about anything unverified.
 ```
