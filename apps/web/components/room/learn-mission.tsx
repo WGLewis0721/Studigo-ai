@@ -9,6 +9,7 @@ import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, supplementalMissionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
+import { createStallTimer, type StallTimer } from "@/lib/companion-stall";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
 import { SourceReading } from "./source-reading";
@@ -92,6 +93,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
+  const stallTimer = useRef<StallTimer | null>(null);
   const previousPhase = useRef<{ topicId: string; phase: Phase } | null>(null);
   const [glowRevision, setGlowRevision] = useState(0);
 
@@ -297,6 +299,21 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const firstCheck = Boolean(integratedJourney && mission?.phase === "show" && beat?.kind === "choice");
   // Use the exact retrieved current passage as the learning introduction.
   const reading = introduction ? snapshot?.source?.excerpt ?? "" : beat?.kind === "read" ? beat.body : "";
+  const journalShowing = journalOpen && !loading;
+  const stallKey = ready && !busy && !loading && !journalShowing && beat && beat.kind !== "read" && !shown && mission
+    ? `${mission.revision}:${mission.phase}:${questionIndex}:${beat.prompt}` : null;
+  useEffect(() => {
+    if (stallKey === null) return;
+    const timer = createStallTimer({ now: () => performance.now(), onStall: (level) => companionEvent("stall", { level }) });
+    stallTimer.current = timer;
+    timer.open(stallKey);
+    const interval = window.setInterval(() => timer.tick(), 1000);
+    return () => {
+      window.clearInterval(interval);
+      timer.close();
+      if (stallTimer.current === timer) stallTimer.current = null;
+    };
+  }, [stallKey, companionEvent]);
 
   // Render the journal in the same Learn room. All teaching, answers and
   // revision-bound cursor updates still belong to the existing player/API.
@@ -308,7 +325,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     onOpenLesson={() => setJournalOpen(false)}
   />;
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
+  return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission"
+    onPointerDown={() => stallTimer.current?.activity()} onKeyDown={() => stallTimer.current?.activity()}
+    onInput={() => stallTimer.current?.activity()} onChange={() => stallTimer.current?.activity()}>
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
       <h2>{invitationTitle ? "Learn " + invitationTitle : "Start with your material"}</h2>

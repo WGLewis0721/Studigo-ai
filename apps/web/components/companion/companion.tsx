@@ -4,14 +4,14 @@ import "./companion.css";
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, type RefObject } from "react";
 import { OUTFITS, OUTFIT_LABELS, parseOutfit, type CompanionEvent } from "@/lib/companion-logic";
 import { readCompanionPrefs, useCompanionPrefs } from "@/lib/companion-prefs";
-import { createCompanion, type CompanionHandle } from "./engine";
+import { createCompanion, type CompanionEventPayload, type CompanionHandle } from "./engine";
 
 /** Set on Home when a room is opened, so he lands in his window instead of just appearing. */
 export const LEAP_KEY = "studigo.leap";
 
 type CompanionApi = {
   /** Tell him about something that already happened (an answer graded, a card rated). */
-  event(name: CompanionEvent): void;
+  event(name: CompanionEvent, payload?: CompanionEventPayload): void;
   thinking(on: boolean): void;
 };
 
@@ -88,7 +88,7 @@ export function useCompanionWindow({ roomId, workspaceRef, tone }: {
   useEffect(() => { safely((companion) => companion.setPrefs(prefs)); }, [prefs, safely]);
 
   const api = useMemo<CompanionApi>(() => ({
-    event: (name) => safely((companion) => companion.event(name)),
+    event: (name, payload) => safely((companion) => companion.event(name, payload)),
     thinking: (on) => safely((companion) => companion.thinking(on))
   }), [safely]);
 
