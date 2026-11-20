@@ -791,6 +791,15 @@ async function UI08() {
   }
 }
 
+/* The figure is drawn in a 400 x 400 art box (.cmpRigBody, or .cmpBody for the sprite renderer); the
+   tips of his frills sit at y 46 in the rest drawing. The stage box itself may extend above the strip on
+   purpose, so clipping is judged on the drawn head, not on the box. */
+const ART_HEAD_TOP = 46 / 400;
+const drawnHeadTop = (page) => page.evaluate((ratio) => {
+  const box = (document.querySelector(".cmp .cmpRigBody") ?? document.querySelector(".cmp .cmpBody")).getBoundingClientRect();
+  return box.top + box.height * ratio;
+}, ART_HEAD_TOP);
+
 async function UI09() {
   if (!want("UI09")) return;
   const { context, page } = await openRoom(PHONE, { room: "phase3" });
@@ -803,7 +812,8 @@ async function UI09() {
     m.slot = { top: Math.round(s.slot.top), height: Math.round(s.slot.height) };
     m.stage = { top: Math.round(s.stage.top), bottom: Math.round(s.stage.bottom) };
     m.railTop = Math.round(s.rail.top);
-    v.ok(s.stage.top >= s.slot.top - 0.5, `figure top ${Math.round(s.stage.top)} is not clipped above the strip top ${Math.round(s.slot.top)}`);
+    m.headTop = Math.round(await drawnHeadTop(page));
+    v.ok(m.headTop >= s.slot.top - 0.5, `drawn head top ${m.headTop} is not clipped above the strip top ${Math.round(s.slot.top)}`);
     v.ok(s.stage.bottom <= s.rail.top + 1, `figure stays above the rail (bottom ${Math.round(s.stage.bottom)}, rail ${Math.round(s.rail.top)})`);
     await page.evaluate(() => {
       const surface = document.querySelector(".modeSurface");
@@ -1332,7 +1342,8 @@ async function A03() {
         };
       });
       v.ok(m.stripMode.docOverflow <= 0, `strip mode at 200%: no horizontal overflow (${m.stripMode.docOverflow} px)`);
-      v.ok(m.stripMode.inSlot && m.stripMode.stageTop >= m.stripMode.slotTop - 0.5, "strip mode at 200%: figure sits inside the strip and is not clipped above");
+      m.stripMode.headTop = Math.round(await drawnHeadTop(page));
+      v.ok(m.stripMode.inSlot && m.stripMode.headTop >= m.stripMode.slotTop - 0.5, `strip mode at 200%: drawn head (${m.stripMode.headTop}) sits inside the strip (top ${m.stripMode.slotTop}) and is not clipped above`);
       record("A03", { name: c.name, size: `${c.viewport.width}x${c.viewport.height}` }, "phase3 quiz, 200% zoom", v, m, await flagsOf(page));
     } finally {
       await context.close();
