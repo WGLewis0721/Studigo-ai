@@ -9,7 +9,7 @@ import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
-import { createRigRenderer } from "./rig-renderer";
+import { createRigRenderer, type RigRenderer } from "./rig-renderer";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -54,8 +54,8 @@ const POSE_BEAT: Partial<Record<WindowPose, BeatName>> = { celebrate: "bound", s
 const PULSE_BEAT: Partial<Record<string, BeatName>> = { land: "land", sway: "tickle", quietAck: "nod" };
 /** A pointer this far from his eyes (at default size) turns his head all the way. */
 const GAZE_REACH = 170;
-/** His stage is 106 px wide at his default size, and his eyes sit 53 px across and 41 px down from its top left. */
-const STAGE_W = 106, EYE_ACROSS = 53, EYE_DOWN = 41;
+/** His stage is 106 px wide at his default size, and his eyes sit 53 px across and 75 px down from its top left: 80 px down the window, where the rig draws them (art y 156 of 400). */
+const STAGE_W = 106, EYE_ACROSS = 53, EYE_DOWN = 75;
 /** Clicking the size handle without dragging steps through these. */
 const SIZE_STEPS = [1, 1.5, 2];
 const NUDGE_PX = 16;
@@ -159,7 +159,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- how he is drawn ---------- */
   /** The living companion: a motion director and the rig. Null means the original drawings. */
   let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm }) : null;
-  let renderer: CompanionRenderer = director ? createRigRenderer(() => fallBack()) : createSpriteRenderer();
+  /** The rig for this visit. A lost WebGL context parks it, and a restored one brings it back. */
+  const rig: RigRenderer | null = director ? createRigRenderer({ onLost: () => fallBack(), onRestored: () => restoreRig() }) : null;
+  let renderer: CompanionRenderer = rig ?? createSpriteRenderer();
+  /** The motion state (mood, streak, beats) kept while the rig is parked, so the rig carries on where it left off. */
+  let parked: Director | null = null;
   /** Dresses whichever drawing he is in now. The original drawings have no outfits, so they ignore it. */
   function applyOutfit() { renderer.setOutfit?.(prefs.outfit); }
 
@@ -199,12 +203,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const stripBox = document.createElement("div");
   stripBox.className = "cmpStrip";
   let heartbeat = 0, motionFrame = 0;
-  /** The rig could not draw (no WebGL, a lost context, missing art): he goes back to the original drawings. */
+  /** The rig could not draw (no WebGL, a lost context, missing art): he goes back to the original drawings. His motion state waits, parked, for the rig. */
   function fallBack() {
     if (dead || !director) return;
-    director = null;
+    parked = director; director = null;
     window.cancelAnimationFrame(motionFrame); motionFrame = 0;
-    try { renderer.destroy(); } catch { /* it was already broken */ }
+    rig?.park();
     renderer = createSpriteRenderer();
     body.innerHTML = renderer.markup();
     renderer.mount(body);
@@ -213,6 +217,22 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (rt.loaded) renderer.load();
     rt.pose = ""; setPose("center");
     if (!heartbeat) heartbeat = window.setInterval(tick, 320);
+  }
+  /** The rig's context came back: he returns to it with the motion state he had, and the drawings go. */
+  function restoreRig() {
+    if (dead || director || !parked || !rig) return;
+    const motion = parked;
+    parked = null;
+    renderer.destroy();
+    rig.resume(body);
+    renderer = rig;
+    director = motion;
+    window.clearInterval(heartbeat); heartbeat = 0;
+    el.dataset.motion = "";
+    applyCalm();
+    director.rest();
+    applyGrowth();
+    syncMotion();
   }
   try { renderer.mount(body); } catch (error) { console.warn("Studigo's rig could not start; using his drawings.", error); fallBack(); }
   applyOutfit();
@@ -472,7 +492,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       const r = stageNode.getBoundingClientRect(), scale = r.width > 0 ? r.width / STAGE_W : k;
       return { x: r.left + EYE_ACROSS * scale, y: r.top + EYE_DOWN * scale, scale };
     }
-    return { x: rt.x + W / 2, y: rt.y + 46 * k, scale: k };
+    return { x: rt.x + W / 2, y: rt.y + 80 * k, scale: k };
   }
   function lookAt(px: number, py: number, hold: number) {
     if (director) {
@@ -484,6 +504,13 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const e = eyes();
     setPose(dirPose(px - e.x, py - e.y, 54 * e.scale));
     rt.gazing = true; rt.gazeUntil = now() + hold;
+  }
+  /** A stall on level 2 looks at the hint button while it is showing. Only his gaze moves: nothing is clicked or focused. */
+  function lookAtHint() {
+    const button = Array.from(ws.querySelectorAll<HTMLElement>(".learnDockHint, button[aria-label='Give me a hint']")).find(shown);
+    if (!button) return;
+    const r = button.getBoundingClientRect();
+    lookAt(r.left + r.width / 2, r.top + r.height / 2, 2500);
   }
 
   /* ---------- speech and particles ---------- */
@@ -580,7 +607,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (stage === "sleep") { rt.asleep = true; rt.nextZ = t; setPose("sleep"); return; }
     if (stage === "lean" && !rt.leaned) { rt.leaned = true; react("lean", 5400); say(LINES.lean); return; }
     if (t > rt.nextBlink) { pulse("blink", 240); rt.nextBlink = t + 2300 + Math.random() * 3300; }
-    if (t > rt.nextGlance) {
+    if (!calm && t > rt.nextGlance) {
       rt.nextGlance = t + 4800 + Math.random() * 4200;
       const toward: GazePose = el.dataset.side === "r" ? "left" : "right";
       const move = pick<GazePose | "sway">([toward, toward, "up", `down-${toward}` as GazePose, "sway"]);
@@ -842,7 +869,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         ${prefs.host === "strip" ? "" : `<label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>`}
         <label class="cmpToggle"><b>Speech</b><small>A short line now and then. Off until you turn it on.</small><input type="checkbox" data-set="speech" ${prefs.speech ? "checked" : ""}></label>
         <label class="cmpToggle"><b>Fade while I scroll</b><small>He turns see-through so nothing under him is hidden.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
-        <label class="cmpToggle"><b>Calm mode</b><small>Gentler, slower movement. No hops, spins or sparkles.</small><input type="checkbox" data-set="calm" ${prefs.calm ? "checked" : ""}></label>
+        <label class="cmpToggle"><b>Calm mode</b><small>Gentler, slower movement. No hops, spins or sparkles.</small><input type="checkbox" data-set="calm" ${calm ? "checked" : ""}${systemReduced ? " disabled" : ""}>${systemReduced ? '<small class="cmpNote">Your device asks for less motion.</small>' : ""}</label>
         <div class="cmpChoice" role="group" aria-labelledby="cmpWhereTitle">
           <b id="cmpWhereTitle">Where he sits</b>
           <small>A floating window you can move, or a strip under the menu.</small>
@@ -981,10 +1008,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const want: WindowPose = pose ?? "center";
     if (rt.pose !== want) stamp(want);
   }
-  /** Idle glances on the drawn version's schedule: a look toward the page, up, down, or a gentle sway. Only while he is idle with nothing playing. */
+  /** Idle glances on the drawn version's schedule: a look toward the page, up, down, or a gentle sway. Only while he is idle with nothing playing, and never in calm mode. */
   function glance(frame: MotionFrame) {
     const t = now();
-    if (!director || frame.base !== "idle" || frame.beat !== null || rt.drag || rt.press || !live()) return;
+    if (!director || calm || frame.base !== "idle" || frame.beat !== null || rt.drag || rt.press || !live()) return;
     if (t < rt.reactUntil || t < rt.typingUntil || t < rt.gazeUntil || t <= rt.nextGlance) return;
     rt.nextGlance = t + 4800 + Math.random() * 4200;
     const toward: GazePose = el.dataset.side === "r" ? "left" : "right";
@@ -1043,6 +1070,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     }
     const reaction = reactionFor(name, rt.streak);
     if (director) {
+      if (name === "stall" && payload?.level === 2) lookAtHint();
       // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
       director.onEvent(name, payload);
       if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
@@ -1103,6 +1131,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       window.clearInterval(heartbeat);
       window.cancelAnimationFrame(motionFrame);
       try { renderer.destroy(); } catch { /* nothing left to release */ }
+      if (rig && rig !== renderer) { try { rig.destroy(); } catch { /* parked, and nothing left to release */ } }
       window.cancelAnimationFrame(placeFrame);
       timers.forEach((id) => window.clearTimeout(id));
       sizes.disconnect(); changes.disconnect();

@@ -97,11 +97,29 @@ function compile(gl: WebGLRenderingContext, type: number, source: string) {
   return shader;
 }
 
-export function createRigRenderer(onLost: () => void): CompanionRenderer {
+export type RigHooks = {
+  /** The context was lost: he goes back to his drawings. */
+  onLost(): void;
+  /** The context came back and the rig can be drawn again. */
+  onRestored(): void;
+};
+
+/** The rig, with the two moves the engine needs when a lost context comes back. */
+export type RigRenderer = CompanionRenderer & {
+  /** Takes the rig out of the page. Its canvas stays alive, so a restored context can still reach it. */
+  park(): void;
+  /** Puts the rig back into a body, in place of whatever is there. */
+  resume(body: HTMLElement): void;
+};
+
+export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer {
   const mesh = buildRig();
   const positions = new Float32Array(mesh.count * 2);
   let wrap: HTMLElement | null = null, canvas: HTMLCanvasElement | null = null, gl: WebGLRenderingContext | null = null;
+  let size = 0;
   let buffer: WebGLBuffer | null = null, ready = false, dead = false, lastFrame: MotionFrame | null = null;
+  /* The approved drawing. It is decoded once and uploaded again after a restore. */
+  let art: HTMLImageElement | null = null, artReady = false;
   const uniforms: Record<string, WebGLUniformLocation | null> = {};
   const span = 1 + MARGIN * 2;
 
@@ -170,6 +188,63 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
     if (shown !== null && wrap) wrap.style.transform = bodyTransform(frame);
   }
 
+  /* Builds the program, the buffers and the state on this context. It runs again after a restore, because the old objects died with the context. */
+  function setUp(context: WebGLRenderingContext) {
+    const program = context.createProgram()!;
+    context.attachShader(program, compile(context, context.VERTEX_SHADER, VERTEX));
+    context.attachShader(program, compile(context, context.FRAGMENT_SHADER, FRAGMENT));
+    context.linkProgram(program);
+    if (!context.getProgramParameter(program, context.LINK_STATUS)) throw new Error("Studigo's rig program did not link.");
+    context.useProgram(program);
+    for (const name of ["uTex", "uSpan", "uMargin", "uGaze", "uOpen", "uSmile", "uBrow", "uMouthCurve", "uMouthOpen", "uCheek"]) uniforms[name] = context.getUniformLocation(program, name);
+    context.uniform1f(uniforms.uSpan, span); context.uniform1f(uniforms.uMargin, MARGIN);
+    const attribute = (name: string, data: Float32Array, usage: number) => {
+      const made = context.createBuffer();
+      context.bindBuffer(context.ARRAY_BUFFER, made);
+      context.bufferData(context.ARRAY_BUFFER, data, usage);
+      const at = context.getAttribLocation(program, name);
+      context.enableVertexAttribArray(at);
+      context.vertexAttribPointer(at, 2, context.FLOAT, false, 0, 0);
+      return made;
+    };
+    attribute("aUv", mesh.uv, context.STATIC_DRAW);
+    buffer = attribute("aPos", mesh.rest, context.DYNAMIC_DRAW);
+    context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, context.createBuffer());
+    context.bufferData(context.ELEMENT_ARRAY_BUFFER, mesh.indices, context.STATIC_DRAW);
+    context.viewport(0, 0, size, size);
+    context.clearColor(0, 0, 0, 0);
+    context.enable(context.BLEND);
+    context.blendFunc(context.ONE, context.ONE_MINUS_SRC_ALPHA);
+  }
+
+  /* The drawing as the texture the mesh samples. */
+  function upload(context: WebGLRenderingContext, image: HTMLImageElement) {
+    const texture = context.createTexture();
+    context.bindTexture(context.TEXTURE_2D, texture);
+    context.pixelStorei(context.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
+    context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, image);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
+    context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+  }
+
+  /* The context came back: rebuild on the same canvas and hand the rig back. If that fails he stays on his drawings, and the next restore tries again. */
+  function restore() {
+    if (dead || !gl || !art || !artReady) return;
+    try {
+      setUp(gl);
+      upload(gl, art);
+    } catch (error) {
+      ready = false;
+      console.warn("Studigo's rig could not come back; he stays on his drawings.", error);
+      return;
+    }
+    ready = true;
+    canvas?.setAttribute("data-ready", "");
+    onRestored();
+  }
+
   return {
     kind: "rig",
     markup: () => `<div class="cmpRigBody"><canvas class="cmpRig" aria-hidden="true"></canvas>${spriteImages(null)}</div>`,
@@ -179,58 +254,30 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
       if (!canvas || !wrap) throw new Error("Studigo's rig has no canvas.");
       drawings = spriteElements(body);
       // His window is at most 2x; 640 backing pixels keep him sharp there without a large buffer on phones.
-      const size = Math.round(Math.min(640, 150 * span * Math.min(2.5, Math.max(1.5, window.devicePixelRatio || 1))));
+      size = Math.round(Math.min(640, 150 * span * Math.min(2.5, Math.max(1.5, window.devicePixelRatio || 1))));
       canvas.width = size; canvas.height = size;
       canvas.style.setProperty("--rig-margin", `${-MARGIN * 100}%`);
       gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "low-power" });
       if (!gl) throw new Error("WebGL is not available for Studigo's rig.");
       const context = gl;
       canvas.addEventListener("webglcontextlost", (event) => { event.preventDefault(); ready = false; if (!dead) onLost(); });
-      const program = context.createProgram()!;
-      context.attachShader(program, compile(context, context.VERTEX_SHADER, VERTEX));
-      context.attachShader(program, compile(context, context.FRAGMENT_SHADER, FRAGMENT));
-      context.linkProgram(program);
-      if (!context.getProgramParameter(program, context.LINK_STATUS)) throw new Error("Studigo's rig program did not link.");
-      context.useProgram(program);
-      for (const name of ["uTex", "uSpan", "uMargin", "uGaze", "uOpen", "uSmile", "uBrow", "uMouthCurve", "uMouthOpen", "uCheek"]) uniforms[name] = context.getUniformLocation(program, name);
-      context.uniform1f(uniforms.uSpan, span); context.uniform1f(uniforms.uMargin, MARGIN);
-      const attribute = (name: string, data: Float32Array, usage: number) => {
-        const made = context.createBuffer();
-        context.bindBuffer(context.ARRAY_BUFFER, made);
-        context.bufferData(context.ARRAY_BUFFER, data, usage);
-        const at = context.getAttribLocation(program, name);
-        context.enableVertexAttribArray(at);
-        context.vertexAttribPointer(at, 2, context.FLOAT, false, 0, 0);
-        return made;
-      };
-      attribute("aUv", mesh.uv, context.STATIC_DRAW);
-      buffer = attribute("aPos", mesh.rest, context.DYNAMIC_DRAW);
-      context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, context.createBuffer());
-      context.bufferData(context.ELEMENT_ARRAY_BUFFER, mesh.indices, context.STATIC_DRAW);
-      context.viewport(0, 0, size, size);
-      context.clearColor(0, 0, 0, 0);
-      context.enable(context.BLEND);
-      context.blendFunc(context.ONE, context.ONE_MINUS_SRC_ALPHA);
+      canvas.addEventListener("webglcontextrestored", restore);
+      setUp(context);
 
-      const art = new Image();
-      art.decoding = "async";
-      art.onload = () => {
+      const image = new Image();
+      image.decoding = "async";
+      art = image;
+      image.onload = () => {
+        artReady = true;
         if (!gl) return;
-        const texture = context.createTexture();
-        context.bindTexture(context.TEXTURE_2D, texture);
-        context.pixelStorei(context.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
-        context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, art);
-        context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MIN_FILTER, context.LINEAR);
-        context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
-        context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
-        context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+        upload(gl, image);
         ready = true;
         canvas?.setAttribute("data-ready", "");
         if (lastFrame) draw(lastFrame);
         showOutfit();
       };
-      art.onerror = () => { if (!dead) onLost(); };
-      art.src = `${SPRITES}/center.webp`;
+      image.onerror = () => { if (!dead) onLost(); };
+      image.src = `${SPRITES}/center.webp`;
       outfitEl = new Image();
       outfitEl.className = "cmpOutfit";
       outfitEl.alt = ""; outfitEl.draggable = false; outfitEl.decoding = "async";
@@ -244,10 +291,17 @@ export function createRigRenderer(onLost: () => void): CompanionRenderer {
     setPose() {},
     apply(frame) { lastFrame = frame; draw(frame); showPose(frame); showOutfit(); },
     setOutfit,
+    park() {
+      ready = false;
+      wrap?.remove();
+    },
+    resume(body) {
+      if (wrap) body.replaceChildren(wrap);
+    },
     destroy() {
       ready = false; dead = true;
       gl?.getExtension("WEBGL_lose_context")?.loseContext();
-      gl = null; canvas = null; wrap = null; shown = null; drawings.clear();
+      gl = null; canvas = null; wrap?.remove(); wrap = null; shown = null; drawings.clear();
       outfitEl?.remove(); outfitEl = null; outfit = null; outfitShown = null;
     }
   };

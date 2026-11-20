@@ -24,9 +24,10 @@ export type BeatDef = {
   poses?: { at: number; pose: WindowPose | null }[];
 };
 
-/** Calm mode drops these (spec §12). What is left: faces, blinks, small nods. */
-export const CALM_DROPS: readonly MoveKind[] = ["hop", "spin", "dash", "shiver", "land"];
-export const CALM_PARTICLE_CAP = 4;
+/** Calm mode drops these (spec §12, LC-DEC-040). What is left: faces, blinks, small nods, a gentle sway. */
+export const CALM_DROPS: readonly MoveKind[] = ["hop", "spin", "dash", "shiver", "land", "wag"];
+/** Calm mode keeps only the sleep letters. Sparks and hearts go. */
+export const CALM_PARTICLES: readonly ParticleKind[] = ["zzz"];
 
 export const BEATS = {
   hello: { priority: 2, ms: 1500, faces: [{ at: 0, face: "Sunny" }, { at: 300, face: "Giggly" }, { at: 1100, face: "Sunny" }], moves: [{ at: 150, ms: 900, kind: "sway", amount: 0.5 }, { at: 0, ms: 1400, kind: "wag", amount: 0.9 }], gaze: [{ at: 0, x: 0, y: 0, mode: "snap", ms: 1200 }] },
