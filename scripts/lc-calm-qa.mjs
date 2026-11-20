@@ -30,7 +30,7 @@ const triggers = [
   { name: "tickle", kind: "play" },
   { name: "celebrate", kind: "play" },
 ];
-const limits = { hopPx: 4, motionPx: 0.2, motionDeg: 0.2, triggerMs: 3000, idleMs: 20000, sampleMs: 33 };
+const limits = { hopPx: 4, motionPx: 0.2, motionDeg: 0.2, breathPx: 2, slidePx: 1, triggerMs: 3000, idleMs: 20000, sampleMs: 33 };
 const beatPoses = ["celebrate", "support", "poke", "pet", "lean", "sleep"];
 const lookPoses = ["left", "right", "up", "down", "up-left", "up-right", "down-left", "down-right"];
 
@@ -94,6 +94,12 @@ async function sampleCompanion({ trigger, durationMs, sampleMs }) {
       calm: cmp.hasAttribute("data-calm"),
       anim: getComputedStyle(body).animationName,
       win: { top: box.top, left: box.left },
+      winTf: (() => {
+        const matrix = getComputedStyle(win).transform;
+        if (matrix === "none") return [0, 0];
+        const v = matrix.slice(7, -1).split(",").map(Number);
+        return [v[4], v[5]];
+      })(),
       dom: null,
     };
     const matrix = getComputedStyle(rigBody).transform;
@@ -198,6 +204,8 @@ function summarizeIdle(result) {
     samples: s.length,
     fx: result.fx,
     anim: uniq(s.map((x) => x.anim)),
+    windowSpreadPx: round(Math.max(spread(s.map((x) => x.win.left)) ?? 0, spread(s.map((x) => x.win.top)) ?? 0)),
+    windowSlidePx: round(Math.max(spread(s.map((x) => x.winTf[0])) ?? 0, spread(s.map((x) => x.winTf[1])) ?? 0)),
     drawnPoses: drawn,
     beatDrawings: drawn.filter((p) => beatPoses.includes(p)),
     lookDrawings: drawn.filter((p) => lookPoses.includes(p)),
@@ -278,7 +286,7 @@ async function menuFlow(page, condition) {
   await page.evaluate(() => { window.__lcMarker = "same-document"; });
   await page.locator(".cmpSill").click();
   await sheet.waitFor({ state: "visible", timeout: 5000 });
-  const result = { checkedAtOpen: await box.isChecked() };
+  const result = { checkedAtOpen: await box.isChecked(), disabledAtOpen: await box.isDisabled() };
   if (condition.id !== "a") {
     await closeMenu(page);
     return result;
@@ -406,7 +414,15 @@ function buildChecks(run) {
   if (run.condition === "a") {
     add({ check: "control: idle motion is measurable", group: "idle-continuous", measured: motionText, expected: "continuous motion present", ok: idle.continuous, control: true });
   } else {
-    add({ check: "idle 20 s: no continuous physics (breath, tail, roll)", group: "idle-continuous", measured: motionText, expected: `static: under ${limits.motionPx} px and ${limits.motionDeg} deg (A02 literal)`, ok: !idle.continuous });
+    // LC-DEC-040 amends A02: slow breath and blinks stay in calm; sway, flicker, glances, hops, spins, slides and particles go.
+    const under = (value, limit) => !isNum(value) || value < limit;
+    const atMost = (value, limit) => !isNum(value) || value <= limit;
+    add({ check: "idle 20 s: no tail sway and no head roll", group: "idle-continuous", measured: `tail x ${m.tailDxPx} px, head roll ${m.rollDeg} deg (peak to peak over 20 s)`, expected: `tail x under ${limits.motionPx} px and roll under ${limits.motionDeg} deg`, ok: under(m.tailDxPx, limits.motionPx) && under(m.rollDeg, limits.motionDeg) });
+    add({ check: "idle 20 s: breathing no more than 2 px at default size", group: "idle-continuous", measured: `top of head ${m.topDyPx} px, tail y ${m.tailDyPx} px (peak to peak over 20 s)`, expected: `${limits.breathPx} px or less`, ok: atMost(m.topDyPx, limits.breathPx) && atMost(m.tailDyPx, limits.breathPx) });
+    add({ check: "idle 20 s: no hop and no slide of his window (transform)", group: "idle-continuous", measured: `hop ${m.hopPx} px, window transform spread ${idle.windowSlidePx} px`, expected: `hop under ${limits.hopPx} px, transform spread under ${limits.slidePx} px`, ok: under(m.hopPx, limits.hopPx) && under(idle.windowSlidePx, limits.slidePx) });
+    add({ check: "idle 20 s: his window layout moves with the page (info)", group: "info", measured: `layout spread ${idle.windowSpreadPx} px; the desktop header drawer folds in idle and moves the room`, expected: "recorded", ok: null });
+    add({ check: "idle 20 s: no sparks or hearts (zzz only)", group: "particles", measured: `${sparkCount(idle.fx)} sparks or hearts`, expected: "0", ok: sparkCount(idle.fx) === 0 });
+    add({ check: "flame flicker (info)", group: "info", measured: "not in the rig probe; covered by companion-motion.test.ts ('calm mode: no flame flicker')", expected: "recorded", ok: null });
   }
 
   if (run.condition === "a") {
@@ -416,7 +432,7 @@ function buildChecks(run) {
     add({ check: "menu Calm toggle flips the saved pref, stops and restores sparks, no reload", group: "toggle", measured: `box ${menu.checkedAtOpen} at open; on: saved ${menu.on.storageCalm}, sparks ${menu.on.celebrate.sparksOrHearts}; off: saved ${menu.off.storageCalm}, sparks ${menu.off.celebrate.sparksOrHearts}; same document ${menu.sameDocument}`, expected: "on: 0 sparks; off: sparks back", ok: pass });
   }
   if (run.condition === "c") {
-    add({ check: "menu checkbox while the OS setting forces calm (observation)", group: "info", measured: `checkbox checked ${menu.checkedAtOpen}; calm attr ${run.start.calm}`, expected: "recorded", ok: null, note: "engine.ts:91 uses systemReduced || prefs.calm; engine.ts:748 renders the box from prefs.calm only" });
+    add({ check: "menu Calm box is checked and disabled under OS reduced motion", group: "toggle", measured: `checked ${menu.checkedAtOpen}, disabled ${menu.disabledAtOpen}; calm attr ${run.start.calm}`, expected: "checked and disabled", ok: menu.checkedAtOpen === true && menu.disabledAtOpen === true });
   }
   return checks;
 }
@@ -471,10 +487,10 @@ const counts = {};
 for (const c of report.checks) counts[c.verdict] = (counts[c.verdict] ?? 0) + 1;
 report.summary = { counts, controlFailures };
 report.a02 = {
-  rowText: "Static safe fallback/no continuous physics, no unwanted particles/tail flicker or autonomously moving interface.",
+  rowText: "Gentle, not frozen (LC-DEC-040): calm keeps slow breath (2 px at most) and blinks; no tail sway, flame flicker, idle glances, hops, spins, slides or particles except zzz.",
   literalRowText: rowVerdict(literalGroups),
   specSection12: rowVerdict(specGroups),
-  note: "Spec section 12 lists what Calm must disable and keeps blinks, small nods and fades; it does not list breathing, tail wag, flame flicker or idle glances, which the QA row text excludes.",
+  note: "The literal verdict reads the amended LC-DEC-040 wording. The strict no-physics wording it replaces failed only on breath (1.09 to 1.25 px). Flame flicker is not in the rig probe.",
 };
 
 const failCount = report.checks.filter((c) => c.verdict.startsWith("FAIL")).length;

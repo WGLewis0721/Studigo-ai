@@ -1,7 +1,7 @@
 "use client";
 
 import "./companion.css";
-import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, type RefObject } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
 import { OUTFITS, OUTFIT_LABELS, parseOutfit, type CompanionEvent } from "@/lib/companion-logic";
 import { growthView, studyTasks, wearableOutfit, type GrowthTrack } from "@/lib/companion-growth";
 import { useCompanionGrowth } from "@/lib/companion-growth-store";
@@ -116,9 +116,23 @@ function TrickRow({ trick }: { trick: GrowthTrack }) {
   );
 }
 
+/** The learner's device asks for less motion. Read after mount, so the first render matches the server. */
+function useDeviceReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  return reduced;
+}
+
 /** Room Settings: how Studigo behaves in this room. Applies at once, like the room color. */
 export function RoomCompanionSettings({ roomId }: { roomId: string }) {
   const [prefs, update] = useCompanionPrefs(roomId);
+  const deviceReduced = useDeviceReducedMotion();
   const growth = useCompanionGrowth();
   const view = growthView(growth.points);
   const worn = wearableOutfit(growth.points, prefs.outfit);
@@ -142,7 +156,8 @@ export function RoomCompanionSettings({ roomId }: { roomId: string }) {
       <label className="cmpToggle">
         <b>Calm mode</b>
         <small>Gentler, slower movement. No hops, spins or sparkles.</small>
-        <input type="checkbox" checked={prefs.calm} onChange={(event) => update({ calm: event.target.checked })} />
+        <input type="checkbox" checked={deviceReduced || prefs.calm} disabled={deviceReduced} onChange={(event) => update({ calm: event.target.checked })} />
+        {deviceReduced ? <small className="cmpNote">Your device asks for less motion.</small> : null}
       </label>
       <div className="cmpChoice">
         <b id={whereId}>Where he sits</b>

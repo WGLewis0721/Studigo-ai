@@ -83,6 +83,15 @@ export function chooseDock(preferred: Dock, area: Area, controls: Rect[], canScr
   return order.find((dock) => !blocked(dock)) ?? preferred;
 }
 
+/** The air Phase 3 keeps between him and every control. */
+const AIR = 8;
+const padded = (rect: Rect): Rect => ({ left: rect.left - AIR, right: rect.right + AIR, top: rect.top - AIR, bottom: rect.bottom + AIR });
+
+/** True when his window, with its top-left at `at`, keeps clear of every control by the Phase 3 margin. */
+export function clearOf(at: { x: number; y: number }, controls: Rect[], size: Size = WINDOW): boolean {
+  return controls.every((rect) => overlap(at.x, at.y, padded(rect), size) === 0);
+}
+
 /**
  * Phase 3 non-chat rooms keep every visible control clear even on scrollable
  * pages. Null means there is no safe window position: use the existing header
@@ -95,12 +104,28 @@ export function controlSafeDock(preferred: Dock, area: Area, controls: Rect[], s
   const side = preferred[1], otherSide = side === "r" ? "l" : "r";
   const row = preferred[0], otherRow = row === "b" ? "t" : "b";
   const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
-  return order.find((dock) => {
+  return order.find((dock) => clearOf(spot(dock, area, size), controls, size)) ?? null;
+}
+
+/**
+ * Keyboard use when no corner is clear of every control: the corner that keeps the
+ * control in focus clear, then the corner under the fewest controls. Ties keep the
+ * usual order, with the preferred corner first.
+ */
+export function dockKeepingFocus(preferred: Dock, area: Area, controls: Rect[], focus: Rect | null, size: Size = WINDOW): Dock {
+  const side = preferred[1], otherSide = side === "r" ? "l" : "r";
+  const row = preferred[0], otherRow = row === "b" ? "t" : "b";
+  const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
+  const score = (dock: Dock) => {
     const at = spot(dock, area, size);
-    return controls.every((rect) => overlap(at.x, at.y, {
-      left: rect.left - 8, right: rect.right + 8, top: rect.top - 8, bottom: rect.bottom + 8
-    }, size) === 0);
-  }) ?? null;
+    const covers = (rect: Rect) => overlap(at.x, at.y, padded(rect), size) > 0;
+    return { hidesFocus: focus !== null && covers(focus), count: controls.filter(covers).length };
+  };
+  return order.reduce((best, dock) => {
+    const candidate = score(dock), current = score(best);
+    if (candidate.hidesFocus !== current.hidesFocus) return candidate.hidesFocus ? best : dock;
+    return candidate.count < current.count ? dock : best;
+  });
 }
 
 /** The corner nearest to where the learner let go of him. */

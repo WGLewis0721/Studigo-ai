@@ -93,6 +93,9 @@
 .cmpPose[data-pose="lean"] { transform: translateY(-21px) scale(.96); }
 .cmp:not([data-calm]) .cmpPose[data-pose="celebrate"] { transform: translateY(-9px) scale(1.14); }
 .cmpPose[data-pose="poke"] { transform: translateY(-4px) scale(1.04); }
+/* Calm: the lean and the poke keep their drawings with no vertical jump; the scale eases in. */
+.cmp[data-calm] .cmpPose[data-pose="lean"] { transform: scale(.96); transition: opacity .13s linear, transform .3s ease; }
+.cmp[data-calm] .cmpPose[data-pose="poke"] { transform: scale(1.04); transition: opacity .13s linear, transform .3s ease; }
 .cmpPose[data-pose="pet"], .cmpPose[data-pose="sleep"] { transform: translateY(2px); }
 
 .cmp[data-pose="celebrate"] .cmpBody { animation: cmpBounce .52s var(--ease-out) 4; }
