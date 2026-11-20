@@ -1,0 +1,3054 @@
+{
+  "generatedAt": "2026-11-20T20:05:45.714Z",
+  "commit": "537c03724c6afa74a902fac61614e9a2b3a2ea2b",
+  "baseUrl": "http://127.0.0.1:3302",
+  "browser": {
+    "name": "chromium (playwright)",
+    "version": "151.0.7922.34"
+  },
+  "command": "node scripts/lc-companion-qa.mjs",
+  "subset": "full matrix",
+  "flags": "dev server with NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1; NEXT_PUBLIC_STUDIGO_COMPANION_MOTION and NEXT_PUBLIC_STUDIGO_COMPANION unset (motion on, companion on); development build, so window.studigoCompanion exists",
+  "viewports": {
+    "desktop": "1440x900, deviceScaleFactor 1",
+    "phone": "390x844, deviceScaleFactor 2, isMobile, hasTouch"
+  },
+  "summary": {
+    "PASS": 34,
+    "FAIL": 7,
+    "OPEN": 28
+  },
+  "results": [
+    {
+      "id": "L02",
+      "viewport": "static",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "8 call sites; 6 follow an awaited commit or a result-gated control; need owner review: apps/web/components/room/learn-mission.tsx:307, apps/web/components/room/learn-mission.tsx:483",
+      "measured": {
+        "sites": [
+          {
+            "file": "apps/web/components/room/quiz-panel.tsx",
+            "line": 174,
+            "call": "companion.event(payload.isCorrect ? \"correct\" : confidence === 3 ? \"blindspot\" : \"wrong\");",
+            "enclosing": "async function submit(confidence: 1 | 2 | 3) {",
+            "awaitedCommit": true,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/quiz-panel.tsx",
+            "line": 185,
+            "call": "if (index + 1 >= questions.length) companion.event(\"setDone\");",
+            "enclosing": "function next() {",
+            "awaitedCommit": false,
+            "gatedByResult": true,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/cards-panel.tsx",
+            "line": 194,
+            "call": "if (index + 1 >= cards.length) companion.event(\"setDone\");",
+            "enclosing": "async function rate(rating: 1 | 2 | 3) {",
+            "awaitedCommit": true,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/cards-panel.tsx",
+            "line": 195,
+            "call": "else if (rating === 3) companion.event(\"cardGood\");",
+            "enclosing": "async function rate(rating: 1 | 2 | 3) {",
+            "awaitedCommit": true,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/cards-panel.tsx",
+            "line": 196,
+            "call": "else if (rating === 1) companion.event(\"cardMiss\");",
+            "enclosing": "async function rate(rating: 1 | 2 | 3) {",
+            "awaitedCommit": true,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/learn-mission.tsx",
+            "line": 195,
+            "call": "if (action === \"advance\" && saved.mission?.phase === \"done\") companionEvent(\"missionComple",
+            "enclosing": "async function act(action: Action, reflection: \"ready\" | \"re",
+            "awaitedCommit": true,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": true
+          },
+          {
+            "file": "apps/web/components/room/learn-mission.tsx",
+            "line": 307,
+            "call": "const timer = createStallTimer({ now: () => performance.now(), onStall: (level) => compani",
+            "enclosing": "const closeSource = () => {",
+            "awaitedCommit": false,
+            "gatedByResult": false,
+            "inlineClick": false,
+            "verified": false
+          },
+          {
+            "file": "apps/web/components/room/learn-mission.tsx",
+            "line": 483,
+            "call": "onClick={() => { setHelpUsed(true); setShown(true); companionEvent(\"hintOpened\"); }} aria-",
+            "enclosing": "const closeSource = () => {",
+            "awaitedCommit": false,
+            "gatedByResult": false,
+            "inlineClick": true,
+            "verified": false
+          }
+        ]
+      },
+      "flags": null
+    },
+    {
+      "id": "UI01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: frame follows the pointer mid-drag (-85, -35 px) | ok: dragon stays in his frame while dragging | ok: frame is inside the viewport after the drop | ok: legacy room: the drop lands where the pointer let go | ok: arrow keys nudge him (ArrowLeft, -80 px over 5 presses) | ok: keyboard stops at the safe edge (left 908, expected 908; safe area 166 to 1274)",
+      "measured": {
+        "midDelta": {
+          "x": -85,
+          "y": -35
+        },
+        "dragonDrift": {
+          "x": -0.6,
+          "y": -0.5
+        },
+        "endDelta": {
+          "x": -170,
+          "y": -70
+        },
+        "focusDuringKeys": [
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit"
+        ],
+        "keyboardKey": "ArrowLeft",
+        "keyboardLeftSteps": [
+          988,
+          972,
+          956,
+          940,
+          924,
+          908
+        ],
+        "safeArea": [
+          166,
+          1274
+        ],
+        "keyboardDx": -80,
+        "posAfterKeys": {
+          "x": 0.7479838709677419,
+          "y": 0.8498112604084317
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "FAIL",
+      "note": "FAIL: arrow keys nudge him (ArrowRight, 0 px over 5 presses) | FAIL: keyboard stops at the safe edge (left 170, expected 250; safe area 170 to 1270) | ok: frame follows the pointer mid-drag (-85, -35 px) | ok: dragon stays in his frame while dragging | ok: frame is inside the viewport after the drop",
+      "measured": {
+        "midDelta": {
+          "x": -85,
+          "y": -35
+        },
+        "dragonDrift": {
+          "x": -0.4,
+          "y": -0.3
+        },
+        "endDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "focusDuringKeys": [
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit"
+        ],
+        "keyboardKey": "ArrowRight",
+        "keyboardLeftSteps": [
+          170,
+          170,
+          170,
+          170,
+          170,
+          170
+        ],
+        "safeArea": [
+          170,
+          1270
+        ],
+        "keyboardDx": 0,
+        "posAfterKeys": {
+          "x": 0.016260162601626018,
+          "y": 0.11421959221935786
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI01",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: frame follows the pointer mid-drag (-85, -35 px) | ok: dragon stays in his frame while dragging | ok: frame is inside the viewport after the drop | ok: legacy room: the drop lands where the pointer let go | ok: arrow keys nudge him (ArrowRight, 80 px over 5 presses) | ok: keyboard stops at the safe edge (left 154, expected 154; safe area 30 to 360) | ok: touch drag follows the finger mid-gesture (centre 167, expected 167 with the 4 px viewport margin)",
+      "measured": {
+        "midDelta": {
+          "x": -85,
+          "y": -35
+        },
+        "dragonDrift": {
+          "x": -0.6,
+          "y": -0.5
+        },
+        "endDelta": {
+          "x": -170,
+          "y": -70
+        },
+        "focusDuringKeys": [
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit"
+        ],
+        "keyboardKey": "ArrowRight",
+        "keyboardLeftSteps": [
+          74,
+          90,
+          106,
+          122,
+          138,
+          154
+        ],
+        "safeArea": [
+          30,
+          360
+        ],
+        "keyboardDx": 80,
+        "posAfterKeys": {
+          "x": 0.5794392523364486,
+          "y": 0.7833655705996132
+        },
+        "touchMid": {
+          "startCenterX": 212,
+          "midCenterX": 167,
+          "expectedMidX": 167
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI01",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "FAIL",
+      "note": "FAIL: arrow keys nudge him (ArrowRight, 0 px over 5 presses) | FAIL: keyboard stops at the safe edge (left 26, expected 106; safe area 26 to 364) | ok: frame follows the pointer mid-drag (-85, -35 px) | ok: dragon stays in his frame while dragging | ok: frame is inside the viewport after the drop | ok: touch drag follows the finger mid-gesture (centre 62, expected 62 with the 4 px viewport margin)",
+      "measured": {
+        "midDelta": {
+          "x": -85,
+          "y": -35
+        },
+        "dragonDrift": {
+          "x": -0.6,
+          "y": -0.5
+        },
+        "endDelta": {
+          "x": -222,
+          "y": 0
+        },
+        "focusDuringKeys": [
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit",
+          "cmpHit"
+        ],
+        "keyboardKey": "ArrowRight",
+        "keyboardLeftSteps": [
+          26,
+          26,
+          26,
+          26,
+          26,
+          26
+        ],
+        "safeArea": [
+          26,
+          364
+        ],
+        "keyboardDx": 0,
+        "posAfterKeys": {
+          "x": 0.07207207207207207,
+          "y": 0
+        },
+        "touchMid": {
+          "startCenterX": 84,
+          "midCenterX": 62,
+          "expectedMidX": 62
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI02",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: frame stays where it was dropped | ok: saved as a normalized non-corner position (0.23, 0.99)",
+      "measured": {
+        "spot": {
+          "x": 396,
+          "y": 748.078125,
+          "clearance": 118
+        },
+        "expectedCenter": {
+          "x": 454,
+          "y": 817
+        },
+        "gotCenter": {
+          "x": 454,
+          "y": 817
+        },
+        "savedPos": {
+          "x": 0.2318548387096774,
+          "y": 0.9872899828968108
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI03",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "OPEN",
+      "note": "OPEN: keyboard open/close and real viewport rotation are not automated here | ok: reload restores the same place (0, 0 px) | ok: after resizing to 864x720 he is fully inside the viewport | ok: returns to the same place after resizing back (0, 0 px)",
+      "measured": {
+        "reloadDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "restoreDelta": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI02",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "FAIL",
+      "note": "FAIL: Phase 3 seats him in a corner and ignores the saved spot (engine placeInRoom reads prefs.pos only when !safeRoom) | ok: saved as a normalized non-corner position (0.07, 0.00)",
+      "measured": {
+        "spot": {
+          "x": 240,
+          "y": 290.078125,
+          "clearance": 164
+        },
+        "expectedCenter": {
+          "x": 298,
+          "y": 359
+        },
+        "gotCenter": {
+          "x": 228,
+          "y": 359
+        },
+        "savedPos": {
+          "x": 0.07113821138211382,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI03",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "OPEN",
+      "note": "OPEN: keyboard open/close and real viewport rotation are not automated here | ok: reload restores the same place (0, 0 px) | ok: after resizing to 864x720 he is fully inside the viewport | ok: returns to the same place after resizing back (0, 0 px)",
+      "measured": {
+        "reloadDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "restoreDelta": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI02",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: frame stays where it was dropped | ok: saved as a normalized non-corner position (0.65, 0.00)",
+      "measured": {
+        "spot": {
+          "x": 170,
+          "y": 297.875,
+          "clearance": 38
+        },
+        "expectedCenter": {
+          "x": 228,
+          "y": 367
+        },
+        "gotCenter": {
+          "x": 228,
+          "y": 367
+        },
+        "savedPos": {
+          "x": 0.6542056074766355,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI03",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "legacy",
+      "status": "OPEN",
+      "note": "OPEN: keyboard open/close and real viewport rotation are not automated here | ok: reload restores the same place (0, 0 px) | ok: after resizing to 234x675 he is fully inside the viewport | ok: returns to the same place after resizing back (0, 0 px)",
+      "measured": {
+        "reloadDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "restoreDelta": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI02",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "FAIL",
+      "note": "FAIL: Phase 3 seats him in a corner and ignores the saved spot (engine placeInRoom reads prefs.pos only when !safeRoom) | ok: saved as a normalized non-corner position (0.32, 0.00)",
+      "measured": {
+        "spot": {
+          "x": 96,
+          "y": 284.875,
+          "clearance": 149
+        },
+        "expectedCenter": {
+          "x": 154,
+          "y": 354
+        },
+        "gotCenter": {
+          "x": 84,
+          "y": 354
+        },
+        "savedPos": {
+          "x": 0.3153153153153153,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI03",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "OPEN",
+      "note": "OPEN: keyboard open/close and real viewport rotation are not automated here | ok: reload restores the same place (0, 0 px) | ok: after resizing to 234x675 he is fully inside the viewport | ok: returns to the same place after resizing back (0, 0 px)",
+      "measured": {
+        "reloadDelta": {
+          "x": 0,
+          "y": 0
+        },
+        "restoreDelta": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy quiz",
+      "status": "PASS",
+      "note": "ok: no overlap with 5 controls",
+      "measured": {
+        "report": {
+          "checked": 5,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: no overlap with 5 controls",
+      "measured": {
+        "report": {
+          "checked": 5,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy coach",
+      "status": "PASS",
+      "note": "ok: no overlap with 7 controls",
+      "measured": {
+        "report": {
+          "checked": 7,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 coach",
+      "status": "PASS",
+      "note": "ok: no overlap with 7 controls",
+      "measured": {
+        "report": {
+          "checked": 7,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: no overlap with 5 controls",
+      "measured": {
+        "report": {
+          "checked": 5,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 coach",
+      "status": "PASS",
+      "note": "ok: no overlap with 6 controls",
+      "measured": {
+        "report": {
+          "checked": 6,
+          "hits": []
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz (no safe corner)",
+      "status": "PASS",
+      "note": "ok: no safe corner: he is seated (window hidden) | ok: bring-back tab (.cmpTab) is visible while he is seated | ok: the bring-back tab summons him again",
+      "measured": {
+        "seat": {
+          "cmpHidden": true,
+          "tabVisible": true,
+          "tab": {
+            "left": 1260,
+            "top": 813,
+            "width": 20,
+            "height": 73
+          }
+        },
+        "summoned": true
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI05",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: resize handle steps size 1 -> 1.5 | ok: menu opens as a dialog and the sill reports it | ok: Escape closes the menu | ok: focus returns to Studigo's menu button",
+      "measured": {
+        "sizeHandleShown": true,
+        "kBefore": 1,
+        "kAfter": 1.5,
+        "savedScale": "1.5",
+        "opened": {
+          "expanded": "true",
+          "role": "dialog"
+        },
+        "closed": {
+          "gone": true,
+          "expanded": "false",
+          "focusOnSill": true
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI05",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: resize handle is hidden on coarse pointers by design; pinch resize is not automated here | ok: menu opens as a dialog and the sill reports it | ok: Escape closes the menu | ok: focus returns to Studigo's menu button",
+      "measured": {
+        "sizeHandleShown": false,
+        "opened": {
+          "expanded": "true",
+          "role": "dialog"
+        },
+        "closed": {
+          "gone": true,
+          "expanded": "false",
+          "focusOnSill": true
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI06",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: exactly one companion in the DOM | ok: companion sits inside the strip slot | ok: the strip slot sits directly above the Studigo rail | ok: strip menu sits at the right edge (gap 32 px) | ok: rail does not move while idle (spread 0 px over 1.5 s)",
+      "measured": {
+        "slotRendered": true,
+        "layout": {
+          "cmpCount": 1,
+          "hostCount": 1,
+          "inSlot": true,
+          "slotDirectlyAboveRail": true,
+          "previousSibling": "modeStrip",
+          "menuGapRight": 32,
+          "slotHeight": 64
+        },
+        "railSpread": 0
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI06",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: exactly one companion in the DOM | ok: companion sits inside the strip slot | ok: the strip slot sits directly above the Studigo rail | ok: strip menu sits at the right edge (gap 14 px) | ok: rail does not move while idle (spread 0 px over 1.5 s)",
+      "measured": {
+        "slotRendered": true,
+        "layout": {
+          "cmpCount": 1,
+          "hostCount": 1,
+          "inSlot": true,
+          "slotDirectlyAboveRail": true,
+          "previousSibling": "modeStrip",
+          "menuGapRight": 14,
+          "slotHeight": 56
+        },
+        "railSpread": 0
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI06",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: exactly one companion in the DOM | ok: companion sits inside the strip slot | ok: the strip slot sits directly above the Studigo rail | ok: strip menu sits at the right edge (gap 32 px) | ok: rail does not move while idle (spread 0 px over 1.5 s)",
+      "measured": {
+        "slotRendered": true,
+        "layout": {
+          "cmpCount": 1,
+          "hostCount": 1,
+          "inSlot": true,
+          "slotDirectlyAboveRail": true,
+          "previousSibling": "modeStrip",
+          "menuGapRight": 32,
+          "slotHeight": 64
+        },
+        "railSpread": 0
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI07",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: strip adds its band to the header (119 -> 183 px) | ok: rail top steady through a celebration (0 px over 2.5 s) | ok: drawer stayed open during the sample | ok: strip folds away with the drawer (slot 0 px) | ok: Show controls brings the strip back (slot 64 px)",
+      "measured": {
+        "stripOff": {
+          "collapsed": "false",
+          "headerH": 119,
+          "slotH": 0
+        },
+        "stripOn": {
+          "collapsed": "false",
+          "headerH": 183,
+          "slotH": 64
+        },
+        "railSpread": 0,
+        "collapsedDuringSample": [
+          "false"
+        ],
+        "tucked": {
+          "collapsed": "true",
+          "headerH": 49,
+          "slotH": 0
+        },
+        "reopened": {
+          "collapsed": "false",
+          "headerH": 183,
+          "slotH": 64
+        },
+        "headerRatioTucked": 0.27
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI07",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: phone keeps the full header: no drawer and no Show controls | ok: phone header controls stay full size (79 px)",
+      "measured": {
+        "collapsed": "false",
+        "toggles": 0,
+        "modeStripHeight": 79
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI08",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: page content scrolled (320 px) | ok: strip, rail and header hold still (drift {\"strip\":0,\"rail\":0,\"frame\":0,\"dragon\":0}) | ok: dragon stays put with the strip (drift 0 px)",
+      "measured": {
+        "scrollTop": 320,
+        "drift": {
+          "strip": 0,
+          "rail": 0,
+          "frame": 0,
+          "dragon": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI08",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: page content scrolled (320 px) | ok: strip, rail and header hold still (drift {\"strip\":0,\"rail\":0,\"frame\":0,\"dragon\":0}) | ok: dragon stays put with the strip (drift 0 px)",
+      "measured": {
+        "scrollTop": 320,
+        "drift": {
+          "strip": 0,
+          "rail": 0,
+          "frame": 0,
+          "dragon": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI09",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz strip",
+      "status": "PASS",
+      "note": "ok: figure top 226 is not clipped above the strip top 224 | ok: figure stays above the rail (bottom 280, rail 280) | ok: practice control \"Start quiz →\" is clickable and not covered | ok: practice control does not overlap his window (0 px2)",
+      "measured": {
+        "slot": {
+          "top": 224,
+          "height": 56
+        },
+        "stage": {
+          "top": 226,
+          "bottom": 280
+        },
+        "railTop": 280,
+        "control": {
+          "label": "Start quiz →",
+          "clickable": true,
+          "coveredByCompanion": false,
+          "rect": {
+            "left": 48,
+            "top": 687.65625,
+            "right": 176.96875,
+            "bottom": 739.65625
+          }
+        },
+        "controlOverlap": 0
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI10",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: exactly one companion and one host in every placement | ok: rig canvases constant across placements (1/1/1) | ok: speech, outfit and calm survive float -> strip -> float",
+      "measured": {
+        "float": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "hasStrip": true,
+        "strip": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "back": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "prefs": {
+          "speech": true,
+          "outfit": "goggles",
+          "calm": true,
+          "host": "float"
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "UI10",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: exactly one companion and one host in every placement | ok: rig canvases constant across placements (1/1/1) | ok: speech, outfit and calm survive float -> strip -> float",
+      "measured": {
+        "float": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "hasStrip": true,
+        "strip": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "back": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "prefs": {
+          "speech": true,
+          "outfit": "goggles",
+          "calm": true,
+          "host": "float"
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "UI10",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: exactly one companion and one host in every placement | ok: rig canvases constant across placements (1/1/1) | ok: speech, outfit and calm survive float -> strip -> float",
+      "measured": {
+        "float": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "hasStrip": true,
+        "strip": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "back": {
+          "companions": 1,
+          "rigCanvases": 1,
+          "hosts": 1
+        },
+        "prefs": {
+          "speech": true,
+          "outfit": "goggles",
+          "calm": true,
+          "host": "float"
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: thinking(true) adds .cmp.thinking | ok: thinking loop animates (cmpThink) | ok: thinking(false) removes .cmp.thinking | ok: thinking loop stops (none)",
+      "measured": {
+        "on": {
+          "thinkingClass": true,
+          "anim": "cmpThink"
+        },
+        "off": {
+          "thinkingClass": false,
+          "anim": "none"
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L01",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: thinking(true) adds .cmp.thinking | ok: thinking loop animates (cmpThink) | ok: thinking(false) removes .cmp.thinking | ok: thinking loop stops (none)",
+      "measured": {
+        "on": {
+          "thinkingClass": true,
+          "anim": "cmpThink"
+        },
+        "off": {
+          "thinkingClass": false,
+          "anim": "none"
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "L03",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "learn mission",
+      "status": "OPEN",
+      "note": "OPEN: formative lesson progress and unchanged mastery need the owner's product check; only the absence of writes is automated | ok: companion source has no network, storage-write or sensor call (0 hits) | ok: no write request from the hint or the 11 companion events (0)",
+      "measured": {
+        "sourceFiles": 19,
+        "sourceHits": [],
+        "hintControls": 0,
+        "writes": []
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: one companion still present after the burst | ok: back at rest 213 ms after the last event | ok: no console or page errors during the burst",
+      "measured": {
+        "sent": 20,
+        "distinctEvents": 7,
+        "settledMs": 213,
+        "last": {
+          "present": 1,
+          "pose": "center",
+          "rig": 1,
+          "onAll": 0,
+          "onNonCenter": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: one companion still present after the burst | ok: back at rest 2 ms after the last event | ok: no console or page errors during the burst",
+      "measured": {
+        "sent": 20,
+        "distinctEvents": 7,
+        "settledMs": 2,
+        "last": {
+          "present": 1,
+          "pose": "center",
+          "rig": 1,
+          "onAll": 0,
+          "onNonCenter": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L04",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: one companion still present after the burst | ok: back at rest 512 ms after the last event | ok: no console or page errors during the burst",
+      "measured": {
+        "sent": 20,
+        "distinctEvents": 8,
+        "settledMs": 512,
+        "last": {
+          "present": 1,
+          "pose": "center",
+          "rig": 1,
+          "onAll": 0,
+          "onNonCenter": 0
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "L05",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: cross-room isolation and stale events between rooms need a second room fixture; only one synthetic room exists | ok: exactly one companion after each navigation | ok: one host element after returning | ok: no console or page errors across the navigations",
+      "measured": {
+        "otherFixture": {
+          "companions": 1,
+          "hosts": 1
+        },
+        "back": {
+          "companions": 1,
+          "hosts": 1
+        },
+        "navButtons": 4,
+        "navClicked": true,
+        "afterSwitch": {
+          "companions": 1,
+          "hosts": 1
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L05",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: the second section button could not be clicked in this state, so the in-room switch was not exercised (locator.click: Timeout 8000ms exceeded. / Call log: / \u001b[2m  - waiting for locator('.studyGroups button:visible:not([aria-current]):not(:disabled)').first()\u001b[22m / \u001b[2m    - locator resolved to <button type=\"button\" title=\"Coach\" data-tone=\"coach\" aria-label=\"Coach\">…</button>\u001b[22m / \u001b[2m  - attempting click action\u001b[22m) | OPEN: cross-room isolation and stale events between rooms need a second room fixture; only one synthetic room exists | ok: exactly one companion after each navigation | ok: one host element after returning | ok: no console or page errors across the navigations",
+      "measured": {
+        "otherFixture": {
+          "companions": 1,
+          "hosts": 1
+        },
+        "back": {
+          "companions": 1,
+          "hosts": 1
+        },
+        "navButtons": 4,
+        "navClickError": "locator.click: Timeout 8000ms exceeded. / Call log: / \u001b[2m  - waiting for locator('.studyGroups button:visible:not([aria-current]):not(:disabled)').first()\u001b[22m / \u001b[2m    - locator resolved to <button type=\"button\" title=\"Coach\" data-tone=\"coach\" aria-label=\"Coach\">…</button>\u001b[22m / \u001b[2m  - attempting click action\u001b[22m",
+        "navClicked": false,
+        "afterSwitch": {
+          "companions": 1,
+          "hosts": 1
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "L06",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "learn mission",
+      "status": "OPEN",
+      "note": "OPEN: no citation controls are rendered in the synthetic Learn fixture | OPEN: RLS and source disclosure need a signed-in room with real files; only overlap is automated",
+      "measured": {
+        "citations": []
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L07",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: companion source has no fetch, beacon, socket or sensor call (0 hits) | ok: no third-party host during 10 s of pointer and companion use (hosts: 127.0.0.1:3302) | ok: no request carries pointer coordinates | ok: no write request during the pointer test",
+      "measured": {
+        "sourceFiles": 19,
+        "sourceHits": [],
+        "requests": 1,
+        "hosts": [
+          "127.0.0.1:3302"
+        ],
+        "foreignHosts": [],
+        "writes": [],
+        "coordinateLeaks": []
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "L07",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "PASS",
+      "note": "ok: companion source has no fetch, beacon, socket or sensor call (0 hits) | ok: no third-party host during 10 s of pointer and companion use (hosts: 127.0.0.1:3302) | ok: no request carries pointer coordinates | ok: no write request during the pointer test",
+      "measured": {
+        "sourceFiles": 19,
+        "sourceHits": [],
+        "requests": 1,
+        "hosts": [
+          "127.0.0.1:3302"
+        ],
+        "foreignHosts": [],
+        "writes": [],
+        "coordinateLeaks": []
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "A01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "legacy",
+      "status": "PASS",
+      "note": "ok: Tab reaches cmpHit | ok: focus ring visible on cmpHit (solid 3px) | ok: Tab reaches cmpSill | ok: focus ring visible on cmpSill (solid 2px) | ok: Tab reaches cmpSize | ok: focus ring visible on cmpSize (solid 2px) | ok: Tab reaches cmpMin | ok: focus ring visible on cmpMin (solid 2px) | ok: accessible names on the pet area, menu, resize and minimize controls | ok: the drag grip is not a Tab stop; arrow keys on the pet area are its keyboard path | ok: keyboard Enter opens the menu, Escape closes it and focus returns to the sill | ok: minimize shows the bring-back tab and moves focus to it | ok: the bring-back tab restores him after a minimize (see summon: windowY and hidden)",
+      "measured": {
+        "stateAtLoad": {
+          "hidden": false,
+          "state": "window"
+        },
+        "trail": [
+          {
+            "tab": 1,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 2,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 3,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 4,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 5,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 6,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 7,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 8,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 9,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 10,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 11,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 12,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 13,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 14,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 15,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 16,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 17,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 18,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 19,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 20,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 21,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 22,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 23,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 24,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 25,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 26,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 27,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 28,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 29,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 30,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 31,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 32,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 33,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 34,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 35,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 36,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 37,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 38,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 39,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 40,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 80,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 120,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 160,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 200,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 240,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 280,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 320,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          }
+        ],
+        "tabIndex": {
+          "cmpHit": 23,
+          "cmpSill": 24,
+          "cmpSize": 25,
+          "cmpMin": 26,
+          "cmpTab": null
+        },
+        "stateAfterTab": {
+          "hidden": false,
+          "state": "window"
+        },
+        "names": {
+          "hit": "Studigo. Tap to play, stroke to pet. Arrow keys move him. His name opens his menu.",
+          "sill": "Studigo's menu",
+          "size": "Resize Studigo. Drag, or press to step through sizes.",
+          "min": "Send Studigo back to his seat",
+          "grip": "Drag to move Studigo",
+          "gripTabIndex": "-1"
+        },
+        "enter": {
+          "active": "",
+          "activeInCard": true,
+          "cards": 1,
+          "expanded": "true",
+          "cmpHidden": false
+        },
+        "enterOpened": true,
+        "escape": {
+          "cards": 0,
+          "active": "cmpSill"
+        },
+        "focusAfterEscape": "cmpSill",
+        "cardsBeforeMinimize": 0,
+        "windowYBeforeMinimize": 0,
+        "afterMinimize": {
+          "focus": "cmpTab",
+          "tabVisible": true
+        },
+        "summon": {
+          "windowY": 0,
+          "hidden": false
+        }
+      },
+      "flags": {
+        "phase3Ui": false,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3",
+      "status": "PASS",
+      "note": "ok: Tab reaches cmpHit | ok: focus ring visible on cmpHit (solid 3px) | ok: Tab reaches cmpSill | ok: focus ring visible on cmpSill (solid 3px) | ok: Tab reaches cmpSize | ok: focus ring visible on cmpSize (solid 3px) | ok: Tab reaches cmpMin | ok: focus ring visible on cmpMin (solid 3px) | ok: accessible names on the pet area, menu, resize and minimize controls | ok: the drag grip is not a Tab stop; arrow keys on the pet area are its keyboard path | ok: keyboard Enter opens the menu, Escape closes it and focus returns to the sill | ok: minimize shows the bring-back tab and moves focus to it | ok: the bring-back tab restores him after a minimize (see summon: windowY and hidden)",
+      "measured": {
+        "stateAtLoad": {
+          "hidden": false,
+          "state": "window"
+        },
+        "trail": [
+          {
+            "tab": 1,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 2,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 3,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 4,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 5,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 6,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 7,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 8,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 9,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 10,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 11,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 12,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 13,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 14,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 15,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 16,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 17,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 18,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 19,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 20,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 21,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 22,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 23,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 24,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 25,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 26,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 27,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 28,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 29,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 30,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 31,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 32,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 33,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 34,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 35,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 36,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 37,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 38,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 39,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 40,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 80,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 120,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 160,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 200,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 240,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 280,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 320,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          }
+        ],
+        "tabIndex": {
+          "cmpHit": 25,
+          "cmpSill": 26,
+          "cmpSize": 27,
+          "cmpMin": 28,
+          "cmpTab": null
+        },
+        "stateAfterTab": {
+          "hidden": false,
+          "state": "window"
+        },
+        "names": {
+          "hit": "Studigo. Tap to play, stroke to pet. Arrow keys move him. His name opens his menu.",
+          "sill": "Studigo's menu",
+          "size": "Resize Studigo. Drag, or press to step through sizes.",
+          "min": "Send Studigo back to his seat",
+          "grip": "Drag to move Studigo",
+          "gripTabIndex": "-1"
+        },
+        "enter": {
+          "active": "",
+          "activeInCard": true,
+          "cards": 1,
+          "expanded": "true",
+          "cmpHidden": false
+        },
+        "enterOpened": true,
+        "escape": {
+          "cards": 0,
+          "active": "cmpSill"
+        },
+        "focusAfterEscape": "cmpSill",
+        "cardsBeforeMinimize": 0,
+        "windowYBeforeMinimize": 0,
+        "afterMinimize": {
+          "focus": "cmpTab",
+          "tabVisible": true
+        },
+        "summon": {
+          "windowY": 0,
+          "hidden": false
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A01",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3",
+      "status": "FAIL",
+      "note": "FAIL: Tab reaches cmpHit | FAIL: Tab reaches cmpSill | FAIL: Tab reaches cmpMin | FAIL: the bring-back tab restores him after a minimize (see summon: windowY and hidden) | ok: accessible names on the pet area, menu, resize and minimize controls | ok: the drag grip is not a Tab stop; arrow keys on the pet area are its keyboard path | ok: keyboard Enter opens the menu, Escape closes it and focus returns to the sill | ok: minimize shows the bring-back tab and moves focus to it",
+      "measured": {
+        "stateAtLoad": {
+          "hidden": false,
+          "state": "window"
+        },
+        "trail": [
+          {
+            "tab": 1,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 2,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 3,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 4,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 5,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 6,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 7,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 8,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 9,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 10,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 11,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 12,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 13,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 14,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 15,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 406
+          },
+          {
+            "tab": 16,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 406
+          },
+          {
+            "tab": 17,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 406
+          },
+          {
+            "tab": 18,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 406
+          },
+          {
+            "tab": 19,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 413
+          },
+          {
+            "tab": 20,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 865
+          },
+          {
+            "tab": 21,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 865
+          },
+          {
+            "tab": 22,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 865
+          },
+          {
+            "tab": 23,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 865
+          },
+          {
+            "tab": 24,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 25,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 26,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 27,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 28,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 29,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 30,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 31,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 32,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 33,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 34,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 35,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 36,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 37,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 38,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 39,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 40,
+            "hidden": false,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 80,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 120,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 0
+          },
+          {
+            "tab": 160,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 200,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 240,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 280,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 894
+          },
+          {
+            "tab": 320,
+            "hidden": true,
+            "surfaceScrollTop": 0,
+            "windowY": 865
+          }
+        ],
+        "tabIndex": {
+          "cmpHit": null,
+          "cmpSill": null,
+          "cmpMin": null,
+          "cmpTab": 24
+        },
+        "stateAfterTab": {
+          "hidden": true,
+          "state": "window"
+        },
+        "names": {
+          "hit": "Studigo. Tap to play, stroke to pet. Arrow keys move him. His name opens his menu.",
+          "sill": "Studigo's menu",
+          "size": "Resize Studigo. Drag, or press to step through sizes.",
+          "min": "Send Studigo back to his seat",
+          "grip": "Drag to move Studigo",
+          "gripTabIndex": "-1"
+        },
+        "seatedAfterTab": true,
+        "restoredFromSeat": true,
+        "enter": {
+          "active": "",
+          "activeInCard": true,
+          "cards": 1,
+          "expanded": "true",
+          "cmpHidden": false
+        },
+        "enterOpened": true,
+        "escape": {
+          "cards": 0,
+          "active": "cmpSill"
+        },
+        "focusAfterEscape": "cmpSill",
+        "cardsBeforeMinimize": 0,
+        "windowYBeforeMinimize": 865,
+        "afterMinimize": {
+          "focus": "cmpTab",
+          "tabVisible": true
+        },
+        "summon": {
+          "windowY": 865,
+          "hidden": true
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "float",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "A02",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz, reduced motion",
+      "status": "FAIL",
+      "note": "FAIL: no CSS hop: largest translate change 22 px over 37 samples | OPEN: rig-level motion is drawn in WebGL, so DOM checks cannot see mesh movement; owner visual check needed | ok: reduced-motion preference turns on calm mode | ok: no sparks or hearts during the celebration (max 0) | ok: body animation is off (none)",
+      "measured": {
+        "calm": true,
+        "maxCssMove": 22,
+        "maxSparks": 0,
+        "samples": 37,
+        "bodyAnimation": "none"
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A02",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz, reduced motion",
+      "status": "FAIL",
+      "note": "FAIL: no CSS hop: largest translate change 22 px over 38 samples | OPEN: rig-level motion is drawn in WebGL, so DOM checks cannot see mesh movement; owner visual check needed | ok: reduced-motion preference turns on calm mode | ok: no sparks or hearts during the celebration (max 0) | ok: body animation is off (none)",
+      "measured": {
+        "calm": true,
+        "maxCssMove": 22,
+        "maxSparks": 0,
+        "samples": 38,
+        "bodyAnimation": "none"
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "A03",
+      "viewport": "desktop",
+      "size": "720x450",
+      "room": "phase3 quiz, 200% zoom",
+      "status": "OPEN",
+      "note": "OPEN: companion is seated at this zoom; nothing to fit | ok: no horizontal overflow | ok: no companion element causes overflow | ok: strip mode at 200%: no horizontal overflow (0 px) | ok: strip mode at 200%: figure sits inside the strip and is not clipped above",
+      "measured": {
+        "viewport": "720x450 at device scale 2 (200% zoom equivalent)",
+        "overflow": {
+          "scrollWidth": 720,
+          "clientWidth": 720,
+          "culprits": []
+        },
+        "companion": {
+          "seated": true
+        },
+        "stripMode": {
+          "docOverflow": 0,
+          "inSlot": true,
+          "slotTop": 354,
+          "stageTop": 357,
+          "menuWidth": 92
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "720x450"
+      }
+    },
+    {
+      "id": "A03",
+      "viewport": "phone",
+      "size": "195x422",
+      "room": "phase3 quiz, 200% zoom",
+      "status": "OPEN",
+      "note": "OPEN: companion is seated at this zoom; nothing to fit | ok: no horizontal overflow | ok: no companion element causes overflow | ok: strip mode at 200%: no horizontal overflow (0 px) | ok: strip mode at 200%: figure sits inside the strip and is not clipped above",
+      "measured": {
+        "viewport": "195x422 at device scale 2 (200% zoom equivalent)",
+        "overflow": {
+          "scrollWidth": 195,
+          "clientWidth": 195,
+          "culprits": [
+            {
+              "tag": "DIV",
+              "cls": "topbarRight",
+              "inCompanion": false
+            },
+            {
+              "tag": "BUTTON",
+              "cls": "iconButton",
+              "inCompanion": false
+            }
+          ]
+        },
+        "companion": {
+          "seated": true
+        },
+        "stripMode": {
+          "docOverflow": 0,
+          "inSlot": true,
+          "slotTop": 267,
+          "stageTop": 269,
+          "menuWidth": 92
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "strip",
+        "prefHost": "strip",
+        "viewport": "195x422"
+      }
+    },
+    {
+      "id": "A04",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: headless Chromium kept this page visible (document.hidden=false), so the background freeze was not reproduced; the count of 115 is visible-state data | ok: no position jump after returning (0 px)",
+      "measured": {
+        "drawerBefore": "false",
+        "visibility": {
+          "hidden": false,
+          "state": "visible"
+        },
+        "rafCallsWhileHidden": 115,
+        "drawerAfter": "false",
+        "jumpPx": 0
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A05",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz, WebGL blocked",
+      "status": "PASS",
+      "note": "ok: no WebGL canvas: the rig is not drawn | ok: falls back to the drawn sprites (15 poses, no data-motion) | ok: no uncaught page error without WebGL",
+      "measured": {
+        "rigCanvases": 0,
+        "posesInDom": 15,
+        "motionAttr": false
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": false,
+        "rigCanvases": 0,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A05",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz, corrupt prefs",
+      "status": "PASS",
+      "note": "ok: room renders with one companion after corrupt prefs | ok: companion placed (window) | ok: no uncaught page error with corrupt prefs",
+      "measured": {
+        "prefsRaw": "{bad",
+        "companions": 1,
+        "state": "window"
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "corrupt",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "V01",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges silhouette, eye color, frills, vest and tail; the six moods are not automated | ok: rest screenshot captured",
+      "measured": {
+        "bytes": 26180
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "V01",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges silhouette, eye color, frills, vest and tail; the six moods are not automated | ok: rest screenshot captured",
+      "measured": {
+        "bytes": 28410
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "V02",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges eye tracking and head-turn smoothness; this is the known V02 versus drawn-head-turn conflict. Measured discrete drawing swaps: 16 | ok: eight sweep screenshots captured",
+      "measured": {
+        "shotBytes": {
+          "left": 26343,
+          "right": 26479,
+          "up": 26791,
+          "down": 27106,
+          "up-left": 27164,
+          "up-right": 28447,
+          "down-left": 30174,
+          "down-right": 29298
+        },
+        "discreteDrawingSwaps": 16
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "V05",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges anticipation, spring, tail lag and settle; timing is approximate because screenshot latency is included | ok: celebration captured at about 150 ms and 600 ms",
+      "measured": {
+        "shot150": {
+          "atMs": 163,
+          "bytes": 35057
+        },
+        "shot600": {
+          "atMs": 601,
+          "bytes": 34292
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "V05",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges anticipation, spring, tail lag and settle; timing is approximate because screenshot latency is included | ok: celebration captured at about 150 ms and 600 ms",
+      "measured": {
+        "shot150": {
+          "atMs": 158,
+          "bytes": 37367
+        },
+        "shot600": {
+          "atMs": 605,
+          "bytes": 35934
+        }
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "V06",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges that the pose is supportive, calm and not shaming | ok: wrong-answer pose captured",
+      "measured": {
+        "bytes": 26606
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "V06",
+      "viewport": "phone",
+      "size": "390x844",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges that the pose is supportive, calm and not shaming | ok: wrong-answer pose captured",
+      "measured": {
+        "bytes": 28839
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "390x844"
+      }
+    },
+    {
+      "id": "V07",
+      "viewport": "desktop",
+      "size": "1440x900",
+      "room": "phase3 quiz",
+      "status": "OPEN",
+      "note": "OPEN: owner judges the lean at 60 s and whether idle reads as calm; the 5-minute idle run is not done | ok: idle screenshot captured at 62 s",
+      "measured": {
+        "pose": "lean",
+        "posesOn": 1,
+        "bytes": 31848
+      },
+      "flags": {
+        "phase3Ui": true,
+        "motionAttr": true,
+        "rigCanvases": 1,
+        "placement": "float",
+        "prefHost": "null",
+        "viewport": "1440x900"
+      }
+    },
+    {
+      "id": "A06",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: owner. needs physical iPhone Safari and iPad Safari with pointer, touch, virtual keyboard, scroll and frame cost; not run",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "A07",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: owner. only headless Chromium (Playwright) ran here; desktop Safari, Firefox and Edge screenshots and motion capture are not run",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "A08",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: H-A (lc/11-measurements). frame time, blend time, memory and bundle size need measurement on real hardware; no budget was invented here",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "A09",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: H-F (lc/23-rollback). emergency-off and motion-off recovery are owned by the rollback task",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "V03",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: owner. blinks across all gaze directions need a visual judgement; not automated",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "V04",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: owner. tap/pet versus drag feel needs a person on a device; the drag mechanics are covered by UI01 only",
+      "measured": {},
+      "flags": null
+    },
+    {
+      "id": "V08",
+      "viewport": "n/a",
+      "size": "",
+      "room": "n/a",
+      "status": "OPEN",
+      "note": "owner: owner or H-A. 30/60/120 Hz consistency and tab-resume dt need hardware refresh rates; not run",
+      "measured": {},
+      "flags": null
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "design/living-companion/evidence/LC-21/UI04-phase3-seated-no-safe-corner.png",
+      "bytes": 14897,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-UI06-strip.png",
+      "bytes": 10234,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/phone-UI09-strip.png",
+      "bytes": 5198,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V01-rest.png",
+      "bytes": 26180,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/phone-V01-rest.png",
+      "bytes": 28410,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-left.png",
+      "bytes": 26343,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-right.png",
+      "bytes": 26479,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-up.png",
+      "bytes": 26791,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-down.png",
+      "bytes": 27106,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-up-left.png",
+      "bytes": 27164,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-up-right.png",
+      "bytes": 28447,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-down-left.png",
+      "bytes": 30174,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V02-down-right.png",
+      "bytes": 29298,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V05-celebrate-150ms.png",
+      "bytes": 35057,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V05-celebrate-600ms.png",
+      "bytes": 34292,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/phone-V05-celebrate-150ms.png",
+      "bytes": 37367,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/phone-V05-celebrate-600ms.png",
+      "bytes": 35934,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V06-wrong.png",
+      "bytes": 26606,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/phone-V06-wrong.png",
+      "bytes": 28839,
+      "overLimit": false
+    },
+    {
+      "file": "design/living-companion/evidence/LC-21/desktop-V07-idle-62s.png",
+      "bytes": 31848,
+      "overLimit": false
+    }
+  ]
+}
