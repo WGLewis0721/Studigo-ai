@@ -19,9 +19,11 @@ import { createRigRenderer } from "./rig-renderer";
 
 export { SPRITES };
 
+export type CompanionEventPayload = { level?: 1 | 2 };
+
 export type CompanionHandle = {
-  /** Something already happened in the room (an answer was graded, a card was rated). */
-  event(name: CompanionEvent): void;
+  /** Something already happened in the room (an answer was graded, a card was rated). A stall passes its level. */
+  event(name: CompanionEvent, payload?: CompanionEventPayload): void;
   /** True while Studigo is working on a reply. */
   thinking(on: boolean): void;
   setTone(tone: string): void;
@@ -933,7 +935,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }, { signal });
 
   return {
-    event(name) {
+    event(name, payload) {
       if (dead) return;
       activity();
       if (name === "correct") rt.streak += 1;
@@ -946,7 +948,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       const reaction = reactionFor(name, rt.streak);
       if (director) {
         // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
-        director.onEvent(name);
+        director.onEvent(name, payload);
         if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
         return;
       }
