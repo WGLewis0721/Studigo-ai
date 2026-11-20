@@ -1,4 +1,4 @@
-import { OUTFITS, type CompanionEvent, type Outfit } from "./companion-logic";
+import { OUTFIT_LABELS, OUTFITS, type CompanionEvent, type Outfit } from "./companion-logic";
 
 /* Studigo grows as the learner works (LC-DEC-033 to 035). Points come from study events the
    app has already committed, plus a room return. Growth never goes down. It unlocks cosmetic
@@ -33,6 +33,9 @@ export const EMPTY_GROWTH: Growth = { v: 1, points: 0, seen: [] };
 export type FlameStage = "warm" | "bright" | "blazing";
 export type UnlockKind = "outfit" | "trick" | "flame";
 export type Unlock = { id: string; at: number; kind: UnlockKind; value: string };
+
+/** How much bigger his flame is drawn in each flame stage. The drawn flame is 1. */
+export const FLAME_BOOST: Record<FlameStage, number> = { warm: 1, bright: 1.15, blazing: 1.3 };
 
 export const STARTER_TRICKS: readonly string[] = ["tailChase", "sitWag"];
 
@@ -145,4 +148,75 @@ export function parseGrowth(raw: string | null | undefined): Growth {
   } catch {
     return EMPTY_GROWTH;
   }
+}
+
+/** Child-facing names for the idle tricks, the starter pair included. */
+export const TRICK_LABELS: Record<string, string> = {
+  tailChase: "Tail chase", sitWag: "Sit and wag", sniff: "Sniff", doubleTake: "Double take", stretch: "Big stretch"
+};
+const FLAME_LABELS: Record<FlameStage, string> = { warm: "Warm flame", bright: "Bright flame", blazing: "Blazing flame" };
+
+/** An unlock's name as the learner sees it. */
+export function unlockLabel(unlock: Unlock): string {
+  if (unlock.kind === "outfit") return OUTFIT_LABELS[unlock.value as Outfit];
+  if (unlock.kind === "trick") return TRICK_LABELS[unlock.value];
+  return FLAME_LABELS[unlock.value as FlameStage];
+}
+
+/** "1 more study task", "3 more study tasks". */
+export function studyTasks(count: number): string {
+  return `${count} more study ${count === 1 ? "task" : "tasks"}`;
+}
+
+/** The saved outfit while growth has reached it; otherwise none, and the saved choice is kept for later. */
+export function wearableOutfit(points: number, saved: Outfit | null): Outfit | null {
+  return saved !== null && isUnlocked(points, `outfit:${saved}`) ? saved : null;
+}
+
+export type GrowthStatus = { unlocked: boolean; tasksLeft: number };
+export type GrowthTrack = GrowthStatus & { value: string; label: string };
+export type GrowthView = {
+  stage: number;
+  /** For example "Stage 3 of 7: Scholar". */
+  stageLabel: string;
+  /** How far from the last unlock to the next one, 0 to 1. Full once everything is unlocked. */
+  fill: number;
+  /** One child-facing line about what comes next. */
+  line: string;
+  flame: FlameStage;
+  outfits: Record<Outfit, GrowthStatus>;
+  tricks: GrowthTrack[];
+};
+
+function tasksUntil(id: string, points: number): number {
+  const at = UNLOCKS.find((item) => item.id === id)?.at ?? 0;
+  return Math.max(0, Math.ceil((at - points) / POINTS_PER_TASK));
+}
+
+function nextLine(unlock: Unlock, tasks: number): string {
+  const tail = unlock.kind === "outfit" ? `the ${unlockLabel(unlock)}!`
+    : unlock.kind === "trick" ? `he learns ${unlockLabel(unlock)}!`
+    : unlock.value === "bright" ? "his flame turns bright!" : "his flame blazes!";
+  return `${studyTasks(tasks)} until ${tail}`;
+}
+
+/** Everything the menu card and Room Settings show about growth, from the points alone. */
+export function growthView(points: number): GrowthView {
+  const index = stage(points);
+  const upcoming = nextUnlock(points);
+  let floor = 0;
+  for (const item of UNLOCKS) if (item.at <= points) floor = item.at;
+  const statusOf = (id: string): GrowthStatus => ({ unlocked: isUnlocked(points, id), tasksLeft: tasksUntil(id, points) });
+  const outfits = {} as Record<Outfit, GrowthStatus>;
+  for (const outfit of OUTFITS) outfits[outfit] = statusOf(`outfit:${outfit}`);
+  const trickNames = [...STARTER_TRICKS, ...UNLOCKS.filter((item) => item.kind === "trick").map((item) => item.value)];
+  return {
+    stage: index,
+    stageLabel: `Stage ${index + 1} of ${GROWTH_STAGES.length}: ${GROWTH_STAGES[index].name}`,
+    fill: upcoming ? (points - floor) / (upcoming.unlock.at - floor) : 1,
+    line: upcoming ? nextLine(upcoming.unlock, upcoming.remainingTasks) : "Everything is unlocked. He is a Legend!",
+    flame: flameStage(points),
+    outfits,
+    tricks: trickNames.map((trick) => ({ value: trick, label: TRICK_LABELS[trick], ...statusOf(`trick:${trick}`) }))
+  };
 }

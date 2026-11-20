@@ -124,6 +124,8 @@ export function createDirector(options: DirectorOptions) {
   const fading: Fading[] = [];
   const queue: BeatName[] = [];
   let nextVignette = VIGNETTE_AFTER_MS, lastVignette: BeatName | null = null, lastVignetteAt = -Infinity;
+  let tricks: readonly BeatName[] = VIGNETTES;
+  let flameBoost = 1;
 
   /* the face: a crossfade from wherever he was to the current target */
   let faceName: ExpressionName = "Sunny";
@@ -198,10 +200,10 @@ export function createDirector(options: DirectorOptions) {
       const stage = idleStage(idleMs);
       if (stage === "sleep") { asleep = true; pending.cues.push("sleep"); }
       else if (stage === "lean" && !leaned) { leaned = true; pending.cues.push("lean"); play("lean"); }
-      else if (!reduced && idleMs > VIGNETTE_AFTER_MS && t > nextVignette) {
+      else if (!reduced && tricks.length > 0 && idleMs > VIGNETTE_AFTER_MS && t > nextVignette) {
         // Livelier moods fidget more often.
         nextVignette = t + (14000 - moodTier(spark) * 2000) * (0.7 + random() * 0.6);
-        const choice = VIGNETTES[Math.floor(random() * VIGNETTES.length)];
+        const choice = tricks[Math.floor(random() * tricks.length)];
         if (choice !== lastVignette || t - lastVignetteAt > VIGNETTE_COOLDOWN_MS + BEATS[choice].ms) { lastVignette = choice; lastVignetteAt = t; play(choice); }
       }
     }
@@ -302,7 +304,7 @@ export function createDirector(options: DirectorOptions) {
     frame.mouthCurve = faceNow.mouthCurve; frame.mouthOpen = Math.max(0, Math.min(1, faceNow.mouthOpen + mouth.x));
     frame.cheek = faceNow.cheek;
     frame.frillL = frillL.x; frame.frillR = frillR.x; frame.tail = tailBase.x; frame.tailTip = tailTip.x;
-    frame.flame = faceNow.flame * flicker * (0.9 + moodTier(spark) * 0.05);
+    frame.flame = faceNow.flame * flicker * (0.9 + moodTier(spark) * 0.05) * flameBoost;
     frame.breath = breathe; frame.hop = tr.hop; frame.dash = tr.dash; frame.shiver = tr.shiver; frame.squash = tr.squash; frame.spin = tr.spin;
     frame.spark = spark; frame.tier = moodTier(spark);
   }
@@ -353,6 +355,10 @@ export function createDirector(options: DirectorOptions) {
     },
     /** 0..1 from a MouthDriver. */
     setMouth(value: number) { mouthTarget = Math.max(0, Math.min(1, value)); },
+    /** Idle moments pick only from the tricks named here, and only the names that are tricks count. */
+    setTricks(names: readonly string[]) { tricks = VIGNETTES.filter((name) => names.includes(name)); },
+    /** Scales the drawn flame: 1 is its drawn size, kept between half and twice. */
+    setFlameBoost(value: number) { flameBoost = Number.isFinite(value) ? Math.min(2, Math.max(0.5, value)) : 1; },
     setReducedMotion(on: boolean) { reduced = on; },
     /** Hidden tabs stop the clock. On return he carries on from where he was, with no jump. */
     setVisible(on: boolean) { if (on && !visible) { lastNow = null; carry = 0; } visible = on; },
