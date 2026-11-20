@@ -2,7 +2,7 @@
 
 **Purpose:** retrieval-first source of truth for any LLM/agent working on Studigo's animated companion. Retrieve the relevant page(s) below, cite their stable IDs (e.g. `LC-DEC-004`), and verify live repo state before acting. Live code on `main` always beats these docs.
 
-**Status:** PLANNED, NOT IMPLEMENTED. Track renamed from "Phase 4" to "Living Companion (LC)" because `docs/ROADMAP.md` Phase 4 means "Reliability, safety, cost" (LC-DEC-001).
+**Status:** IN PROGRESS. Motion director, mood meter, prefs v2, MouthDriver, WebGL mesh rig renderer (behind `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION`), dock, strip, outfits and Calm mode are on the `claude/studigo-living-companion-upgrade-ee0706` branch; QA, renderer sign-off and voice are open. See [STATUS_2026-11-20.md](STATUS_2026-11-20.md). Track renamed from "Phase 4" to "Living Companion (LC)" because `docs/ROADMAP.md` Phase 4 means "Reliability, safety, cost" (LC-DEC-001).
 
 **Branch note:** the *original research branch* (`research/phase4-coucou-rea-behavior-spec`, PR #164) has unrelated history and must not be merged into `main` directly. This **foundation branch** (`feat/studigo-v2-phase4-animation-foundation`) was created from `main` and copied the LC knowledge-base content. Subsequent implementation task branches follow LC-DEC-005 and start from current `main`.
 
@@ -23,6 +23,8 @@
 | [COUCOU_REA_BEHAVIOR_EXTRACTION.md](COUCOU_REA_BEHAVIOR_EXTRACTION.md) | Coucou open-source behavior numbers (springs, idle, dock) | Coucou, REA, spring, extraction |
 | [assets/ASSET_MANIFEST.md](assets/ASSET_MANIFEST.md) | Assets, outfits, license rules | asset, outfit, license, art |
 | [AGENT_RUNBOOK.md](AGENT_RUNBOOK.md) | Loop an agent follows until v1 is done | runbook, agent, workflow, stop conditions |
+| [STATUS_2026-11-20.md](STATUS_2026-11-20.md) | Where the work stands per plan step, the renderer as built, Rive licence findings, the new video reference, remaining work split owner / Haiku | status, remaining, Rive, mesh rig, Haiku, video |
+| [LOCAL_CONTINUATION_PROMPT.md](LOCAL_CONTINUATION_PROMPT.md) | Paste-ready prompt: sync the laptop, re-plan, then work through Haiku sessions at max effort | handoff, prompt, local, Haiku, orchestrator |
 | [HAIKU_HANDOFF.md](HAIKU_HANDOFF.md) | Local repo groundwork, exact historical handoff ZIP upload, reference mirror | local, Haiku, setup, archive, SHA256, hydration |
 | [manifests/reference-sources.json](manifests/reference-sources.json) | SHA-pinned code references, approved concept URLs and archive checksum | manifest, references, videos, Coucou, REA, provenance |
 | [../../implementation/LIVING_COMPANION_V1_PLAN.md](../../implementation/LIVING_COMPANION_V1_PLAN.md) | Executable plan: definition of done, tasks LC-0..LC-10, estimates | plan, task, LC-0, LC-10, acceptance |

@@ -4,6 +4,8 @@ Status: DRAFT, revised 2026-11-15. Replaces the table-based plan on the foundati
 
 How to read this: do the steps in order. Each step has a **Done when** line. Steps marked **HUMAN** need the owner. Steps marked **STOP** end the run until the owner answers.
 
+> **Update 2026-11-20:** steps 3 to 9, 14 to 16 and 18 to 19 have landed on `claude/studigo-living-companion-upgrade-ee0706`; see `design/living-companion/STATUS_2026-11-20.md` for the current state and `design/living-companion/LOCAL_CONTINUATION_PROMPT.md` for the next run. The notes below are the 2026-11-16 snapshot.
+
 ## Start here (Fable handoff, 2026-11-16)
 
 **Visual style is 2.5D** (LC-DEC-021): layered 2D art with depth cues such as perspective head yaw and pitch. Not full 3D. Coucou is 2D (LC-DEC-022). Ignore the "rigged 3D Studigo" line in `design/companion-demo/README.md` (LC-DEC-023).
