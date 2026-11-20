@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { COMPANION_EVENTS, WINDOW_POSES, type CompanionEvent, type WindowPose } from "./companion-logic";
-import { BEATS, CALM_PARTICLE_CAP, type BeatDef, type BeatName } from "./companion-motion/beats";
+import { BEATS, CALM_PARTICLE_CAP, VIGNETTES, type BeatDef, type BeatName } from "./companion-motion/beats";
 import { createDirector, type MotionFrame } from "./companion-motion/director";
 import { EXPRESSION_NAMES } from "./companion-motion/expressions";
 
@@ -400,4 +400,42 @@ test("calm mode shows the same drawings; only the motion is gentler", () => {
 test("the idle glance's sway is one gentle sway: no tickle, no face change", () => {
   assert.deepEqual(BEATS.sway.moves.map((move) => [move.kind, move.amount]), [["sway", 0.5]]);
   assert.deepEqual(BEATS.sway.faces.map((key) => key.face), ["Sunny"]);
+});
+
+/** Idle for almost three minutes (before he dozes), and the vignettes that came up. */
+function idleVignettes(director: ReturnType<typeof createDirector>): Set<string> {
+  const seen = new Set<string>();
+  for (let now = 0; now <= 170_000; now += 50) {
+    const beat = director.advance(now).beat;
+    if (beat && (VIGNETTES as readonly string[]).includes(beat)) seen.add(beat);
+  }
+  return seen;
+}
+
+test("growth decides which idle tricks he picks: only the ones he knows, and only real tricks", () => {
+  const director = createDirector({ random: seeded(40) });
+  director.setTricks(["sitWag", "nope"]);
+  const seen = idleVignettes(director);
+  assert.ok(seen.has("sitWag"), "the one trick he knows never came up");
+  assert.deepEqual([...seen], ["sitWag"]);
+});
+
+test("with no idle tricks yet, an idle moment plays no vignette at all", () => {
+  const director = createDirector({ random: seeded(40) });
+  director.setTricks([]);
+  assert.equal(idleVignettes(director).size, 0);
+});
+
+test("the flame boost scales the drawn flame, stays between half and twice, and defaults to the drawn size", () => {
+  const flameWith = (boost?: number) => {
+    const director = createDirector({ random: seeded(41) });
+    if (boost !== undefined) director.setFlameBoost(boost);
+    return run(director, 120, 0, 500).flame;
+  };
+  const drawn = flameWith();
+  assert.equal(flameWith(1), drawn);
+  assert.ok(Math.abs(flameWith(1.15) - drawn * 1.15) < 1e-9, "bright flame is not 1.15 times the drawn flame");
+  assert.ok(Math.abs(flameWith(1.3) - drawn * 1.3) < 1e-9, "blazing flame is not 1.3 times the drawn flame");
+  assert.equal(flameWith(9), flameWith(2));
+  assert.equal(flameWith(Number.NaN), drawn);
 });

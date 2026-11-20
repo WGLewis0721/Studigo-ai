@@ -1,8 +1,10 @@
 import {
   LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, WINDOW, chooseDock, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, idleStage, nudgePos, parseOutfit, pointFromPos, posFromPoint, reactionFor, readingPose,
   roomFor, scaleFromDrag, sizeAt, spot,
-  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
+  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Outfit, type Rect, type WindowPose
 } from "@/lib/companion-logic";
+import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
+import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
 import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
@@ -26,6 +28,8 @@ export type CompanionHandle = {
   event(name: CompanionEvent, payload?: CompanionEventPayload): void;
   /** True while Studigo is working on a reply. */
   thinking(on: boolean): void;
+  /** Dev and QA only (window.studigoCompanion): adds growth points as if study tasks had been completed. */
+  grow(points: number): void;
   setTone(tone: string): void;
   setPrefs(prefs: CompanionPrefs): void;
   /** Living companion only: play one of his beats by name. For the dev hook and demos. */
@@ -66,6 +70,35 @@ const FX_COLORS = {
   spark: ["var(--dandelion)", "var(--kiwi)", "var(--tangerine)", "var(--teal)"],
   zzz: ["var(--indigo)"]
 } as const;
+const BADGE_MS = 3000;
+const UNLOCK_ICON: Record<UnlockKind, string> = {
+  outfit: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 11.5c0-1.6 2.5-2.6 6-2.6s6 1 6 2.6V13H2v-1.5Zm3-3.8C5 4.9 6.3 2.5 8 2.5s3 2.4 3 5.2c-1-.6-2-.9-3-.9s-2 .3-3 .9Z"/></svg>',
+  trick: SHAPES.spark,
+  flame: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1c.9 2.8 3.9 4.4 3.9 8.2A3.9 3.9 0 0 1 4.1 9.2c0-1.7.8-2.9 1.7-3.8.1 1.1.6 1.9 1.3 2.4C7 6.4 7.4 3.6 8 1Z"/></svg>'
+};
+const LOCK_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.4" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+const CHECK_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2 5 8.6l4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* The menu card's growth sections. Their words come from growthView, so Room Settings shows the same. */
+function growingHtml(view: GrowthView): string {
+  const pct = Math.round(view.fill * 100);
+  return `<section class="cmpGrow" aria-labelledby="cmpGrowTitle">
+          <div class="cmpGrowHead"><strong id="cmpGrowTitle">Growing</strong><span>${view.stageLabel}</span></div>
+          <div class="cmpBar" role="progressbar" aria-label="Progress to the next unlock" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
+          <small>${view.line}</small>
+          <div class="cmpTricks"><strong id="cmpTricksTitle">Tricks</strong>
+            <ul aria-labelledby="cmpTricksTitle">${view.tricks.map((trick) => `<li data-known="${trick.unlocked}">${trick.unlocked ? CHECK_ICON : LOCK_ICON}<span>${trick.label}</span><small>${trick.unlocked ? "He knows this one" : `Unlocks after ${studyTasks(trick.tasksLeft)}`}</small></li>`).join("")}</ul>
+          </div>
+        </section>`;
+}
+
+function outfitsHtml(view: GrowthView, worn: Outfit | null): string {
+  const option = (value: string, label: string, unlocked: boolean, tasksLeft: number, checked: boolean) => `<label class="cmpOutfitOpt${unlocked ? "" : " locked"}"><input type="radio" name="cmpOutfit" value="${value}" data-set="outfit"${checked ? " checked" : ""}${unlocked ? "" : " disabled"}><span>${label}</span>${unlocked ? "" : `<small>${LOCK_ICON}Unlocks after ${studyTasks(tasksLeft)}</small>`}</label>`;
+  return `<fieldset class="cmpOutfits"><legend><b>Outfit</b></legend>
+          <small>Cosmetic only. It never changes his progress.</small>
+          <div class="cmpOutfitList">${option("", "None", true, 0, worn === null)}${OUTFITS.map((outfit) => option(outfit, OUTFIT_LABELS[outfit], view.outfits[outfit].unlocked, view.outfits[outfit].tasksLeft, worn === outfit)).join("")}</div>
+        </fieldset>`;
+}
 
 const now = () => performance.now();
 const clamp = (value: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, value));
@@ -89,7 +122,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const lifetime = new AbortController();
   const { signal } = lifetime;
   let dead = false;
-  let prefs = options.prefs;
+  let growth: Growth = readGrowth();
+  /** The outfit the learner picked. He wears it only while growth has reached it, and it comes back if growth does. */
+  let picked: Outfit | null = options.prefs.outfit;
+  const wearing = (next: CompanionPrefs): CompanionPrefs => ({ ...next, outfit: wearableOutfit(growth.points, picked) });
+  let prefs = wearing(options.prefs);
+  /** True while an event is being answered: its reaction plays first, then any unlock it earned. */
+  let quiet = false;
+  let unsubscribeGrowth = () => {};
   let calm = systemReduced || prefs.calm;
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
@@ -127,6 +167,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   host.innerHTML = `
     <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br"${director ? " data-motion" : ""}>
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
+      <span class="cmpNew" role="status"></span>
       <div class="cmpWin">
         <div class="cmpScale">
           <div class="cmpScreen"></div>
@@ -144,6 +185,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     <button class="cmpTab" type="button" hidden aria-label="Bring Studigo back out"><span class="led"></span><svg width="10" height="14" viewBox="0 0 10 14" aria-hidden="true"><path d="M7 2 2.5 7 7 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   const el = host.querySelector<HTMLElement>(".cmp")!;
   const bubble = host.querySelector<HTMLButtonElement>(".cmpBubble")!;
+  const badge = host.querySelector<HTMLElement>(".cmpNew")!;
   const fx = host.querySelector<HTMLElement>(".cmpFx")!;
   const tab = host.querySelector<HTMLButtonElement>(".cmpTab")!;
   const hit = host.querySelector<HTMLElement>(".cmpHit")!;
@@ -470,6 +512,56 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     }
   }
 
+  /* ---------- growth: what he has earned on this device ---------- */
+  /** Unlocks the badge is showing now, so one is never celebrated twice while it shows. */
+  const showing = new Set<string>();
+  let badgeBatch = 0;
+  /** Re-reads the device's growth. A new unlock is celebrated at once, unless an event is being answered (then after it). */
+  function refreshGrowth() {
+    if (dead) return;
+    growth = readGrowth();
+    prefs = wearing(prefs);
+    applyGrowth();
+    if (!quiet) celebrate();
+  }
+  function applyGrowth() {
+    director?.setTricks(availableTricks(growth.points));
+    director?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
+    el.dataset.stage = String(growthStage(growth.points));
+    applyOutfit();
+  }
+  function recordGrowth(name: CompanionEvent) {
+    const before = readGrowth();
+    const after = addGrowth(before, name);
+    if (after !== before) writeGrowth(after);
+  }
+  /**
+   * A newly reached unlock: a celebration, sparks and a badge on his window. The line
+   * is spoken only when speech is on. Seated, he waits and shows it when he comes out.
+   * The unlock counts as seen once its badge has had its time.
+   */
+  function celebrate() {
+    if (dead || !live()) return;
+    const fresh = newlyUnlocked(growth).filter((id) => !showing.has(id));
+    if (fresh.length === 0) return;
+    fresh.forEach((id) => showing.add(id));
+    const items = UNLOCKS.filter((item) => fresh.includes(item.id));
+    if (director) director.play("celebrate"); else react("celebrate", 2300);
+    burst("spark", 12);
+    const text = items.length === 1 ? `New: ${unlockLabel(items[0])}!` : `${items.length} new things unlocked!`;
+    badge.dataset.kind = items[0].kind;
+    badge.innerHTML = `${UNLOCK_ICON[items[0].kind]}<span>${items.length === 1 ? "New!" : `${items.length} new!`}</span><span class="cmpNewSr">${text}</span>`;
+    badge.classList.remove("on"); void badge.offsetWidth; badge.classList.add("on");
+    if (prefs.speech) say([text]);
+    const batch = ++badgeBatch;
+    later(() => {
+      fresh.forEach((id) => showing.delete(id));
+      const current = readGrowth(), seen = markSeen(current, fresh);
+      if (seen !== current) writeGrowth(seen);
+      if (batch === badgeBatch) badge.classList.remove("on");
+    }, BADGE_MS);
+  }
+
   /* ---------- idle: a character waiting for input ---------- */
   function activity() {
     rt.lastInput = now(); rt.leaned = false;
@@ -665,7 +757,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- his seat: the header avatar he goes back to when dismissed ---------- */
   let seatTimer = 0;
   function changePrefs(patch: Partial<CompanionPrefs>) {
-    prefs = { ...prefs, ...patch };
+    if ("outfit" in patch) picked = patch.outfit ?? null;
+    prefs = wearing({ ...prefs, ...patch });
     applyCalm();
     if ("outfit" in patch) applyOutfit();
     options.onPrefs(patch);
@@ -698,6 +791,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       ws.dataset.seat = "empty"; el.dataset.state = "window"; activity(); place();
     }
     syncMotion();
+    celebrate();
   }
   /** The window appears empty; he lands in it a moment later (the end of his leap from Home). */
   function arrive() {
@@ -706,7 +800,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     ws.dataset.seat = "empty";
     el.dataset.empty = ""; el.classList.add("noMove"); el.dataset.state = "window";
     place(); void el.offsetWidth; el.classList.remove("noMove");
-    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); }, calm ? 0 : 520);
+    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); celebrate(); }, calm ? 0 : 520);
   }
   host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => {
     rt.userSummoned = false;
@@ -733,7 +827,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function openCard() {
     closeCard();
-    const outfitOptions = `<option value=""${prefs.outfit === null ? " selected" : ""}>None</option>${OUTFITS.map((outfit) => `<option value="${outfit}"${prefs.outfit === outfit ? " selected" : ""}>${OUTFIT_LABELS[outfit]}</option>`).join("")}`;
+    const view = growthView(growth.points);
     const wrap = document.createElement("div");
     wrap.className = "cmpCard";
     wrap.innerHTML = `
@@ -744,6 +838,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
           <button class="cmpPlay" type="button" data-card="play" aria-label="Studigo. Tap to play."><img src="${SPRITES}/full/center.webp" alt=""></button>
           <div class="cmpAbout"><strong>He studies with you.</strong><p>He looks where you tap, reads along while you type, and turns see-through when you scroll. He never changes your mastery. Only your answers do.</p></div>
         </div>
+        ${growingHtml(view)}
         ${prefs.host === "strip" ? "" : `<label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>`}
         <label class="cmpToggle"><b>Speech</b><small>A short line now and then. Off until you turn it on.</small><input type="checkbox" data-set="speech" ${prefs.speech ? "checked" : ""}></label>
         <label class="cmpToggle"><b>Fade while I scroll</b><small>He turns see-through so nothing under him is hidden.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
@@ -756,7 +851,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
             <button type="button" data-host-choice="strip" aria-pressed="${prefs.host === "strip"}">Strip under the menu</button>
           </div>
         </div>
-        <label class="cmpChoice"><b>Outfit</b><small>Cosmetic only. It never changes his progress.</small><select data-set="outfit" aria-label="Studigo's outfit">${outfitOptions}</select></label>
+        ${outfitsHtml(view, prefs.outfit)}
         <div class="cmpCardActions">
           ${prefs.host === "strip" ? "" : `<button class="ghostButton" type="button" data-card="move">Move to the other side</button>`}
           <button class="ghostButton" type="button" data-card="seat">Send him back to his seat</button>
@@ -787,7 +882,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     wrap.addEventListener("change", (event) => {
       const input = event.target as HTMLInputElement, key = input.dataset.set;
       if (key === "speech" || key === "tuck" || key === "calm") changePrefs({ [key]: input.checked });
-      if (key === "outfit") changePrefs({ outfit: parseOutfit((event.target as HTMLSelectElement).value) });
+      if (key === "outfit" && (input.value === "" || wearableOutfit(growth.points, parseOutfit(input.value)) !== null)) changePrefs({ outfit: parseOutfit(input.value) });
     });
     wrap.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); closeCard(); } });
     host.appendChild(wrap);
@@ -909,8 +1004,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
   applyCalm();
   applyScale(prefs.scale, false);
+  applyGrowth();
   if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
   syncMotion();
+  unsubscribeGrowth = subscribeGrowth(refreshGrowth);
 
   /* A lesson opened or a guide became ready. One brief nod, or nothing if he is minimized or motion is reduced. */
   const quietSeen = new Set<string>();
@@ -934,27 +1031,40 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     detail.decision = acknowledgeQuiet(detail);
   }, { signal });
 
+  /** How he reacts to a committed event, whether he is out or seated. */
+  function answer(name: CompanionEvent, payload?: CompanionEventPayload) {
+    activity();
+    if (name === "correct") rt.streak += 1;
+    else if (name === "wrong" || name === "blindspot") rt.streak = 0;
+    if (rt.mode === "seat") {
+      // From his seat he still notices: the avatar gives a small bounce.
+      if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
+      return;
+    }
+    const reaction = reactionFor(name, rt.streak);
+    if (director) {
+      // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
+      director.onEvent(name, payload);
+      if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+      return;
+    }
+    react(reaction.pose, reaction.ms);
+    if (reaction.sparks) burst("spark", reaction.sparks);
+    if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+  }
+
   return {
     event(name, payload) {
       if (dead) return;
-      activity();
-      if (name === "correct") rt.streak += 1;
-      else if (name === "wrong" || name === "blindspot") rt.streak = 0;
-      if (rt.mode === "seat") {
-        // From his seat he still notices: the avatar gives a small bounce.
-        if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
-        return;
-      }
-      const reaction = reactionFor(name, rt.streak);
-      if (director) {
-        // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
-        director.onEvent(name, payload);
-        if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
-        return;
-      }
-      react(reaction.pose, reaction.ms);
-      if (reaction.sparks) burst("spark", reaction.sparks);
-      if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+      quiet = true;
+      try { recordGrowth(name); } finally { quiet = false; }
+      answer(name, payload);
+      celebrate();
+    },
+    grow(points) {
+      if (dead) return;
+      const before = readGrowth(), gained = Math.max(0, Math.floor(points));
+      if (gained > 0) writeGrowth({ ...before, points: Math.min(GROWTH_MAX, before.points + gained) });
     },
     thinking(on) {
       if (dead || rt.thinking === on) return;
@@ -975,10 +1085,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     },
     setPrefs(next) {
       if (dead) return;
-      const outfitChanged = next.outfit !== prefs.outfit;
-      prefs = next;
+      picked = next.outfit;
+      prefs = wearing(next);
       applyCalm();
-      if (outfitChanged) applyOutfit();
+      applyOutfit();
       if (next.seated) rt.userSummoned = false;
       if (!rt.drag) rt.dock = next.dock;
       if (!next.speech) bubble.hidden = true;
@@ -988,6 +1098,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     play(beat) { if (!dead) director?.play(beat); },
     destroy() {
       dead = true;
+      unsubscribeGrowth();
       lifetime.abort();
       window.clearInterval(heartbeat);
       window.cancelAnimationFrame(motionFrame);
