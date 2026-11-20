@@ -110,6 +110,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | RAG evaluation | `evals/rag/` | Grounding, abstention, isolation, prompt-injection, latency/cost benchmark |
 | ML experiments | `evals/ml/` | Advisory BKT/calibration work |
 | Security tests | `tests/database-security.test.mjs` | Database/tenant boundary regression |
+| Living Companion (animated Studigo) | `apps/web/components/companion/` (engine, `rig-renderer.ts` WebGL rig, `renderers.ts` sprite fallback), `apps/web/lib/companion-motion/` (pure motion director), `apps/web/lib/companion-growth*.ts`, `design/living-companion/` | Presentation only: reacts to committed learning events, grows cosmetically on the device. Flags `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION` (on unless `off`) and `NEXT_PUBLIC_STUDIGO_COMPANION=off`. Never writes grades, mastery, progress or evidence |
 | Game prototype | `prototypes/moon-road/` | Separate game-first prototype |
 
 ## Where to make common changes
