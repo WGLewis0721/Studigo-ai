@@ -27,6 +27,9 @@
 | [LOCAL_CONTINUATION_PROMPT.md](LOCAL_CONTINUATION_PROMPT.md) | Paste-ready prompt: sync the laptop, re-plan, then work through Haiku sessions at max effort | handoff, prompt, local, Haiku, orchestrator |
 | [HAIKU_HANDOFF.md](HAIKU_HANDOFF.md) | Local repo groundwork, exact historical handoff ZIP upload, reference mirror | local, Haiku, setup, archive, SHA256, hydration |
 | [manifests/reference-sources.json](manifests/reference-sources.json) | SHA-pinned code references, approved concept URLs and archive checksum | manifest, references, videos, Coucou, REA, provenance |
+| [QA_RELEASE_ACCEPTANCE.md](QA_RELEASE_ACCEPTANCE.md) | QA rows V01-V08, UI01-UI10, L01-L07, A01-A09 and the release gate (restored from the historical handoff) | QA, acceptance, matrix, release gate, V02 |
+| [evidence/LC-1.md](evidence/LC-1.md) | Laptop baseline, mesh-rig measurements and the LC-1 recommendation | baseline, measurements, frame time, recommendation |
+| [evidence/rive-licensing-notes.md](evidence/rive-licensing-notes.md) | Rive plans, `.riv` export and licensing research (unverified items marked) | Rive, license, pricing, export, splash |
 | [../../implementation/LIVING_COMPANION_V1_PLAN.md](../../implementation/LIVING_COMPANION_V1_PLAN.md) | Executable plan: definition of done, tasks LC-0..LC-10, estimates | plan, task, LC-0, LC-10, acceptance |
 
 ## Retrieval rules
