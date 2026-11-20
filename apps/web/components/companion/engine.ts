@@ -1,7 +1,7 @@
 import {
-  LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, WINDOW, chooseDock, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, idleStage, nudgePos, parseOutfit, pointFromPos, posFromPoint, reactionFor, readingPose,
+  LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, WINDOW, chooseDock, clearOf, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, dockKeepingFocus, idleStage, nudgePos, parseOutfit, pointFromPos, posFromPoint, reactionFor, readingPose,
   roomFor, scaleFromDrag, sizeAt, spot,
-  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Outfit, type Rect, type WindowPose
+  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Outfit, type Rect, type Size, type WindowPose
 } from "@/lib/companion-logic";
 import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
 import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
@@ -362,9 +362,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       });
     }
     // A spot he was moved to holds, as a corner does, unless it covers a control the page cannot scroll clear.
-    // Without the scroll rule, scrolling would flip him between spot and corner. Phase 3 rooms and chat rows keep their corners.
+    // Without the scroll rule, scrolling would flip him between spot and corner. Phase 3 rooms hold it only while it
+    // clears every control (LC-DEC-041), and chat rows keep their corners.
     let free: { x: number; y: number; dock: Dock } | null = null;
-    if (prefs.pos && !safeRoom && !a.inRow) {
+    if (prefs.pos && !a.inRow) {
       const floatDock = grow?.dock ?? dockForPos(prefs.pos, a, size);
       const from = grow
         ? { x: floatDock[1] === "r" ? grow.x - size.w : grow.x, y: floatDock[0] === "b" ? grow.y - size.h : grow.y }
@@ -375,7 +376,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         dock: floatDock
       };
     }
-    if (free && (rt.drag || canScrollClear() || !coversControl(free, targets, size))) {
+    const holds = safeRoom
+      ? free !== null && clearOf(free, targets, size)
+      : free !== null && (canScrollClear() || !coversControl(free, targets, size));
+    if (free && (rt.drag || holds)) {
       floating = true;
       rt.autoSeated = false;
       positionSeatTab();
@@ -387,9 +391,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       return;
     }
     const preferred = grow?.dock ?? (prefs.pos && !a.inRow ? dockForPos(prefs.pos, a, size) : rt.dock);
-    const dock = safeRoom && !rt.drag && !rt.userSummoned
-      ? controlSafeDock(preferred, a, targets, size)
-      : rt.drag ? rt.dock : chooseDock(preferred, a, targets, canScrollClear(), size);
+    const dock = rt.drag ? rt.dock
+      : !safeRoom || rt.userSummoned ? chooseDock(preferred, a, targets, canScrollClear(), size)
+      : controlSafeDock(preferred, a, targets, size) ?? keyboardDock(preferred, a, targets, size);
     if (dock === null) {
       // No safe corner. Temporarily seat him, but expose his normal edge tab
       // even if the header has retracted: the learner can always summon him.
@@ -414,6 +418,15 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       // thread rather than adding space to the surrounding page.
       makeRoom(0, 0, dock[0] === "b" ? H + 8 : 0, 0);
     } else makeRoom(room.right, room.left, room.thread, room.page);
+  }
+  /** While the learner works the room from the keyboard, a scroll never seats him: the corner keeps the control in focus clear. Null when focus is elsewhere, so normal placement applies. */
+  function keyboardDock(preferred: Dock, a: Area, targets: Rect[], size: Size): Dock | null {
+    const focus = document.activeElement;
+    if (!(focus instanceof HTMLElement) || !ws.contains(focus)) return null;
+    if (host.contains(focus)) return dockKeepingFocus(preferred, a, targets, null, size);
+    if (!focus.matches(":focus-visible")) return null;
+    const r = focus.getBoundingClientRect();
+    return dockKeepingFocus(preferred, a, targets, r.width > 0 ? r : null, size);
   }
   /** The strip's slot in this room's header, if the room has one. */
   function stripSlot(): HTMLElement | null { return ws.querySelector<HTMLElement>("[data-companion-strip]"); }
@@ -834,9 +847,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true });
   }, { signal });
   tab.addEventListener("click", () => {
-    // Only an explicit learner request may relax the no-overlap fallback when
-    // every automatic corner is blocked. Drag/seat remain available afterward.
-    rt.userSummoned = rt.autoSeated;
+    // An explicit learner request brings him out even where every automatic corner is blocked.
+    // He stays out, at the least-covering spot, until the page or tone changes.
+    rt.userSummoned = true;
     rt.autoSeated = false;
     changePrefs({ seated: false }); sync();
   }, { signal });
@@ -971,6 +984,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   // He rides along whenever the page under him changes: a new page, the keyboard, a resize.
   window.addEventListener("resize", schedulePlace, { signal });
   window.addEventListener("scroll", schedulePlace, { signal, passive: true });
+  // Focus moving through the room re-checks his spot, so he never covers the control in focus. Leaving his window resumes normal placement.
+  ws.addEventListener("focusin", schedulePlace, { signal, passive: true });
+  ws.addEventListener("focusout", schedulePlace, { signal, passive: true });
   // Internal page scrollers do not bubble scroll events. Only the new non-chat
   // collision policy needs to follow them; leave Coach's locked geometry alone.
   ws.addEventListener("scroll", () => {

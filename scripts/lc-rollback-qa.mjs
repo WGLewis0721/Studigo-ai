@@ -279,7 +279,7 @@ async function menuDefaults(page) {
       tuck: sheet.querySelector('input[data-set="tuck"]').checked,
       calm: sheet.querySelector('input[data-set="calm"]').checked,
       host: sheet.querySelector('button[data-host-choice="float"]').getAttribute("aria-pressed"),
-      outfit: sheet.querySelector('select[data-set="outfit"]').value,
+      outfit: sheet.querySelector('input[data-set="outfit"]:checked')?.value ?? "none",
     };
   });
   await page.locator(".cmpSheetHead button[data-card='close']").click({ timeout: 5_000 });

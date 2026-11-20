@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   COMPANION_EVENTS, DEFAULT_PREFS, LEAN_AFTER_MS, LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, SLEEP_AFTER_MS, WINDOW,
-  chooseDock, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, dockFromDrop, idleStage, nudgePos, parseOutfit, parsePrefs, pointFromPos, posFromPoint, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
+  chooseDock, clearOf, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, dockFromDrop, dockKeepingFocus, idleStage, nudgePos, parseOutfit, parsePrefs, pointFromPos, posFromPoint, reactionFor, readingPose, roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionPrefs, type Rect
 } from "./companion-logic";
 
@@ -173,6 +173,16 @@ test("the tab that calls him back stays under the finger while it is pressed", (
   assert.ok(!/transform\s*:/.test(rule), "the tab must not be placed with a transform");
 });
 
+test("calm keeps the lean and the poke drawings without a vertical jump", () => {
+  const css = readFileSync(join(here, "../components/companion/companion.css"), "utf8");
+  for (const pose of ["lean", "poke"]) {
+    const rule = new RegExp(`\\.cmp\\[data-calm\\] \\.cmpPose\\[data-pose="${pose}"\\] \\{([^}]*)\\}`).exec(css)?.[1] ?? "";
+    assert.ok(rule, `calm has a ${pose} rule`);
+    assert.doesNotMatch(rule, /translate/, `${pose} has no translation in calm`);
+    assert.match(rule, /transition:[^;]*transform \.3s/, `${pose} eases its scale in calm`);
+  }
+});
+
 test("he never changes mastery: nothing in the companion talks to the network or to practice state", () => {
   const files = ["companion-logic.ts", "companion-prefs.ts", "../components/companion/engine.ts", "../components/companion/stage.tsx", "../components/companion/companion.tsx", "../components/companion/figure.tsx"];
   for (const file of files) {
@@ -201,6 +211,22 @@ test("Phase 3 seats temporarily when all corners are blocked, then restores the 
   assert.equal(controlSafeDock("br", { ...a, right: a.left + WINDOW.w - 1 }, []), null);
   assert.equal(controlSafeDock("br", { ...a, bottom: a.top + WINDOW.h - 1 }, []), null);
   assert.equal(controlSafeDock("br", area(true), controls), "br", "Coach keeps its reserved composer geometry");
+});
+
+test("a Phase 3 spot the learner chose holds only while it clears every control, with the same 8 px of air as a corner", () => {
+  const at = { x: 100, y: 300 };
+  assert.equal(clearOf(at, []), true);
+  const beside = (gap: number): Rect => ({ left: at.x + WINDOW.w + gap, top: at.y, right: at.x + WINDOW.w + gap + 30, bottom: at.y + 30 });
+  assert.equal(clearOf(at, [beside(8)]), true, "8 px of air is clear");
+  assert.equal(clearOf(at, [beside(7)]), false, "7 px is not");
+  assert.equal(clearOf(at, [under(at.x + 40, at.y + 40)]), false, "a control under him is not");
+});
+
+test("with no corner clear, keyboard focus keeps the control it is on clear first, then the corner under the fewest controls", () => {
+  const a = area();
+  const br = spot("br", a), bl = spot("bl", a), tr = spot("tr", a);
+  assert.equal(dockKeepingFocus("br", a, [under(br.x, br.y), under(tr.x, tr.y)], under(bl.x, bl.y)), "tl");
+  assert.equal(dockKeepingFocus("br", a, [under(br.x, br.y)], null), "bl", "no focus: the usual order breaks the tie");
 });
 
 /** The field picking from before prefs v2, copied so a v2 save can be checked against an older build. */
