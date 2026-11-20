@@ -1,6 +1,6 @@
 import { dirPose, idleStage, type CompanionEvent, type GazePose, type WindowPose } from "../companion-logic";
 import { SPARK_START, moodTier, nextSpark } from "../companion-mood";
-import { BEATS, CALM_DROPS, CALM_PARTICLE_CAP, EVENT_BEAT, STREAK_BEAT, VIGNETTES, type BeatDef, type BeatName, type GazeMode, type Move, type ParticleKind } from "./beats";
+import { BEATS, CALM_DROPS, CALM_PARTICLES, EVENT_BEAT, STREAK_BEAT, VIGNETTES, type BeatDef, type BeatName, type GazeMode, type Move, type ParticleKind } from "./beats";
 import { EXPRESSIONS, REST, CHANNEL_KEYS, mix, type Channels, type ExpressionName } from "./expressions";
 import { SPRINGS, STEP_S, spring, stepSpring, type SpringSpec } from "./springs";
 
@@ -224,7 +224,7 @@ export function createDirector(options: DirectorOptions) {
       const fx = def.fx ?? [];
       while (playing.fxDone < fx.length && fx[playing.fxDone].at <= tau) {
         const item = fx[playing.fxDone++];
-        pending.fx.push({ kind: item.kind, count: reduced ? Math.min(item.count, CALM_PARTICLE_CAP) : item.count });
+        if (!reduced || CALM_PARTICLES.includes(item.kind)) pending.fx.push({ kind: item.kind, count: item.count });
       }
       const cues = def.gaze ?? [];
       while (playing.gazeDone < cues.length && cues[playing.gazeDone].at <= tau) {
@@ -251,8 +251,10 @@ export function createDirector(options: DirectorOptions) {
       }
     }
     if (t > nextSaccade) {
+      // Calm draws the same random numbers as the normal run, so the wander stays the same, and keeps no jitter.
       nextSaccade = t + 400 + random() * 800;
-      jitterX = asleep ? 0 : (random() - 0.5) * 0.08; jitterY = asleep ? 0 : (random() - 0.5) * 0.06;
+      const jx = asleep ? 0 : (random() - 0.5) * 0.08, jy = asleep ? 0 : (random() - 0.5) * 0.06;
+      jitterX = reduced ? 0 : jx; jitterY = reduced ? 0 : jy;
     }
     const reach = asleep ? 0 : reduced ? 0.5 : 1;
     const wantX = (gaze.x + faceNow.yaw * 0.6) * reach + jitterX, wantY = (gaze.y + faceNow.pitch * 0.5) * reach + jitterY;
@@ -274,17 +276,20 @@ export function createDirector(options: DirectorOptions) {
 
     /* soft parts: frills and tail lag whatever the head and body just did */
     const liveliness = reduced ? 0.4 : 0.6 + moodTier(spark) * 0.2;
-    const wagAmp = Math.min(1, faceNow.tailWag + tr.wag) * (reduced ? 0.4 : 1);
+    const wagAmp = reduced ? 0 : Math.min(1, faceNow.tailWag + tr.wag);
     const wag = Math.sin((t / 1000) * (5 + wagAmp * 6)) * wagAmp;
     const drag = headX.v * 0.22;
     stepSpring(frillL, faceNow.frill + faceNow.frillAsym * 0.6 - drag + tr.hop * 3, SPRINGS.SOFT_PART);
     stepSpring(frillR, faceNow.frill - faceNow.frillAsym * 0.6 + drag + tr.hop * 3, SPRINGS.SOFT_PART);
-    stepSpring(tailBase, wag * 0.7 - bodyX.v * 0.3 + Math.sin(t / 1900) * 0.08 * liveliness, SPRINGS.SOFT_PART);
+    // Calm: the tail stays still. Its sway and its lag behind the body are both motion.
+    const tailTarget = reduced ? 0 : wag * 0.7 - bodyX.v * 0.3 + Math.sin(t / 1900) * 0.08 * liveliness;
+    stepSpring(tailBase, tailTarget, SPRINGS.SOFT_PART);
     stepSpring(tailTip, tailBase.x * 1.25 - tailBase.v * 0.08, SPRINGS.SOFT_PART);
     stepSpring(mouth, mouthTarget, SPRINGS.MOUTH);
 
-    const breathe = asleep ? Math.sin((t / 1000) * 1.2) * 0.034 : Math.sin((t / 1000) * 2.4) * 0.022 * liveliness;
-    const flicker = 1 + Math.sin(t / 90) * 0.04 + Math.sin(t / 37) * 0.03;
+    // Calm breathes about 14 times a minute, not 23, and with less than half the lift.
+    const breathe = asleep ? Math.sin((t / 1000) * 1.2) * 0.034 : Math.sin((t / 1000) * (reduced ? 1.5 : 2.4)) * 0.022 * liveliness;
+    const flicker = reduced ? 1 : 1 + Math.sin(t / 90) * 0.04 + Math.sin(t / 37) * 0.03;
     const open = Math.max(0, faceNow.eyeOpen + tr.eyeOpen) * (1 - lid) * (asleep ? 0 : 1);
 
     /* the drawing: a base state, then a beat that names one, then a far look; otherwise the rig */

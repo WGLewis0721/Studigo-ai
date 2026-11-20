@@ -327,7 +327,7 @@ test("the strip takes no room until he is shown in it, folds with the header, an
   assert.match(css, /\.cmpStripSlot \{[^}]*height: 0;/, "the slot is empty by default");
   assert.match(css, /\.cmpStripSlot\[data-on\] \{ height: 64px; \}/);
   assert.match(css, /\.modeFrame\[data-collapsed="true"\] \.cmpStripSlot, html\[data-keyboard="open"\] \.cmpStripSlot \{ height: 0; \}/);
-  assert.match(css, /@media \(max-width: 700px\) \{\s*\.cmp\[data-host="strip"\] \{ --strip-k: \.5; --strip-x: 14px; \}\s*\.cmpStripSlot\[data-on\] \{ height: 56px; \}\s*\}/);
+  assert.match(css, /@media \(max-width: 700px\) \{\s*\.cmp\[data-host="strip"\] \{ --strip-k: \.823; --strip-x: 14px; \}\s*\.cmpStripSlot\[data-on\] \{ height: 56px; \}\s*\}/);
 });
 
 test("the strip clips to its own band, so a hop or a bubble cannot leave it or push the rail", () => {

@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { COMPANION_EVENTS, WINDOW_POSES, type CompanionEvent, type WindowPose } from "./companion-logic";
-import { BEATS, CALM_PARTICLE_CAP, VIGNETTES, type BeatDef, type BeatName } from "./companion-motion/beats";
+import { BEATS, VIGNETTES, type BeatDef, type BeatName } from "./companion-motion/beats";
 import { createDirector, type MotionFrame } from "./companion-motion/director";
 import { EXPRESSION_NAMES } from "./companion-motion/expressions";
 
@@ -185,19 +185,69 @@ test("streaks are counted here, from committed right answers only", () => {
   assert.equal(director.state().streak, 0);
 });
 
-test("calm mode: no hops, spins, dashes or shivers, and at most four particles", () => {
+test("calm mode: no hops, spins, dashes, shivers or wags, and no sparks or hearts", () => {
   const director = createDirector({ random: seeded(10), reducedMotion: true });
   director.advance(0);
   director.onEvent("setDone");
   run(director, 60, 0, BEATS.celebrate.ms, (frame) => {
     assert.equal(frame.hop, 0); assert.equal(frame.spin, 0); assert.equal(frame.dash, 0); assert.equal(frame.shiver, 0);
-    for (const fx of frame.fx) assert.ok(fx.count <= CALM_PARTICLE_CAP);
+    assert.equal(frame.tail, 0, "the tail wagged in calm");
+    assert.deepEqual(frame.fx, [], "a spark or heart got through");
   });
   assert.equal(director.state().playing, null);
   // The idle never starts a vignette on its own in calm mode.
   let beats = 0;
   run(director, 30, BEATS.celebrate.ms, 50_000, (frame) => { if (frame.beat) beats += 1; });
   assert.equal(beats, 0);
+});
+
+test("calm mode: no flame flicker, no saccade jitter and no tail sway", () => {
+  const trail = (reducedMotion: boolean) => {
+    const director = createDirector({ random: seeded(42), reducedMotion });
+    director.advance(0);
+    // Eyes held on the centre: anything that moves them after this is jitter.
+    director.lookAt(0, 0, 60_000, "look");
+    const flames: number[] = [], pupils: number[] = [], tails: number[] = [];
+    run(director, 120, 0, 8000, (frame, now) => {
+      flames.push(frame.flame);
+      if (now > 2000) pupils.push(Math.abs(frame.gazeX), Math.abs(frame.gazeY));
+      tails.push(Math.abs(frame.tail), Math.abs(frame.tailTip));
+    });
+    const range = (values: number[]) => Math.max(...values) - Math.min(...values);
+    return { flame: range(flames), pupil: Math.max(...pupils), tail: Math.max(...tails) };
+  };
+  const normal = trail(false), calm = trail(true);
+  assert.ok(normal.flame > 0.02 && normal.pupil > 0.005 && normal.tail > 0.01, JSON.stringify(normal));
+  assert.equal(calm.flame, 0, "the flame flickers in calm");
+  assert.ok(calm.pupil < 1e-6, `the eyes jitter in calm (${calm.pupil})`);
+  assert.equal(calm.tail, 0, "the tail moves in calm");
+});
+
+test("calm mode: a tail wag from a beat does not move the tail", () => {
+  const director = createDirector({ random: seeded(45), reducedMotion: true });
+  run(director, 120, 0, 300);
+  director.play("tickle");
+  let most = 0;
+  run(director, 120, 300, 2000, (frame) => { most = Math.max(most, Math.abs(frame.tail), Math.abs(frame.tailTip)); });
+  assert.equal(most, 0);
+});
+
+test("calm mode breathes slower and smaller, and keeps his blinks", () => {
+  const trail = (reducedMotion: boolean) => {
+    const director = createDirector({ random: seeded(43), reducedMotion });
+    let peak = 0, crossings = 0, last = 0, closed = 0;
+    run(director, 120, 0, 20_000, (frame) => {
+      peak = Math.max(peak, Math.abs(frame.breath));
+      if (Math.sign(frame.breath) !== Math.sign(last)) crossings += 1;
+      last = frame.breath;
+      if (frame.eyeOpenL < 0.15) closed += 1;
+    });
+    return { peak, crossings, closed };
+  };
+  const normal = trail(false), calm = trail(true);
+  assert.ok(calm.peak < normal.peak * 0.6, `calm breath ${calm.peak} is not smaller than ${normal.peak}`);
+  assert.ok(calm.crossings < normal.crossings * 0.75, `calm breath ${calm.crossings} cycles is not slower than ${normal.crossings}`);
+  assert.ok(calm.closed > 2, "no blink in calm");
 });
 
 test("a hidden tab stops the clock and resumes without a jump", () => {
