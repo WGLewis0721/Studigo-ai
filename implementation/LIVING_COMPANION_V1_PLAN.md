@@ -6,6 +6,55 @@ How to read this: do the steps in order. Each step has a **Done when** line. Ste
 
 > **Update 2026-11-20:** steps 3 to 9, 14 to 16 and 18 to 19 have landed on `claude/studigo-living-companion-upgrade-ee0706`; see `design/living-companion/STATUS_2026-11-20.md` for the current state and `design/living-companion/LOCAL_CONTINUATION_PROMPT.md` for the next run. The notes below are the 2026-11-16 snapshot.
 
+## Start here (laptop run, 2026-11-20)
+
+Branch `claude/studigo-living-companion-upgrade-ee0706`, PR #268 (open, unmerged). Baseline at `261496a` is in `design/living-companion/evidence/LC-1.md`. `main` has not moved (`056066f`). QA row IDs resolve to `design/living-companion/QA_RELEASE_ACCEPTANCE.md`.
+
+**Step state**
+
+| Step | State | Evidence |
+|---|---|---|
+| 1-2 | Done except OPEN H3, H5, H6 | `evidence/LC-0.md` |
+| 3 event contract | Done | `7e1db4d` |
+| 4 mood meter | Done | `59f8371` |
+| 5 motion director | Done | `f21a20d` |
+| 6 prefs v2 | Done | `8a554cc` |
+| 7 MouthDriver | Done, no voice | `8a554cc` |
+| 8 sprite renderer extracted | Done | `51cb6ec` |
+| 9 motion flag | Done, defaults ON at owner request | `51cb6ec` |
+| 10 wait for H4, H5 | H4 partial (Rive CLI not logged in on 2026-11-20); H5 OPEN | `evidence/LC-1.md` |
+| 11 LC-1 spike | Partial: mesh rig built, Rive not built; measurements pending (H-A) | `evidence/LC-1.md` |
+| 12 renderer decision | STOP, owner | - |
+| 13 rig | Built (mesh rig + original drawings for gestures and far head turns) | `51cb6ec`, `e55bc2d` |
+| 14 adapter + fallback | Done | `51cb6ec` |
+| 15 floating dock | Done, UI01-UI05 unverified (H-C) | `d72bede` |
+| 16 fixed strip | Done, UI06-UI10 unverified (H-C) | `d72bede` |
+| 17 events | Partial: `missionComplete`, `hintOpened` wired; `stall` and `correctFast` not (H-B) | `8a554cc` |
+| 18 outfits | Code done, placeholder art (owner) | `d72bede` |
+| 19 Calm mode | Done, A02 unverified (H-D) | `d72bede` |
+| 20 stall thresholds | STOP, owner data | - |
+| 21 QA matrix | Not started (H-C, H-D, H-A) | - |
+| 22 sign-off | STOP, owner | - |
+| 23 rollback rehearsal | Not started (H-F, local only) | `evidence/LC-9.md` |
+| 24 release PR | PR #268 exists; owner merges | - |
+| 25 voice | Blocked on owner narration | - |
+
+**Run order.** Each Haiku task runs in its own worktree on branch `lc/<step>-<slug>` from `claude/studigo-living-companion-upgrade-ee0706`. The orchestrator reviews each diff, merges with `--no-ff`, re-runs the LC tests, and pushes. Dev servers use a private port per task so tasks can run in parallel.
+
+| Task | Owner | Branch | Files allowed | Done when | Evidence |
+|---|---|---|---|---|---|
+| H-B events + stall | Haiku | `lc/17-events-stall` | `apps/web/components/companion/{companion.tsx,engine.ts}`, `apps/web/lib/companion-logic.ts`, `apps/web/lib/companion-stall.ts` (new), `apps/web/components/room/learn-mission.tsx`, new `lib/*.test.ts` | Every shared event has an emitter or a written reason; `stall` L1/L2 placeholder thresholds wired with tests; LC tests and typecheck pass | `evidence/LC-17.md` |
+| H-C QA scripts | Haiku | `lc/21-qa-matrix` | new `scripts/lc-companion-qa.mjs`, `design/living-companion/evidence/LC-21.md`, `design/living-companion/evidence/LC-21/` screenshots | Script runs UI01-UI10, L01-L07, A01-A09 rows that are automatable on desktop + emulated phone; every row PASS, FAIL or OPEN with reason | `evidence/LC-21.md` |
+| H-E outfits | Haiku | `lc/18-outfit-checks` | new `apps/web/lib/companion-outfits-*.test.ts`, scratch bench outside repo | Outfit tests pass; per-outfit CPU frame-time delta recorded; no art judgement | `evidence/LC-18.md` |
+| H-A measurements | Haiku | `lc/11-measurements` | new `scripts/lc-companion-perf.mjs`, `evidence/LC-1.md` (Measurements and Recommendation sections only) | Frame time, blend time, bundle size, WebGL fallback measured in Chromium on this laptop; recommendation written | `evidence/LC-1.md` |
+| H-D calm + reduced motion | Haiku | `lc/19-calm-checks` | new `scripts/lc-calm-qa.mjs`, `evidence/LC-19.md` | A02 and calm checks run with real results | `evidence/LC-19.md` |
+| H-F rollback rehearsal | Haiku | `lc/23-rollback` | new `scripts/lc-rollback-qa.mjs`, `evidence/LC-9.md` | Motion-off and companion-off verified locally; production rehearsal OPEN | `evidence/LC-9.md` |
+| H-G docs hygiene | Orchestrator | this branch | `DECISIONS.md`, `README.md`, this plan | PROPOSAL row for the mesh rig; README index updated; SHAs filled | this plan |
+
+H-B, H-C and H-E run first in parallel; H-A, H-D and H-F follow. H-C does not edit code; if it finds a bug, it reports it.
+
+**STOP (owner):** H1 expressions/beats; H5 signed-in screenshots; H6 production flag names; step 12 renderer (mesh rig vs Rive vs both); Rive `.riv` commercial terms; QA V02 vs restored drawn head turns; outfit art; stall thresholds from real data; identity and "feels alive" sign-off; merging PR #268 or deploying; voice narration.
+
 ## Start here (Fable handoff, 2026-11-16)
 
 **Visual style is 2.5D** (LC-DEC-021): layered 2D art with depth cues such as perspective head yaw and pitch. Not full 3D. Coucou is 2D (LC-DEC-022). Ignore the "rigged 3D Studigo" line in `design/companion-demo/README.md` (LC-DEC-023).
