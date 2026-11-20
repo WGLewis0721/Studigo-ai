@@ -1,0 +1,402 @@
+{
+  "id": "LC-9",
+  "expect": "off",
+  "base": "http://127.0.0.1:3305",
+  "headBranch": "lc/23-rollback",
+  "headSha": "56b32d21d19d173ea51e303cfce2de07db5c3879",
+  "scriptSha256": "abad0dfe0abd15ca2e42afd76360d244e029d30f53f29789dbae5d0227364043",
+  "serverEnv": "NEXT_PUBLIC_STUDIGO_COMPANION=off, NEXT_PUBLIC_STUDIGO_COMPANION_MOTION unset (next dev, port 3305)",
+  "node": "v22.23.5",
+  "chromium": "151.0.7922.34",
+  "startedAt": "2026-11-20T17:44:27.841Z",
+  "finishedAt": "2026-11-20T17:45:06.911Z",
+  "result": "PASS",
+  "fatal": null,
+  "summary": {
+    "checks": 30,
+    "passed": 30,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 7894,
+      "detail": null
+    },
+    {
+      "name": "no companion element, empty host, no dev hook",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 66,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "room renders: Study Room sections visible",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 43,
+      "detail": null
+    },
+    {
+      "name": "quiz topic checkbox toggles and restores",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 582,
+      "detail": {
+        "before": true,
+        "after": false
+      }
+    },
+    {
+      "name": "screenshot off-1440x900.png saved, under 300 KB",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 416,
+      "detail": {
+        "bytes": 156268
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 8,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 3028,
+      "detail": null
+    },
+    {
+      "name": "no companion element, empty host, no dev hook",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 299,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "room renders: Study Room sections visible",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 26,
+      "detail": null
+    },
+    {
+      "name": "quiz topic checkbox toggles and restores",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 591,
+      "detail": {
+        "before": true,
+        "after": false
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 1,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 8822,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 3159,
+      "detail": null
+    },
+    {
+      "name": "no companion in off mode with malformed prefs",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 87,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 1,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 1880,
+      "detail": null
+    },
+    {
+      "name": "no companion element, empty host, no dev hook",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 229,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "room renders: Study Room sections visible",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 22,
+      "detail": null
+    },
+    {
+      "name": "quiz topic checkbox toggles and restores",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 415,
+      "detail": {
+        "before": true,
+        "after": false
+      }
+    },
+    {
+      "name": "screenshot off-390x844.png saved, under 300 KB",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 123,
+      "detail": {
+        "bytes": 88665
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 873,
+      "detail": null
+    },
+    {
+      "name": "no companion element, empty host, no dev hook",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 165,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "room renders: Study Room sections visible",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 21,
+      "detail": null
+    },
+    {
+      "name": "quiz topic checkbox toggles and restores",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 468,
+      "detail": {
+        "before": true,
+        "after": false
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 2459,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 2478,
+      "detail": null
+    },
+    {
+      "name": "no companion in off mode with malformed prefs",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 5,
+      "detail": {
+        "companion": false,
+        "dataMotion": null,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 0,
+        "eyelids": 0,
+        "hostChildren": 0,
+        "devHook": "undefined",
+        "pose": null
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    }
+  ],
+  "screenshots": [
+    "design/living-companion/evidence/LC-9/off-1440x900.png",
+    "design/living-companion/evidence/LC-9/off-390x844.png"
+  ],
+  "sessions": [
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    }
+  ]
+}
