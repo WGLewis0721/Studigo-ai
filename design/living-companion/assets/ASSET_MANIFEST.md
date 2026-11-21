@@ -37,3 +37,7 @@ Original kid-safe art, one layer per item, matched to the rig's slot pivots: sci
 ## Dressed gesture and head-turn drawings (2026-11-20)
 
 `apps/web/public/mascot/companion/dressed/<outfit>/<pose>.webp` for all 7 outfits x 12 poses (celebrate, left, right, up, down, up-right, down-right, support, pet, poke, lean, sleep); `up-left` and `down-left` are the mirrored right-facing art, as for the originals. Generated with Higgsfield `gpt_image_2_6` using each original pose drawing as the only reference (84 images, 63 credits), cut out by edge flood-fill, 22 to 36 KB each, with the tail flame restored from the original drawing on the six poses that show it. Every sheet was reviewed by the orchestrator: poses and face unchanged, outfit placed and turned correctly. Original kid-safe accessories; no third-party character art.
+
+## Puppet parts (2026-11-21, LC-DEC-043)
+
+`apps/web/public/mascot/companion/puppet/`: `body.webp` (400 x 400, same framing as `center.webp`, both arms removed and the vest and body painted in behind them; tail flame restored from `center.webp`), `arm-left.webp` and `arm-right.webp` (bare arms, shoulder at the top, paw at the bottom, 200 px tall, transparent; "left" and "right" are the viewer's sides). Generated with Higgsfield `gpt_image_2_6` from `center.webp`; arms thresholded from the model's own alpha. Reviewed by the orchestrator: on-model colour and render style. Outfit (dressed) armless plates are not made yet.
