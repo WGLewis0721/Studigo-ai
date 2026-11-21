@@ -1,0 +1,441 @@
+{
+  "browser": {
+    "name": "chromium (playwright)",
+    "version": "151.0.7922.34"
+  },
+  "playwright": "1.62.1",
+  "node": "v22.23.5",
+  "url": "http://127.0.0.1:3321/dev/study?mode=quiz",
+  "readyMs": 19641,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "durationMin": 10,
+  "events": 29,
+  "pointerMoves": 231,
+  "eventsSample": [
+    {
+      "tS": 20,
+      "name": "correct"
+    },
+    {
+      "tS": 41,
+      "name": "wrong"
+    },
+    {
+      "tS": 61,
+      "name": "setDone"
+    },
+    {
+      "tS": 82,
+      "name": "cardGood"
+    },
+    {
+      "tS": 102,
+      "name": "correct"
+    },
+    {
+      "tS": 122,
+      "name": "wrong"
+    },
+    {
+      "tS": 143,
+      "name": "setDone"
+    },
+    {
+      "tS": 164,
+      "name": "cardGood"
+    },
+    {
+      "tS": 184,
+      "name": "correct"
+    },
+    {
+      "tS": 205,
+      "name": "wrong"
+    },
+    {
+      "tS": 225,
+      "name": "setDone"
+    },
+    {
+      "tS": 245,
+      "name": "cardGood"
+    },
+    {
+      "tS": 265,
+      "name": "correct"
+    },
+    {
+      "tS": 285,
+      "name": "wrong"
+    },
+    {
+      "tS": 305,
+      "name": "setDone"
+    },
+    {
+      "tS": 326,
+      "name": "cardGood"
+    },
+    {
+      "tS": 346,
+      "name": "correct"
+    },
+    {
+      "tS": 366,
+      "name": "wrong"
+    },
+    {
+      "tS": 386,
+      "name": "setDone"
+    },
+    {
+      "tS": 406,
+      "name": "cardGood"
+    },
+    {
+      "tS": 427,
+      "name": "correct"
+    },
+    {
+      "tS": 447,
+      "name": "wrong"
+    },
+    {
+      "tS": 467,
+      "name": "setDone"
+    },
+    {
+      "tS": 487,
+      "name": "cardGood"
+    },
+    {
+      "tS": 507,
+      "name": "correct"
+    },
+    {
+      "tS": 528,
+      "name": "wrong"
+    },
+    {
+      "tS": 548,
+      "name": "setDone"
+    },
+    {
+      "tS": 568,
+      "name": "cardGood"
+    },
+    {
+      "tS": 588,
+      "name": "correct"
+    }
+  ],
+  "samples": [
+    {
+      "label": "t0",
+      "tS": 0,
+      "usedKB": 14059,
+      "totalKB": 15472,
+      "domNodes": 396,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t1",
+      "tS": 61,
+      "usedKB": 14301,
+      "totalKB": 14960,
+      "domNodes": 401,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t2",
+      "tS": 121,
+      "usedKB": 14482,
+      "totalKB": 15472,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t3",
+      "tS": 181,
+      "usedKB": 14543,
+      "totalKB": 15728,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t4",
+      "tS": 241,
+      "usedKB": 14641,
+      "totalKB": 15728,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t5",
+      "tS": 301,
+      "usedKB": 14589,
+      "totalKB": 15728,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t6",
+      "tS": 361,
+      "usedKB": 14665,
+      "totalKB": 15472,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t7",
+      "tS": 421,
+      "usedKB": 14655,
+      "totalKB": 15472,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t8",
+      "tS": 481,
+      "usedKB": 14745,
+      "totalKB": 15728,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t9",
+      "tS": 541,
+      "usedKB": 14652,
+      "totalKB": 15472,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    },
+    {
+      "label": "t10",
+      "tS": 601,
+      "usedKB": 14611,
+      "totalKB": 15728,
+      "domNodes": 405,
+      "fxNodes": 0,
+      "companions": 1,
+      "rigReady": true
+    }
+  ],
+  "fit": {
+    "slopeKBPerMin": 47.28,
+    "r2": 0.627
+  },
+  "flatThresholdKBPerMin": 10,
+  "verdict": "GROWING",
+  "deltaKB": 552,
+  "deltaDomNodes": 9,
+  "maxFxNodes": 0,
+  "snapshotDiff": {
+    "before": {
+      "totalObjects": 389620,
+      "totalSelfKB": 37938
+    },
+    "after": {
+      "totalObjects": 369708,
+      "totalSelfKB": 36887
+    },
+    "topGrowingConstructors": [
+      {
+        "name": "UtilityScript",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "InjectedScript",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "system / CppHeapExternal",
+        "countBefore": 1,
+        "countAfter": 1,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Object",
+        "countBefore": 17123,
+        "countAfter": 17123,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Object (prototype) / http://127.0.0.1:3321",
+        "countBefore": 5,
+        "countAfter": 5,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Error",
+        "countBefore": 893,
+        "countAfter": 893,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Array",
+        "countBefore": 5980,
+        "countAfter": 5980,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "PerformanceEntry",
+        "countBefore": 1,
+        "countAfter": 1,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "PerformanceMeasure (prototype) / http://127.0.0.1:3321",
+        "countBefore": 1,
+        "countAfter": 1,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "EventTarget",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "AbortSignal (prototype) / http://127.0.0.1:3321",
+        "countBefore": 1,
+        "countAfter": 1,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "HTMLDocument (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "MutationObserver (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "system / Context / scope @91401",
+        "countBefore": 119,
+        "countAfter": 119,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Module",
+        "countBefore": 541,
+        "countAfter": 541,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "DevContext",
+        "countBefore": 85,
+        "countAfter": 85,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGElement",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGGraphicsElement",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGGeometryElement",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGPathElement (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "Element",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGGElement (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGStopElement (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGGradientElement",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      },
+      {
+        "name": "SVGLinearGradientElement (prototype) / http://127.0.0.1:3321",
+        "countBefore": 2,
+        "countAfter": 2,
+        "countDelta": 0,
+        "selfKBDelta": 0
+      }
+    ]
+  }
+}

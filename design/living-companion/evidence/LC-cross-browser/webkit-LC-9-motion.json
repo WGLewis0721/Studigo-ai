@@ -1,0 +1,729 @@
+{
+  "id": "LC-9",
+  "expect": "motion",
+  "base": "http://127.0.0.1:3321",
+  "headBranch": "lc/cross-browser",
+  "headSha": "66c1b563b50fb6dcbe028772d4c807393e57899c",
+  "scriptSha256": "849717c0b37afbeaaf486c699a570646b5718d3b0c518836e4feb5df97868646",
+  "serverEnv": "dev server: NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1; NEXT_PUBLIC_STUDIGO_COMPANION_MOTION and NEXT_PUBLIC_STUDIGO_COMPANION unset (motion on, companion on)",
+  "node": "v22.23.5",
+  "browser": {
+    "name": "webkit",
+    "version": "26.5"
+  },
+  "startedAt": "2026-11-21T02:32:50.751Z",
+  "finishedAt": "2026-11-21T02:33:23.546Z",
+  "result": "FAIL",
+  "fatal": null,
+  "summary": {
+    "checks": 48,
+    "passed": 44,
+    "failed": 4
+  },
+  "checks": [
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 2487,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 5775,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 37,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "screenshot motion-1440x900.png saved, under 300 KB",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 628,
+      "detail": {
+        "bytes": 155095
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 182,
+      "detail": {
+        "ms": 61
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": false,
+      "ms": 4,
+      "error": "Expected values to be strictly deep-equal: + actual - expected "
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 892,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 1015,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 16,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 105,
+      "detail": {
+        "ms": 100
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": false,
+      "ms": 1,
+      "error": "Expected values to be strictly deep-equal: + actual - expected "
+    },
+    {
+      "name": "page loads with WebGL disabled",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 840,
+      "detail": null
+    },
+    {
+      "name": "sprites take over: no rig canvas, no data-motion, 15 drawings",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 590,
+      "detail": {
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "support"
+      }
+    },
+    {
+      "name": "correct answer still reacts with sprites",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 21,
+      "detail": {
+        "ms": 14
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 1,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 933,
+      "detail": null
+    },
+    {
+      "name": "sprites replace the rig within 1 s of context loss",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 1499,
+      "detail": {
+        "ms": 12,
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer still reacts after the switch",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 42,
+      "detail": {
+        "ms": 32
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 894,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 466,
+      "detail": null
+    },
+    {
+      "name": "companion mounts on defaults",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 719,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "his menu shows the default choices",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 2260,
+      "detail": {
+        "speech": false,
+        "tuck": true,
+        "calm": false,
+        "host": "true",
+        "outfit": ""
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 741,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 844,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 14,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "screenshot motion-390x844.png saved, under 300 KB",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 113,
+      "detail": {
+        "bytes": 82430
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 58,
+      "detail": {
+        "ms": 51
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": false,
+      "ms": 0,
+      "error": "Expected values to be strictly deep-equal: + actual - expected "
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 763,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 884,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 15,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 33,
+      "detail": {
+        "ms": 26
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": false,
+      "ms": 1,
+      "error": "Expected values to be strictly deep-equal: + actual - expected "
+    },
+    {
+      "name": "page loads with WebGL disabled",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 758,
+      "detail": null
+    },
+    {
+      "name": "sprites take over: no rig canvas, no data-motion, 15 drawings",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 520,
+      "detail": {
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "support"
+      }
+    },
+    {
+      "name": "correct answer still reacts with sprites",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 41,
+      "detail": {
+        "ms": 36
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 734,
+      "detail": null
+    },
+    {
+      "name": "sprites replace the rig within 1 s of context loss",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 1355,
+      "detail": {
+        "ms": 10,
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer still reacts after the switch",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 31,
+      "detail": {
+        "ms": 26
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 853,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 499,
+      "detail": null
+    },
+    {
+      "name": "companion mounts on defaults",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 712,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "his menu shows the default choices",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 1357,
+      "detail": {
+        "speech": false,
+        "tuck": true,
+        "calm": false,
+        "host": "true",
+        "outfit": ""
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    }
+  ],
+  "screenshots": [
+    "design/living-companion/evidence/LC-9/motion-1440x900.png",
+    "design/living-companion/evidence/LC-9/motion-390x844.png"
+  ],
+  "sessions": [
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": [
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig."
+      ]
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g",
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": [
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig."
+      ]
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g",
+        "The Content Security Policy 'default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' https://*.supabase.co https://formsubmit.co; form-action 'self' https://*.supabase.co https://accounts.g"
+      ],
+      "badResponses": [],
+      "warnings": []
+    }
+  ]
+}

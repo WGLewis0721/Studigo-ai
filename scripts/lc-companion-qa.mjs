@@ -2,10 +2,11 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 // Automated rows of the Living Companion QA matrix (LC-21). Synthetic fixture only.
 // The base URL must be a loopback address; nothing here writes learner state.
+// --browser=chromium|webkit|firefox picks the engine (default chromium); PLAYWRIGHT_<ENGINE>_EXECUTABLE_PATH overrides the binary.
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "design", "living-companion", "evidence", "LC-21");
@@ -15,6 +16,10 @@ if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(BASE).hostname)) {
 }
 const ONLY = process.env.LC_QA_ONLY ? new Set(process.env.LC_QA_ONLY.split(",").map((id) => id.trim())) : null;
 const want = (...ids) => !ONLY || ids.some((id) => ONLY.has(id));
+const BROWSER_NAME = process.argv.find((arg) => arg.startsWith("--browser="))?.slice("--browser=".length) ?? "chromium";
+const ENGINES = { chromium, firefox, webkit };
+if (!Object.hasOwn(ENGINES, BROWSER_NAME)) throw new Error(`--browser must be chromium, webkit or firefox, got ${BROWSER_NAME}`);
+const CHROMIUM = BROWSER_NAME === "chromium";
 
 const PREFS_KEY = "studigo.companion.fixture";
 const SCALE_KEY = "studigo.companion.scale";
@@ -442,7 +447,9 @@ async function UI01() {
       m.posAfterKeys = (await readPrefs(page))?.pos ?? null;
       v.ok(Math.abs(finalLeft - lefts[0]) >= 16, `arrow keys nudge him (${key}, ${m.keyboardDx} px over 5 presses)`);
       v.ok(Math.abs(finalLeft - expectedLeft) <= 3, `keyboard stops at the safe edge (left ${finalLeft}, expected ${Math.round(expectedLeft)}; safe area ${Math.round(safeLeft)} to ${Math.round(safeRight)})`);
-      if (vp.isMobile) {
+      if (vp.isMobile && !CHROMIUM) {
+        v.open(`touch drag is driven over CDP Input.dispatchTouchEvent, which ${BROWSER_NAME} does not expose; real-touch proof is owed to A06`);
+      } else if (vp.isMobile) {
         const t0 = await snapshot(page);
         const { mid } = await touchDragBy(context, page, -90, -40);
         if (mid && mid.win) {
@@ -1551,7 +1558,7 @@ async function V07() {
 
 function openOnlyRows() {
   recordOpen("A06", "owner", "needs physical iPhone Safari and iPad Safari with pointer, touch, virtual keyboard, scroll and frame cost; not run");
-  recordOpen("A07", "owner", "only headless Chromium (Playwright) ran here; desktop Safari, Firefox and Edge screenshots and motion capture are not run");
+  recordOpen("A07", "owner", `only headless ${BROWSER_NAME} (Playwright) ran here; installed desktop Safari, Firefox and Edge screenshots and motion capture are not run`);
   recordOpen("A08", "H-A (lc/11-measurements)", "frame time, blend time, memory and bundle size need measurement on real hardware; no budget was invented here");
   recordOpen("A09", "H-F (lc/23-rollback)", "emergency-off and motion-off recovery are owned by the rollback task");
   recordOpen("V03", "owner", "blinks across all gaze directions need a visual judgement; not automated");
@@ -1562,7 +1569,7 @@ function openOnlyRows() {
 async function main() {
   await mkdir(OUT, { recursive: true });
   const started = new Date().toISOString();
-  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined });
+  browser = await ENGINES[BROWSER_NAME].launch({ headless: true, executablePath: process.env[`PLAYWRIGHT_${BROWSER_NAME.toUpperCase()}_EXECUTABLE_PATH`] || undefined });
   const browserVersion = browser.version();
   try {
     await run("L02", L02);
@@ -1608,8 +1615,8 @@ async function main() {
     generatedAt: started,
     commit,
     baseUrl: BASE,
-    browser: { name: "chromium (playwright)", version: browserVersion },
-    command: "node scripts/lc-companion-qa.mjs",
+    browser: { name: `${BROWSER_NAME} (playwright)`, version: browserVersion },
+    command: ["node scripts/lc-companion-qa.mjs", ...process.argv.slice(2)].join(" "),
     subset: ONLY ? [...ONLY] : "full matrix",
     flags: "dev server with NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1; NEXT_PUBLIC_STUDIGO_COMPANION_MOTION and NEXT_PUBLIC_STUDIGO_COMPANION unset (motion on, companion on); development build, so window.studigoCompanion exists",
     viewports: { desktop: "1440x900, deviceScaleFactor 1", phone: "390x844, deviceScaleFactor 2, isMobile, hasTouch" },

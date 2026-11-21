@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const scriptFile = fileURLToPath(import.meta.url);
 const repo = join(dirname(scriptFile), "..");
@@ -12,8 +12,10 @@ const evidenceRel = "design/living-companion/evidence/LC-9";
 const evidenceDir = join(repo, ...evidenceRel.split("/"));
 const base = process.env.STUDIGO_QA_BASE ?? "http://127.0.0.1:3305";
 const expect = process.argv.find((arg) => arg.startsWith("--expect="))?.slice("--expect=".length);
-if (!["motion", "sprites", "off"].includes(expect)) {
-  console.error("usage: node scripts/lc-rollback-qa.mjs --expect=motion|sprites|off");
+const browserName = process.argv.find((arg) => arg.startsWith("--browser="))?.slice("--browser=".length) ?? "chromium";
+const engines = { chromium, firefox, webkit };
+if (!["motion", "sprites", "off"].includes(expect) || !Object.hasOwn(engines, browserName)) {
+  console.error("usage: node scripts/lc-rollback-qa.mjs --expect=motion|sprites|off [--browser=chromium|webkit|firefox]");
   process.exit(2);
 }
 
@@ -325,8 +327,8 @@ async function corruptPrefsChecks(browser, vp) {
 
 async function main() {
   mkdirSync(evidenceDir, { recursive: true });
-  const browser = await chromium.launch({ headless: true });
-  const chromiumVersion = browser.version();
+  const browser = await engines[browserName].launch({ headless: true, executablePath: process.env[`PLAYWRIGHT_${browserName.toUpperCase()}_EXECUTABLE_PATH`] || undefined });
+  const version = browser.version();
   try {
     for (const vp of VIEWPORTS) {
       for (const route of ROUTES) await routeChecks(browser, vp, route);
@@ -336,16 +338,16 @@ async function main() {
       }
       await corruptPrefsChecks(browser, vp);
     }
-    return chromiumVersion;
+    return version;
   } finally {
     await browser.close();
   }
 }
 
-let chromiumVersion = null;
+let engineVersion = null;
 let fatal = null;
 try {
-  chromiumVersion = await main();
+  engineVersion = await main();
 } catch (error) {
   fatal = String(error?.stack ?? error).slice(0, 1200);
 }
@@ -360,7 +362,8 @@ const report = {
   scriptSha256: createHash("sha256").update(readFileSync(scriptFile)).digest("hex"),
   serverEnv: process.env.LC_QA_SERVER_ENV ?? "(not recorded)",
   node: process.version,
-  chromium: chromiumVersion,
+  browser: { name: browserName, version: engineVersion },
+  chromium: browserName === "chromium" ? engineVersion : undefined,
   startedAt,
   finishedAt: new Date().toISOString(),
   result: fatal || failed ? "FAIL" : "PASS",
@@ -372,5 +375,5 @@ const report = {
 };
 mkdirSync(evidenceDir, { recursive: true });
 writeFileSync(join(evidenceDir, `${expect}.json`), `${JSON.stringify(report, null, 2)}\n`);
-console.log(`LC-9 ${expect}: ${report.result} (${checks.length - failed}/${checks.length} checks passed)`);
+console.log(`LC-9 ${expect} ${browserName}: ${report.result} (${checks.length - failed}/${checks.length} checks passed)`);
 process.exitCode = fatal || failed ? 1 : 0;

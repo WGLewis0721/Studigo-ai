@@ -3,13 +3,20 @@
 // viewports it runs three conditions (normal, Calm pref on, OS reduced motion) and writes
 // results.json plus up to six PNG crops to design/living-companion/evidence/LC-19/.
 // Exits 1 when any check FAILs. It never changes product code.
+// --browser=chromium|webkit|firefox picks the engine (default chromium); PLAYWRIGHT_<ENGINE>_EXECUTABLE_PATH overrides the binary.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const origin = process.env.STUDIGO_QA_BASE ?? "http://127.0.0.1:3303";
+const browserName = process.argv.find((arg) => arg.startsWith("--browser="))?.slice("--browser=".length) ?? "chromium";
+const engines = { chromium, firefox, webkit };
+if (!Object.hasOwn(engines, browserName)) {
+  console.error("usage: node scripts/lc-calm-qa.mjs [--browser=chromium|webkit|firefox]");
+  process.exit(2);
+}
 const repoRoot = resolve(import.meta.dirname, "..");
 const outDir = resolve(repoRoot, "design/living-companion/evidence/LC-19");
 const roomPath = "/dev/study?mode=quiz";
@@ -454,8 +461,9 @@ const report = {
   checks: [],
 };
 
-const browser = await chromium.launch({ headless: true });
-report.chromium = browser.version();
+const browser = await engines[browserName].launch({ headless: true, executablePath: process.env[`PLAYWRIGHT_${browserName.toUpperCase()}_EXECUTABLE_PATH`] || undefined });
+report.browser = { name: browserName, version: browser.version() };
+if (browserName === "chromium") report.chromium = browser.version();
 let exitCode = 0;
 try {
   for (const viewport of viewports) {
