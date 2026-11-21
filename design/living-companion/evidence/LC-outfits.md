@@ -65,4 +65,4 @@ Draw sampling: after each draw, the wrapper reads back a 16 by 16 pixel block ne
 - [ASSET_MANIFEST.md](../assets/ASSET_MANIFEST.md) still says to replace the flat placeholder overlays, and LC-DEC-028 stays OPEN until the owner approves the new art. Both are outside the file list, so they were not edited.
 - The menu thumbnails use `loading="lazy"`, so they fetch as the menu scrolls into view. The rig then reuses the cached drawings.
 - Timings come from a software-rendered headless Chromium (SwiftShader), not a phone.
-- The menu card vanished once during run 2 (see the commands table). Its cause is not known, and it did not recur in run 3.
+- One menu label was detached during a click in run 2 (see the commands table). Its cause is not known. It did not recur in run 3, where no menu-card removal was logged.
