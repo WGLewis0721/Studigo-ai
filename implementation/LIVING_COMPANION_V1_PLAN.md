@@ -43,6 +43,8 @@ Branch `claude/studigo-living-companion-upgrade-ee0706`, PR #268 (open, unmerged
 
 **Progress at 2026-11-20 evening:** branch head `339e29c`; LC tests 169 pass; typecheck, lint, build pass; PR #268 open, not merged. Running: H-K (dressed outfit texture swap, `lc/dressed-outfits`) and H-A (measurements, `lc/11-measurements`).
 
+**Final verification 2026-11-21 (orchestrator, merged branch `b7eda67`):** typecheck exit 0; lint exit 0; build exit 0; full web suite 637 pass, 1 fail (C19 `pymupdf` only, known); `lc-companion-qa.mjs` exit 0 (39 PASS, 0 FAIL, 30 OPEN); `lc-calm-qa.mjs` exit 0 (A02 PASS); `lc-rollback-qa.mjs --expect=motion` exit 0 (48/48). Since the progress note: dressed outfit textures and 84 dressed drawings (`f86c7b7`, `79e226d`), LC-1 measurements GO (`6e6caf7`), Benji voice with lip sync, lazy drawing loads, calm fades, DPR cap (`b7eda67`). OPEN: physical iPhone/Android, Safari/Firefox, 10-minute heap soak, owner listen and "feels alive" sign-off, merging PR #268.
+
 **Run order.** Each Haiku task runs in its own worktree on branch `lc/<step>-<slug>` from `claude/studigo-living-companion-upgrade-ee0706`. The orchestrator reviews each diff, merges with `--no-ff`, re-runs the LC tests, and pushes. Dev servers use a private port per task so tasks can run in parallel.
 
 | Task | Owner | Branch | Files allowed | Done when | Evidence |

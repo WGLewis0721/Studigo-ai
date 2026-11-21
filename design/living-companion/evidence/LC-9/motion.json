@@ -1,15 +1,15 @@
 {
   "id": "LC-9",
   "expect": "motion",
-  "base": "http://127.0.0.1:3305",
-  "headBranch": "lc/23-rollback",
-  "headSha": "56b32d21d19d173ea51e303cfce2de07db5c3879",
-  "scriptSha256": "abad0dfe0abd15ca2e42afd76360d244e029d30f53f29789dbae5d0227364043",
-  "serverEnv": "default: NEXT_PUBLIC_STUDIGO_COMPANION_MOTION unset, NEXT_PUBLIC_STUDIGO_COMPANION unset (next dev, port 3305)",
+  "base": "http://127.0.0.1:3320",
+  "headBranch": "claude/studigo-living-companion-upgrade-ee0706",
+  "headSha": "b7eda677e31ca0be58a0ab14acdd34035234756b",
+  "scriptSha256": "4fb8ba255dd6786a3a3e5fed4c0201a6ea72447c2ba6ecdb380a6a01bf91f5a3",
+  "serverEnv": "(not recorded)",
   "node": "v22.23.5",
   "chromium": "151.0.7922.34",
-  "startedAt": "2026-11-20T17:42:37.695Z",
-  "finishedAt": "2026-11-20T17:42:54.420Z",
+  "startedAt": "2026-11-21T02:10:32.388Z",
+  "finishedAt": "2026-11-21T02:10:46.180Z",
   "result": "PASS",
   "fatal": null,
   "summary": {
@@ -23,7 +23,7 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 1834,
+      "ms": 505,
       "detail": null
     },
     {
@@ -31,12 +31,12 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 604,
+      "ms": 481,
       "detail": {
         "companion": true,
         "dataMotion": true,
         "rigCanvas": true,
-        "rigReady": false,
+        "rigReady": true,
         "drawings": 15,
         "eyelids": 0,
         "hostChildren": 2,
@@ -49,7 +49,7 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 311,
+      "ms": 11,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -67,9 +67,9 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 198,
+      "ms": 147,
       "detail": {
-        "bytes": 170096
+        "bytes": 207309
       }
     },
     {
@@ -77,9 +77,9 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 27,
+      "ms": 17,
       "detail": {
-        "ms": 19
+        "ms": 12
       }
     },
     {
@@ -87,7 +87,7 @@
       "viewport": "1440x900",
       "route": "quiz",
       "pass": true,
-      "ms": 3,
+      "ms": 1,
       "detail": null
     },
     {
@@ -95,7 +95,7 @@
       "viewport": "1440x900",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 623,
+      "ms": 460,
       "detail": null
     },
     {
@@ -103,7 +103,7 @@
       "viewport": "1440x900",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 295,
+      "ms": 116,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -121,7 +121,7 @@
       "viewport": "1440x900",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 167,
+      "ms": 100,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -139,9 +139,9 @@
       "viewport": "1440x900",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 21,
+      "ms": 14,
       "detail": {
-        "ms": 9
+        "ms": 12
       }
     },
     {
@@ -158,7 +158,7 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 700,
+      "ms": 422,
       "detail": null
     },
     {
@@ -167,7 +167,7 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 233,
+      "ms": 115,
       "detail": {
         "companion": true,
         "dataMotion": false,
@@ -186,9 +186,9 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 20,
+      "ms": 9,
       "detail": {
-        "ms": 16
+        "ms": 7
       }
     },
     {
@@ -206,7 +206,7 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 673,
+      "ms": 613,
       "detail": null
     },
     {
@@ -215,9 +215,9 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 389,
+      "ms": 418,
       "detail": {
-        "ms": 9,
+        "ms": 8,
         "companion": true,
         "dataMotion": false,
         "rigCanvas": false,
@@ -235,9 +235,9 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 19,
+      "ms": 25,
       "detail": {
-        "ms": 14
+        "ms": 18
       }
     },
     {
@@ -255,7 +255,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 691,
+      "ms": 676,
       "detail": null
     },
     {
@@ -264,7 +264,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 679,
+      "ms": 798,
       "detail": null
     },
     {
@@ -273,7 +273,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 134,
+      "ms": 33,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -292,7 +292,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 642,
+      "ms": 1099,
       "detail": {
         "speech": false,
         "tuck": true,
@@ -315,7 +315,7 @@
       "viewport": "390x844",
       "route": "quiz",
       "pass": true,
-      "ms": 873,
+      "ms": 683,
       "detail": null
     },
     {
@@ -341,7 +341,7 @@
       "viewport": "390x844",
       "route": "quiz",
       "pass": true,
-      "ms": 46,
+      "ms": 143,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -359,9 +359,9 @@
       "viewport": "390x844",
       "route": "quiz",
       "pass": true,
-      "ms": 163,
+      "ms": 131,
       "detail": {
-        "bytes": 99918
+        "bytes": 98527
       }
     },
     {
@@ -369,9 +369,9 @@
       "viewport": "390x844",
       "route": "quiz",
       "pass": true,
-      "ms": 15,
+      "ms": 22,
       "detail": {
-        "ms": 8
+        "ms": 18
       }
     },
     {
@@ -379,7 +379,7 @@
       "viewport": "390x844",
       "route": "quiz",
       "pass": true,
-      "ms": 1,
+      "ms": 0,
       "detail": null
     },
     {
@@ -387,7 +387,7 @@
       "viewport": "390x844",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 676,
+      "ms": 638,
       "detail": null
     },
     {
@@ -395,7 +395,7 @@
       "viewport": "390x844",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 199,
+      "ms": 215,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -413,7 +413,7 @@
       "viewport": "390x844",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 92,
+      "ms": 137,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -431,9 +431,9 @@
       "viewport": "390x844",
       "route": "quiz-phase3",
       "pass": true,
-      "ms": 11,
+      "ms": 23,
       "detail": {
-        "ms": 8
+        "ms": 20
       }
     },
     {
@@ -450,7 +450,7 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 563,
+      "ms": 618,
       "detail": null
     },
     {
@@ -459,7 +459,7 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 297,
+      "ms": 217,
       "detail": {
         "companion": true,
         "dataMotion": false,
@@ -478,9 +478,9 @@
       "route": "quiz",
       "case": "webgl-unavailable",
       "pass": true,
-      "ms": 15,
+      "ms": 16,
       "detail": {
-        "ms": 11
+        "ms": 12
       }
     },
     {
@@ -498,7 +498,7 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 579,
+      "ms": 629,
       "detail": null
     },
     {
@@ -507,9 +507,9 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 435,
+      "ms": 397,
       "detail": {
-        "ms": 12,
+        "ms": 8,
         "companion": true,
         "dataMotion": false,
         "rigCanvas": false,
@@ -527,9 +527,9 @@
       "route": "quiz",
       "case": "lost-webgl-context",
       "pass": true,
-      "ms": 36,
+      "ms": 18,
       "detail": {
-        "ms": 25
+        "ms": 11
       }
     },
     {
@@ -547,7 +547,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 566,
+      "ms": 614,
       "detail": null
     },
     {
@@ -556,7 +556,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 858,
+      "ms": 740,
       "detail": null
     },
     {
@@ -565,7 +565,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 34,
+      "ms": 33,
       "detail": {
         "companion": true,
         "dataMotion": true,
@@ -584,7 +584,7 @@
       "route": "quiz",
       "case": "corrupt-prefs",
       "pass": true,
-      "ms": 847,
+      "ms": 934,
       "detail": {
         "speech": false,
         "tuck": true,
@@ -615,10 +615,10 @@
       "consoleErrors": [],
       "badResponses": [],
       "warnings": [
-        "[.WebGL-0x3f8401e7ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-        "[.WebGL-0x3f8401e7ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-        "[.WebGL-0x3f8401e7ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-        "[.WebGL-0x3f8401e7ca00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+        "[.WebGL-0x3fe400a98200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x3fe400a98200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x3fe400a98200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x3fe400a98200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
       ]
     },
     {
@@ -637,8 +637,8 @@
       "consoleErrors": [],
       "badResponses": [],
       "warnings": [
-        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3305/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:2229:28)\n    at createCompanion (http://127.0.0.1:3305/_next/static/chunks/apps_web_comp",
-        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3305/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:2229:28)\n    at createCompanion (http://127.0.0.1:3305/_next/static/chunks/apps_web_comp"
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3320/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3320/_next/static/chunks/apps_web_comp",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3320/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3320/_next/static/chunks/apps_web_comp"
       ]
     },
     {
@@ -683,8 +683,8 @@
       "consoleErrors": [],
       "badResponses": [],
       "warnings": [
-        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3305/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:2229:28)\n    at createCompanion (http://127.0.0.1:3305/_next/static/chunks/apps_web_comp",
-        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3305/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:2229:28)\n    at createCompanion (http://127.0.0.1:3305/_next/static/chunks/apps_web_comp"
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3320/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3320/_next/static/chunks/apps_web_comp",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3320/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3320/_next/static/chunks/apps_web_comp"
       ]
     },
     {
