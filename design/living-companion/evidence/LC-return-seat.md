@@ -65,3 +65,7 @@ Screenshots (2x crops around the seat): [rest](LC-return-seat/seat-avatar-rest.p
 
 - Nothing pushed or merged.
 - Phase 3 (`ui=phase3`) was checked at rest: header 112 px, rail and avatar unchanged by seating. The scroll tuck was not exercised. The change adds transforms and absolutely positioned eyelids only, no layout property.
+
+## Orchestrator follow-up 2026-11-21: reload after a long idle
+
+Decision: a reload after a long idle should greet (the learner came back to an open tab). Leaving the tab now records the last time the learner was active, not the unload time (`engine.ts`, `lastActiveAt`). Verified with Playwright's fake clock on a dev server, Chromium, 1440x900: open the room, move the pointer, fast-forward 2 h with no activity, reload: the bound beat plays (`celebrate`) and `oh-youre-here-early.mp3` is requested. Same with 1 minute: no greeting, no voice request. No page errors in either run. LC tests 184 pass after the change (the session test file is counted in the 188-test run above); typecheck exit 0.

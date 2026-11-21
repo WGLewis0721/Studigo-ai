@@ -165,6 +165,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let k = 1, W: number = WINDOW.w, H: number = WINDOW.h;
   /** The size the learner asked for. What is shown (k) can be smaller when the room is tight. */
   let desired = prefs.scale;
+  /** When the learner last did something here; written as last seen when the tab is hidden. */
+  let lastActiveAt = Date.now();
   /** The corner a resize or pinch grows from, while it lasts. */
   let grow: { x: number; y: number; dock: Dock } | null = null;
   /** True when he sits at the spot the learner chose, rather than in a corner. */
@@ -707,7 +709,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- idle: a character waiting for input ---------- */
   function activity() {
-    rt.lastInput = now(); rt.leaned = false;
+    rt.lastInput = now(); rt.leaned = false; lastActiveAt = Date.now();
     director?.activity();
     if (rt.asleep) { rt.asleep = false; react("poke", 800); say(LINES.wake); }
   }
@@ -1161,7 +1163,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (on && !motionFrame) motionFrame = window.requestAnimationFrame(motionLoop);
     else if (!on && motionFrame) { window.cancelAnimationFrame(motionFrame); motionFrame = 0; }
   }
-  document.addEventListener("visibilitychange", () => { if (document.hidden) { stopVoice(); touchLastSeen(); } syncMotion(); }, { signal });
+  // Leaving records when the learner was last active, not when the tab closed, so a reload after a long idle still greets.
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { stopVoice(); writeLastSeen(lastActiveAt); } syncMotion(); }, { signal });
   if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
   applyCalm();
   applyScale(prefs.scale, false);
