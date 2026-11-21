@@ -33,3 +33,7 @@ Original kid-safe art, one layer per item, matched to the rig's slot pivots: sci
 ## Dressed rig textures (2026-11-20, LC-DEC-037)
 
 `apps/web/public/mascot/companion/dressed/{goggles,explorer,visor,reader,beret,headphones,sash}.webp`: 400 x 400, same framing as `center.webp` (silhouette and vest within 1 to 2 px), so the WebGL rig deforms them with the existing landmarks and the outfit moves with his head. Generated with Higgsfield `gpt_image_2_6` from `center.webp` as the only reference (one image per outfit, prompts recorded in the session), background removed by edge flood-fill, and the tail flame region restored from `center.webp` to remove a white glow halo. Original kid-safe accessories; no third-party character art. Replace the flat placeholder SVG overlays. Owner may still swap any of them.
+
+## Dressed gesture and head-turn drawings (2026-11-20)
+
+`apps/web/public/mascot/companion/dressed/<outfit>/<pose>.webp` for all 7 outfits x 12 poses (celebrate, left, right, up, down, up-right, down-right, support, pet, poke, lean, sleep); `up-left` and `down-left` are the mirrored right-facing art, as for the originals. Generated with Higgsfield `gpt_image_2_6` using each original pose drawing as the only reference (84 images, 63 credits), cut out by edge flood-fill, 22 to 36 KB each, with the tail flame restored from the original drawing on the six poses that show it. Every sheet was reviewed by the orchestrator: poses and face unchanged, outfit placed and turned correctly. Original kid-safe accessories; no third-party character art.
