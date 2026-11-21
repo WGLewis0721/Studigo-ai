@@ -285,7 +285,34 @@
 .roomWorkspace .chatMascot .studigoMascot img { transition: opacity .22s ease, scale .3s var(--ease-spring); }
 .roomWorkspace[data-seat="empty"] .chatMascot .studigoMascot { background: color-mix(in oklab, var(--tone) 9%, white); box-shadow: inset 0 2px 5px rgba(20, 27, 45, .12), inset 0 0 0 1.5px color-mix(in oklab, var(--tone) 40%, white), 0 0 0 2px var(--white); }
 .roomWorkspace[data-seat="empty"] .chatMascot .studigoMascot img { opacity: 0; scale: .6; }
-.roomWorkspace.seatLand .chatMascot .studigoMascot { animation: cmpSquish .42s var(--ease-spring) 1; }
+/* A good event while he sits in his seat (or his return) hops the avatar. Calm keeps still. */
+.roomWorkspace:not([data-calm]).seatLand .chatMascot .studigoMascot { animation: seatHop .42s var(--ease-out) 1; }
+@keyframes seatHop {
+  0% { transform: none; }
+  34% { transform: translateY(-7px) scale(.97, 1.05); }
+  62% { transform: translateY(0) scale(1.07, .92); }
+  80% { transform: translateY(-1.5px) scale(.99, 1.01); }
+  100% { transform: none; }
+}
+/* Seated, he is alive in the avatar. The picture breathes (1.5% over 3.8 s) and two eyelids blink on one long
+   cycle, about every 6 s. The lids are the window's eyelids drawn for the small picture: the eyes sit at 28.9%
+   and 63.9% across and 52.1% down. Calm stops the breathing; blinks run in every mode. */
+.studigoMascot.alive .mascotLid {
+  display: none; position: absolute; top: 52.1%; width: 15.8%; height: 15.8%; margin: -7.9% 0 0 -7.9%; border-radius: 50%;
+  background: linear-gradient(180deg, #f49b57, #ea8443); border-bottom: 1px solid #7a3a16;
+  transform: scaleY(0); transform-origin: 50% 0; pointer-events: none;
+}
+.studigoMascot.alive .mascotLid.l { left: 28.9%; }
+.studigoMascot.alive .mascotLid.r { left: 63.9%; }
+.roomWorkspace[data-seat="occupied"] .chatMascot .studigoMascot.alive .mascotLid { display: block; animation: seatBlink 12.6s ease-in-out infinite; }
+.roomWorkspace[data-seat="occupied"] .chatMascot .studigoMascot.alive .mascotLid.r { animation-delay: .045s; }
+.roomWorkspace:not([data-calm])[data-seat="occupied"] .chatMascot .studigoMascot.alive img { animation: seatBreathe 3.8s ease-in-out infinite; }
+@keyframes seatBreathe { 50% { transform: scale(1.015); } }
+/* Two blinks a cycle, 5.9 s and 6.7 s apart, each about 0.2 s. */
+@keyframes seatBlink {
+  0%, 34.2%, 35.8%, 81%, 82.6%, 100% { transform: scaleY(0); }
+  35%, 81.8% { transform: scaleY(1); }
+}
 
 /* His menu: a bottom sheet on phones, a roomy panel on wide screens. */
 .cmpCard { position: fixed; inset: 0; z-index: 120; display: grid; align-items: end; justify-items: center; padding: 8px 8px max(16px, env(safe-area-inset-bottom)); }
@@ -487,4 +514,8 @@ body:has(.learnReading) .cmpStripSlot, body[data-home-borrowed] .cmpStripSlot { 
   .cmp, .cmpWin, .cmpScale, .cmpTab, .cmpSill, .cmpStripSlot, .cmpStripMenu { transition: none; animation: none; }
   .cmpBody, .stgBody, .cmp .cmpWin, .cmpSheet, .cmpBubble, .cmp.quietAck .cmpBody, .lessonProgressRow .quietStatus, .cmpNew.on { animation: none !important; }
   .cmpBar span, .cmpScreen::before, .cmpScreen::after { transition: none; }
+  /* The seat blinks in every mode, with no breathing. The global rule would cut its timing, so these outrank it. */
+  .roomWorkspace[data-seat="occupied"] .chatMascot .studigoMascot.alive img { animation: none; }
+  .roomWorkspace[data-seat="occupied"] .chatMascot .studigoMascot.alive .mascotLid { animation: seatBlink 12.6s ease-in-out infinite !important; }
+  .roomWorkspace[data-seat="occupied"] .chatMascot .studigoMascot.alive .mascotLid.r { animation-delay: .045s !important; }
 }

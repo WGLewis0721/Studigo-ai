@@ -256,7 +256,7 @@ export function ModeHeader({
     <ModeFrame tone={frameTone}>
       <header className="modeHead" data-tone={current}>
         <span className="chatMascot chatMascotStatic">
-          <StudigoMascot state={mascot} size={38} mark />
+          <StudigoMascot state={mascot} size={38} mark alive />
         </span>
         {modes.length > 1 ? (
           <div className="chatModes" role="group" aria-label={`${groupName} modes`}>

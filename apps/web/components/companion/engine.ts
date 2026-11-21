@@ -5,6 +5,7 @@ import {
 } from "@/lib/companion-logic";
 import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
 import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
+import { isReturn, readLastSeen, writeLastSeen } from "@/lib/companion-session";
 import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
 import { createMouth } from "@/lib/companion-motion/mouth-driver";
@@ -74,6 +75,10 @@ const FX_COLORS = {
   zzz: ["var(--indigo)"]
 } as const;
 const BADGE_MS = 3000;
+/** A return is greeted this long after he starts, once his landing has played. */
+const GREET_AFTER_MS = 600;
+/** Committed events that give the header avatar a small happy hop while he sits in his seat. */
+const SEATED_CHEER: ReadonlySet<CompanionEvent> = new Set<CompanionEvent>(["correct", "setDone", "cardGood", "missionComplete", "sessionReturn"]);
 const UNLOCK_ICON: Record<UnlockKind, string> = {
   outfit: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 11.5c0-1.6 2.5-2.6 6-2.6s6 1 6 2.6V13H2v-1.5Zm3-3.8C5 4.9 6.3 2.5 8 2.5s3 2.4 3 5.2c-1-.6-2-.9-3-.9s-2 .3-3 .9Z"/></svg>',
   trick: SHAPES.spark,
@@ -114,6 +119,7 @@ const MET_KEY = "studigo.companion.met";
 function hasMet(): boolean { try { return window.localStorage.getItem(MET_KEY) === "1"; } catch { return true; } }
 function markMet() { try { window.localStorage.setItem(MET_KEY, "1"); } catch { /* storage is optional */ } }
 function unmarkMet() { try { window.localStorage.removeItem(MET_KEY); } catch { /* storage is optional */ } }
+const touchLastSeen = () => writeLastSeen(Date.now());
 /* Reading targets stay this far out, so the director draws him looking down into the field. */
 const READ_REACH = 0.6;
 /** Reading: he peers down into the field, as the drawn reading pose did. Text beside him, or just above, is pulled down. */
@@ -905,6 +911,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   function applyCalm() {
     calm = systemReduced || prefs.calm;
     el.toggleAttribute("data-calm", calm);
+    ws.toggleAttribute("data-calm", calm);
     director?.setReducedMotion(calm);
   }
   /** Where he is: seated, in his floating window, or in the strip. The strip needs its slot in this room. */
@@ -934,13 +941,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     celebrate();
   }
   /** The window appears empty; he lands in it a moment later (the end of his leap from Home). */
-  function arrive() {
+  function arrive(back: boolean) {
     loadPoses();
     rt.mode = wanted(); rt.asleep = false;
     ws.dataset.seat = "empty";
     el.dataset.empty = ""; el.classList.add("noMove"); el.dataset.state = "window";
     place(); void el.offsetWidth; el.classList.remove("noMove");
-    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); celebrate(); introduce(); }, calm ? 0 : 520);
+    // A returning learner gets the return beat instead of the arrival celebration: queued behind it, the greeting would land seconds late.
+    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); if (!back) react("celebrate", 1300); burst("spark", 10); celebrate(); introduce(); }, calm ? 0 : 520);
   }
   host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => {
     rt.userSummoned = false;
@@ -1153,14 +1161,20 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (on && !motionFrame) motionFrame = window.requestAnimationFrame(motionLoop);
     else if (!on && motionFrame) { window.cancelAnimationFrame(motionFrame); motionFrame = 0; }
   }
-  document.addEventListener("visibilitychange", () => { if (document.hidden) stopVoice(); syncMotion(); }, { signal });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { stopVoice(); touchLastSeen(); } syncMotion(); }, { signal });
   if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
   applyCalm();
   applyScale(prefs.scale, false);
   applyGrowth();
-  if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
+  // Read before this visit writes anything: the gap since the last visit decides whether he greets the learner back.
+  const back = isReturn(readLastSeen(), Date.now());
+  /** True until the return greeting has had its turn, so a room line cannot take the voice's cooldown first. */
+  let greetingDue = back;
+  if (options.arriving && !prefs.seated && surface()) arrive(back); else sync();
   syncMotion();
   unsubscribeGrowth = subscribeGrowth(refreshGrowth);
+  // Saved after the greeting, not at once: a remount in the same tick (React runs effects twice in development) must still read the gap.
+  later(() => { greetingDue = false; if (back) commit("sessionReturn"); else touchLastSeen(); }, GREET_AFTER_MS);
 
   /* A lesson opened or a guide became ready. One brief nod, or nothing if he is minimized or motion is reduced. */
   const quietSeen = new Set<string>();
@@ -1193,8 +1207,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (name === "cardGood") rt.cardStreak += 1;
     else if (name === "cardMiss") rt.cardStreak = 0;
     if (rt.mode === "seat") {
-      // From his seat he still notices: the avatar gives a small bounce.
-      if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
+      // From his seat he still notices: the avatar gives a small happy hop.
+      if (SEATED_CHEER.has(name)) pulse("seatLand", 420, ws);
       return;
     }
     const reaction = reactionFor(name, rt.streak);
@@ -1214,14 +1228,18 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (says) say(says);
   }
 
+  /** A committed event, from a room or from his return greeting: the visit is saved, growth is earned, then his reaction, then any unlock it earned. */
+  function commit(name: CompanionEvent, payload?: CompanionEventPayload) {
+    if (dead) return;
+    touchLastSeen();
+    quiet = true;
+    try { recordGrowth(name); } finally { quiet = false; }
+    answer(name, payload);
+    celebrate();
+  }
+
   return {
-    event(name, payload) {
-      if (dead) return;
-      quiet = true;
-      try { recordGrowth(name); } finally { quiet = false; }
-      answer(name, payload);
-      celebrate();
-    },
+    event(name, payload) { commit(name, payload); },
     grow(points) {
       if (dead) return;
       const before = readGrowth(), gained = Math.max(0, Math.floor(points));
@@ -1245,7 +1263,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       }
       if (tone !== roomTone) {
         roomTone = tone;
-        if (tone === "coach" || tone === "materials") speakMoment({ kind: "room", room: tone, roll: Math.random() });
+        if (!greetingDue && (tone === "coach" || tone === "materials")) speakMoment({ kind: "room", room: tone, roll: Math.random() });
       }
     },
     setPrefs(next) {
@@ -1282,6 +1300,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       ["--dock-r", "--dock-l", "--dock-thread", "--dock-page"].forEach((name) => ws.style.removeProperty(name));
       delete ws.dataset.seat;
       ws.classList.remove("seatLand");
+      ws.removeAttribute("data-calm");
     }
   };
 }
