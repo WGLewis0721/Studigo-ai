@@ -1,0 +1,354 @@
+{
+  "firefox": {
+    "version": "153.0",
+    "finalHidden": false,
+    "log": [
+      {
+        "at": 124,
+        "kind": "pointerdown-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 125,
+          "label": "pointerdown",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "1",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 134,
+        "kind": "mousedown-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 134,
+          "label": "mousedown",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "1",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 188,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "data-side",
+        "old": "r",
+        "now": "r"
+      },
+      {
+        "at": 189,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": null,
+        "now": ""
+      },
+      {
+        "at": 221,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": null
+      },
+      {
+        "at": 221,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": null
+      },
+      {
+        "at": 221,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "data-side",
+        "old": "r",
+        "now": "r"
+      },
+      {
+        "at": 273,
+        "kind": "mouseup-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 273,
+          "label": "mouseup",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "0",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 273,
+        "kind": "click-capture",
+        "target": "cmpTab"
+      },
+      {
+        "at": 466,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": null,
+        "now": ""
+      },
+      {
+        "at": 466,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 466,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 466,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 644,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 644,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 947,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 947,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      }
+    ]
+  },
+  "chromium": {
+    "version": "151.0.7922.34",
+    "finalHidden": false,
+    "log": [
+      {
+        "at": 27,
+        "kind": "pointerdown-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 29,
+          "label": "pointerdown",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "1",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 30,
+        "kind": "mousedown-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 31,
+          "label": "mousedown",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "1",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 50,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "data-side",
+        "old": "r",
+        "now": "r"
+      },
+      {
+        "at": 50,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": null,
+        "now": ""
+      },
+      {
+        "at": 67,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": null
+      },
+      {
+        "at": 67,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": null
+      },
+      {
+        "at": 67,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "data-side",
+        "old": "r",
+        "now": "r"
+      },
+      {
+        "at": 92,
+        "kind": "mouseup-capture",
+        "target": "cmpTab",
+        "snap": {
+          "at": 92,
+          "label": "mouseup",
+          "hidden": false,
+          "display": "grid",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "opacity": "0",
+          "hitUnderPointer": "cmpTab"
+        }
+      },
+      {
+        "at": 94,
+        "kind": "click-capture",
+        "target": "cmpTab"
+      },
+      {
+        "at": 167,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": null,
+        "now": ""
+      },
+      {
+        "at": 167,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 167,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 167,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 205,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 205,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 446,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 446,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 470,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 470,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 524,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      },
+      {
+        "at": 524,
+        "kind": "attr",
+        "target": "cmpTab",
+        "name": "hidden",
+        "old": "",
+        "now": ""
+      }
+    ]
+  }
+}

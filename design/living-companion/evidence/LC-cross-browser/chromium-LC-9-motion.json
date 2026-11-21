@@ -1,0 +1,713 @@
+{
+  "id": "LC-9",
+  "expect": "motion",
+  "base": "http://127.0.0.1:3321",
+  "headBranch": "lc/cross-browser",
+  "headSha": "66c1b563b50fb6dcbe028772d4c807393e57899c",
+  "scriptSha256": "849717c0b37afbeaaf486c699a570646b5718d3b0c518836e4feb5df97868646",
+  "serverEnv": "dev server: NEXT_PUBLIC_STUDIGO_PHASE3_FOUNDATION_UI=1; NEXT_PUBLIC_STUDIGO_COMPANION_MOTION and NEXT_PUBLIC_STUDIGO_COMPANION unset (motion on, companion on)",
+  "node": "v22.23.5",
+  "browser": {
+    "name": "chromium",
+    "version": "151.0.7922.34"
+  },
+  "chromium": "151.0.7922.34",
+  "startedAt": "2026-11-21T02:22:06.035Z",
+  "finishedAt": "2026-11-21T02:22:27.584Z",
+  "result": "PASS",
+  "fatal": null,
+  "summary": {
+    "checks": 48,
+    "passed": 48,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 1052,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 1270,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 53,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "screenshot motion-1440x900.png saved, under 300 KB",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 398,
+      "detail": {
+        "bytes": 207342
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 92,
+      "detail": {
+        "ms": 71
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pass": true,
+      "ms": 11,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 965,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 507,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": false,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 205,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 55,
+      "detail": {
+        "ms": 34
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads with WebGL disabled",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 864,
+      "detail": null
+    },
+    {
+      "name": "sprites take over: no rig canvas, no data-motion, 15 drawings",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 445,
+      "detail": {
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "support"
+      }
+    },
+    {
+      "name": "correct answer still reacts with sprites",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 33,
+      "detail": {
+        "ms": 27
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 804,
+      "detail": null
+    },
+    {
+      "name": "sprites replace the rig within 1 s of context loss",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 684,
+      "detail": {
+        "ms": 11,
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer still reacts after the switch",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 43,
+      "detail": {
+        "ms": 32
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 806,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 1313,
+      "detail": null
+    },
+    {
+      "name": "companion mounts on defaults",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 50,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "his menu shows the default choices",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 980,
+      "detail": {
+        "speech": false,
+        "tuck": true,
+        "calm": false,
+        "host": "true",
+        "outfit": ""
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 1,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz returns 200",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 743,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 363,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": false,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 179,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "screenshot motion-390x844.png saved, under 300 KB",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 156,
+      "detail": {
+        "bytes": 98586
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 30,
+      "detail": {
+        "ms": 18
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "GET /dev/study?mode=quiz&ui=phase3 returns 200",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 678,
+      "detail": null
+    },
+    {
+      "name": "companion carries data-motion",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 424,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": false,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "rig canvas present and data-ready within 10 s",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 171,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer makes him celebrate within 1 s",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 39,
+      "detail": {
+        "ms": 25
+      }
+    },
+    {
+      "name": "no uncaught page errors or console errors",
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads with WebGL disabled",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 781,
+      "detail": null
+    },
+    {
+      "name": "sprites take over: no rig canvas, no data-motion, 15 drawings",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 424,
+      "detail": {
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "support"
+      }
+    },
+    {
+      "name": "correct answer still reacts with sprites",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 25,
+      "detail": {
+        "ms": 16
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 776,
+      "detail": null
+    },
+    {
+      "name": "sprites replace the rig within 1 s of context loss",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 701,
+      "detail": {
+        "ms": 17,
+        "companion": true,
+        "dataMotion": false,
+        "rigCanvas": false,
+        "rigReady": null,
+        "drawings": 15,
+        "eyelids": 2,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "correct answer still reacts after the switch",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 43,
+      "detail": {
+        "ms": 33
+      }
+    },
+    {
+      "name": "no uncaught page errors",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    },
+    {
+      "name": "page loads",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 782,
+      "detail": null
+    },
+    {
+      "name": "malformed saved prefs survive a reload and the room renders",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 1165,
+      "detail": null
+    },
+    {
+      "name": "companion mounts on defaults",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 65,
+      "detail": {
+        "companion": true,
+        "dataMotion": true,
+        "rigCanvas": true,
+        "rigReady": true,
+        "drawings": 15,
+        "eyelids": 0,
+        "hostChildren": 2,
+        "devHook": "object",
+        "pose": "center"
+      }
+    },
+    {
+      "name": "his menu shows the default choices",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 716,
+      "detail": {
+        "speech": false,
+        "tuck": true,
+        "calm": false,
+        "host": "true",
+        "outfit": ""
+      }
+    },
+    {
+      "name": "no uncaught page errors with malformed prefs",
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pass": true,
+      "ms": 0,
+      "detail": null
+    }
+  ],
+  "screenshots": [
+    "design/living-companion/evidence/LC-9/motion-1440x900.png",
+    "design/living-companion/evidence/LC-9/motion-390x844.png"
+  ],
+  "sessions": [
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": [
+        "[.WebGL-0x57ac00a9c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x57ac00a9c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x57ac00a9c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+        "[.WebGL-0x57ac00a9c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+      ]
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": [
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3321/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3321/_next/static/chunks/apps_web_comp",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3321/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3321/_next/static/chunks/apps_web_comp"
+      ]
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "1440x900",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz-phase3",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "webgl-unavailable",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": [
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3321/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3321/_next/static/chunks/apps_web_comp",
+        "Studigo's rig could not start; using his drawings. Error: WebGL is not available for Studigo's rig.\n    at Object.mount (http://127.0.0.1:3321/_next/static/chunks/apps_web_components_companion_1oo5rfw6zml3l._.js:3126:28)\n    at createCompanion (http://127.0.0.1:3321/_next/static/chunks/apps_web_comp"
+      ]
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "lost-webgl-context",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    },
+    {
+      "viewport": "390x844",
+      "route": "quiz",
+      "case": "corrupt-prefs",
+      "pageErrors": [],
+      "consoleErrors": [],
+      "badResponses": [],
+      "warnings": []
+    }
+  ]
+}

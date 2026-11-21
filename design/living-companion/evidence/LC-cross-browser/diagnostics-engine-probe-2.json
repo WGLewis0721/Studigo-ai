@@ -1,0 +1,392 @@
+{
+  "firefox": {
+    "version": "153.0",
+    "phoneNoTouch": {
+      "before": {
+        "l": 244,
+        "t": 621
+      },
+      "mid": {
+        "dragging": true,
+        "l": 151,
+        "t": 578
+      },
+      "events": [
+        [
+          "pointermove",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointerdown",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointermove",
+          "mouse",
+          287,
+          615
+        ],
+        [
+          "pointermove",
+          "mouse",
+          273,
+          609
+        ],
+        [
+          "pointermove",
+          "mouse",
+          259,
+          603
+        ],
+        [
+          "pointermove",
+          "mouse",
+          245,
+          597
+        ],
+        [
+          "pointermove",
+          "mouse",
+          231,
+          591
+        ],
+        [
+          "pointermove",
+          "mouse",
+          217,
+          586
+        ],
+        [
+          "pointerup",
+          "mouse",
+          217,
+          586
+        ]
+      ],
+      "moved": 136
+    },
+    "summonTrace": {
+      "before": {
+        "tab": [
+          1260,
+          813,
+          20,
+          73
+        ],
+        "frameCollapsed": "false",
+        "scrollY": 0
+      },
+      "pointerAt": {
+        "x": 1270,
+        "y": 849.5
+      },
+      "underPointerAfterMove": "cmpTab",
+      "after": {
+        "hidden": true,
+        "frameCollapsed": "false",
+        "tab": [
+          1260,
+          813,
+          20,
+          73
+        ],
+        "trace": [
+          [
+            "pointerdown",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "mousedown",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "mouseup",
+            "modeSurface",
+            1270,
+            849
+          ],
+          [
+            "click",
+            "roomWorkspace",
+            1270,
+            849
+          ]
+        ]
+      }
+    },
+    "rafLong": {
+      "framesIn10s": 492,
+      "fps": 49.1,
+      "maxGapMs": 116,
+      "medianGapMs": 17
+    }
+  },
+  "chromium": {
+    "version": "151.0.7922.34",
+    "phoneNoTouch": {
+      "before": {
+        "l": 244,
+        "t": 621
+      },
+      "mid": {
+        "dragging": true,
+        "l": 151,
+        "t": 578
+      },
+      "events": [
+        [
+          "pointermove",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointerdown",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointermove",
+          "mouse",
+          288,
+          615
+        ],
+        [
+          "pointermove",
+          "mouse",
+          274,
+          609
+        ],
+        [
+          "pointermove",
+          "mouse",
+          260,
+          604
+        ],
+        [
+          "pointermove",
+          "mouse",
+          245,
+          598
+        ],
+        [
+          "pointermove",
+          "mouse",
+          231,
+          592
+        ],
+        [
+          "pointermove",
+          "mouse",
+          217,
+          586
+        ],
+        [
+          "pointerup",
+          "mouse",
+          217,
+          586
+        ]
+      ],
+      "moved": 136
+    },
+    "summonTrace": {
+      "before": {
+        "tab": [
+          1260,
+          813,
+          20,
+          73
+        ],
+        "frameCollapsed": "false",
+        "scrollY": 0
+      },
+      "pointerAt": {
+        "x": 1270,
+        "y": 849.5
+      },
+      "underPointerAfterMove": "cmpTab",
+      "after": {
+        "hidden": true,
+        "frameCollapsed": "false",
+        "tab": [
+          1260,
+          813,
+          20,
+          73
+        ],
+        "trace": [
+          [
+            "pointerdown",
+            "cmpTab",
+            1270,
+            850
+          ],
+          [
+            "mousedown",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "mouseup",
+            "modeSurface",
+            1270,
+            849
+          ],
+          [
+            "click",
+            "roomWorkspace",
+            1270,
+            849
+          ]
+        ]
+      }
+    },
+    "rafLong": {
+      "framesIn10s": 551,
+      "fps": 55.1,
+      "maxGapMs": 532,
+      "medianGapMs": 17
+    }
+  },
+  "webkit": {
+    "version": "26.5",
+    "phoneNoTouch": {
+      "before": {
+        "l": 244,
+        "t": 621
+      },
+      "mid": {
+        "dragging": true,
+        "l": 151,
+        "t": 578
+      },
+      "events": [
+        [
+          "pointermove",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointerdown",
+          "mouse",
+          302,
+          621
+        ],
+        [
+          "pointermove",
+          "mouse",
+          287,
+          615
+        ],
+        [
+          "pointermove",
+          "mouse",
+          273,
+          609
+        ],
+        [
+          "pointermove",
+          "mouse",
+          259,
+          603
+        ],
+        [
+          "pointermove",
+          "mouse",
+          245,
+          597
+        ],
+        [
+          "pointermove",
+          "mouse",
+          231,
+          591
+        ],
+        [
+          "pointermove",
+          "mouse",
+          217,
+          586
+        ],
+        [
+          "pointerup",
+          "mouse",
+          217,
+          586
+        ]
+      ],
+      "moved": 136
+    },
+    "summonTrace": {
+      "before": {
+        "tab": [
+          1260,
+          813,
+          20,
+          73
+        ],
+        "frameCollapsed": "false",
+        "scrollY": 0
+      },
+      "pointerAt": {
+        "x": 1270,
+        "y": 849.5
+      },
+      "underPointerAfterMove": "cmpTab",
+      "after": {
+        "hidden": false,
+        "frameCollapsed": "true",
+        "tab": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "trace": [
+          [
+            "pointerdown",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "mousedown",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "mouseup",
+            "cmpTab",
+            1270,
+            849
+          ],
+          [
+            "click",
+            "cmpTab",
+            1270,
+            849
+          ]
+        ]
+      }
+    },
+    "rafLong": {
+      "framesIn10s": 21,
+      "fps": 2,
+      "maxGapMs": 1108,
+      "medianGapMs": 488
+    }
+  }
+}
