@@ -29,3 +29,7 @@ Original kid-safe art, one layer per item, matched to the rig's slot pivots: sci
 ## To be added by LC-1 (not yet existing)
 - Layered rig source (`.riv` and/or layered SVG/PNG parts) with pivot map and provenance.
 - Neutral-pose side-by-side vs `center.webp`.
+
+## Dressed rig textures (2026-11-20, LC-DEC-037)
+
+`apps/web/public/mascot/companion/dressed/{goggles,explorer,visor,reader,beret,headphones,sash}.webp`: 400 x 400, same framing as `center.webp` (silhouette and vest within 1 to 2 px), so the WebGL rig deforms them with the existing landmarks and the outfit moves with his head. Generated with Higgsfield `gpt_image_2_6` from `center.webp` as the only reference (one image per outfit, prompts recorded in the session), background removed by edge flood-fill, and the tail flame region restored from `center.webp` to remove a white glow halo. Original kid-safe accessories; no third-party character art. Replace the flat placeholder SVG overlays. Owner may still swap any of them.
