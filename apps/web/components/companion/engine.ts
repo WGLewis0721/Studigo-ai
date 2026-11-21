@@ -167,6 +167,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let desired = prefs.scale;
   /** When the learner last did something here; written as last seen when the tab is hidden. */
   let lastActiveAt = Date.now();
+  let tabHeld = false;
   /** The corner a resize or pinch grows from, while it lasts. */
   let grow: { x: number; y: number; dock: Dock } | null = null;
   /** True when he sits at the spot the learner chose, rather than in a corner. */
@@ -348,7 +349,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       // A safety retreat on a dense Progress surface is still a seat: unlike
       // the saved seated preference, it must not strand Studigo offscreen.
       const waiting = a !== null && (prefs.seated || rt.autoSeated);
-      tab.hidden = !waiting;
+      // A tab the learner is pressing stays put, or a placement pass mid-press would swallow the tap.
+      tab.hidden = !waiting && !tabHeld;
       if (!waiting || !a) return;
       const page = surface()!.getBoundingClientRect(), right = rt.dock[1] === "r";
       tab.dataset.side = right ? "r" : "l";
@@ -956,6 +958,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     rt.userSummoned = false;
     changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true });
   }, { signal });
+  tab.addEventListener("pointerdown", () => { tabHeld = true; }, { signal });
+  const releaseTab = () => { if (!tabHeld) return; tabHeld = false; schedulePlace(); };
+  window.addEventListener("pointerup", releaseTab, { signal });
+  window.addEventListener("pointercancel", releaseTab, { signal });
   tab.addEventListener("click", () => {
     // An explicit learner request brings him out even where every automatic corner is blocked.
     // He stays out, at the least-covering spot, until the page or tone changes.

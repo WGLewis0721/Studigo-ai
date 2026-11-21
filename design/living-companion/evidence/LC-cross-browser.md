@@ -157,3 +157,10 @@ Verdict: GROWING by the pre-declared full-window rule, but the growth is warm-up
 - `LC-cross-browser/chromium-heap-soak.json`: soak samples, fit and snapshot diff.
 - `LC-cross-browser/diagnostics-engine-probe-1.json`, `diagnostics-engine-probe-2.json`, `diagnostics-tab-press-trace.json`: probe outputs behind F1, F3 and the frame rates. The probe scripts are scratch files outside the repo and are not committed.
 - Per-run console logs were not committed because `*.log` is gitignored. Each run's exit code and result line are in the Runs table.
+
+## Orchestrator follow-up 2026-11-21
+
+- **UI04 bring-back tab race fixed** in `engine.ts`: a tab the learner is pressing stays visible until the press ends, so a placement pass mid-press can no longer swallow the tap. Re-run `LC_QA_ONLY=UI04 node scripts/lc-companion-qa.mjs --browser=<b>` five times each: Chromium 5/5 exit 0 (PASS 7, FAIL 0), Firefox 5/5 exit 0 (PASS 7, FAIL 0). Before: intermittent, 2/5 and 3/5 failing. LC tests 188 pass; typecheck exit 0.
+- **WebKit CSP console error** (`apps/web/next.config.ts`, report-only CSP without a report target) is app-wide, not companion code; left for the app owner.
+- **Firefox phone UI01/UI02** failures are the test's mouse input under touch emulation, not the product; marked OPEN pending a real touch device.
+- **WebKit calm desktop** findings ran at about 2 fps on this host; inconclusive, needs real Safari.
