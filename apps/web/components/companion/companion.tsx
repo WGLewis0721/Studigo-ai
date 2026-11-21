@@ -5,8 +5,9 @@ import { createContext, useCallback, useContext, useEffect, useId, useMemo, useR
 import { OUTFITS, OUTFIT_LABELS, parseOutfit, type CompanionEvent } from "@/lib/companion-logic";
 import { growthView, studyTasks, wearableOutfit, type GrowthTrack } from "@/lib/companion-growth";
 import { useCompanionGrowth } from "@/lib/companion-growth-store";
+import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { readCompanionPrefs, useCompanionPrefs } from "@/lib/companion-prefs";
-import { createCompanion, type CompanionEventPayload, type CompanionHandle } from "./engine";
+import { createCompanion, SPRITES, type CompanionEventPayload, type CompanionHandle } from "./engine";
 
 /** Set on Home when a room is opened, so he lands in his window instead of just appearing. */
 export const LEAP_KEY = "studigo.leap";
@@ -189,14 +190,16 @@ export function RoomCompanionSettings({ roomId }: { roomId: string }) {
         <div className="cmpOutfitList">
           <label className="cmpOutfitOpt">
             <input type="radio" name={outfitId} value="" checked={worn === null} onChange={(event) => update({ outfit: parseOutfit(event.target.value) })} />
-            <span>None</span>
+            <span className="cmpThumb" aria-hidden="true"><img src={`${SPRITES}/center.webp`} alt="" width={400} height={400} loading="lazy" decoding="async" draggable={false} /></span>
+            <span className="cmpOutfitName">None</span>
           </label>
           {OUTFITS.map((outfit) => {
             const status = view.outfits[outfit];
             return (
               <label key={outfit} className={`cmpOutfitOpt${status.unlocked ? "" : " locked"}`}>
                 <input type="radio" name={outfitId} value={outfit} checked={worn === outfit} disabled={!status.unlocked} onChange={(event) => update({ outfit: parseOutfit(event.target.value) })} />
-                <span>{OUTFIT_LABELS[outfit]}</span>
+                <span className="cmpThumb" aria-hidden="true"><img src={OUTFIT_TEXTURES[outfit]} alt="" width={400} height={400} loading="lazy" decoding="async" draggable={false} /></span>
+                <span className="cmpOutfitName">{OUTFIT_LABELS[outfit]}</span>
                 {status.unlocked ? null : <small><LockGlyph />Unlocks after {studyTasks(status.tasksLeft)}</small>}
               </label>
             );

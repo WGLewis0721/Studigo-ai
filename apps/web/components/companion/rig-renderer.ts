@@ -1,6 +1,6 @@
 import type { Outfit, WindowPose } from "@/lib/companion-logic";
 import type { MotionFrame } from "@/lib/companion-motion/director";
-import { OUTFIT_LAYERS, outfitTransform } from "@/lib/companion-motion/outfits";
+import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { RIG, RIG_SIZE, STRETCH, buildRig, poseMesh } from "@/lib/companion-motion/rig";
 import { SPRITES, loadSprites, spriteElements, spriteImages, type CompanionRenderer } from "./renderers";
 
@@ -10,10 +10,13 @@ import { SPRITES, loadSprites, spriteElements, spriteImages, type CompanionRende
    The mesh moves his head, frills, tail and body. The shader does what has to
    happen inside the drawing itself: the irises slide within the eyes, the lids
    close and smile, the mouth curls and opens, the cheeks warm. Nothing is
-   redrawn by hand, so he stays the same dragon in every frame. */
+   redrawn by hand, so he stays the same dragon in every frame. An outfit is
+   another drawing of him in the same framing, so the mesh carries it as well. */
 
 /** The canvas is wider than his body box so a hop, a lean or a frill can leave it. */
 const MARGIN = 0.3;
+/** A swap between two drawings fades over this long: quick, and never a pop. */
+const FADE_MS = 200;
 
 const VERTEX = `
 attribute vec2 aPos; attribute vec2 aUv; varying vec2 vUv; uniform float uSpan; uniform float uMargin;
@@ -26,7 +29,7 @@ void main() {
 const px = (v: { x: number; y: number }) => `vec2(${(v.x / RIG_SIZE).toFixed(5)}, ${(v.y / RIG_SIZE).toFixed(5)})`;
 const FRAGMENT = `
 precision mediump float;
-varying vec2 vUv; uniform sampler2D uTex;
+varying vec2 vUv; uniform sampler2D uTex; uniform sampler2D uPrev; uniform float uMix;
 uniform vec2 uGaze; uniform vec2 uOpen; uniform float uSmile; uniform float uBrow;
 uniform float uMouthCurve; uniform float uMouthOpen; uniform float uCheek;
 const vec2 EYE_L = ${px(RIG.eyeL)}; const vec2 EYE_R = ${px(RIG.eyeR)}; const vec2 EYE_SIZE = ${px(RIG.eyeR2)};
@@ -65,7 +68,8 @@ vec2 lid(vec2 uv, vec2 c, float open, float side) {
 }
 
 void main() {
-  vec4 col = texture2D(uTex, warp(vUv));
+  vec2 w = warp(vUv);
+  vec4 col = mix(texture2D(uPrev, w), texture2D(uTex, w), uMix);
   float a = col.a;
   vec3 rgb = col.rgb;
   vec2 l = lid(vUv, EYE_L, uOpen.x, -1.0); vec2 r = lid(vUv, EYE_R, uOpen.y, 1.0);
@@ -112,58 +116,98 @@ export type RigRenderer = CompanionRenderer & {
   resume(body: HTMLElement): void;
 };
 
+/** One drawing of him, undressed or in an outfit. Decoded once; its texture is made on the context that draws it. */
+type Skin = { image: HTMLImageElement; decoded: boolean; failed: boolean; texture: WebGLTexture | null };
+
 export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer {
   const mesh = buildRig();
   const positions = new Float32Array(mesh.count * 2);
   let wrap: HTMLElement | null = null, canvas: HTMLCanvasElement | null = null, gl: WebGLRenderingContext | null = null;
   let size = 0;
-  let buffer: WebGLBuffer | null = null, ready = false, dead = false, lastFrame: MotionFrame | null = null;
-  /* The approved drawing. It is decoded once and uploaded again after a restore. */
-  let art: HTMLImageElement | null = null, artReady = false;
+  let buffer: WebGLBuffer | null = null, ready = false, dead = false, lost = false, lastFrame: MotionFrame | null = null;
+  /* His drawings by outfit (null is undressed). `current` is on screen; `previous` is the one a swap fades out of. */
+  const skins = new Map<Outfit | null, Skin>();
+  let wanted: Outfit | null = null, current: Skin | null = null, previous: Skin | null = null, fadeAt = 0;
+  /* Set when the context is lost, and cleared once onRestored has been called for it. */
+  let owedRestore = false;
   const uniforms: Record<string, WebGLUniformLocation | null> = {};
   const span = 1 + MARGIN * 2;
 
   /* The original drawings that stand in for the mesh while the director names one, and the one showing now. */
   let drawings = new Map<string, HTMLImageElement>(), shown: WindowPose | null = null;
 
-  /* The outfit is an image in the same body box as the canvas, so a rig point p sits at p / RIG_SIZE of the box, exactly as the canvas maps it. */
-  let outfit: Outfit | null = null, outfitEl: HTMLImageElement | null = null, outfitShown: Outfit | null = null;
-  let outfitLoaded = false, outfitVisible = false;
-
-  function placeOutfit(frame: MotionFrame) {
-    if (!outfitEl || !outfit) return;
-    const layer = OUTFIT_LAYERS[outfit], pose = outfitTransform(outfit, frame);
-    // translate() percentages are of the layer's own box, so convert the rig offset to that box.
-    const dx = ((pose.x - layer.anchor.x * layer.w) / layer.w) * 100, dy = ((pose.y - layer.anchor.y * layer.h) / layer.h) * 100;
-    outfitEl.style.transform = `translate(${dx}%, ${dy}%) rotate(${pose.rotate}rad) scale(${pose.scaleX}, ${pose.scaleY})`;
+  /* Starts decoding one drawing. Nothing changes on screen until it is ready. */
+  function prepare(outfit: Outfit | null) {
+    const image = new Image();
+    image.decoding = "async";
+    const skin: Skin = { image, decoded: false, failed: false, texture: null };
+    skins.set(outfit, skin);
+    image.onload = () => { skin.decoded = true; if (!dead) settle(); };
+    image.onerror = () => {
+      skin.failed = true;
+      if (dead) return;
+      settle();
+      // Without his undressed drawing and nothing on screen, there is nothing to draw him with.
+      if (outfit === null && !current) onLost();
+    };
+    image.src = outfit === null ? `${SPRITES}/center.webp` : OUTFIT_TEXTURES[outfit];
   }
 
-  /* Shown only once his drawing is up and the outfit's art has loaded, so it never appears on its own. */
-  function showOutfit() {
-    if (!outfitEl) return;
-    if (lastFrame) placeOutfit(lastFrame);
-    const visible = outfit !== null && ready && outfitLoaded;
-    if (visible !== outfitVisible) { outfitVisible = visible; outfitEl.style.display = visible ? "block" : "none"; }
+  /* Puts the drawing he should wear on screen once it is ready. Until then, and if it fails, what is on screen stays. */
+  function settle() {
+    if (!gl || lost || dead) return;
+    const target = skins.get(wanted);
+    if (target?.decoded) { show(target); return; }
+    if (target && !target.failed) return;
+    // The outfit failed with nothing on screen yet, so the undressed drawing stands in for it.
+    if (current) return;
+    const base = skins.get(null);
+    if (!base) prepare(null);
+    else if (base.decoded) show(base);
   }
 
-  function setOutfit(next: Outfit | null) {
-    outfit = next;
-    if (outfitEl && next && next !== outfitShown) {
-      const layer = OUTFIT_LAYERS[next];
-      outfitShown = next; outfitLoaded = false;
-      outfitEl.style.width = `${(layer.w / RIG_SIZE) * 100}%`;
-      outfitEl.style.height = `${(layer.h / RIG_SIZE) * 100}%`;
-      outfitEl.style.transformOrigin = `${layer.anchor.x * 100}% ${layer.anchor.y * 100}%`;
-      outfitEl.src = layer.src;
-    }
-    showOutfit();
+  function ensure(skin: Skin): boolean {
+    if (skin.texture) return true;
+    if (!gl || lost || !skin.decoded) return false;
+    skin.texture = upload(gl, skin.image);
+    return skin.texture !== null;
+  }
+
+  function show(skin: Skin) {
+    if (skin === current || !ensure(skin)) return;
+    if (current) { previous = current; fadeAt = performance.now(); }
+    current = skin;
+    markReady();
+    if (lastFrame) draw(lastFrame);
+  }
+
+  function markReady() {
+    if (ready) return;
+    ready = true;
+    canvas?.setAttribute("data-ready", "");
+    if (owedRestore) { owedRestore = false; onRestored(); }
+  }
+
+  /* 0 while the drawing before still shows, 1 once the one now does. */
+  function blend(): number {
+    if (!previous) return 1;
+    const t = (performance.now() - fadeAt) / FADE_MS;
+    if (t >= 1) { previous = null; return 1; }
+    return Math.max(0, t);
   }
 
   function draw(frame: MotionFrame) {
-    if (!gl || !canvas || !ready) return;
+    const top = current;
+    if (!gl || !canvas || !ready || !top?.texture) return;
     poseMesh(mesh, frame, positions);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, positions);
+    const mix = blend();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, previous?.texture ?? top.texture);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, top.texture);
+    gl.uniform1f(uniforms.uMix, mix);
     gl.uniform2f(uniforms.uGaze, Math.max(-1, Math.min(1, frame.gazeX)), Math.max(-1, Math.min(1, frame.gazeY)));
     gl.uniform2f(uniforms.uOpen, frame.eyeOpenL, frame.eyeOpenR);
     gl.uniform1f(uniforms.uSmile, frame.eyeSmile);
@@ -182,7 +226,6 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       if (frame.pose !== null) drawings.get(frame.pose)?.classList.add("on");
       shown = frame.pose;
       canvas?.classList.toggle("off", shown !== null);
-      outfitEl?.classList.toggle("off", shown !== null);
       if (shown === null && wrap) wrap.style.transform = "";
     }
     if (shown !== null && wrap) wrap.style.transform = bodyTransform(frame);
@@ -196,8 +239,9 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
     context.linkProgram(program);
     if (!context.getProgramParameter(program, context.LINK_STATUS)) throw new Error("Studigo's rig program did not link.");
     context.useProgram(program);
-    for (const name of ["uTex", "uSpan", "uMargin", "uGaze", "uOpen", "uSmile", "uBrow", "uMouthCurve", "uMouthOpen", "uCheek"]) uniforms[name] = context.getUniformLocation(program, name);
+    for (const name of ["uTex", "uPrev", "uMix", "uSpan", "uMargin", "uGaze", "uOpen", "uSmile", "uBrow", "uMouthCurve", "uMouthOpen", "uCheek"]) uniforms[name] = context.getUniformLocation(program, name);
     context.uniform1f(uniforms.uSpan, span); context.uniform1f(uniforms.uMargin, MARGIN);
+    context.uniform1i(uniforms.uTex, 0); context.uniform1i(uniforms.uPrev, 1);
     const attribute = (name: string, data: Float32Array, usage: number) => {
       const made = context.createBuffer();
       context.bindBuffer(context.ARRAY_BUFFER, made);
@@ -217,9 +261,11 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
     context.blendFunc(context.ONE, context.ONE_MINUS_SRC_ALPHA);
   }
 
-  /* The drawing as the texture the mesh samples. */
-  function upload(context: WebGLRenderingContext, image: HTMLImageElement) {
+  /* A drawing as the texture the mesh samples. */
+  function upload(context: WebGLRenderingContext, image: HTMLImageElement): WebGLTexture | null {
     const texture = context.createTexture();
+    if (!texture) return null;
+    context.activeTexture(context.TEXTURE0);
     context.bindTexture(context.TEXTURE_2D, texture);
     context.pixelStorei(context.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 1);
     context.texImage2D(context.TEXTURE_2D, 0, context.RGBA, context.RGBA, context.UNSIGNED_BYTE, image);
@@ -227,22 +273,24 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_MAG_FILTER, context.LINEAR);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_S, context.CLAMP_TO_EDGE);
     context.texParameteri(context.TEXTURE_2D, context.TEXTURE_WRAP_T, context.CLAMP_TO_EDGE);
+    return texture;
   }
 
-  /* The context came back: rebuild on the same canvas and hand the rig back. If that fails he stays on his drawings, and the next restore tries again. */
+  /* The context came back: rebuild on the same canvas, make again the texture he is wearing, and hand the rig back. If that fails he stays on his drawings, and the next restore tries again. */
   function restore() {
-    if (dead || !gl || !art || !artReady) return;
+    lost = false;
+    if (dead || !gl) return;
     try {
       setUp(gl);
-      upload(gl, art);
     } catch (error) {
       ready = false;
       console.warn("Studigo's rig could not come back; he stays on his drawings.", error);
       return;
     }
-    ready = true;
-    canvas?.setAttribute("data-ready", "");
-    onRestored();
+    for (const skin of skins.values()) skin.texture = null;
+    previous = null;
+    if (current && ensure(current)) markReady();
+    settle();
   }
 
   return {
@@ -260,37 +308,25 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "low-power" });
       if (!gl) throw new Error("WebGL is not available for Studigo's rig.");
       const context = gl;
-      canvas.addEventListener("webglcontextlost", (event) => { event.preventDefault(); ready = false; if (!dead) onLost(); });
+      canvas.addEventListener("webglcontextlost", (event) => {
+        event.preventDefault();
+        ready = false; lost = true; owedRestore = true; previous = null;
+        for (const skin of skins.values()) skin.texture = null;
+        if (!dead) onLost();
+      });
       canvas.addEventListener("webglcontextrestored", restore);
       setUp(context);
-
-      const image = new Image();
-      image.decoding = "async";
-      art = image;
-      image.onload = () => {
-        artReady = true;
-        if (!gl) return;
-        upload(gl, image);
-        ready = true;
-        canvas?.setAttribute("data-ready", "");
-        if (lastFrame) draw(lastFrame);
-        showOutfit();
-      };
-      image.onerror = () => { if (!dead) onLost(); };
-      image.src = `${SPRITES}/center.webp`;
-      outfitEl = new Image();
-      outfitEl.className = "cmpOutfit";
-      outfitEl.alt = ""; outfitEl.draggable = false; outfitEl.decoding = "async";
-      outfitEl.setAttribute("aria-hidden", "true");
-      Object.assign(outfitEl.style, { position: "absolute", left: "0", top: "0", maxWidth: "none", pointerEvents: "none", display: "none" });
-      outfitEl.onload = () => { outfitLoaded = true; showOutfit(); };
-      wrap.appendChild(outfitEl);
-      if (outfit) setOutfit(outfit);
     },
     load() { loadSprites(drawings); },
     setPose() {},
-    apply(frame) { lastFrame = frame; draw(frame); showPose(frame); showOutfit(); },
-    setOutfit,
+    apply(frame) { lastFrame = frame; draw(frame); showPose(frame); },
+    setOutfit(next) {
+      if (dead) return;
+      wanted = next;
+      const known = skins.get(next);
+      if (!known || known.failed) prepare(next);
+      settle();
+    },
     park() {
       ready = false;
       wrap?.remove();
@@ -302,7 +338,7 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       ready = false; dead = true;
       gl?.getExtension("WEBGL_lose_context")?.loseContext();
       gl = null; canvas = null; wrap?.remove(); wrap = null; shown = null; drawings.clear();
-      outfitEl?.remove(); outfitEl = null; outfit = null; outfitShown = null;
+      skins.clear(); current = null; previous = null;
     }
   };
 }

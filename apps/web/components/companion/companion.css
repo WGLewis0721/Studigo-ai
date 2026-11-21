@@ -147,8 +147,6 @@
 .cmpRig { position: absolute; left: var(--rig-margin, -30%); top: var(--rig-margin, -30%); width: 160%; height: 160%; max-width: none; opacity: 0; transition: opacity .13s linear; }
 .cmpRig[data-ready] { opacity: 1; }
 .cmpRig.off { opacity: 0; }
-.cmpOutfit { transition: opacity .13s linear; }
-.cmpOutfit.off { opacity: 0; }
 
 .cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 116px; border-radius: 28px 28px 0 0; cursor: pointer; z-index: 5; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
@@ -352,14 +350,17 @@
 .cmpOutfits > legend b { font-size: 1.08rem; }
 .cmpOutfits > small { color: var(--muted); font-size: .92rem; line-height: 1.3; }
 .cmpOutfitList { display: grid; gap: 6px; }
-.cmpOutfitOpt { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 48px; padding: 8px 14px; border: 1px solid var(--hairline-strong); border-radius: 16px; background: var(--white); cursor: pointer; }
-.cmpOutfitOpt input { width: 20px; height: 20px; margin: 0; accent-color: var(--tangerine); }
-.cmpOutfitOpt > span { font-size: 1rem; font-weight: 700; }
-.cmpOutfitOpt > small { grid-column: 2; display: block; color: var(--muted); font-size: .84rem; line-height: 1.3; }
+.cmpOutfitOpt { display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 10px; align-items: center; min-height: 48px; padding: 8px 14px; border: 1px solid var(--hairline-strong); border-radius: 16px; background: var(--white); cursor: pointer; }
+.cmpOutfitOpt input { grid-row: 1 / span 2; width: 20px; height: 20px; margin: 0; accent-color: var(--tangerine); }
+.cmpOutfitOpt .cmpThumb { grid-row: 1 / span 2; position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--tangerine-soft); }
+.cmpOutfitOpt .cmpThumb img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 50% 12%; transform: scale(1.7); transform-origin: 50% 12%; pointer-events: none; }
+.cmpOutfitName { font-size: 1rem; font-weight: 700; }
+.cmpOutfitOpt > small { grid-column: 3; display: block; color: var(--muted); font-size: .84rem; line-height: 1.3; }
 .cmpOutfitOpt > small > svg { display: inline-block; margin: 0 5px 0 0; vertical-align: -1px; }
 .cmpOutfitOpt:has(input:checked) { border-color: var(--tangerine); box-shadow: inset 0 0 0 1px var(--tangerine); }
 .cmpOutfitOpt.locked { cursor: not-allowed; background: rgba(20, 27, 45, .03); color: var(--ink-2); }
 .cmpOutfitOpt.locked input { opacity: .45; }
+.cmpOutfitOpt.locked .cmpThumb img { filter: grayscale(1); opacity: .5; }
 .cmpOutfitOpt:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
 @media (min-width: 701px) { .cmpOutfitList { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -376,7 +377,7 @@
 .companionSettings .cmpChoice > small { font-size: .8rem; }
 .companionSettings .cmpSegment button { min-height: 38px; font-size: .86rem; }
 .companionSettings .cmpOutfitOpt { min-height: 44px; }
-.companionSettings .cmpOutfitOpt > span { font-size: .92rem; }
+.companionSettings .cmpOutfitName { font-size: .92rem; }
 
 /* The strip: his window moved under the room menu, above the colored rail. The slot has no height
    unless he is shown in it, so a room without the strip is unchanged. The stage is the same node,

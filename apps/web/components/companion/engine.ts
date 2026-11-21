@@ -7,6 +7,7 @@ import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growth
 import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
 import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
+import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
 import { createRigRenderer, type RigRenderer } from "./rig-renderer";
@@ -93,10 +94,10 @@ function growingHtml(view: GrowthView): string {
 }
 
 function outfitsHtml(view: GrowthView, worn: Outfit | null): string {
-  const option = (value: string, label: string, unlocked: boolean, tasksLeft: number, checked: boolean) => `<label class="cmpOutfitOpt${unlocked ? "" : " locked"}"><input type="radio" name="cmpOutfit" value="${value}" data-set="outfit"${checked ? " checked" : ""}${unlocked ? "" : " disabled"}><span>${label}</span>${unlocked ? "" : `<small>${LOCK_ICON}Unlocks after ${studyTasks(tasksLeft)}</small>`}</label>`;
+  const option = (value: string, label: string, src: string, unlocked: boolean, tasksLeft: number, checked: boolean) => `<label class="cmpOutfitOpt${unlocked ? "" : " locked"}"><input type="radio" name="cmpOutfit" value="${value}" data-set="outfit"${checked ? " checked" : ""}${unlocked ? "" : " disabled"}><span class="cmpThumb" aria-hidden="true"><img src="${src}" alt="" width="400" height="400" loading="lazy" decoding="async" draggable="false"></span><span class="cmpOutfitName">${label}</span>${unlocked ? "" : `<small>${LOCK_ICON}Unlocks after ${studyTasks(tasksLeft)}</small>`}</label>`;
   return `<fieldset class="cmpOutfits"><legend><b>Outfit</b></legend>
           <small>Cosmetic only. It never changes his progress.</small>
-          <div class="cmpOutfitList">${option("", "None", true, 0, worn === null)}${OUTFITS.map((outfit) => option(outfit, OUTFIT_LABELS[outfit], view.outfits[outfit].unlocked, view.outfits[outfit].tasksLeft, worn === outfit)).join("")}</div>
+          <div class="cmpOutfitList">${option("", "None", `${SPRITES}/center.webp`, true, 0, worn === null)}${OUTFITS.map((outfit) => option(outfit, OUTFIT_LABELS[outfit], OUTFIT_TEXTURES[outfit], view.outfits[outfit].unlocked, view.outfits[outfit].tasksLeft, worn === outfit)).join("")}</div>
         </fieldset>`;
 }
 
