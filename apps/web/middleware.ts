@@ -6,6 +6,14 @@ import { isSignedInAccount } from './lib/account-kind';
 const PROTECTED_PREFIXES = ["/app"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
+// Fail quickly if Supabase is paused or unreachable instead of timing out the
+// entire request in Vercel middleware.
+const authFetch: typeof fetch = (input, init) => {
+  const timeout = AbortSignal.timeout(6_000);
+  const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+  return fetch(input, { ...init, signal });
+};
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -22,11 +30,30 @@ export async function middleware(request: NextRequest) {
     if (path.startsWith('/app')) return response;
   }
 
+  const path = request.nextUrl.pathname;
+  const protectedRoute = PROTECTED_PREFIXES.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+  );
+
+  // Public pages do not need an auth lookup. They must remain available while
+  // Supabase is down; /app still checks authentication before proceeding.
+  if (!protectedRoute && !AUTH_ROUTES.includes(path)) return response;
+
+  const redirectToLogin = () => {
+    const redirect = request.nextUrl.clone();
+    redirect.pathname = "/login";
+    redirect.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
+    const redirected = NextResponse.redirect(redirect);
+    response.cookies.getAll().forEach((cookie) => redirected.cookies.set(cookie));
+    return redirected;
+  };
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) return response;
+  if (!url || !anonKey) return protectedRoute ? redirectToLogin() : response;
 
   const supabase = createServerClient(url, anonKey, {
+    global: { fetch: authFetch },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -43,22 +70,17 @@ export async function middleware(request: NextRequest) {
 
   // Refreshes the session cookie on every navigation so a student stays signed
   // in across visits without a client-side round trip.
-  const {
-    data: { user: sessionUser }
-  } = await supabase.auth.getUser();
+  let sessionUser = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) sessionUser = data.user;
+  } catch {
+    // Network failure must never expose a protected page or hang a public one.
+  }
   // An anonymous Supabase session is not a Studigo account.
   const user = isSignedInAccount(sessionUser) ? sessionUser : null;
 
-  const path = request.nextUrl.pathname;
-
-  if (!user && PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix))) {
-    const redirect = request.nextUrl.clone();
-    redirect.pathname = "/login";
-    redirect.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
-    const redirected = NextResponse.redirect(redirect);
-    response.cookies.getAll().forEach(cookie => redirected.cookies.set(cookie));
-    return redirected;
-  }
+  if (!user && protectedRoute) return redirectToLogin();
 
   if (user && AUTH_ROUTES.includes(path)) {
     const redirect = request.nextUrl.clone();
