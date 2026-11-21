@@ -27,7 +27,7 @@ export const RIG = {
 } as const;
 
 /** How far he can turn before the single drawing stops holding up, in radians. */
-export const MAX_YAW = 0.5, MAX_PITCH = 0.34, MAX_TILT = 0.2;
+export const MAX_YAW = 0.6, MAX_PITCH = 0.38, MAX_TILT = 0.2;
 /** How far squash widens him, breath lifts him and a lean brings his head nearer. Outfits stretch with the same factors. */
 export const STRETCH = { squashWide: 0.7, breathTall: 0.55, lean: 0.035 } as const;
 const HEAD_DEPTH = 80;

@@ -175,7 +175,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- how he is drawn ---------- */
   /** The living companion: a motion director and the rig. Null means the original drawings. */
-  let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm }) : null;
+  let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm, drawings: false }) : null;
   /** The rig for this visit. A lost WebGL context parks it, and a restored one brings it back. */
   const rig: RigRenderer | null = director ? createRigRenderer({ onLost: () => fallBack(), onRestored: () => restoreRig() }) : null;
   let renderer: CompanionRenderer = rig ?? createSpriteRenderer();

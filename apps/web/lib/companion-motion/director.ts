@@ -57,6 +57,8 @@ export type DirectorOptions = {
   /** 0 <= value < 1. Inject a seeded source for tests. */
   random: () => number;
   reducedMotion?: boolean;
+  /** Pick one of the drawn poses for gestures and far looks. Off keeps him on the rig alone, so he never swaps pictures. */
+  drawings?: boolean;
 };
 
 type Playing = { name: BeatName; def: BeatDef; start: number; fxDone: number; gazeDone: number };
@@ -302,7 +304,7 @@ export function createDirector(options: DirectorOptions) {
     const wantLook = distance >= (lookPose ? LOOK_OUT : LOOK_IN) ? dirPose(gaze.x * 100, gaze.y * 100, 0) : null;
     if (wantLook !== lookPose && (!lookPose || t - lookSince >= LOOK_HOLD_MS)) { lookPose = wantLook; lookSince = t; }
     const named = playing ? beatPose(playing.def, t - playing.start) : undefined;
-    frame.pose = base === "asleep" ? "sleep" : base === "held" ? "poke" : base === "petted" ? "pet"
+    frame.pose = options.drawings === false ? null : base === "asleep" ? "sleep" : base === "held" ? "poke" : base === "petted" ? "pet"
       : named !== undefined ? named : base === "thinking" ? "up" : lookPose;
     frame.base = base; frame.expression = faceName; frame.beat = playing ? playing.name : null;
     frame.gazeX = pupilX.x; frame.gazeY = pupilY.x;
