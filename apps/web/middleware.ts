@@ -68,8 +68,8 @@ export async function middleware(request: NextRequest) {
     }
   });
 
-  // Refreshes the session cookie on every navigation so a student stays signed
-  // in across visits without a client-side round trip.
+  // Refresh sessions only where authentication is needed. Public navigation
+  // remains independent of Supabase availability.
   let sessionUser = null;
   try {
     const { data, error } = await supabase.auth.getUser();
