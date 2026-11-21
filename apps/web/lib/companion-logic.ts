@@ -253,6 +253,8 @@ export type CompanionPrefs = {
   v: 2;
   /** Speech bubbles. Off unless the learner turns them on in Room Settings. */
   speech: boolean;
+  /** Short spoken lines in his voice. On unless the learner turns it off. */
+  voice: boolean;
   /** True when the learner sent him back to his seat; he stays there until called. */
   seated: boolean;
   /** He turns see-through while the page scrolls, so nothing under him is hidden. */
@@ -270,7 +272,7 @@ export type CompanionPrefs = {
   scale: number;
 };
 
-export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, seated: false, tuck: true, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 };
+export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, voice: true, seated: false, tuck: true, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 };
 const DOCKS: readonly string[] = ["br", "bl", "tr", "tl"];
 
 function parsePos(value: unknown): { x: number; y: number } | null {
@@ -299,6 +301,7 @@ export function parsePrefs(raw: string | null | undefined, savedScale?: string |
     return {
       v: 2,
       speech: value.speech === true,
+      voice: value.voice !== false,
       seated: value.seated === true,
       tuck: value.tuck !== false,
       dock: typeof value.dock === "string" && DOCKS.includes(value.dock) ? (value.dock as Dock) : DEFAULT_PREFS.dock,

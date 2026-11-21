@@ -7,10 +7,12 @@ import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growth
 import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
 import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
+import { createMouth } from "@/lib/companion-motion/mouth-driver";
 import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
+import { momentFor, planVoice, voiceLine, VOICE_START, type VoiceLine, type VoiceMoment, type VoiceState } from "@/lib/companion-voice";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
-import { createRigRenderer, type RigRenderer } from "./rig-renderer";
+import { createRigRenderer, GAZE_POSES, GESTURE_POSES, type RigRenderer } from "./rig-renderer";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -107,6 +109,11 @@ const pick = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.le
 const shown = (node: Element | null): node is HTMLElement => Boolean(node && node.getClientRects().length);
 /** Keeps a drag attached to its handle. A pointer that is already gone is not worth failing over. */
 const capture = (node: Element, pointerId: number) => { try { node.setPointerCapture(pointerId); } catch { /* the pointer was released first */ } };
+/* The device has seen him come out once, so his first meeting is said once. Blocked storage counts as seen, so it is never repeated. */
+const MET_KEY = "studigo.companion.met";
+function hasMet(): boolean { try { return window.localStorage.getItem(MET_KEY) === "1"; } catch { return true; } }
+function markMet() { try { window.localStorage.setItem(MET_KEY, "1"); } catch { /* storage is optional */ } }
+function unmarkMet() { try { window.localStorage.removeItem(MET_KEY); } catch { /* storage is optional */ } }
 /* Reading targets stay this far out, so the director draws him looking down into the field. */
 const READ_REACH = 0.6;
 /** Reading: he peers down into the field, as the drawn reading pose did. Text beside him, or just above, is pulled down. */
@@ -143,7 +150,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const rt = {
     mode: "seat" as Mode, dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
     reactUntil: 0, reacting: false, gazeUntil: 0, gazing: false, typingUntil: 0, thinking: false, asleep: false, leaned: false,
-    lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, pokeAt: 0, pokeCombo: 0,
+    lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, cardStreak: 0, pokeAt: 0, pokeCombo: 0,
     press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false, pinchEndedAt: 0,
     // Auto-seating is transient. The edge tab must still allow an explicit summon.
     autoSeated: false, userSummoned: false
@@ -203,7 +210,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /** The strip's box. His window lives in it only while he is shown in the strip. */
   const stripBox = document.createElement("div");
   stripBox.className = "cmpStrip";
-  let heartbeat = 0, motionFrame = 0;
+  let heartbeat = 0, motionFrame = 0, motionTick = 0;
+  let roomTone: string | null = null;
+  let gazeWarm = false, gesturesWarm = false;
   /** The rig could not draw (no WebGL, a lost context, missing art): he goes back to the original drawings. His motion state waits, parked, for the rig. */
   function fallBack() {
     if (dead || !director) return;
@@ -530,9 +539,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- speech and particles ---------- */
   let sayTimer = 0;
   /** Only ever speaks when the learner has switched speech on for this room. */
-  function say(lines: readonly string[]) {
+  function say(lines: readonly string[]) { sayText(pick(lines)); }
+  function sayText(text: string) {
     if (!prefs.speech || !live()) return;
-    bubble.textContent = pick(lines);
+    bubble.textContent = text;
     bubble.hidden = true; void bubble.offsetWidth; bubble.hidden = false;
     cancel(sayTimer); sayTimer = later(() => { bubble.hidden = true; }, 2900);
   }
@@ -552,6 +562,92 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       fx.appendChild(node);
     }
   }
+
+  /* ---------- voice: a short line now and then, in his voice (LC-DEC-042) ---------- */
+  /* One audio element per companion. Its sound runs through an analyser, so the mouth follows the clip's loudness. Nothing is recorded. */
+  const clip = new Audio();
+  clip.preload = "none";
+  const mouth = createMouth();
+  clip.addEventListener("ended", () => mouth.detach(), { signal });
+  let voiceCtx: AudioContext | null = null, levels: AnalyserNode | null = null, samples: Float32Array<ArrayBuffer> | null = null;
+  let routed: "untried" | "yes" | "no" = "untried";
+  let voiceState: VoiceState = VOICE_START;
+  let voiceEnd = 0;
+  /** The clip's loudness now, 0..1, from its analyser. Silence reads as 0. */
+  function loudness(): number {
+    if (!levels || !samples) return 0;
+    levels.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
+    return Math.min(1, Math.max(0, (Math.sqrt(sum / samples.length) - 0.01) * 6));
+  }
+  /** Sends the clip through an analyser, once, on the first line. Without Web Audio the mouth pulses on a timer. */
+  function route(): boolean {
+    if (routed !== "untried") return routed === "yes";
+    routed = "no";
+    const Context: typeof AudioContext | undefined = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Context) return false;
+    let ctx: AudioContext | null = null;
+    try {
+      ctx = new Context();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      ctx.createMediaElementSource(clip).connect(analyser);
+      analyser.connect(ctx.destination);
+      voiceCtx = ctx; levels = analyser; samples = new Float32Array(analyser.fftSize);
+      routed = "yes";
+      // A context made before any touch may start suspended; the first touch wakes it.
+      document.addEventListener("pointerdown", wake, { signal });
+      document.addEventListener("keydown", wake, { signal });
+    } catch (error) {
+      void ctx?.close().catch(() => {});
+      console.warn("Studigo's voice has no analyser; his mouth will pulse instead.", error);
+    }
+    return routed === "yes";
+  }
+  function wake() { if (voiceCtx?.state === "suspended") void voiceCtx.resume().catch(() => {}); }
+  function stopVoice() {
+    cancel(voiceEnd); voiceEnd = 0;
+    clip.pause();
+    mouth.detach();
+  }
+  /** Starts one line, and shows its text in the bubble when speech is on. */
+  function speakLine(line: VoiceLine, meeting: boolean) {
+    stopVoice();
+    const analysed = route();
+    wake();
+    mouth.attach(analysed
+      ? { kind: "amplitude", sample: loudness }
+      : { kind: "boundary", onWord: (pulse) => { const id = window.setInterval(pulse, 180); return () => window.clearInterval(id); } }, now());
+    clip.src = line.src;
+    if (meeting) markMet();
+    clip.play().then(() => {
+      if (dead) return;
+      sayText(line.text);
+      if (line.maxMs) voiceEnd = later(stopVoice, line.maxMs);
+    }, (error: unknown) => {
+      mouth.detach();
+      // Browsers hold sound until the learner has touched the page: the meeting is unmarked, and it says itself on the next touch.
+      if (meeting && !dead && error instanceof DOMException && error.name === "NotAllowedError") {
+        unmarkMet();
+        const retry = () => { if (!hasMet()) speakMoment({ kind: "firstMeet" }); };
+        document.addEventListener("pointerdown", retry, { signal, once: true });
+        document.addEventListener("keydown", retry, { signal, once: true });
+      }
+    });
+  }
+  /** Plans the line for a moment and starts it, when the voice is on and he is out. Returns the line, or null when he stays quiet. */
+  function speakMoment(moment: VoiceMoment): VoiceLine | null {
+    if (dead || !prefs.voice || !live()) return null;
+    const planned = planVoice(moment, voiceState, now());
+    if (!planned) return null;
+    voiceState = planned.state;
+    const line = voiceLine(planned.id);
+    speakLine(line, moment.kind === "firstMeet");
+    return line;
+  }
+  /** The first time he is out in his window on this device, he introduces himself. */
+  function introduce() { if (!hasMet()) speakMoment({ kind: "firstMeet" }); }
 
   /* ---------- growth: what he has earned on this device ---------- */
   /** Unlocks the badge is showing now, so one is never celebrated twice while it shows. */
@@ -801,6 +897,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if ("outfit" in patch) picked = patch.outfit ?? null;
     prefs = wearing({ ...prefs, ...patch });
     applyCalm();
+    if (!prefs.voice) stopVoice();
     if ("outfit" in patch) applyOutfit();
     options.onPrefs(patch);
   }
@@ -824,7 +921,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       // He was parked on his seat, so the move to his corner reads as stepping out of it.
       el.dataset.state = "window"; activity(); place(); pulse("land", 460);
       react("support", 1200);
+      introduce();
     } else if (want === "seat") {
+      stopVoice();
       el.dataset.state = "seat"; place();
       seatTimer = later(() => { ws.dataset.seat = "occupied"; pulse("seatLand", 420, ws); }, calm ? 0 : 300);
     } else {
@@ -841,7 +940,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     ws.dataset.seat = "empty";
     el.dataset.empty = ""; el.classList.add("noMove"); el.dataset.state = "window";
     place(); void el.offsetWidth; el.classList.remove("noMove");
-    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); celebrate(); }, calm ? 0 : 520);
+    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); celebrate(); introduce(); }, calm ? 0 : 520);
   }
   host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => {
     rt.userSummoned = false;
@@ -852,7 +951,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     // He stays out, at the least-covering spot, until the page or tone changes.
     rt.userSummoned = true;
     rt.autoSeated = false;
+    const meeting = !hasMet();
     changePrefs({ seated: false }); sync();
+    if (!meeting) speakMoment({ kind: "summon" });
   }, { signal });
 
   /* ---------- his menu ---------- */
@@ -882,6 +983,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         ${growingHtml(view)}
         ${prefs.host === "strip" ? "" : `<label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>`}
         <label class="cmpToggle"><b>Speech</b><small>A short line now and then. Off until you turn it on.</small><input type="checkbox" data-set="speech" ${prefs.speech ? "checked" : ""}></label>
+        <label class="cmpToggle"><b>Voice</b><small>He says a short line now and then.</small><input type="checkbox" data-set="voice" ${prefs.voice ? "checked" : ""}></label>
         <label class="cmpToggle"><b>Fade while I scroll</b><small>He turns see-through so nothing under him is hidden.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
         <label class="cmpToggle"><b>Calm mode</b><small>Gentler, slower movement. No hops, spins or sparkles.</small><input type="checkbox" data-set="calm" ${calm ? "checked" : ""}${systemReduced ? " disabled" : ""}>${systemReduced ? '<small class="cmpNote">Your device asks for less motion.</small>' : ""}</label>
         <div class="cmpChoice" role="group" aria-labelledby="cmpWhereTitle">
@@ -922,7 +1024,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     });
     wrap.addEventListener("change", (event) => {
       const input = event.target as HTMLInputElement, key = input.dataset.set;
-      if (key === "speech" || key === "tuck" || key === "calm") changePrefs({ [key]: input.checked });
+      if (key === "speech" || key === "voice" || key === "tuck" || key === "calm") changePrefs({ [key]: input.checked });
       if (key === "outfit" && (input.value === "" || wearableOutfit(growth.points, parseOutfit(input.value)) !== null)) changePrefs({ outfit: parseOutfit(input.value) });
     });
     wrap.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); closeCard(); } });
@@ -936,7 +1038,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- watching the room ---------- */
   const inHost = (target: EventTarget | null) => target instanceof Node && (host.contains(target) || el.contains(target));
-  ws.addEventListener("pointermove", (event) => { if (!inHost(event.target)) lookAt(event.clientX, event.clientY, 1800); }, { signal, passive: true });
+  ws.addEventListener("pointermove", (event) => {
+    if (!gazeWarm) { gazeWarm = true; rig?.preload(GAZE_POSES); }
+    if (!inHost(event.target)) lookAt(event.clientX, event.clientY, 1800);
+  }, { signal, passive: true });
   ws.addEventListener("pointerdown", (event) => { if (!inHost(event.target)) { activity(); lookAt(event.clientX, event.clientY, 1500); } }, { signal, capture: true, passive: true });
   document.addEventListener("keydown", activity, { signal });
   /** On every keystroke he looks at where the words are appearing. */
@@ -1012,6 +1117,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     motionFrame = 0;
     if (dead || !director) return;
     motionFrame = window.requestAnimationFrame(motionLoop);
+    // Calm draws every other frame (30 Hz). The director steps from the clock, so what he does is the same.
+    motionTick += 1;
+    if (calm && motionTick % 2 === 0) return;
+    director.setMouth(mouth.sample(time));
     const frame = director.advance(time);
     renderer.apply(frame);
     for (const item of frame.fx) burst(item.kind, item.count);
@@ -1044,7 +1153,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (on && !motionFrame) motionFrame = window.requestAnimationFrame(motionLoop);
     else if (!on && motionFrame) { window.cancelAnimationFrame(motionFrame); motionFrame = 0; }
   }
-  document.addEventListener("visibilitychange", syncMotion, { signal });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stopVoice(); syncMotion(); }, { signal });
   if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
   applyCalm();
   applyScale(prefs.scale, false);
@@ -1078,24 +1187,31 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /** How he reacts to a committed event, whether he is out or seated. */
   function answer(name: CompanionEvent, payload?: CompanionEventPayload) {
     activity();
+    if (!gesturesWarm) { gesturesWarm = true; rig?.preload(GESTURE_POSES); }
     if (name === "correct") rt.streak += 1;
     else if (name === "wrong" || name === "blindspot") rt.streak = 0;
+    if (name === "cardGood") rt.cardStreak += 1;
+    else if (name === "cardMiss") rt.cardStreak = 0;
     if (rt.mode === "seat") {
       // From his seat he still notices: the avatar gives a small bounce.
       if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
       return;
     }
     const reaction = reactionFor(name, rt.streak);
+    const moment = momentFor(name, { streak: rt.streak, cardStreak: rt.cardStreak, level: payload?.level });
+    // When he speaks, the bubble shows that line instead of a reaction line, so one answer never says two things.
+    const spoke = moment !== null && speakMoment(moment) !== null;
+    const says = !spoke && reaction.lines && (reaction.always || Math.random() < 0.35) ? reaction.lines : null;
     if (director) {
       if (name === "stall" && payload?.level === 2) lookAtHint();
       // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
       director.onEvent(name, payload);
-      if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+      if (says) say(says);
       return;
     }
     react(reaction.pose, reaction.ms);
     if (reaction.sparks) burst("spark", reaction.sparks);
-    if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+    if (says) say(says);
   }
 
   return {
@@ -1127,12 +1243,17 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         el.dataset.tone = tone;
         schedulePlace();
       }
+      if (tone !== roomTone) {
+        roomTone = tone;
+        if (tone === "coach" || tone === "materials") speakMoment({ kind: "room", room: tone, roll: Math.random() });
+      }
     },
     setPrefs(next) {
       if (dead) return;
       picked = next.outfit;
       prefs = wearing(next);
       applyCalm();
+      if (!prefs.voice) stopVoice();
       applyOutfit();
       if (next.seated) rt.userSummoned = false;
       if (!rt.drag) rt.dock = next.dock;
@@ -1147,6 +1268,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       lifetime.abort();
       window.clearInterval(heartbeat);
       window.cancelAnimationFrame(motionFrame);
+      stopVoice();
+      clip.removeAttribute("src"); clip.load();
+      void voiceCtx?.close().catch(() => {});
       try { renderer.destroy(); } catch { /* nothing left to release */ }
       if (rig && rig !== renderer) { try { rig.destroy(); } catch { /* parked, and nothing left to release */ } }
       window.cancelAnimationFrame(placeFrame);

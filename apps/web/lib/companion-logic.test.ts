@@ -22,8 +22,8 @@ test("speech is off unless it was saved on", () => {
 });
 
 test("saved preferences fall back field by field", () => {
-  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { v: 2, speech: false, seated: true, tuck: false, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
-  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { v: 2, speech: false, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"zz","tuck":false,"seated":true}'), { v: 2, speech: false, voice: true, seated: true, tuck: false, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
+  assert.deepEqual(parsePrefs('{"dock":"tl"}'), { v: 2, speech: false, voice: true, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1 });
 });
 
 test("his size is saved for the device, kept within bounds, and a bad value means the default", () => {
@@ -242,13 +242,22 @@ function parseV1(raw: string) {
 
 test("a save from before v2 migrates: it reads as v2 with the new fields at their defaults", () => {
   assert.deepEqual(parsePrefs('{"speech":true,"seated":false,"tuck":true,"dock":"tl"}', "1.25"), {
-    v: 2, speech: true, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1.25
+    v: 2, speech: true, voice: true, seated: false, tuck: true, dock: "tl", pos: null, host: "float", outfit: null, calm: false, scale: 1.25
   });
   assert.deepEqual(parsePrefs(null), DEFAULT_PREFS);
 });
 
+test("his voice is on unless the learner saved it off", () => {
+  assert.equal(DEFAULT_PREFS.voice, true);
+  assert.equal(parsePrefs(null).voice, true);
+  assert.equal(parsePrefs('{"speech":true}').voice, true, "a save with no voice field keeps the voice on");
+  assert.equal(parsePrefs('{"voice":false}').voice, false);
+  assert.equal(parsePrefs('{"voice":true}').voice, true);
+  assert.equal(parsePrefs('{"voice":"no"}').voice, true, "only a saved false turns the voice off");
+});
+
 test("a v2 save reads back unchanged", () => {
-  const prefs: CompanionPrefs = { v: 2, speech: true, seated: true, tuck: false, dock: "bl", pos: { x: 0.25, y: 0.75 }, host: "strip", outfit: "sash", calm: true, scale: 1.5 };
+  const prefs: CompanionPrefs = { v: 2, speech: true, voice: false, seated: true, tuck: false, dock: "bl", pos: { x: 0.25, y: 0.75 }, host: "strip", outfit: "sash", calm: true, scale: 1.5 };
   const { scale, ...room } = prefs;
   assert.deepEqual(parsePrefs(JSON.stringify(room), String(scale)), prefs);
 });

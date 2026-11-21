@@ -2,7 +2,7 @@ import type { Outfit, WindowPose } from "@/lib/companion-logic";
 import type { MotionFrame } from "@/lib/companion-motion/director";
 import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { RIG, RIG_SIZE, STRETCH, buildRig, poseMesh } from "@/lib/companion-motion/rig";
-import { SPRITES, loadSprites, spriteElements, spriteImages, type CompanionRenderer } from "./renderers";
+import { SPRITES, drawingUrl, spriteElements, spriteImages, type CompanionRenderer } from "./renderers";
 
 /* The living companion's renderer: the approved front-facing drawing on a
    deforming mesh (lib/companion-motion/rig.ts), drawn with WebGL in one call.
@@ -114,7 +114,13 @@ export type RigRenderer = CompanionRenderer & {
   park(): void;
   /** Puts the rig back into a body, in place of whatever is there. */
   resume(body: HTMLElement): void;
+  /** Starts fetching these drawings now, so a beat that names them can show them at once. */
+  preload(poses: readonly WindowPose[]): void;
 };
+
+/* Only his front drawing loads at mount. The others load when the director first names them, or when the learner's first pointer move or committed event asks for the set. */
+export const GAZE_POSES: readonly WindowPose[] = ["left", "right", "up", "down", "up-right", "up-left", "down-right", "down-left"];
+export const GESTURE_POSES: readonly WindowPose[] = ["celebrate", "support", "pet", "poke", "lean", "sleep"];
 
 /** One drawing of him, undressed or in an outfit. Decoded once; its texture is made on the context that draws it. */
 type Skin = { image: HTMLImageElement; decoded: boolean; failed: boolean; texture: WebGLTexture | null };
@@ -133,8 +139,8 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
   const uniforms: Record<string, WebGLUniformLocation | null> = {};
   const span = 1 + MARGIN * 2;
 
-  /* The original drawings that stand in for the mesh while the director names one, and the one showing now. */
-  let drawings = new Map<string, HTMLImageElement>(), shown: WindowPose | null = null;
+  /* The drawings that stand in for the mesh while the director names one. `asked` is the pose the director named last; `shown` is the drawing on screen. */
+  let drawings = new Map<string, HTMLImageElement>(), shown: WindowPose | null = null, asked: WindowPose | null = null;
 
   /* Starts decoding one drawing. Nothing changes on screen until it is ready. */
   function prepare(outfit: Outfit | null) {
@@ -219,12 +225,29 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
     gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
   }
 
-  /* A drawing takes over with the canvas's own crossfade. Classes change only when the pose does; while a drawing shows, the body carries the motion the mesh would. */
+  /* A drawing is pointed at its file the first time the director names it. The file is then the outfit's dressed one, for as long as that outfit is worn. */
+  function ask(pose: WindowPose, outfit: Outfit | null) {
+    const img = drawings.get(pose);
+    if (!img || pose === "center") return;
+    const url = drawingUrl(pose, outfit);
+    if (img.getAttribute("src") !== url) img.src = url;
+  }
+  /* A drawing shows only once it has loaded. One that fails never does, so he stays on the rig. */
+  function drawn(pose: WindowPose): boolean {
+    const img = drawings.get(pose);
+    return img !== undefined && img.complete && img.naturalWidth > 0;
+  }
+  /* A drawing takes over with the canvas's own crossfade. Until it has loaded the rig stands in, so there is never a blank. Classes change only when the pose or its loading does; while a drawing shows, the body carries the motion the mesh would. */
   function showPose(frame: MotionFrame) {
-    if (frame.pose !== shown) {
+    if (frame.pose !== asked) {
+      asked = frame.pose;
+      if (asked !== null) ask(asked, wanted);
+    }
+    const want = asked !== null && drawn(asked) ? asked : null;
+    if (want !== shown) {
       if (shown !== null) drawings.get(shown)?.classList.remove("on");
-      if (frame.pose !== null) drawings.get(frame.pose)?.classList.add("on");
-      shown = frame.pose;
+      if (want !== null) drawings.get(want)?.classList.add("on");
+      shown = want;
       canvas?.classList.toggle("off", shown !== null);
       if (shown === null && wrap) wrap.style.transform = "";
     }
@@ -301,8 +324,8 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       wrap = body.querySelector<HTMLElement>(".cmpRigBody");
       if (!canvas || !wrap) throw new Error("Studigo's rig has no canvas.");
       drawings = spriteElements(body);
-      // His window is at most 2x; 640 backing pixels keep him sharp there without a large buffer on phones.
-      size = Math.round(Math.min(640, 150 * span * Math.min(2.5, Math.max(1.5, window.devicePixelRatio || 1))));
+      // His window is at most 2x; 640 backing pixels keep him sharp there. The backing store stops at 2x the device pixel ratio.
+      size = Math.round(Math.min(640, 150 * span * Math.min(2, Math.max(1.5, window.devicePixelRatio || 1))));
       canvas.width = size; canvas.height = size;
       canvas.style.setProperty("--rig-margin", `${-MARGIN * 100}%`);
       gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "low-power" });
@@ -317,8 +340,10 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       canvas.addEventListener("webglcontextrestored", restore);
       setUp(context);
     },
-    load() { loadSprites(drawings); },
+    // Only his front drawing loads at mount; the others are asked for as the director names them.
+    load() {},
     setPose() {},
+    preload(poses) { if (!dead) for (const pose of poses) ask(pose, wanted); },
     apply(frame) { lastFrame = frame; draw(frame); showPose(frame); },
     setOutfit(next) {
       if (dead) return;
@@ -326,6 +351,9 @@ export function createRigRenderer({ onLost, onRestored }: RigHooks): RigRenderer
       const known = skins.get(next);
       if (!known || known.failed) prepare(next);
       settle();
+      // A drawing on screen gives way to the rig, and drawings already on their way switch to this outfit.
+      if (shown !== null) { drawings.get(shown)?.classList.remove("on"); shown = null; canvas?.classList.remove("off"); if (wrap) wrap.style.transform = ""; }
+      drawings.forEach((img, pose) => { if (img.getAttribute("src")) ask(pose as WindowPose, next); });
     },
     park() {
       ready = false;

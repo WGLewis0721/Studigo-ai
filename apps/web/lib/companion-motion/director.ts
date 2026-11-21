@@ -1,6 +1,6 @@
 import { dirPose, idleStage, type CompanionEvent, type GazePose, type WindowPose } from "../companion-logic";
 import { SPARK_START, moodTier, nextSpark } from "../companion-mood";
-import { BEATS, CALM_DROPS, CALM_PARTICLES, EVENT_BEAT, STREAK_BEAT, VIGNETTES, type BeatDef, type BeatName, type GazeMode, type Move, type ParticleKind } from "./beats";
+import { BEATS, CALM_DROPS, CALM_PARTICLES, EVENT_BEAT, STREAK_BEAT, VIGNETTES, type BeatDef, type BeatName, type Fx, type GazeCue, type GazeMode, type Move, type ParticleKind } from "./beats";
 import { EXPRESSIONS, REST, CHANNEL_KEYS, mix, type Channels, type ExpressionName } from "./expressions";
 import { SPRINGS, STEP_S, spring, stepSpring, type SpringSpec } from "./springs";
 
@@ -75,11 +75,16 @@ const LOOK_IN = 0.4, LOOK_OUT = 0.26, LOOK_HOLD_MS = 250;
 const smooth = (p: number) => { const c = Math.max(0, Math.min(1, p)); return c * c * (3 - 2 * c); };
 const BASE_FACE: Record<BaseState, ExpressionName> = { idle: "Sunny", thinking: "Thinking", held: "Wow", petted: "Giggly", asleep: "Sleepy" };
 const GAZE_SPRING: Record<GazeMode, SpringSpec> = { snap: SPRINGS.GAZE_SNAP, look: SPRINGS.GAZE_LOOK, drift: SPRINGS.GAZE_DRIFT };
+/* Shared empty lists for beats that leave a track out. A fresh [] per substep would be garbage at 120 Hz. */
+const NO_MOVES: readonly Move[] = [];
+const NO_FX: readonly Fx[] = [];
+const NO_GAZE: readonly GazeCue[] = [];
+const NO_POSES: readonly { at: number; pose: WindowPose | null }[] = [];
 
 /** The drawing a beat names at tau: its latest key at or before tau. Undefined while no key has come yet. */
 function beatPose(def: BeatDef, tau: number): WindowPose | null | undefined {
   let found: { at: number; pose: WindowPose | null } | undefined;
-  for (const key of def.poses ?? []) if (key.at <= tau && (!found || key.at >= found.at)) found = key;
+  for (const key of def.poses ?? NO_POSES) if (key.at <= tau && (!found || key.at >= found.at)) found = key;
   return found?.pose;
 }
 
@@ -220,13 +225,13 @@ export function createDirector(options: DirectorOptions) {
     if (playing) {
       const tau = t - playing.start, def = playing.def;
       for (const key of def.faces) if (key.at <= tau) face = key.face;
-      for (const move of def.moves ?? []) if (!reduced || !CALM_DROPS.includes(move.kind)) moveInto(tr, move, tau - move.at, reduced ? 0.5 : 1);
-      const fx = def.fx ?? [];
+      for (const move of def.moves ?? NO_MOVES) if (!reduced || !CALM_DROPS.includes(move.kind)) moveInto(tr, move, tau - move.at, reduced ? 0.5 : 1);
+      const fx = def.fx ?? NO_FX;
       while (playing.fxDone < fx.length && fx[playing.fxDone].at <= tau) {
         const item = fx[playing.fxDone++];
         if (!reduced || CALM_PARTICLES.includes(item.kind)) pending.fx.push({ kind: item.kind, count: item.count });
       }
-      const cues = def.gaze ?? [];
+      const cues = def.gaze ?? NO_GAZE;
       while (playing.gazeDone < cues.length && cues[playing.gazeDone].at <= tau) {
         const cue = cues[playing.gazeDone++];
         if (gaze.owner !== "look" || t > gaze.until) { gaze.x = cue.x; gaze.y = cue.y; gaze.mode = cue.mode; gaze.until = t + cue.ms; gaze.owner = "beat"; }
@@ -236,7 +241,7 @@ export function createDirector(options: DirectorOptions) {
       const old = fading[i], weight = 1 - smooth((t - old.cutAt) / CUT_FADE_MS);
       if (weight <= 0) { fading.splice(i, 1); continue; }
       // The cut beat keeps moving along its own curve while it lets go, so nothing jumps.
-      for (const move of old.def.moves ?? []) if (!reduced || !CALM_DROPS.includes(move.kind)) moveInto(tr, move, t - old.start - move.at, weight * (reduced ? 0.5 : 1));
+      for (const move of old.def.moves ?? NO_MOVES) if (!reduced || !CALM_DROPS.includes(move.kind)) moveInto(tr, move, t - old.start - move.at, weight * (reduced ? 0.5 : 1));
     }
     setFace(face);
     mix(faceFrom, EXPRESSIONS[faceName], smooth((t - faceAt) / faceFade()), faceNow);
@@ -322,8 +327,11 @@ export function createDirector(options: DirectorOptions) {
         lastNow = nowMs;
         while (carry >= STEP_S - 1e-9) { carry -= STEP_S; substep(); }
       }
+      // The two lists trade places, so a frame hands out what was pending without allocating. The caller reads them before the next call.
+      const fxOut = frame.fx, cuesOut = frame.cues;
       frame.fx = pending.fx; frame.cues = pending.cues;
-      pending.fx = []; pending.cues = [];
+      pending.fx = fxOut; pending.cues = cuesOut;
+      pending.fx.length = 0; pending.cues.length = 0;
       return frame;
     },
     /** A committed learning event. Stall carries its level; nothing else has a payload. */

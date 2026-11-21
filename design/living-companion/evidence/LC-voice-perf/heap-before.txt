@@ -1,0 +1,43 @@
+{
+  "label": "before-HEAD-79e226d",
+  "path": "/demo/room?mode=quiz",
+  "durationMs": 180004,
+  "startBytes": 13287620,
+  "endBytes": 13327760,
+  "deltaBytes": 40140,
+  "deltaPerMinuteBytes": 13380,
+  "samples": [
+    {
+      "atMs": 0,
+      "usedBytes": 13287620
+    },
+    {
+      "atMs": 30156,
+      "usedBytes": 13237032
+    },
+    {
+      "atMs": 60310,
+      "usedBytes": 13378572
+    },
+    {
+      "atMs": 90372,
+      "usedBytes": 13449316
+    },
+    {
+      "atMs": 120402,
+      "usedBytes": 13395740
+    },
+    {
+      "atMs": 150452,
+      "usedBytes": 13413340
+    },
+    {
+      "atMs": 180004,
+      "usedBytes": 13327760
+    }
+  ],
+  "pose": "sleep",
+  "errors": []
+}
+
+[exited with code 0]

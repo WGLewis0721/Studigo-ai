@@ -150,6 +150,11 @@ export function RoomCompanionSettings({ roomId }: { roomId: string }) {
         <input type="checkbox" checked={prefs.speech} onChange={(event) => update({ speech: event.target.checked })} />
       </label>
       <label className="cmpToggle">
+        <b>Voice</b>
+        <small>He says a short line now and then.</small>
+        <input type="checkbox" checked={prefs.voice} onChange={(event) => update({ voice: event.target.checked })} />
+      </label>
+      <label className="cmpToggle">
         <b>His window</b>
         <small>He sits in a corner of every page of this room. Off keeps him in his seat.</small>
         <input type="checkbox" checked={!prefs.seated} onChange={(event) => update({ seated: !event.target.checked })} />
