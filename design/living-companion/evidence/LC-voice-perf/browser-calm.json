@@ -1,0 +1,27 @@
+{
+  "base": "http://127.0.0.1:3312",
+  "startedAt": "2026-11-21T01:47:28.562Z",
+  "sections": {
+    "calm": {
+      "reducedMotion": {
+        "fade": {
+          "msToNinetyFive": 305,
+          "transition": "0.3s",
+          "calm": true
+        },
+        "drawsPerSecond": 30,
+        "errors": []
+      },
+      "normal": {
+        "fade": {
+          "msToNinetyFive": 134,
+          "transition": "0.13s",
+          "calm": false
+        },
+        "drawsPerSecond": 58,
+        "errors": []
+      }
+    }
+  },
+  "finishedAt": "2026-11-21T01:47:49.166Z"
+}

@@ -139,6 +139,25 @@ test("30, 60 and 120 Hz displays see the same motion and the same drawings", () 
   }
 });
 
+test("a render that draws every other frame (calm's 30 Hz) sees the same motion and the same particles", () => {
+  const every = createDirector({ random: seeded(30) });
+  const half = createDirector({ random: seeded(30) });
+  every.advance(0); half.advance(0);
+  every.onEvent("setDone"); half.onEvent("setDone");
+  let particlesEvery = 0, particlesHalf = 0;
+  for (let i = 1; i <= 600; i += 1) {
+    const now = (i * 1000) / 60;
+    const a = every.advance(now);
+    particlesEvery += a.fx.reduce((sum, item) => sum + item.count, 0);
+    if (i % 2 !== 0) continue;
+    const b = half.advance(now);
+    particlesHalf += b.fx.reduce((sum, item) => sum + item.count, 0);
+    for (const key of NUMERIC) assert.ok(Math.abs((a[key] as number) - (b[key] as number)) < 1e-6, `${String(key)} differs at frame ${i}`);
+    assert.equal(a.pose, b.pose, `pose differs at frame ${i}`);
+  }
+  assert.equal(particlesHalf, particlesEvery, "no particle is lost when the render skips frames");
+});
+
 test("the eyes lead the head, and the head leads the body", () => {
   const director = createDirector({ random: seeded(3) });
   director.advance(0);
@@ -305,20 +324,24 @@ test("the rig at rest is the approved drawing, untouched", async () => {
 });
 
 test("a head turn has depth: the snout travels further than the skull's edge, and the far side foreshortens", async () => {
-  const { RIG, poseHeadPoint } = await import("./companion-motion/rig");
+  const { RIG, headDepth, posePoint } = await import("./companion-motion/rig");
   const director = createDirector({ random: seeded(21) });
   director.advance(0);
   director.lookAt(1, 0, 5000);
   const frame = run(director, 120, 0, 2000);
-  const moved = (x: number, y: number) => poseHeadPoint(x, y, frame).x - x;
+  const poseHeadPoint = (x: number, y: number) => {
+    const out = { x: 0, y: 0 };
+    posePoint(x, y, { head: 1, depth: headDepth(x, y), frillL: 0, frillR: 0, tail: 0, flame: 0, body: 0 }, frame, out);
+    return out;
+  };
+  const moved = (x: number, y: number) => poseHeadPoint(x, y).x - x;
   const snout = moved(RIG.snout.x, RIG.snout.y), eye = moved(RIG.eyeL.x, RIG.eyeL.y), rim = moved(RIG.head.x - RIG.head.rx + 2, RIG.head.y);
   assert.ok(snout > 12, `the snout only moved ${snout.toFixed(1)} px`);
   assert.ok(snout > eye && eye > rim, JSON.stringify({ snout, eye, rim }));
-  const near = poseHeadPoint(RIG.eyeR.x, RIG.eyeR.y, frame).x - poseHeadPoint(RIG.head.x, RIG.eyeR.y, frame).x;
-  const far = poseHeadPoint(RIG.head.x, RIG.eyeL.y, frame).x - poseHeadPoint(RIG.eyeL.x, RIG.eyeL.y, frame).x;
+  const near = poseHeadPoint(RIG.eyeR.x, RIG.eyeR.y).x - poseHeadPoint(RIG.head.x, RIG.eyeR.y).x;
+  const far = poseHeadPoint(RIG.head.x, RIG.eyeL.y).x - poseHeadPoint(RIG.eyeL.x, RIG.eyeL.y).x;
   assert.ok(Math.abs(near - far) > 1.5, "both halves of his face kept the same width, so the turn is flat");
   // The body is not part of the head: a point on his chest does not ride the turn.
-  const { posePoint } = await import("./companion-motion/rig");
   const chest = { x: 0, y: 0 };
   posePoint(205, 330, { head: 0, depth: 0, frillL: 0, frillR: 0, tail: 0, flame: 0, body: 1 }, frame, chest);
   assert.ok(Math.abs(chest.x - 205) < snout / 2);

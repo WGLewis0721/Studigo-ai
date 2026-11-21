@@ -1,0 +1,41 @@
+{
+  "label": "after-lc-voice-perf",
+  "path": "/demo/room?mode=quiz",
+  "durationMs": 180001,
+  "startBytes": 13021188,
+  "endBytes": 13086144,
+  "deltaBytes": 64956,
+  "deltaPerMinuteBytes": 21652,
+  "samples": [
+    {
+      "atMs": 0,
+      "usedBytes": 13021188
+    },
+    {
+      "atMs": 30029,
+      "usedBytes": 13144904
+    },
+    {
+      "atMs": 60074,
+      "usedBytes": 13108424
+    },
+    {
+      "atMs": 90116,
+      "usedBytes": 13234516
+    },
+    {
+      "atMs": 120146,
+      "usedBytes": 13238096
+    },
+    {
+      "atMs": 150185,
+      "usedBytes": 13186916
+    },
+    {
+      "atMs": 180001,
+      "usedBytes": 13086144
+    }
+  ],
+  "pose": "sleep",
+  "errors": []
+}

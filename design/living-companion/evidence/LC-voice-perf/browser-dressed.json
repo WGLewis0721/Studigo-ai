@@ -1,0 +1,55 @@
+{
+  "base": "http://127.0.0.1:3312",
+  "startedAt": "2026-11-21T01:47:08.661Z",
+  "sections": {
+    "dressed": {
+      "mountRequests": [
+        "/mascot/companion/dressed/explorer.webp",
+        "/mascot/companion/center.webp",
+        "/mascot/companion/dressed/explorer/celebrate.webp"
+      ],
+      "celebrate": {
+        "src": "/mascot/companion/dressed/explorer/celebrate.webp"
+      },
+      "farLeft": {
+        "src": "/mascot/companion/dressed/explorer/left.webp"
+      },
+      "frameBox": {
+        "x": 1158,
+        "y": 754,
+        "width": 116,
+        "height": 138
+      },
+      "goggles": {
+        "celebrateSrc": "/mascot/companion/dressed/goggles/celebrate.webp"
+      },
+      "dressedRequests": [
+        "/mascot/companion/dressed/explorer.webp",
+        "/mascot/companion/dressed/explorer/celebrate.webp",
+        "/mascot/companion/dressed/explorer/support.webp",
+        "/mascot/companion/dressed/explorer/left.webp",
+        "/mascot/companion/dressed/explorer/right.webp",
+        "/mascot/companion/dressed/explorer/up.webp",
+        "/mascot/companion/dressed/explorer/down.webp",
+        "/mascot/companion/dressed/explorer/up-right.webp",
+        "/mascot/companion/dressed/explorer/down-right.webp",
+        "/mascot/companion/dressed/goggles.webp",
+        "/mascot/companion/dressed/visor.webp",
+        "/mascot/companion/dressed/reader.webp",
+        "/mascot/companion/dressed/beret.webp",
+        "/mascot/companion/dressed/headphones.webp",
+        "/mascot/companion/dressed/sash.webp",
+        "/mascot/companion/dressed/goggles/left.webp",
+        "/mascot/companion/dressed/goggles/right.webp",
+        "/mascot/companion/dressed/goggles/up.webp",
+        "/mascot/companion/dressed/goggles/down.webp",
+        "/mascot/companion/dressed/goggles/up-right.webp",
+        "/mascot/companion/dressed/goggles/down-right.webp",
+        "/mascot/companion/dressed/goggles/celebrate.webp",
+        "/mascot/companion/dressed/goggles/support.webp"
+      ],
+      "consoleAndPageErrors": []
+    }
+  },
+  "finishedAt": "2026-11-21T01:47:21.124Z"
+}

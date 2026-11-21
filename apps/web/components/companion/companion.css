@@ -96,6 +96,8 @@
 /* Calm: the lean and the poke keep their drawings with no vertical jump; the scale eases in. */
 .cmp[data-calm] .cmpPose[data-pose="lean"] { transform: scale(.96); transition: opacity .13s linear, transform .3s ease; }
 .cmp[data-calm] .cmpPose[data-pose="poke"] { transform: scale(1.04); transition: opacity .13s linear, transform .3s ease; }
+/* Calm: a drawing swap fades over 300 ms, never a cut. The !important outranks the global reduced-motion rule (globals.css). */
+.cmp[data-calm] .cmpPose, .cmp[data-calm] .cmpRig { transition-duration: 300ms !important; }
 .cmpPose[data-pose="pet"], .cmpPose[data-pose="sleep"] { transform: translateY(2px); }
 
 .cmp[data-pose="celebrate"] .cmpBody { animation: cmpBounce .52s var(--ease-out) 4; }

@@ -23,9 +23,7 @@ export const RIG = {
   mouth: { x: 205, y: 208, rx: 46, ry: 15 },
   cheekL: { x: 136, y: 190 }, cheekR: { x: 274, y: 190 },
   frillL: { x: 140, y: 160 }, frillR: { x: 274, y: 160 },
-  tailBase: { x: 108, y: 345 }, flameBase: { x: 52, y: 292 }, flame: { x: 48, y: 258, r: 40 },
-  /** Outfit slots ride these points, so an outfit layer turns with the part it sits on. */
-  slots: { head: { x: 205, y: 96 }, eyes: { x: 203, y: 156 }, neck: { x: 205, y: 250 } }
+  tailBase: { x: 108, y: 345 }, flameBase: { x: 52, y: 292 }, flame: { x: 48, y: 258, r: 40 }
 } as const;
 
 /** How far he can turn before the single drawing stops holding up, in radians. */
@@ -86,7 +84,7 @@ export function buildRig(grid: number = RIG_GRID): RigMesh {
   return mesh;
 }
 
-/** Where one rest point ends up for a frame. Shared by the mesh and by outfit slots. */
+/** Where one rest point ends up for a frame. */
 export function posePoint(x: number, y: number, w: { head: number; depth: number; frillL: number; frillR: number; tail: number; flame: number; body: number }, f: MotionFrame, out: { x: number; y: number }) {
   let px = x, py = y;
 
@@ -152,11 +150,4 @@ export function poseMesh(mesh: RigMesh, frame: MotionFrame, out: Float32Array): 
     out[n * 2] = point.x; out[n * 2 + 1] = point.y;
   }
   return out;
-}
-
-/** Where a head-mounted point (an outfit slot, the eyes) sits for this frame. */
-export function poseHeadPoint(x: number, y: number, frame: MotionFrame): { x: number; y: number } {
-  const result = { x: 0, y: 0 };
-  posePoint(x, y, { head: 1, depth: headDepth(x, y), frillL: 0, frillR: 0, tail: 0, flame: 0, body: 0 }, frame, result);
-  return result;
 }
