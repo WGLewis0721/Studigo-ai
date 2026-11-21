@@ -63,6 +63,12 @@ function overlap(x: number, y: number, rect: Rect, size: Size) {
 /** More than this share of his window over a control counts as sitting on it. */
 const COVERED_SHARE = 0.075;
 
+/** True when more than a sliver of his window, with its top-left at `at`, sits over one of these controls. */
+export function coversControl(at: { x: number; y: number }, controls: Rect[], size: Size = WINDOW): boolean {
+  const limit = size.w * size.h * COVERED_SHARE;
+  return controls.some((rect) => overlap(at.x, at.y, rect, size) > limit);
+}
+
 /**
  * He never sits on a control the learner needs. If his corner covers one and
  * the page cannot scroll it clear, he takes the nearest free corner: the other
@@ -70,12 +76,20 @@ const COVERED_SHARE = 0.075;
  */
 export function chooseDock(preferred: Dock, area: Area, controls: Rect[], canScrollClear: boolean, size: Size = WINDOW): Dock {
   if (area.inRow || canScrollClear) return preferred;
-  const limit = size.w * size.h * COVERED_SHARE;
-  const blocked = (dock: Dock) => { const at = spot(dock, area, size); return controls.some((rect) => overlap(at.x, at.y, rect, size) > limit); };
+  const blocked = (dock: Dock) => coversControl(spot(dock, area, size), controls, size);
   const side = preferred[1], otherSide = side === "r" ? "l" : "r";
   const row = preferred[0], otherRow = row === "b" ? "t" : "b";
   const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
   return order.find((dock) => !blocked(dock)) ?? preferred;
+}
+
+/** The air Phase 3 keeps between him and every control. */
+const AIR = 8;
+const padded = (rect: Rect): Rect => ({ left: rect.left - AIR, right: rect.right + AIR, top: rect.top - AIR, bottom: rect.bottom + AIR });
+
+/** True when his window, with its top-left at `at`, keeps clear of every control by the Phase 3 margin. */
+export function clearOf(at: { x: number; y: number }, controls: Rect[], size: Size = WINDOW): boolean {
+  return controls.every((rect) => overlap(at.x, at.y, padded(rect), size) === 0);
 }
 
 /**
@@ -90,17 +104,67 @@ export function controlSafeDock(preferred: Dock, area: Area, controls: Rect[], s
   const side = preferred[1], otherSide = side === "r" ? "l" : "r";
   const row = preferred[0], otherRow = row === "b" ? "t" : "b";
   const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
-  return order.find((dock) => {
+  return order.find((dock) => clearOf(spot(dock, area, size), controls, size)) ?? null;
+}
+
+/**
+ * Keyboard use when no corner is clear of every control: the corner that keeps the
+ * control in focus clear, then the corner under the fewest controls. Ties keep the
+ * usual order, with the preferred corner first.
+ */
+export function dockKeepingFocus(preferred: Dock, area: Area, controls: Rect[], focus: Rect | null, size: Size = WINDOW): Dock {
+  const side = preferred[1], otherSide = side === "r" ? "l" : "r";
+  const row = preferred[0], otherRow = row === "b" ? "t" : "b";
+  const order = [preferred, `${row}${otherSide}`, `${otherRow}${side}`, `${otherRow}${otherSide}`] as Dock[];
+  const score = (dock: Dock) => {
     const at = spot(dock, area, size);
-    return controls.every((rect) => overlap(at.x, at.y, {
-      left: rect.left - 8, right: rect.right + 8, top: rect.top - 8, bottom: rect.bottom + 8
-    }, size) === 0);
-  }) ?? null;
+    const covers = (rect: Rect) => overlap(at.x, at.y, padded(rect), size) > 0;
+    return { hidesFocus: focus !== null && covers(focus), count: controls.filter(covers).length };
+  };
+  return order.reduce((best, dock) => {
+    const candidate = score(dock), current = score(best);
+    if (candidate.hidesFocus !== current.hidesFocus) return candidate.hidesFocus ? best : dock;
+    return candidate.count < current.count ? dock : best;
+  });
 }
 
 /** The corner nearest to where the learner let go of him. */
 export function dockFromDrop(centerX: number, centerY: number, area: Rect): Dock {
   return `${centerY > (area.top + area.bottom) / 2 ? "b" : "t"}${centerX > (area.left + area.right) / 2 ? "r" : "l"}` as Dock;
+}
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * The top-left point of his window as a share of the room he has to slide:
+ * 0 at the left or top edge, 1 at the right or bottom. No room to slide reads as the middle.
+ */
+export function posFromPoint(x: number, y: number, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const freeX = area.right - area.left - size.w, freeY = area.bottom - area.top - size.h;
+  return {
+    x: freeX > 0 ? clamp01((x - area.left) / freeX) : 0.5,
+    y: freeY > 0 ? clamp01((y - area.top) / freeY) : 0.5
+  };
+}
+
+/** The inverse of posFromPoint. The window stays inside the area, even when the area has shrunk since the position was saved. */
+export function pointFromPos(pos: { x: number; y: number }, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const freeX = Math.max(0, area.right - area.left - size.w), freeY = Math.max(0, area.bottom - area.top - size.h);
+  return { x: area.left + clamp01(pos.x) * freeX, y: area.top + clamp01(pos.y) * freeY };
+}
+
+/** The corner nearest to where his window sits in the area. */
+export function dockForPos(pos: { x: number; y: number }, area: Rect, size: Size = WINDOW): Dock {
+  const at = pointFromPos(pos, area, size);
+  return dockFromDrop(at.x + size.w / 2, at.y + size.h / 2, area);
+}
+
+/** Moves a saved position by a few pixels (arrow keys), clamped to the free room. */
+export function nudgePos(pos: { x: number; y: number }, dxPx: number, dyPx: number, area: Rect, size: Size = WINDOW): { x: number; y: number } {
+  const at = pointFromPos(pos, area, size);
+  return posFromPoint(at.x + dxPx, at.y + dyPx, area, size);
 }
 
 /** How much the page has to move aside for him, per dock. All in CSS pixels. */
@@ -125,8 +189,9 @@ export function scaleFromDrag(anchorX: number, anchorY: number, pointerX: number
 
 /* ---------- what the room tells him ---------- */
 
-export type CompanionEvent = "correct" | "wrong" | "blindspot" | "setDone" | "cardGood" | "cardMiss";
-export const COMPANION_EVENTS: readonly CompanionEvent[] = ["correct", "wrong", "blindspot", "setDone", "cardGood", "cardMiss"];
+/** Events the room can send. The first six exist on main. The rest are the LC v1 additions from SHARED_COMPANION_EVENTS.md (LC-7 wires their reactions; until then they use placeholder reactions below). */
+export type CompanionEvent = "correct" | "wrong" | "blindspot" | "setDone" | "cardGood" | "cardMiss" | "correctFast" | "stall" | "hintOpened" | "missionComplete" | "sessionReturn";
+export const COMPANION_EVENTS: readonly CompanionEvent[] = ["correct", "wrong", "blindspot", "setDone", "cardGood", "cardMiss", "correctFast", "stall", "hintOpened", "missionComplete", "sessionReturn"];
 
 /** Short, rare, and only when the learner has switched speech on. No em dashes (PLAIN_PUNCTUATION_RULE). */
 export const LINES = {
@@ -153,6 +218,12 @@ export function reactionFor(event: CompanionEvent, streak: number): Reaction {
     case "setDone": return { pose: "celebrate", ms: 3000, sparks: 16, lines: LINES.setDone, always: true };
     case "cardGood": return { pose: "celebrate", ms: 1300, sparks: 5 };
     case "cardMiss": return { pose: "support", ms: 1500, sparks: 0 };
+    // Placeholders for LC v1 events. LC-7 replaces these with the reactions in SHARED_COMPANION_EVENTS.md.
+    case "correctFast": return { pose: "celebrate", ms: 1000, sparks: 6 };
+    case "stall": return { pose: "lean", ms: 2000, sparks: 0, lines: LINES.lean };
+    case "hintOpened": return { pose: "center", ms: 600, sparks: 0 };
+    case "missionComplete": return { pose: "celebrate", ms: 2500, sparks: 16, lines: LINES.setDone, always: true };
+    case "sessionReturn": return { pose: "center", ms: 1500, sparks: 0 };
   }
 }
 
@@ -165,22 +236,61 @@ export function idleStage(idleMs: number): "awake" | "lean" | "sleep" {
 
 /* ---------- what the learner has switched on ---------- */
 
+/** Cosmetic outfits he can wear. A saved id that is not in this list reads back as no outfit. */
+export const OUTFITS = ["goggles", "explorer", "visor", "reader", "beret", "headphones", "sash"] as const;
+export type Outfit = typeof OUTFITS[number];
+/** The names in the menu. Plain text: no dashes, nothing a child would need explained. */
+export const OUTFIT_LABELS: Record<Outfit, string> = {
+  goggles: "Science goggles", explorer: "Explorer hat", visor: "Math visor", reader: "Reading glasses",
+  beret: "Art beret", headphones: "Music headphones", sash: "Civics sash"
+};
+
+/** Where he is out: his floating window, or the fixed strip under the room menu. */
+export type CompanionHost = "float" | "strip";
+
 export type CompanionPrefs = {
+  /** Format version, written as 2 on every save. Older builds ignore the new fields and still read the rest. */
+  v: 2;
   /** Speech bubbles. Off unless the learner turns them on in Room Settings. */
   speech: boolean;
+  /** Short spoken lines in his voice. On unless the learner turns it off. */
+  voice: boolean;
   /** True when the learner sent him back to his seat; he stays there until called. */
   seated: boolean;
   /** He turns see-through while the page scrolls, so nothing under him is hidden. */
   tuck: boolean;
   dock: Dock;
+  /** Where the learner moved him, as shares of his free room (see posFromPoint). Null means he sits in his dock corner. */
+  pos: { x: number; y: number } | null;
+  /** Floating window or the strip. A value that is neither reads as float. */
+  host: CompanionHost;
+  /** A cosmetic outfit from OUTFITS, or null for none. */
+  outfit: Outfit | null;
+  /** The learner's in-app Calm mode (reduced motion). Off unless they turn it on. */
+  calm: boolean;
   /** 1 is his default size. Saved for the device, not per room. */
   scale: number;
 };
 
-export const DEFAULT_PREFS: CompanionPrefs = { speech: false, seated: false, tuck: true, dock: "br", scale: 1 };
+export const DEFAULT_PREFS: CompanionPrefs = { v: 2, speech: false, voice: true, seated: false, tuck: true, dock: "br", pos: null, host: "float", outfit: null, calm: false, scale: 1 };
 const DOCKS: readonly string[] = ["br", "bl", "tr", "tl"];
 
-/** Reads saved preferences. Anything missing or malformed falls back to the default, so speech can only be on if it was saved on. */
+function parsePos(value: unknown): { x: number; y: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const { x, y } = value as { x?: unknown; y?: unknown };
+  if (typeof x !== "number" || typeof y !== "number" || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return { x: clamp01(x), y: clamp01(y) };
+}
+
+export function parseOutfit(value: unknown): Outfit | null {
+  return OUTFITS.find((outfit) => outfit === value) ?? null;
+}
+
+/**
+ * Reads saved preferences. Anything missing or malformed falls back to the default,
+ * so speech can only be on if it was saved on. A save from before v2 has none of the
+ * newer fields, so they read as their defaults.
+ */
 export function parsePrefs(raw: string | null | undefined, savedScale?: string | null): CompanionPrefs {
   const scale = savedScale ? clampScale(savedScale) : DEFAULT_PREFS.scale;
   const base = scale === DEFAULT_PREFS.scale ? DEFAULT_PREFS : { ...DEFAULT_PREFS, scale };
@@ -189,10 +299,16 @@ export function parsePrefs(raw: string | null | undefined, savedScale?: string |
     const value = JSON.parse(raw) as Partial<Record<keyof CompanionPrefs, unknown>> | null;
     if (!value || typeof value !== "object") return base;
     return {
+      v: 2,
       speech: value.speech === true,
+      voice: value.voice !== false,
       seated: value.seated === true,
       tuck: value.tuck !== false,
       dock: typeof value.dock === "string" && DOCKS.includes(value.dock) ? (value.dock as Dock) : DEFAULT_PREFS.dock,
+      pos: parsePos(value.pos),
+      host: value.host === "strip" ? "strip" : "float",
+      outfit: parseOutfit(value.outfit),
+      calm: value.calm === true,
       scale
     };
   } catch {

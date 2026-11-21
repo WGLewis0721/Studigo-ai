@@ -1,9 +1,18 @@
 import {
-  LINES, MAX_SCALE, MIN_SCALE, MIRRORED, WINDOW, WINDOW_POSES, chooseDock, controlSafeDock, clampScale, dirPose, dockFromDrop, idleStage, reactionFor, readingPose,
+  LINES, MAX_SCALE, MIN_SCALE, OUTFITS, OUTFIT_LABELS, WINDOW, chooseDock, clearOf, controlSafeDock, clampScale, coversControl, dirPose, dockForPos, dockKeepingFocus, idleStage, nudgePos, parseOutfit, pointFromPos, posFromPoint, reactionFor, readingPose,
   roomFor, scaleFromDrag, sizeAt, spot,
-  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Rect, type WindowPose
+  type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Outfit, type Rect, type Size, type WindowPose
 } from "@/lib/companion-logic";
+import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
+import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
+import type { BeatName } from "@/lib/companion-motion/beats";
+import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
+import { createMouth } from "@/lib/companion-motion/mouth-driver";
+import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
+import { momentFor, planVoice, voiceLine, VOICE_START, type VoiceLine, type VoiceMoment, type VoiceState } from "@/lib/companion-voice";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
+import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
+import { createRigRenderer, GAZE_POSES, GESTURE_POSES, type RigRenderer } from "./rig-renderer";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -13,15 +22,21 @@ import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@
    else: the room around it is React's. It reads the page to stay out of the
    way and never writes to practice state. */
 
-export const SPRITES = "/mascot/companion";
+export { SPRITES };
+
+export type CompanionEventPayload = { level?: 1 | 2 };
 
 export type CompanionHandle = {
-  /** Something already happened in the room (an answer was graded, a card was rated). */
-  event(name: CompanionEvent): void;
+  /** Something already happened in the room (an answer was graded, a card was rated). A stall passes its level. */
+  event(name: CompanionEvent, payload?: CompanionEventPayload): void;
   /** True while Studigo is working on a reply. */
   thinking(on: boolean): void;
+  /** Dev and QA only (window.studigoCompanion): adds growth points as if study tasks had been completed. */
+  grow(points: number): void;
   setTone(tone: string): void;
   setPrefs(prefs: CompanionPrefs): void;
+  /** Living companion only: play one of his beats by name. For the dev hook and demos. */
+  play?(beat: BeatName): void;
   destroy(): void;
 };
 
@@ -34,10 +49,20 @@ type Options = {
 };
 
 type Press = { sx: number; sy: number; ox: number; oy: number; mode: "press" | "pet" | "drag" | "long"; lastHeart: number };
+type Mode = "seat" | "window" | "strip";
 
 const POP: Partial<Record<WindowPose, true>> = { celebrate: true, lean: true, poke: true };
+/** With the living companion, the old pose and pulse commands become beats. */
+const POSE_BEAT: Partial<Record<WindowPose, BeatName>> = { celebrate: "bound", support: "support", poke: "poke", pet: "petted", lean: "lean" };
+const PULSE_BEAT: Partial<Record<string, BeatName>> = { land: "land", sway: "tickle", quietAck: "nod" };
+/** A pointer this far from his eyes (at default size) turns his head all the way. */
+const GAZE_REACH = 170;
+/** His stage is 106 px wide at his default size, and his eyes sit 53 px across and 75 px down from its top left: 80 px down the window, where the rig draws them (art y 156 of 400). */
+const STAGE_W = 106, EYE_ACROSS = 53, EYE_DOWN = 75;
 /** Clicking the size handle without dragging steps through these. */
 const SIZE_STEPS = [1, 1.5, 2];
+const NUDGE_PX = 16;
+const NUDGE = new Map<string, readonly [number, number]>([["ArrowLeft", [-1, 0]], ["ArrowRight", [1, 0]], ["ArrowUp", [0, -1]], ["ArrowDown", [0, 1]]]);
 const SHAPES = {
   heart: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 14.2 2.6 8.9a3.5 3.5 0 0 1 5-4.9l.4.4.4-.4a3.5 3.5 0 0 1 5 4.9Z"/></svg>',
   spark: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0c.6 4.2 3.8 7.4 8 8-4.2.6-7.4 3.8-8 8-.6-4.2-3.8-7.4-8-8 4.2-.6 7.4-3.8 8-8Z"/></svg>',
@@ -48,6 +73,35 @@ const FX_COLORS = {
   spark: ["var(--dandelion)", "var(--kiwi)", "var(--tangerine)", "var(--teal)"],
   zzz: ["var(--indigo)"]
 } as const;
+const BADGE_MS = 3000;
+const UNLOCK_ICON: Record<UnlockKind, string> = {
+  outfit: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 11.5c0-1.6 2.5-2.6 6-2.6s6 1 6 2.6V13H2v-1.5Zm3-3.8C5 4.9 6.3 2.5 8 2.5s3 2.4 3 5.2c-1-.6-2-.9-3-.9s-2 .3-3 .9Z"/></svg>',
+  trick: SHAPES.spark,
+  flame: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1c.9 2.8 3.9 4.4 3.9 8.2A3.9 3.9 0 0 1 4.1 9.2c0-1.7.8-2.9 1.7-3.8.1 1.1.6 1.9 1.3 2.4C7 6.4 7.4 3.6 8 1Z"/></svg>'
+};
+const LOCK_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="5.5" width="8" height="5.5" rx="1.4" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+const CHECK_ICON = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2 5 8.6l4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* The menu card's growth sections. Their words come from growthView, so Room Settings shows the same. */
+function growingHtml(view: GrowthView): string {
+  const pct = Math.round(view.fill * 100);
+  return `<section class="cmpGrow" aria-labelledby="cmpGrowTitle">
+          <div class="cmpGrowHead"><strong id="cmpGrowTitle">Growing</strong><span>${view.stageLabel}</span></div>
+          <div class="cmpBar" role="progressbar" aria-label="Progress to the next unlock" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
+          <small>${view.line}</small>
+          <div class="cmpTricks"><strong id="cmpTricksTitle">Tricks</strong>
+            <ul aria-labelledby="cmpTricksTitle">${view.tricks.map((trick) => `<li data-known="${trick.unlocked}">${trick.unlocked ? CHECK_ICON : LOCK_ICON}<span>${trick.label}</span><small>${trick.unlocked ? "He knows this one" : `Unlocks after ${studyTasks(trick.tasksLeft)}`}</small></li>`).join("")}</ul>
+          </div>
+        </section>`;
+}
+
+function outfitsHtml(view: GrowthView, worn: Outfit | null): string {
+  const option = (value: string, label: string, src: string, unlocked: boolean, tasksLeft: number, checked: boolean) => `<label class="cmpOutfitOpt${unlocked ? "" : " locked"}"><input type="radio" name="cmpOutfit" value="${value}" data-set="outfit"${checked ? " checked" : ""}${unlocked ? "" : " disabled"}><span class="cmpThumb" aria-hidden="true"><img src="${src}" alt="" width="400" height="400" loading="lazy" decoding="async" draggable="false"></span><span class="cmpOutfitName">${label}</span>${unlocked ? "" : `<small>${LOCK_ICON}Unlocks after ${studyTasks(tasksLeft)}</small>`}</label>`;
+  return `<fieldset class="cmpOutfits"><legend><b>Outfit</b></legend>
+          <small>Cosmetic only. It never changes his progress.</small>
+          <div class="cmpOutfitList">${option("", "None", `${SPRITES}/center.webp`, true, 0, worn === null)}${OUTFITS.map((outfit) => option(outfit, OUTFIT_LABELS[outfit], OUTFIT_TEXTURES[outfit], view.outfits[outfit].unlocked, view.outfits[outfit].tasksLeft, worn === outfit)).join("")}</div>
+        </fieldset>`;
+}
 
 const now = () => performance.now();
 const clamp = (value: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, value));
@@ -55,13 +109,36 @@ const pick = <T,>(list: readonly T[]) => list[Math.floor(Math.random() * list.le
 const shown = (node: Element | null): node is HTMLElement => Boolean(node && node.getClientRects().length);
 /** Keeps a drag attached to its handle. A pointer that is already gone is not worth failing over. */
 const capture = (node: Element, pointerId: number) => { try { node.setPointerCapture(pointerId); } catch { /* the pointer was released first */ } };
+/* The device has seen him come out once, so his first meeting is said once. Blocked storage counts as seen, so it is never repeated. */
+const MET_KEY = "studigo.companion.met";
+function hasMet(): boolean { try { return window.localStorage.getItem(MET_KEY) === "1"; } catch { return true; } }
+function markMet() { try { window.localStorage.setItem(MET_KEY, "1"); } catch { /* storage is optional */ } }
+function unmarkMet() { try { window.localStorage.removeItem(MET_KEY); } catch { /* storage is optional */ } }
+/* Reading targets stay this far out, so the director draws him looking down into the field. */
+const READ_REACH = 0.6;
+/** Reading: he peers down into the field, as the drawn reading pose did. Text beside him, or just above, is pulled down. */
+function readingGaze(x: number, y: number): [number, number] {
+  let gx = x, gy = y;
+  if (gy > -0.3) gy = Math.max(gy, 0.5 * Math.abs(gx), READ_REACH);
+  const length = Math.hypot(gx, gy);
+  if (length < READ_REACH) { gx = (gx * READ_REACH) / length; gy = (gy * READ_REACH) / length; }
+  return [gx, gy];
+}
 
 export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Options): CompanionHandle {
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const systemReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const lifetime = new AbortController();
   const { signal } = lifetime;
   let dead = false;
-  let prefs = options.prefs;
+  let growth: Growth = readGrowth();
+  /** The outfit the learner picked. He wears it only while growth has reached it, and it comes back if growth does. */
+  let picked: Outfit | null = options.prefs.outfit;
+  const wearing = (next: CompanionPrefs): CompanionPrefs => ({ ...next, outfit: wearableOutfit(growth.points, picked) });
+  let prefs = wearing(options.prefs);
+  /** True while an event is being answered: its reaction plays first, then any unlock it earned. */
+  let quiet = false;
+  let unsubscribeGrowth = () => {};
+  let calm = systemReduced || prefs.calm;
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
     const id = window.setTimeout(() => { timers.delete(id); if (!dead) fn(); }, ms);
@@ -71,9 +148,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const cancel = (id: number) => { window.clearTimeout(id); timers.delete(id); };
 
   const rt = {
-    mode: "seat" as "seat" | "window", dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
+    mode: "seat" as Mode, dock: prefs.dock, pose: "center" as WindowPose | "", x: 0, y: 0,
     reactUntil: 0, reacting: false, gazeUntil: 0, gazing: false, typingUntil: 0, thinking: false, asleep: false, leaned: false,
-    lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, pokeAt: 0, pokeCombo: 0,
+    lastInput: now(), nextBlink: now() + 2200, nextGlance: now() + 5200, nextZ: 0, streak: 0, cardStreak: 0, pokeAt: 0, pokeCombo: 0,
     press: null as Press | null, drag: null as { ox: number; oy: number } | null, steadyUntil: 0, loaded: false, pinchEndedAt: 0,
     // Auto-seating is transient. The edge tab must still allow an explicit summon.
     autoSeated: false, userSummoned: false
@@ -82,16 +159,32 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let k = 1, W: number = WINDOW.w, H: number = WINDOW.h;
   /** The size the learner asked for. What is shown (k) can be smaller when the room is tight. */
   let desired = prefs.scale;
+  /** The corner a resize or pinch grows from, while it lasts. */
+  let grow: { x: number; y: number; dock: Dock } | null = null;
+  /** True when he sits at the spot the learner chose, rather than in a corner. */
+  let floating = false;
+
+  /* ---------- how he is drawn ---------- */
+  /** The living companion: a motion director and the rig. Null means the original drawings. */
+  let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm }) : null;
+  /** The rig for this visit. A lost WebGL context parks it, and a restored one brings it back. */
+  const rig: RigRenderer | null = director ? createRigRenderer({ onLost: () => fallBack(), onRestored: () => restoreRig() }) : null;
+  let renderer: CompanionRenderer = rig ?? createSpriteRenderer();
+  /** The motion state (mood, streak, beats) kept while the rig is parked, so the rig carries on where it left off. */
+  let parked: Director | null = null;
+  /** Dresses whichever drawing he is in now. The original drawings have no outfits, so they ignore it. */
+  function applyOutfit() { renderer.setOutfit?.(prefs.outfit); }
 
   /* ---------- his elements ---------- */
   host.innerHTML = `
-    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br">
+    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br"${director ? " data-motion" : ""}>
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
+      <span class="cmpNew" role="status"></span>
       <div class="cmpWin">
         <div class="cmpScale">
           <div class="cmpScreen"></div>
-          <div class="cmpStage"><div class="cmpBody">${WINDOW_POSES.map((pose) => `<img class="cmpPose${pose === "center" ? " on" : ""}" data-pose="${pose}" ${MIRRORED[pose as GazePose] ? "data-flip" : ""} alt="" draggable="false" decoding="async">`).join("")}<i class="cmpLid l"></i><i class="cmpLid r"></i></div></div>
-          <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet. His name opens his menu."></div>
+          <div class="cmpStage"><div class="cmpBody">${renderer.markup()}</div></div>
+          <div class="cmpHit" role="button" tabindex="0" aria-label="Studigo. Tap to play, stroke to pet. Arrow keys move him. His name opens his menu."></div>
           <button class="cmpSill" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Studigo's menu"><span class="led"></span><span class="sillBrand">studigo</span><svg class="sillMore" width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5 5 3.5l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
         <button class="cmpCorner cmpGrip" type="button" tabindex="-1" aria-label="Drag to move Studigo"><svg width="16" height="6" viewBox="0 0 16 6" aria-hidden="true"><g fill="currentColor"><circle cx="3" cy="3" r="1.4"/><circle cx="8" cy="3" r="1.4"/><circle cx="13" cy="3" r="1.4"/></g></svg></button>
@@ -99,25 +192,65 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         <button class="cmpCorner cmpMin" type="button" aria-label="Send Studigo back to his seat"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
       <div class="cmpFx"></div>
+      <button class="cmpStripMenu" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Studigo's menu"><span class="led"></span><span class="sillBrand">studigo</span><svg class="sillMore" width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5 5 3.5l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
     <button class="cmpTab" type="button" hidden aria-label="Bring Studigo back out"><span class="led"></span><svg width="10" height="14" viewBox="0 0 10 14" aria-hidden="true"><path d="M7 2 2.5 7 7 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   const el = host.querySelector<HTMLElement>(".cmp")!;
   const bubble = host.querySelector<HTMLButtonElement>(".cmpBubble")!;
+  const badge = host.querySelector<HTMLElement>(".cmpNew")!;
   const fx = host.querySelector<HTMLElement>(".cmpFx")!;
   const tab = host.querySelector<HTMLButtonElement>(".cmpTab")!;
   const hit = host.querySelector<HTMLElement>(".cmpHit")!;
   const grip = host.querySelector<HTMLElement>(".cmpGrip")!;
   const sizer = host.querySelector<HTMLButtonElement>(".cmpSize")!;
   const sill = host.querySelector<HTMLButtonElement>(".cmpSill")!;
-  const poseEls = new Map<string, HTMLImageElement>();
-  host.querySelectorAll<HTMLImageElement>(".cmpPose").forEach((img) => poseEls.set(img.dataset.pose ?? "", img));
-  const spriteFor = (pose: string) => `${SPRITES}/${MIRRORED[pose as GazePose] ?? pose}.webp`;
-  poseEls.get("center")!.src = spriteFor("center");
+  const body = host.querySelector<HTMLElement>(".cmpBody")!;
+  const stageNode = el.querySelector<HTMLElement>(".cmpStage")!;
+  const stripMenu = host.querySelector<HTMLButtonElement>(".cmpStripMenu")!;
+  /** The strip's box. His window lives in it only while he is shown in the strip. */
+  const stripBox = document.createElement("div");
+  stripBox.className = "cmpStrip";
+  let heartbeat = 0, motionFrame = 0, motionTick = 0;
+  let roomTone: string | null = null;
+  let gazeWarm = false, gesturesWarm = false;
+  /** The rig could not draw (no WebGL, a lost context, missing art): he goes back to the original drawings. His motion state waits, parked, for the rig. */
+  function fallBack() {
+    if (dead || !director) return;
+    parked = director; director = null;
+    window.cancelAnimationFrame(motionFrame); motionFrame = 0;
+    rig?.park();
+    renderer = createSpriteRenderer();
+    body.innerHTML = renderer.markup();
+    renderer.mount(body);
+    applyOutfit();
+    delete el.dataset.motion;
+    if (rt.loaded) renderer.load();
+    rt.pose = ""; setPose("center");
+    if (!heartbeat) heartbeat = window.setInterval(tick, 320);
+  }
+  /** The rig's context came back: he returns to it with the motion state he had, and the drawings go. */
+  function restoreRig() {
+    if (dead || director || !parked || !rig) return;
+    const motion = parked;
+    parked = null;
+    renderer.destroy();
+    rig.resume(body);
+    renderer = rig;
+    director = motion;
+    window.clearInterval(heartbeat); heartbeat = 0;
+    el.dataset.motion = "";
+    applyCalm();
+    director.rest();
+    applyGrowth();
+    syncMotion();
+  }
+  try { renderer.mount(body); } catch (error) { console.warn("Studigo's rig could not start; using his drawings.", error); fallBack(); }
+  applyOutfit();
   /** The other poses are only fetched once he is actually out in his window. */
   const loadPoses = () => {
     if (rt.loaded) return;
     rt.loaded = true;
-    poseEls.forEach((img, pose) => { if (!img.getAttribute("src")) img.src = spriteFor(pose); });
+    renderer.load();
   };
 
   /* ---------- geometry, in viewport pixels ---------- */
@@ -191,6 +324,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function place() {
     if (dead) return;
+    if (rt.mode === "strip") { placeStrip(); return; }
+    stripSlot()?.removeAttribute("data-on");
+    stripBox.remove();
+    // Coming back from the strip is a move, not a slide: he appears where he now is.
+    if (el.parentElement !== host || el.dataset.host) snap(() => { delete el.dataset.host; host.insertBefore(el, tab); placeInRoom(); });
+    else placeInRoom();
+  }
+  function placeInRoom() {
     const a = area();
     // His size follows the room he has: he shrinks to fit a tight spot and returns to the chosen size after.
     const fitted = fit(desired, a);
@@ -209,6 +350,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     positionSeatTab();
     // Automatic seating is transient presentation, never a saved preference.
     el.hidden = false; el.inert = false;
+    floating = false;
     if (rt.mode !== "window" || !a) {
       rt.autoSeated = false;
       positionSeatTab();
@@ -229,9 +371,39 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         if (rect.width > 0 && rect.bottom > a.top && rect.top < a.bottom) targets.push(rect);
       });
     }
-    const dock = safeRoom && !rt.drag && !rt.userSummoned
-      ? controlSafeDock(rt.dock, a, targets, size)
-      : rt.drag ? rt.dock : chooseDock(rt.dock, a, targets, canScrollClear(), size);
+    // A spot he was moved to holds, as a corner does, unless it covers a control the page cannot scroll clear.
+    // Without the scroll rule, scrolling would flip him between spot and corner. Phase 3 rooms hold it only while it
+    // clears every control (LC-DEC-041), and chat rows keep their corners.
+    let free: { x: number; y: number; dock: Dock } | null = null;
+    if (prefs.pos && !a.inRow) {
+      const floatDock = grow?.dock ?? dockForPos(prefs.pos, a, size);
+      const from = grow
+        ? { x: floatDock[1] === "r" ? grow.x - size.w : grow.x, y: floatDock[0] === "b" ? grow.y - size.h : grow.y }
+        : pointFromPos(prefs.pos, a, size);
+      free = {
+        x: clamp(from.x, a.left, Math.max(a.left, a.right - size.w)),
+        y: clamp(from.y, a.top, Math.max(a.top, a.bottom - size.h)),
+        dock: floatDock
+      };
+    }
+    const holds = safeRoom
+      ? free !== null && clearOf(free, targets, size)
+      : free !== null && (canScrollClear() || !coversControl(free, targets, size));
+    if (free && (rt.drag || holds)) {
+      floating = true;
+      rt.autoSeated = false;
+      positionSeatTab();
+      ws.dataset.seat = "empty";
+      if (!rt.drag) setXY(free.x, free.y);
+      el.dataset.side = free.dock[1];
+      el.dataset.dock = free.dock;
+      makeRoom(0, 0, 0, 0);
+      return;
+    }
+    const preferred = grow?.dock ?? (prefs.pos && !a.inRow ? dockForPos(prefs.pos, a, size) : rt.dock);
+    const dock = rt.drag ? rt.dock
+      : !safeRoom || rt.userSummoned ? chooseDock(preferred, a, targets, canScrollClear(), size)
+      : controlSafeDock(preferred, a, targets, size) ?? keyboardDock(preferred, a, targets, size);
     if (dock === null) {
       // No safe corner. Temporarily seat him, but expose his normal edge tab
       // even if the header has retracted: the learner can always summon him.
@@ -257,6 +429,42 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       makeRoom(0, 0, dock[0] === "b" ? H + 8 : 0, 0);
     } else makeRoom(room.right, room.left, room.thread, room.page);
   }
+  /** While the learner works the room from the keyboard, a scroll never seats him: the corner keeps the control in focus clear. Null when focus is elsewhere, so normal placement applies. */
+  function keyboardDock(preferred: Dock, a: Area, targets: Rect[], size: Size): Dock | null {
+    const focus = document.activeElement;
+    if (!(focus instanceof HTMLElement) || !ws.contains(focus)) return null;
+    if (host.contains(focus)) return dockKeepingFocus(preferred, a, targets, null, size);
+    if (!focus.matches(":focus-visible")) return null;
+    const r = focus.getBoundingClientRect();
+    return dockKeepingFocus(preferred, a, targets, r.width > 0 ? r : null, size);
+  }
+  /** The strip's slot in this room's header, if the room has one. */
+  function stripSlot(): HTMLElement | null { return ws.querySelector<HTMLElement>("[data-companion-strip]"); }
+  /** The strip only shows while its slot has a height. The header's drawer folds it away. */
+  function stripShowing(): boolean { const slot = stripSlot(); return Boolean(slot && slot.getBoundingClientRect().height > 0); }
+  /** He is out and can be seen: in his window, or in the strip while the strip shows. */
+  function live(): boolean { return rt.mode === "window" || (rt.mode === "strip" && stripShowing()); }
+  /** Changes his window in place without a transition, so he appears where he now is. */
+  function snap(change: () => void) {
+    el.classList.add("noMove");
+    change();
+    void el.offsetWidth;
+    el.classList.remove("noMove");
+  }
+  /** The strip: his window moved into the slot under the menu, where it is a fixed band. */
+  function placeStrip() {
+    const slot = stripSlot();
+    if (!slot) { sync(); return; }
+    slot.setAttribute("data-on", "");
+    sizes.observe(slot);
+    if (stripBox.parentElement !== slot) slot.appendChild(stripBox);
+    if (el.parentElement !== stripBox || el.dataset.host !== "strip") snap(() => { el.dataset.host = "strip"; stripBox.appendChild(el); });
+    el.hidden = false; el.inert = false; floating = false;
+    tab.hidden = true;
+    makeRoom(0, 0, 0, 0);
+    ws.dataset.seat = "empty";
+    syncMotion();
+  }
   let placeFrame = 0;
   const schedulePlace = () => { if (!placeFrame) placeFrame = window.requestAnimationFrame(() => { placeFrame = 0; place(); }); };
 
@@ -271,60 +479,234 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const sizing = (on: boolean) => { el.classList.toggle("sizing", on); if (on) bubble.hidden = true; };
 
   /* ---------- poses ---------- */
-  function setPose(name: WindowPose) {
-    if (rt.pose === name) return;
+  /** Writes the pose his element carries: the attribute the CSS reads, and the pop that lets him break out of his frame. */
+  function stamp(name: WindowPose) {
     rt.pose = name;
-    poseEls.forEach((img, key) => img.classList.toggle("on", key === name));
     // Re-entering the same pose (a second poke) replays its movement.
     if (el.dataset.pose === name) { el.dataset.pose = ""; void el.offsetWidth; }
     el.dataset.pose = name;
     if (POP[name]) el.dataset.pop = ""; else delete el.dataset.pop;
   }
+  function setPose(name: WindowPose) {
+    // In motion mode the director names the pose instead (see syncPose).
+    if (director) return;
+    if (rt.pose === name) return;
+    renderer.setPose(name);
+    stamp(name);
+  }
   /** A reaction outranks gaze and idle until it runs out. */
   function react(name: WindowPose, ms: number) {
+    if (director) { const beat = POSE_BEAT[name]; if (beat) director.play(beat); return; }
     rt.reacting = true; rt.reactUntil = now() + ms; rt.gazing = false;
     rt.pose = ""; setPose(name);
   }
   function pulse(cls: string, ms: number, node: HTMLElement = el) {
+    if (director && node === el) {
+      const beat = PULSE_BEAT[cls];
+      if (beat) { director.play(beat); return; }
+      if (cls === "bob" || cls === "blink") return;
+    }
     node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls);
     later(() => node.classList.remove(cls), ms);
   }
-  const eyesX = () => rt.x + W / 2, eyesY = () => rt.y + 46 * k;
+  /** Where his eyes are on the page, and how many page pixels make one of his units. In the strip that is the stage as it is drawn. */
+  function eyes(): { x: number; y: number; scale: number } {
+    if (rt.mode === "strip") {
+      const r = stageNode.getBoundingClientRect(), scale = r.width > 0 ? r.width / STAGE_W : k;
+      return { x: r.left + EYE_ACROSS * scale, y: r.top + EYE_DOWN * scale, scale };
+    }
+    return { x: rt.x + W / 2, y: rt.y + 80 * k, scale: k };
+  }
   function lookAt(px: number, py: number, hold: number) {
-    if (rt.mode !== "window" || rt.drag || rt.press || rt.asleep || rt.thinking || now() < rt.reactUntil) return;
-    setPose(dirPose(px - eyesX(), py - eyesY(), 54 * k));
+    if (director) {
+      // Continuous: his eyes go first, then his head. Only the direction is used; nothing is kept.
+      if (live() && !rt.drag && !rt.press) { const e = eyes(); director.lookAt((px - e.x) / (GAZE_REACH * e.scale), (py - e.y) / (GAZE_REACH * e.scale), hold); rt.gazeUntil = now() + hold; }
+      return;
+    }
+    if (!live() || rt.drag || rt.press || rt.asleep || rt.thinking || now() < rt.reactUntil) return;
+    const e = eyes();
+    setPose(dirPose(px - e.x, py - e.y, 54 * e.scale));
     rt.gazing = true; rt.gazeUntil = now() + hold;
+  }
+  /** A stall on level 2 looks at the hint button while it is showing. Only his gaze moves: nothing is clicked or focused. */
+  function lookAtHint() {
+    const button = Array.from(ws.querySelectorAll<HTMLElement>(".learnDockHint, button[aria-label='Give me a hint']")).find(shown);
+    if (!button) return;
+    const r = button.getBoundingClientRect();
+    lookAt(r.left + r.width / 2, r.top + r.height / 2, 2500);
   }
 
   /* ---------- speech and particles ---------- */
   let sayTimer = 0;
   /** Only ever speaks when the learner has switched speech on for this room. */
-  function say(lines: readonly string[]) {
-    if (!prefs.speech || rt.mode !== "window") return;
-    bubble.textContent = pick(lines);
+  function say(lines: readonly string[]) { sayText(pick(lines)); }
+  function sayText(text: string) {
+    if (!prefs.speech || !live()) return;
+    bubble.textContent = text;
     bubble.hidden = true; void bubble.offsetWidth; bubble.hidden = false;
     cancel(sayTimer); sayTimer = later(() => { bubble.hidden = true; }, 2900);
   }
   function burst(kind: keyof typeof FX_COLORS, count: number) {
-    if (reduced && kind !== "zzz") count = Math.min(count, 2);
+    // Calm mode has no sparks or hearts. Only the sleep letters remain.
+    if (calm && kind !== "zzz") return;
+    // In the strip the figure is small: particles start lower and travel a short way, so they stay in it.
+    const inStrip = rt.mode === "strip", travel = inStrip ? 0.2 : k;
     for (let i = 0; i < count; i += 1) {
       const node = document.createElement("span");
       node.className = "fx";
-      const dx = (Math.random() - 0.5) * (kind === "spark" ? 150 : 70) * k, dy = (kind === "spark" ? -30 - Math.random() * 90 : -50 - Math.random() * 40) * k;
-      node.style.cssText = `--fx:${30 + Math.random() * 40}%;--fy:${kind === "zzz" ? 22 : 18 + Math.random() * 30}%;--dx:${kind === "zzz" ? 26 * k : dx}px;--dy:${dy}px;--s:${(0.7 + Math.random() * 0.7) * Math.max(1, k * 0.8)};--r:${(Math.random() - 0.5) * 120}deg;--t:${kind === "zzz" ? 1.9 : 0.8 + Math.random() * 0.5}s;--c:${pick(FX_COLORS[kind])};animation-delay:${i * (kind === "spark" ? 30 : 110)}ms`;
+      const dx = (Math.random() - 0.5) * (kind === "spark" ? 150 : 70) * travel, dy = (kind === "spark" ? -30 - Math.random() * 90 : -50 - Math.random() * 40) * travel;
+      const fy = kind === "zzz" ? 22 : inStrip ? 40 + Math.random() * 20 : 18 + Math.random() * 30, size = inStrip ? 1 : Math.max(1, k * 0.8);
+      node.style.cssText = `--fx:${30 + Math.random() * 40}%;--fy:${fy}%;--dx:${kind === "zzz" ? 26 * travel : dx}px;--dy:${dy}px;--s:${(0.7 + Math.random() * 0.7) * size};--r:${(Math.random() - 0.5) * 120}deg;--t:${kind === "zzz" ? 1.9 : 0.8 + Math.random() * 0.5}s;--c:${pick(FX_COLORS[kind])};animation-delay:${i * (kind === "spark" ? 30 : 110)}ms`;
       node.innerHTML = kind === "zzz" ? "z" : kind === "spark" ? (i % 3 ? SHAPES.spark : SHAPES.dot) : SHAPES.heart;
       node.addEventListener("animationend", () => node.remove());
       fx.appendChild(node);
     }
   }
 
+  /* ---------- voice: a short line now and then, in his voice (LC-DEC-042) ---------- */
+  /* One audio element per companion. Its sound runs through an analyser, so the mouth follows the clip's loudness. Nothing is recorded. */
+  const clip = new Audio();
+  clip.preload = "none";
+  const mouth = createMouth();
+  clip.addEventListener("ended", () => mouth.detach(), { signal });
+  let voiceCtx: AudioContext | null = null, levels: AnalyserNode | null = null, samples: Float32Array<ArrayBuffer> | null = null;
+  let routed: "untried" | "yes" | "no" = "untried";
+  let voiceState: VoiceState = VOICE_START;
+  let voiceEnd = 0;
+  /** The clip's loudness now, 0..1, from its analyser. Silence reads as 0. */
+  function loudness(): number {
+    if (!levels || !samples) return 0;
+    levels.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
+    return Math.min(1, Math.max(0, (Math.sqrt(sum / samples.length) - 0.01) * 6));
+  }
+  /** Sends the clip through an analyser, once, on the first line. Without Web Audio the mouth pulses on a timer. */
+  function route(): boolean {
+    if (routed !== "untried") return routed === "yes";
+    routed = "no";
+    const Context: typeof AudioContext | undefined = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Context) return false;
+    let ctx: AudioContext | null = null;
+    try {
+      ctx = new Context();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      ctx.createMediaElementSource(clip).connect(analyser);
+      analyser.connect(ctx.destination);
+      voiceCtx = ctx; levels = analyser; samples = new Float32Array(analyser.fftSize);
+      routed = "yes";
+      // A context made before any touch may start suspended; the first touch wakes it.
+      document.addEventListener("pointerdown", wake, { signal });
+      document.addEventListener("keydown", wake, { signal });
+    } catch (error) {
+      void ctx?.close().catch(() => {});
+      console.warn("Studigo's voice has no analyser; his mouth will pulse instead.", error);
+    }
+    return routed === "yes";
+  }
+  function wake() { if (voiceCtx?.state === "suspended") void voiceCtx.resume().catch(() => {}); }
+  function stopVoice() {
+    cancel(voiceEnd); voiceEnd = 0;
+    clip.pause();
+    mouth.detach();
+  }
+  /** Starts one line, and shows its text in the bubble when speech is on. */
+  function speakLine(line: VoiceLine, meeting: boolean) {
+    stopVoice();
+    const analysed = route();
+    wake();
+    mouth.attach(analysed
+      ? { kind: "amplitude", sample: loudness }
+      : { kind: "boundary", onWord: (pulse) => { const id = window.setInterval(pulse, 180); return () => window.clearInterval(id); } }, now());
+    clip.src = line.src;
+    if (meeting) markMet();
+    clip.play().then(() => {
+      if (dead) return;
+      sayText(line.text);
+      if (line.maxMs) voiceEnd = later(stopVoice, line.maxMs);
+    }, (error: unknown) => {
+      mouth.detach();
+      // Browsers hold sound until the learner has touched the page: the meeting is unmarked, and it says itself on the next touch.
+      if (meeting && !dead && error instanceof DOMException && error.name === "NotAllowedError") {
+        unmarkMet();
+        const retry = () => { if (!hasMet()) speakMoment({ kind: "firstMeet" }); };
+        document.addEventListener("pointerdown", retry, { signal, once: true });
+        document.addEventListener("keydown", retry, { signal, once: true });
+      }
+    });
+  }
+  /** Plans the line for a moment and starts it, when the voice is on and he is out. Returns the line, or null when he stays quiet. */
+  function speakMoment(moment: VoiceMoment): VoiceLine | null {
+    if (dead || !prefs.voice || !live()) return null;
+    const planned = planVoice(moment, voiceState, now());
+    if (!planned) return null;
+    voiceState = planned.state;
+    const line = voiceLine(planned.id);
+    speakLine(line, moment.kind === "firstMeet");
+    return line;
+  }
+  /** The first time he is out in his window on this device, he introduces himself. */
+  function introduce() { if (!hasMet()) speakMoment({ kind: "firstMeet" }); }
+
+  /* ---------- growth: what he has earned on this device ---------- */
+  /** Unlocks the badge is showing now, so one is never celebrated twice while it shows. */
+  const showing = new Set<string>();
+  let badgeBatch = 0;
+  /** Re-reads the device's growth. A new unlock is celebrated at once, unless an event is being answered (then after it). */
+  function refreshGrowth() {
+    if (dead) return;
+    growth = readGrowth();
+    prefs = wearing(prefs);
+    applyGrowth();
+    if (!quiet) celebrate();
+  }
+  function applyGrowth() {
+    director?.setTricks(availableTricks(growth.points));
+    director?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
+    el.dataset.stage = String(growthStage(growth.points));
+    applyOutfit();
+  }
+  function recordGrowth(name: CompanionEvent) {
+    const before = readGrowth();
+    const after = addGrowth(before, name);
+    if (after !== before) writeGrowth(after);
+  }
+  /**
+   * A newly reached unlock: a celebration, sparks and a badge on his window. The line
+   * is spoken only when speech is on. Seated, he waits and shows it when he comes out.
+   * The unlock counts as seen once its badge has had its time.
+   */
+  function celebrate() {
+    if (dead || !live()) return;
+    const fresh = newlyUnlocked(growth).filter((id) => !showing.has(id));
+    if (fresh.length === 0) return;
+    fresh.forEach((id) => showing.add(id));
+    const items = UNLOCKS.filter((item) => fresh.includes(item.id));
+    if (director) director.play("celebrate"); else react("celebrate", 2300);
+    burst("spark", 12);
+    const text = items.length === 1 ? `New: ${unlockLabel(items[0])}!` : `${items.length} new things unlocked!`;
+    badge.dataset.kind = items[0].kind;
+    badge.innerHTML = `${UNLOCK_ICON[items[0].kind]}<span>${items.length === 1 ? "New!" : `${items.length} new!`}</span><span class="cmpNewSr">${text}</span>`;
+    badge.classList.remove("on"); void badge.offsetWidth; badge.classList.add("on");
+    if (prefs.speech) say([text]);
+    const batch = ++badgeBatch;
+    later(() => {
+      fresh.forEach((id) => showing.delete(id));
+      const current = readGrowth(), seen = markSeen(current, fresh);
+      if (seen !== current) writeGrowth(seen);
+      if (batch === badgeBatch) badge.classList.remove("on");
+    }, BADGE_MS);
+  }
+
   /* ---------- idle: a character waiting for input ---------- */
   function activity() {
     rt.lastInput = now(); rt.leaned = false;
+    director?.activity();
     if (rt.asleep) { rt.asleep = false; react("poke", 800); say(LINES.wake); }
   }
   function tick() {
-    if (rt.mode !== "window" || rt.drag || rt.press || rt.thinking) return;
+    if (!live() || rt.drag || rt.press || rt.thinking) return;
     const t = now();
     if (t < rt.reactUntil) return;
     if (rt.reacting) { rt.reacting = false; if (!rt.asleep) setPose("center"); }
@@ -335,7 +717,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (stage === "sleep") { rt.asleep = true; rt.nextZ = t; setPose("sleep"); return; }
     if (stage === "lean" && !rt.leaned) { rt.leaned = true; react("lean", 5400); say(LINES.lean); return; }
     if (t > rt.nextBlink) { pulse("blink", 240); rt.nextBlink = t + 2300 + Math.random() * 3300; }
-    if (t > rt.nextGlance) {
+    if (!calm && t > rt.nextGlance) {
       rt.nextGlance = t + 4800 + Math.random() * 4200;
       const toward: GazePose = el.dataset.side === "r" ? "left" : "right";
       const move = pick<GazePose | "sway">([toward, toward, "up", `down-${toward}` as GazePose, "sway"]);
@@ -353,6 +735,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function highFive() { pulse("highfive", 360); burst("spark", 9); rt.reactUntil = now() + 1100; }
   function startDrag(x: number, y: number, press?: Press) {
+    director?.setPetted(false); director?.setHeld(true);
     rt.drag = { ox: press ? press.ox : x - rt.x, oy: press ? press.oy : y - rt.y };
     el.classList.add("dragging"); bubble.hidden = true;
     rt.pose = ""; setPose("poke");
@@ -363,9 +746,42 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function endDrag() {
     const a = area();
-    if (a) { rt.dock = dockFromDrop(rt.x + W / 2, rt.y + H / 2, a); changePrefs({ dock: rt.dock }); }
+    if (a) {
+      const size = { w: W, h: H }, pos = posFromPoint(rt.x, rt.y, a, size);
+      rt.dock = dockForPos(pos, a, size);
+      changePrefs({ pos, dock: rt.dock });
+    }
     rt.drag = null; el.classList.remove("dragging");
+    director?.setHeld(false);
     place(); pulse("land", 460); react("center", 300);
+  }
+  /** The corner a resize or pinch keeps still: his window's corner on the side he is docked to. */
+  function growCorner(): { x: number; y: number; dock: Dock } {
+    const dock = (el.dataset.dock ?? rt.dock) as Dock;
+    return { x: dock[1] === "r" ? rt.x + W : rt.x, y: dock[0] === "b" ? rt.y + H : rt.y, dock };
+  }
+  /** Saves the size, and the spot too while he floats, so he stays where the hand let go. */
+  function saveSize() {
+    const a = area();
+    if (!floating || !a) { changePrefs({ scale: k }); return; }
+    const size = { w: W, h: H }, pos = posFromPoint(rt.x, rt.y, a, size);
+    rt.dock = dockForPos(pos, a, size);
+    changePrefs({ scale: k, pos, dock: rt.dock });
+  }
+  /** Arrow keys nudge him and Home sends him back to his corner. False when the key is not his to take. */
+  function moveFromKeys(key: string, shift: boolean): boolean {
+    const a = area();
+    if (rt.mode !== "window" || !a || a.inRow) return false;
+    const size = { w: W, h: H };
+    if (key === "Home") { if (prefs.pos) changePrefs({ pos: null }); place(); return true; }
+    const step = NUDGE.get(key);
+    if (!step) return false;
+    const px = NUDGE_PX * (shift ? 4 : 1);
+    const pos = nudgePos(posFromPoint(rt.x, rt.y, a, size), step[0] * px, step[1] * px, a, size);
+    rt.dock = dockForPos(pos, a, size);
+    changePrefs({ pos, dock: rt.dock });
+    place();
+    return true;
   }
   let longTimer = 0;
   hit.addEventListener("pointerdown", (event) => {
@@ -380,10 +796,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const press = rt.press;
     if (!press || pinch) return;
     const x = event.clientX, y = event.clientY;
-    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); }
+    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); director?.setPetted(true); }
     if (press.mode === "pet") {
       const outside = x < rt.x - 18 || x > rt.x + W + 18 || y < rt.y - 18 || y > rt.y + H + 18;
-      if (outside) { press.mode = "drag"; startDrag(x, y, press); }
+      if (outside && rt.mode === "window") { press.mode = "drag"; startDrag(x, y, press); }
       else if (now() - press.lastHeart > 300) { press.lastHeart = now(); burst("heart", 1); }
     }
     if (press.mode === "drag") dragTo(x, y);
@@ -392,13 +808,17 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const press = rt.press;
     if (!press) return;
     cancel(longTimer); rt.press = null;
+    director?.setPetted(false);
     if (press.mode === "press") { if (rt.pose === "celebrate") highFive(); else poke(); }
     else if (press.mode === "pet") react("pet", 750);
     else if (press.mode === "drag") endDrag();
   };
   hit.addEventListener("pointerup", release, { signal });
   hit.addEventListener("pointercancel", release, { signal });
-  hit.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activity(); poke(); } }, { signal });
+  hit.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activity(); poke(); return; }
+    if (moveFromKeys(event.key, event.shiftKey)) event.preventDefault();
+  }, { signal });
   grip.addEventListener("pointerdown", (event) => { event.preventDefault(); activity(); capture(grip, event.pointerId); startDrag(event.clientX, event.clientY); }, { signal });
   grip.addEventListener("pointermove", (event) => dragTo(event.clientX, event.clientY), { signal });
   const drop = () => { if (rt.drag) endDrag(); };
@@ -411,8 +831,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   sizer.addEventListener("pointerdown", (event) => {
     event.preventDefault(); activity();
     capture(sizer, event.pointerId);
-    const dock = (el.dataset.dock ?? rt.dock) as Dock;
-    resize = { ax: dock[1] === "r" ? rt.x + W : rt.x, ay: dock[0] === "b" ? rt.y + H : rt.y, moved: false };
+    grow = growCorner();
+    resize = { ax: grow.x, ay: grow.y, moved: false };
   }, { signal });
   sizer.addEventListener("pointermove", (event) => {
     if (!resize) return;
@@ -422,10 +842,10 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const endResize = () => {
     if (!resize) return;
     const dragged = resize.moved;
-    resize = null;
+    resize = null; grow = null;
     if (!dragged) return;
     sizing(false); sizeClickUntil = now() + 350;
-    changePrefs({ scale: k });
+    saveSize();
   };
   let sizeClickUntil = 0;
   sizer.addEventListener("pointerup", endResize, { signal });
@@ -442,14 +862,16 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let pinch: { start: number; from: number } | null = null;
   const spread = () => { const [a, b] = Array.from(fingers.values()); return Math.hypot(a.x - b.x, a.y - b.y); };
   el.addEventListener("pointerdown", (event) => {
-    if (event.pointerType !== "touch") return;
+    if (event.pointerType !== "touch" || rt.mode !== "window") return;
     fingers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (fingers.size !== 2 || pinch) return;
     // A second finger turns the gesture into a pinch: whatever the first finger began is dropped.
     cancel(longTimer); rt.press = null;
     if (rt.drag) { rt.drag = null; el.classList.remove("dragging"); }
+    director?.setHeld(false); director?.setPetted(false);
     rt.pose = ""; setPose("center");
     pinch = { start: Math.max(spread(), 24), from: k };
+    grow = growCorner();
     sizing(true);
   }, { signal, capture: true });
   window.addEventListener("pointermove", (event) => {
@@ -459,9 +881,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }, { signal, passive: true });
   const liftFinger = (event: PointerEvent) => {
     if (!fingers.delete(event.pointerId) || !pinch || fingers.size >= 2) return;
-    pinch = null; sizing(false);
+    pinch = null; grow = null; sizing(false);
     rt.pinchEndedAt = now();
-    changePrefs({ scale: k });
+    saveSize();
     pulse("land", 460);
   };
   window.addEventListener("pointerup", liftFinger, { signal });
@@ -472,57 +894,82 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- his seat: the header avatar he goes back to when dismissed ---------- */
   let seatTimer = 0;
   function changePrefs(patch: Partial<CompanionPrefs>) {
-    prefs = { ...prefs, ...patch };
+    if ("outfit" in patch) picked = patch.outfit ?? null;
+    prefs = wearing({ ...prefs, ...patch });
+    applyCalm();
+    if (!prefs.voice) stopVoice();
+    if ("outfit" in patch) applyOutfit();
     options.onPrefs(patch);
   }
-  const wanted = () => (!prefs.seated && surface() ? "window" : "seat");
+  /** Calm reaches his window and the living companion's motion at once. */
+  function applyCalm() {
+    calm = systemReduced || prefs.calm;
+    el.toggleAttribute("data-calm", calm);
+    director?.setReducedMotion(calm);
+  }
+  /** Where he is: seated, in his floating window, or in the strip. The strip needs its slot in this room. */
+  const wanted = (): Mode => (prefs.seated || !surface() ? "seat" : prefs.host === "strip" && stripSlot() ? "strip" : "window");
   function sync() {
     const want = wanted();
-    if (want === rt.mode) { ws.dataset.seat = want === "window" ? "empty" : "occupied"; place(); return; }
+    if (want === rt.mode) { ws.dataset.seat = want === "seat" ? "occupied" : "empty"; place(); return; }
+    const was = rt.mode;
     rt.mode = want; rt.asleep = false; rt.drag = null; bubble.hidden = true; closeCard();
     cancel(seatTimer);
-    if (want === "window") {
+    if (want !== "seat" && was === "seat") {
       loadPoses();
       ws.dataset.seat = "empty";
       // He was parked on his seat, so the move to his corner reads as stepping out of it.
       el.dataset.state = "window"; activity(); place(); pulse("land", 460);
       react("support", 1200);
-    } else {
+      introduce();
+    } else if (want === "seat") {
+      stopVoice();
       el.dataset.state = "seat"; place();
-      seatTimer = later(() => { ws.dataset.seat = "occupied"; pulse("seatLand", 420, ws); }, reduced ? 0 : 300);
+      seatTimer = later(() => { ws.dataset.seat = "occupied"; pulse("seatLand", 420, ws); }, calm ? 0 : 300);
+    } else {
+      // Window and strip: he changes place, not state, so he does not hop.
+      ws.dataset.seat = "empty"; el.dataset.state = "window"; activity(); place();
     }
+    syncMotion();
+    celebrate();
   }
   /** The window appears empty; he lands in it a moment later (the end of his leap from Home). */
   function arrive() {
     loadPoses();
-    rt.mode = "window"; rt.asleep = false;
+    rt.mode = wanted(); rt.asleep = false;
     ws.dataset.seat = "empty";
     el.dataset.empty = ""; el.classList.add("noMove"); el.dataset.state = "window";
     place(); void el.offsetWidth; el.classList.remove("noMove");
-    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); }, reduced ? 0 : 520);
+    later(() => { delete el.dataset.empty; activity(); pulse("land", 460); react("celebrate", 1300); burst("spark", 10); celebrate(); introduce(); }, calm ? 0 : 520);
   }
   host.querySelector<HTMLButtonElement>(".cmpMin")!.addEventListener("click", () => {
     rt.userSummoned = false;
     changePrefs({ seated: true }); sync(); tab.focus({ preventScroll: true });
   }, { signal });
   tab.addEventListener("click", () => {
-    // Only an explicit learner request may relax the no-overlap fallback when
-    // every automatic corner is blocked. Drag/seat remain available afterward.
-    rt.userSummoned = rt.autoSeated;
+    // An explicit learner request brings him out even where every automatic corner is blocked.
+    // He stays out, at the least-covering spot, until the page or tone changes.
+    rt.userSummoned = true;
     rt.autoSeated = false;
+    const meeting = !hasMet();
     changePrefs({ seated: false }); sync();
+    if (!meeting) speakMoment({ kind: "summon" });
   }, { signal });
 
   /* ---------- his menu ---------- */
   let card: HTMLElement | null = null;
+  /** His sill in his window and the strip's button both open the menu, so both say whether it is open. */
+  const menuButtons = () => [sill, stripMenu];
+  const menuButton = () => (rt.mode === "strip" ? stripMenu : sill);
   function closeCard() {
     if (!card) return;
     card.remove(); card = null;
-    sill.setAttribute("aria-expanded", "false");
-    if (rt.mode === "window") sill.focus({ preventScroll: true });
+    for (const button of menuButtons()) button.setAttribute("aria-expanded", "false");
+    if (rt.mode !== "seat") menuButton().focus({ preventScroll: true });
   }
   function openCard() {
     closeCard();
+    const view = growthView(growth.points);
     const wrap = document.createElement("div");
     wrap.className = "cmpCard";
     wrap.innerHTML = `
@@ -533,11 +980,23 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
           <button class="cmpPlay" type="button" data-card="play" aria-label="Studigo. Tap to play."><img src="${SPRITES}/full/center.webp" alt=""></button>
           <div class="cmpAbout"><strong>He studies with you.</strong><p>He looks where you tap, reads along while you type, and turns see-through when you scroll. He never changes your mastery. Only your answers do.</p></div>
         </div>
-        <label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>
+        ${growingHtml(view)}
+        ${prefs.host === "strip" ? "" : `<label class="cmpRange"><b>Size</b><small>Drag his corner handle, or pinch him on a phone.</small><input type="range" min="${MIN_SCALE * 100}" max="${MAX_SCALE * 100}" step="5" value="${Math.round(k * 100)}" data-set="scale" aria-label="Studigo's size"><output>${Math.round(k * 100)}%</output></label>`}
         <label class="cmpToggle"><b>Speech</b><small>A short line now and then. Off until you turn it on.</small><input type="checkbox" data-set="speech" ${prefs.speech ? "checked" : ""}></label>
+        <label class="cmpToggle"><b>Voice</b><small>He says a short line now and then.</small><input type="checkbox" data-set="voice" ${prefs.voice ? "checked" : ""}></label>
         <label class="cmpToggle"><b>Fade while I scroll</b><small>He turns see-through so nothing under him is hidden.</small><input type="checkbox" data-set="tuck" ${prefs.tuck ? "checked" : ""}></label>
+        <label class="cmpToggle"><b>Calm mode</b><small>Gentler, slower movement. No hops, spins or sparkles.</small><input type="checkbox" data-set="calm" ${calm ? "checked" : ""}${systemReduced ? " disabled" : ""}>${systemReduced ? '<small class="cmpNote">Your device asks for less motion.</small>' : ""}</label>
+        <div class="cmpChoice" role="group" aria-labelledby="cmpWhereTitle">
+          <b id="cmpWhereTitle">Where he sits</b>
+          <small>A floating window you can move, or a strip under the menu.</small>
+          <div class="cmpSegment">
+            <button type="button" data-host-choice="float" aria-pressed="${prefs.host === "float"}">Floating window</button>
+            <button type="button" data-host-choice="strip" aria-pressed="${prefs.host === "strip"}">Strip under the menu</button>
+          </div>
+        </div>
+        ${outfitsHtml(view, prefs.outfit)}
         <div class="cmpCardActions">
-          <button class="ghostButton" type="button" data-card="move">Move to the other side</button>
+          ${prefs.host === "strip" ? "" : `<button class="ghostButton" type="button" data-card="move">Move to the other side</button>`}
           <button class="ghostButton" type="button" data-card="seat">Send him back to his seat</button>
         </div>
       </section>`;
@@ -546,7 +1005,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       const action = (event.target as HTMLElement).closest<HTMLElement>("[data-card]")?.dataset.card;
       if (action === "close") closeCard();
       if (action === "seat") { closeCard(); changePrefs({ seated: true }); sync(); }
-      if (action === "move") { rt.dock = `${rt.dock[0]}${rt.dock[1] === "r" ? "l" : "r"}` as Dock; changePrefs({ dock: rt.dock }); closeCard(); place(); pulse("land", 460); }
+      const choice = (event.target as HTMLElement).closest<HTMLElement>("[data-host-choice]")?.dataset.hostChoice;
+      if (choice === "float" || choice === "strip") { changePrefs({ host: choice }); sync(); closeCard(); }
+      if (action === "move") { rt.dock = `${rt.dock[0]}${rt.dock[1] === "r" ? "l" : "r"}` as Dock; changePrefs({ dock: rt.dock, pos: null }); closeCard(); place(); pulse("land", 460); }
       const play = action === "play" ? wrap.querySelector<HTMLElement>(".cmpPlay") : null;
       if (play) {
         const img = play.querySelector("img")!;
@@ -554,29 +1015,33 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         later(() => { img.src = `${SPRITES}/full/center.webp`; }, 900);
       }
     });
-    const readout = wrap.querySelector("output")!;
+    const readout = wrap.querySelector("output");
     wrap.addEventListener("input", (event) => {
       const input = event.target as HTMLInputElement;
       if (input.dataset.set !== "scale") return;
       applyScale(Number(input.value) / 100, true);
-      readout.textContent = `${Math.round(k * 100)}%`;
+      if (readout) readout.textContent = `${Math.round(k * 100)}%`;
     });
     wrap.addEventListener("change", (event) => {
       const input = event.target as HTMLInputElement, key = input.dataset.set;
-      if (key === "speech" || key === "tuck") changePrefs({ [key]: input.checked });
+      if (key === "speech" || key === "voice" || key === "tuck" || key === "calm") changePrefs({ [key]: input.checked });
+      if (key === "outfit" && (input.value === "" || wearableOutfit(growth.points, parseOutfit(input.value)) !== null)) changePrefs({ outfit: parseOutfit(input.value) });
     });
     wrap.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); closeCard(); } });
     host.appendChild(wrap);
     card = wrap;
-    sill.setAttribute("aria-expanded", "true");
+    for (const button of menuButtons()) button.setAttribute("aria-expanded", "true");
     wrap.querySelector<HTMLButtonElement>(".cmpSheetHead [data-card]")?.focus({ preventScroll: true });
   }
-  sill.addEventListener("click", () => { if (afterPinch()) return; pulse("pressed", 260, sill); openCard(); }, { signal });
+  for (const button of menuButtons()) button.addEventListener("click", () => { if (afterPinch()) return; pulse("pressed", 260, button); openCard(); }, { signal });
   bubble.addEventListener("click", () => { bubble.hidden = true; }, { signal });
 
   /* ---------- watching the room ---------- */
-  const inHost = (target: EventTarget | null) => target instanceof Node && host.contains(target);
-  ws.addEventListener("pointermove", (event) => { if (!inHost(event.target)) lookAt(event.clientX, event.clientY, 1800); }, { signal, passive: true });
+  const inHost = (target: EventTarget | null) => target instanceof Node && (host.contains(target) || el.contains(target));
+  ws.addEventListener("pointermove", (event) => {
+    if (!gazeWarm) { gazeWarm = true; rig?.preload(GAZE_POSES); }
+    if (!inHost(event.target)) lookAt(event.clientX, event.clientY, 1800);
+  }, { signal, passive: true });
   ws.addEventListener("pointerdown", (event) => { if (!inHost(event.target)) { activity(); lookAt(event.clientX, event.clientY, 1500); } }, { signal, capture: true, passive: true });
   document.addEventListener("keydown", activity, { signal });
   /** On every keystroke he looks at where the words are appearing. */
@@ -585,11 +1050,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) || inHost(input)) return;
     if (input instanceof HTMLInputElement && !["text", "search", ""].includes(input.type)) return;
     activity();
-    if (rt.mode !== "window" || now() < rt.reactUntil || rt.thinking) return;
-    const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26);
-    setPose(readingPose(r.left + 16 + chars * 8.4 - eyesX(), r.top + r.height / 2 - eyesY()));
+    if (!live() || now() < rt.reactUntil || rt.thinking) return;
+    const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26), e = eyes();
+    const tx = r.left + 16 + chars * 8.4 - e.x, ty = r.top + r.height / 2 - e.y;
+    // He reads along: eyes on where the words are appearing, down into the field.
+    if (director) { const [x, y] = readingGaze(tx / (GAZE_REACH * e.scale), ty / (GAZE_REACH * e.scale)); director.lookAt(x, y, 1500, "drift"); rt.typingUntil = now() + 1500; return; }
+    setPose(readingPose(tx, ty));
     rt.gazing = true; rt.typingUntil = now() + 1500;
-    if (!reduced) pulse("bob", 170);
+    if (!calm) pulse("bob", 170);
   }, { signal });
 
   /* While the page scrolls up or down he stays exactly where he is and turns
@@ -600,7 +1068,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const sideways = (target: EventTarget | null) => target instanceof Element && Boolean(target.closest(".chatChips, .coachTabs, .chatModes, .studyGroups"));
   const fadeForScroll = () => {
     rt.lastInput = now();
-    if (!prefs.tuck || rt.mode !== "window" || rt.drag || pinch || resize || now() < rt.steadyUntil) return;
+    if (!prefs.tuck || !live() || rt.drag || pinch || resize || now() < rt.steadyUntil) return;
     el.classList.add("ghost"); bubble.hidden = true;
     cancel(fadeTimer); fadeTimer = later(() => el.classList.remove("ghost"), 520);
   };
@@ -622,6 +1090,9 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   // He rides along whenever the page under him changes: a new page, the keyboard, a resize.
   window.addEventListener("resize", schedulePlace, { signal });
   window.addEventListener("scroll", schedulePlace, { signal, passive: true });
+  // Focus moving through the room re-checks his spot, so he never covers the control in focus. Leaving his window resumes normal placement.
+  ws.addEventListener("focusin", schedulePlace, { signal, passive: true });
+  ws.addEventListener("focusout", schedulePlace, { signal, passive: true });
   // Internal page scrollers do not bubble scroll events. Only the new non-chat
   // collision policy needs to follow them; leave Coach's locked geometry alone.
   ws.addEventListener("scroll", () => {
@@ -633,7 +1104,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   const sizes = new ResizeObserver(schedulePlace);
   sizes.observe(ws);
   const changes = new MutationObserver((records) => {
-    if (!records.some((record) => !host.contains(record.target))) return;
+    if (!records.some((record) => !(host.contains(record.target) || el.contains(record.target)))) return;
     // The page changed under him: hold still for a moment, and catch up.
     rt.steadyUntil = now() + 700;
     schedulePlace();
@@ -641,9 +1112,55 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   });
   changes.observe(ws, { childList: true, subtree: true });
 
-  const heartbeat = window.setInterval(tick, 320);
+  /* The living companion runs on one animation loop, and only while he is out and the tab is showing. */
+  function motionLoop(time: number) {
+    motionFrame = 0;
+    if (dead || !director) return;
+    motionFrame = window.requestAnimationFrame(motionLoop);
+    // Calm draws every other frame (30 Hz). The director steps from the clock, so what he does is the same.
+    motionTick += 1;
+    if (calm && motionTick % 2 === 0) return;
+    director.setMouth(mouth.sample(time));
+    const frame = director.advance(time);
+    renderer.apply(frame);
+    for (const item of frame.fx) burst(item.kind, item.count);
+    for (const cue of frame.cues) { if (cue === "lean") say(LINES.lean); else if (cue === "wake") say(LINES.wake); }
+    if (frame.base === "asleep" && time > rt.nextZ) { burst("zzz", 1); rt.nextZ = time + 1500; }
+    syncPose(frame.pose);
+    glance(frame);
+  }
+  /** The pose the director names is the pose he is in. Changed only when it changes, so the CSS animations replay once. */
+  function syncPose(pose: WindowPose | null) {
+    const want: WindowPose = pose ?? "center";
+    if (rt.pose !== want) stamp(want);
+  }
+  /** Idle glances on the drawn version's schedule: a look toward the page, up, down, or a gentle sway. Only while he is idle with nothing playing, and never in calm mode. */
+  function glance(frame: MotionFrame) {
+    const t = now();
+    if (!director || calm || frame.base !== "idle" || frame.beat !== null || rt.drag || rt.press || !live()) return;
+    if (t < rt.reactUntil || t < rt.typingUntil || t < rt.gazeUntil || t <= rt.nextGlance) return;
+    rt.nextGlance = t + 4800 + Math.random() * 4200;
+    const toward: GazePose = el.dataset.side === "r" ? "left" : "right";
+    const move = pick<GazePose | "sway">([toward, toward, "up", `down-${toward}` as GazePose, "sway"]);
+    if (move === "sway") { director.play("sway"); return; }
+    director.lookAt(move.endsWith("left") ? -0.9 : move.endsWith("right") ? 0.9 : 0, move === "up" ? -0.8 : move.startsWith("down") ? 0.7 : 0, 850);
+    rt.gazeUntil = t + 850;
+  }
+  function syncMotion() {
+    if (!director) return;
+    const on = live() && !document.hidden;
+    director.setVisible(on);
+    if (on && !motionFrame) motionFrame = window.requestAnimationFrame(motionLoop);
+    else if (!on && motionFrame) { window.cancelAnimationFrame(motionFrame); motionFrame = 0; }
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stopVoice(); syncMotion(); }, { signal });
+  if (!director && !heartbeat) heartbeat = window.setInterval(tick, 320);
+  applyCalm();
   applyScale(prefs.scale, false);
+  applyGrowth();
   if (options.arriving && !prefs.seated && surface()) arrive(); else sync();
+  syncMotion();
+  unsubscribeGrowth = subscribeGrowth(refreshGrowth);
 
   /* A lesson opened or a guide became ready. One brief nod, or nothing if he is minimized or motion is reduced. */
   const quietSeen = new Set<string>();
@@ -654,8 +1171,8 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       kind: detail.kind,
       eventKey: detail.eventKey,
       acknowledged,
-      reducedMotion: reduced,
-      minimized: rt.mode !== "window"
+      reducedMotion: calm,
+      minimized: rt.mode !== "window" && rt.mode !== "strip"
     });
     for (const key of decision.acknowledged) quietSeen.add(key);
     if (decision.animate) pulse("quietAck", 700);
@@ -667,27 +1184,55 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     detail.decision = acknowledgeQuiet(detail);
   }, { signal });
 
+  /** How he reacts to a committed event, whether he is out or seated. */
+  function answer(name: CompanionEvent, payload?: CompanionEventPayload) {
+    activity();
+    if (!gesturesWarm) { gesturesWarm = true; rig?.preload(GESTURE_POSES); }
+    if (name === "correct") rt.streak += 1;
+    else if (name === "wrong" || name === "blindspot") rt.streak = 0;
+    if (name === "cardGood") rt.cardStreak += 1;
+    else if (name === "cardMiss") rt.cardStreak = 0;
+    if (rt.mode === "seat") {
+      // From his seat he still notices: the avatar gives a small bounce.
+      if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
+      return;
+    }
+    const reaction = reactionFor(name, rt.streak);
+    const moment = momentFor(name, { streak: rt.streak, cardStreak: rt.cardStreak, level: payload?.level });
+    // When he speaks, the bubble shows that line instead of a reaction line, so one answer never says two things.
+    const spoke = moment !== null && speakMoment(moment) !== null;
+    const says = !spoke && reaction.lines && (reaction.always || Math.random() < 0.35) ? reaction.lines : null;
+    if (director) {
+      if (name === "stall" && payload?.level === 2) lookAtHint();
+      // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
+      director.onEvent(name, payload);
+      if (says) say(says);
+      return;
+    }
+    react(reaction.pose, reaction.ms);
+    if (reaction.sparks) burst("spark", reaction.sparks);
+    if (says) say(says);
+  }
+
   return {
-    event(name) {
+    event(name, payload) {
       if (dead) return;
-      activity();
-      if (name === "correct") rt.streak += 1;
-      else if (name === "wrong" || name === "blindspot") rt.streak = 0;
-      if (rt.mode !== "window") {
-        // From his seat he still notices: the avatar gives a small bounce.
-        if (name === "correct" || name === "setDone" || name === "cardGood") pulse("seatLand", 420, ws);
-        return;
-      }
-      const reaction = reactionFor(name, rt.streak);
-      react(reaction.pose, reaction.ms);
-      if (reaction.sparks) burst("spark", reaction.sparks);
-      if (reaction.lines && (reaction.always || Math.random() < 0.35)) say(reaction.lines);
+      quiet = true;
+      try { recordGrowth(name); } finally { quiet = false; }
+      answer(name, payload);
+      celebrate();
+    },
+    grow(points) {
+      if (dead) return;
+      const before = readGrowth(), gained = Math.max(0, Math.floor(points));
+      if (gained > 0) writeGrowth({ ...before, points: Math.min(GROWTH_MAX, before.points + gained) });
     },
     thinking(on) {
       if (dead || rt.thinking === on) return;
       rt.thinking = on;
       el.classList.toggle("thinking", on);
-      if (rt.mode !== "window") return;
+      director?.setThinking(on);
+      if (!live()) return;
       activity();
       rt.pose = ""; setPose(on ? "up" : "center");
     },
@@ -698,23 +1243,41 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
         el.dataset.tone = tone;
         schedulePlace();
       }
+      if (tone !== roomTone) {
+        roomTone = tone;
+        if (tone === "coach" || tone === "materials") speakMoment({ kind: "room", room: tone, roll: Math.random() });
+      }
     },
     setPrefs(next) {
       if (dead) return;
-      prefs = next;
+      picked = next.outfit;
+      prefs = wearing(next);
+      applyCalm();
+      if (!prefs.voice) stopVoice();
+      applyOutfit();
       if (next.seated) rt.userSummoned = false;
       if (!rt.drag) rt.dock = next.dock;
       if (!next.speech) bubble.hidden = true;
       if (!pinch && !resize) desired = next.scale;
       sync();
     },
+    play(beat) { if (!dead) director?.play(beat); },
     destroy() {
       dead = true;
+      unsubscribeGrowth();
       lifetime.abort();
       window.clearInterval(heartbeat);
+      window.cancelAnimationFrame(motionFrame);
+      stopVoice();
+      clip.removeAttribute("src"); clip.load();
+      void voiceCtx?.close().catch(() => {});
+      try { renderer.destroy(); } catch { /* nothing left to release */ }
+      if (rig && rig !== renderer) { try { rig.destroy(); } catch { /* parked, and nothing left to release */ } }
       window.cancelAnimationFrame(placeFrame);
       timers.forEach((id) => window.clearTimeout(id));
       sizes.disconnect(); changes.disconnect();
+      stripSlot()?.removeAttribute("data-on");
+      el.remove(); stripBox.remove();
       host.innerHTML = "";
       ["--dock-r", "--dock-l", "--dock-thread", "--dock-page"].forEach((name) => ws.style.removeProperty(name));
       delete ws.dataset.seat;

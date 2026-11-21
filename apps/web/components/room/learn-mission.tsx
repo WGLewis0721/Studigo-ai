@@ -9,6 +9,7 @@ import { MATERIAL_NOTES } from "@/lib/fixture-materials";
 import type { Topic } from "@/lib/rooms";
 import { missionBeats, supplementalMissionBeats, tapCheck, type ExplainDelivery, type MissionBeat } from "@/lib/learn-tap";
 import { useCompanion } from "@/components/companion/companion";
+import { createStallTimer, type StallTimer } from "@/lib/companion-stall";
 import { StudigoMascot } from "@/components/studigo-mascot";
 import { ReadAloudControl } from "./read-aloud-control";
 import { SourceReading } from "./source-reading";
@@ -92,6 +93,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const [sample, setSample] = useState<keyof typeof SAMPLES>("elementary");
   const sectionRef = useRef<HTMLElement>(null);
   const inFlight = useRef(false);
+  const stallTimer = useRef<StallTimer | null>(null);
   const previousPhase = useRef<{ topicId: string; phase: Phase } | null>(null);
   const [glowRevision, setGlowRevision] = useState(0);
 
@@ -100,7 +102,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   // canary use one Learn journey instead of competing Learn/Explore modes.
   const integratedJourney = !fixture || previewJournal;
   const mission = snapshot?.mission ?? null;
-  const { thinking: companionThinking } = useCompanion();
+  const { thinking: companionThinking, event: companionEvent } = useCompanion();
   useEffect(() => { companionThinking(busy); return () => companionThinking(false); }, [busy, companionThinking]);
   const currentTopic = topics.find((topic) => topic.id === mission?.topic_id);
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId);
@@ -188,8 +190,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     setBusy(true);
     setError(null);
     try {
-      await post(mission, action, reflection, topicOverride);
+      const saved = await post(mission, action, reflection, topicOverride);
       if (action === "restart" || action === "start") setTapped(null);
+      if (action === "advance" && saved.mission?.phase === "done") companionEvent("missionComplete");
       return true;
     } catch (caught) {
       await reload();
@@ -296,6 +299,21 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
   const firstCheck = Boolean(integratedJourney && mission?.phase === "show" && beat?.kind === "choice");
   // Use the exact retrieved current passage as the learning introduction.
   const reading = introduction ? snapshot?.source?.excerpt ?? "" : beat?.kind === "read" ? beat.body : "";
+  const journalShowing = journalOpen && !loading;
+  const stallKey = ready && !busy && !loading && !journalShowing && beat && beat.kind !== "read" && !shown && mission
+    ? `${mission.revision}:${mission.phase}:${questionIndex}:${beat.prompt}` : null;
+  useEffect(() => {
+    if (stallKey === null) return;
+    const timer = createStallTimer({ now: () => performance.now(), onStall: (level) => companionEvent("stall", { level }) });
+    stallTimer.current = timer;
+    timer.open(stallKey);
+    const interval = window.setInterval(() => timer.tick(), 1000);
+    return () => {
+      window.clearInterval(interval);
+      timer.close();
+      if (stallTimer.current === timer) stallTimer.current = null;
+    };
+  }, [stallKey, companionEvent]);
 
   // Render the journal in the same Learn room. All teaching, answers and
   // revision-bound cursor updates still belong to the existing player/API.
@@ -307,7 +325,9 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
     onOpenLesson={() => setJournalOpen(false)}
   />;
 
-  return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission">
+  return <section ref={sectionRef} className="learnReading" aria-label="Guided Learn mission"
+    onPointerDown={() => stallTimer.current?.activity()} onKeyDown={() => stallTimer.current?.activity()}
+    onInput={() => stallTimer.current?.activity()} onChange={() => stallTimer.current?.activity()}>
     {!loading && !mission && <div className="learnInvitation">
       <p className="tinyLabel">YOUR LEARNING MISSION</p>
       <h2>{invitationTitle ? "Learn " + invitationTitle : "Start with your material"}</h2>
@@ -460,7 +480,7 @@ export function LearnMission({ roomId, topics, selectedTopicId, explainLevel = "
         <MissionControlIcon name="journal" />
       </button>}
       {ready && beat?.kind !== "read" && !shown && <button type="button" className="ghostButton learnDockHint learnIconKey"
-        onClick={() => { setHelpUsed(true); setShown(true); }} aria-label="Give me a hint" title="Give me a hint">
+        onClick={() => { setHelpUsed(true); setShown(true); companionEvent("hintOpened"); }} aria-label="Give me a hint" title="Give me a hint">
         <span className="learnHelpGlyph" aria-hidden="true">?</span>
       </button>}
       {!mission?.paused && mission?.phase !== "done" && <button className={introduction ? "buttonPrimary learnGo learnGoIconOnly" : "buttonPrimary learnGo"} type="button"
