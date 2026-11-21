@@ -8,6 +8,7 @@ import { useCompanionGrowth } from "@/lib/companion-growth-store";
 import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { readCompanionPrefs, useCompanionPrefs } from "@/lib/companion-prefs";
 import { createCompanion, SPRITES, type CompanionEventPayload, type CompanionHandle } from "./engine";
+import { mountTestPanel, testPanelAllowed } from "./test-panel";
 
 /** Set on Home when a room is opened, so he lands in his window instead of just appearing. */
 export const LEAP_KEY = "studigo.leap";
@@ -70,17 +71,20 @@ export function useCompanionWindow({ roomId, workspaceRef, tone }: {
         window.sessionStorage.removeItem(LEAP_KEY);
       } catch { /* storage is optional */ }
     }
+    let removePanel: (() => void) | null = null;
     try {
       const created = createCompanion(workspace, host, { prefs: readCompanionPrefs(roomId), onPrefs: updatePrefs, arriving: arriving.current });
       created.setTone(latest.current.tone);
       handle.current = created;
       // Local fixtures have no grading API, so this is how his reactions are exercised by hand.
       if (process.env.NODE_ENV === "development") (window as unknown as { studigoCompanion?: CompanionHandle }).studigoCompanion = created;
+      if (testPanelAllowed()) removePanel = mountTestPanel(created);
     } catch (error) {
       console.error("Studigo's window could not start.", error);
       host.innerHTML = "";
     }
     return () => {
+      removePanel?.();
       const companion = handle.current;
       handle.current = null;
       try { companion?.destroy(); } catch { /* nothing left to clean up */ }
