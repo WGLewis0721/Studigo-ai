@@ -22,22 +22,26 @@ Branch `claude/studigo-living-companion-upgrade-ee0706`, PR #268 (open, unmerged
 | 7 MouthDriver | Done, no voice | `8a554cc` |
 | 8 sprite renderer extracted | Done | `51cb6ec` |
 | 9 motion flag | Done, defaults ON at owner request | `51cb6ec` |
-| 10 wait for H4, H5 | H4 partial (Rive CLI not logged in on 2026-11-20); H5 OPEN | `evidence/LC-1.md` |
-| 11 LC-1 spike | Partial: mesh rig built, Rive not built; measurements pending (H-A) | `evidence/LC-1.md` |
-| 12 renderer decision | STOP, owner | - |
+| 10 wait for H4, H5 | Superseded by owner delegation (LC-DEC-030); H5 still OPEN (needs owner accounts) | `evidence/LC-1.md` |
+| 11 LC-1 spike | Mesh rig measured by H-A (running); Rive deferred (LC-DEC-031) | `evidence/LC-1.md` |
+| 12 renderer decision | Decided under delegation: hybrid mesh rig (LC-DEC-031) | `DECISIONS.md` |
 | 13 rig | Built (mesh rig + original drawings for gestures and far head turns) | `51cb6ec`, `e55bc2d` |
 | 14 adapter + fallback | Done | `51cb6ec` |
-| 15 floating dock | Done, UI01-UI05 unverified (H-C) | `d72bede` |
-| 16 fixed strip | Done, UI06-UI10 unverified (H-C) | `d72bede` |
-| 17 events | Partial: `missionComplete`, `hintOpened` wired; `stall` and `correctFast` not (H-B) | `8a554cc` |
-| 18 outfits | Code done, placeholder art (owner) | `d72bede` |
-| 19 Calm mode | Done, A02 unverified (H-D) | `d72bede` |
+| 15 floating dock | Done; free spot honoured in Phase 3 too (LC-DEC-041); UI01-UI05 PASS | `417fce4`, `evidence/LC-21.md` |
+| 16 fixed strip | Done; fuller phone strip; UI06-UI10 PASS | `5518cbc`, `evidence/LC-21.md` |
+| 17 events | Done except `correctFast` (off by decision) and `sessionReturn` (no emitter); `stall` timer in Guided Learn | `1c62bc1`, `evidence/LC-17.md` |
+| 18 outfits | On-model dressed art committed (`339e29c`); texture swap wiring running (H-K); unlocked by growth | `evidence/LC-18.md` |
+| 19 Calm mode | Done, gentle not frozen (LC-DEC-040); calm checks PASS | `5518cbc`, `417fce4`, `evidence/LC-19.md` |
 | 20 stall thresholds | STOP, owner data | - |
-| 21 QA matrix | Not started (H-C, H-D, H-A) | - |
+| 21 QA matrix | Automated rows: 39 PASS, 0 FAIL, 30 OPEN (person, device or measurement) | `1e999f6`, `evidence/LC-21.md` |
 | 22 sign-off | STOP, owner | - |
-| 23 rollback rehearsal | Not started (H-F, local only) | `evidence/LC-9.md` |
+| 23 rollback rehearsal | Local rehearsal PASS (motion, sprites, off); production OPEN | `b89eee6`, `evidence/LC-9.md` |
 | 24 release PR | PR #268 exists; owner merges | - |
 | 25 voice | Blocked on owner narration | - |
+
+| growth (new) | Done: points from every committed event, 7 stages, unlocks for outfits, tricks, flame; menu "Growing" section (LC-DEC-033, 039) | `4bd5774`, `e0dde5f`, `evidence/LC-growth.md` |
+
+**Progress at 2026-11-20 evening:** branch head `339e29c`; LC tests 169 pass; typecheck, lint, build pass; PR #268 open, not merged. Running: H-K (dressed outfit texture swap, `lc/dressed-outfits`) and H-A (measurements, `lc/11-measurements`).
 
 **Run order.** Each Haiku task runs in its own worktree on branch `lc/<step>-<slug>` from `claude/studigo-living-companion-upgrade-ee0706`. The orchestrator reviews each diff, merges with `--no-ff`, re-runs the LC tests, and pushes. Dev servers use a private port per task so tasks can run in parallel.
 
