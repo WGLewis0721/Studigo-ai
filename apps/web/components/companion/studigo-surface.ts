@@ -1,6 +1,7 @@
 import type { Rive } from "@rive-app/webgl2";
 import { version } from "@rive-app/webgl2/package.json";
 import type { StudigoController } from "./studigo-controller";
+import { emoteDone, emoteIn, emoteOut } from "@/lib/studigo-emote";
 import { OUTFITS, type Outfit } from "@/lib/companion-logic";
 import { STUDIGO_EMOTES, type StudigoEmote } from "@/lib/studigo-behaviors";
 
@@ -40,6 +41,7 @@ export function mountStudigoSurface(
   let ready = false;
   let renderAllowed = true;
   let watchdog: ReturnType<typeof setTimeout> | undefined;
+  let springFrame = 0;
   const events = new AbortController();
 
   function resize() {
@@ -57,6 +59,7 @@ export function mountStudigoSurface(
   function dispose() {
     dead = true;
     clearTimeout(watchdog);
+    cancelAnimationFrame(springFrame);
     events.abort();
     visibility?.disconnect();
     dimensions?.disconnect();
@@ -102,6 +105,23 @@ export function mountStudigoSurface(
             if (!mode || !intent || !gazeX || !gazeY || !flameBoost || [...choices, ...expressions].some(({ binding }) => !binding)) { fail(); return; }
             let equipped: Outfit | null | undefined;
             let emote: StudigoEmote | null | undefined;
+            // Emotes pop: the rig scales them from their centre, so a short spring runs here. Reduced motion jumps straight to 1 or 0.
+            const springs = expressions.flatMap(({ name, binding }) => binding ? [{ name, binding, shown: false, moving: false, from: 0, start: 0 }] : []);
+            const kick = () => {
+              if (springFrame || dead) return;
+              springFrame = requestAnimationFrame(function step(now) {
+                springFrame = 0;
+                let again = false;
+                for (const spring of springs) {
+                  if (!spring.moving) continue;
+                  const elapsed = now - spring.start;
+                  const direction = spring.shown ? "in" : "out";
+                  spring.binding.value = direction === "in" ? emoteIn(elapsed) : emoteOut(spring.from, elapsed);
+                  if (emoteDone(direction, elapsed)) { spring.binding.value = spring.shown ? 1 : 0; spring.moving = false; } else again = true;
+                }
+                if (again && !dead) springFrame = requestAnimationFrame(step);
+              });
+            };
             unsubscribe = controller.subscribe((frame) => {
               mode.value = frame.mode;
               intent.value = frame.intent;
@@ -115,7 +135,16 @@ export function mountStudigoSurface(
               }
               if (emote !== frame.emote) {
                 emote = frame.emote;
-                for (const { name, binding } of expressions) if (binding) binding.value = name === emote ? 1 : 0;
+                for (const spring of springs) {
+                  const want = spring.name === emote;
+                  if (want === spring.shown) continue;
+                  spring.shown = want;
+                  if (frame.mode === 2) { spring.binding.value = want ? 1 : 0; spring.moving = false; continue; }
+                  spring.from = spring.binding.value;
+                  spring.start = performance.now();
+                  spring.moving = true;
+                }
+                kick();
               }
             });
             ready = true;
