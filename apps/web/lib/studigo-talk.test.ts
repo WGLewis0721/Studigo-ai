@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createTalkSmoother, talkFromRms, TALK_REDUCED_CAP } from "./studigo-talk";
 
-test("rms maps 0.02 to 0.25 onto 0 to 1 and clamps outside", () => {
+test("rms maps 0.02 to 0.32 onto 0 to 1 and clamps outside", () => {
   assert.equal(talkFromRms(0), 0);
   assert.equal(talkFromRms(0.02), 0);
-  assert.ok(Math.abs(talkFromRms(0.135) - 0.5) < 1e-9);
-  assert.equal(talkFromRms(0.25), 1);
+  assert.ok(Math.abs(talkFromRms(0.17) - 0.5) < 1e-9);
+  assert.equal(talkFromRms(0.32), 1);
   assert.equal(talkFromRms(0.9), 1);
   assert.equal(talkFromRms(Number.NaN), 0);
 });

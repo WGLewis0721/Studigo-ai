@@ -2,12 +2,14 @@
    Pure: time comes in from the caller. */
 
 export const TALK_RMS_FLOOR = 0.02;
-export const TALK_RMS_CEILING = 0.25;
+// Measured on the 14 Benji lines: ceiling 0.32 puts about 63% of speech frames over the painted "ah" threshold (0.16)
+// and about 13% over the wide-open threshold (0.6). A ceiling of 0.25 put 26% on wide-open: he looked like he was shouting.
+export const TALK_RMS_CEILING = 0.32;
 export const TALK_ATTACK_MS = 60;
 export const TALK_RELEASE_MS = 120;
 export const TALK_REDUCED_CAP = 0.4;
 
-/** Roughly RMS 0.02 to 0.25 maps onto 0 to 1. Quieter than the floor is a closed mouth. */
+/** Roughly RMS 0.02 to 0.32 maps onto 0 to 1. Quieter than the floor is a closed mouth. */
 export function talkFromRms(rms: number): number {
   if (!Number.isFinite(rms)) return 0;
   return Math.min(1, Math.max(0, (rms - TALK_RMS_FLOOR) / (TALK_RMS_CEILING - TALK_RMS_FLOOR)));
