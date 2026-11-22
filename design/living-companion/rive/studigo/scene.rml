@@ -89,6 +89,10 @@
         </Node>
         </Node>
         <!-- All bind positions are measured in the original full-body neutral. -->
+        <Node x="270" y="520" name="Growth pivot" id="0:825">
+            <DataBindContext sourcePathIds="0:60-0:820" propertyKey="16" converterId="0:821"/>
+            <DataBindContext sourcePathIds="0:60-0:820" propertyKey="17" converterId="0:821"/>
+            <Node x="-270" y="-520" name="Growth pivot return" id="0:826">
         <RootBone x="270" y="520" length="0" name="Root" id="0:10">
             <RootBone x="0" y="-85" length="0" name="Pelvis" id="0:11">
                 <RootBone x="0" y="-104" length="0" name="Torso" id="0:12">
@@ -268,13 +272,13 @@
                         </RootBone>
                         <RootBone x="-46" y="-80" length="0" name="Left Brow" id="0:25"/>
                         <RootBone x="46" y="-80" length="0" name="Right Brow" id="0:26"/>
-                        <RootBone x="-68" y="-76" length="0" name="Left Frills" id="0:27">
+                        <RootBone x="-68" y="-76" length="0" name="Left Frills" id="0:27"><DataBindContext sourcePathIds="0:60-0:820" propertyKey="17" converterId="0:822"/><DataBindContext sourcePathIds="0:60-0:820" propertyKey="16" converterId="0:824"/>
                             <DataBindContext sourcePathIds="0:60-0:64" propertyKey="15" converterId="0:215"/>
                         </RootBone>
-                        <RootBone x="69" y="-76" length="0" name="Right Frills" id="0:28">
+                        <RootBone x="69" y="-76" length="0" name="Right Frills" id="0:28"><DataBindContext sourcePathIds="0:60-0:820" propertyKey="17" converterId="0:822"/><DataBindContext sourcePathIds="0:60-0:820" propertyKey="16" converterId="0:824"/>
                             <DataBindContext sourcePathIds="0:60-0:64" propertyKey="15" converterId="0:215"/>
                         </RootBone>
-                        <RootBone x="0" y="-112" length="0" name="Head Spike" id="0:29"/>
+                        <RootBone x="0" y="-112" length="0" name="Head Spike" id="0:29"><DataBindContext sourcePathIds="0:60-0:820" propertyKey="17" converterId="0:823"/></RootBone>
                         </RootBone>
                         </RootBone>
                         </RootBone>
@@ -301,6 +305,8 @@
                 </RootBone>
             </RootBone>
         </RootBone>
+            </Node>
+        </Node>
         <Node name="Effects" id="0:38">
             <Node name="Particles" id="0:39"/>
         </Node>
@@ -23069,6 +23075,7 @@
         <ViewModelPropertyNumber name="headphones" id="0:305"/>
         <ViewModelPropertyNumber name="sash" id="0:306"/>
         <ViewModelPropertyNumber name="talk" id="0:800"/>
+        <ViewModelPropertyNumber name="growth" id="0:820"/>
         <ViewModelInstance exports="true" name="Default" id="0:62">
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:61"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:63"/>
@@ -23086,6 +23093,7 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:305"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:306"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:800"/>
+            <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:820"/>
         </ViewModelInstance>
     </ViewModel>
     <DataConverterRangeMapper name="Talk open" minInput="0" maxInput="1" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:804"/>
@@ -23095,6 +23103,10 @@
     <DataConverterRangeMapper name="Talk stretch tall" minInput="0" maxInput="1" minOutput="1" maxOutput="1.055" clampLower="true" clampUpper="true" id="0:812"/>
     <DataConverterRangeMapper name="Talk stretch narrow" minInput="0" maxInput="1" minOutput="1" maxOutput="0.975" clampLower="true" clampUpper="true" id="0:813"/>
     <DataConverterRangeMapper name="Talk tilt" minInput="0" maxInput="1" minOutput="0" maxOutput="0.03" clampLower="true" clampUpper="true" id="0:814"/>
+    <DataConverterRangeMapper name="Growth size" minInput="0" maxInput="1" minOutput="0.86" maxOutput="1" clampLower="true" clampUpper="true" id="0:821"/>
+    <DataConverterRangeMapper name="Growth frill length" minInput="0" maxInput="1" minOutput="0.84" maxOutput="1" clampLower="true" clampUpper="true" id="0:822"/>
+    <DataConverterRangeMapper name="Growth frill width" minInput="0" maxInput="1" minOutput="0.92" maxOutput="1" clampLower="true" clampUpper="true" id="0:824"/>
+    <DataConverterRangeMapper name="Growth spike" minInput="0" maxInput="1" minOutput="0.7" maxOutput="1" clampLower="true" clampUpper="true" id="0:823"/>
     <DataConverterRangeMapper name="Neck horizontal reach" minInput="-1" maxInput="1" minOutput="-10" maxOutput="10" clampLower="true" clampUpper="true" id="0:221"/>
     <DataConverterRangeMapper name="Neck vertical reach" minInput="-1" maxInput="1" minOutput="-6" maxOutput="6" clampLower="true" clampUpper="true" id="0:222"/>
     <DataConverterRangeMapper name="Pupil horizontal reach" minInput="-1" maxInput="1" minOutput="-7" maxOutput="7" clampLower="true" clampUpper="true" id="0:223"/>
