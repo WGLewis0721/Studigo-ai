@@ -2,6 +2,8 @@ import type { Rive } from "@rive-app/webgl2";
 import { version } from "@rive-app/webgl2/package.json";
 import type { StudigoController } from "./studigo-controller";
 import { emoteDone, emoteIn, emoteOut } from "@/lib/studigo-emote";
+
+const GROWTH_TWEEN_MS = 900;
 import { OUTFITS, type Outfit } from "@/lib/companion-logic";
 import { STUDIGO_EMOTES, type StudigoEmote } from "@/lib/studigo-behaviors";
 
@@ -100,6 +102,9 @@ export function mountStudigoSurface(
             const flameBoost = model?.number("flameBoost");
             // `talk` arrived with the lip-sync rig; an older export simply has no mouth to drive.
             const talk = model?.number("talk");
+            const growth = model?.number("growth");
+            let growthShown: number | undefined;
+            let growthTween: { from: number; to: number; start: number } | null = null;
             const choices = OUTFITS.map((outfit) => ({ outfit, binding: model?.number(outfit) }));
             const expressions = STUDIGO_EMOTES.map((name) => ({ name, binding: model?.number(name) }));
             if (!mode || !intent || !gazeX || !gazeY || !flameBoost || [...choices, ...expressions].some(({ binding }) => !binding)) { fail(); return; }
@@ -112,6 +117,11 @@ export function mountStudigoSurface(
               springFrame = requestAnimationFrame(function step(now) {
                 springFrame = 0;
                 let again = false;
+                if (growth && growthTween) {
+                  const x = Math.min(1, (now - growthTween.start) / GROWTH_TWEEN_MS);
+                  growth.value = growthTween.from + (growthTween.to - growthTween.from) * (1 - (1 - x) ** 3);
+                  if (x < 1) again = true; else growthTween = null;
+                }
                 for (const spring of springs) {
                   if (!spring.moving) continue;
                   const elapsed = now - spring.start;
@@ -129,6 +139,12 @@ export function mountStudigoSurface(
               gazeY.value = frame.gaze.y;
               flameBoost.value = frame.flameBoost;
               if (talk) talk.value = frame.talk;
+              if (growth && growthShown !== frame.growth) {
+                // The first value lands at once; a change after that grows him over 900 ms with an ease-out (reduced motion: at once).
+                if (growthShown === undefined || frame.mode === 2) { growth.value = frame.growth; growthTween = null; }
+                else { growthTween = { from: growth.value, to: frame.growth, start: performance.now() }; kick(); }
+                growthShown = frame.growth;
+              }
               if (equipped !== frame.outfit) {
                 equipped = frame.outfit;
                 for (const { outfit, binding } of choices) if (binding) binding.value = outfit === equipped ? 1 : 0;

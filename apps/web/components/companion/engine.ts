@@ -3,7 +3,7 @@ import {
   roomFor, scaleFromDrag, sizeAt, spot,
   type Area, type CompanionEvent, type CompanionPrefs, type Dock, type GazePose, type Outfit, type Rect, type Size, type WindowPose
 } from "@/lib/companion-logic";
-import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
+import { FLAME_BOOST, GROWTH_MAX, addGrowth, availableTricks, flameStage, growthFraction, growthView, markSeen, newlyUnlocked, stage as growthStage, studyTasks, unlockLabel, wearableOutfit, UNLOCKS, type Growth, type GrowthView, type UnlockKind } from "@/lib/companion-growth";
 import { readGrowth, subscribeGrowth, writeGrowth } from "@/lib/companion-growth-store";
 import { isReturn, readLastSeen, writeLastSeen } from "@/lib/companion-session";
 import type { BeatName } from "@/lib/companion-motion/beats";
@@ -718,10 +718,18 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     applyGrowth();
     if (!quiet) celebrate();
   }
+  let lastStage: number | null = null;
   function applyGrowth() {
     director?.setTricks(availableTricks(growth.points));
     director?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
     rive?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
+    if (rive) {
+      rive.setGrowth(growthFraction(growth.points));
+      // A stage-up plays his celebration while the tween grows him, so he visibly grows during the jump.
+      const reached = growthStage(growth.points);
+      if (lastStage !== null && reached > lastStage) rive.react("celebrating");
+      lastStage = reached;
+    }
     el.dataset.stage = String(growthStage(growth.points));
     applyOutfit();
   }

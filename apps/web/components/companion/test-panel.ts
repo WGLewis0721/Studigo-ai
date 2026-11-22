@@ -1,4 +1,4 @@
-import { EMPTY_GROWTH } from "@/lib/companion-growth";
+import { EMPTY_GROWTH, GROWTH_STAGES } from "@/lib/companion-growth";
 import { writeGrowth } from "@/lib/companion-growth-store";
 import type { CompanionHandle } from "./engine";
 
@@ -58,6 +58,7 @@ export function mountTestPanel(companion: CompanionHandle): () => void {
   const collect = (label: string, run: () => void) => { add(label, run); buttons.push(panel.lastElementChild as HTMLElement); };
   for (const [label, run] of BUTTONS) collect(label, () => run(companion));
   collect("Reset growth", () => writeGrowth(EMPTY_GROWTH));
+  GROWTH_STAGES.forEach((item, index) => collect(`Stage ${index + 1}`, () => writeGrowth({ ...EMPTY_GROWTH, points: item.at })));
   collect("Forget me", () => {
     try { ["studigo.companion.met", "studigo.companion.lastSeen"].forEach((key) => window.localStorage.removeItem(key)); } catch { /* storage is optional */ }
   });

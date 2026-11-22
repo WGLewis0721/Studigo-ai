@@ -76,6 +76,11 @@ export const GROWTH_STAGES: readonly { name: string; at: number }[] = [
   { name: "Legend", at: unlockAt("flame:blazing") }
 ];
 
+/** The rig's `growth` input: stage 0 of the last stage is 0, the last stage is 1 (his approved size). */
+export function growthFraction(points: number): number {
+  return stage(points) / (GROWTH_STAGES.length - 1);
+}
+
 export function stage(points: number): number {
   return GROWTH_STAGES.reduce((index, item, i) => (points >= item.at ? i : index), 0);
 }

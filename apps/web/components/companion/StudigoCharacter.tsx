@@ -7,6 +7,8 @@ import type { StudigoState } from "@/lib/studigo-behaviors";
 import { studigoTouchRegion, type StudigoTouchRegion } from "@/lib/studigo-touch";
 import type { Outfit } from "@/lib/companion-logic";
 import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
+import { growthFraction } from "@/lib/companion-growth";
+import { useCompanionGrowth } from "@/lib/companion-growth-store";
 import "./studigo-character.css";
 
 export type StudigoInteraction = "tap" | "pet" | "poke" | "hold" | "drag" | "surprise";
@@ -14,6 +16,8 @@ type Press = { pointer: number; x: number; y: number; region: StudigoTouchRegion
 const SIZES = { small: 88, medium: 152, large: 224 } as const;
 
 type Props = {
+  /** The rig's growth input, 0 to 1. Defaults to this learner's stored growth. */
+  growth?: number;
   state?: StudigoState;
   size?: keyof typeof SIZES | number | "fill";
   interactive?: boolean;
@@ -28,7 +32,7 @@ type Props = {
 };
 
 export const StudigoCharacter = forwardRef<StudigoController, Props>(function StudigoCharacter({
-  state = "idle", size = "medium", interactive = false, reducedMotion = "system", staticOnly = false,
+  growth, state = "idle", size = "medium", interactive = false, reducedMotion = "system", staticOnly = false,
   label = "Studigo", className, onInteraction, outfit = null, flameBoost = 1, portrait = false,
 }, ref) {
   const [controller] = useState(createStudigoController);
@@ -45,6 +49,9 @@ export const StudigoCharacter = forwardRef<StudigoController, Props>(function St
   } as CSSProperties;
   useImperativeHandle(ref, () => controller, [controller]);
 
+  const stored = useCompanionGrowth();
+  const growthValue = growth ?? growthFraction(stored.points);
+  useEffect(() => { controller.setGrowth(growthValue); }, [controller, growthValue]);
   useEffect(() => () => controller.dispose(), [controller]);
   useEffect(() => () => clearTimeout(holdTimer.current), []);
   useEffect(() => { controller.setState(state); }, [controller, state]);
