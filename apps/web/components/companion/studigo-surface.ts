@@ -95,6 +95,8 @@ export function mountStudigoSurface(
             const gazeX = model?.number("gazeX");
             const gazeY = model?.number("gazeY");
             const flameBoost = model?.number("flameBoost");
+            // `talk` arrived with the lip-sync rig; an older export simply has no mouth to drive.
+            const talk = model?.number("talk");
             const choices = OUTFITS.map((outfit) => ({ outfit, binding: model?.number(outfit) }));
             const expressions = STUDIGO_EMOTES.map((name) => ({ name, binding: model?.number(name) }));
             if (!mode || !intent || !gazeX || !gazeY || !flameBoost || [...choices, ...expressions].some(({ binding }) => !binding)) { fail(); return; }
@@ -106,6 +108,7 @@ export function mountStudigoSurface(
               gazeX.value = frame.gaze.x;
               gazeY.value = frame.gaze.y;
               flameBoost.value = frame.flameBoost;
+              if (talk) talk.value = frame.talk;
               if (equipped !== frame.outfit) {
                 equipped = frame.outfit;
                 for (const { outfit, binding } of choices) if (binding) binding.value = outfit === equipped ? 1 : 0;
