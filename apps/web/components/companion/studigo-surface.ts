@@ -6,8 +6,9 @@ import { emoteDone, emoteIn, emoteOut } from "@/lib/studigo-emote";
 const GROWTH_TWEEN_MS = 900;
 import { OUTFITS, type Outfit } from "@/lib/companion-logic";
 import { STUDIGO_EMOTES, type StudigoEmote } from "@/lib/studigo-behaviors";
+import { STUDIGO_RIVE_VERSION } from "./studigo-rive-version";
 
-export const STUDIGO_RIVE_ASSET = "/mascot/rive/studigo.riv";
+export const STUDIGO_RIVE_ASSET = `/mascot/rive/studigo.riv?v=${STUDIGO_RIVE_VERSION}`;
 export const STUDIGO_STATIC_ASSET = "/mascot/companion/full/center.webp";
 export type StudigoSurfaceStatus = "loading" | "ready" | "fallback";
 

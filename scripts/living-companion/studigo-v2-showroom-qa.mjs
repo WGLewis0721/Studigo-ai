@@ -185,7 +185,7 @@ try {
   }
 
   const failure = await browser.newPage();
-  await failure.route("**/mascot/rive/studigo.riv", (route) => route.fulfill({ status: 404 }));
+  await failure.route("**/mascot/rive/studigo.riv*", (route) => route.fulfill({ status: 404 }));
   await failure.goto(`${base}/dev/studigo`);
   const fallback = failure.getByRole("button", { name: "Pet or tap Studigo" }).and(failure.locator("[data-studigo=fallback]"));
   await fallback.waitFor();
