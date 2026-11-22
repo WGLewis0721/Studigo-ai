@@ -45,3 +45,11 @@ Original kid-safe art, one layer per item, matched to the rig's slot pivots: sci
 ## Rive face layers (2026-11-21)
 
 `design/living-companion/rive/studigo/parts/*.webp` (eyes-closed, mouth-laugh, mouth-oh, face-joy, mouth-neutral, face-worried, mouth-ah). Source: Higgsfield `gpt_image_2_6` edits of `apps/web/public/mascot/companion/full/center.webp` (upscaled to 1024, white background), one prompt per expression of the form "Edit this exact image. Keep the character, pose, framing, size, position, proportions, colors, lighting and plain white background pixel-identical. Change ONLY his <eyes|mouth|face>: <expression>." Body and frills register with the source at 0 px offset and the head within about 1 px. Each layer is the expression's eye or mouth region (fixed ellipses), feathered, clipped to the source silhouette and away from the white background, then scaled to the 540 artboard. Built into the rig by `scripts/living-companion/build-studigo-face.mjs`. An arms-raised edit was also generated for a later arm layer and is not yet used.
+
+## 3D reference model (2026-11-21)
+
+Kept outside the repo in `C:/Users/Willi/Dev/Learning/av2-3d/` (binaries). Higgsfield `meshy_v7_image_to_3d` from the approved neutral (1024 px on white): `studigo.glb` (standing pose, about 31k faces, 38 credits; source of the head-turn deformations in `rive/studigo/turns/turn-deltas.json`) and `studigo-apose.glb` (A-pose with Meshy's humanoid rig, 44 credits; pose guides for arm layers). `studigo-rig.blend` holds both with a hand-weighted rig on the standing model. Pose renders: a-cheer, a-wave, a-point, a-chin, pose-yaw, pose-up, pose-down. SHA-256:
+
+- `studigo.glb` 2165170e343e8effdd553b6ee0bbb27f1680427523bef06c576582ca187469b6
+- `studigo-apose.glb` d65d8c4979516b8e59317722402b7f44a994d9ab4c56796ae1e1f818c2a34df9
+- `studigo-rig.blend` 12d04cfa2b9a7014934aee882f60f53507db0f13202428c78b41174acbac6c40
