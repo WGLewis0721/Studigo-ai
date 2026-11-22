@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { createStudigoController } from "@/components/companion/studigo-controller";
+import { mountStudigoSurface, STUDIGO_STATIC_ASSET } from "@/components/companion/studigo-surface";
+import { studigoRiveEnabled } from "@/lib/studigo-preview";
+import "@/components/companion/studigo-character.css";
 
 /* One Studigo, three places: inside the demo phone in the hero, loose on the
    page (he leaps out when you scroll and reacts to each section), and on his
@@ -35,6 +39,9 @@ function startHome(): () => void {
   if (!root || !phone || !phoneFrame || !hero || !ctaSpot || !guide || !guideBody || !bubble || !guideFx) return () => {};
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rive = studigoRiveEnabled ? createStudigoController() : null;
+  rive?.setReducedMotion(reduced);
+  let disposeRive: (() => void) | undefined;
   const fine = window.matchMedia("(pointer: fine)").matches;
   const narrow = () => window.innerWidth < 961;
 
@@ -88,6 +95,13 @@ function startHome(): () => void {
   const setPose = (name: Pose) => {
     if (pose === name) return;
     pose = name;
+    if (rive) {
+      rive.lookAt({ x: 0, y: 0 });
+      rive.setState(name === "read" ? "reading" : "idle");
+      if (name === "wave") rive.react("wake");
+      if (name === "celebrate") rive.react("celebrating");
+      if (name === "leap") rive.react("happy");
+    }
     imgs.forEach((img, key) => img.classList.toggle("on", key === name));
     if (guide.dataset.pose === name) { guide.dataset.pose = ""; void guide.offsetWidth; }
     guide.dataset.pose = name;
@@ -126,6 +140,11 @@ function startHome(): () => void {
   const look = (x: number, y: number) => {
     if (where === "phone" || flying || press || rest !== "center" || now() < busyUntil) return;
     const dx = x - (box.x + box.size / 2), dy = y - (box.y + box.size * 0.3);
+    if (rive) {
+      rive.lookAt({ x: dx / box.size, y: dy / box.size });
+      gazeUntil = now() + 1500;
+      return;
+    }
     const far = Math.hypot(dx, dy) > box.size * 0.42;
     setPose(far ? GAZE[String(Math.round(Math.atan2(dy, dx) / (Math.PI / 4)))] ?? "center" : "center");
     gazeUntil = now() + 1500;
@@ -133,6 +152,7 @@ function startHome(): () => void {
   const tick = () => {
     if (where === "phone" || flying || press) return;
     const t = now();
+    if (rive && gazeUntil && t > gazeUntil) { gazeUntil = 0; rive.lookAt({ x: 0, y: 0 }); }
     if (t > busyUntil && t > gazeUntil && pose !== rest) setPose(rest);
   };
   /** One leap from where he is to a new spot. */
@@ -168,8 +188,15 @@ function startHome(): () => void {
     });
   };
   const mountGuide = () => {
-    guideBody.innerHTML = POSES.map((name) => `<img data-pose="${name}" ${MIRROR[name] ? "data-flip" : ""} src="${SPRITES}/${MIRROR[name] ?? name}.webp" alt="" draggable="false">`).join("");
-    guideBody.querySelectorAll<HTMLImageElement>("img").forEach((img) => imgs.set(img.dataset.pose as Pose, img));
+    if (rive) {
+      guide.dataset.rive = "";
+      guideBody.innerHTML = `<img class="studigoCharacterStill" src="${STUDIGO_STATIC_ASSET}" alt="" draggable="false"><canvas class="studigoCharacterCanvas" aria-hidden="true"></canvas>`;
+      const canvas = guideBody.querySelector("canvas");
+      if (canvas) disposeRive = mountStudigoSurface(canvas, rive, (status) => { guideBody.dataset.studigo = status; });
+    } else {
+      guideBody.innerHTML = POSES.map((name) => `<img data-pose="${name}" ${MIRROR[name] ? "data-flip" : ""} src="${SPRITES}/${MIRROR[name] ?? name}.webp" alt="" draggable="false">`).join("");
+      guideBody.querySelectorAll<HTMLImageElement>("img").forEach((img) => imgs.set(img.dataset.pose as Pose, img));
+    }
     setPose("center");
     guide.addEventListener("pointerdown", (event) => {
       if (flying) return;
@@ -186,7 +213,7 @@ function startHome(): () => void {
       const was = press;
       if (!was) return;
       press = null; guide.classList.remove("petting");
-      if (was.mode === "pet") react("up", 700); else poke();
+      if (was.mode === "pet") { if (rive) rive.react("petting"); else react("up", 700); } else poke();
     };
     guide.addEventListener("pointerup", release, { signal });
     guide.addEventListener("pointercancel", release, { signal });
@@ -418,6 +445,11 @@ function startHome(): () => void {
 
   return () => {
     dead = true;
+    disposeRive?.();
+    rive?.dispose();
+    delete guide.dataset.rive;
+    delete guideBody.dataset.studigo;
+    guideBody.replaceChildren();
     lifetime.abort();
     window.clearInterval(heartbeat);
     timers.forEach((id) => window.clearTimeout(id));

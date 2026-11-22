@@ -30,6 +30,9 @@ importers:
       '@pdf-lib/fontkit':
         specifier: ^1.1.1
         version: 1.1.1
+      '@rive-app/webgl2':
+        specifier: 2.54.0
+        version: 2.54.0
       '@studigo/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -508,6 +511,9 @@ packages:
 
   '@pdf-lib/upng@1.0.1':
     resolution: {integrity: sha512-dQK2FUMQtowVP00mtIksrlZhdFXQZPC+taih1q4CvPZ5vqdxR/LKBaFg0oAfzd1GlHZXXSPdQfzQnt+ViGvEIQ==}
+
+  '@rive-app/webgl2@2.54.0':
+    resolution: {integrity: sha512-OCA/GGrVRigWiLUJW/DIytfW47aj4QI2ELVtr/d9fZB0bCkTWrds97lsI7e6Xpv3eJ7440sUKmw4rTBl5FLYbA==}
 
   '@supabase/auth-js@2.116.0':
     resolution: {integrity: sha512-Cmosty12gyKGK9N3bQb+lMmuAFev5nmUzaR1AsmZHqKOAGzqX1VQzmp49CNPwOx/pw0H9Qqk4rs9yhwTlKpfDg==}
@@ -1284,6 +1290,8 @@ snapshots:
   '@pdf-lib/upng@1.0.1':
     dependencies:
       pako: 1.0.11
+
+  '@rive-app/webgl2@2.54.0': {}
 
   '@supabase/auth-js@2.116.0':
     dependencies:

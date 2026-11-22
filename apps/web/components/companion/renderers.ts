@@ -7,7 +7,7 @@ import type { MotionFrame } from "@/lib/companion-motion/director";
 export const SPRITES = "/mascot/companion";
 
 export interface CompanionRenderer {
-  readonly kind: "sprite" | "rig";
+  readonly kind: "sprite" | "rig" | "rive";
   /** The markup that goes inside .cmpBody. */
   markup(): string;
   /** Called once that markup is in the page. Throws if it cannot draw. */

@@ -149,6 +149,14 @@
 .cmpRig { position: absolute; left: var(--rig-margin, -30%); top: var(--rig-margin, -30%); width: 160%; height: 160%; max-width: none; opacity: 0; transition: opacity .13s linear; }
 .cmpRig[data-ready] { opacity: 1; }
 .cmpRig.off { opacity: 0; }
+.cmp[data-rive] .cmpBody { top: -24px; }
+.cmp[data-rive][data-host="strip"] .cmpBody { top: 6px; }
+.cmpRive { position: absolute; inset: 0; }
+.cmpRive canvas, .cmpRiveStill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.cmpRive canvas { visibility: hidden; }
+.cmpRive[data-studigo="ready"] canvas { visibility: visible; }
+.cmpRive[data-studigo="ready"] .cmpRiveStill { visibility: hidden; }
+.cmpRive[data-dressed] .cmpRiveStill { top: 32px; }
 
 .cmpHit { position: absolute; left: 0; right: 0; top: 0; height: 116px; border-radius: 28px 28px 0 0; cursor: pointer; z-index: 5; }
 .cmpHit:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }

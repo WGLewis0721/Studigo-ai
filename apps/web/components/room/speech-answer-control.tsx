@@ -19,9 +19,10 @@ type RecognitionWindow = Window & {
 /** Optional, explicitly initiated browser speech preview.
  * No audio bytes reach Studigo; browser speech services may process audio.
  * Full production release requires consent, locale and provider safeguards. */
-export function SpeechAnswerControl({ onUse, disabled = false }: {
+export function SpeechAnswerControl({ onUse, disabled = false, onListening }: {
   onUse: (text: string) => void;
   disabled?: boolean;
+  onListening?: (active: boolean) => void;
 }) {
   const recognition = useRef<DeviceRecognizer | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -31,6 +32,11 @@ export function SpeechAnswerControl({ onUse, disabled = false }: {
   const [transcript, setTranscript] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const listeningCallback = useRef(onListening);
+  useEffect(() => { listeningCallback.current = onListening; }, [onListening]);
+  useEffect(() => {
+    listeningCallback.current?.(listening);
+  }, [listening]);
   useEffect(() => () => { recognition.current?.abort(); recognition.current = null; }, []);
   // Native top-layer dialog avoids getting clipped beneath the scrolling
   // lesson canvas on narrow devices; Escape cancels safely without submitting.

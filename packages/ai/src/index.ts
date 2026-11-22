@@ -11,3 +11,4 @@ export * from "./study";
 export * from "./typos";
 export * from "./verify-claim";
 export * from "./provider-budget";
+export * from "./companion-welcome";

@@ -14,6 +14,10 @@ import { momentFor, planVoice, voiceLine, VOICE_START, type VoiceLine, type Voic
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
 import { createSpriteRenderer, motionEnabled, SPRITES, type CompanionRenderer } from "./renderers";
 import { createRigRenderer, GAZE_POSES, GESTURE_POSES, type RigRenderer } from "./rig-renderer";
+import { createStudigoController } from "./studigo-controller";
+import { createStudigoRoomRenderer } from "./studigo-room-renderer";
+import { STUDIGO_EVENT_REACTION, STUDIGO_TRICKS, type StudigoReaction } from "@/lib/studigo-behaviors";
+import { studigoRiveEnabled } from "@/lib/studigo-preview";
 
 /* Studigo's window in a Study Room, drawn straight onto the page.
 
@@ -56,6 +60,9 @@ const POP: Partial<Record<WindowPose, true>> = { celebrate: true, lean: true, po
 /** With the living companion, the old pose and pulse commands become beats. */
 const POSE_BEAT: Partial<Record<WindowPose, BeatName>> = { celebrate: "bound", support: "support", poke: "poke", pet: "petted", lean: "lean" };
 const PULSE_BEAT: Partial<Record<string, BeatName>> = { land: "land", sway: "tickle", quietAck: "nod" };
+const RIVE_POSE: Partial<Record<WindowPose, StudigoReaction>> = {
+  celebrate: "celebrating", support: "encouraging", poke: "surprised", pet: "petting", lean: "curious",
+};
 /** A pointer this far from his eyes (at default size) turns his head all the way. */
 const GAZE_REACH = 170;
 /** His stage is 106 px wide at his default size, and his eyes sit 53 px across and 75 px down from its top left: 80 px down the window, where the rig draws them (art y 156 of 400). */
@@ -145,6 +152,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let quiet = false;
   let unsubscribeGrowth = () => {};
   let calm = systemReduced || prefs.calm;
+  let nextRiveTrick = now() + 8000;
   const timers = new Set<number>();
   const later = (fn: () => void, ms: number) => {
     const id = window.setTimeout(() => { timers.delete(id); if (!dead) fn(); }, ms);
@@ -175,10 +183,11 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- how he is drawn ---------- */
   /** The living companion: a motion director and the rig. Null means the original drawings. */
-  let director: Director | null = motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm, drawings: false }) : null;
+  const rive = studigoRiveEnabled ? createStudigoController() : null;
+  let director: Director | null = !rive && motionEnabled() ? createDirector({ random: Math.random, reducedMotion: calm, drawings: false }) : null;
   /** The rig for this visit. A lost WebGL context parks it, and a restored one brings it back. */
   const rig: RigRenderer | null = director ? createRigRenderer({ onLost: () => fallBack(), onRestored: () => restoreRig() }) : null;
-  let renderer: CompanionRenderer = rig ?? createSpriteRenderer();
+  let renderer: CompanionRenderer = rive ? createStudigoRoomRenderer(rive) : rig ?? createSpriteRenderer();
   /** The motion state (mood, streak, beats) kept while the rig is parked, so the rig carries on where it left off. */
   let parked: Director | null = null;
   /** Dresses whichever drawing he is in now. The original drawings have no outfits, so they ignore it. */
@@ -186,7 +195,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
 
   /* ---------- his elements ---------- */
   host.innerHTML = `
-    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br"${director ? " data-motion" : ""}>
+    <div class="cmp" data-state="seat" data-tone="coach" data-pose="center" data-side="r" data-dock="br"${director || rive ? " data-motion" : ""}${rive ? " data-rive" : ""}>
       <button class="cmpBubble" type="button" hidden aria-live="polite"></button>
       <span class="cmpNew" role="status"></span>
       <div class="cmpWin">
@@ -499,18 +508,24 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
   function setPose(name: WindowPose) {
     // In motion mode the director names the pose instead (see syncPose).
-    if (director) return;
+    if (director || rive) return;
     if (rt.pose === name) return;
     renderer.setPose(name);
     stamp(name);
   }
   /** A reaction outranks gaze and idle until it runs out. */
   function react(name: WindowPose, ms: number) {
+    if (rive) { const reaction = RIVE_POSE[name]; if (reaction) rive.react(reaction); return; }
     if (director) { const beat = POSE_BEAT[name]; if (beat) director.play(beat); return; }
     rt.reacting = true; rt.reactUntil = now() + ms; rt.gazing = false;
     rt.pose = ""; setPose(name);
   }
   function pulse(cls: string, ms: number, node: HTMLElement = el) {
+    if (rive && node === el) {
+      if (cls === "quietAck") rive.react("encouraging");
+      if (cls === "sway") rive.react("happy");
+      if (cls === "quietAck" || cls === "sway" || cls === "bob" || cls === "blink") return;
+    }
     if (director && node === el) {
       const beat = PULSE_BEAT[cls];
       if (beat) { director.play(beat); return; }
@@ -528,6 +543,14 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     return { x: rt.x + W / 2, y: rt.y + 80 * k, scale: k };
   }
   function lookAt(px: number, py: number, hold: number) {
+    if (rive) {
+      if (live() && !rt.drag && !rt.press) {
+        const eye = eyes();
+        rive.lookAt({ x: (px - eye.x) / (GAZE_REACH * eye.scale), y: (py - eye.y) / (GAZE_REACH * eye.scale) });
+        rt.gazeUntil = now() + hold;
+      }
+      return;
+    }
     if (director) {
       // Continuous: his eyes go first, then his head. Only the direction is used; nothing is kept.
       if (live() && !rt.drag && !rt.press) { const e = eyes(); director.lookAt((px - e.x) / (GAZE_REACH * e.scale), (py - e.y) / (GAZE_REACH * e.scale), hold); rt.gazeUntil = now() + hold; }
@@ -674,6 +697,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   function applyGrowth() {
     director?.setTricks(availableTricks(growth.points));
     director?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
+    rive?.setFlameBoost(FLAME_BOOST[flameStage(growth.points)]);
     el.dataset.stage = String(growthStage(growth.points));
     applyOutfit();
   }
@@ -712,12 +736,29 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   /* ---------- idle: a character waiting for input ---------- */
   function activity() {
     rt.lastInput = now(); rt.leaned = false; lastActiveAt = Date.now();
+    nextRiveTrick = rt.lastInput + 8000;
     director?.activity();
-    if (rt.asleep) { rt.asleep = false; react("poke", 800); say(LINES.wake); }
+    if (rt.asleep) {
+      rt.asleep = false;
+      if (rive) { rive.setState("idle"); rive.react("wake"); } else react("poke", 800);
+      say(LINES.wake);
+    }
   }
   function tick() {
     if (!live() || rt.drag || rt.press || rt.thinking) return;
     const t = now();
+    if (rive) {
+      if (rt.gazeUntil && t >= rt.gazeUntil) { rt.gazeUntil = 0; rive.lookAt({ x: 0, y: 0 }); }
+      if (rt.typingUntil && t >= rt.typingUntil) { rt.typingUntil = 0; rive.setState("idle"); }
+      if (!rt.asleep && idleStage(t - rt.lastInput) === "sleep") { rt.asleep = true; rive.setState("sleepy"); }
+      if (!calm && !rt.asleep && !rt.typingUntil && !rt.gazeUntil && !document.hidden && t >= nextRiveTrick) {
+        const available = availableTricks(growth.points);
+        const tricks = STUDIGO_TRICKS.filter((trick) => available.includes(trick));
+        if (tricks.length) rive.react(pick(tricks));
+        nextRiveTrick = t + 14000;
+      }
+      return;
+    }
     if (t < rt.reactUntil) return;
     if (rt.reacting) { rt.reacting = false; if (!rt.asleep) setPose("center"); }
     if (t < rt.typingUntil || t < rt.gazeUntil) return;
@@ -806,7 +847,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const press = rt.press;
     if (!press || pinch) return;
     const x = event.clientX, y = event.clientY;
-    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); director?.setPetted(true); }
+    if (press.mode === "press" && Math.hypot(x - press.sx, y - press.sy) > 7) { press.mode = "pet"; cancel(longTimer); rt.pose = ""; setPose("pet"); director?.setPetted(true); rive?.react("petting"); }
     if (press.mode === "pet") {
       const outside = x < rt.x - 18 || x > rt.x + W + 18 || y < rt.y - 18 || y > rt.y + H + 18;
       if (outside && rt.mode === "window") { press.mode = "drag"; startDrag(x, y, press); }
@@ -917,6 +958,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     el.toggleAttribute("data-calm", calm);
     ws.toggleAttribute("data-calm", calm);
     director?.setReducedMotion(calm);
+    rive?.setReducedMotion(calm);
   }
   /** Where he is: seated, in his floating window, or in the strip. The strip needs its slot in this room. */
   const wanted = (): Mode => (prefs.seated || !surface() ? "seat" : prefs.host === "strip" && stripSlot() ? "strip" : "window");
@@ -1070,6 +1112,13 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     const r = input.getBoundingClientRect(), chars = Math.min(input.value.length, 26), e = eyes();
     const tx = r.left + 16 + chars * 8.4 - e.x, ty = r.top + r.height / 2 - e.y;
     // He reads along: eyes on where the words are appearing, down into the field.
+    if (rive) {
+      const [x, y] = readingGaze(tx / (GAZE_REACH * e.scale), ty / (GAZE_REACH * e.scale));
+      rive.lookAt({ x, y });
+      rive.setState("reading");
+      rt.gazeUntil = rt.typingUntil = now() + 1500;
+      return;
+    }
     if (director) { const [x, y] = readingGaze(tx / (GAZE_REACH * e.scale), ty / (GAZE_REACH * e.scale)); director.lookAt(x, y, 1500, "drift"); rt.typingUntil = now() + 1500; return; }
     setPose(readingPose(tx, ty));
     rt.gazing = true; rt.typingUntil = now() + 1500;
@@ -1225,6 +1274,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     // When he speaks, the bubble shows that line instead of a reaction line, so one answer never says two things.
     const spoke = moment !== null && speakMoment(moment) !== null;
     const says = !spoke && reaction.lines && (reaction.always || Math.random() < 0.35) ? reaction.lines : null;
+    if (rive) {
+      if (name === "stall" && payload?.level === 2) lookAtHint();
+      rive.react(STUDIGO_EVENT_REACTION[name]);
+      if (says) say(says);
+      return;
+    }
     if (director) {
       if (name === "stall" && payload?.level === 2) lookAtHint();
       // The director picks the motion and its sparks from the same committed event; only the line is chosen here.
@@ -1259,6 +1314,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       rt.thinking = on;
       el.classList.toggle("thinking", on);
       director?.setThinking(on);
+      if (rive) { rive.setState(on ? "thinking" : "idle"); rt.asleep = false; }
       if (!live()) return;
       activity();
       rt.pose = ""; setPose(on ? "up" : "center");
