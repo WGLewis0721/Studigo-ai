@@ -1,0 +1,629 @@
+<Rive version="1" kind="fragment">
+    <Artboard width="540" height="540" styleId="0:2" defaultStateMachineId="0:50" name="Studigo" id="0:1">
+        <LayoutComponentStyle name="Fixed 540 px artboard" id="0:2"/>
+        <!-- All bind positions are measured in the original full-body neutral. -->
+        <RootBone x="270" y="520" length="0" name="Root" id="0:10">
+            <RootBone x="0" y="-85" length="0" name="Pelvis" id="0:11">
+                <RootBone x="0" y="-104" length="0" name="Torso" id="0:12">
+                    <RootBone x="0" y="24" length="0" name="Chest and Belly" id="0:13"/>
+                    <RootBone x="-59" y="-26" length="0" name="Left Shoulder" id="0:14">
+                        <RootBone x="-24" y="58" length="0" name="Left Forearm" id="0:15"/>
+                    </RootBone>
+                    <RootBone x="59" y="-26" length="0" name="Right Shoulder" id="0:16">
+                        <RootBone x="24" y="58" length="0" name="Right Forearm" id="0:17"/>
+                    </RootBone>
+                    <RootBone x="-2" y="-85" length="0" name="Head" id="0:18">
+                        <RotationConstraint name="Head roll limit" doesCopy="false" min="true" max="true" minValue="-0.12" maxValue="0.12" minMaxSpaceValue="local"/>
+                        <Node x="-44" y="-55" opacity="0" name="Left closed eyelid" id="0:54">
+                            <Shape y="5" name="Lid crease">
+                                <PointsPath>
+                                    <CubicDetachedVertex x="-15" y="-3" outRotation="0.44" outDistance="9"/>
+                                    <CubicDetachedVertex x="15" y="-4" inRotation="2.65" inDistance="9"/>
+                                </PointsPath>
+                                <Stroke thickness="2" cap="round"><SolidColor colorValue="FF87421F"/></Stroke>
+                            </Shape>
+                            <Shape name="Left lid skin">
+                                <Ellipse width="39" height="34"/>
+                                <Fill fillRule="clockwise">
+                                    <LinearGradient startX="-12" startY="-18" endX="10" endY="17">
+                                        <GradientStop position="0" colorValue="FFB55B37"/>
+                                        <GradientStop position="0.4" colorValue="FFE38C57"/>
+                                        <GradientStop position="1" colorValue="FFF4A56D"/>
+                                    </LinearGradient>
+                                    <Feather strength="5" spaceValue="local"/>
+                                </Fill>
+                            </Shape>
+                        </Node>
+                        <Node x="43" y="-55" opacity="0" name="Right closed eyelid" id="0:55">
+                            <Shape y="5" name="Lid crease">
+                                <PointsPath>
+                                    <CubicDetachedVertex x="-15" y="-4" outRotation="0.49" outDistance="9"/>
+                                    <CubicDetachedVertex x="15" y="-3" inRotation="2.70" inDistance="9"/>
+                                </PointsPath>
+                                <Stroke thickness="2" cap="round"><SolidColor colorValue="FF87421F"/></Stroke>
+                            </Shape>
+                            <Shape name="Right lid skin">
+                                <Ellipse width="39" height="34"/>
+                                <Fill fillRule="clockwise">
+                                    <LinearGradient startX="12" startY="-18" endX="-10" endY="17">
+                                        <GradientStop position="0" colorValue="FFB55B37"/>
+                                        <GradientStop position="0.4" colorValue="FFE38C57"/>
+                                        <GradientStop position="1" colorValue="FFF4A56D"/>
+                                    </LinearGradient>
+                                    <Feather strength="5" spaceValue="local"/>
+                                </Fill>
+                            </Shape>
+                        </Node>
+                        <RootBone x="0" y="-26" length="0" name="Snout" id="0:19"/>
+                        <RootBone x="0" y="-8" length="0" name="Jaw and Mouth" id="0:20"/>
+                        <RootBone x="-44" y="-55" length="0" name="Left Lid" id="0:21">
+                            <RootBone length="0" name="Left Eye Aim" id="0:22"/>
+                        </RootBone>
+                        <RootBone x="43" y="-55" length="0" name="Right Lid" id="0:23">
+                            <RootBone length="0" name="Right Eye Aim" id="0:24"/>
+                        </RootBone>
+                        <RootBone x="-46" y="-80" length="0" name="Left Brow" id="0:25"/>
+                        <RootBone x="46" y="-80" length="0" name="Right Brow" id="0:26"/>
+                        <RootBone x="-68" y="-76" length="0" name="Left Frills" id="0:27"/>
+                        <RootBone x="69" y="-76" length="0" name="Right Frills" id="0:28"/>
+                        <RootBone x="0" y="-112" length="0" name="Head Spike" id="0:29"/>
+                    </RootBone>
+                </RootBone>
+                <RootBone x="-68" y="5" length="0" name="Left Leg" id="0:30">
+                    <RootBone x="-8" y="54" length="0" name="Left Foot" id="0:31"/>
+                </RootBone>
+                <RootBone x="66" y="5" length="0" name="Right Leg" id="0:32">
+                    <RootBone x="8" y="54" length="0" name="Right Foot" id="0:33"/>
+                </RootBone>
+                <RootBone x="-85" y="-4" length="0" name="Tail Root" id="0:34">
+                    <RootBone x="-35" y="-43" length="0" name="Tail Mid" id="0:35">
+                        <RootBone x="-21" y="-56" length="0" name="Tail Tip" id="0:36">
+                            <RootBone x="-12" y="-32" length="0" name="Flame" id="0:37"/>
+                        </RootBone>
+                    </RootBone>
+                </RootBone>
+            </RootBone>
+        </RootBone>
+        <Node name="Effects" id="0:38">
+            <Node name="Particles" id="0:39"/>
+        </Node>
+        <Image x="270" y="270" assetId="0:8" name="Canonical skin" id="0:9">
+            <Mesh triangleIndexBytes="AQoQDwEQCgsREAoRCwwSEQsSEgwTDA0UEwwUDQ4VFA0VDgIWFQ4WDxAXEBEYFxAYERIZGBEZGRIaEhMbGhIbExQcGxMcHBQdFBUeHRQeHhUfFRYgHxUgAAEhAQ8hDxchFxgiIRciGBkjIhgjIxkkGRolJBklGhsmJRomHB0nGxwnJhsnHR4oJx0oHh8pKB4pKR8qHyArKh8rAgMsFgIsIBYsKyAsISItIiMuLSIuIyQvLiMvLyQwJCUxMCQxJSYyMSUyJiczMiYzJyg0Myc0KCk1NCg1NSk2KSo3Nik3Kis4Nyo4Kyw5LAM5OCs5LS47Oi07Li88Oy48LzA9PC89MDE+PTA+PjE/MTJAPzFAQDJBMjNCQTJCMzRDQjNDQzRENDVFRDRFNTZGRTVGRjZHNjdIRzZISDdJNzhKSTdKODlLSjhLOQNMSzlMOjtNOzxOTTtOPD1PTjxPPT5QTz1QPj9QP0BRUD9RQEFSUUBSQUJTUkFTQkNUU0JUQ0RVVENVREVWVURWRUZXVkVXRkdYV0ZYR0hYSElZWEhZSUpaWUlaSktbWkpbS0xcW0tcXExdTU5eXk5fTk9gX05gUFFhT1BhYE9hUVJiYVFiUlNiU1RjYlNjVFVkY1RkZFVlVVZmZVVmVldnZlZnWFloV1hoZ1doWltpWVppaFlpW1xqaVtqXF1ralxra11sXl9tX2BubV9uYGFvbmBvYmNwYWJwb2FwY2RxcGNxcWRyZWZzZGVzcmRzZmd0c2Z0Z2h1dGd1aGl2dWh2aWp3dml3amt4d2p4a2x5eGt5bW56bm97em57b3B8e298cHF9fHB9cXJ+fXF+c3R/cnN/fnJ/dHWAAX90gAF1doEBgAF1gQF2d4IBgQF2ggF3eIMBggF3gwF5bIQBeHmEAYMBeIQBbXqFAXp7hQF7fIYBhQF7hgF8fYcBhgF8hwF9fogBhwF9iAF/gAGJAX5/iQGIAX6JAYABgQGKAYkBgAGKAYEBggGLAYoBgQGLAYIBgwGMAYsBggGMAYMBhAGNAYwBgwGNAQAhjgEhLY4BLTqOATpNjgFNXo4BXm2PAY4BXo8BbYUBkAGPAW2QAYUBhgGRAYYBhwGSAZEBhgGSAYcBiAGTAZIBhwGTAYgBiQGTAYkBigGUAZMBiQGUAYoBiwGVAZQBigGVAYsBjAGWAZUBiwGWAYwBjQGXAZYBjAGXAQkAmAEAjgGYAY4BjwGZAZgBjgGZAY8BkAGaAZkBjwGaAZoBkAGbAZABhQGcAZsBkAGcAYUBkQGcAZEBkgGdAZwBkQGdAZIBkwGeAZ0BkgGeAZMBlAGfAZ4BkwGfAZ8BlAGgAZQBlQGhAaABlAGhAZUBlgGiAaEBlQGiAZYBlwGjAaIBlgGjAZcBjQGkAaMBlwGkAQmYAaUBmAGZAaUBmQGaAaYBpQGZAaYBmgGbAacBpgGaAacBmwGcAagBpwGbAagBqAGcAakBnAGdAaoBqQGcAaoBnQGeAasBqgGdAasBnwGgAawBngGfAawBqwGeAawBrAGgAa0BoQGiAa4BoAGhAa4BrQGgAa4BogGjAa8BrgGiAa8BowGkAbABrwGjAbABhAFssQGNAYQBsQGkAY0BsQGwAaQBsQEJpQGyAaUBpgGzAbIBpQGzAaYBpwGzAacBqAG0AbMBpwG0AagBqQG1AbQBqAG1AbUBqQG2AakBqgG3AbYBqQG3AaoBqwG4AbcBqgG4AasBrAG5AbgBqwG5AawBrQG6AbkBrAG6AboBrQG7Aa0BrgG8AbsBrQG8Aa4BrwG9AbwBrgG9Aa8BsAG+Ab0BrwG+AbABsQG/Ab4BsAG/AbEBbMABvwGxAcABCbIBwQGyAbMBwQGzAbQBwgHBAbMBwgG0AbUBwwHCAbQBwwHDAbUBxAG1AbYBxQHEAbUBxQG2AbcBxgHFAbYBxgG3AbgBxwHGAbcBxwG4AbkByAHHAbgByAG5AboByQHIAbkByQG6AbsBygHJAboBygG8Ab0BywG7AbwBywHKAbsBywG9Ab4BzAHLAb0BzAG+Ab8BzQHMAb4BzQG/AcABzgHNAb8BzgHOAcABzwEICdABCcEB0AHBAcIB0AHCAcMB0QHQAcIB0QHDAcQB0gHRAcMB0gHEAcUB0wHSAcQB0wHFAcYB1AHTAcUB1AHGAccB1QHUAcYB1QHHAcgB1QHIAckB1gHVAcgB1gHJAcoB1wHWAckB1wHKAcsB2AHXAcoB2AHLAcwB2QHYAcsB2QHMAc0B2gHZAcwB2gHNAc4B2wHaAc0B2wHOAc8B3AHbAc4B3AHcAc8B3QFMA94BXUzeAWxd3gHAAWzeAc8BwAHeAd0BzwHeAQjQAd8B0AHRAd8B0QHSAeAB3wHRAeAB0gHTAeEB4AHSAeEB4QHTAeIB0wHUAeMB4gHTAeMB1AHVAeQB4wHUAeQB1QHWAeUB5AHVAeUB1gHXAeYB5QHWAeYB1wHYAecB5gHXAecB5wHYAegB2AHZAekB6AHYAekB2QHaAeoB6QHZAeoB2gHbAesB6gHaAesB2wHcAewB6wHbAewB3AHdAe0B7AHcAe0B3QHeAe4B3gEE7gHtAd0B7gEI3wHvAd8B4AHvAeAB4QHvAeEB4gHwAe8B4QHwAeIB4wHxAfAB4gHxAeMB5AHyAfEB4wHyAeQB5QHzAfIB5AHzAeUB5gH0AfMB5QH0AeYB5wH1AfQB5gH1AecB6AH2AfUB5wH2AegB6QH2AekB6gH3AfYB6QH3AfcB6gH4AeoB6wH5AfgB6gH5AewB7QH6AesB7AH6AfkB6wH6Ae0B7gH7AfoB7QH7AQQF/AHuAQT8AfsB7gH8AQjvAf0B7wHwAf0B8AHxAf4B/QHwAf4B8QHyAf8B/gHxAf8B8gHzAYAC/wHyAYAC8wH0AYECgALzAYEC9AH1AYICgQL0AYIC9gH3AYMC9QH2AYMCggL1AYMC9wH4AYQCgwL3AYQC+AH5AYUChAL4AYUC+QH6AYYChQL5AYYC+gH7AYcChgL6AYcC+wH8AYgChwL7AYgC/QH+AYkC/gH/AYoCiQL+AYoC/wGAAosCigL/AYsCgAKBAowCiwKAAowCgQKCAo0CjAKBAo0CgwKEAo4CggKDAo4CjQKCAo4ChAKFAo8CjgKEAo8ChQKGApACjwKFApAChgKHApECkAKGApEChwKIApICkQKHApICiAL8AZMCkgKIApMCCP0BlAL9AYkClAKJAooClQKUAokClQKLAowClgKKAosClgKVAooClgKMAo0ClwKWAowClwKXAo0CmAKNAo4CmQKYAo0CmQKOAo8CmgKZAo4CmgKPApACmwKaAo8CmwKbApACnAKRApICnQKQApECnQKcApACnQKSApMCngKdApICngL8AQWfApMC/AGfAp4CkwKfAgcIoAIIlAKgApQClQKgApUClgKhAqAClQKhApYClwKiAqEClgKiApcCmAKjAqIClwKjApgCmQKkAqMCmAKkAqQCmQKlApoCmwKmApkCmgKmAqUCmQKmAqYCmwKnApsCnAKoAqcCmwKoApwCnQKpAqgCnAKpAp0CngKqAqkCnQKqAp4CnwKrAp8CBasCBQarAqoCngKrAgegAqwCoAKhAqwCoQKiAq0CrAKhAq0CogKjAq4CrQKiAq4CowKkAq4CpAKlAq8CrgKkAq8CpQKmAq8CpwKoArACpgKnArACrwKmArACqQKqArECqAKpArECsAKoArECqgKrArICqwIGsgKxAqoCsgI=" name="Continuous skin">
+                <ContourMeshVertex x="-180" y="23" u="0.1666667" v="0.5425926"><Weight indices="6683" values="1020"/></ContourMeshVertex>
+                <ContourMeshVertex x="-112" y="-190" u="0.2925926" v="0.1481481"><Weight indices="17" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="95" y="-190" u="0.6759259" v="0.1481481"><Weight indices="18" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="109" y="-99" u="0.7018519" v="0.3166667"><Weight indices="18" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="123" y="141" u="0.7277778" v="0.7611111"><Weight indices="5639" values="3315"/></ContourMeshVertex>
+                <ContourMeshVertex x="120" y="246" u="0.7222222" v="0.9555556"><Weight indices="23" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="116" y="256" u="0.7148148" v="0.9740741"><Weight indices="23" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="-115" y="256" u="0.2870370" v="0.9740741"><Weight indices="21" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="-120" y="246" u="0.2777778" v="0.9555556"><Weight indices="21" values="255"/></ContourMeshVertex>
+                <ContourMeshVertex x="-179" y="42" u="0.1685185" v="0.5777778"><Weight indices="26" values="255"/></ContourMeshVertex>
+                <MeshVertex x="-76" y="-190" u="0.3592593" v="0.1481481"><Weight indices="4360" values="32640"/></MeshVertex>
+                <MeshVertex x="-20" y="-190" u="0.4629630" v="0.1481481"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-1" y="-190" u="0.4981481" v="0.1481481"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="16" y="-190" u="0.5296296" v="0.1481481"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="79" y="-190" u="0.6462963" v="0.1481481"><Weight indices="2066" values="18105"/></MeshVertex>
+                <MeshVertex x="-113" y="-166" u="0.2907407" v="0.1925926"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-93" y="-166" u="0.3277778" v="0.1925926"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-74" y="-166" u="0.3629630" v="0.1925926"><Weight indices="4360" values="25245"/></MeshVertex>
+                <MeshVertex x="-17" y="-166" u="0.4685185" v="0.1925926"><Weight indices="4872" values="27285"/></MeshVertex>
+                <MeshVertex x="-2" y="-166" u="0.4962963" v="0.1925926"><Weight indices="19" values="255"/></MeshVertex>
+                <MeshVertex x="12" y="-166" u="0.5222222" v="0.1925926"><Weight indices="2067" values="31620"/></MeshVertex>
+                <MeshVertex x="74" y="-166" u="0.6370370" v="0.1925926"><Weight indices="4616" values="28815"/></MeshVertex>
+                <MeshVertex x="95" y="-166" u="0.6759259" v="0.1925926"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-112" y="-140" u="0.2925926" v="0.2407407"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-82" y="-140" u="0.3481481" v="0.2407407"><Weight indices="2065" values="11730"/></MeshVertex>
+                <MeshVertex x="-59" y="-140" u="0.3907407" v="0.2407407"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-25" y="-140" u="0.4537037" v="0.2407407"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-14" y="-140" u="0.4740741" v="0.2407407"><Weight indices="2067" values="19125"/></MeshVertex>
+                <MeshVertex x="-2" y="-140" u="0.4962963" v="0.2407407"><Weight indices="19" values="255"/></MeshVertex>
+                <MeshVertex x="13" y="-140" u="0.5240741" v="0.2407407"><Weight indices="4872" values="27285"/></MeshVertex>
+                <MeshVertex x="34" y="-140" u="0.5629630" v="0.2407407"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="57" y="-140" u="0.6055556" v="0.2407407"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="96" y="-140" u="0.6777778" v="0.2407407"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-122" y="-118" u="0.2740741" v="0.2814815"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-100" y="-118" u="0.3148148" v="0.2814815"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-78" y="-118" u="0.3555556" v="0.2814815"><Weight indices="2065" values="25245"/></MeshVertex>
+                <MeshVertex x="-63" y="-118" u="0.3833333" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-46" y="-118" u="0.4148148" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-24" y="-118" u="0.4555556" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-2" y="-118" u="0.4962963" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="18" y="-118" u="0.5333333" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="41" y="-118" u="0.5759259" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="61" y="-118" u="0.6129630" v="0.2814815"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="80" y="-118" u="0.6481481" v="0.2814815"><Weight indices="2066" values="14790"/></MeshVertex>
+                <MeshVertex x="105" y="-118" u="0.6944444" v="0.2814815"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-123" y="-99" u="0.2722222" v="0.3166667"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-96" y="-99" u="0.3222222" v="0.3166667"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-74" y="-99" u="0.3629630" v="0.3166667"><Weight indices="4360" values="25245"/></MeshVertex>
+                <MeshVertex x="-62" y="-99" u="0.3851852" v="0.3166667"><Weight indices="3848" values="10200"/></MeshVertex>
+                <MeshVertex x="-48" y="-99" u="0.4111111" v="0.3166667"><Weight indices="527119" values="1193400"/></MeshVertex>
+                <MeshVertex x="-34" y="-99" u="0.4370370" v="0.3166667"><Weight indices="724744" values="10200"/></MeshVertex>
+                <MeshVertex x="-19" y="-99" u="0.4648148" v="0.3166667"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="14" y="-99" u="0.5259259" v="0.3166667"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="29" y="-99" u="0.5537037" v="0.3166667"><Weight indices="856072" values="6120"/></MeshVertex>
+                <MeshVertex x="43" y="-99" u="0.5796296" v="0.3166667"><Weight indices="527632" values="1193400"/></MeshVertex>
+                <MeshVertex x="57" y="-99" u="0.6055556" v="0.3166667"><Weight indices="4104" values="15045"/></MeshVertex>
+                <MeshVertex x="69" y="-99" u="0.6277778" v="0.3166667"><Weight indices="4616" values="11730"/></MeshVertex>
+                <MeshVertex x="85" y="-99" u="0.6574074" v="0.3166667"><Weight indices="2066" values="2550"/></MeshVertex>
+                <MeshVertex x="-122" y="-84" u="0.2740741" v="0.3444444"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-100" y="-84" u="0.3148148" v="0.3444444"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-80" y="-84" u="0.3518519" v="0.3444444"><Weight indices="2065" values="18105"/></MeshVertex>
+                <MeshVertex x="-68" y="-84" u="0.3740741" v="0.3444444"><Weight indices="725256" values="71910"/></MeshVertex>
+                <MeshVertex x="-59" y="-84" u="0.3907407" v="0.3444444"><Weight indices="2059" values="12240"/></MeshVertex>
+                <MeshVertex x="-51" y="-84" u="0.4055556" v="0.3444444"><Weight indices="2828" values="24990"/></MeshVertex>
+                <MeshVertex x="-44" y="-84" u="0.4185185" v="0.3444444"><Weight indices="12" values="255"/></MeshVertex>
+                <MeshVertex x="-36" y="-84" u="0.4333333" v="0.3444444"><Weight indices="527116" values="144840"/></MeshVertex>
+                <MeshVertex x="-26" y="-84" u="0.4518519" v="0.3444444"><Weight indices="2824" values="6375"/></MeshVertex>
+                <MeshVertex x="-12" y="-84" u="0.4777778" v="0.3444444"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="10" y="-84" u="0.5185185" v="0.3444444"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="22" y="-84" u="0.5407407" v="0.3444444"><Weight indices="3336" values="11730"/></MeshVertex>
+                <MeshVertex x="32" y="-84" u="0.5592593" v="0.3444444"><Weight indices="3342" values="14025"/></MeshVertex>
+                <MeshVertex x="40" y="-84" u="0.5740741" v="0.3444444"><Weight indices="14" values="255"/></MeshVertex>
+                <MeshVertex x="48" y="-84" u="0.5888889" v="0.3444444"><Weight indices="3597" values="27795"/></MeshVertex>
+                <MeshVertex x="57" y="-84" u="0.6055556" v="0.3444444"><Weight indices="3336" values="32385"/></MeshVertex>
+                <MeshVertex x="68" y="-84" u="0.6259259" v="0.3444444"><Weight indices="4616" values="8925"/></MeshVertex>
+                <MeshVertex x="81" y="-84" u="0.6500000" v="0.3444444"><Weight indices="2066" values="11730"/></MeshVertex>
+                <MeshVertex x="107" y="-84" u="0.6981481" v="0.3444444"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-116" y="-72" u="0.2851852" v="0.3666667"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-91" y="-72" u="0.3314815" v="0.3666667"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-71" y="-72" u="0.3685185" v="0.3666667"><Weight indices="4360" values="14790"/></MeshVertex>
+                <MeshVertex x="-59" y="-72" u="0.3907407" v="0.3666667"><Weight indices="2059" values="17340"/></MeshVertex>
+                <MeshVertex x="-51" y="-72" u="0.4055556" v="0.3666667"><Weight indices="3083" values="29835"/></MeshVertex>
+                <MeshVertex x="-44" y="-72" u="0.4185185" v="0.3666667"><Weight indices="2316" values="255"/></MeshVertex>
+                <MeshVertex x="-35" y="-72" u="0.4351852" v="0.3666667"><Weight indices="134810635" values="85223550"/></MeshVertex>
+                <MeshVertex x="-23" y="-72" u="0.4574074" v="0.3666667"><Weight indices="2312" values="18105"/></MeshVertex>
+                <MeshVertex x="-1" y="-72" u="0.4981481" v="0.3666667"><Weight indices="2312" values="30090"/></MeshVertex>
+                <MeshVertex x="18" y="-72" u="0.5333333" v="0.3666667"><Weight indices="2312" values="19125"/></MeshVertex>
+                <MeshVertex x="30" y="-72" u="0.5555556" v="0.3666667"><Weight indices="134811149" values="18366885"/></MeshVertex>
+                <MeshVertex x="40" y="-72" u="0.5740741" v="0.3666667"><Weight indices="2318" values="255"/></MeshVertex>
+                <MeshVertex x="49" y="-72" u="0.5907407" v="0.3666667"><Weight indices="527885" values="8925"/></MeshVertex>
+                <MeshVertex x="57" y="-72" u="0.6055556" v="0.3666667"><Weight indices="3336" values="27540"/></MeshVertex>
+                <MeshVertex x="68" y="-72" u="0.6259259" v="0.3666667"><Weight indices="4616" values="8925"/></MeshVertex>
+                <MeshVertex x="85" y="-72" u="0.6574074" v="0.3666667"><Weight indices="2066" values="2550"/></MeshVertex>
+                <MeshVertex x="105" y="-72" u="0.6944444" v="0.3666667"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-112" y="-61" u="0.2925926" v="0.3870370"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-91" y="-61" u="0.3314815" v="0.3870370"><Weight indices="17" values="255"/></MeshVertex>
+                <MeshVertex x="-72" y="-61" u="0.3666667" v="0.3870370"><Weight indices="4360" values="18105"/></MeshVertex>
+                <MeshVertex x="-62" y="-61" u="0.3851852" v="0.3870370"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="-47" y="-61" u="0.4129630" v="0.3870370"><Weight indices="591883" values="4476270"/></MeshVertex>
+                <MeshVertex x="-30" y="-61" u="0.4444444" v="0.3870370"><Weight indices="2057" values="12495"/></MeshVertex>
+                <MeshVertex x="-15" y="-61" u="0.4722222" v="0.3870370"><Weight indices="2057" values="5355"/></MeshVertex>
+                <MeshVertex x="0" y="-61" u="0.5000000" v="0.3870370"><Weight indices="2057" values="5355"/></MeshVertex>
+                <MeshVertex x="12" y="-61" u="0.5222222" v="0.3870370"><Weight indices="2057" values="5355"/></MeshVertex>
+                <MeshVertex x="28" y="-61" u="0.5518519" v="0.3870370"><Weight indices="854025" values="537540"/></MeshVertex>
+                <MeshVertex x="41" y="-61" u="0.5759259" v="0.3870370"><Weight indices="526605" values="3822960"/></MeshVertex>
+                <MeshVertex x="57" y="-61" u="0.6055556" v="0.3870370"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="70" y="-61" u="0.6296296" v="0.3870370"><Weight indices="4616" values="14790"/></MeshVertex>
+                <MeshVertex x="90" y="-61" u="0.6666667" v="0.3870370"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="101" y="-61" u="0.6870370" v="0.3870370"><Weight indices="18" values="255"/></MeshVertex>
+                <MeshVertex x="-106" y="-45" u="0.3037037" v="0.4166667"><Weight indices="2065" values="6885"/></MeshVertex>
+                <MeshVertex x="-81" y="-45" u="0.3500000" v="0.4166667"><Weight indices="2065" values="20145"/></MeshVertex>
+                <MeshVertex x="-64" y="-45" u="0.3814815" v="0.4166667"><Weight indices="4360" values="255"/></MeshVertex>
+                <MeshVertex x="-47" y="-45" u="0.4129630" v="0.4166667"><Weight indices="2312" values="25245"/></MeshVertex>
+                <MeshVertex x="-29" y="-45" u="0.4462963" v="0.4166667"><Weight indices="657417" values="5865"/></MeshVertex>
+                <MeshVertex x="-16" y="-45" u="0.4703704" v="0.4166667"><Weight indices="657417" values="592620"/></MeshVertex>
+                <MeshVertex x="0" y="-45" u="0.5000000" v="0.4166667"><Weight indices="526857" values="331755"/></MeshVertex>
+                <MeshVertex x="14" y="-45" u="0.5259259" v="0.4166667"><Weight indices="657417" values="527595"/></MeshVertex>
+                <MeshVertex x="29" y="-45" u="0.5537037" v="0.4166667"><Weight indices="2057" values="9690"/></MeshVertex>
+                <MeshVertex x="45" y="-45" u="0.5833333" v="0.4166667"><Weight indices="2312" values="20400"/></MeshVertex>
+                <MeshVertex x="61" y="-45" u="0.6129630" v="0.4166667"><Weight indices="8" values="255"/></MeshVertex>
+                <MeshVertex x="78" y="-45" u="0.6444444" v="0.4166667"><Weight indices="2066" values="26010"/></MeshVertex>
+                <MeshVertex x="92" y="-45" u="0.6703704" v="0.4166667"><Weight indices="2066" values="6885"/></MeshVertex>
+                <MeshVertex x="-92" y="-30" u="0.3296296" v="0.4444444"><Weight indices="4360" values="14280"/></MeshVertex>
+                <MeshVertex x="-71" y="-30" u="0.3685185" v="0.4444444"><Weight indices="659720" values="68850"/></MeshVertex>
+                <MeshVertex x="-54" y="-30" u="0.4000000" v="0.4444444"><Weight indices="2568" values="23715"/></MeshVertex>
+                <MeshVertex x="-38" y="-30" u="0.4296296" v="0.4444444"><Weight indices="591882" values="667845"/></MeshVertex>
+                <MeshVertex x="-21" y="-30" u="0.4611111" v="0.4444444"><Weight indices="2314" values="17850"/></MeshVertex>
+                <MeshVertex x="0" y="-30" u="0.5000000" v="0.4444444"><Weight indices="2314" values="23205"/></MeshVertex>
+                <MeshVertex x="22" y="-30" u="0.5407407" v="0.4444444"><Weight indices="2314" values="14280"/></MeshVertex>
+                <MeshVertex x="42" y="-30" u="0.5777778" v="0.4444444"><Weight indices="2058" values="26520"/></MeshVertex>
+                <MeshVertex x="56" y="-30" u="0.6037037" v="0.4444444"><Weight indices="2568" values="12750"/></MeshVertex>
+                <MeshVertex x="73" y="-30" u="0.6351852" v="0.4444444"><Weight indices="4616" values="5610"/></MeshVertex>
+                <MeshVertex x="90" y="-30" u="0.6666667" v="0.4444444"><Weight indices="4616" values="14280"/></MeshVertex>
+                <MeshVertex x="-92" y="-11" u="0.3296296" v="0.4796296"><Weight indices="520" values="19635"/></MeshVertex>
+                <MeshVertex x="-65" y="-11" u="0.3796296" v="0.4796296"><Weight indices="520" values="19635"/></MeshVertex>
+                <MeshVertex x="-48" y="-11" u="0.4111111" v="0.4796296"><Weight indices="655880" values="871590"/></MeshVertex>
+                <MeshVertex x="-31" y="-11" u="0.4425926" v="0.4796296"><Weight indices="50987528" values="4148340"/></MeshVertex>
+                <MeshVertex x="-2" y="-11" u="0.4962963" v="0.4796296"><Weight indices="50856458" values="105203310"/></MeshVertex>
+                <MeshVertex x="26" y="-11" u="0.5481481" v="0.4796296"><Weight indices="50987528" values="4344690"/></MeshVertex>
+                <MeshVertex x="45" y="-11" u="0.5833333" v="0.4796296"><Weight indices="655880" values="740520"/></MeshVertex>
+                <MeshVertex x="66" y="-11" u="0.6222222" v="0.4796296"><Weight indices="520" values="19635"/></MeshVertex>
+                <MeshVertex x="85" y="-11" u="0.6574074" v="0.4796296"><Weight indices="520" values="19635"/></MeshVertex>
+                <MeshVertex x="-168" y="7" u="0.1888889" v="0.5129630"><Weight indices="27" values="255"/></MeshVertex>
+                <MeshVertex x="-150" y="7" u="0.2222222" v="0.5129630"><Weight indices="27" values="255"/></MeshVertex>
+                <MeshVertex x="-130" y="7" u="0.2592593" v="0.5129630"><Weight indices="27" values="255"/></MeshVertex>
+                <MeshVertex x="-72" y="7" u="0.3666667" v="0.5129630"><Weight indices="2050" values="1530"/></MeshVertex>
+                <MeshVertex x="-52" y="7" u="0.4037037" v="0.5129630"><Weight indices="2050" values="1530"/></MeshVertex>
+                <MeshVertex x="-31" y="7" u="0.4425926" v="0.5129630"><Weight indices="525058" values="334050"/></MeshVertex>
+                <MeshVertex x="-1" y="7" u="0.4981481" v="0.5129630"><Weight indices="525058" values="348585"/></MeshVertex>
+                <MeshVertex x="31" y="7" u="0.5574074" v="0.5129630"><Weight indices="525058" values="334050"/></MeshVertex>
+                <MeshVertex x="54" y="7" u="0.6000000" v="0.5129630"><Weight indices="2050" values="1530"/></MeshVertex>
+                <MeshVertex x="77" y="7" u="0.6425926" v="0.5129630"><Weight indices="2050" values="1530"/></MeshVertex>
+                <MeshVertex x="-167" y="23" u="0.1907407" v="0.5425926"><Weight indices="6683" values="1020"/></MeshVertex>
+                <MeshVertex x="-152" y="23" u="0.2185185" v="0.5425926"><Weight indices="6683" values="1020"/></MeshVertex>
+                <MeshVertex x="-140" y="23" u="0.2407407" v="0.5425926"><Weight indices="6683" values="1020"/></MeshVertex>
+                <MeshVertex x="-128" y="23" u="0.2629630" v="0.5425926"><Weight indices="6683" values="1020"/></MeshVertex>
+                <MeshVertex x="-81" y="23" u="0.3500000" v="0.5425926"><Weight indices="1026" values="19380"/></MeshVertex>
+                <MeshVertex x="-59" y="23" u="0.3907407" v="0.5425926"><Weight indices="1026" values="19380"/></MeshVertex>
+                <MeshVertex x="-42" y="23" u="0.4222222" v="0.5425926"><Weight indices="262914" values="333540"/></MeshVertex>
+                <MeshVertex x="-25" y="23" u="0.4537037" v="0.5425926"><Weight indices="770" values="23715"/></MeshVertex>
+                <MeshVertex x="0" y="23" u="0.5000000" v="0.5425926"><Weight indices="515" values="29835"/></MeshVertex>
+                <MeshVertex x="24" y="23" u="0.5444444" v="0.5425926"><Weight indices="770" values="24735"/></MeshVertex>
+                <MeshVertex x="44" y="23" u="0.5814815" v="0.5425926"><Weight indices="770" values="4080"/></MeshVertex>
+                <MeshVertex x="61" y="23" u="0.6129630" v="0.5425926"><Weight indices="1538" values="2805"/></MeshVertex>
+                <MeshVertex x="81" y="23" u="0.6500000" v="0.5425926"><Weight indices="1538" values="19380"/></MeshVertex>
+                <MeshVertex x="-157" y="42" u="0.2092593" v="0.5777778"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-147" y="42" u="0.2277778" v="0.5777778"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-130" y="42" u="0.2592593" v="0.5777778"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-119" y="42" u="0.2796296" v="0.5777778"><Weight indices="132122" values="4080"/></MeshVertex>
+                <MeshVertex x="-84" y="42" u="0.3444444" v="0.5777778"><Weight indices="516" values="2295"/></MeshVertex>
+                <MeshVertex x="-66" y="42" u="0.3777778" v="0.5777778"><Weight indices="516" values="3060"/></MeshVertex>
+                <MeshVertex x="-46" y="42" u="0.4148148" v="0.5777778"><Weight indices="262914" values="10200"/></MeshVertex>
+                <MeshVertex x="-23" y="42" u="0.4574074" v="0.5777778"><Weight indices="515" values="27285"/></MeshVertex>
+                <MeshVertex x="0" y="42" u="0.5000000" v="0.5777778"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="23" y="42" u="0.5425926" v="0.5777778"><Weight indices="515" values="27285"/></MeshVertex>
+                <MeshVertex x="47" y="42" u="0.5870370" v="0.5777778"><Weight indices="770" values="8925"/></MeshVertex>
+                <MeshVertex x="69" y="42" u="0.6277778" v="0.5777778"><Weight indices="518" values="28050"/></MeshVertex>
+                <MeshVertex x="90" y="42" u="0.6666667" v="0.5777778"><Weight indices="518" values="2295"/></MeshVertex>
+                <MeshVertex x="-165" y="67" u="0.1944444" v="0.6240741"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-146" y="67" u="0.2296296" v="0.6240741"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-128" y="67" u="0.2629630" v="0.6240741"><Weight indices="26" values="255"/></MeshVertex>
+                <MeshVertex x="-113" y="67" u="0.2907407" v="0.6240741"><Weight indices="1050" values="21675"/></MeshVertex>
+                <MeshVertex x="-89" y="67" u="0.3351852" v="0.6240741"><Weight indices="4" values="255"/></MeshVertex>
+                <MeshVertex x="-76" y="67" u="0.3592593" v="0.6240741"><Weight indices="516" values="3060"/></MeshVertex>
+                <MeshVertex x="-56" y="67" u="0.3962963" v="0.6240741"><Weight indices="262914" values="201195"/></MeshVertex>
+                <MeshVertex x="-39" y="67" u="0.4277778" v="0.6240741"><Weight indices="770" values="30600"/></MeshVertex>
+                <MeshVertex x="-17" y="67" u="0.4685185" v="0.6240741"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="-1" y="67" u="0.4981481" v="0.6240741"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="20" y="67" u="0.5370370" v="0.6240741"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="41" y="67" u="0.5759259" v="0.6240741"><Weight indices="770" values="27540"/></MeshVertex>
+                <MeshVertex x="64" y="67" u="0.6185185" v="0.6240741"><Weight indices="1538" values="24480"/></MeshVertex>
+                <MeshVertex x="80" y="67" u="0.6481481" v="0.6240741"><Weight indices="6" values="255"/></MeshVertex>
+                <MeshVertex x="97" y="67" u="0.6796296" v="0.6240741"><Weight indices="6" values="255"/></MeshVertex>
+                <MeshVertex x="-161" y="91" u="0.2018519" v="0.6685185"><Weight indices="6426" values="7395"/></MeshVertex>
+                <MeshVertex x="-145" y="91" u="0.2314815" v="0.6685185"><Weight indices="6426" values="7395"/></MeshVertex>
+                <MeshVertex x="-126" y="91" u="0.2666667" v="0.6685185"><Weight indices="6426" values="7395"/></MeshVertex>
+                <MeshVertex x="-109" y="91" u="0.2981481" v="0.6685185"><Weight indices="84154650" values="135338445"/></MeshVertex>
+                <MeshVertex x="-96" y="91" u="0.3222222" v="0.6685185"><Weight indices="419764740" values="204430950"/></MeshVertex>
+                <MeshVertex x="-83" y="91" u="0.3462963" v="0.6685185"><Weight indices="421135620" values="282795"/></MeshVertex>
+                <MeshVertex x="-64" y="91" u="0.3814815" v="0.6685185"><Weight indices="50660354" values="925395"/></MeshVertex>
+                <MeshVertex x="-49" y="91" u="0.4092593" v="0.6685185"><Weight indices="770" values="17595"/></MeshVertex>
+                <MeshVertex x="-19" y="91" u="0.4648148" v="0.6685185"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="-2" y="91" u="0.4962963" v="0.6685185"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="19" y="91" u="0.5351852" v="0.6685185"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="46" y="91" u="0.5851852" v="0.6685185"><Weight indices="770" values="22950"/></MeshVertex>
+                <MeshVertex x="68" y="91" u="0.6259259" v="0.6685185"><Weight indices="132870" values="3228045"/></MeshVertex>
+                <MeshVertex x="90" y="91" u="0.6666667" v="0.6685185"><Weight indices="1798" values="20910"/></MeshVertex>
+                <MeshVertex x="106" y="91" u="0.6962963" v="0.6685185"><Weight indices="1798" values="20910"/></MeshVertex>
+                <MeshVertex x="-155" y="116" u="0.2129630" v="0.7148148"><Weight indices="6681" values="7395"/></MeshVertex>
+                <MeshVertex x="-135" y="116" u="0.2500000" v="0.7148148"><Weight indices="6681" values="7395"/></MeshVertex>
+                <MeshVertex x="-117" y="116" u="0.2833333" v="0.7148148"><Weight indices="6681" values="7395"/></MeshVertex>
+                <MeshVertex x="-102" y="116" u="0.3111111" v="0.7148148"><Weight indices="68814105" values="18044055"/></MeshVertex>
+                <MeshVertex x="-86" y="116" u="0.3407407" v="0.7148148"><Weight indices="436476165" values="33755370"/></MeshVertex>
+                <MeshVertex x="-66" y="116" u="0.3777778" v="0.7148148"><Weight indices="263426" values="17850"/></MeshVertex>
+                <MeshVertex x="-42" y="116" u="0.4222222" v="0.7148148"><Weight indices="770" values="26265"/></MeshVertex>
+                <MeshVertex x="-17" y="116" u="0.4685185" v="0.7148148"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="0" y="116" u="0.5000000" v="0.7148148"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="21" y="116" u="0.5388889" v="0.7148148"><Weight indices="515" values="23460"/></MeshVertex>
+                <MeshVertex x="48" y="116" u="0.5888889" v="0.7148148"><Weight indices="770" values="16320"/></MeshVertex>
+                <MeshVertex x="71" y="116" u="0.6314815" v="0.7148148"><Weight indices="1543" values="1020"/></MeshVertex>
+                <MeshVertex x="89" y="116" u="0.6648148" v="0.7148148"><Weight indices="1543" values="1020"/></MeshVertex>
+                <MeshVertex x="109" y="116" u="0.7018519" v="0.7148148"><Weight indices="1543" values="1020"/></MeshVertex>
+                <MeshVertex x="121" y="116" u="0.7240741" v="0.7148148"><Weight indices="1543" values="1020"/></MeshVertex>
+                <MeshVertex x="-146" y="141" u="0.2296296" v="0.7611111"><Weight indices="6169" values="20400"/></MeshVertex>
+                <MeshVertex x="-129" y="141" u="0.2611111" v="0.7611111"><Weight indices="6169" values="20400"/></MeshVertex>
+                <MeshVertex x="-116" y="141" u="0.2851852" v="0.7611111"><Weight indices="6169" values="20400"/></MeshVertex>
+                <MeshVertex x="-103" y="141" u="0.3092593" v="0.7611111"><Weight indices="337118489" values="54020220"/></MeshVertex>
+                <MeshVertex x="-87" y="141" u="0.3388889" v="0.7611111"><Weight indices="403970309" values="118165980"/></MeshVertex>
+                <MeshVertex x="-75" y="141" u="0.3611111" v="0.7611111"><Weight indices="1311237" values="800445"/></MeshVertex>
+                <MeshVertex x="-56" y="141" u="0.3962963" v="0.7611111"><Weight indices="201730" values="134385"/></MeshVertex>
+                <MeshVertex x="-35" y="141" u="0.4351852" v="0.7611111"><Weight indices="18088706" values="67657875"/></MeshVertex>
+                <MeshVertex x="-15" y="141" u="0.4722222" v="0.7611111"><Weight indices="335610371" values="809115"/></MeshVertex>
+                <MeshVertex x="0" y="141" u="0.5000000" v="0.7611111"><Weight indices="66051" values="808860"/></MeshVertex>
+                <MeshVertex x="16" y="141" u="0.5296296" v="0.7611111"><Weight indices="369164803" values="809115"/></MeshVertex>
+                <MeshVertex x="38" y="141" u="0.5703704" v="0.7611111"><Weight indices="18219778" values="17453220"/></MeshVertex>
+                <MeshVertex x="62" y="141" u="0.6148148" v="0.7611111"><Weight indices="1442311" values="795090"/></MeshVertex>
+                <MeshVertex x="78" y="141" u="0.6444444" v="0.7611111"><Weight indices="5639" values="3315"/></MeshVertex>
+                <MeshVertex x="95" y="141" u="0.6759259" v="0.7611111"><Weight indices="5639" values="3315"/></MeshVertex>
+                <MeshVertex x="109" y="141" u="0.7018519" v="0.7611111"><Weight indices="5639" values="3315"/></MeshVertex>
+                <MeshVertex x="-130" y="165" u="0.2592593" v="0.8055556"><Weight indices="335878424" values="185274330"/></MeshVertex>
+                <MeshVertex x="-110" y="165" u="0.2962963" v="0.8055556"><Weight indices="420742424" values="236131530"/></MeshVertex>
+                <MeshVertex x="-95" y="165" u="0.3240741" v="0.8055556"><Weight indices="421008389" values="89215320"/></MeshVertex>
+                <MeshVertex x="-80" y="165" u="0.3518519" v="0.8055556"><Weight indices="136197" values="294015"/></MeshVertex>
+                <MeshVertex x="-59" y="165" u="0.3907407" v="0.8055556"><Weight indices="332802" values="162945"/></MeshVertex>
+                <MeshVertex x="-38" y="165" u="0.4296296" v="0.8055556"><Weight indices="50402306" values="253387380"/></MeshVertex>
+                <MeshVertex x="-20" y="165" u="0.4629630" v="0.8055556"><Weight indices="335741441" values="171004020"/></MeshVertex>
+                <MeshVertex x="0" y="165" u="0.5000000" v="0.8055556"><Weight indices="197121" values="4211070"/></MeshVertex>
+                <MeshVertex x="22" y="165" u="0.5407407" v="0.8055556"><Weight indices="369295873" values="439243875"/></MeshVertex>
+                <MeshVertex x="39" y="165" u="0.5722222" v="0.8055556"><Weight indices="50402818" values="218984055"/></MeshVertex>
+                <MeshVertex x="57" y="165" u="0.6055556" v="0.8055556"><Weight indices="132886" values="2187390"/></MeshVertex>
+                <MeshVertex x="80" y="165" u="0.6481481" v="0.8055556"><Weight indices="5639" values="31875"/></MeshVertex>
+                <MeshVertex x="99" y="165" u="0.6833333" v="0.8055556"><Weight indices="5639" values="31875"/></MeshVertex>
+                <MeshVertex x="120" y="165" u="0.7222222" v="0.8055556"><Weight indices="5639" values="31875"/></MeshVertex>
+                <MeshVertex x="-118" y="184" u="0.2814815" v="0.8407407"><Weight indices="1574164" values="532440"/></MeshVertex>
+                <MeshVertex x="-99" y="184" u="0.3166667" v="0.8407407"><Weight indices="1574164" values="270555"/></MeshVertex>
+                <MeshVertex x="-81" y="184" u="0.3500000" v="0.8407407"><Weight indices="402785556" values="8415"/></MeshVertex>
+                <MeshVertex x="-69" y="184" u="0.3722222" v="0.8407407"><Weight indices="328212" values="922335"/></MeshVertex>
+                <MeshVertex x="-50" y="184" u="0.4074074" v="0.8407407"><Weight indices="532" values="8415"/></MeshVertex>
+                <MeshVertex x="-28" y="184" u="0.4481481" v="0.8407407"><Weight indices="50467841" values="35541645"/></MeshVertex>
+                <MeshVertex x="-2" y="184" u="0.4962963" v="0.8407407"><Weight indices="197121" values="465375"/></MeshVertex>
+                <MeshVertex x="24" y="184" u="0.5444444" v="0.8407407"><Weight indices="50468353" values="52248480"/></MeshVertex>
+                <MeshVertex x="44" y="184" u="0.5814815" v="0.8407407"><Weight indices="66070" values="139485"/></MeshVertex>
+                <MeshVertex x="64" y="184" u="0.6185185" v="0.8407407"><Weight indices="1814" values="8415"/></MeshVertex>
+                <MeshVertex x="84" y="184" u="0.6555556" v="0.8407407"><Weight indices="1814" values="8415"/></MeshVertex>
+                <MeshVertex x="104" y="184" u="0.6925926" v="0.8407407"><Weight indices="1814" values="8415"/></MeshVertex>
+                <MeshVertex x="-109" y="207" u="0.2981481" v="0.8833333"><Weight indices="20" values="255"/></MeshVertex>
+                <MeshVertex x="-91" y="207" u="0.3314815" v="0.8833333"><Weight indices="20" values="255"/></MeshVertex>
+                <MeshVertex x="-77" y="207" u="0.3574074" v="0.8833333"><Weight indices="20" values="255"/></MeshVertex>
+                <MeshVertex x="-59" y="207" u="0.3907407" v="0.8833333"><Weight indices="20" values="255"/></MeshVertex>
+                <MeshVertex x="-38" y="207" u="0.4296296" v="0.8833333"><Weight indices="276" values="13770"/></MeshVertex>
+                <MeshVertex x="-5" y="207" u="0.4907407" v="0.8833333"><Weight indices="1" values="255"/></MeshVertex>
+                <MeshVertex x="30" y="207" u="0.5555556" v="0.8833333"><Weight indices="278" values="29835"/></MeshVertex>
+                <MeshVertex x="55" y="207" u="0.6018519" v="0.8833333"><Weight indices="22" values="255"/></MeshVertex>
+                <MeshVertex x="76" y="207" u="0.6407407" v="0.8833333"><Weight indices="22" values="255"/></MeshVertex>
+                <MeshVertex x="94" y="207" u="0.6740741" v="0.8833333"><Weight indices="22" values="255"/></MeshVertex>
+                <MeshVertex x="106" y="207" u="0.6962963" v="0.8833333"><Weight indices="22" values="255"/></MeshVertex>
+                <MeshVertex x="-111" y="226" u="0.2944444" v="0.9185185"><Weight indices="5141" values="20400"/></MeshVertex>
+                <MeshVertex x="-92" y="226" u="0.3296296" v="0.9185185"><Weight indices="5141" values="20400"/></MeshVertex>
+                <MeshVertex x="-77" y="226" u="0.3574074" v="0.9185185"><Weight indices="5141" values="20400"/></MeshVertex>
+                <MeshVertex x="-57" y="226" u="0.3944444" v="0.9185185"><Weight indices="5141" values="20400"/></MeshVertex>
+                <MeshVertex x="-38" y="226" u="0.4296296" v="0.9185185"><Weight indices="70677" values="3489420"/></MeshVertex>
+                <MeshVertex x="-17" y="226" u="0.4685185" v="0.9185185"><Weight indices="1316097" values="66555"/></MeshVertex>
+                <MeshVertex x="17" y="226" u="0.5314815" v="0.9185185"><Weight indices="1447681" values="264945"/></MeshVertex>
+                <MeshVertex x="37" y="226" u="0.5685185" v="0.9185185"><Weight indices="71191" values="2900370"/></MeshVertex>
+                <MeshVertex x="55" y="226" u="0.6018519" v="0.9185185"><Weight indices="5655" values="20400"/></MeshVertex>
+                <MeshVertex x="75" y="226" u="0.6388889" v="0.9185185"><Weight indices="5655" values="20400"/></MeshVertex>
+                <MeshVertex x="97" y="226" u="0.6796296" v="0.9185185"><Weight indices="5655" values="20400"/></MeshVertex>
+                <MeshVertex x="114" y="226" u="0.7111111" v="0.9185185"><Weight indices="5655" values="20400"/></MeshVertex>
+                <MeshVertex x="-100" y="246" u="0.3148148" v="0.9555556"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-85" y="246" u="0.3425926" v="0.9555556"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-70" y="246" u="0.3703704" v="0.9555556"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-49" y="246" u="0.4092593" v="0.9555556"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-35" y="246" u="0.4351852" v="0.9555556"><Weight indices="277" values="21420"/></MeshVertex>
+                <MeshVertex x="-16" y="246" u="0.4703704" v="0.9555556"><Weight indices="5377" values="765"/></MeshVertex>
+                <MeshVertex x="15" y="246" u="0.5277778" v="0.9555556"><Weight indices="5889" values="1530"/></MeshVertex>
+                <MeshVertex x="39" y="246" u="0.5722222" v="0.9555556"><Weight indices="279" values="7140"/></MeshVertex>
+                <MeshVertex x="52" y="246" u="0.5962963" v="0.9555556"><Weight indices="23" values="255"/></MeshVertex>
+                <MeshVertex x="70" y="246" u="0.6296296" v="0.9555556"><Weight indices="23" values="255"/></MeshVertex>
+                <MeshVertex x="91" y="246" u="0.6685185" v="0.9555556"><Weight indices="23" values="255"/></MeshVertex>
+                <MeshVertex x="109" y="246" u="0.7018519" v="0.9555556"><Weight indices="23" values="255"/></MeshVertex>
+                <MeshVertex x="-95" y="256" u="0.3240741" v="0.9740741"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-77" y="256" u="0.3574074" v="0.9740741"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-51" y="256" u="0.4055556" v="0.9740741"><Weight indices="21" values="255"/></MeshVertex>
+                <MeshVertex x="-25" y="256" u="0.4537037" v="0.9740741"><Weight indices="5377" values="16065"/></MeshVertex>
+                <MeshVertex x="40" y="256" u="0.5740741" v="0.9740741"><Weight indices="279" values="5610"/></MeshVertex>
+                <MeshVertex x="70" y="256" u="0.6296296" v="0.9740741"><Weight indices="23" values="255"/></MeshVertex>
+                <MeshVertex x="96" y="256" u="0.6777778" v="0.9740741"><Weight indices="23" values="255"/></MeshVertex>
+                <Skin tx="270" ty="270" name="Studigo bind pose">
+                    <Tendon boneId="0:11" tx="270" ty="435"/>
+                    <Tendon boneId="0:12" tx="270" ty="331"/>
+                    <Tendon boneId="0:13" tx="270" ty="355"/>
+                    <Tendon boneId="0:14" tx="211" ty="305"/>
+                    <Tendon boneId="0:15" tx="187" ty="363"/>
+                    <Tendon boneId="0:16" tx="329" ty="305"/>
+                    <Tendon boneId="0:17" tx="353" ty="363"/>
+                    <Tendon boneId="0:18" tx="268" ty="246"/>
+                    <Tendon boneId="0:19" tx="268" ty="220"/>
+                    <Tendon boneId="0:20" tx="268" ty="238"/>
+                    <Tendon boneId="0:21" tx="224" ty="191"/>
+                    <Tendon boneId="0:22" tx="224" ty="191"/>
+                    <Tendon boneId="0:23" tx="311" ty="191"/>
+                    <Tendon boneId="0:24" tx="311" ty="191"/>
+                    <Tendon boneId="0:25" tx="222" ty="166"/>
+                    <Tendon boneId="0:26" tx="314" ty="166"/>
+                    <Tendon boneId="0:27" tx="200" ty="170"/>
+                    <Tendon boneId="0:28" tx="337" ty="170"/>
+                    <Tendon boneId="0:29" tx="268" ty="134"/>
+                    <Tendon boneId="0:30" tx="202" ty="440"/>
+                    <Tendon boneId="0:31" tx="194" ty="494"/>
+                    <Tendon boneId="0:32" tx="336" ty="440"/>
+                    <Tendon boneId="0:33" tx="344" ty="494"/>
+                    <Tendon boneId="0:34" tx="185" ty="431"/>
+                    <Tendon boneId="0:35" tx="150" ty="388"/>
+                    <Tendon boneId="0:36" tx="129" ty="332"/>
+                    <Tendon boneId="0:37" tx="117" ty="300"/>
+                </Skin>
+            </Mesh>
+        </Image>
+        <StateMachine name="Studigo Motion" id="0:50">
+            <StateMachineLayer name="Character" id="0:51">
+                <AnyState x="30" y="-120"/>
+                <ExitState x="450" y="120"/>
+                <EntryState x="30" y="30"><StateTransition stateToId="0:52"/></EntryState>
+                <AnimationState x="230" y="30" animationId="0:53" id="0:52"/>
+            </StateMachineLayer>
+        </StateMachine>
+        <!-- Diagnostic sequence, with rest frames between the isolated checks. -->
+        <LinearAnimation fps="60" duration="540" name="Rig Inspection" id="0:53">
+            <KeyedObject objectId="0:18">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="-2" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-7" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="3" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="-2"/>
+                    <KeyFrameDouble frame="420" value="-2" interpolationType="linear"/>
+                    <KeyFrameDouble frame="465" value="-4" interpolationType="linear"/>
+                    <KeyFrameDouble frame="540" value="-2"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="91">
+                    <KeyFrameDouble frame="0" value="-85" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-91" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="-81" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="-85"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-0.11" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="0.11" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="0"/>
+                    <KeyFrameDouble frame="420" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="465" value="-0.07" interpolationType="linear"/>
+                    <KeyFrameDouble frame="540" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:19">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:22">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:24">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="45" value="-4" interpolationType="linear"/>
+                    <KeyFrameDouble frame="90" value="4" interpolationType="linear"/>
+                    <KeyFrameDouble frame="120" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:21">
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="1"/>
+                    <KeyFrameDouble frame="125" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="142" value="0.23" interpolationType="linear"/>
+                    <KeyFrameDouble frame="169" value="1"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:23">
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="1"/>
+                    <KeyFrameDouble frame="147" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="164" value="0.23" interpolationType="linear"/>
+                    <KeyFrameDouble frame="191" value="1"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:54">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="132" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="142" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="160" value="0"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="0.5"/>
+                    <KeyFrameDouble frame="132" value="0.5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="142" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="160" value="0.5"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:55">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="154" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="164" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="182" value="0"/>
+                </KeyedProperty>
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="0.5"/>
+                    <KeyFrameDouble frame="154" value="0.5" interpolationType="linear"/>
+                    <KeyFrameDouble frame="164" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="182" value="0.5"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:20">
+                <KeyedProperty propertyKey="91">
+                    <KeyFrameDouble frame="0" value="-8"/>
+                    <KeyFrameDouble frame="170" value="-8" interpolationType="linear"/>
+                    <KeyFrameDouble frame="181" value="-4" interpolationType="linear"/>
+                    <KeyFrameDouble frame="192" value="-8"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:14">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="195" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="235" value="0.12" interpolationType="linear"/>
+                    <KeyFrameDouble frame="273" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:15">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="200" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="239" value="0.08" interpolationType="linear"/>
+                    <KeyFrameDouble frame="278" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:16">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="230" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="269" value="-0.12" interpolationType="linear"/>
+                    <KeyFrameDouble frame="303" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:17">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="235" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="273" value="-0.08" interpolationType="linear"/>
+                    <KeyFrameDouble frame="307" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:34">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="302" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="338" value="0.13" interpolationType="linear"/>
+                    <KeyFrameDouble frame="378" value="-0.10" interpolationType="linear"/>
+                    <KeyFrameDouble frame="415" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:35">
+                <KeyedProperty propertyKey="15">
+                    <KeyFrameDouble frame="0" value="0"/>
+                    <KeyFrameDouble frame="308" value="0" interpolationType="linear"/>
+                    <KeyFrameDouble frame="345" value="0.09" interpolationType="linear"/>
+                    <KeyFrameDouble frame="383" value="-0.09" interpolationType="linear"/>
+                    <KeyFrameDouble frame="419" value="0"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:37">
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="1"/>
+                    <KeyFrameDouble frame="310" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="352" value="1.12" interpolationType="linear"/>
+                    <KeyFrameDouble frame="390" value="0.89" interpolationType="linear"/>
+                    <KeyFrameDouble frame="415" value="1"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:12">
+                <KeyedProperty propertyKey="17">
+                    <KeyFrameDouble frame="0" value="1"/>
+                    <KeyFrameDouble frame="418" value="1" interpolationType="linear"/>
+                    <KeyFrameDouble frame="463" value="0.95" interpolationType="linear"/>
+                    <KeyFrameDouble frame="510" value="1.02" interpolationType="linear"/>
+                    <KeyFrameDouble frame="540" value="1"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:30">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="-68"/>
+                    <KeyFrameDouble frame="425" value="-68" interpolationType="linear"/>
+                    <KeyFrameDouble frame="465" value="-71" interpolationType="linear"/>
+                    <KeyFrameDouble frame="526" value="-68"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:32">
+                <KeyedProperty propertyKey="90">
+                    <KeyFrameDouble frame="0" value="66"/>
+                    <KeyFrameDouble frame="425" value="66" interpolationType="linear"/>
+                    <KeyFrameDouble frame="465" value="69" interpolationType="linear"/>
+                    <KeyFrameDouble frame="526" value="66"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+    </Artboard>
+    <ImageAsset file="../../../../apps/web/public/mascot/companion/full/center.webp" name="Canonical full-body neutral" id="0:8"/>
+</Rive>
