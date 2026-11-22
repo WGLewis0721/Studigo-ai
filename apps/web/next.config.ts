@@ -35,12 +35,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   transpilePackages: ["@studigo/ai", "@studigo/documents", "@studigo/learning"],
   async headers() {
-    const headers = [{ source: "/(.*)", headers: securityHeaders }];
-    if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_STUDIGO_COMPANION_VOICE_PREVIEW === "1") {
-      const voice = [{ key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" }];
-      headers.push({ source: "/app", headers: voice }, { source: "/dev/home", headers: voice });
-    }
-    return headers;
+    return [{ source: "/(.*)", headers: securityHeaders }];
   }
 };
 

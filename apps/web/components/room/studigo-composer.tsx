@@ -14,8 +14,7 @@ export function StudigoComposer({
   variant = "default",
   placeholder = "Ask Studigo",
   accent,
-  enableSpeech = false,
-  onListening
+  enableSpeech = false
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -31,7 +30,6 @@ export function StudigoComposer({
   accent?: "learn";
   /** Behind Guided Learn preview gate until youth voice/privacy acceptance. */
   enableSpeech?: boolean;
-  onListening?: (active: boolean) => void;
 }) {
   const canSend = !disabled && Boolean(value.trim());
 
@@ -56,7 +54,7 @@ export function StudigoComposer({
           enterKeyHint="send"
           autoComplete="off"
         />
-        {enableSpeech && <SpeechAnswerControl disabled={disabled} onUse={onChange} onListening={onListening} />}
+        {enableSpeech && <SpeechAnswerControl disabled={disabled} onUse={onChange} />}
         <button className="chatSend" type="submit" aria-label="Send to Studigo" disabled={!canSend}>
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />

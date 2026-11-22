@@ -21,13 +21,6 @@ import type { HomeNext } from "@/lib/home-next";
 import { ROOM_THEMES, saveRoomTheme, useRoomTheme, type RoomTheme } from "@/lib/room-theme";
 import { LEAP_KEY } from "@/components/companion/companion";
 import { StudigoStage, type StageHandle } from "@/components/companion/stage";
-import { StudigoCharacter } from "@/components/companion/StudigoCharacter";
-import type { StudigoController } from "@/components/companion/studigo-controller";
-import { StudigoWelcome } from "@/components/companion/studigo-welcome";
-import { studigoRiveEnabled } from "@/lib/studigo-preview";
-import { FLAME_BOOST, flameStage, wearableOutfit } from "@/lib/companion-growth";
-import { useCompanionGrowth } from "@/lib/companion-growth-store";
-import { useCompanionPrefs } from "@/lib/companion-prefs";
 
 /** Fired when a room is opened from Home, so Studigo can leap toward it. */
 export const LEAP_EVENT = "studigo:leap";
@@ -46,22 +39,14 @@ function Sill() {
 }
 
 /** Home, with rooms: Studigo on his stage, what is next, and how far along the room is. */
-export function HomeHero({ next, fixture = false }: { next: HomeNext; fixture?: boolean }) {
+export function HomeHero({ next }: { next: HomeNext }) {
   const [theme] = useRoomTheme(next.roomId);
-  const [prefs] = useCompanionPrefs(next.roomId);
-  const growth = useCompanionGrowth();
   const stage = useRef<StageHandle>(null);
-  const companion = useRef<StudigoController>(null);
-  const [greetingOpen, setGreetingOpen] = useState(false);
   const nextAction = next.mode === "materials" ? "Open Materials" : next.mode === "quiz" ? "Start a quiz" : next.mode === "cards" ? "Review flashcards" : "Open Learn";
 
   useEffect(() => {
     stage.current?.react("wave", 1700);
-    companion.current?.react("wake");
-    const onLeap = (event: Event) => {
-      companion.current?.react("happy");
-      void stage.current?.leapTo((event as CustomEvent<LeapDetail>).detail);
-    };
+    const onLeap = (event: Event) => { void stage.current?.leapTo((event as CustomEvent<LeapDetail>).detail); };
     window.addEventListener(LEAP_EVENT, onLeap);
     return () => window.removeEventListener(LEAP_EVENT, onLeap);
   }, []);
@@ -69,22 +54,13 @@ export function HomeHero({ next, fixture = false }: { next: HomeNext; fixture?: 
   return (
     <section className="homeHero" data-tone={theme} data-ui={foundationUi ? "phase3" : undefined} aria-labelledby="home-title">
       <div className="stageScreen homeStage">
-        {studigoRiveEnabled
-          ? <StudigoCharacter ref={companion} size={208} interactive reducedMotion={prefs.calm}
-              outfit={wearableOutfit(growth.points, prefs.outfit)} flameBoost={FLAME_BOOST[flameStage(growth.points)]}
-              label="Studigo. Tap or pet to play." />
-          : <StudigoStage ref={stage} size={184} />}
+        <StudigoStage ref={stage} size={184} />
         <Sill />
       </div>
       <div className="homeSay">
         <span className="tinyLabel">{foundationUi ? "YOUR STUDY SPACE / NEXT STEP" : "UP NEXT"}</span>
         <h1 className="pageTitle" id="home-title">{next.title} is up next.</h1>
         <p className="pageLede">{next.line}</p>
-        {studigoRiveEnabled && <button type="button" className="ghostButton" aria-expanded={greetingOpen}
-          aria-controls="home-studigo-welcome" onClick={() => setGreetingOpen((open) => !open)}>
-          {greetingOpen ? "Close chat" : "Say hi to Studigo"}
-        </button>}
-        {greetingOpen && <div id="home-studigo-welcome"><StudigoWelcome controller={companion} fixture={fixture} /></div>}
       </div>
       <div className="nextUp">
         <div className="nextUpText">
@@ -129,7 +105,6 @@ function objectiveFor(goal: SampleGoal, topicTitle: string) {
 export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const router = useRouter();
   const stage = useRef<StageHandle>(null);
-  const companion = useRef<StudigoController>(null);
   const [step, setStep] = useState<FirstRunStep>("material");
   const [materialPath, setMaterialPath] = useState<"sample" | "own">("sample");
   const [subject, setSubject] = useState<string>(SAMPLE.subject);
@@ -143,12 +118,8 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const stepIndex = FIRST_RUN_STEPS.indexOf(step);
-  const meeting = studigoRiveEnabled && step === "material";
 
-  useEffect(() => {
-    stage.current?.react("wave", 1700);
-    companion.current?.react("wake");
-  }, []);
+  useEffect(() => { stage.current?.react("wave", 1700); }, []);
   useEffect(() => {
     try {
       const savedPath = window.localStorage.getItem(FIRST_RUN_PATH_KEY);
@@ -211,7 +182,6 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   function pickTheme(id: RoomTheme) {
     setTheme(id);
     stage.current?.react("celebrate", 800);
-    companion.current?.react("celebrating");
   }
   /** The same arrow keys as the color picker in Room Settings (a grid of three columns). */
   function onSwatchKey(event: KeyboardEvent<HTMLDivElement>) {
@@ -226,10 +196,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
     if (busy) return;
     const button = event.currentTarget;
     setBusy(true); setError(null);
-    if (fixture) {
-      router.push(materialPath === "sample" ? "/dev/study?mode=coach&shell=1" : "/dev/study?mode=materials&shell=1&empty=1");
-      return;
-    }
+    if (fixture) { setError("Preview only: this would create the room and open it."); setBusy(false); return; }
     const data = new FormData();
     data.set("title", title.trim());
     data.set("subject", subject.trim());
@@ -244,7 +211,6 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
       } catch { /* storage is optional */ }
       saveRoomTheme(result.roomId, theme);
       announceLeap(button);
-      companion.current?.react("happy");
       void stage.current?.leapTo(button.getBoundingClientRect());
       router.push(roomEntryForFirstRun(result.roomId, materialPath));
     } catch {
@@ -255,34 +221,23 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
   const previewTitle = title.trim() || roomTitleFromGuess(subject, topic);
 
   return (
-    <section className="firstRoom" data-tone={theme} data-ui={foundationUi ? "phase3" : undefined} data-meeting={meeting || undefined} aria-label={meeting ? "Meet Studigo" : "Set up your first Study Room"}>
+    <section className="firstRoom" data-tone={theme} data-ui={foundationUi ? "phase3" : undefined} aria-label="Set up your first Study Room">
       <div className="stageScreen firstRoomStage">
-        {studigoRiveEnabled
-          ? <StudigoCharacter ref={companion} size={324} className="firstRoomCharacter" portrait interactive label="Studigo. Tap his head, pet him, or poke his belly." />
-          : <StudigoStage ref={stage} size={210} />}
+        <StudigoStage ref={stage} size={210} />
         <Sill />
       </div>
 
-      <div className="firstRoomBody">
-        {!meeting && <div className="firstRoomBar">
+      <form className="firstRoomBody" onSubmit={(event) => event.preventDefault()}>
+        <div className="firstRoomBar">
           {stepIndex > 0
             ? <button type="button" className="firstRoomBack" onClick={back} disabled={busy}><span aria-hidden="true">‹</span> Back</button>
             : <span />}
           <span className="firstRoomDots" role="img" aria-label={`Step ${stepIndex + 1} of ${FIRST_RUN_STEPS.length}`}>
             {FIRST_RUN_STEPS.map((item, index) => <i key={item} data-on={index === stepIndex || undefined} data-past={index < stepIndex || undefined} />)}
           </span>
-        </div>}
+        </div>
 
-        {meeting && <>
-          <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Meet Studigo</h1>
-          <StudigoWelcome controller={companion} fixture={fixture} />
-          <div className="studigoWelcomeActions">
-            <button className="buttonPrimary" type="button" onClick={chooseOwn}>Get homework help <span aria-hidden="true">→</span></button>
-            <button className="ghostButton" type="button" onClick={chooseSample}>Try a sample together</button>
-          </div>
-        </>}
-
-        {step === "material" && !meeting && (
+        {step === "material" && (
           <>
             <span className="tinyLabel">HI, I'M STUDIGO</span>
             <h1 className="pageTitle" ref={headingRef} tabIndex={-1}>Start with something to study.</h1>
@@ -377,7 +332,7 @@ export function FirstRoomSetup({ fixture = false }: { fixture?: boolean }) {
             </button>
           </>
         )}
-      </div>
+      </form>
     </section>
   );
 }

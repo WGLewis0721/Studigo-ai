@@ -34,7 +34,7 @@ export default async function HomeFixture({ searchParams }: { searchParams: Prom
         <p className="hintText">LOCAL VISUAL FIXTURE · Synthetic rooms · Nothing here is saved</p>
         {first ? <FirstRoomSetup fixture /> : (
           <>
-            <HomeHero next={next} fixture />
+            <HomeHero next={next} />
             <div className="roomsHeading"><div><span className="tinyLabel">YOUR STUDY ROOMS</span><h2>Each room holds one test.</h2></div></div>
             <div className="roomsLayout">
               <section className="roomsGrid" aria-label="Study rooms">

@@ -10,7 +10,6 @@
 .homeSay { grid-area: say; align-self: end; }
 .homeSay .pageTitle { margin-top: 8px; font-size: clamp(1.9rem, 3.2vw, 2.9rem); text-wrap: balance; }
 .homeSay .pageLede { margin-top: 8px; }
-.homeSay #home-studigo-welcome { margin-top: 12px; max-width: 540px; }
 .nextUp {
   grid-area: next; align-self: start; max-width: 760px;
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: center; padding: 20px 22px 20px; border-radius: var(--r-xl);
@@ -32,25 +31,6 @@
   min-height: min(720px, calc(100dvh - 140px)); padding: clamp(8px, 2vw, 24px) 0;
 }
 .firstRoomStage { width: 100%; aspect-ratio: 1 / 1.05; }
-.stageScreen .studigoCharacter { max-width: 100%; margin-bottom: 26px; }
-.firstRoomStage .firstRoomCharacter { width: min(100%, var(--studigo-size)); }
-@media (max-width: 760px) {
-  .firstRoomStage .firstRoomCharacter, .homeStage .studigoCharacter { width: min(100%, 188px); }
-}
-.studigoWelcome { display: grid; gap: 10px; min-width: 0; }
-.studigoWelcomeBubble { padding: 14px 18px; border-radius: 20px; border-bottom-left-radius: 5px; background: var(--white); box-shadow: var(--edge), inset 0 0 0 1px var(--hairline); }
-.studigoWelcomeBubble p, .studigoWelcomeNote { margin: 0; }
-.studigoWelcomeNote { color: var(--muted); font-size: .88rem; }
-.studigoWelcomeActions { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
-.studigoWelcome .studigoWelcomeComposer { position: relative; padding: 0; margin: 0; background: transparent; }
-.studigoWelcomeComposer { --chat-key: var(--tone-key); --chat-on: var(--tone-on); }
-.studigoWelcomeComposer .chatRow > input { min-height: 48px; padding-right: 54px; }
-.studigoWelcomeComposer .chatSend { width: 38px; height: 38px; }
-.studigoWelcomeComposer .chatSend:disabled { opacity: .35; transform: translateY(-50%); }
-.studigoWelcomeComposer .chatRow:has(.voiceAnswerControl) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
-.studigoWelcomeComposer .chatRow:has(.voiceAnswerControl) .chatSend { right: 48px; }
-.studigoWelcome .readAloudControl { display: flex; gap: 8px; align-items: center; }
-.studigoWelcome .readAloudControl button { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--hairline-strong); background: var(--white); color: var(--ink); font: inherit; cursor: pointer; }
 .firstRoomBody { display: grid; gap: 14px; align-content: start; }
 .firstRoomBody .pageTitle { margin: 0; font-size: clamp(2rem, 3.8vw, 3rem); outline: none; text-wrap: balance; }
 .firstRoomBody .pageLede { margin: 0 0 6px; }
