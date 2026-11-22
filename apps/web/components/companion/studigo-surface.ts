@@ -1,6 +1,8 @@
 import type { Rive } from "@rive-app/webgl2";
 import { version } from "@rive-app/webgl2/package.json";
 import type { StudigoController } from "./studigo-controller";
+import { OUTFITS, type Outfit } from "@/lib/companion-logic";
+import { STUDIGO_EMOTES, type StudigoEmote } from "@/lib/studigo-behaviors";
 
 export const STUDIGO_RIVE_ASSET = "/mascot/rive/studigo.riv";
 export const STUDIGO_STATIC_ASSET = "/mascot/companion/full/center.webp";
@@ -28,6 +30,7 @@ function loadAsset() {
 
 export function mountStudigoSurface(
   canvas: HTMLCanvasElement, controller: StudigoController, onStatus: (status: StudigoSurfaceStatus) => void,
+  renderScale = 1,
 ) {
   let rive: Rive | undefined;
   let unsubscribe: (() => void) | undefined;
@@ -40,7 +43,7 @@ export function mountStudigoSurface(
   const events = new AbortController();
 
   function resize() {
-    if (ready) rive?.resizeDrawingSurfaceToCanvas(Math.min(window.devicePixelRatio || 1, 2));
+    if (ready) rive?.resizeDrawingSurfaceToCanvas(Math.min((window.devicePixelRatio || 1) * renderScale, 2));
   }
 
   function updateVisibility() {
@@ -89,10 +92,28 @@ export function mountStudigoSurface(
             const model = rive.viewModelInstance;
             const mode = model?.number("mode");
             const intent = model?.number("intent");
-            if (!mode || !intent) { fail(); return; }
+            const gazeX = model?.number("gazeX");
+            const gazeY = model?.number("gazeY");
+            const flameBoost = model?.number("flameBoost");
+            const choices = OUTFITS.map((outfit) => ({ outfit, binding: model?.number(outfit) }));
+            const expressions = STUDIGO_EMOTES.map((name) => ({ name, binding: model?.number(name) }));
+            if (!mode || !intent || !gazeX || !gazeY || !flameBoost || [...choices, ...expressions].some(({ binding }) => !binding)) { fail(); return; }
+            let equipped: Outfit | null | undefined;
+            let emote: StudigoEmote | null | undefined;
             unsubscribe = controller.subscribe((frame) => {
               mode.value = frame.mode;
               intent.value = frame.intent;
+              gazeX.value = frame.gaze.x;
+              gazeY.value = frame.gaze.y;
+              flameBoost.value = frame.flameBoost;
+              if (equipped !== frame.outfit) {
+                equipped = frame.outfit;
+                for (const { outfit, binding } of choices) if (binding) binding.value = outfit === equipped ? 1 : 0;
+              }
+              if (emote !== frame.emote) {
+                emote = frame.emote;
+                for (const { name, binding } of expressions) if (binding) binding.value = name === emote ? 1 : 0;
+              }
             });
             ready = true;
             resize();

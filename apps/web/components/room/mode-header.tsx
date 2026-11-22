@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useId, useState, type ReactNode, type Ref } from "react";
 import { createPortal } from "react-dom";
 import { StudigoMascot, type MascotState } from "@/components/studigo-mascot";
+import { studigoRiveEnabled } from "@/lib/studigo-preview";
 
 /**
  * The header every Study Room page shares, the same arrangement the Coach chat
@@ -256,7 +257,7 @@ export function ModeHeader({
     <ModeFrame tone={frameTone}>
       <header className="modeHead" data-tone={current}>
         <span className="chatMascot chatMascotStatic">
-          <StudigoMascot state={mascot} size={38} mark alive />
+          <StudigoMascot state={mascot} size={38} mark alive={!studigoRiveEnabled} />
         </span>
         {modes.length > 1 ? (
           <div className="chatModes" role="group" aria-label={`${groupName} modes`}>

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { COMPANION_EVENTS } from "./companion-logic";
 import {
   expireStudigoReaction, requestStudigoReaction, resolveStudigoIntent,
-  STUDIGO_EVENT_REACTION, STUDIGO_INITIAL_BEHAVIOR, STUDIGO_INTENT, studigoDirection,
+  STUDIGO_EVENT_REACTION, STUDIGO_INITIAL_BEHAVIOR, STUDIGO_INTENT, normalizeStudigoGaze,
 } from "./studigo-behaviors";
 
 test("all committed companion events resolve to named Rive behavior targets", () => {
@@ -39,12 +39,8 @@ test("wake and a pet release a sleepy base before returning to idle", () => {
   }
 });
 
-test("direction applies during idle and uses normalized coordinates with a dead zone", () => {
-  assert.equal(studigoDirection({ x: 0.17, y: 0.1 }), null);
-  assert.equal(studigoDirection({ x: 0.7, y: -0.1 }), "right");
-  assert.equal(studigoDirection({ x: -0.2, y: -0.6 }), "up");
-  assert.equal(studigoDirection({ x: NaN, y: 1 }), null);
-  const idle = { ...STUDIGO_INITIAL_BEHAVIOR, direction: "left" } as const;
-  assert.equal(resolveStudigoIntent(idle), "left");
-  assert.equal(resolveStudigoIntent({ ...idle, state: "thinking" }), "thinking");
+test("live gaze preserves diagonal and small motion but clamps invalid or distant input", () => {
+  assert.deepEqual(normalizeStudigoGaze({ x: 0.17, y: -0.32 }), { x: 0.17, y: -0.32 });
+  assert.deepEqual(normalizeStudigoGaze({ x: 2, y: -3 }), { x: 1, y: -1 });
+  assert.deepEqual(normalizeStudigoGaze({ x: NaN, y: Infinity }), { x: 0, y: 0 });
 });

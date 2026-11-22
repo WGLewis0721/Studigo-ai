@@ -343,6 +343,8 @@ html:has(.home) { scroll-behavior: smooth; }
 .home .guide[data-pose="wave"] .guideBody { animation: gSway 1.7s ease-in-out infinite; }
 .home .guide[data-pose="leap"] .guideBody { animation: none; }
 .home .guide.petting .guideBody { animation: gNuzzle 1.1s ease-in-out infinite; }
+.home .guide[data-rive] .guideBody { animation: none; }
+.home .guide[data-rive] .guideBody img { opacity: 1; transition: none; }
 @keyframes gBreathe { 50% { transform: translateY(-1.5px) scale(1.012, 1.02); } }
 @keyframes gBounce { 0%, 100% { transform: none; } 40% { transform: translateY(-9%) scale(1.03, .98); } 70% { transform: translateY(1%) scale(.99, 1.02); } }
 @keyframes gSway { 25% { transform: rotate(-2.6deg); } 70% { transform: rotate(2.2deg); } }

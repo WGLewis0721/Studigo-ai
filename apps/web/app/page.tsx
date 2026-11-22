@@ -8,6 +8,7 @@ import { HomeMotion } from "@/components/home/home-motion";
 import { StudigoWordmark } from "@/components/studigo-wordmark";
 import { MeetPortrait } from "@/components/home/meet-portrait";
 import { StudigoWaitlist } from "@/components/home/waitlist";
+import { studigoRiveEnabled } from "@/lib/studigo-preview";
 import "./waitlist.css";
 
 export const metadata: Metadata = {
@@ -140,8 +141,10 @@ const Sill = ({ className }: { className: string }) => (
 
 export default function HomePage() {
   // The first two poses the intro needs; the rest load with the page script.
-  preload("/mascot/companion/full/leap.webp", { as: "image" });
-  preload("/mascot/companion/full/wave.webp", { as: "image" });
+  if (!studigoRiveEnabled) {
+    preload("/mascot/companion/full/leap.webp", { as: "image" });
+    preload("/mascot/companion/full/wave.webp", { as: "image" });
+  }
   preload("/brand/studigo-official-wordmark.svg", { as: "image" });
 
   return (

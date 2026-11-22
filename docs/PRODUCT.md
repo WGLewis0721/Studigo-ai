@@ -57,6 +57,13 @@ being filled with general model knowledge.
 9. Student can click **Download study guide** and receive a clean, printable
    study guide built from the current grounded room state.
 
+The Rive preview introduces Studigo immediately after account creation. A learner
+can play with him, say hello, hear a reply on request, or start homework help
+right away. The sample lets the learner try one question before opening a room.
+The own-file path leads to Materials.
+The welcome conversation has no course context and cannot grade or award growth.
+The Study Room remains the place for grounded help from class materials.
+
 ## Grounding rules
 
 - Do not answer course-specific factual questions as if unsupported information came from the student's files.

@@ -110,7 +110,7 @@ A new dependency or AI layer still has to beat the current path on a measured qu
 | RAG evaluation | `evals/rag/` | Grounding, abstention, isolation, prompt-injection, latency/cost benchmark |
 | ML experiments | `evals/ml/` | Advisory BKT/calibration work |
 | Security tests | `tests/database-security.test.mjs` | Database/tenant boundary regression |
-| Living Companion (animated Studigo) | `apps/web/components/companion/` (engine, `rig-renderer.ts` WebGL rig, `renderers.ts` sprite fallback), `apps/web/lib/companion-motion/` (pure motion director), `apps/web/lib/companion-growth*.ts`, `design/living-companion/` | Presentation only: reacts to committed learning events, grows cosmetically on the device. Flags `NEXT_PUBLIC_STUDIGO_COMPANION_MOTION` (on unless `off`) and `NEXT_PUBLIC_STUDIGO_COMPANION=off`. Never writes grades, mastery, progress or evidence |
+| Living Companion (animated Studigo) | `apps/web/components/companion/` (room host, shared Rive surface and controller, legacy rollback), `apps/web/lib/companion-growth*.ts`, `design/living-companion/rive/studigo/`, `packages/ai/src/companion-welcome.ts` | Rive preview runs by default in dev. Production builds opt in via `NEXT_PUBLIC_STUDIGO_RIVE=1`. Animation consumes committed events, with cosmetic growth on the device. The guarded first-meeting conversation has no course context, writes, or learning authority. See [Animation V2 integration](docs/animation-v2/07-integration.md). |
 | Game prototype | `prototypes/moon-road/` | Separate game-first prototype |
 
 ## Where to make common changes
