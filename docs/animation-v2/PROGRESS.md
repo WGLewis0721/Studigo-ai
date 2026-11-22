@@ -4,6 +4,7 @@
 | --- | --- |
 | CURRENT PHASE | 8 — device verification after the [integration checkpoint](07-integration.md) |
 | CURRENT STATUS | NOT DONE — local integration runs in Chrome. Physical Apple-device and signed-in voice checks are open. |
+| STAGE A (LIVING IDLE) | Reworked 2026-11-21: blink ghosting fixed, three randomly chained idle loops (9, 10, 8 s). Evidence in [03-idle.md](03-idle.md#stage-a-revision-2026-11-21-blink-ghosting-and-varied-loops). Awaiting orchestrator review of the recordings; later stages not started. |
 | LAST VERIFIED PASSING GATE | Gate 7 local integration — [shared product hosts](07-integration.md), [browser evidence](08-qa-evidence.md) |
 | REMOTE BRANCH | `origin/feat/studigo-animation-v2` |
 | LATEST VERIFIED COMMIT | `50eb557294aa9615c71d162a4b37d199d4076e38` is the source/runtime checkpoint in [draft PR 271](https://github.com/WGLewis0721/Studigo-ai/pull/271). |

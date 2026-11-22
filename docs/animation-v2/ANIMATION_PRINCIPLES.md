@@ -30,3 +30,15 @@ Record the clip or command, size, device, and timecodes. Mark applicable checks 
 - [ ] Review at actual speed confirms the personality and emotional intent.
 
 Current recorded baselines are [idle](03-idle.md), [transitions](04-transitions.md), and [behaviors](05-behaviors.md). Review the exact application asset again when live touch, voice, or growth changes its output.
+
+## Stage A idle review (2026-11-21)
+
+Clip: 60 s Rive CLI render (360 px, 24 fps) and a 32 s real-time Chrome 151 recording of the shipped component; hashes in [03-idle.md](03-idle.md#stage-a-revision-2026-11-21-blink-ghosting-and-varied-loops). Stills: [30 s sheet](evidence/stageA/idle-30s-sheet.jpg), [blink before and after](evidence/stageA/blink-before-after.jpg).
+
+- [x] Solid drawing, no ghosting: head, snout, frills, spike, vest and tail stay registered across 60 s. The blink ghost (eyeball through the lid, crease over the pupil) was found and fixed.
+- [x] No pose snapping: no adjacent-frame spike above 8x the median; rest at 9 s and 19 s matches frame 0 exactly.
+- [x] Follow-through and overlap: eyes lead the head, frills and tail follow, flame trails the tail tip.
+- [x] Slow in and slow out: breath, glance and tilt keys use per-segment cubic easing; blink closes fast and opens slower.
+- [x] Timing and exaggeration: restrained by design; blink about 130 ms, closed about 50 ms.
+- [x] Interruption and recovery: reduced motion returns to the exact neutral on the next tick; the idle restarts at its first frame after an intent or inspection mode.
+- [ ] Appeal and personality at real speed: needs a human viewing of the recordings. Not claimed by this review.

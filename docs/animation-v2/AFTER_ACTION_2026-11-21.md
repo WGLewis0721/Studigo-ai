@@ -7,7 +7,7 @@
 - [Editable Rive project](../../design/living-companion/rive/studigo/scene.rml) and [CLI project settings](../../design/living-companion/rive/studigo/rive.yaml). Open the project from the repository root with `rive design/living-companion/rive/studigo`. Add `--data=mode=1` for joint inspection or `--data=intent=9` for celebration.
 - [Runtime export](../../apps/web/public/mascot/rive/studigo.riv). The CLI built it locally. No Rive workspace file was created. The Free-tier splash remains on the exported file.
 - [React component](../../apps/web/components/companion/StudigoCharacter.tsx), [controller](../../apps/web/components/companion/studigo-controller.ts), and [browser surface](../../apps/web/components/companion/studigo-surface.ts). The development showroom is at `/dev/studigo`, accessible when the Next dev server runs from this worktree. The Study Room, Home, and onboarding still use their existing renderers.
-- [30-second idle recording](evidence/phase3/idle-30s.mp4), [60-second capture](evidence/phase3/idle-60s.mp4), and [Higgsfield comparison](evidence/phase3/higgsfield-v1-vs-rive-idle.mp4).
+- Idle recordings are kept locally outside git; see [Stage A in 03-idle.md](03-idle.md) for stills, a GIF and SHA-256 values.
 
 ## What was completed and checked
 
