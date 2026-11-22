@@ -61,9 +61,13 @@ export const StudigoCharacter = forwardRef<StudigoController, Props>(function St
     return mountStudigoSurface(canvas.current, controller, setStatus, zoom);
   }, [controller, staticOnly, zoom]);
 
-  function interact(kind: StudigoInteraction) {
-    controller.react(kind === "pet" ? "petting" : kind === "surprise" ? "surprised" : kind === "poke" ? "annoyed"
-      : kind === "hold" ? "curious" : kind === "drag" ? "stretch" : "happy");
+  function interact(kind: StudigoInteraction, region: StudigoTouchRegion = "head") {
+    // Each part answers in its own way: a pat on the head, a poke in the belly, a tug on the tail.
+    controller.react(
+      kind === "pet" ? "petting" : kind === "surprise" ? "surprised"
+        : region === "tail" && kind !== "hold" ? "tailTug"
+        : region === "belly" && (kind === "poke" || kind === "drag") ? "bellyPoke"
+        : kind === "poke" ? "annoyed" : kind === "hold" ? "curious" : kind === "drag" ? "stretch" : "happy");
     onInteraction?.(kind);
   }
 
@@ -96,7 +100,7 @@ export const StudigoCharacter = forwardRef<StudigoController, Props>(function St
     if (held?.pointer === event.pointerId && !held.gesture && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) {
       clearTimeout(holdTimer.current);
       held.gesture = held.region === "head" ? "pet" : "drag";
-      interact(held.gesture);
+      interact(held.gesture, held.region);
     }
   }
 
@@ -110,7 +114,7 @@ export const StudigoCharacter = forwardRef<StudigoController, Props>(function St
       const now = performance.now();
       const streak = now - previousTap.current.time < 850 ? previousTap.current.count + 1 : 1;
       previousTap.current = { time: now, count: streak === 3 ? 0 : streak };
-      interact(streak === 3 ? "surprise" : held.region === "head" ? "tap" : "poke");
+      interact(streak === 3 ? "surprise" : held.region === "head" ? "tap" : "poke", held.region);
     }
     controller.lookAt({ x: 0, y: 0 });
   }

@@ -6,5 +6,7 @@ test("character regions follow the canonical artboard rather than the entire but
   assert.equal(studigoTouchRegion(0.46, 0.29), "head");
   assert.equal(studigoTouchRegion(0.5, 0.72), "belly");
   assert.equal(studigoTouchRegion(0.1, 0.15), "outside");
+  assert.equal(studigoTouchRegion(0.27, 0.66), "tail");
+  assert.equal(studigoTouchRegion(0.24, 0.6), "tail");
   assert.equal(studigoTouchRegion(0.5, 0.51), "belly");
 });

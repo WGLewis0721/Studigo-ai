@@ -6,6 +6,7 @@ export const STUDIGO_INTENT = {
   encouraging: 10, correct: 11, incorrect: 12, curious: 13, sleepy: 14,
   wake: 15, petting: 16, surprised: 17, proud: 18, annoyed: 19, excited: 20,
   tailChase: 21, sitWag: 22, sniff: 23, doubleTake: 24, stretch: 25,
+  bellyPoke: 26, tailTug: 27,
 } as const;
 
 export type StudigoIntent = keyof typeof STUDIGO_INTENT;
@@ -30,6 +31,8 @@ export const STUDIGO_REACTIONS = {
   surprised: { priority: 3, durationMs: 660 },
   proud: { priority: 4, durationMs: 1100 },
   annoyed: { priority: 2, durationMs: 700 },
+  bellyPoke: { priority: 3, durationMs: 1600 },
+  tailTug: { priority: 3, durationMs: 2200 },
   excited: { priority: 5, durationMs: 1220 },
   tailChase: { priority: 0, durationMs: 1700 },
   sitWag: { priority: 0, durationMs: 1920 },

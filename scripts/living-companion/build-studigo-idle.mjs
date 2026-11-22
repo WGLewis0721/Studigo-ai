@@ -9,29 +9,62 @@ let s = readFileSync(FILE, "utf8");
 
 /* ---------- 1. Physical eyelids ---------- */
 // A skin lid that slides down from the top of each eye socket. Always opaque.
-const lidNode = (id, x, name) => `<Node x="${x}" y="-74" scaleY="0" name="${name}" id="${id}">
-                            <Shape name="Lid skin">
-                                <Ellipse y="18" width="38" height="36"/>
-                                <Fill fillRule="clockwise">
-                                    <LinearGradient startX="0" startY="0" endX="0" endY="36">
-                                        <GradientStop position="0" colorValue="FFF8AA62"/>
-                                        <GradientStop position="1" colorValue="FFEB8A52"/>
-                                    </LinearGradient>
-                                    <Feather strength="2" spaceValue="local"/>
-                                </Fill>
-                            </Shape>
-                            <Shape y="34" name="Lid edge">
-                                <PointsPath>
-                                    <CubicDetachedVertex x="-14" y="-2" outRotation="0.44" outDistance="8"/>
-                                    <CubicDetachedVertex x="14" y="-2" inRotation="2.70" inDistance="8"/>
-                                </PointsPath>
-                                <Stroke thickness="2" cap="round"><SolidColor colorValue="FF87421F"/></Stroke>
-                            </Shape>
+const lidNode = (id, x, name, edge, arc) => `<Node x="${x}" y="-74" scaleY="0" name="${name}" id="${id}">
+                            <Node opacity="0" name="Happy arc group" id="${arc}">
+                                <Shape y="24" name="Happy arc">
+                                    <PointsPath>
+                                        <CubicDetachedVertex x="-12" y="3" outRotation="5.533" outDistance="6"/>
+                                        <CubicDetachedVertex x="12" y="3" inRotation="3.883" inDistance="6"/>
+                                    </PointsPath>
+                                    <Stroke thickness="2.6" cap="round"><SolidColor colorValue="FF7A3A18"/></Stroke>
+                                </Shape>
+                            </Node>
+                            <Node name="Lid edge group" id="${edge}">
+                                <Shape y="34" name="Lid edge">
+                                    <PointsPath>
+                                        <CubicDetachedVertex x="-14" y="-2" outRotation="0.44" outDistance="8"/>
+                                        <CubicDetachedVertex x="14" y="-2" inRotation="2.70" inDistance="8"/>
+                                    </PointsPath>
+                                    <Stroke thickness="2" cap="round"><SolidColor colorValue="FF87421F"/></Stroke>
+                                </Shape>
+                            </Node>
+                            <Node name="Lid skin group">
+                                <Shape name="Lid skin">
+                                    <Ellipse y="18" width="38" height="36"/>
+                                    <Fill fillRule="clockwise">
+                                        <LinearGradient startX="0" startY="0" endX="0" endY="36">
+                                            <GradientStop position="0" colorValue="FFF8AA62"/>
+                                            <GradientStop position="1" colorValue="FFEB8A52"/>
+                                        </LinearGradient>
+                                        <Feather strength="2" spaceValue="local"/>
+                                    </Fill>
+                                </Shape>
+                            </Node>
                         </Node>`;
-for (const [id, x] of [["0:54", -44], ["0:55", 43]]) {
-  const re = new RegExp('<Node x="' + x + '" y="-[0-9]+" [^>]*id="' + id + '">[^]*?</Node>');
-  if (!re.test(s)) throw new Error("lid node " + id);
-  s = s.replace(re, () => lidNode(id, x, x < 0 ? "Left closed eyelid" : "Right closed eyelid"));
+// Replace a Node and its whole subtree: count nested Node tags with indexOf, no regex needed.
+function replaceNode(src, openTag, make) {
+  const start = src.indexOf(openTag);
+  if (start < 0) throw new Error("node " + openTag);
+  let depth = 0, i = start;
+  while (i < src.length) {
+    const open = src.indexOf("<Node", i), close = src.indexOf("</Node>", i);
+    if (open !== -1 && open < close) {
+      const after = src.slice(open + 5, open + 6);
+      if (after === " " || after === ">") { depth += 1; }
+      i = open + 5;
+    } else {
+      depth -= 1;
+      i = close + 7;
+      if (depth === 0) return src.slice(0, start) + make() + src.slice(i);
+    }
+  }
+  throw new Error("unbalanced " + openTag);
+}
+for (const [id, x, edge, arc] of [["0:54", -44, "0:720", "0:722"], ["0:55", 43, "0:721", "0:723"]]) {
+  const name = x < 0 ? "Left closed eyelid" : "Right closed eyelid";
+  const m = new RegExp('<Node x="' + x + '" y="-[0-9]+" scaleY="0" name="' + name + '" id="' + id + '">').exec(s);
+  if (!m) throw new Error("lid node " + id);
+  s = replaceNode(s, m[0], () => lidNode(id, x, name, edge, arc));
 }
 
 /* ---------- 2. Motion library ---------- */
