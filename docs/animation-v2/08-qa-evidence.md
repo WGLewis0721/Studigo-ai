@@ -11,6 +11,8 @@ node scripts/living-companion/studigo-v2-showroom-qa.mjs --stress
 
 Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a local Chrome executable for the installed desktop test. Without it, the scripts use Playwright Chromium.
 
+On this Windows host, the first compile of `/dev/study?mode=coach&shell=1` in an isolated checkout exceeded the browser test timeout. Open that route once and wait for the page before starting the timed journey from a cold development server.
+
 | Check | Evidence |
 | --- | --- |
 | Desktop Chrome | The showroom requires painted orange character pixels after the Rive splash before testing animation. It exercises direct touch, keyboard, reduced motion, cosmetics, multiple instances, repeated mounts, missing assets, and an injected context-loss notification. |
@@ -21,3 +23,5 @@ Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a local Chrome executable for the i
 | Authenticated and physical microphone conversation | Pending. The workspace has no Supabase configuration for signed-in model calls. Exercise admission and provider responses in a configured non-production account. Confirm mic permission granted, declined and unsupported behavior, transcript review, and read-aloud on physical browsers. |
 
 The room test injects committed events through the existing development hook. A passing fixture does not certify provider access, actual graded requests or an authenticated room write. Full GPU resource and physical thermal measurements remain open.
+
+The clean checkout at `50eb557` passed the locked install, TypeScript, the Chrome showroom and the Chrome journey after warming the Study Room route. Rive CLI 1.10.0 regenerated the exact 122,802-byte runtime file with SHA-256 `f2d669f7e40467860af4443555d212ddacb346a715be965818ec462964199b60`.

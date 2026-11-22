@@ -11,3 +11,5 @@ The local preview now introduces Studigo before the first Study Room. The same R
 | Visual review | Corrected the accessory draw order that put goggles and sash under the skin. Captured the actual character in Chrome after the Free-tier splash. |
 
 The [integration notes](07-integration.md) and [Chrome evidence](08-qa-evidence.md) include the exact local commands. The 390 px result comes from a Chrome touch viewport. Local conversation uses scripted responses. The signed-in AI response and microphone path require real device verification. Physical desktop, iPhone and iPad Safari and full graphics-memory cleanup remain acceptance blockers. The Free Rive export includes a splash.
+
+The integration commit is `50eb557294aa9615c71d162a4b37d199d4076e38`. The review branch is based on the recovered companion branch. [Draft pull request 271](https://github.com/WGLewis0721/Studigo-ai/pull/271).

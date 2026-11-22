@@ -6,7 +6,7 @@
 | CURRENT STATUS | NOT DONE — local integration runs in Chrome. Physical Apple-device and signed-in voice checks are open. |
 | LAST VERIFIED PASSING GATE | Gate 7 local integration — [shared product hosts](07-integration.md), [browser evidence](08-qa-evidence.md) |
 | REMOTE BRANCH | `origin/feat/studigo-animation-v2` |
-| LATEST VERIFIED COMMIT | `1e8e70a2466b817a64a0a712006aeb47a01d8f97` for Gate 6. The pushed integration checkpoint follows it on the same branch. |
+| LATEST VERIFIED COMMIT | `50eb557294aa9615c71d162a4b37d199d4076e38` is the source/runtime checkpoint in [draft PR 271](https://github.com/WGLewis0721/Studigo-ai/pull/271). |
 | LOCAL WORKTREE STATE | Dedicated branch in `studigo-living-companion-upgrade-ee0706`. Claude's source worktrees remain intact. |
 | CURRENT IMPLEMENTATION | Rive is the local default for the public guide, onboarding, Home and Study Room window and strip. A single renderer owns the art and state-machine bindings. The legacy renderer remains available as a rollback. |
 | VALIDATED ARTIFACTS | Recovered Phase 0 sheets, SHA-256 checked against Claude's local originals. V1–V3 film checksums match LC-0. |
@@ -14,7 +14,7 @@
 | RIVE PROJECT LOCATION | `design/living-companion/rive/studigo/` |
 | RUNTIME ASSET LOCATION | `apps/web/public/mascot/rive/studigo.riv` (idle, 25 additional intent targets, 7 outfits, 3 emotes, existing flame levels). |
 | TEST COMMANDS | `rive design/living-companion/rive/studigo --verify`, `rive inspect design/living-companion/rive/studigo --summary`, Rive `--commands` pose captures and ImageMagick AE comparison. |
-| LAST TEST RESULTS | Chrome 157 passed the local first encounter, sample room handoff, own-file path, room placement and growth adapter. TypeScript and 33 focused tests passed. See [QA evidence](08-qa-evidence.md) for the stress run and gaps. |
+| LAST TEST RESULTS | Chrome 157 passed the local and clean-checkout journeys and showroom. TypeScript, 33 focused tests, repository lint and a byte-identical clean Rive rebuild passed. See [QA evidence](08-qa-evidence.md) for the stress run and gaps. |
 | VISUAL EVIDENCE | [Baseline](evidence/phase0/), [character and V1](evidence/phase1/), [rig](evidence/phase2/), [idle](evidence/phase3/), [transitions](evidence/phase4/) and [integrated preview](evidence/phase7/). |
 | DEVICE VALIDATION | Windows desktop Chrome and a 390 px emulated touch viewport passed the local journey. Physical desktop, iPhone and iPad Safari are pending. |
 | KNOWN FAILURES | The local export includes the Free-tier splash. Authenticated provider replies, browser speech on real devices, and GPU/WASM memory are unverified. |
