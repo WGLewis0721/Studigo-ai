@@ -1,0 +1,385 @@
+{
+  "schema": 1,
+  "tool": "scripts/living-companion/rive-idle-capture.mjs",
+  "capturedAt": "2026-11-22T03:04:15.732Z",
+  "project": "design/living-companion/rive/studigo",
+  "artboard": "Studigo",
+  "rive": {
+    "version": "1.10.0",
+    "exitCode": 0,
+    "okScreenshots": 900,
+    "build": "195319 bytes, 1314ms, 0 errors, 65 warnings"
+  },
+  "animation": {
+    "name": "Idle",
+    "durationFrames": 540,
+    "fps": 60,
+    "loopTicks": 540,
+    "loopTicksSource": "rive inspect",
+    "loopFrames": 270
+  },
+  "capture": {
+    "seconds": 30,
+    "fps": 30,
+    "frames": 900,
+    "size": 540,
+    "ticksPerFrame": 2,
+    "lastTick": 1798,
+    "data": [],
+    "startState": {
+      "mode": 0,
+      "intent": 0,
+      "gazeX": 0,
+      "gazeY": 0,
+      "flameBoost": 1,
+      "spark": 0,
+      "heart": 0,
+      "thought": 0,
+      "goggles": 0,
+      "explorer": 0,
+      "visor": 0,
+      "reader": 0,
+      "beret": 0,
+      "headphones": 0,
+      "sash": 0
+    }
+  },
+  "seam": {
+    "loopSeconds": 9,
+    "loopAligned": true,
+    "firstVsLastFrame": {
+      "frames": [
+        0,
+        269
+      ],
+      "ticks": [
+        0,
+        538
+      ],
+      "mad": 1.3366,
+      "max": 226,
+      "changedPct": 15.191
+    },
+    "loopPairs": {
+      "count": 630,
+      "firstFrames": [
+        0,
+        270
+      ],
+      "first": {
+        "mad": 0.0014,
+        "max": 2,
+        "changedPct": 0.21
+      },
+      "meanMad": 9.5741,
+      "worst": {
+        "frames": [
+          99,
+          369
+        ],
+        "mad": 16.6871,
+        "max": 237
+      },
+      "maxChannelDiff": 249
+    },
+    "boundaries": [
+      {
+        "frame": 270,
+        "tick": 540,
+        "tSeconds": 9,
+        "stepMad": 1.3356,
+        "stepMax": 226,
+        "stepRatio": 1.655,
+        "vsFirstFrameMad": 0.0014,
+        "vsFirstFrameMax": 2,
+        "vsFirstFrameChangedPct": 0.21
+      },
+      {
+        "frame": 540,
+        "tick": 1080,
+        "tSeconds": 18,
+        "stepMad": 1.7896,
+        "stepMax": 218,
+        "stepRatio": 2.218,
+        "vsFirstFrameMad": 7.1215,
+        "vsFirstFrameMax": 241,
+        "vsFirstFrameChangedPct": 25.132
+      },
+      {
+        "frame": 810,
+        "tick": 1620,
+        "tSeconds": 27,
+        "stepMad": 2.0504,
+        "stepMax": 225,
+        "stepRatio": 2.541,
+        "vsFirstFrameMad": 0.0066,
+        "vsFirstFrameMax": 6,
+        "vsFirstFrameChangedPct": 0.794
+      }
+    ]
+  },
+  "motion": {
+    "steps": 899,
+    "medianMad": 0.807,
+    "meanMad": 1.0131,
+    "popFactor": 3,
+    "popThresholdMad": 2.421,
+    "popCount": 28
+  },
+  "popFrames": [
+    {
+      "frame": 83,
+      "tick": 166,
+      "tSeconds": 2.7667,
+      "stepMad": 2.67,
+      "stepMax": 235,
+      "ratioToMedian": 3.31
+    },
+    {
+      "frame": 84,
+      "tick": 168,
+      "tSeconds": 2.8,
+      "stepMad": 3.0265,
+      "stepMax": 240,
+      "ratioToMedian": 3.75
+    },
+    {
+      "frame": 85,
+      "tick": 170,
+      "tSeconds": 2.8333,
+      "stepMad": 3.1214,
+      "stepMax": 237,
+      "ratioToMedian": 3.87
+    },
+    {
+      "frame": 86,
+      "tick": 172,
+      "tSeconds": 2.8667,
+      "stepMad": 3.1554,
+      "stepMax": 233,
+      "ratioToMedian": 3.91
+    },
+    {
+      "frame": 87,
+      "tick": 174,
+      "tSeconds": 2.9,
+      "stepMad": 3.213,
+      "stepMax": 241,
+      "ratioToMedian": 3.98
+    },
+    {
+      "frame": 88,
+      "tick": 176,
+      "tSeconds": 2.9333,
+      "stepMad": 3.0275,
+      "stepMax": 235,
+      "ratioToMedian": 3.75
+    },
+    {
+      "frame": 89,
+      "tick": 178,
+      "tSeconds": 2.9667,
+      "stepMad": 2.6617,
+      "stepMax": 220,
+      "ratioToMedian": 3.3
+    },
+    {
+      "frame": 90,
+      "tick": 180,
+      "tSeconds": 3,
+      "stepMad": 2.4921,
+      "stepMax": 226,
+      "ratioToMedian": 3.09
+    },
+    {
+      "frame": 153,
+      "tick": 306,
+      "tSeconds": 5.1,
+      "stepMad": 2.5095,
+      "stepMax": 223,
+      "ratioToMedian": 3.11
+    },
+    {
+      "frame": 154,
+      "tick": 308,
+      "tSeconds": 5.1333,
+      "stepMad": 2.9224,
+      "stepMax": 222,
+      "ratioToMedian": 3.62
+    },
+    {
+      "frame": 155,
+      "tick": 310,
+      "tSeconds": 5.1667,
+      "stepMad": 2.4741,
+      "stepMax": 222,
+      "ratioToMedian": 3.07
+    },
+    {
+      "frame": 512,
+      "tick": 1024,
+      "tSeconds": 17.0667,
+      "stepMad": 2.6755,
+      "stepMax": 237,
+      "ratioToMedian": 3.32
+    },
+    {
+      "frame": 513,
+      "tick": 1026,
+      "tSeconds": 17.1,
+      "stepMad": 2.895,
+      "stepMax": 239,
+      "ratioToMedian": 3.59
+    },
+    {
+      "frame": 514,
+      "tick": 1028,
+      "tSeconds": 17.1333,
+      "stepMad": 3.2095,
+      "stepMax": 243,
+      "ratioToMedian": 3.98
+    },
+    {
+      "frame": 515,
+      "tick": 1030,
+      "tSeconds": 17.1667,
+      "stepMad": 3.228,
+      "stepMax": 242,
+      "ratioToMedian": 4
+    },
+    {
+      "frame": 516,
+      "tick": 1032,
+      "tSeconds": 17.2,
+      "stepMad": 2.8974,
+      "stepMax": 236,
+      "ratioToMedian": 3.59
+    },
+    {
+      "frame": 517,
+      "tick": 1034,
+      "tSeconds": 17.2333,
+      "stepMad": 2.6394,
+      "stepMax": 231,
+      "ratioToMedian": 3.27
+    },
+    {
+      "frame": 687,
+      "tick": 1374,
+      "tSeconds": 22.9,
+      "stepMad": 2.6433,
+      "stepMax": 226,
+      "ratioToMedian": 3.28
+    },
+    {
+      "frame": 688,
+      "tick": 1376,
+      "tSeconds": 22.9333,
+      "stepMad": 2.4949,
+      "stepMax": 223,
+      "ratioToMedian": 3.09
+    },
+    {
+      "frame": 699,
+      "tick": 1398,
+      "tSeconds": 23.3,
+      "stepMad": 2.4277,
+      "stepMax": 223,
+      "ratioToMedian": 3.01
+    },
+    {
+      "frame": 705,
+      "tick": 1410,
+      "tSeconds": 23.5,
+      "stepMad": 2.5016,
+      "stepMax": 224,
+      "ratioToMedian": 3.1
+    },
+    {
+      "frame": 893,
+      "tick": 1786,
+      "tSeconds": 29.7667,
+      "stepMad": 2.671,
+      "stepMax": 235,
+      "ratioToMedian": 3.31
+    },
+    {
+      "frame": 894,
+      "tick": 1788,
+      "tSeconds": 29.8,
+      "stepMad": 3.0275,
+      "stepMax": 241,
+      "ratioToMedian": 3.75
+    },
+    {
+      "frame": 895,
+      "tick": 1790,
+      "tSeconds": 29.8333,
+      "stepMad": 3.1208,
+      "stepMax": 237,
+      "ratioToMedian": 3.87
+    },
+    {
+      "frame": 896,
+      "tick": 1792,
+      "tSeconds": 29.8667,
+      "stepMad": 3.1557,
+      "stepMax": 233,
+      "ratioToMedian": 3.91
+    },
+    {
+      "frame": 897,
+      "tick": 1794,
+      "tSeconds": 29.9,
+      "stepMad": 3.2119,
+      "stepMax": 240,
+      "ratioToMedian": 3.98
+    },
+    {
+      "frame": 898,
+      "tick": 1796,
+      "tSeconds": 29.9333,
+      "stepMad": 3.0271,
+      "stepMax": 235,
+      "ratioToMedian": 3.75
+    },
+    {
+      "frame": 899,
+      "tick": 1798,
+      "tSeconds": 29.9667,
+      "stepMad": 2.6615,
+      "stepMax": 220,
+      "ratioToMedian": 3.3
+    }
+  ],
+  "outputs": {
+    "frames": "frames/frame-00000.png to frame-00899.png (outside repo)",
+    "video": "idle-30s-30fps.mp4",
+    "preview": "idle-preview-loop.webp",
+    "previewBytes": 802862,
+    "previewSeconds": 9,
+    "previewWidth": 360,
+    "previewQuality": 70,
+    "motionCsv": "idle-capture-motion.csv",
+    "contactSheets": [
+      {
+        "file": "idle-contact-01.jpg",
+        "fromSeconds": 0,
+        "toSeconds": 14.5,
+        "thumbs": 30
+      },
+      {
+        "file": "idle-contact-02.jpg",
+        "fromSeconds": 15,
+        "toSeconds": 29.5,
+        "thumbs": 30
+      }
+    ]
+  },
+  "warnings": [],
+  "timingsMs": {
+    "capture": 102792,
+    "analysis": 13712,
+    "encode": 11357
+  }
+}

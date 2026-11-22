@@ -72,23 +72,29 @@ The orchestrator's review failed the first Stage A pass on two points: the blink
 - One personality beat per loop: tail flick with flame overshoot (Idle), shrug plus arm scratch (Idle B), squint-smile with a half-closed lid, head tilt and belly bounce (Idle C).
 - Continuous micro-drift between beats (head, eyes, snout, brows, frills, arms; integer cycles so the loop closes).
 
-The source is generated, so every number above is one line: `node scripts/living-companion/build-studigo-idle.mjs` rewrites the three idle animations and the lids in `scene.rml`. The generator samples curves, so `rive --verify` reports about 113 "dense-keys" style warnings and 0 errors.
+The source is generated, so every number above is one line: `node scripts/living-companion/build-studigo-idle.mjs` rewrites the three idle animations and the lids in `scene.rml`. The generator samples curves, so `rive --verify` reports about 65 sampled-curve style warnings and 0 errors.
 
 | Check | Result |
 | --- | --- |
 | [Side by side with V1](evidence/stageA/v1-vs-rive-2fps.jpg) | V1 left, Rive right, 2 fps, same crop height. V1 still moves more: it turns three-quarter, opens its mouth and hugs the vest, which the front-facing art cannot do without breaking identity. The Rive idle now shifts weight, leans, glances with parallax, drifts the arms and flicks the tail. |
-| [Rive 2 fps tile, 10 s](evidence/stageA/idle-2fps-10s.jpg) | Mean absolute pixel difference between adjacent half-second frames is 2.9 to 14.6 (was 1.5 to 14.1 before the micro-drift), so every adjacent pair changes. |
+| [Rive 2 fps tile, 10 s](evidence/stageA/idle-2fps-10s.jpg) | Mean absolute pixel difference between adjacent half-second frames is 2.8 to 14.8 (was 1.5 to 14.1 before the micro-drift), so every adjacent pair changes. |
 | 60 s continuous (24 fps, 360 px) | Frame at 9 s and 19 s differs from frame 0 by 0.01 (the loop closes exactly). Adjacent-frame difference: median 1.0, maximum 4.3, no spike above 6x the median, no still stretch. |
 | Feet | Right foot's rightmost orange pixel is fixed at x 329 and toe row 455 through the 9 s loop. |
 | Reduced motion | Unchanged: `mode=2` still returns the static neutral. |
-| Browser (Chrome 151) | `studigo-v2-showroom-qa.mjs`: idle, keyboard, touch, 7 outfits, flame, calm, instances, remount, asset 404 and context loss all pass with the republished `studigo.riv` (213,112 bytes, Free-tier splash). A 30 s browser recording shows no console errors. |
+| Browser (Chrome 151) | `studigo-v2-showroom-qa.mjs`: idle, keyboard, touch, 7 outfits, flame, calm, instances, remount, asset 404 and context loss all pass with the republished `studigo.riv` (209,212 bytes, Free-tier splash). A 30 s browser recording shows no console errors. |
 
 Local recordings (not in git), `C:/Users/Willi/Dev/Learning/av2-evidence-videos/`:
 
 | File | SHA-256 |
 | --- | --- |
-| higgsfield-v1-vs-rive-idle-stageA2.mp4 | `b402f66d53c01cc522990d46dd603d32d55210ec6cdea57ccd8c9cd2a5528fe8` |
-| stageA2-rive-idle-60s-cli-360.mp4 | `c3e89cfc9873b26f40246df77a9b35d86300cedbfa3fe5eff3fd26a53d4e739d` |
-| stageA2-browser-idle-30s.mp4 | `aafbae13d51bf3f4d8e45c182d68c768ca4c657d00920c3ac112f9141adb17fc` |
+| higgsfield-v1-vs-rive-idle-stageA2.mp4 | `3a7f6387eefe5ecd4c7cf6face23a1eb112a64f674039a9cbe88aaa8a2eb31fe` |
+| stageA2-rive-idle-60s-cli-360.mp4 | `4f445b1a015b007775cad27ed570794b4d9e0f97bce2c8f9e4eb985b25687bc3` |
+| stageA2-browser-idle-30s.mp4 | `f935e876b50dd0fa8c9be55a3b9b2cc3f71736de2c6d9386519328b80ea96f1a` |
 
 **Still open:** a human viewing at real speed. The amplitude is bounded by the front-facing art: head turns come from parallax and translation, not a rotated head, so large three-quarter turns need new art (a separate Higgsfield reference and a second skin) and are not attempted here.
+
+### Loop seam and pop check (headless capture tool)
+
+`node scripts/living-companion/rive-idle-capture.mjs --seconds 30 --fps 30 --out <scratch dir> --evidence docs/animation-v2/evidence/idle-capture` ([summary, CSV and contact sheets](evidence/idle-capture/)). It found a real defect in the first pass of this rework: the breath curves did not start at rest, so the generator's forced rest value at tick 0 and at the loop end made a step (frame 1 flagged at 3.8x the median, plus a seam jump). Each breath component now starts and ends at zero. After the fix the frame at tick 0 and the frame one loop later differ by 0.001 (mean absolute difference), frame 1 is no longer flagged, and first-versus-last-frame difference is 1.3, one ordinary step.
+
+Remaining pop candidates (step above 3x the median) are frames 83 to 90 (ticks 166 to 180, the middle of the weight shift) and 153 to 155 (the tail flick). Both are bell-shaped speed curves that rise and fall over 8 to 10 frames, not discontinuities, and the large pixel area of a whole-body shift is what raises the number. The old-rig candidates at frames 24 to 26, 67 to 73 and 151 to 154 were the single-tick blink closure and the full-opacity lid pops; the first two no longer appear. The "N versus N+loop" columns differ by design because the state machine chains three different loops at random. The tool treats `rive inspect` warnings as non-fatal (only errors stop it).

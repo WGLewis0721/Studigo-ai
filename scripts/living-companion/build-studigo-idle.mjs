@@ -53,14 +53,14 @@ function scene(D, p) {
   const P = D / p.breaths;
   const sinc = (t, cycles, phase = 0) => Math.sin(2 * Math.PI * (cycles * t / D + phase));
   const br = (t, lag = 0) => 0.5 - 0.5 * Math.cos(2 * Math.PI * ((t - lag) / P));
-  add("0:12", 17, REST.torsoSy, (t) => 0.034 * (br(t) - 0.4));
-  add("0:13", 16, REST.chestSx, (t) => 0.06 * (br(t, 6) - 0.4));
-  add("0:13", 17, REST.chestSy, (t) => 0.03 * (br(t, 6) - 0.4));
-  add("0:14", 15, 0, (t) => 0.075 * (br(t, 10) - 0.4));
-  add("0:16", 15, 0, (t) => -0.075 * (br(t, 10) - 0.4));
-  add("0:15", 15, 0, (t) => 0.11 * (br(t, 22) - 0.4));
-  add("0:17", 15, 0, (t) => -0.11 * (br(t, 22) - 0.4));
-  add("0:18", 91, REST.headY, (t) => -2.2 * (br(t, 14) - 0.4));
+  add("0:12", 17, REST.torsoSy, (t) => 0.034 * (br(t) - br(0)));
+  add("0:13", 16, REST.chestSx, (t) => 0.06 * (br(t, 6) - br(0, 6)));
+  add("0:13", 17, REST.chestSy, (t) => 0.03 * (br(t, 6) - br(0, 6)));
+  add("0:14", 15, 0, (t) => 0.075 * (br(t, 10) - br(0, 10)));
+  add("0:16", 15, 0, (t) => -0.075 * (br(t, 10) - br(0, 10)));
+  add("0:15", 15, 0, (t) => 0.11 * (br(t, 22) - br(0, 22)));
+  add("0:17", 15, 0, (t) => -0.11 * (br(t, 22) - br(0, 22)));
+  add("0:18", 91, REST.headY, (t) => -2.2 * (br(t, 14) - br(0, 14)));
   // Continuous micro-drift between the set beats (integer cycles from phase 0, so the loop closes): he never freezes.
   const dr = (t, k, ph = 0) => Math.sin(2 * Math.PI * (k * t / D + ph));
   add("0:18", 15, 0, (t) => p.drift * (0.03 * dr(t, 3) + 0.018 * dr(t, 5)));
