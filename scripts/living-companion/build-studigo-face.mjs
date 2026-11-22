@@ -35,14 +35,48 @@ const PARTS = {
   "mouth-neutral": { asset: "0:834", cx: 269.5, cy: 239.5 },
   "face-worried": { asset: "0:835", cx: 270, cy: 206 },
   "mouth-ah": { asset: "0:836", cx: 270, cy: 248 },
+  // Lane 2 face library (kie.ai edits, same recipe; see ASSET_MANIFEST.md)
+  "viseme-ee": { asset: "0:880", cx: 270, cy: 248 },
+  "viseme-oo": { asset: "0:881", cx: 269.5, cy: 239.5 },
+  "viseme-mbp": { asset: "0:882", cx: 269.5, cy: 239.5 },
+  "viseme-fv": { asset: "0:883", cx: 270, cy: 248 },
+  "mouth-closed-smile": { asset: "0:884", cx: 269.5, cy: 239.5 },
+  "eyes-wink": { asset: "0:885", cx: 270, cy: 182 },
+  "face-smirk": { asset: "0:886", cx: 270, cy: 215 },
+  "face-determined": { asset: "0:887", cx: 270.5, cy: 215 },
+  "eyes-sleepy": { asset: "0:888", cx: 269.5, cy: 182 },
+  "face-sad": { asset: "0:889", cx: 269.5, cy: 215 },
+  "face-silly": { asset: "0:890", cx: 270.5, cy: 215 },
+  "face-blush": { asset: "0:891", cx: 266, cy: 206 },
 };
 // reaction layers (keyed) draw above the speech layers (bound to talk), so a reaction face wins while he talks
 const LAYERS = [
   ["React joy", "face-joy", "0:840"], ["React worried", "face-worried", "0:841"], ["React laugh", "mouth-laugh", "0:842"],
   ["React oh", "mouth-oh", "0:843"], ["React ah", "mouth-ah", "0:844"], ["React eyes closed", "eyes-closed", "0:845"],
   ["React neutral", "mouth-neutral", "0:846"],
-  ["Talk wide", "mouth-laugh", "0:850", "0:852"], ["Talk ah", "mouth-ah", "0:851", "0:853"],
+  ["React smirk", "face-smirk", "0:860"], ["React determined", "face-determined", "0:861"], ["React sad", "face-sad", "0:862"],
+  ["React silly", "face-silly", "0:863"], ["React blush", "face-blush", "0:864"], ["React wink", "eyes-wink", "0:865"],
+  ["React sleepy eyes", "eyes-sleepy", "0:866"], ["React closed smile", "mouth-closed-smile", "0:867"],
 ];
+const img = (name, part, id, binds = []) => {
+  const p = PARTS[part];
+  const b = binds.map(([prop, conv]) => `\n                            <DataBindContext sourcePathIds="0:60-${prop}" propertyKey="18" converterId="${conv}"/>`).join("");
+  return `<Image name="${name}" assetId="${p.asset}" x="${+(p.cx - HEAD.x).toFixed(2)}" y="${+(p.cy - HEAD.y).toFixed(2)}" opacity="${binds.length ? 1 : 0}" id="${id}">${b}
+                        </Image>`;
+};
+// Speech: a mouth chart. Any sound (talk >= 0.16) opens the group; the app's `viseme` (0 ah, 1 ee, 2 oo, 3 m/b/p,
+// 4 f/v) picks the shape, and loud syllables (talk >= 0.6) open wide over all of them.
+const VIS = [[1, "viseme-ee", "0:871"], [2, "viseme-oo", "0:872"], [3, "viseme-mbp", "0:873"], [4, "viseme-fv", "0:874"]];
+const ge = (k) => `0:9${k}0`, le = (k) => `0:9${k}1`;
+const talkGroup = `<Node name="Speech mouths" id="0:870">
+                        <DataBindContext sourcePathIds="0:60-0:800" propertyKey="18" converterId="0:853"/>
+                        ${img("Talk wide", "mouth-laugh", "0:850", [["0:800", "0:852"]])}
+                        ${VIS.map(([k, part, id]) => `<Node name="Viseme ${k}" id="0:87${k + 4}">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="${ge(k)}"/>
+                        ${img("Talk " + part, part, id, [["0:899", le(k)]])}
+                        </Node>`).join("\n                        ")}
+                        ${img("Talk ah", "mouth-ah", "0:851", [["0:899", le(0)]])}
+                        </Node>`;
 const layerXml = LAYERS.map(([name, part, id, conv]) => {
   const p = PARTS[part];
   const bind = conv ? `\n                            <DataBindContext sourcePathIds="0:60-0:800" propertyKey="18" converterId="${conv}"/>` : "";
@@ -51,13 +85,25 @@ const layerXml = LAYERS.map(([name, part, id, conv]) => {
 }).join("\n                        ");
 const faceNode = `<Node name="Face layers" id="0:839">
                         ${layerXml}
+                        ${talkGroup}
                         </Node>`;
-s = s.replace(/<Node name="Face layers" id="0:839">[^]*?<\/Node>\s*/, "");
+// remove the previous face group, counting nested Nodes from its open tag
+{
+  const open = s.indexOf('<Node name="Face layers" id="0:839">');
+  if (open >= 0) {
+    let depth = 0, i = open;
+    for (;;) {
+      const o = s.indexOf("<Node ", i + 1), c = s.indexOf("</Node>", i + 1);
+      if (o !== -1 && o < c) { depth++; i = o; } else { if (depth === 0) { i = c + 7; break; } depth--; i = c; }
+    }
+    s = s.slice(0, open) + s.slice(i).replace(/^\s*/, "");
+  }
+}
 const snout = '<RootBone x="0" y="-26" length="0" name="Snout" id="0:19"/>';
 if (!s.includes(snout)) throw new Error("snout bone");
 s = s.replace(snout, `${faceNode}\n                        ${snout}`);
 
-s = s.replace(/\s*<ImageAsset file="parts\/[^"]+" name="[^"]*" id="0:83\d"\/>/g, "");
+s = s.replace(/\s*<ImageAsset file="parts\/[^"]+" name="[^"]*" id="0:8[389]\d"\/>/g, "");
 const assets = Object.entries(PARTS).map(([k, p]) => `<ImageAsset file="parts/${k}.webp" name="Face ${k}" id="${p.asset}"/>`).join("\n    ");
 s = s.replace('<ImageAsset file="outfits/sash.webp" name="Sash layer" id="0:316"/>', (m) => `${m}\n    ${assets}`);
 
@@ -67,6 +113,18 @@ if (!s.includes('id="0:852"')) {
     <DataConverterRangeMapper name="Talk ah step" minInput="0.14" maxInput="0.18" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:853"/>
     $1`);
 }
+if (!s.includes('id="0:899"')) {
+  s = s.replace('<ViewModelPropertyNumber name="talk" id="0:800"/>', (m) => `${m}\n        <ViewModelPropertyNumber name="viseme" id="0:899"/>`);
+  s = s.replace('<ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:800"/>', (m) => `${m}\n            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:899"/>`);
+}
+if (!s.includes('id="0:901"')) {
+  const conv = [];
+  for (let k = 0; k <= 4; k++) {
+    conv.push(`<DataConverterRangeMapper name="Viseme ${k} from" minInput="${k - 0.6}" maxInput="${k - 0.4}" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:9${k}0"/>`);
+    conv.push(`<DataConverterRangeMapper name="Viseme ${k} to" minInput="${k + 0.4}" maxInput="${k + 0.6}" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:9${k}1"/>`);
+  }
+  s = s.replace(/(<DataConverterRangeMapper name="Neck horizontal reach")/, `${conv.join("\n    ")}\n    $1`);
+}
 
 /* 4. which face each reaction wears, and when (ticks at 60 fps) */
 const FACES = {
@@ -74,22 +132,23 @@ const FACES = {
   "Celebrating": [["0:840", 6, 62]],
   "Correct": [["0:840", 6, 40]],
   "Excited": [["0:840", 4, 66]],
-  "Encouraging": [["0:844", 12, 56]],
-  "Proud": [["0:844", 14, 58]],
-  "Petting": [["0:844", 14, 74]],
+  "Encouraging": [["0:861", 10, 58]],
+  "Proud": [["0:860", 12, 60]],
+  "Petting": [["0:864", 10, 80]],
+  "Playfully annoyed": [["0:863", 4, 36]],
   "Incorrect · Reassure": [["0:841", 6, 62]],
-  "Wake": [["0:843", 8, 32]],
   "Surprised": [["0:843", 2, 30]],
   "Curious": [["0:843", 18, 44]],
   "Belly poke": [["0:843", 2, 16], ["0:840", 18, 80]],
   "Tail tug": [["0:843", 3, 26]],
   "Sit and wag": [["0:840", 24, 96]],
-  "Tail chase": [["0:843", 17, 34], ["0:840", 76, 98]],
+  "Tail chase": [["0:843", 17, 34], ["0:863", 76, 98]],
   "Double take": [["0:843", 32, 60]],
   "Stretch": [["0:842", 26, 64], ["0:845", 24, 70]],
   "Sniff": [["0:846", 6, 40]],
-  "Sleepy": [["0:845", 104, 152]],
-  "Listening": [["0:846", 1, 30]],
+  "Sleepy": [["0:866", 0, 104], ["0:845", 104, 152], ["0:866", 152, 360]],
+  "Listening": [["0:867", 1, 30]],
+  "Wake": [["0:845", 0, 6], ["0:843", 8, 32], ["0:865", 36, 52]],
 };
 const esc = (v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 for (const [name, spans] of Object.entries(FACES)) {
@@ -97,15 +156,15 @@ for (const [name, spans] of Object.entries(FACES)) {
   const m = re.exec(s);
   if (!m) throw new Error("missing animation " + name);
   const D = Number(m[2]);
-  let body = m[3].replace(/\s*<KeyedObject objectId="0:84[0-6]">[^]*?<\/KeyedObject>/g, "");
+  let body = m[3].replace(/\s*<KeyedObject objectId="0:8(4[0-6]|6[0-7])">[^]*?<\/KeyedObject>/g, "");
   body = body.replace(/\s*<KeyedObject objectId="0:20">[^]*?<\/KeyedObject>/g, "");
   // a painted eye set replaces the vector lids and happy arcs in that reaction (sleepy keeps its heavy lids)
-  if (name !== "Sleepy" && spans.some(([id]) => ["0:840", "0:841", "0:845"].includes(id)))
+  if (spans.some(([id]) => ["0:840", "0:841", "0:845", "0:860", "0:861", "0:862", "0:863", "0:864", "0:865", "0:866"].includes(id)))
     body = body.replace(/\s*<KeyedObject objectId="0:(54|55|72[0-3])">[^]*?<\/KeyedObject>/g, "");
   const byId = new Map();
   for (const [id, on, off] of spans) { if (!byId.has(id)) byId.set(id, []); byId.get(id).push([on, Math.min(off, D)]); }
   const objs = [...byId.entries()].map(([id, list]) => {
-    const keys = [`<KeyFrameDouble frame="0" value="0" interpolationType="hold"/>`];
+    const keys = list[0][0] === 0 ? [] : [`<KeyFrameDouble frame="0" value="0" interpolationType="hold"/>`];
     for (const [on, off] of list) {
       keys.push(`<KeyFrameDouble frame="${on}" value="1" interpolationType="hold"/>`);
       keys.push(`<KeyFrameDouble frame="${off}" value="0" interpolationType="hold"/>`);
@@ -118,7 +177,7 @@ for (const [name, spans] of Object.entries(FACES)) {
 
 /* 5. every intent animation that does not wear a face clears all of them at its first frame; Rive keeps an
    unkeyed value, so without this a face would stay on after an interrupted reaction */
-const FACE_IDS = ["0:840", "0:841", "0:842", "0:843", "0:844", "0:845", "0:846"];
+const FACE_IDS = ["0:840", "0:841", "0:842", "0:843", "0:844", "0:845", "0:846", "0:860", "0:861", "0:862", "0:863", "0:864", "0:865", "0:866", "0:867"];
 const NOT_INTENT = new Set(["Idle", "Idle B", "Idle C", "Still", "Rig Inspection"]);
 s = s.replace(/(<LinearAnimation name="([^"]+)"[^>]*>)([^]*?)(<\/LinearAnimation>)/g, (all, open, name, body, close) => {
   if (NOT_INTENT.has(name)) return all;

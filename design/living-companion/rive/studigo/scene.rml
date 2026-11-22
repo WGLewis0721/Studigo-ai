@@ -197,12 +197,55 @@
                         </Image>
                         <Image name="React neutral" assetId="0:834" x="1.5" y="-6.5" opacity="0" id="0:846">
                         </Image>
-                        <Image name="Talk wide" assetId="0:831" x="1.5" y="2" opacity="0" id="0:850">
+                        <Image name="React smirk" assetId="0:886" x="2" y="-31" opacity="0" id="0:860">
+                        </Image>
+                        <Image name="React determined" assetId="0:887" x="2.5" y="-31" opacity="0" id="0:861">
+                        </Image>
+                        <Image name="React sad" assetId="0:889" x="1.5" y="-31" opacity="0" id="0:862">
+                        </Image>
+                        <Image name="React silly" assetId="0:890" x="2.5" y="-31" opacity="0" id="0:863">
+                        </Image>
+                        <Image name="React blush" assetId="0:891" x="-2" y="-40" opacity="0" id="0:864">
+                        </Image>
+                        <Image name="React wink" assetId="0:885" x="2" y="-64" opacity="0" id="0:865">
+                        </Image>
+                        <Image name="React sleepy eyes" assetId="0:888" x="1.5" y="-64" opacity="0" id="0:866">
+                        </Image>
+                        <Image name="React closed smile" assetId="0:884" x="1.5" y="-6.5" opacity="0" id="0:867">
+                        </Image>
+                        <Node name="Speech mouths" id="0:870">
+                        <DataBindContext sourcePathIds="0:60-0:800" propertyKey="18" converterId="0:853"/>
+                        <Image name="Talk wide" assetId="0:831" x="1.5" y="2" opacity="1" id="0:850">
                             <DataBindContext sourcePathIds="0:60-0:800" propertyKey="18" converterId="0:852"/>
                         </Image>
-                        <Image name="Talk ah" assetId="0:836" x="2" y="2" opacity="0" id="0:851">
-                            <DataBindContext sourcePathIds="0:60-0:800" propertyKey="18" converterId="0:853"/>
+                        <Node name="Viseme 1" id="0:875">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:910"/>
+                        <Image name="Talk viseme-ee" assetId="0:880" x="2" y="2" opacity="1" id="0:871">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:911"/>
                         </Image>
+                        </Node>
+                        <Node name="Viseme 2" id="0:876">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:920"/>
+                        <Image name="Talk viseme-oo" assetId="0:881" x="1.5" y="-6.5" opacity="1" id="0:872">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:921"/>
+                        </Image>
+                        </Node>
+                        <Node name="Viseme 3" id="0:877">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:930"/>
+                        <Image name="Talk viseme-mbp" assetId="0:882" x="1.5" y="-6.5" opacity="1" id="0:873">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:931"/>
+                        </Image>
+                        </Node>
+                        <Node name="Viseme 4" id="0:878">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:940"/>
+                        <Image name="Talk viseme-fv" assetId="0:883" x="2" y="2" opacity="1" id="0:874">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:941"/>
+                        </Image>
+                        </Node>
+                        <Image name="Talk ah" assetId="0:836" x="2" y="2" opacity="1" id="0:851">
+                            <DataBindContext sourcePathIds="0:60-0:899" propertyKey="18" converterId="0:901"/>
+                        </Image>
+                        </Node>
                         </Node>
                         <RootBone x="0" y="-26" length="0" name="Snout" id="0:19"/>
                         <RootBone x="0" y="-8" length="0" name="Jaw and Mouth" id="0:20"/>
@@ -1007,6 +1050,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Look left" duration="1" id="0:91">
             <KeyedObject objectId="0:70">
@@ -1022,6 +1073,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Look right" duration="1" id="0:92">
             <KeyedObject objectId="0:70">
@@ -1037,6 +1096,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Look up" duration="1" id="0:93">
             <KeyedObject objectId="0:70">
@@ -1052,6 +1119,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Look down" duration="1" id="0:94">
             <KeyedObject objectId="0:70">
@@ -1067,6 +1142,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Listening" fps="60" duration="30" id="0:95">
             <!-- boosted rot/x x1.6 -->
@@ -1218,7 +1301,7 @@
                     <KeyFrameDouble frame="30" value="1.012"/>
                 </KeyedProperty>
             </KeyedObject>
-            <KeyedObject objectId="0:846">
+            <KeyedObject objectId="0:867">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
                     <KeyFrameDouble frame="1" value="1" interpolationType="hold"/>
@@ -1231,6 +1314,14 @@
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Thinking" fps="60" duration="30" id="0:96">
             <!-- boosted rot/x x1.6 -->
@@ -1437,6 +1528,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Reading" fps="60" duration="240" loopValue="loop" id="0:97">
             <KeyedObject objectId="0:22">
@@ -1751,6 +1850,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Happy" fps="60" duration="54" id="0:98">
             <!-- boosted rot/x x1.6 -->
@@ -2148,6 +2255,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Celebrating" fps="60" duration="72" id="0:99">
             <!-- boosted rot/x x1.6 -->
@@ -2685,61 +2800,17 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Encouraging" fps="60" duration="68" id="0:111">
             <!-- boosted rot/x x1.6 -->
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.0013" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.0092" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.0269" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.0546" interpolationType="linear"/>
-                    <KeyFrameDouble frame="7" value="0.0901" interpolationType="linear"/>
-                    <KeyFrameDouble frame="10" value="0.2054" interpolationType="linear"/>
-                    <KeyFrameDouble frame="11" value="0.2331" interpolationType="linear"/>
-                    <KeyFrameDouble frame="12" value="0.2508" interpolationType="linear"/>
-                    <KeyFrameDouble frame="13" value="0.2587" interpolationType="linear"/>
-                    <KeyFrameDouble frame="14" value="0.26" interpolationType="linear"/>
-                    <KeyFrameDouble frame="53" value="0.2592" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0.254" interpolationType="linear"/>
-                    <KeyFrameDouble frame="55" value="0.2419" interpolationType="linear"/>
-                    <KeyFrameDouble frame="56" value="0.2224" interpolationType="linear"/>
-                    <KeyFrameDouble frame="58" value="0.1644" interpolationType="linear"/>
-                    <KeyFrameDouble frame="61" value="0.0641" interpolationType="linear"/>
-                    <KeyFrameDouble frame="62" value="0.0376" interpolationType="linear"/>
-                    <KeyFrameDouble frame="63" value="0.0181" interpolationType="linear"/>
-                    <KeyFrameDouble frame="64" value="0.006" interpolationType="linear"/>
-                    <KeyFrameDouble frame="65" value="0.0008" interpolationType="linear"/>
-                    <KeyFrameDouble frame="68" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.0013" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.0092" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.0269" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.0546" interpolationType="linear"/>
-                    <KeyFrameDouble frame="7" value="0.0901" interpolationType="linear"/>
-                    <KeyFrameDouble frame="10" value="0.2054" interpolationType="linear"/>
-                    <KeyFrameDouble frame="11" value="0.2331" interpolationType="linear"/>
-                    <KeyFrameDouble frame="12" value="0.2508" interpolationType="linear"/>
-                    <KeyFrameDouble frame="13" value="0.2587" interpolationType="linear"/>
-                    <KeyFrameDouble frame="14" value="0.26" interpolationType="linear"/>
-                    <KeyFrameDouble frame="53" value="0.2592" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0.254" interpolationType="linear"/>
-                    <KeyFrameDouble frame="55" value="0.2419" interpolationType="linear"/>
-                    <KeyFrameDouble frame="56" value="0.2224" interpolationType="linear"/>
-                    <KeyFrameDouble frame="58" value="0.1644" interpolationType="linear"/>
-                    <KeyFrameDouble frame="61" value="0.0641" interpolationType="linear"/>
-                    <KeyFrameDouble frame="62" value="0.0376" interpolationType="linear"/>
-                    <KeyFrameDouble frame="63" value="0.0181" interpolationType="linear"/>
-                    <KeyFrameDouble frame="64" value="0.006" interpolationType="linear"/>
-                    <KeyFrameDouble frame="65" value="0.0008" interpolationType="linear"/>
-                    <KeyFrameDouble frame="68" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
             <KeyedObject objectId="0:21">
                 <KeyedProperty propertyKey="17">
                     <KeyFrameDouble frame="0" value="1" interpolationType="linear"/>
@@ -3123,19 +3194,27 @@
                     <KeyFrameDouble frame="68" value="1"/>
                 </KeyedProperty>
             </KeyedObject>
-            <KeyedObject objectId="0:844">
+            <KeyedObject objectId="0:861">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="12" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="56" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="10" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="58" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
             <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Correct" fps="60" duration="48" id="0:112">
             <!-- boosted rot/x x1.6 -->
@@ -3587,6 +3666,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Incorrect · Reassure" fps="60" duration="72" id="0:113">
             <!-- boosted rot/x x1.6 -->
@@ -3943,6 +4030,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Curious" fps="60" duration="60" id="0:114">
             <!-- boosted rot/x x1.6 -->
@@ -4389,6 +4484,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Sleepy" fps="60" duration="360" loopValue="loop" id="0:115">
             <KeyedObject objectId="0:12">
@@ -4531,46 +4634,6 @@
                     <KeyFrameDouble frame="181" value="-82.3262" interpolationType="linear"/>
                     <KeyFrameDouble frame="188" value="-82.0053" interpolationType="linear"/>
                     <KeyFrameDouble frame="360" value="-82"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0.62" interpolationType="linear"/>
-                    <KeyFrameDouble frame="75" value="0.6335" interpolationType="linear"/>
-                    <KeyFrameDouble frame="90" value="0.6998" interpolationType="linear"/>
-                    <KeyFrameDouble frame="126" value="0.9537" interpolationType="linear"/>
-                    <KeyFrameDouble frame="137" value="0.9909" interpolationType="linear"/>
-                    <KeyFrameDouble frame="150" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="151" value="0.9685" interpolationType="linear"/>
-                    <KeyFrameDouble frame="153" value="0.7209" interpolationType="linear"/>
-                    <KeyFrameDouble frame="154" value="0.678" interpolationType="linear"/>
-                    <KeyFrameDouble frame="157" value="0.6106" interpolationType="linear"/>
-                    <KeyFrameDouble frame="164" value="0.3845" interpolationType="linear"/>
-                    <KeyFrameDouble frame="167" value="0.3423" interpolationType="linear"/>
-                    <KeyFrameDouble frame="173" value="0.3793" interpolationType="linear"/>
-                    <KeyFrameDouble frame="189" value="0.5805" interpolationType="linear"/>
-                    <KeyFrameDouble frame="197" value="0.6189" interpolationType="linear"/>
-                    <KeyFrameDouble frame="360" value="0.62"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0.62" interpolationType="linear"/>
-                    <KeyFrameDouble frame="75" value="0.6335" interpolationType="linear"/>
-                    <KeyFrameDouble frame="90" value="0.6998" interpolationType="linear"/>
-                    <KeyFrameDouble frame="126" value="0.9537" interpolationType="linear"/>
-                    <KeyFrameDouble frame="137" value="0.9909" interpolationType="linear"/>
-                    <KeyFrameDouble frame="150" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="151" value="0.9685" interpolationType="linear"/>
-                    <KeyFrameDouble frame="153" value="0.7209" interpolationType="linear"/>
-                    <KeyFrameDouble frame="154" value="0.678" interpolationType="linear"/>
-                    <KeyFrameDouble frame="157" value="0.6106" interpolationType="linear"/>
-                    <KeyFrameDouble frame="164" value="0.3845" interpolationType="linear"/>
-                    <KeyFrameDouble frame="167" value="0.3423" interpolationType="linear"/>
-                    <KeyFrameDouble frame="173" value="0.3793" interpolationType="linear"/>
-                    <KeyFrameDouble frame="189" value="0.5805" interpolationType="linear"/>
-                    <KeyFrameDouble frame="197" value="0.6189" interpolationType="linear"/>
-                    <KeyFrameDouble frame="360" value="0.62"/>
                 </KeyedProperty>
             </KeyedObject>
             <KeyedObject objectId="0:21">
@@ -4837,6 +4900,14 @@
                     <KeyFrameDouble frame="360" value="0.85"/>
                 </KeyedProperty>
             </KeyedObject>
+            <KeyedObject objectId="0:866">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="104" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="152" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="360" value="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
             <KeyedObject objectId="0:845">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
@@ -4850,35 +4921,16 @@
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Wake" fps="60" duration="54" id="0:116">
             <!-- boosted rot/x x1.6 -->
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="1" value="0.729" interpolationType="linear"/>
-                    <KeyFrameDouble frame="2" value="0.512" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.343" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.216" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.125" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.064" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0.008" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="1" value="0.729" interpolationType="linear"/>
-                    <KeyFrameDouble frame="2" value="0.512" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.343" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.216" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.125" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.064" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0.008" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
             <KeyedObject objectId="0:21">
                 <KeyedProperty propertyKey="17">
                     <KeyFrameDouble frame="0" value="0.9" interpolationType="linear"/>
@@ -5409,6 +5461,12 @@
                     <KeyFrameDouble frame="54" value="0"/>
                 </KeyedProperty>
             </KeyedObject>
+            <KeyedObject objectId="0:845">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="6" value="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
             <KeyedObject objectId="0:843">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
@@ -5416,49 +5474,28 @@
                     <KeyFrameDouble frame="32" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
+            <KeyedObject objectId="0:865">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="36" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="52" value="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
             <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
-            <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Petting" fps="60" duration="88" id="0:117">
             <!-- boosted rot/x x1.6 -->
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="1" value="0.1035" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.8965" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="78" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="79" value="0.7023" interpolationType="linear"/>
-                    <KeyFrameDouble frame="80" value="0.4705" interpolationType="linear"/>
-                    <KeyFrameDouble frame="81" value="0.2963" interpolationType="linear"/>
-                    <KeyFrameDouble frame="82" value="0.1715" interpolationType="linear"/>
-                    <KeyFrameDouble frame="83" value="0.0878" interpolationType="linear"/>
-                    <KeyFrameDouble frame="84" value="0.037" interpolationType="linear"/>
-                    <KeyFrameDouble frame="86" value="0.0014" interpolationType="linear"/>
-                    <KeyFrameDouble frame="88" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="1" value="0.1035" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.8965" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="78" value="1" interpolationType="linear"/>
-                    <KeyFrameDouble frame="79" value="0.7023" interpolationType="linear"/>
-                    <KeyFrameDouble frame="80" value="0.4705" interpolationType="linear"/>
-                    <KeyFrameDouble frame="81" value="0.2963" interpolationType="linear"/>
-                    <KeyFrameDouble frame="82" value="0.1715" interpolationType="linear"/>
-                    <KeyFrameDouble frame="83" value="0.0878" interpolationType="linear"/>
-                    <KeyFrameDouble frame="84" value="0.037" interpolationType="linear"/>
-                    <KeyFrameDouble frame="86" value="0.0014" interpolationType="linear"/>
-                    <KeyFrameDouble frame="88" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
             <KeyedObject objectId="0:21">
                 <KeyedProperty propertyKey="17">
                     <KeyFrameDouble frame="0" value="1" interpolationType="linear"/>
@@ -6090,47 +6127,27 @@
                     <KeyFrameDouble frame="88" value="1"/>
                 </KeyedProperty>
             </KeyedObject>
-        <KeyedObject objectId="0:722">
+            <KeyedObject objectId="0:864">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="3" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="80" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:723">
-                <KeyedProperty propertyKey="18">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="4" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="80" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:720">
-                <KeyedProperty propertyKey="18">
-                    <KeyFrameDouble frame="0" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="3" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="80" value="1"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:721">
-                <KeyedProperty propertyKey="18">
-                    <KeyFrameDouble frame="0" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="4" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="80" value="1"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:844">
-                <KeyedProperty propertyKey="18">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="14" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="74" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="10" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="80" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
             <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Surprised" fps="60" duration="40" id="0:118">
             <!-- boosted rot/x x1.6 -->
@@ -6546,6 +6563,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <!-- Rest pose for reduced motion. It evaluates once and stays still. -->
         <LinearAnimation name="Proud" fps="60" duration="67" id="0:401">
@@ -6594,58 +6619,6 @@
                     <KeyFrameDouble frame="64" value="-85.0838" interpolationType="linear"/>
                     <KeyFrameDouble frame="65" value="-85.0118" interpolationType="linear"/>
                     <KeyFrameDouble frame="67" value="-85"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="10" value="0.007" interpolationType="linear"/>
-                    <KeyFrameDouble frame="11" value="0.0208" interpolationType="linear"/>
-                    <KeyFrameDouble frame="12" value="0.0434" interpolationType="linear"/>
-                    <KeyFrameDouble frame="13" value="0.0739" interpolationType="linear"/>
-                    <KeyFrameDouble frame="16" value="0.1896" interpolationType="linear"/>
-                    <KeyFrameDouble frame="18" value="0.2566" interpolationType="linear"/>
-                    <KeyFrameDouble frame="19" value="0.2792" interpolationType="linear"/>
-                    <KeyFrameDouble frame="20" value="0.293" interpolationType="linear"/>
-                    <KeyFrameDouble frame="22" value="0.3" interpolationType="linear"/>
-                    <KeyFrameDouble frame="50" value="0.3" interpolationType="linear"/>
-                    <KeyFrameDouble frame="52" value="0.293" interpolationType="linear"/>
-                    <KeyFrameDouble frame="53" value="0.2792" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0.2566" interpolationType="linear"/>
-                    <KeyFrameDouble frame="56" value="0.1896" interpolationType="linear"/>
-                    <KeyFrameDouble frame="59" value="0.0739" interpolationType="linear"/>
-                    <KeyFrameDouble frame="60" value="0.0434" interpolationType="linear"/>
-                    <KeyFrameDouble frame="61" value="0.0208" interpolationType="linear"/>
-                    <KeyFrameDouble frame="62" value="0.007" interpolationType="linear"/>
-                    <KeyFrameDouble frame="63" value="0.001" interpolationType="linear"/>
-                    <KeyFrameDouble frame="67" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="10" value="0.007" interpolationType="linear"/>
-                    <KeyFrameDouble frame="11" value="0.0208" interpolationType="linear"/>
-                    <KeyFrameDouble frame="12" value="0.0434" interpolationType="linear"/>
-                    <KeyFrameDouble frame="13" value="0.0739" interpolationType="linear"/>
-                    <KeyFrameDouble frame="16" value="0.1896" interpolationType="linear"/>
-                    <KeyFrameDouble frame="18" value="0.2566" interpolationType="linear"/>
-                    <KeyFrameDouble frame="19" value="0.2792" interpolationType="linear"/>
-                    <KeyFrameDouble frame="20" value="0.293" interpolationType="linear"/>
-                    <KeyFrameDouble frame="22" value="0.3" interpolationType="linear"/>
-                    <KeyFrameDouble frame="50" value="0.3" interpolationType="linear"/>
-                    <KeyFrameDouble frame="52" value="0.293" interpolationType="linear"/>
-                    <KeyFrameDouble frame="53" value="0.2792" interpolationType="linear"/>
-                    <KeyFrameDouble frame="54" value="0.2566" interpolationType="linear"/>
-                    <KeyFrameDouble frame="56" value="0.1896" interpolationType="linear"/>
-                    <KeyFrameDouble frame="59" value="0.0739" interpolationType="linear"/>
-                    <KeyFrameDouble frame="60" value="0.0434" interpolationType="linear"/>
-                    <KeyFrameDouble frame="61" value="0.0208" interpolationType="linear"/>
-                    <KeyFrameDouble frame="62" value="0.007" interpolationType="linear"/>
-                    <KeyFrameDouble frame="63" value="0.001" interpolationType="linear"/>
-                    <KeyFrameDouble frame="67" value="0"/>
                 </KeyedProperty>
             </KeyedObject>
             <KeyedObject objectId="0:21">
@@ -7031,19 +7004,27 @@
                     <KeyFrameDouble frame="67" value="1"/>
                 </KeyedProperty>
             </KeyedObject>
-            <KeyedObject objectId="0:844">
+            <KeyedObject objectId="0:860">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
-                    <KeyFrameDouble frame="14" value="1" interpolationType="hold"/>
-                    <KeyFrameDouble frame="58" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="12" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="60" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
             <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Playfully annoyed" fps="60" duration="42" id="0:402">
             <!-- boosted rot/x x1.6 -->
@@ -7128,50 +7109,6 @@
                     <KeyFrameDouble frame="37" value="-0.0104" interpolationType="linear"/>
                     <KeyFrameDouble frame="38" value="-0.0035" interpolationType="linear"/>
                     <KeyFrameDouble frame="39" value="-0.0005" interpolationType="linear"/>
-                    <KeyFrameDouble frame="42" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:54">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="2" value="0.0079" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.0492" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.1251" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.2149" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.2908" interpolationType="linear"/>
-                    <KeyFrameDouble frame="7" value="0.3321" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0.34" interpolationType="linear"/>
-                    <KeyFrameDouble frame="29" value="0.3383" interpolationType="linear"/>
-                    <KeyFrameDouble frame="30" value="0.3279" interpolationType="linear"/>
-                    <KeyFrameDouble frame="31" value="0.3048" interpolationType="linear"/>
-                    <KeyFrameDouble frame="32" value="0.2686" interpolationType="linear"/>
-                    <KeyFrameDouble frame="35" value="0.1179" interpolationType="linear"/>
-                    <KeyFrameDouble frame="36" value="0.0714" interpolationType="linear"/>
-                    <KeyFrameDouble frame="37" value="0.0352" interpolationType="linear"/>
-                    <KeyFrameDouble frame="38" value="0.0121" interpolationType="linear"/>
-                    <KeyFrameDouble frame="39" value="0.0017" interpolationType="linear"/>
-                    <KeyFrameDouble frame="42" value="0"/>
-                </KeyedProperty>
-            </KeyedObject>
-            <KeyedObject objectId="0:55">
-                <KeyedProperty propertyKey="17">
-                    <KeyFrameDouble frame="0" value="0" interpolationType="linear"/>
-                    <KeyFrameDouble frame="2" value="0.0079" interpolationType="linear"/>
-                    <KeyFrameDouble frame="3" value="0.0492" interpolationType="linear"/>
-                    <KeyFrameDouble frame="4" value="0.1251" interpolationType="linear"/>
-                    <KeyFrameDouble frame="5" value="0.2149" interpolationType="linear"/>
-                    <KeyFrameDouble frame="6" value="0.2908" interpolationType="linear"/>
-                    <KeyFrameDouble frame="7" value="0.3321" interpolationType="linear"/>
-                    <KeyFrameDouble frame="8" value="0.34" interpolationType="linear"/>
-                    <KeyFrameDouble frame="29" value="0.3383" interpolationType="linear"/>
-                    <KeyFrameDouble frame="30" value="0.3279" interpolationType="linear"/>
-                    <KeyFrameDouble frame="31" value="0.3048" interpolationType="linear"/>
-                    <KeyFrameDouble frame="32" value="0.2686" interpolationType="linear"/>
-                    <KeyFrameDouble frame="35" value="0.1179" interpolationType="linear"/>
-                    <KeyFrameDouble frame="36" value="0.0714" interpolationType="linear"/>
-                    <KeyFrameDouble frame="37" value="0.0352" interpolationType="linear"/>
-                    <KeyFrameDouble frame="38" value="0.0121" interpolationType="linear"/>
-                    <KeyFrameDouble frame="39" value="0.0017" interpolationType="linear"/>
                     <KeyFrameDouble frame="42" value="0"/>
                 </KeyedProperty>
             </KeyedObject>
@@ -7530,6 +7467,13 @@
                     <KeyFrameDouble frame="42" value="1"/>
                 </KeyedProperty>
             </KeyedObject>
+            <KeyedObject objectId="0:863">
+                <KeyedProperty propertyKey="18">
+                    <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
+                    <KeyFrameDouble frame="4" value="1" interpolationType="hold"/>
+                    <KeyFrameDouble frame="36" value="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
             <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
@@ -7537,6 +7481,13 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Excited" fps="60" duration="74" id="0:403">
             <!-- boosted rot/x x1.6 -->
@@ -8256,6 +8207,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Tail chase" fps="60" duration="102" id="0:451">
             <KeyedObject objectId="0:18">
@@ -9215,18 +9174,26 @@
                     <KeyFrameDouble frame="34" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
-            <KeyedObject objectId="0:840">
+            <KeyedObject objectId="0:863">
                 <KeyedProperty propertyKey="18">
                     <KeyFrameDouble frame="0" value="0" interpolationType="hold"/>
                     <KeyFrameDouble frame="76" value="1" interpolationType="hold"/>
                     <KeyFrameDouble frame="98" value="0" interpolationType="hold"/>
                 </KeyedProperty>
             </KeyedObject>
+            <KeyedObject objectId="0:840"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:841"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:842"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Sit and wag" fps="60" duration="116" id="0:452">
             <KeyedObject objectId="0:11">
@@ -10149,6 +10116,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Sniff" fps="60" duration="65" id="0:453">
             <KeyedObject objectId="0:18">
@@ -10720,6 +10695,14 @@
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Double take" fps="60" duration="77" id="0:454">
             <KeyedObject objectId="0:18">
@@ -11297,6 +11280,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Stretch" fps="60" duration="115" id="0:455">
             <KeyedObject objectId="0:14">
@@ -11853,6 +11844,14 @@
             <KeyedObject objectId="0:843"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Tail tug" fps="60" duration="132" id="0:731">
             <!-- boosted rot/x x1.6 -->
@@ -12597,6 +12596,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Belly poke" fps="60" duration="96" id="0:730">
             <!-- boosted rot/x x1.6 -->
@@ -13429,6 +13436,14 @@
             <KeyedObject objectId="0:844"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:845"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
             <KeyedObject objectId="0:846"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:860"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:861"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:862"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:863"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:864"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:865"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:866"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
+            <KeyedObject objectId="0:867"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="hold"/></KeyedProperty></KeyedObject>
         </LinearAnimation>
         <LinearAnimation name="Turn right" duration="1" id="0:2400">
             <KeyedObject objectId="0:2001"><KeyedProperty propertyKey="24"><KeyFrameDouble value="-110.04"/></KeyedProperty><KeyedProperty propertyKey="25"><KeyFrameDouble value="-190"/></KeyedProperty></KeyedObject>
@@ -22138,6 +22153,7 @@
         <ViewModelPropertyNumber name="headphones" id="0:305"/>
         <ViewModelPropertyNumber name="sash" id="0:306"/>
         <ViewModelPropertyNumber name="talk" id="0:800"/>
+        <ViewModelPropertyNumber name="viseme" id="0:899"/>
         <ViewModelPropertyNumber name="growth" id="0:820"/>
         <ViewModelInstance exports="true" name="Default" id="0:62">
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:61"/>
@@ -22156,6 +22172,7 @@
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:305"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:306"/>
             <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:800"/>
+            <ViewModelInstanceNumber propertyValue="0" viewModelPropertyId="0:899"/>
             <ViewModelInstanceNumber propertyValue="1" viewModelPropertyId="0:820"/>
         </ViewModelInstance>
     </ViewModel>
@@ -22176,6 +22193,16 @@
     <DataConverterRangeMapper name="Turn left weight" minInput="-1" maxInput="0" minOutput="80" maxOutput="0" clampLower="true" clampUpper="true" id="0:2411"/>
     <DataConverterRangeMapper name="Turn down weight" minInput="0" maxInput="1" minOutput="0" maxOutput="100" clampLower="true" clampUpper="true" id="0:2412"/>
     <DataConverterRangeMapper name="Turn up weight" minInput="-1" maxInput="0" minOutput="100" maxOutput="0" clampLower="true" clampUpper="true" id="0:2413"/>
+    <DataConverterRangeMapper name="Viseme 0 from" minInput="-0.6" maxInput="-0.4" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:900"/>
+    <DataConverterRangeMapper name="Viseme 0 to" minInput="0.4" maxInput="0.6" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:901"/>
+    <DataConverterRangeMapper name="Viseme 1 from" minInput="0.4" maxInput="0.6" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:910"/>
+    <DataConverterRangeMapper name="Viseme 1 to" minInput="1.4" maxInput="1.6" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:911"/>
+    <DataConverterRangeMapper name="Viseme 2 from" minInput="1.4" maxInput="1.6" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:920"/>
+    <DataConverterRangeMapper name="Viseme 2 to" minInput="2.4" maxInput="2.6" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:921"/>
+    <DataConverterRangeMapper name="Viseme 3 from" minInput="2.4" maxInput="2.6" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:930"/>
+    <DataConverterRangeMapper name="Viseme 3 to" minInput="3.4" maxInput="3.6" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:931"/>
+    <DataConverterRangeMapper name="Viseme 4 from" minInput="3.4" maxInput="3.6" minOutput="0" maxOutput="1" clampLower="true" clampUpper="true" id="0:940"/>
+    <DataConverterRangeMapper name="Viseme 4 to" minInput="4.4" maxInput="4.6" minOutput="1" maxOutput="0" clampLower="true" clampUpper="true" id="0:941"/>
     <DataConverterRangeMapper name="Neck horizontal reach" minInput="-1" maxInput="1" minOutput="-10" maxOutput="10" clampLower="true" clampUpper="true" id="0:221"/>
     <DataConverterRangeMapper name="Neck vertical reach" minInput="-1" maxInput="1" minOutput="-6" maxOutput="6" clampLower="true" clampUpper="true" id="0:222"/>
     <DataConverterRangeMapper name="Pupil horizontal reach" minInput="-1" maxInput="1" minOutput="-7" maxOutput="7" clampLower="true" clampUpper="true" id="0:223"/>
@@ -22216,4 +22243,16 @@
     <ImageAsset file="parts/mouth-neutral.webp" name="Face mouth-neutral" id="0:834"/>
     <ImageAsset file="parts/face-worried.webp" name="Face face-worried" id="0:835"/>
     <ImageAsset file="parts/mouth-ah.webp" name="Face mouth-ah" id="0:836"/>
+    <ImageAsset file="parts/viseme-ee.webp" name="Face viseme-ee" id="0:880"/>
+    <ImageAsset file="parts/viseme-oo.webp" name="Face viseme-oo" id="0:881"/>
+    <ImageAsset file="parts/viseme-mbp.webp" name="Face viseme-mbp" id="0:882"/>
+    <ImageAsset file="parts/viseme-fv.webp" name="Face viseme-fv" id="0:883"/>
+    <ImageAsset file="parts/mouth-closed-smile.webp" name="Face mouth-closed-smile" id="0:884"/>
+    <ImageAsset file="parts/eyes-wink.webp" name="Face eyes-wink" id="0:885"/>
+    <ImageAsset file="parts/face-smirk.webp" name="Face face-smirk" id="0:886"/>
+    <ImageAsset file="parts/face-determined.webp" name="Face face-determined" id="0:887"/>
+    <ImageAsset file="parts/eyes-sleepy.webp" name="Face eyes-sleepy" id="0:888"/>
+    <ImageAsset file="parts/face-sad.webp" name="Face face-sad" id="0:889"/>
+    <ImageAsset file="parts/face-silly.webp" name="Face face-silly" id="0:890"/>
+    <ImageAsset file="parts/face-blush.webp" name="Face face-blush" id="0:891"/>
 </Rive>
