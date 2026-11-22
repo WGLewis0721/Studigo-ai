@@ -9,6 +9,7 @@ import { isReturn, readLastSeen, writeLastSeen } from "@/lib/companion-session";
 import type { BeatName } from "@/lib/companion-motion/beats";
 import { createDirector, type Director, type MotionFrame } from "@/lib/companion-motion/director";
 import { createMouth } from "@/lib/companion-motion/mouth-driver";
+import { createTalkSmoother, talkFromRms } from "@/lib/studigo-talk";
 import { OUTFIT_TEXTURES } from "@/lib/companion-motion/outfits";
 import { momentFor, planVoice, voiceLine, VOICE_START, type VoiceLine, type VoiceMoment, type VoiceState } from "@/lib/companion-voice";
 import { QUIET_FEEDBACK_EVENT, quietFeedback, type QuietFeedbackDetail } from "@/lib/quiet-feedback";
@@ -609,12 +610,32 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   let voiceState: VoiceState = VOICE_START;
   let voiceEnd = 0;
   /** The clip's loudness now, 0..1, from its analyser. Silence reads as 0. */
-  function loudness(): number {
+  function rms(): number {
     if (!levels || !samples) return 0;
     levels.getFloatTimeDomainData(samples);
     let sum = 0;
     for (let i = 0; i < samples.length; i += 1) sum += samples[i] * samples[i];
-    return Math.min(1, Math.max(0, (Math.sqrt(sum / samples.length) - 0.01) * 6));
+    return Math.sqrt(sum / samples.length);
+  }
+  function loudness(): number {
+    return Math.min(1, Math.max(0, (rms() - 0.01) * 6));
+  }
+  /** Rive character: feeds the voice's analyser level to the rig's `talk` input every frame while he speaks. */
+  const talkSmoother = createTalkSmoother();
+  let talkFrame = 0, talkLast = 0;
+  function talkLoop(time: number) {
+    talkFrame = 0;
+    if (dead || !rive) return;
+    const speaking = mouth.active();
+    const target = !speaking ? 0 : levels && routed === "yes" ? talkFromRms(rms()) : mouth.sample(time);
+    const level = talkSmoother.step(target, talkLast ? time - talkLast : 16, calm);
+    talkLast = time;
+    rive.setTalk(level);
+    if (speaking || level > 0) talkFrame = window.requestAnimationFrame(talkLoop);
+    else talkLast = 0;
+  }
+  function startTalk() {
+    if (rive && !talkFrame) talkFrame = window.requestAnimationFrame(talkLoop);
   }
   /** Sends the clip through an analyser, once, on the first line. Without Web Audio the mouth pulses on a timer. */
   function route(): boolean {
@@ -654,6 +675,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     mouth.attach(analysed
       ? { kind: "amplitude", sample: loudness }
       : { kind: "boundary", onWord: (pulse) => { const id = window.setInterval(pulse, 180); return () => window.clearInterval(id); } }, now());
+    startTalk();
     clip.src = line.src;
     if (meeting) markMet();
     clip.play().then(() => {
@@ -1359,7 +1381,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       unsubscribeGrowth();
       lifetime.abort();
       window.clearInterval(heartbeat);
-      window.cancelAnimationFrame(motionFrame);
+      window.cancelAnimationFrame(motionFrame); window.cancelAnimationFrame(talkFrame);
       stopVoice();
       clip.removeAttribute("src"); clip.load();
       void voiceCtx?.close().catch(() => {});
