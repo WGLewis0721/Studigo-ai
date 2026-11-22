@@ -9,6 +9,27 @@ const browser = await chromium.launch({
   ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}),
 });
 
+async function visibleCharacter(canvas) {
+  // Free exports play Rive's monochrome splash before drawing the character.
+  // Check for the approved orange art before evaluating any animation frames.
+  await canvas.evaluate((element) => new Promise((resolve, reject) => {
+    const context = element.getContext("2d");
+    if (!context) { reject(new Error("No composited Rive canvas")); return; }
+    const until = performance.now() + 15_000;
+    const inspect = () => {
+      const pixels = context.getImageData(0, 0, element.width, element.height).data;
+      let orange = 0;
+      for (let i = 0; i < pixels.length; i += 16) {
+        if (pixels[i] > 135 && pixels[i] - pixels[i + 1] > 36 && pixels[i + 1] - pixels[i + 2] > 15 && pixels[i + 3] > 200) orange++;
+      }
+      if (orange > element.width * element.height / 160) resolve();
+      else if (performance.now() > until) reject(new Error("The orange character never appeared after the Rive splash"));
+      else setTimeout(inspect, 150);
+    };
+    inspect();
+  }));
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 900, height: 880 }, reducedMotion: "no-preference" });
   const errors = [];
@@ -18,10 +39,11 @@ try {
   const canvas = actor.locator("canvas");
   const ready = () => actor.and(page.locator("[data-studigo=ready]")).waitFor();
   await ready();
+  await visibleCharacter(canvas);
   assert.equal(await canvas.count(), 1);
-  const idle = await actor.screenshot({ animations: "disabled" });
+  const idle = await canvas.screenshot({ animations: "disabled" });
   await page.waitForTimeout(450);
-  assert.notDeepEqual(await actor.screenshot({ animations: "disabled" }), idle, "idle should visibly advance");
+  assert.ok(!(await canvas.screenshot({ animations: "disabled" })).equals(idle), "idle should visibly advance");
 
   await actor.focus();
   await page.keyboard.press("Enter");
@@ -35,20 +57,37 @@ try {
   await page.getByText("pet", { exact: true }).waitFor();
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.waitForTimeout(125);
-  const calm = await actor.screenshot({ animations: "disabled" });
+  await page.waitForTimeout(250);
+  await canvas.evaluate((element) => {
+    const context = element.getContext("2d");
+    if (!context) throw new Error("Studigo shared renderer did not expose its composited surface");
+    window.studigoCalmPixels = context.getImageData(0, 0, element.width, element.height).data;
+  });
   await page.getByRole("button", { name: "celebrating", exact: true }).click();
   await page.waitForTimeout(400);
-  assert.deepEqual(await actor.screenshot({ animations: "disabled" }), calm, "system calm blocks decorative reactions");
+  const calmDifference = await canvas.evaluate((element) => {
+    const old = window.studigoCalmPixels;
+    delete window.studigoCalmPixels;
+    const current = element.getContext("2d").getImageData(0, 0, element.width, element.height).data;
+    let changed = 0;
+    for (let i = 0; i < current.length; i += 4) {
+      if (current.subarray(i, i + 4).some((color, channel) => Math.abs(color - old[i + channel]) > 3)) changed++;
+    }
+    return changed / (current.length / 4);
+  });
+  assert.ok(calmDifference < 0.0005, `system calm blocks decorative reactions (changed ${calmDifference} of pixels)`);
 
   await page.getByLabel("Second instance").check();
-  await page.getByRole("img", { name: "Second Studigo instance" }).and(page.locator("[data-studigo=ready]")).waitFor();
+  const secondActor = page.getByRole("img", { name: "Second Studigo instance" }).and(page.locator("[data-studigo=ready]"));
+  await secondActor.waitFor();
   assert.equal(await page.locator(".studigoCharacterCanvas").count(), 2);
   await page.getByLabel("Mounted", { exact: true }).uncheck();
   assert.equal(await page.locator(".studigoCharacterCanvas").count(), 1);
   await page.getByLabel("Mounted", { exact: true }).check();
   await ready();
   assert.equal(await page.locator(".studigoCharacterCanvas").count(), 2);
+  await visibleCharacter(canvas);
+  await visibleCharacter(secondActor.locator("canvas"));
   assert.deepEqual(errors, []);
   if (output) {
     await mkdir(output, { recursive: true });

@@ -77,7 +77,7 @@ export function mountStudigoSurface(
         runtime = undefined;
         throw error;
       });
-      const [{ Rive: Player, Layout, Fit, Alignment, EventType }, buffer] = await Promise.all([runtime, loadAsset()]);
+      const [{ Rive: Player, Layout, Fit, Alignment }, buffer] = await Promise.all([runtime, loadAsset()]);
       if (dead) return;
       rive = new Player({
         canvas, buffer, artboard: "Studigo", stateMachine: "Studigo Motion",
@@ -96,14 +96,17 @@ export function mountStudigoSurface(
             });
             ready = true;
             resize();
-            const firstDraw = () => {
-              rive?.off(EventType.Draw, firstDraw);
-              if (dead) return;
-              updateVisibility();
-              clearTimeout(watchdog);
-              onStatus("ready");
-            };
-            rive.on(EventType.Draw, firstDraw);
+            try {
+              // The high-level runtime does not dispatch its declared Draw event.
+              // Paint the newly bound artboard before removing the static image.
+              rive.drawFrame();
+            } catch {
+              fail();
+              return;
+            }
+            updateVisibility();
+            clearTimeout(watchdog);
+            onStatus("ready");
           });
         },
         onLoadError: () => queueMicrotask(fail),
