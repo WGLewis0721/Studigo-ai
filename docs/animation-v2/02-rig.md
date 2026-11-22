@@ -1,6 +1,6 @@
 # Phase 2 — Primary Rive rig
 
-**PASS within the Phase 1 amplitude envelope · 2026-11-21.** The source is [scene.rml](../../design/living-companion/rive/studigo/scene.rml). Run `rive design/living-companion/rive/studigo` from the repository root to see the diagnostic timeline at this checkpoint.
+**PASS within the Phase 1 amplitude envelope · 2026-11-21.** The source is [scene.rml](../../design/living-companion/rive/studigo/scene.rml). Run `rive design/living-companion/rive/studigo --data=mode=1` from the repository root to see the diagnostic timeline.
 
 The `Studigo` artboard carries one continuous skinned surface. The 307 vertices and 589 triangles share one texture, with up to four influences per vertex. The texture is the approved full-body neutral at `apps/web/public/mascot/companion/full/center.webp` (SHA-256 `4dc1a128970096d4ecfd5bacf282d279fba55bc414ee05c3753778ee22b05926`). The RML links the tracked original. No duplicate full-body art, cropping step or network asset is needed. The soft closed-lid patches are editable Rive shapes registered to the head. Their color and extent were tuned against the approved skin and eyelid outlines.
 
