@@ -26,7 +26,7 @@ export function createStudigoController() {
     gaze: reducedMotion ? centered : gaze,
     outfit,
     flameBoost,
-    emote: reducedMotion ? null : emote ?? STUDIGO_EXPRESSION_EMOTE[resolveStudigoIntent(behavior)] ?? null,
+    emote: emote ?? STUDIGO_EXPRESSION_EMOTE[resolveStudigoIntent(behavior)] ?? null,
     talk: reducedMotion ? Math.min(talk, TALK_REDUCED_CAP) : talk,
   });
   let last = frame();

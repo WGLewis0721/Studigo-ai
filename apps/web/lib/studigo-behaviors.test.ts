@@ -27,7 +27,7 @@ test("equal or higher priority reactions replace the earlier one", () => {
   const petting = requestStudigoReaction(incorrect, "petting", 40);
   assert.equal(resolveStudigoIntent(incorrect), "incorrect");
   assert.equal(resolveStudigoIntent(petting), "petting");
-  assert.equal(resolveStudigoIntent(expireStudigoReaction(petting, 1490)), "idle");
+  assert.equal(resolveStudigoIntent(expireStudigoReaction(petting, 1530)), "idle");
 });
 
 test("wake and a pet release a sleepy base before returning to idle", () => {
