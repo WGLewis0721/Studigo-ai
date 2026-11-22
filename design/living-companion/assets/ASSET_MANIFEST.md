@@ -53,3 +53,35 @@ Kept outside the repo in `C:/Users/Willi/Dev/Learning/av2-3d/` (binaries). Higgs
 - `studigo.glb` 2165170e343e8effdd553b6ee0bbb27f1680427523bef06c576582ca187469b6
 - `studigo-apose.glb` d65d8c4979516b8e59317722402b7f44a994d9ab4c56796ae1e1f818c2a34df9
 - `studigo-rig.blend` 12d04cfa2b9a7014934aee882f60f53507db0f13202428c78b41174acbac6c40
+
+## Rive face library (Lane 2)
+
+Model: kie.ai `gpt-image-2-image-to-image` (GPT Image 2, image to image), 1K, 1:1, opaque background, 6 credits per task. Reference: `apps/web/public/mascot/companion/full/center.webp` flattened on white and upscaled to a 1024 px PNG (LANCZOS), uploaded to kie.ai as the reference image. Prompt template for every row:
+
+> Edit this exact image. Keep the character, pose, framing, size, position, proportions, colors, lighting and plain white background pixel-identical. Change ONLY his <PART>: <EXPRESSION>. Nothing else changes.
+
+Cut with `scripts/living-companion/cut-face-layer.py`, which rejects an edit whose body is not at 0 px or whose head is more than 1 px from the source. Regions in 540 artboard units: eyes `224,182,30,36 316,182,30,36`; mouth `270,240,66,26`; open mouth `270,248,62,36`; face = eyes + open mouth; face-blush = eyes + mouth + cheeks `196,222,28,20 344,222,28,20`. Output: `design/living-companion/rive/studigo/parts/<name>.webp`; `cx,cy` is the layer centre on the 540 artboard.
+
+| Layer | Part | `<EXPRESSION>` | Model | Date | kie.ai task id | cx,cy |
+|---|---|---|---|---|---|---|
+| `viseme-ee` | mouth | wide flat smile showing teeth, saying 'ee' | gpt-image-2-image-to-image | 2026-11-21 | `5e8fc0eeefdf7270c7c996915a21951f` | 270, 248 |
+| `viseme-oo` | mouth | small rounded pursed lips saying 'oo' | gpt-image-2-image-to-image | 2026-11-21 | `122d9b492d64830e37b0e6e6141a8cb9` | 269.5, 239.5 |
+| `viseme-mbp` | mouth | lips pressed closed, slightly puffed | gpt-image-2-image-to-image | 2026-11-21 | `9c2407691f0e308d6754ef8b76deb301` | 269.5, 239.5 |
+| `viseme-fv` | mouth | upper teeth resting on the lower lip, saying 'f' | gpt-image-2-image-to-image | 2026-11-21 | `149fa7d0d44e984313c99cb662d26827` | 270, 248 |
+| `mouth-closed-smile` | mouth | closed gentle smile, slightly bigger than now | gpt-image-2-image-to-image | 2026-11-21 | `73b9fcee7eaf6491b3f2d526dc340cfa` | 269.5, 239.5 |
+| `eyes-wink` | eyes | his left eye (viewer's right) winking closed, other eye open | gpt-image-2-image-to-image | 2026-11-21 | `92f86414fce9658bdb56f0f8bb0fdef2` | 270, 182 |
+| `face-smirk` | face | playful lopsided smirk, one brow raised | gpt-image-2-image-to-image | 2026-11-21 | `0fb975ef2cad03609a43d837bef96b3e` | 270, 215 |
+| `face-determined` | face | determined, brows lowered, confident small smile | gpt-image-2-image-to-image | 2026-11-21 | `0077f4037601f074065bd38edad76b44` | 270.5, 215 |
+| `eyes-sleepy` | eyes | heavy half-closed sleepy eyelids | gpt-image-2-image-to-image | 2026-11-21 | `b5e89d4227771aa2a988f8d63eae9639` | 269.5, 182 |
+| `face-sad` | face | sad, brows up in the middle, eyes glossy with a small tear, soft frown | gpt-image-2-image-to-image | 2026-11-21 | `f475ff5bf647175459f8e92e09063cd0` | 269.5, 215 |
+| `face-silly` | face | silly, eyes squinted, tongue sticking out (attempt 3) | gpt-image-2-image-to-image | 2026-11-21 | `1dea099c5946c6310dd1e6a8b7e35891` | 270.5, 215 |
+| `face-blush` | face | shy happy, rosy pink blush on both cheeks, small smile | gpt-image-2-image-to-image | 2026-11-21 | `61002244b7fe1a1c0d7309cd90b6619e` | 266, 206 |
+
+Not delivered (not in `parts/`):
+
+- `face-thinking` (thinking, eyes looking up to one side, mouth pushed to one side): skipped after three kie.ai attempts. `984ea4617d5a0cc7c20732f30f023f38` and `c95c22b923ed78ceda843ede96a5d24a` passed registration, but the edit moved the nostrils, which show as ghost nostrils when composited. `14a269be14e9ffd4163beb284ba521fb` was rejected (head 5 px off).
+- `face-silly` attempts `c41ee5d0ad4d5516f1a807ba3a8f3ad4` (head 2 px off) and `6fd83c9b24d6dc13d57883651e7e79c6` (whole frame about 10 px off) were rejected. The layer above is attempt 3.
+
+Review note: `viseme-mbp` has closed lips with almost no visible lip line. Check it on the rig before relying on it as the closed shape.
+
+Total: 17 kie.ai tasks, 102 credits.
