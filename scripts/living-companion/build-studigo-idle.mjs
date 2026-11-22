@@ -30,7 +30,11 @@ const lidNode = (id, x, name, edge, arc) => `<Node x="${x}" y="-74" scaleY="0" n
                             </Node>
                             <Node name="Lid skin group">
                                 <Shape name="Lid skin">
-                                    <Ellipse y="18" width="38" height="36"/>
+                                    <PointsPath isClosed="true">
+                                        <CubicDetachedVertex x="-19" y="0" inRotation="1.5708" inDistance="19.9" outRotation="0" outDistance="0"/>
+                                        <CubicDetachedVertex x="19" y="0" inRotation="3.1416" inDistance="0" outRotation="1.5708" outDistance="19.9"/>
+                                        <CubicDetachedVertex x="0" y="36" inRotation="0" inDistance="10.5" outRotation="3.1416" outDistance="10.5"/>
+                                    </PointsPath>
                                     <Fill fillRule="clockwise">
                                         <LinearGradient startX="0" startY="0" endX="0" endY="36">
                                             <GradientStop position="0" colorValue="FFF8AA62"/>
