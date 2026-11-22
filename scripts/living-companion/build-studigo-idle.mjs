@@ -9,42 +9,43 @@ let s = readFileSync(FILE, "utf8");
 
 /* ---------- 1. Physical eyelids ---------- */
 // A skin lid that slides down from the top of each eye socket. Always opaque.
-const lidNode = (id, x, name, edge, arc) => `<Node x="${x}" y="-74" scaleY="0" name="${name}" id="${id}">
+// The lid is a rounded skin ball sized to the eye socket (measured on the still neutral: each eye is
+// about 32 x 36 px, its top at the node). A radial gradient goes from lit lid to the socket's shadow, and
+// the feather melts its edge into the dark socket rim, so it never reads as a pasted patch.
+const LID_DX = { "0:54": 0, "0:55": 4 };
+const lidNode = (id, x, name, edge, arc) => { const dx = LID_DX[id]; return `<Node x="${x}" y="-74" scaleY="0" name="${name}" id="${id}">
                             <Node opacity="0" name="Happy arc group" id="${arc}">
-                                <Shape y="24" name="Happy arc">
+                                <Shape x="${dx}" y="21" name="Happy arc">
                                     <PointsPath>
-                                        <CubicDetachedVertex x="-12" y="3" outRotation="5.533" outDistance="6"/>
-                                        <CubicDetachedVertex x="12" y="3" inRotation="3.883" inDistance="6"/>
+                                        <CubicDetachedVertex x="-13" y="3" outRotation="5.533" outDistance="7"/>
+                                        <CubicDetachedVertex x="13" y="3" inRotation="3.883" inDistance="7"/>
                                     </PointsPath>
-                                    <Stroke thickness="2.6" cap="round"><SolidColor colorValue="FF7A3A18"/></Stroke>
+                                    <Stroke thickness="2.8" cap="round"><SolidColor colorValue="FF6E3216"/></Stroke>
                                 </Shape>
                             </Node>
                             <Node name="Lid edge group" id="${edge}">
-                                <Shape y="34" name="Lid edge">
+                                <Shape x="${dx}" y="27" name="Lid edge">
                                     <PointsPath>
-                                        <CubicDetachedVertex x="-14" y="-2" outRotation="0.44" outDistance="8"/>
-                                        <CubicDetachedVertex x="14" y="-2" inRotation="2.70" inDistance="8"/>
+                                        <CubicDetachedVertex x="-15" y="-3" outRotation="0.5" outDistance="8"/>
+                                        <CubicDetachedVertex x="15" y="-3" inRotation="2.64" inDistance="8"/>
                                     </PointsPath>
-                                    <Stroke thickness="2" cap="round"><SolidColor colorValue="FF87421F"/></Stroke>
+                                    <Stroke thickness="2.2" cap="round"><SolidColor colorValue="FF7E3B1C"/></Stroke>
                                 </Shape>
                             </Node>
                             <Node name="Lid skin group">
-                                <Shape name="Lid skin">
-                                    <PointsPath isClosed="true">
-                                        <CubicDetachedVertex x="-19" y="0" inRotation="1.5708" inDistance="19.9" outRotation="0" outDistance="0"/>
-                                        <CubicDetachedVertex x="19" y="0" inRotation="3.1416" inDistance="0" outRotation="1.5708" outDistance="19.9"/>
-                                        <CubicDetachedVertex x="0" y="36" inRotation="0" inDistance="10.5" outRotation="3.1416" outDistance="10.5"/>
-                                    </PointsPath>
+                                <Shape x="${dx}" y="18" name="Lid skin">
+                                    <Ellipse width="37" height="41"/>
                                     <Fill fillRule="clockwise">
-                                        <LinearGradient startX="0" startY="0" endX="0" endY="36">
-                                            <GradientStop position="0" colorValue="FFF8AA62"/>
-                                            <GradientStop position="1" colorValue="FFEB8A52"/>
-                                        </LinearGradient>
-                                        <Feather strength="2" spaceValue="local"/>
+                                        <RadialGradient startX="0" startY="-2" endX="21" endY="-2">
+                                            <GradientStop position="0" colorValue="FFF4A05E"/>
+                                            <GradientStop position="0.7" colorValue="FFEE9150"/>
+                                            <GradientStop position="1" colorValue="FFDC7A4A"/>
+                                        </RadialGradient>
+                                        <Feather strength="5" spaceValue="local"/>
                                     </Fill>
                                 </Shape>
                             </Node>
-                        </Node>`;
+                        </Node>`; };
 // Replace a Node and its whole subtree: count nested Node tags with indexOf, no regex needed.
 function replaceNode(src, openTag, make) {
   const start = src.indexOf(openTag);
