@@ -42,6 +42,8 @@ export type CompanionHandle = {
   setPrefs(prefs: CompanionPrefs): void;
   /** Living companion only: play one of his beats by name. For the dev hook and demos. */
   play?(beat: BeatName): void;
+  /** Rive character only: play one of his reactions by name (dev hook and test panel). */
+  react?(reaction: StudigoReaction): void;
   destroy(): void;
 };
 
@@ -1351,6 +1353,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       sync();
     },
     play(beat) { if (!dead) director?.play(beat); },
+    react(reaction) { if (!dead) rive?.react(reaction); },
     destroy() {
       dead = true;
       unsubscribeGrowth();

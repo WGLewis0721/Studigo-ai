@@ -24,6 +24,13 @@ const BUTTONS: [label: string, run: (c: CompanionHandle) => void][] = [
   ["Stall 2", (c) => c.event("stall", { level: 2 })],
   ["Welcome back", (c) => c.event("sessionReturn")],
   ["Thinking", (c) => { c.thinking(true); window.setTimeout(() => c.thinking(false), 2500); }],
+  ["Pat", (c) => c.react?.("petting")],
+  ["Belly poke", (c) => c.react?.("bellyPoke")],
+  ["Tail tug", (c) => c.react?.("tailTug")],
+  ["Surprised", (c) => c.react?.("surprised")],
+  ["Proud", (c) => c.react?.("proud")],
+  ["Annoyed", (c) => c.react?.("annoyed")],
+  ["Excited", (c) => c.react?.("excited")],
   ["Grow +50", (c) => c.grow(50)],
   ["Grow +500", (c) => c.grow(500)]
 ];
