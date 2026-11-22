@@ -42,6 +42,8 @@ export type CompanionHandle = {
   setPrefs(prefs: CompanionPrefs): void;
   /** Living companion only: play one of his beats by name. For the dev hook and demos. */
   play?(beat: BeatName): void;
+  /** Rive character only: play one of his reactions by name (dev hook and test panel). */
+  react?(reaction: StudigoReaction): void;
   destroy(): void;
 };
 
@@ -754,8 +756,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       if (!calm && !rt.asleep && !rt.typingUntil && !rt.gazeUntil && !document.hidden && t >= nextRiveTrick) {
         const available = availableTricks(growth.points);
         const tricks = STUDIGO_TRICKS.filter((trick) => available.includes(trick));
-        if (tricks.length) rive.react(pick(tricks));
-        nextRiveTrick = t + 14000;
+        // Growth shows in how he carries himself: a new Studigo is eager and curious and pipes up often;
+        // an experienced one is composed, with a proud stance now and then.
+        const eager = growth.points < 55;
+        const pool: StudigoReaction[] = eager ? [...tricks, "curious", "happy", "curious"] : [...tricks, "proud"];
+        if (pool.length) rive.react(pick(pool));
+        nextRiveTrick = t + (eager ? 11000 : 15000);
       }
       return;
     }
@@ -1347,6 +1353,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
       sync();
     },
     play(beat) { if (!dead) director?.play(beat); },
+    react(reaction) { if (!dead) rive?.react(reaction); },
     destroy() {
       dead = true;
       unsubscribeGrowth();
