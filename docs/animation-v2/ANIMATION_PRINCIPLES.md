@@ -33,12 +33,12 @@ Current recorded baselines are [idle](03-idle.md), [transitions](04-transitions.
 
 ## Stage A idle review (2026-11-21)
 
-Clip: 60 s Rive CLI render (360 px, 24 fps) and a 32 s real-time Chrome 151 recording of the shipped component; hashes in [03-idle.md](03-idle.md#stage-a-revision-2026-11-21-blink-ghosting-and-varied-loops). Stills: [30 s sheet](evidence/stageA/idle-30s-sheet.jpg), [blink before and after](evidence/stageA/blink-before-after.jpg).
+Clip: 60 s Rive CLI render (360 px, 24 fps) and a 32 s real-time Chrome 151 recording of the shipped component; hashes in [03-idle.md](03-idle.md#stage-a-revision-2026-11-21-blink-ghosting-and-varied-loops). Stills: [blink, one tick per frame](evidence/stageA/blink-1tick-strip.jpg), [2 fps tile](evidence/stageA/idle-2fps-10s.jpg), [V1 side by side](evidence/stageA/v1-vs-rive-2fps.jpg). Rework 2 hashes are in 03-idle.md.
 
-- [x] Solid drawing, no ghosting: head, snout, frills, spike, vest and tail stay registered across 60 s. The blink ghost (eyeball through the lid, crease over the pupil) was found and fixed.
+- [x] Solid drawing, no ghosting: head, snout, frills, spike, vest and tail stay registered across 60 s. The blink is a physical opaque lid sliding over the eye; no frame shows a pupil or crease through it.
 - [x] No pose snapping: no adjacent-frame spike above 8x the median; rest at 9 s and 19 s matches frame 0 exactly.
 - [x] Follow-through and overlap: eyes lead the head, frills and tail follow, flame trails the tail tip.
 - [x] Slow in and slow out: breath, glance and tilt keys use per-segment cubic easing; blink closes fast and opens slower.
-- [x] Timing and exaggeration: restrained by design; blink about 130 ms, closed about 50 ms.
+- [x] Timing and exaggeration: restrained by design; blink about 140 ms (3 ticks closing, 3 hold, 8 opening), closed about 50 ms; glances anticipate with a dip opposite the look.
 - [x] Interruption and recovery: reduced motion returns to the exact neutral on the next tick; the idle restarts at its first frame after an intent or inspection mode.
 - [ ] Appeal and personality at real speed: needs a human viewing of the recordings. Not claimed by this review.
