@@ -778,10 +778,12 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
   }
 
   /* ---------- touch: tap to poke, stroke to pet, pull to pick up, pinch to resize ---------- */
-  function poke() {
+  /** `belly`: the tap landed low on his body, so the Rive character answers with a belly poke instead of a startle. */
+  function poke(belly = false) {
     const t = now();
     rt.pokeCombo = t - rt.pokeAt < 1300 ? rt.pokeCombo + 1 : 1; rt.pokeAt = t;
-    react("poke", 900); burst("spark", 3);
+    if (rive && belly) rive.react("bellyPoke"); else react("poke", 900);
+    burst("spark", 3);
     if (rt.pokeCombo >= 3) { rt.pokeCombo = 0; pulse("sway", 1600); say(LINES.tickle); }
   }
   function highFive() { pulse("highfive", 360); burst("spark", 9); rt.reactUntil = now() + 1100; }
@@ -860,7 +862,7 @@ export function createCompanion(ws: HTMLElement, host: HTMLElement, options: Opt
     if (!press) return;
     cancel(longTimer); rt.press = null;
     director?.setPetted(false);
-    if (press.mode === "press") { if (rt.pose === "celebrate") highFive(); else poke(); }
+    if (press.mode === "press") { if (rt.pose === "celebrate") highFive(); else poke(press.sy > rt.y + H * 0.58); }
     else if (press.mode === "pet") react("pet", 750);
     else if (press.mode === "drag") endDrag();
   };

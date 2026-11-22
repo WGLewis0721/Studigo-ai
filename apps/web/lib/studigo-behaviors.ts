@@ -49,7 +49,7 @@ export const STUDIGO_EVENT_REACTION = {
 } as const satisfies Record<CompanionEvent, StudigoReaction>;
 
 export const STUDIGO_EXPRESSION_EMOTE: Partial<Record<StudigoIntent, StudigoEmote>> = {
-  proud: "spark", celebrating: "spark", excited: "spark", petting: "heart", curious: "thought",
+  proud: "spark", celebrating: "spark", excited: "spark", petting: "heart", curious: "thought", bellyPoke: "spark", thinking: "thought",
 };
 
 export type StudigoBehavior = {
