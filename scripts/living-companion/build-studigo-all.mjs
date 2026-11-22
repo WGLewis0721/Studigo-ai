@@ -3,7 +3,7 @@
 import { execFileSync } from "node:child_process";
 import { copyFileSync } from "node:fs";
 
-const steps = ["idle", "touch", "expressions", "gestures", "face", "growth", "boost"];
+const steps = ["idle", "touch", "expressions", "gestures", "face", "growth", "boost", "turns"];
 for (const step of steps) {
   process.stdout.write(`${step}: `);
   execFileSync(process.execPath, [`scripts/living-companion/build-studigo-${step}.mjs`], { stdio: "inherit" });
