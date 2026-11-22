@@ -112,7 +112,11 @@ const PLAN = {
   "Petting": { laugh: (t) => 0.35 * bump(t, 10, 22, 64, 82) },
   "Belly poke": { oh: (t) => bump(t, 1, 5, 12, 20, out), laugh: (t) => laughs(t, 18, 4, 15, 0.9) },
   "Tail tug": { oh: (t) => bump(t, 2, 6, 20, 32, out) },
-  "Sit and wag": { laugh: (t) => 0.6 * bump(t, 20, 34, 90, 110) },
+  "Sit and wag": { laugh: (t) => 0.7 * bump(t, 20, 34, 88, 108) },
+  "Tail chase": { oh: (t) => 0.7 * bump(t, 16, 22, 30, 40), laugh: (t) => laughs(t, 74, 2, 13, 0.8) },
+  "Double take": { oh: (t) => 0.85 * bump(t, 31, 35, 54, 68, out) },
+  "Stretch": { oh: (t) => 1.25 * bump(t, 22, 40, 58, 72) },
+  "Sniff": { oh: (t) => 0.3 * bump(t, 44, 50, 54, 62) },
 };
 
 function keys(D, fn) {

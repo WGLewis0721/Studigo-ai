@@ -14,7 +14,7 @@ const GAIN = Number(process.env.STUDIGO_BOOST ?? 1.6);
 const gainFor = (oid, key) => key === "15" || key === "90" ? GAIN : key === "91" && (oid === "0:10" || oid === "0:11") ? 1.25 : 1;
 const BODY = ["0:10", "0:11", "0:12", "0:13", "0:14", "0:15", "0:16", "0:17", "0:18", "0:70", "0:19", "0:27", "0:28", "0:29", "0:30", "0:31", "0:32", "0:33", "0:34", "0:35", "0:36", "0:37"];
 const REACTIONS = ["Listening", "Thinking", "Happy", "Celebrating", "Encouraging", "Correct", "Incorrect · Reassure", "Curious", "Wake",
-  "Petting", "Surprised", "Proud", "Playfully annoyed", "Excited", "Tail chase", "Sit and wag", "Sniff", "Double take", "Stretch", "Belly poke", "Tail tug"];
+  "Petting", "Surprised", "Proud", "Playfully annoyed", "Excited", "Belly poke", "Tail tug"];
 
 // rest values: rotation 0, scale 1, x and y from the bone's bind attributes
 const rest = {};
