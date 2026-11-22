@@ -26,4 +26,4 @@ rive design/living-companion/rive/studigo --publish=local
 
 `mode` is the numeric property on the default `Studigo Controls` view model. 0 is idle, 1 is the rig inspection, 2 is the reduced-motion still. The state machine runs on artboard `Studigo` and is named `Studigo Motion`.
 
-The exported [runtime candidate](../../apps/web/public/mascot/rive/studigo.riv) is 66,958 bytes with SHA-256 `677fc15d70708f717b65c1136a98e6eeab2e841a98cde276b68633617490f2bb`. Rive reports the approved Free-tier splash. This is a local export. Capture timing measures deterministic animation playback, not wall-clock browser performance.
+The runtime candidate at Gate 3 was 66,958 bytes with SHA-256 `677fc15d70708f717b65c1136a98e6eeab2e841a98cde276b68633617490f2bb`. The [current export](../../apps/web/public/mascot/rive/studigo.riv) follows the latest passing gate. Rive reports the approved Free-tier splash on local export. Capture timing measures deterministic animation playback, not wall-clock browser performance.
