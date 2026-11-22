@@ -1,0 +1,47 @@
+{
+  "roomSettingsCalm_reduced_false": {
+    "checked": false,
+    "disabled": false,
+    "note": "",
+    "errors": []
+  },
+  "roomSettingsCalm_reduced_true": {
+    "checked": false,
+    "disabled": false,
+    "note": "",
+    "errors": []
+  },
+  "spriteLeanPoke_calm_false": {
+    "dataCalm": false,
+    "lean": "matrix(0.96, 0, 0, 0.96, 0, -21)",
+    "poke": "matrix(1.04, 0, 0, 1.04, 0, -4)",
+    "errors": []
+  },
+  "spriteLeanPoke_calm_true": {
+    "dataCalm": true,
+    "lean": "matrix(0.96, 0, 0, 0.96, 0, -21)",
+    "poke": "matrix(1.04, 0, 0, 1.04, 0, -4)",
+    "errors": []
+  },
+  "phoneTabAfterMinimizeOnDensePage": {
+    "top": {
+      "hidden": false,
+      "windowY": 0
+    },
+    "minimized": {
+      "hidden": false,
+      "tabHidden": false
+    },
+    "scrolled": {
+      "hidden": false,
+      "tabHidden": false,
+      "windowY": 865
+    },
+    "after": {
+      "hidden": true,
+      "state": "window",
+      "windowY": 865
+    },
+    "errors": []
+  }
+}

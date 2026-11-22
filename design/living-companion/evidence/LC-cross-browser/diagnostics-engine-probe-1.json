@@ -1,0 +1,721 @@
+{
+  "firefox": {
+    "version": "153.0",
+    "rafRate": {
+      "framesIn3s": 42,
+      "fps": 13.9
+    },
+    "phoneDrag": {
+      "before": {
+        "grip": {
+          "cx": 302,
+          "cy": 621,
+          "w": 34,
+          "h": 16
+        },
+        "hitIsGrip": true,
+        "hitClass": "cmpCorner cmpGrip",
+        "win": {
+          "l": 244,
+          "t": 621,
+          "w": 116
+        },
+        "state": "window"
+      },
+      "mid": {
+        "dragging": false,
+        "win": {
+          "l": 244,
+          "t": 621
+        }
+      },
+      "events": [
+        [
+          "mousedown",
+          "",
+          302,
+          621,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "mouseup",
+          "",
+          217,
+          586,
+          "trName"
+        ]
+      ]
+    },
+    "summon": {
+      "seat": {
+        "cmpHidden": true,
+        "state": "window",
+        "prefsSeated": null
+      },
+      "tabHit": {
+        "cx": 1270,
+        "cy": 850,
+        "hitIsTab": true,
+        "hitClass": "cmpTab"
+      },
+      "samples": [
+        {
+          "tMs": 250,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 500,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 750,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 1000,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 1250,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 1500,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 1750,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 2000,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 2250,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 2500,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 2750,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 3000,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 3250,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 3500,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 3750,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        },
+        {
+          "tMs": 4000,
+          "hidden": true,
+          "state": "window",
+          "prefsSeated": null,
+          "clicks": [
+            "roomWorkspace"
+          ]
+        }
+      ]
+    }
+  },
+  "chromium": {
+    "version": "151.0.7922.34",
+    "rafRate": {
+      "framesIn3s": 148,
+      "fps": 49.2
+    },
+    "phoneDrag": {
+      "before": {
+        "grip": {
+          "cx": 302,
+          "cy": 621,
+          "w": 34,
+          "h": 16
+        },
+        "hitIsGrip": true,
+        "hitClass": "cmpCorner cmpGrip",
+        "win": {
+          "l": 244,
+          "t": 621,
+          "w": 116
+        },
+        "state": "window"
+      },
+      "mid": {
+        "dragging": true,
+        "win": {
+          "l": 151,
+          "t": 578
+        }
+      },
+      "events": [
+        [
+          "pointermove",
+          "mouse",
+          302,
+          621,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointerdown",
+          "mouse",
+          302,
+          621,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          288,
+          615,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          274,
+          609,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          260,
+          604,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          245,
+          598,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          231,
+          592,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          217,
+          586,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointerup",
+          "mouse",
+          217,
+          586,
+          "cmpCorner cmpGrip"
+        ]
+      ]
+    },
+    "summon": {
+      "seat": {
+        "cmpHidden": true,
+        "state": "window",
+        "prefsSeated": null
+      },
+      "tabHit": {
+        "cx": 1270,
+        "cy": 850,
+        "hitIsTab": true,
+        "hitClass": "cmpTab"
+      },
+      "samples": [
+        {
+          "tMs": 250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 4000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        }
+      ]
+    }
+  },
+  "webkit": {
+    "version": "26.5",
+    "rafRate": {
+      "framesIn3s": 1,
+      "fps": 0.3
+    },
+    "phoneDrag": {
+      "before": {
+        "grip": {
+          "cx": 302,
+          "cy": 621,
+          "w": 34,
+          "h": 16
+        },
+        "hitIsGrip": true,
+        "hitClass": "cmpCorner cmpGrip",
+        "win": {
+          "l": 244,
+          "t": 621,
+          "w": 116
+        },
+        "state": "window"
+      },
+      "mid": {
+        "dragging": true,
+        "win": {
+          "l": 151,
+          "t": 578
+        }
+      },
+      "events": [
+        [
+          "pointermove",
+          "mouse",
+          302,
+          621,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointerdown",
+          "mouse",
+          302,
+          621,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          287,
+          615,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          273,
+          609,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          259,
+          603,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          245,
+          597,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          231,
+          591,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointermove",
+          "mouse",
+          217,
+          586,
+          "cmpCorner cmpGrip"
+        ],
+        [
+          "pointerup",
+          "mouse",
+          217,
+          586,
+          "cmpCorner cmpGrip"
+        ]
+      ]
+    },
+    "summon": {
+      "seat": {
+        "cmpHidden": true,
+        "state": "window",
+        "prefsSeated": null
+      },
+      "tabHit": {
+        "cx": 1270,
+        "cy": 850,
+        "hitIsTab": true,
+        "hitClass": "cmpTab"
+      },
+      "samples": [
+        {
+          "tMs": 250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 1750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 2750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3250,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3500,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 3750,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        },
+        {
+          "tMs": 4000,
+          "hidden": false,
+          "state": "window",
+          "prefsSeated": false,
+          "clicks": [
+            "cmpTab"
+          ]
+        }
+      ]
+    }
+  }
+}

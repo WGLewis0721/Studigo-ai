@@ -1,0 +1,141 @@
+{
+  "base": "http://127.0.0.1:3312",
+  "startedAt": "2026-11-21T01:45:23.231Z",
+  "sections": {
+    "voice": {
+      "firstMeeting": {
+        "plays": [
+          "/mascot/voice/im-studigo.mp3"
+        ],
+        "mascotRequestsAtMount": [
+          "/mascot/companion/center.webp",
+          "/mascot/companion/support.webp"
+        ],
+        "metFlagAfter": "1"
+      },
+      "lipSync": [
+        {
+          "file": "im-coming-with-you.mp3",
+          "playToPlaying": 138,
+          "playingToAudible": 76,
+          "audibleToMouthAbove02": 34,
+          "loudToMouthAbove02": 34,
+          "rmsP50": 0.088,
+          "rmsP90": 0.239,
+          "rmsMax": 0.393,
+          "mouthP10": 0,
+          "mouthP50": 0.408,
+          "mouthP90": 0.986,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 39
+        },
+        {
+          "file": "im-coming-with-you.mp3",
+          "playToPlaying": 73,
+          "playingToAudible": 186,
+          "audibleToMouthAbove02": 1,
+          "loudToMouthAbove02": 1,
+          "rmsP50": 0.077,
+          "rmsP90": 0.238,
+          "rmsMax": 0.376,
+          "mouthP10": 0,
+          "mouthP50": 0.486,
+          "mouthP90": 0.977,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 44
+        },
+        {
+          "file": "im-coming-with-you.mp3",
+          "playToPlaying": 55,
+          "playingToAudible": 78,
+          "audibleToMouthAbove02": 53,
+          "loudToMouthAbove02": 36,
+          "rmsP50": 0.09,
+          "rmsP90": 0.236,
+          "rmsMax": 0.374,
+          "mouthP10": 0,
+          "mouthP50": 0.325,
+          "mouthP90": 0.96,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 45
+        },
+        {
+          "file": "im-coming-with-you.mp3",
+          "playToPlaying": 32,
+          "playingToAudible": 138,
+          "audibleToMouthAbove02": 0,
+          "loudToMouthAbove02": 0,
+          "rmsP50": 0.096,
+          "rmsP90": 0.222,
+          "rmsMax": 0.365,
+          "mouthP10": 0,
+          "mouthP50": 0.446,
+          "mouthP90": 0.978,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 43
+        },
+        {
+          "file": "im-coming-with-you.mp3",
+          "playToPlaying": 38,
+          "playingToAudible": 136,
+          "audibleToMouthAbove02": 0,
+          "loudToMouthAbove02": 0,
+          "rmsP50": 0.09,
+          "rmsP90": 0.236,
+          "rmsMax": 0.359,
+          "mouthP10": 0,
+          "mouthP50": 0.469,
+          "mouthP90": 0.987,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 46
+        }
+      ],
+      "cooldown": {
+        "steps": [
+          "wrong",
+          "correct1",
+          "correct2",
+          "correct3",
+          "correct4",
+          "setDone-inside-cooldown",
+          "setDone-after-cooldown"
+        ],
+        "playsInOrder": [
+          "one-step-at-a-time.mp3",
+          "nice.mp3",
+          "you-knew-that-one.mp3"
+        ],
+        "lipSyncOfPlays": null
+      },
+      "bubble": {
+        "text": "Come on!",
+        "shown": true
+      },
+      "voiceOff": {
+        "playsWhileOff": 0
+      },
+      "voiceOn": {
+        "plays": [
+          "/mascot/voice/you-knew-that-one.mp3"
+        ],
+        "lipSync": {
+          "file": "you-knew-that-one.mp3",
+          "playToPlaying": 2,
+          "playingToAudible": 85,
+          "audibleToMouthAbove02": 0,
+          "loudToMouthAbove02": 0,
+          "rmsP50": 0.083,
+          "rmsP90": 0.218,
+          "rmsMax": 0.333,
+          "mouthP10": 0.347,
+          "mouthP50": 0.35,
+          "mouthP90": 1,
+          "maxMouthDuringLine": 1,
+          "distinctMouthValues": 42
+        }
+      },
+      "consoleAndPageErrors": []
+    }
+  },
+  "finishedAt": "2026-11-21T01:47:08.051Z"
+}

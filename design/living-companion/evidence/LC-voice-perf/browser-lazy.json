@@ -1,0 +1,30 @@
+{
+  "base": "http://127.0.0.1:3312",
+  "startedAt": "2026-11-21T01:47:21.595Z",
+  "sections": {
+    "lazy": {
+      "atMount": [
+        "/mascot/companion/center.webp"
+      ],
+      "afterFirstEvent": [
+        "/mascot/companion/celebrate.webp",
+        "/mascot/companion/support.webp",
+        "/mascot/companion/pet.webp",
+        "/mascot/companion/poke.webp",
+        "/mascot/companion/lean.webp",
+        "/mascot/companion/sleep.webp",
+        "/mascot/voice/nice.mp3"
+      ],
+      "afterFirstPointerMove": [
+        "/mascot/companion/left.webp",
+        "/mascot/companion/right.webp",
+        "/mascot/companion/up.webp",
+        "/mascot/companion/down.webp",
+        "/mascot/companion/up-right.webp",
+        "/mascot/companion/down-right.webp"
+      ],
+      "consoleAndPageErrors": []
+    }
+  },
+  "finishedAt": "2026-11-21T01:47:28.028Z"
+}

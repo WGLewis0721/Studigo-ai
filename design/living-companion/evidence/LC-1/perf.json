@@ -1,0 +1,1747 @@
+{
+  "id": "LC-1",
+  "task": "H-A",
+  "measuredOn": "2026-11-20",
+  "builds": {
+    "on": {
+      "build": {
+        "label": "on",
+        "exitCode": "0",
+        "command": "pnpm --filter @studigo/web build"
+      },
+      "suites": {
+        "bundle": {
+          "ok": true,
+          "webgl": {
+            "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x000046A8) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+            "vendor": "Google Inc. (Intel)",
+            "version": "WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+          },
+          "routeJs": {
+            "chunks": 12,
+            "rawBytes": 2072287,
+            "gzipBytes": 638398
+          },
+          "companionChunks": [
+            {
+              "file": "/_next/static/chunks/3l64rezdyqovi.js",
+              "rawBytes": 79743,
+              "gzipBytes": 28396,
+              "companion": true,
+              "markers": [
+                "cmpRigBody",
+                "cmpSill",
+                "Giggly",
+                "studigo.companion.",
+                "Studigo's rig",
+                "webglcontextlost"
+              ]
+            }
+          ],
+          "companionRawBytes": 79743,
+          "companionGzipBytes": 28396,
+          "companionShareOfRouteJsRawPct": 3.848,
+          "artRequested": [
+            {
+              "file": "/mascot/companion/celebrate.webp",
+              "bytes": 42330,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/center.webp",
+              "bytes": 33054,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/down-right.webp",
+              "bytes": 31988,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/down.webp",
+              "bytes": 33410,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/lean.webp",
+              "bytes": 26712,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/left.webp",
+              "bytes": 30802,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/pet.webp",
+              "bytes": 25192,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/poke.webp",
+              "bytes": 28664,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/right.webp",
+              "bytes": 31476,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/sleep.webp",
+              "bytes": 25106,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/support.webp",
+              "bytes": 29870,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/up-right.webp",
+              "bytes": 31838,
+              "requestedByRoomReady": true
+            },
+            {
+              "file": "/mascot/companion/up.webp",
+              "bytes": 31088,
+              "requestedByRoomReady": true
+            }
+          ],
+          "artOnDiskBytes": [
+            {
+              "file": "/mascot/companion/celebrate.webp",
+              "bytes": 42330
+            },
+            {
+              "file": "/mascot/companion/center.webp",
+              "bytes": 33054
+            },
+            {
+              "file": "/mascot/companion/down-right.webp",
+              "bytes": 31988
+            },
+            {
+              "file": "/mascot/companion/down.webp",
+              "bytes": 33410
+            },
+            {
+              "file": "/mascot/companion/lean.webp",
+              "bytes": 26712
+            },
+            {
+              "file": "/mascot/companion/left.webp",
+              "bytes": 30802
+            },
+            {
+              "file": "/mascot/companion/pet.webp",
+              "bytes": 25192
+            },
+            {
+              "file": "/mascot/companion/poke.webp",
+              "bytes": 28664
+            },
+            {
+              "file": "/mascot/companion/right.webp",
+              "bytes": 31476
+            },
+            {
+              "file": "/mascot/companion/sleep.webp",
+              "bytes": 25106
+            },
+            {
+              "file": "/mascot/companion/support.webp",
+              "bytes": 29870
+            },
+            {
+              "file": "/mascot/companion/up-right.webp",
+              "bytes": 31838
+            },
+            {
+              "file": "/mascot/companion/up.webp",
+              "bytes": 31088
+            }
+          ],
+          "outfitsOnDiskBytes": [
+            {
+              "file": "/mascot/companion/outfits/beret.svg",
+              "bytes": 750
+            },
+            {
+              "file": "/mascot/companion/outfits/explorer.svg",
+              "bytes": 950
+            },
+            {
+              "file": "/mascot/companion/outfits/goggles.svg",
+              "bytes": 993
+            },
+            {
+              "file": "/mascot/companion/outfits/headphones.svg",
+              "bytes": 908
+            },
+            {
+              "file": "/mascot/companion/outfits/reader.svg",
+              "bytes": 740
+            },
+            {
+              "file": "/mascot/companion/outfits/sash.svg",
+              "bytes": 836
+            },
+            {
+              "file": "/mascot/companion/outfits/visor.svg",
+              "bytes": 643
+            }
+          ],
+          "note": "Chunk-level attribution: a chunk flagged companion can also hold other route code. Gzip is zlib default level 6 of the response body.",
+          "ms": 21199
+        },
+        "frames-desktop": {
+          "ok": true,
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.005,
+            "frame": {
+              "frames": 1198,
+              "n": 1198,
+              "mean": 16.694,
+              "p50": 16.6,
+              "p95": 18,
+              "p99": 24.2,
+              "max": 52.8,
+              "fpsMean": 59.902,
+              "over16_7": 532,
+              "over33_4": 1
+            },
+            "companionCallbackMs": {
+              "n": 1199,
+              "mean": 0.158,
+              "p50": 0.2,
+              "p95": 0.3,
+              "p99": 0.4,
+              "max": 0.7
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 37.602,
+              "ScriptDuration": 11.102,
+              "LayoutDuration": 0.404,
+              "RecalcStyleDuration": 1.036
+            }
+          },
+          "overall": {
+            "seconds": 35.137,
+            "frame": {
+              "frames": 2106,
+              "n": 2106,
+              "mean": 16.682,
+              "p50": 16.6,
+              "p95": 18,
+              "p99": 20.4,
+              "max": 52.8,
+              "fpsMean": 59.945,
+              "over16_7": 957,
+              "over33_4": 1
+            },
+            "companionCallbackMs": {
+              "n": 2107,
+              "mean": 0.169,
+              "p50": 0.2,
+              "p95": 0.3,
+              "p99": 0.4,
+              "max": 1.2
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            }
+          },
+          "errors": [],
+          "events": {
+            "count": 10,
+            "seconds": 15.132,
+            "frame": {
+              "frames": 907,
+              "n": 907,
+              "mean": 16.666,
+              "p50": 16.6,
+              "p95": 17.9,
+              "p99": 18.7,
+              "max": 23.8,
+              "fpsMean": 60.002,
+              "over16_7": 425,
+              "over33_4": 0
+            },
+            "companionCallbackMs": {
+              "n": 908,
+              "mean": 0.182,
+              "p50": 0.2,
+              "p95": 0.3,
+              "p99": 0.5,
+              "max": 1.2
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 59.272,
+              "ScriptDuration": 13.777,
+              "LayoutDuration": 0.68,
+              "RecalcStyleDuration": 9.419
+            },
+            "requests": {
+              "total": 0,
+              "byMethod": {},
+              "nonStaticRequests": []
+            }
+          },
+          "ms": 36653
+        },
+        "frames-phone": {
+          "ok": true,
+          "viewport": "390x844 dpr3, CPU throttled 4x",
+          "idle": {
+            "seconds": 20.016,
+            "frame": {
+              "frames": 1192,
+              "n": 1192,
+              "mean": 16.778,
+              "p50": 16.7,
+              "p95": 18.2,
+              "p99": 19.8,
+              "max": 65.5,
+              "fpsMean": 59.602,
+              "over16_7": 582,
+              "over33_4": 5
+            },
+            "companionCallbackMs": {
+              "n": 1193,
+              "mean": 1.261,
+              "p50": 1,
+              "p95": 2.9,
+              "p99": 4.3,
+              "max": 10.4
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 205.231,
+              "ScriptDuration": 87.725,
+              "LayoutDuration": 0.378,
+              "RecalcStyleDuration": 5.154
+            }
+          },
+          "overall": {
+            "seconds": 35.152,
+            "frame": {
+              "frames": 2098,
+              "n": 2098,
+              "mean": 16.746,
+              "p50": 16.7,
+              "p95": 18.4,
+              "p99": 20.3,
+              "max": 65.5,
+              "fpsMean": 59.716,
+              "over16_7": 1032,
+              "over33_4": 5
+            },
+            "companionCallbackMs": {
+              "n": 2099,
+              "mean": 1.155,
+              "p50": 0.8,
+              "p95": 2.8,
+              "p99": 4.1,
+              "max": 10.4
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            }
+          },
+          "errors": [],
+          "events": {
+            "count": 10,
+            "seconds": 15.136,
+            "frame": {
+              "frames": 905,
+              "n": 905,
+              "mean": 16.703,
+              "p50": 16.7,
+              "p95": 18.7,
+              "p99": 20.7,
+              "max": 31.3,
+              "fpsMean": 59.869,
+              "over16_7": 449,
+              "over33_4": 0
+            },
+            "companionCallbackMs": {
+              "n": 906,
+              "mean": 1.015,
+              "p50": 0.8,
+              "p95": 2.6,
+              "p99": 3.7,
+              "max": 8.8
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 317.137,
+              "ScriptDuration": 73.72,
+              "LayoutDuration": 4.056,
+              "RecalcStyleDuration": 81.368
+            },
+            "requests": {
+              "total": 0,
+              "byMethod": {},
+              "nonStaticRequests": []
+            }
+          },
+          "ms": 40649
+        },
+        "memory-desktop": {
+          "ok": true,
+          "scriptSha256": "5fd7b1dfdb52cac87ecf66d565657108640142623b6b4066427824bd4be5bc46",
+          "quietHarness": true,
+          "start": {
+            "usedBytes": 7048504,
+            "totalBytes": 8241152,
+            "jsHeapUsedSize": 10000000
+          },
+          "after60s": {
+            "usedBytes": 7541540,
+            "totalBytes": 8765440,
+            "jsHeapUsedSize": 10000000
+          },
+          "deltaUsedBytes": 493036,
+          "surfaces": {
+            "canvasPixels": [
+              360,
+              360
+            ],
+            "canvasBackingStoreBytes": 518400,
+            "decodedDrawings": 15,
+            "decodedDrawingBytes": 9600000
+          },
+          "harnessEntries": {
+            "frames": 0,
+            "comp": 0,
+            "uniformWrites": 0
+          },
+          "errors": [],
+          "ms": 63107
+        },
+        "profile": {
+          "ok": true,
+          "seconds": 20,
+          "samplingIntervalUs": 500,
+          "totalMs": 20126.407,
+          "idlePct": 97.384,
+          "busyMs": 526.539,
+          "gcMs": 13.305,
+          "programMs": 398.059,
+          "companionChunkBusyMs": 76.936,
+          "companionShareOfBusyPct": 14.612,
+          "topChunks": [
+            {
+              "file": "/_next/static/chunks/3l64rezdyqovi.js",
+              "busyMs": 76.936,
+              "sharePct": 14.612,
+              "companion": true
+            },
+            {
+              "file": "(native)",
+              "busyMs": 36.369,
+              "sharePct": 6.907,
+              "companion": false
+            },
+            {
+              "file": "/_next/static/chunks/43j59s8n4w56_.js",
+              "busyMs": 1.87,
+              "sharePct": 0.355,
+              "companion": false
+            }
+          ],
+          "note": "Attribution is per script chunk (minified, no source maps in production). Shares are of busy main-thread time, excluding idle, program and GC.",
+          "ms": 22682
+        },
+        "blend-desktop": {
+          "ok": true,
+          "reps": 10,
+          "drawingOpacityMs": {
+            "n": 10,
+            "mean": 155.85,
+            "p50": 151.9,
+            "p95": 165.7,
+            "p99": 165.7,
+            "max": 165.7
+          },
+          "onClassMs": {
+            "n": 10,
+            "mean": 10.2,
+            "p50": 12.8,
+            "p95": 16.7,
+            "p99": 16.7,
+            "max": 16.7
+          },
+          "faceSettledMs": {
+            "n": 9,
+            "mean": 160.6,
+            "p50": 165.1,
+            "p95": 165.9,
+            "p99": 165.9,
+            "max": 165.9
+          },
+          "faceMaxPerFrameStep": {
+            "n": 10,
+            "mean": 0.162,
+            "p50": 0.155,
+            "p95": 0.221,
+            "p99": 0.221,
+            "max": 0.221
+          },
+          "rows": [
+            {
+              "onClassMs": 15.2,
+              "drawingOpacityMs": 164.2,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 15,
+                "settledMs": 165.1,
+                "maxPerFrameStep": 0.221
+              }
+            },
+            {
+              "onClassMs": 1.2,
+              "drawingOpacityMs": 151.7,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 1,
+                "settledMs": 152.3,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 16.7,
+              "drawingOpacityMs": 164.6,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 16.2,
+                "settledMs": 165.4,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 12.8,
+              "drawingOpacityMs": 162.8,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 12.5,
+                "settledMs": 163.4,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 8.2,
+              "drawingOpacityMs": 151.2,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 0.42,
+                "firstDrawAfterEventMs": 8.1,
+                "settledMs": null,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 14.7,
+              "drawingOpacityMs": 147.6,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 14.6,
+                "settledMs": 165.5,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 2.1,
+              "drawingOpacityMs": 133.8,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 1.9,
+                "settledMs": 150.4,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 14.3,
+              "drawingOpacityMs": 165,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 14.1,
+                "settledMs": 165.3,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 14.6,
+              "drawingOpacityMs": 165.7,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 14.5,
+                "settledMs": 165.9,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 2.2,
+              "drawingOpacityMs": 151.9,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 2,
+                "settledMs": 152.1,
+                "maxPerFrameStep": 0.155
+              }
+            }
+          ],
+          "ms": 39711
+        },
+        "blend-phone": {
+          "ok": true,
+          "reps": 5,
+          "drawingOpacityMs": {
+            "n": 5,
+            "mean": 178.14,
+            "p50": 171,
+            "p95": 202,
+            "p99": 202,
+            "max": 202
+          },
+          "onClassMs": {
+            "n": 5,
+            "mean": 20.26,
+            "p50": 19.2,
+            "p95": 41.5,
+            "p99": 41.5,
+            "max": 41.5
+          },
+          "faceSettledMs": {
+            "n": 4,
+            "mean": 172.55,
+            "p50": 173.7,
+            "p95": 176.1,
+            "p99": 176.1,
+            "max": 176.1
+          },
+          "faceMaxPerFrameStep": {
+            "n": 5,
+            "mean": 0.156,
+            "p50": 0.155,
+            "p95": 0.16,
+            "p99": 0.16,
+            "max": 0.16
+          },
+          "rows": [
+            {
+              "onClassMs": 22.2,
+              "drawingOpacityMs": 185.7,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 19.2,
+                "settledMs": 176.1,
+                "maxPerFrameStep": 0.16
+              }
+            },
+            {
+              "onClassMs": 6.3,
+              "drawingOpacityMs": 161.4,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 4.2,
+                "settledMs": 165.6,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 12.1,
+              "drawingOpacityMs": 170.6,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 11.1,
+                "settledMs": 173.7,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 19.2,
+              "drawingOpacityMs": 171,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 1,
+                "firstDrawAfterEventMs": 16.9,
+                "settledMs": 174.8,
+                "maxPerFrameStep": 0.155
+              }
+            },
+            {
+              "onClassMs": 41.5,
+              "drawingOpacityMs": 202,
+              "pose": "celebrate",
+              "opacity": "1",
+              "face": {
+                "target": 0.42,
+                "firstDrawAfterEventMs": 41.1,
+                "settledMs": null,
+                "maxPerFrameStep": 0.155
+              }
+            }
+          ],
+          "ms": 22670
+        },
+        "reduced-motion": {
+          "ok": true,
+          "normal": {
+            "frames": 1082,
+            "translationCssPx": {
+              "maxFromMedian": 15.005,
+              "p95FromMedian": 9.808
+            },
+            "particlesAdded": 54,
+            "calmAttribute": false
+          },
+          "reduced": {
+            "frames": 1081,
+            "translationCssPx": {
+              "maxFromMedian": 1.779,
+              "p95FromMedian": 1.272
+            },
+            "particlesAdded": 0,
+            "calmAttribute": true,
+            "blend": {
+              "reps": 5,
+              "drawingOpacityMs": {
+                "n": 5,
+                "mean": 29.16,
+                "p50": 31.8,
+                "p95": 32.3,
+                "p99": 32.3,
+                "max": 32.3
+              },
+              "onClassMs": {
+                "n": 5,
+                "mean": 12.56,
+                "p50": 15.4,
+                "p95": 15.8,
+                "p99": 15.8,
+                "max": 15.8
+              },
+              "faceSettledMs": {
+                "n": 5,
+                "mean": 279.52,
+                "p50": 282.3,
+                "p95": 282.8,
+                "p99": 282.8,
+                "max": 282.8
+              },
+              "faceMaxPerFrameStep": {
+                "n": 5,
+                "mean": 0.083,
+                "p50": 0.083,
+                "p95": 0.083,
+                "p99": 0.083,
+                "max": 0.083
+              },
+              "rows": [
+                {
+                  "onClassMs": 15.8,
+                  "drawingOpacityMs": 31.8,
+                  "pose": "celebrate",
+                  "opacity": "1",
+                  "face": {
+                    "target": 1,
+                    "firstDrawAfterEventMs": 15.6,
+                    "settledMs": 282.8,
+                    "maxPerFrameStep": 0.083
+                  }
+                },
+                {
+                  "onClassMs": 15.4,
+                  "drawingOpacityMs": 32.3,
+                  "pose": "celebrate",
+                  "opacity": "1",
+                  "face": {
+                    "target": 1,
+                    "firstDrawAfterEventMs": 15.3,
+                    "settledMs": 282.3,
+                    "maxPerFrameStep": 0.083
+                  }
+                },
+                {
+                  "onClassMs": 15.8,
+                  "drawingOpacityMs": 32.2,
+                  "pose": "celebrate",
+                  "opacity": "1",
+                  "face": {
+                    "target": 1,
+                    "firstDrawAfterEventMs": 15.7,
+                    "settledMs": 282.6,
+                    "maxPerFrameStep": 0.083
+                  }
+                },
+                {
+                  "onClassMs": 1.1,
+                  "drawingOpacityMs": 17.7,
+                  "pose": "celebrate",
+                  "opacity": "1",
+                  "face": {
+                    "target": 1,
+                    "firstDrawAfterEventMs": 1.1,
+                    "settledMs": 268.7,
+                    "maxPerFrameStep": 0.083
+                  }
+                },
+                {
+                  "onClassMs": 14.7,
+                  "drawingOpacityMs": 31.8,
+                  "pose": "celebrate",
+                  "opacity": "1",
+                  "face": {
+                    "target": 1,
+                    "firstDrawAfterEventMs": 14.6,
+                    "settledMs": 281.2,
+                    "maxPerFrameStep": 0.083
+                  }
+                }
+              ]
+            }
+          },
+          "ms": 57463
+        },
+        "webgl-off": {
+          "ok": true,
+          "mode": "WebGL blocked (sprites)",
+          "reps": 3,
+          "visibleMs": {
+            "n": 3,
+            "mean": 543.833,
+            "p50": 579.5,
+            "p95": 608.6,
+            "p99": 608.6,
+            "max": 608.6
+          },
+          "loadEventMs": {
+            "n": 3,
+            "mean": 254.367,
+            "p50": 270.6,
+            "p95": 289.1,
+            "p99": 289.1,
+            "max": 289.1
+          },
+          "rows": [
+            {
+              "visibleMs": 443.39999997615814,
+              "loadEventMs": 203.39999997615814,
+              "rigCanvas": false,
+              "dataMotion": false,
+              "drawings": 15,
+              "eyelids": 2,
+              "errors": []
+            },
+            {
+              "visibleMs": 608.5999999046326,
+              "loadEventMs": 270.59999990463257,
+              "rigCanvas": false,
+              "dataMotion": false,
+              "drawings": 15,
+              "eyelids": 2,
+              "errors": []
+            },
+            {
+              "visibleMs": 579.5,
+              "loadEventMs": 289.09999990463257,
+              "rigCanvas": false,
+              "dataMotion": false,
+              "drawings": 15,
+              "eyelids": 2,
+              "errors": []
+            }
+          ],
+          "ms": 2051
+        },
+        "rig-visible": {
+          "ok": true,
+          "mode": "WebGL available (rig)",
+          "reps": 3,
+          "visibleMs": {
+            "n": 3,
+            "mean": 775.633,
+            "p50": 748.3,
+            "p95": 882.8,
+            "p99": 882.8,
+            "max": 882.8
+          },
+          "loadEventMs": {
+            "n": 3,
+            "mean": 271.7,
+            "p50": 267.2,
+            "p95": 304.4,
+            "p99": 304.4,
+            "max": 304.4
+          },
+          "rows": [
+            {
+              "visibleMs": 748.2999999523163,
+              "loadEventMs": 267.1999999284744,
+              "dataMotion": true,
+              "eyelids": 0,
+              "errors": []
+            },
+            {
+              "visibleMs": 695.8000000715256,
+              "loadEventMs": 243.5,
+              "dataMotion": true,
+              "eyelids": 0,
+              "errors": []
+            },
+            {
+              "visibleMs": 882.8000000715256,
+              "loadEventMs": 304.40000009536743,
+              "dataMotion": true,
+              "eyelids": 0,
+              "errors": []
+            }
+          ],
+          "ms": 2697
+        },
+        "lost-context": {
+          "ok": true,
+          "reps": 3,
+          "toSpritesMs": {
+            "n": 3,
+            "mean": 11.567,
+            "p50": 12.4,
+            "p95": 17.5,
+            "p99": 17.5,
+            "max": 17.5
+          },
+          "toRigMs": {
+            "n": 3,
+            "mean": 24.567,
+            "p50": 24,
+            "p95": 30.3,
+            "p99": 30.3,
+            "max": 30.3
+          },
+          "reactionAfterRestoreMs": {
+            "n": 3,
+            "mean": 3.867,
+            "p50": 3.6,
+            "p95": 5.3,
+            "p99": 5.3,
+            "max": 5.3
+          },
+          "rows": [
+            {
+              "toSpritesMs": 12.4,
+              "toRigMs": 30.3,
+              "reactionAfterRestoreMs": 3.6,
+              "errors": []
+            },
+            {
+              "toSpritesMs": 4.8,
+              "toRigMs": 19.4,
+              "reactionAfterRestoreMs": 5.3,
+              "errors": []
+            },
+            {
+              "toSpritesMs": 17.5,
+              "toRigMs": 24,
+              "reactionAfterRestoreMs": 2.7,
+              "errors": []
+            }
+          ],
+          "ms": 5680
+        },
+        "hz": {
+          "ok": true,
+          "30Hz": {
+            "event": "setDone (celebrate beat: drawing 0-700 ms, rig 700-1400 ms, drawing 1400-2300 ms)",
+            "poseChanges": [
+              [
+                27,
+                "celebrate"
+              ],
+              [
+                686,
+                "center"
+              ],
+              [
+                1403,
+                "celebrate"
+              ],
+              [
+                2292,
+                "center"
+              ],
+              [
+                2519,
+                "celebrate"
+              ]
+            ],
+            "expectedChangesMs": [
+              0,
+              700,
+              1400,
+              2300
+            ],
+            "endsAtCenter": false,
+            "frameIntervalMs": {
+              "n": 199,
+              "mean": 38.029,
+              "p50": 35.6,
+              "p95": 47.4,
+              "p99": 48.8,
+              "max": 53.6
+            },
+            "errors": []
+          },
+          "60Hz": {
+            "event": "setDone (celebrate beat: drawing 0-700 ms, rig 700-1400 ms, drawing 1400-2300 ms)",
+            "poseChanges": [
+              [
+                13,
+                "celebrate"
+              ],
+              [
+                723,
+                "center"
+              ],
+              [
+                1438,
+                "celebrate"
+              ],
+              [
+                2313,
+                "center"
+              ],
+              [
+                2515,
+                "celebrate"
+              ]
+            ],
+            "expectedChangesMs": [
+              0,
+              700,
+              1400,
+              2300
+            ],
+            "endsAtCenter": false,
+            "frameIntervalMs": {
+              "n": 199,
+              "mean": 19.152,
+              "p50": 16.3,
+              "p95": 50,
+              "p99": 74.3,
+              "max": 82.3
+            },
+            "errors": []
+          },
+          "ms": 19807
+        },
+        "tab-resume": {
+          "ok": true,
+          "hiddenSeconds": 10,
+          "hiddenState": {
+            "visibilityState": "hidden",
+            "hidden": true
+          },
+          "simulation": "document.visibilityState and document.hidden overridden, then visibilitychange dispatched. bringToFront() did not hide the first page in headless Chromium.",
+          "companionCallbacksWhileHidden": 0,
+          "cssPxPerRigUnit": 0.281,
+          "normalStepRigPx": {
+            "n": 213,
+            "mean": 0.181,
+            "p50": 0.14,
+            "p95": 0.469,
+            "p99": 0.944,
+            "max": 0.99
+          },
+          "resumeFirstStepRigPx": 0,
+          "resumeFirstFiveStepsRigPx": [
+            0,
+            0.106,
+            0.115,
+            0.132,
+            0.155
+          ],
+          "resumeFirstStepCssPx": 0,
+          "normalStepP95CssPx": 0.132,
+          "centroidShiftAcrossResumeCssPx": 0,
+          "verdict": "first resumed step is within the normal per-frame range (no teleport)",
+          "ms": 20086
+        },
+        "frames-desktop-run2": {
+          "ok": true,
+          "scriptSha256": "7cdfc2f8f0129b6f1a3493c69929e2e46ba95ff2bc25cc547423e043f589ed14",
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.027,
+            "frame": {
+              "frames": 1174,
+              "n": 1174,
+              "mean": 17.049,
+              "p50": 16.7,
+              "p95": 18,
+              "p99": 18.8,
+              "max": 369.7,
+              "fpsMean": 58.654,
+              "over16_7": 588,
+              "over33_4": 3
+            },
+            "companionCallbackMs": {
+              "n": 1175,
+              "mean": 0.516,
+              "p50": 0.5,
+              "p95": 0.8,
+              "p99": 1.2,
+              "max": 4
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 88.398,
+              "ScriptDuration": 35.515,
+              "LayoutDuration": 0.675,
+              "RecalcStyleDuration": 4.314
+            }
+          },
+          "overall": {
+            "seconds": 35.269,
+            "frame": {
+              "frames": 2085,
+              "n": 2085,
+              "mean": 16.914,
+              "p50": 16.7,
+              "p95": 18,
+              "p99": 18.8,
+              "max": 369.7,
+              "fpsMean": 59.123,
+              "over16_7": 1033,
+              "over33_4": 4
+            },
+            "companionCallbackMs": {
+              "n": 2086,
+              "mean": 0.578,
+              "p50": 0.5,
+              "p95": 0.9,
+              "p99": 1.6,
+              "max": 11.3
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            }
+          },
+          "errors": [],
+          "events": {
+            "count": 10,
+            "seconds": 15.242,
+            "frame": {
+              "frames": 910,
+              "n": 910,
+              "mean": 16.74,
+              "p50": 16.7,
+              "p95": 18,
+              "p99": 18.8,
+              "max": 83.2,
+              "fpsMean": 59.737,
+              "over16_7": 444,
+              "over33_4": 1
+            },
+            "companionCallbackMs": {
+              "n": 911,
+              "mean": 0.659,
+              "p50": 0.6,
+              "p95": 1,
+              "p99": 1.9,
+              "max": 11.3
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 182.228,
+              "ScriptDuration": 45.416,
+              "LayoutDuration": 2.885,
+              "RecalcStyleDuration": 38.669
+            },
+            "requests": {
+              "total": 0,
+              "byMethod": {},
+              "nonStaticRequests": []
+            }
+          },
+          "ms": 70960
+        },
+        "frames-desktop-run3": {
+          "ok": true,
+          "scriptSha256": "7cdfc2f8f0129b6f1a3493c69929e2e46ba95ff2bc25cc547423e043f589ed14",
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.028,
+            "frame": {
+              "frames": 1176,
+              "n": 1176,
+              "mean": 17.016,
+              "p50": 16.7,
+              "p95": 17.9,
+              "p99": 18.5,
+              "max": 351.8,
+              "fpsMean": 58.768,
+              "over16_7": 575,
+              "over33_4": 2
+            },
+            "companionCallbackMs": {
+              "n": 1177,
+              "mean": 0.474,
+              "p50": 0.5,
+              "p95": 0.7,
+              "p99": 0.9,
+              "max": 4.1
+            },
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 78.241,
+              "ScriptDuration": 32.367,
+              "LayoutDuration": 0.616,
+              "RecalcStyleDuration": 3.101
+            }
+          },
+          "overall": {
+            "seconds": 35.382,
+            "frame": {
+              "frames": 2080,
+              "n": 2080,
+              "mean": 17.008,
+              "p50": 16.7,
+              "p95": 17.9,
+              "p99": 18.8,
+              "max": 351.8,
+              "fpsMean": 58.796,
+              "over16_7": 1023,
+              "over33_4": 7
+            },
+            "companionCallbackMs": {
+              "n": 2081,
+              "mean": 0.588,
+              "p50": 0.5,
+              "p95": 1,
+              "p99": 1.8,
+              "max": 13.8
+            },
+            "longTasks": {
+              "count": 3,
+              "maxMs": 121,
+              "totalMs": 259
+            }
+          },
+          "errors": [],
+          "events": {
+            "count": 10,
+            "seconds": 15.354,
+            "frame": {
+              "frames": 903,
+              "n": 903,
+              "mean": 16.997,
+              "p50": 16.7,
+              "p95": 18,
+              "p99": 26.7,
+              "max": 140.1,
+              "fpsMean": 58.834,
+              "over16_7": 447,
+              "over33_4": 5
+            },
+            "companionCallbackMs": {
+              "n": 904,
+              "mean": 0.736,
+              "p50": 0.6,
+              "p95": 1.2,
+              "p99": 3.2,
+              "max": 13.8
+            },
+            "longTasks": {
+              "count": 3,
+              "maxMs": 121,
+              "totalMs": 259
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 220.429,
+              "ScriptDuration": 51.777,
+              "LayoutDuration": 5.415,
+              "RecalcStyleDuration": 48.644
+            },
+            "requests": {
+              "total": 0,
+              "byMethod": {},
+              "nonStaticRequests": []
+            }
+          },
+          "ms": 39681
+        }
+      },
+      "chromium": "151.0.7922.34"
+    },
+    "off": {
+      "build": {
+        "label": "off",
+        "exitCode": "0",
+        "command": "env -u NEXT_PUBLIC_STUDIGO_COMPANION_MOTION NEXT_PUBLIC_STUDIGO_COMPANION=off pnpm --filter @studigo/web build"
+      },
+      "suites": {
+        "bundle": {
+          "ok": true,
+          "scriptSha256": "5fd7b1dfdb52cac87ecf66d565657108640142623b6b4066427824bd4be5bc46",
+          "webgl": null,
+          "routeJs": {
+            "chunks": 12,
+            "rawBytes": 2006697,
+            "gzipBytes": 615343
+          },
+          "companionChunks": [
+            {
+              "file": "/_next/static/chunks/2i44l2zg5yezt.js",
+              "rawBytes": 12830,
+              "gzipBytes": 4919,
+              "companion": true,
+              "markers": [
+                "Giggly",
+                "studigo.companion."
+              ]
+            }
+          ],
+          "companionRawBytes": 12830,
+          "companionGzipBytes": 4919,
+          "companionShareOfRouteJsRawPct": 0.639,
+          "artRequested": [],
+          "artOnDiskBytes": [
+            {
+              "file": "/mascot/companion/celebrate.webp",
+              "bytes": 42330
+            },
+            {
+              "file": "/mascot/companion/center.webp",
+              "bytes": 33054
+            },
+            {
+              "file": "/mascot/companion/down-right.webp",
+              "bytes": 31988
+            },
+            {
+              "file": "/mascot/companion/down.webp",
+              "bytes": 33410
+            },
+            {
+              "file": "/mascot/companion/lean.webp",
+              "bytes": 26712
+            },
+            {
+              "file": "/mascot/companion/left.webp",
+              "bytes": 30802
+            },
+            {
+              "file": "/mascot/companion/pet.webp",
+              "bytes": 25192
+            },
+            {
+              "file": "/mascot/companion/poke.webp",
+              "bytes": 28664
+            },
+            {
+              "file": "/mascot/companion/right.webp",
+              "bytes": 31476
+            },
+            {
+              "file": "/mascot/companion/sleep.webp",
+              "bytes": 25106
+            },
+            {
+              "file": "/mascot/companion/support.webp",
+              "bytes": 29870
+            },
+            {
+              "file": "/mascot/companion/up-right.webp",
+              "bytes": 31838
+            },
+            {
+              "file": "/mascot/companion/up.webp",
+              "bytes": 31088
+            }
+          ],
+          "outfitsOnDiskBytes": [
+            {
+              "file": "/mascot/companion/outfits/beret.svg",
+              "bytes": 750
+            },
+            {
+              "file": "/mascot/companion/outfits/explorer.svg",
+              "bytes": 950
+            },
+            {
+              "file": "/mascot/companion/outfits/goggles.svg",
+              "bytes": 993
+            },
+            {
+              "file": "/mascot/companion/outfits/headphones.svg",
+              "bytes": 908
+            },
+            {
+              "file": "/mascot/companion/outfits/reader.svg",
+              "bytes": 740
+            },
+            {
+              "file": "/mascot/companion/outfits/sash.svg",
+              "bytes": 836
+            },
+            {
+              "file": "/mascot/companion/outfits/visor.svg",
+              "bytes": 643
+            }
+          ],
+          "note": "Chunk-level attribution: a chunk flagged companion can also hold other route code. Gzip is zlib default level 6 of the response body.",
+          "ms": 21193
+        },
+        "frames-desktop": {
+          "ok": true,
+          "scriptSha256": "5fd7b1dfdb52cac87ecf66d565657108640142623b6b4066427824bd4be5bc46",
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.07,
+            "frame": {
+              "frames": 1187,
+              "n": 1187,
+              "mean": 16.907,
+              "p50": 16.4,
+              "p95": 41.1,
+              "p99": 47.8,
+              "max": 61.8,
+              "fpsMean": 59.147,
+              "over16_7": 526,
+              "over33_4": 107
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 26.381,
+              "ScriptDuration": 3.091,
+              "LayoutDuration": 0.604,
+              "RecalcStyleDuration": 0.755
+            }
+          },
+          "overall": {
+            "seconds": 20.075,
+            "frame": {
+              "frames": 1187,
+              "n": 1187,
+              "mean": 16.907,
+              "p50": 16.4,
+              "p95": 41.1,
+              "p99": 47.8,
+              "max": 61.8,
+              "fpsMean": 59.147,
+              "over16_7": 526,
+              "over33_4": 107
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            }
+          },
+          "errors": [],
+          "ms": 22433
+        },
+        "frames-phone": {
+          "ok": true,
+          "scriptSha256": "5fd7b1dfdb52cac87ecf66d565657108640142623b6b4066427824bd4be5bc46",
+          "viewport": "390x844 dpr3, CPU throttled 4x",
+          "idle": {
+            "seconds": 20.005,
+            "frame": {
+              "frames": 1156,
+              "n": 1156,
+              "mean": 17.287,
+              "p50": 16.6,
+              "p95": 19.4,
+              "p99": 70.6,
+              "max": 100.6,
+              "fpsMean": 57.847,
+              "over16_7": 562,
+              "over33_4": 27
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 4,
+              "maxMs": 72,
+              "totalMs": 259
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 107.159,
+              "ScriptDuration": 13.734,
+              "LayoutDuration": 0,
+              "RecalcStyleDuration": 0
+            }
+          },
+          "overall": {
+            "seconds": 20.01,
+            "frame": {
+              "frames": 1156,
+              "n": 1156,
+              "mean": 17.287,
+              "p50": 16.6,
+              "p95": 19.4,
+              "p99": 70.6,
+              "max": 100.6,
+              "fpsMean": 57.847,
+              "over16_7": 562,
+              "over33_4": 27
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 4,
+              "maxMs": 72,
+              "totalMs": 259
+            }
+          },
+          "errors": [],
+          "ms": 25451
+        },
+        "memory-desktop": {
+          "ok": true,
+          "scriptSha256": "5fd7b1dfdb52cac87ecf66d565657108640142623b6b4066427824bd4be5bc46",
+          "quietHarness": true,
+          "start": {
+            "usedBytes": 6715636,
+            "totalBytes": 7979008,
+            "jsHeapUsedSize": 10000000
+          },
+          "after60s": {
+            "usedBytes": 6744916,
+            "totalBytes": 7716864,
+            "jsHeapUsedSize": 10000000
+          },
+          "deltaUsedBytes": 29280,
+          "surfaces": {
+            "canvasPixels": null,
+            "canvasBackingStoreBytes": 0,
+            "decodedDrawings": 0,
+            "decodedDrawingBytes": 0
+          },
+          "harnessEntries": {
+            "frames": 0,
+            "comp": 0,
+            "uniformWrites": 0
+          },
+          "errors": [],
+          "ms": 60863
+        },
+        "frames-desktop-run2": {
+          "ok": true,
+          "scriptSha256": "7cdfc2f8f0129b6f1a3493c69929e2e46ba95ff2bc25cc547423e043f589ed14",
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.006,
+            "frame": {
+              "frames": 1192,
+              "n": 1192,
+              "mean": 16.763,
+              "p50": 16.6,
+              "p95": 18.1,
+              "p99": 27.2,
+              "max": 102,
+              "fpsMean": 59.655,
+              "over16_7": 554,
+              "over33_4": 3
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 12.966,
+              "ScriptDuration": 1.67,
+              "LayoutDuration": 0.471,
+              "RecalcStyleDuration": 0.322
+            }
+          },
+          "overall": {
+            "seconds": 20.011,
+            "frame": {
+              "frames": 1193,
+              "n": 1193,
+              "mean": 16.763,
+              "p50": 16.6,
+              "p95": 18.1,
+              "p99": 27.2,
+              "max": 102,
+              "fpsMean": 59.655,
+              "over16_7": 555,
+              "over33_4": 3
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 0,
+              "maxMs": 0,
+              "totalMs": 0
+            }
+          },
+          "errors": [],
+          "ms": 21805
+        },
+        "frames-desktop-run3": {
+          "ok": true,
+          "scriptSha256": "7cdfc2f8f0129b6f1a3493c69929e2e46ba95ff2bc25cc547423e043f589ed14",
+          "viewport": "1440x900 dpr1",
+          "idle": {
+            "seconds": 20.301,
+            "frame": {
+              "frames": 1007,
+              "n": 1007,
+              "mean": 20.142,
+              "p50": 16.6,
+              "p95": 46,
+              "p99": 87.4,
+              "max": 627.8,
+              "fpsMean": 49.648,
+              "over16_7": 485,
+              "over33_4": 69
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 13,
+              "maxMs": 131,
+              "totalMs": 987
+            },
+            "cpuMsPerSec": {
+              "TaskDuration": 85.44,
+              "ScriptDuration": 17.814,
+              "LayoutDuration": 1.328,
+              "RecalcStyleDuration": 0.938
+            }
+          },
+          "overall": {
+            "seconds": 20.543,
+            "frame": {
+              "frames": 1019,
+              "n": 1019,
+              "mean": 20.15,
+              "p50": 16.6,
+              "p95": 48.4,
+              "p99": 89.8,
+              "max": 627.8,
+              "fpsMean": 49.628,
+              "over16_7": 491,
+              "over33_4": 71
+            },
+            "companionCallbackMs": null,
+            "longTasks": {
+              "count": 13,
+              "maxMs": 131,
+              "totalMs": 987
+            }
+          },
+          "errors": [],
+          "ms": 26247
+        }
+      },
+      "chromium": "151.0.7922.34"
+    }
+  },
+  "script": {
+    "path": "scripts/lc-companion-perf.mjs",
+    "sha256": "7cdfc2f8f0129b6f1a3493c69929e2e46ba95ff2bc25cc547423e043f589ed14"
+  },
+  "git": {
+    "branch": "lc/11-measurements",
+    "headSha": "1e999f672d610d75a33287e7353c68b0b599bd89"
+  },
+  "machine": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "logicalCores": 12,
+    "ramBytes": 8301043712,
+    "osRelease": "10.0.26200",
+    "node": "v22.23.5",
+    "webgl": {
+      "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x000046A8) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "vendor": "Google Inc. (Intel)",
+      "version": "WebGL 1.0 (OpenGL ES 2.0 Chromium)"
+    }
+  },
+  "launch": {
+    "headless": true,
+    "args": [
+      "--use-angle=d3d11",
+      "--ignore-gpu-blocklist",
+      "--enable-gpu-rasterization"
+    ]
+  },
+  "harness": {
+    "studigoCompanionHook": "window.studigoCompanion is set only when NODE_ENV is development (companion.tsx). Production builds are measured through the same CompanionHandle, read from React's fiber tree (read-only) and calling its public event() and play().",
+    "frameTiming": "a requestAnimationFrame collector and a wrapper around page rAF callbacks; a callback counts as companion work when it calls WebGL bufferSubData",
+    "uniformTrace": "WebGLRenderingContext uniform1f wrappers record uSmile and the other drawn channels per frame",
+    "shim30": "rAF callbacks delivered from a 30 Hz timer (simulated cadence, not a 30 Hz panel)"
+  }
+}
